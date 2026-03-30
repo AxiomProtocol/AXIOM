@@ -238,7 +238,10 @@ export default function DisclosurePage() {
   ];
 
   const operationalContracts = [
-    { name: 'Deployer', address: '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96', purpose: 'Contract deployment authority', status: 'Live' },
+    { name: 'Governance Safe (3-of-5)', address: '0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d', purpose: 'Primary multi-party authorization — emergency pause, sweep, and timelock proposer; migration target for most admin roles', status: 'Live' },
+    { name: 'AXM Admin Safe', address: '0x93696b537d814Aed5875C4490143195983AED365', purpose: 'AXM token minting authority — Safe-controlled', status: 'Live' },
+    { name: 'Timelock Controller (24h)', address: '0xf1B1D594d6Edc9f045dF55B32006A24e666Ed899', purpose: 'Minimum 24-hour delay on parameter changes and role grants — Safe holds PROPOSER_ROLE', status: 'Live' },
+    { name: 'Deployer EOA', address: '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96', purpose: 'Contract deployment and residual admin authority — migrating to Safe/Timelock (Task #42 in progress; see Governance Migration tracker)', status: 'Live' },
   ];
 
   return (
@@ -1095,6 +1098,14 @@ export default function DisclosurePage() {
             {operationalContracts.map((c, i) => (
               <ContractRow key={i} name={c.name} address={c.address} purpose={c.purpose} status={c.status} alt={i % 2 === 0} />
             ))}
+          </div>
+          <div className="border border-dl-border border-t-0 px-5 py-3 bg-dl-bg-alt">
+            <p className="font-dl-mono text-xs text-dl-gray">
+              <span className="text-dl-navy font-semibold">Governance Migration Status:</span>{' '}
+              Multi-party authorization Safe is deployed and operational. Critical roles are transitioning from the deployer EOA to the Governance Safe
+              and Timelock Controller. Role-by-role migration details are tracked in the internal Governance Migration dashboard. Institutional
+              counterparties may request the current migration status report directly from the protocol team.
+            </p>
           </div>
         </section>
 

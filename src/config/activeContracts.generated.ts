@@ -39,6 +39,15 @@ export const EULER_PSM = '0x4584888cB411E9cc88e3800BAB73A430D90d3793' as const;
 /** @deprecated Legacy Primary AXUSD — superseded by ACTIVE_AXUSD (ERC-3643). PSM-paired. */
 export const LEGACY_GENIUS_AXUSD = '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C' as const;
 
+// ── Governance Authority Addresses ──────────────────────────────────────────
+// Governance Safe: 3-of-5 Gnosis Safe — primary multi-party authorization target
+// AXM Admin Safe: AXM token minting authority — already wired
+// Timelock: 24h delay controller — Safe holds PROPOSER_ROLE
+// Deployer EOA: Current admin — migrating to Safe/Timelock per Task #42
+export const GOVERNANCE_SAFE_ADDRESS = '0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d' as const;
+export const AXM_ADMIN_SAFE_ADDRESS = '0x93696b537d814Aed5875C4490143195983AED365' as const;
+export const TIMELOCK_ADDRESS = '0xf1B1D594d6Edc9f045dF55B32006A24e666Ed899' as const;
+
 export const ACTIVE_CONTRACTS = {
   axusd: {
     canonical: ACTIVE_AXUSD,

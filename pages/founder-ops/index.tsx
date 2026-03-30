@@ -108,7 +108,8 @@ type TabId =
   | 'realassets'
   | 'community'
   | 'log'
-  | 'system';
+  | 'system'
+  | 'governance';
 
 const FRAMEWORK_PRINCIPLE = `This is not a personal budget. This is a disciplined capital deployment system designed to build a machine-verifiable operating record across Axiom's live rails. The objective is not to maximize short-term return. The objective is to systematically produce proof that Axiom's infrastructure is active, capitalized, measurable, and compounding across on-chain liquidity, real asset intelligence, and community coordination.`;
 
@@ -220,6 +221,9 @@ export default function FounderOpsPage() {
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
   const [reviewMsg, setReviewMsg] = useState<{ id: string; type: 'success' | 'error'; text: string } | null>(null);
 
+  const [govStatus, setGovStatus] = useState<any | null>(null);
+  const [govLoading, setGovLoading] = useState(false);
+
   useEffect(() => {
     Promise.all([
       fetch('/api/founder-ops/overview').then(r => r.json()).catch(() => null),
@@ -264,6 +268,16 @@ export default function FounderOpsPage() {
       if (d.prs != null) setPrsData(d);
     }).catch(() => {}).finally(() => setPrsLoading(false));
   }, []);
+
+  const loadGovernanceStatus = async () => {
+    setGovLoading(true);
+    try {
+      const res = await fetch('/api/governance/multisig-status').then(r => r.json()).catch(() => null);
+      if (res?.success) setGovStatus(res);
+    } finally {
+      setGovLoading(false);
+    }
+  };
 
   const loadVariances = async () => {
     setVarianceLoading(true);
@@ -363,6 +377,7 @@ export default function FounderOpsPage() {
     { id: 'realassets', label: 'Real Assets' },
     { id: 'community', label: 'Community' },
     { id: 'log', label: `Log${logs.length > 0 ? ` (${logs.length})` : ''}` },
+    { id: 'governance', label: 'Governance Migration' },
     { id: 'system', label: 'System Status' },
   ];
 
@@ -404,6 +419,7 @@ export default function FounderOpsPage() {
                   onClick={() => {
                     setActiveTab(tab.id);
                     if (tab.id === 'system') { loadOutcomes(); loadVariances(); }
+                    if (tab.id === 'governance') { loadGovernanceStatus(); }
                   }}
                   className={`px-4 py-2 text-sm border-b-2 -mb-px ${
                     activeTab === tab.id
@@ -970,6 +986,197 @@ export default function FounderOpsPage() {
                   keyExtractor={(e) => e.id}
                   emptyMessage="No operations logged yet. Log your first action via POST /api/founder-ops/log"
                 />
+              </>
+            )}
+
+            {/* ── TAB: GOVERNANCE MIGRATION ───────────────────────────── */}
+            {activeTab === 'governance' && (
+              <>
+                <div className="border border-dl-border border-l-4 border-l-dl-gold px-6 py-4 mb-6 bg-dl-bg-alt">
+                  <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gold mb-2">Governance Hardening — Task #42</p>
+                  <p className="text-sm text-dl-navy leading-relaxed max-w-3xl">
+                    The protocol currently operates under a single deployer EOA ({' '}
+                    <span className="font-dl-mono text-xs">0x8d7892CF…4C96</span>) that holds most administrative roles.
+                    This tracker shows which roles have been migrated to the Governance Safe (3-of-5) and which remain on the EOA pending migration.
+                  </p>
+                </div>
+
+                {govLoading && (
+                  <div className="border border-dl-border p-8 text-center mb-6">
+                    <p className="font-dl-mono text-sm text-dl-gray">Loading governance status…</p>
+                  </div>
+                )}
+
+                {!govLoading && !govStatus && (
+                  <div className="border border-dl-border p-8 text-center mb-6">
+                    <p className="font-dl-mono text-sm text-dl-gray">Click the Governance Migration tab to load status.</p>
+                  </div>
+                )}
+
+                {govStatus && (
+                  <>
+                    <div className="mb-6">
+                      <SectionHeading>Migration Summary</SectionHeading>
+                      <div className="grid grid-cols-2 lg:grid-cols-5 gap-0 border border-dl-border">
+                        <div className="px-4 py-4 border-r border-dl-border">
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Total Roles</p>
+                          <p className="font-dl-heading text-2xl text-dl-navy">{govStatus.summary.total}</p>
+                        </div>
+                        <div className="px-4 py-4 border-r border-dl-border">
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Migrated to Safe</p>
+                          <p className="font-dl-heading text-2xl text-dl-forest">{govStatus.summary.migrated}</p>
+                        </div>
+                        <div className="px-4 py-4 border-r border-dl-border">
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Pending Migration</p>
+                          <p className="font-dl-heading text-2xl text-dl-gold">{govStatus.summary.pending}</p>
+                        </div>
+                        <div className="px-4 py-4 border-r border-dl-border">
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Migration %</p>
+                          <p className="font-dl-heading text-2xl text-dl-navy">{govStatus.summary.migrationPct}%</p>
+                        </div>
+                        <div className="px-4 py-4">
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Overall Risk</p>
+                          <p className={`font-dl-heading text-xl ${
+                            govStatus.riskLevel === 'CRITICAL' ? 'text-dl-error' :
+                            govStatus.riskLevel === 'HIGH' ? 'text-dl-gold' :
+                            govStatus.riskLevel === 'MEDIUM' ? 'text-dl-navy' : 'text-dl-forest'
+                          }`}>{govStatus.riskLevel}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <SectionHeading>Key Addresses</SectionHeading>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 border border-dl-border">
+                        {[
+                          { label: 'Governance Safe (3-of-5)', addr: govStatus.addresses.GOVERNANCE_SAFE, note: 'Treasury and emergency powers — primary multisig target', status: 'SAFE' },
+                          { label: 'AXM Admin Safe', addr: govStatus.addresses.AXM_ADMIN_SAFE, note: 'AXM minting authority — already wired', status: 'SAFE' },
+                          { label: 'Deployer EOA', addr: govStatus.addresses.DEPLOYER_EOA, note: 'Current holder of most admin roles — migration source', status: 'EOA' },
+                          { label: 'Timelock Controller', addr: govStatus.addresses.TIMELOCK, note: '24h delay — target for DEFAULT_ADMIN and parameter changes', status: 'TIMELOCK' },
+                        ].map((a, i) => (
+                          <div key={a.addr} className={`px-5 py-4 ${i % 2 === 0 ? 'border-b lg:border-b-0 lg:border-r' : 'border-b last:border-0'} border-dl-border`}>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`font-dl-mono text-xs px-2 py-0.5 border ${
+                                a.status === 'SAFE' ? 'border-dl-forest text-dl-forest' :
+                                a.status === 'EOA' ? 'border-dl-gold text-dl-gold' :
+                                'border-dl-navy text-dl-navy'
+                              }`}>{a.status}</span>
+                              <p className="text-sm font-medium text-dl-navy">{a.label}</p>
+                            </div>
+                            <a href={`https://arbiscan.io/address/${a.addr}`} target="_blank" rel="noopener noreferrer"
+                              className="font-dl-mono text-xs text-dl-navy underline break-all">{a.addr}</a>
+                            <p className="font-dl-mono text-xs text-dl-gray mt-1">{a.note}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <SectionHeading>Role Migration Tracker</SectionHeading>
+                      <div className="border border-dl-border">
+                        <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border grid grid-cols-5 gap-2">
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase col-span-2">Role</p>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase">Current Holder</p>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase">Target</p>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase">Status</p>
+                        </div>
+                        {govStatus.roles.map((role: any, i: number) => (
+                          <div key={role.id} className={`px-4 py-3 border-b border-dl-border last:border-0 ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                            <div className="grid grid-cols-5 gap-2 items-start">
+                              <div className="col-span-2">
+                                <p className="text-xs font-medium text-dl-navy">{role.role}</p>
+                                <p className="font-dl-mono text-xs text-dl-gray mt-0.5 leading-relaxed">{role.description}</p>
+                                <p className="font-dl-mono text-xs text-dl-gray mt-1">
+                                  {role.contracts.slice(0, 2).join(' · ')}
+                                  {role.contracts.length > 2 ? ` +${role.contracts.length - 2}` : ''}
+                                </p>
+                              </div>
+                              <div>
+                                <span className={`font-dl-mono text-xs px-1.5 py-0.5 border ${
+                                  role.currentHolderType === 'SAFE' ? 'border-dl-forest text-dl-forest' :
+                                  role.currentHolderType === 'EOA' ? 'border-dl-gold text-dl-gold' :
+                                  role.currentHolderType === 'TIMELOCK' ? 'border-dl-navy text-dl-navy' :
+                                  'border-dl-gray text-dl-gray'
+                                }`}>{role.currentHolderType}</span>
+                                <p className="font-dl-mono text-xs text-dl-gray mt-1 break-all">
+                                  {role.currentHolder.slice(0, 10)}…{role.currentHolder.slice(-4)}
+                                </p>
+                              </div>
+                              <div>
+                                <span className={`font-dl-mono text-xs px-1.5 py-0.5 border ${
+                                  role.targetHolderType === 'SAFE' ? 'border-dl-forest text-dl-forest' :
+                                  role.targetHolderType === 'TIMELOCK' ? 'border-dl-navy text-dl-navy' :
+                                  'border-dl-gray text-dl-gray'
+                                }`}>{role.targetHolderType}</span>
+                              </div>
+                              <div>
+                                {role.migrated ? (
+                                  <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-1.5 py-0.5">COMPLETE</span>
+                                ) : (
+                                  <span className={`font-dl-mono text-xs border px-1.5 py-0.5 ${
+                                    role.riskLevel === 'critical' ? 'border-dl-error text-dl-error' :
+                                    role.riskLevel === 'high' ? 'border-dl-gold text-dl-gold' :
+                                    'border-dl-gray text-dl-gray'
+                                  }`}>PENDING</span>
+                                )}
+                                <p className="font-dl-mono text-xs text-dl-gray mt-1 leading-relaxed">{role.migrationNote.replace('PENDING — ', '')}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <SectionHeading>Migration Checklist</SectionHeading>
+                      <div className="border border-dl-border">
+                        {[
+                          { step: '1', title: 'Confirm Safe is operational', detail: 'Test Safe transaction signing with all 3 required signers. Verify app.safe.global shows Governance Safe at 0x2Bb2c2A7…', done: true },
+                          { step: '2', title: 'Wire AXM Safe as token admin', detail: 'AXM_ADMIN_SAFE (0x9369…) holds MINTER_ROLE — verify via Arbiscan roles event.', done: true },
+                          { step: '3', title: 'Transfer GUARDIAN_ROLE to Safe', detail: 'Execute: grantRole(GUARDIAN_ROLE, SAFE) on AXIOMCreditMarket + renounceRole(GUARDIAN_ROLE, EOA)', done: false },
+                          { step: '4', title: 'Transfer RISK_COMMITTEE_ROLE to Safe', detail: 'Execute on AXIOMCreditMarket and RiskConfig via Safe transaction batch', done: false },
+                          { step: '5', title: 'Transfer SETTLEMENT_AUTHORITY_ROLE to Safe', detail: 'Required before first external credit market borrower — execute on AXIOMFixedLoan', done: false },
+                          { step: '6', title: 'Add Safe as Identity Registry agent', detail: 'Execute: addAgent(SAFE) on IdentityRegistry — allows Safe to register/update investors', done: false },
+                          { step: '7', title: 'Transfer EVK vault governor', detail: 'Execute: setGovernor(SAFE) on eAXUSD-6 (0xacdA8780…)', done: false },
+                          { step: '8', title: 'Grant DEFAULT_ADMIN_ROLE to Timelock', detail: 'Execute via Safe: grantRole(DEFAULT_ADMIN, TIMELOCK) then renounceRole(DEFAULT_ADMIN, EOA) — requires Timelock to be proposer-configured', done: false },
+                          { step: '9', title: 'Wire EIP-1271 claim signing infrastructure', detail: 'Safe-aware claim signing required before migrating ClaimIssuer signing key from EOA to Safe', done: false },
+                          { step: '10', title: 'Publish on-chain migration attestation', detail: 'Update disclosure page with final role registry — timestamp and post snapshot to IPFS for third-party verification', done: false },
+                        ].map((item) => (
+                          <div key={item.step} className={`flex items-start gap-4 px-5 py-3 border-b border-dl-border last:border-0 ${item.done ? 'bg-dl-bg' : 'bg-dl-bg'}`}>
+                            <div className={`w-5 h-5 border flex-shrink-0 flex items-center justify-center mt-0.5 ${item.done ? 'border-dl-forest bg-dl-forest' : 'border-dl-border'}`}>
+                              {item.done && <span className="text-white text-xs font-bold">✓</span>}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-xs font-medium text-dl-navy">Step {item.step}: {item.title}</p>
+                              <p className="font-dl-mono text-xs text-dl-gray mt-0.5 leading-relaxed">{item.detail}</p>
+                            </div>
+                            <span className={`font-dl-mono text-xs px-2 py-0.5 border flex-shrink-0 ${item.done ? 'border-dl-forest text-dl-forest' : 'border-dl-gold text-dl-gold'}`}>
+                              {item.done ? 'DONE' : 'PENDING'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <SectionHeading>Safe Transaction Links</SectionHeading>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 border border-dl-border">
+                        {[
+                          { label: 'Governance Safe — app.safe.global', href: `https://app.safe.global/home?safe=arb1:${govStatus.addresses.GOVERNANCE_SAFE}`, note: '3-of-5 threshold — treasury and emergency powers' },
+                          { label: 'AXM Admin Safe — app.safe.global', href: `https://app.safe.global/home?safe=arb1:${govStatus.addresses.AXM_ADMIN_SAFE}`, note: 'AXM minting authority' },
+                          { label: 'Governance Safe — Arbiscan', href: `https://arbiscan.io/address/${govStatus.addresses.GOVERNANCE_SAFE}`, note: 'On-chain transaction history' },
+                          { label: 'Deployer EOA — Arbiscan', href: `https://arbiscan.io/address/${govStatus.addresses.DEPLOYER_EOA}`, note: 'Current admin authority — migration source' },
+                        ].map((link, i) => (
+                          <div key={link.href} className={`px-5 py-4 ${i < 2 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'lg:border-r border-dl-border' : ''}`}>
+                            <a href={link.href} target="_blank" rel="noopener noreferrer"
+                              className="text-sm text-dl-navy underline hover:text-dl-forest font-medium">{link.label} →</a>
+                            <p className="font-dl-mono text-xs text-dl-gray mt-1">{link.note}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </>
             )}
 
