@@ -1,9 +1,21 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { pool } from '../../../server/db';
-import { ACTIVE_PSM, EULER_PSM } from '../../../src/config/activeContracts.generated';
+import { ACTIVE_PSM, EULER_PSM, CANONICAL_PSM } from '../../../src/config/activeContracts.generated';
 
-const VALID_PSM_ADDRESSES = [ACTIVE_PSM.toLowerCase(), EULER_PSM.toLowerCase()];
+const VALID_PSM_ADDRESSES = [
+  CANONICAL_PSM.toLowerCase(),
+  ACTIVE_PSM.toLowerCase(),
+  EULER_PSM.toLowerCase(),
+];
+
+const ECOSYSTEM_PSM_MAP: Record<string, string> = {
+  CANONICAL: CANONICAL_PSM.toLowerCase(),
+  PRIMARY:   ACTIVE_PSM.toLowerCase(),
+  EULER:     EULER_PSM.toLowerCase(),
+};
+
+const VALID_ECOSYSTEMS = Object.keys(ECOSYSTEM_PSM_MAP);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -14,15 +26,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { txHash, week, ecosystem, operation, inputAmount, description } = req.body;
 
   if (!txHash || !week || !ecosystem || !operation || !inputAmount) {
-    return res.status(400).json({ success: false, error: 'Missing required fields: txHash, week, ecosystem, operation, inputAmount' });
+    return res.status(400).json({
+      success: false,
+      error: 'Missing required fields: txHash, week, ecosystem, operation, inputAmount',
+    });
   }
 
-  if (!['PRIMARY', 'EULER'].includes(ecosystem)) {
-    return res.status(400).json({ success: false, error: 'Invalid ecosystem: must be PRIMARY or EULER' });
+  if (!VALID_ECOSYSTEMS.includes(ecosystem)) {
+    return res.status(400).json({
+      success: false,
+      error: `Invalid ecosystem: must be one of ${VALID_ECOSYSTEMS.join(', ')}`,
+    });
   }
 
   if (!['Mint', 'Redeem'].includes(operation)) {
-    return res.status(400).json({ success: false, error: 'Invalid operation: must be Mint or Redeem' });
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid operation: must be Mint or Redeem',
+    });
   }
 
   const alchemyKey = process.env.ALCHEMY_API_KEY;
@@ -30,14 +51,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ success: false, error: 'ALCHEMY_API_KEY not configured' });
   }
 
-  const MINT_SELECTORS = ['0xa0712d68', '0xa43e6141', '0xda6dd95a'];
-  const REDEEM_SELECTORS = ['0xdb006a75', '0xe042f940', '0x5de8946f'];
+  // Canonical PSM selectors: mint(uint256), redeem(uint256)
+  const CANONICAL_MINT_SELECTORS    = ['0xa0712d68'];
+  const CANONICAL_REDEEM_SELECTORS  = ['0xdb006a75'];
+  // Legacy PSM selectors (GENIUS / Euler)
+  const LEGACY_MINT_SELECTORS       = ['0xa43e6141', '0xda6dd95a'];
+  const LEGACY_REDEEM_SELECTORS     = ['0xe042f940', '0x5de8946f'];
+
+  const MINT_SELECTORS   = [...CANONICAL_MINT_SELECTORS, ...LEGACY_MINT_SELECTORS];
+  const REDEEM_SELECTORS = [...CANONICAL_REDEEM_SELECTORS, ...LEGACY_REDEEM_SELECTORS];
   const ALL_PSM_SELECTORS = [...MINT_SELECTORS, ...REDEEM_SELECTORS];
 
   try {
-    const provider = new ethers.JsonRpcProvider(`https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`);
+    const provider = new ethers.JsonRpcProvider(
+      `https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`
+    );
 
-    let receipt, tx;
+    let receipt: any, tx: any;
     for (let attempt = 1; attempt <= 3; attempt++) {
       [receipt, tx] = await Promise.all([
         provider.getTransactionReceipt(txHash),
@@ -48,7 +78,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (!receipt || !tx) {
-      return res.status(400).json({ success: false, error: 'Transaction not found on-chain after 3 attempts. It may still be pending — try again in a few seconds.' });
+      return res.status(400).json({
+        success: false,
+        error: 'Transaction not found on-chain after 3 attempts. It may still be pending — try again in a few seconds.',
+      });
     }
 
     if (receipt.status !== 1) {
@@ -57,22 +90,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const txTo = receipt.to?.toLowerCase();
     if (!txTo || !VALID_PSM_ADDRESSES.includes(txTo)) {
-      return res.status(400).json({ success: false, error: `Transaction target ${txTo} is not a valid PSM address.` });
+      return res.status(400).json({
+        success: false,
+        error: `Transaction target ${txTo} is not a recognised PSM address.`,
+      });
     }
 
-    const expectedPsm = ecosystem === 'PRIMARY' ? ACTIVE_PSM.toLowerCase() : EULER_PSM.toLowerCase();
+    const expectedPsm = ECOSYSTEM_PSM_MAP[ecosystem];
     if (txTo !== expectedPsm) {
-      return res.status(400).json({ success: false, error: `Transaction was sent to ${txTo} but ecosystem ${ecosystem} expects ${expectedPsm}. DO NOT MIX ecosystems.` });
+      return res.status(400).json({
+        success: false,
+        error: `Transaction was sent to ${txTo} but ecosystem ${ecosystem} expects ${expectedPsm}. DO NOT MIX ecosystems.`,
+      });
     }
 
     const selector = tx.data?.slice(0, 10).toLowerCase();
     if (!ALL_PSM_SELECTORS.includes(selector)) {
-      return res.status(400).json({ success: false, error: `Transaction method signature ${selector} is not a recognized PSM function.` });
+      return res.status(400).json({
+        success: false,
+        error: `Transaction method signature ${selector} is not a recognised PSM function.`,
+      });
     }
 
     const detectedOp = MINT_SELECTORS.includes(selector) ? 'Mint' : 'Redeem';
     if (detectedOp !== operation) {
-      console.warn(`[log-psm-op] Client sent operation=${operation} but on-chain selector ${selector} is ${detectedOp}. Using detected value.`);
+      console.warn(
+        `[log-psm-op] Client sent operation=${operation} but on-chain selector ${selector} is ${detectedOp}. Using detected value.`
+      );
     }
     const verifiedOperation = detectedOp;
 
@@ -81,15 +125,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       [txHash]
     );
     if (existingLog.rows.length > 0) {
-      return res.status(200).json({ success: true, duplicate: true, entry: existingLog.rows[0], message: 'Transaction already logged.' });
+      return res.status(200).json({
+        success: true,
+        duplicate: true,
+        entry: existingLog.rows[0],
+        message: 'Transaction already logged.',
+      });
     }
 
-    const ecoLabel = ecosystem === 'PRIMARY' ? 'PRIMARY (GENIUS)' : 'EULER (Original)';
+    const ecoLabel =
+      ecosystem === 'CANONICAL' ? 'CANONICAL (ERC-3643)' :
+      ecosystem === 'PRIMARY'   ? 'PRIMARY (GENIUS)'     :
+                                  'EULER (Original)';
+
     const title = verifiedOperation === 'Mint'
       ? `PSM Mint: ${inputAmount} USDC via ${ecoLabel} PSM`
       : `PSM Redeem: ${inputAmount} AXUSD via ${ecoLabel} PSM`;
 
-    const logDescription = description || `${verifiedOperation} operation via ${ecoLabel} PSM. Verified on-chain: tx ${txHash} confirmed in block ${receipt.blockNumber}.`;
+    const logDescription = description ||
+      `${verifiedOperation} operation via ${ecoLabel} PSM. Verified on-chain: tx ${txHash} confirmed in block ${receipt.blockNumber}.`;
 
     const numericAmount = parseFloat(inputAmount) || 0;
 

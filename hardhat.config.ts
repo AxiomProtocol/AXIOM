@@ -33,6 +33,14 @@ const config: HardhatUserConfig = {
       },
     ],
     overrides: {
+      "contracts/axusd/CanonicalPSM.sol": {
+        version: "0.8.24",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+          evmVersion: "cancun",
+        },
+      },
       "contracts/land-acquisition/LandOptionRegistry.sol": {
         version: "0.8.24",
         settings: {
