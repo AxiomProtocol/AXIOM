@@ -12,9 +12,10 @@ const ERC20_ABI = [
   'function totalSupply() view returns (uint256)',
 ];
 
-// ERC-3643 T-REX agent registry surface
+// AXUSD uses OZ AccessControl — agent check via hasRole(AGENT_ROLE, address)
+const AGENT_ROLE = '0xcab5a0bfe0b79d2c4b1c2e02599fa044d115b7511f9659307cb4276950967709';
 const AXUSD_AGENT_ABI = [
-  'function isAgent(address _agent) view returns (bool)',
+  'function hasRole(bytes32 role, address account) view returns (bool)',
 ];
 
 const CANONICAL_PSM_ABI = [
@@ -83,7 +84,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       canonicalPsm.availableCapacity().catch(() => BigInt(0)),
       usdc.balanceOf(CANONICAL_PSM).catch(() => BigInt(0)),
       axusdCanonical.totalSupply().catch(() => BigInt(0)),
-      axusdCanonical.isAgent(CANONICAL_PSM).catch(() => false),
+      axusdCanonical.hasRole(AGENT_ROLE, CANONICAL_PSM).catch(() => false),
       legacyPsm.mintFee().catch(() => BigInt(0)),
       legacyPsm.redeemFee().catch(() => BigInt(0)),
       legacyPsm.debtCeiling().catch(() => BigInt(0)),
@@ -129,8 +130,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           owner: canonicalOwner,
           agentRegistered: canonicalAgentRegistered,
           note: canonicalAgentRegistered
-            ? 'PSM active. Canonical PSM registered as AXUSD agent — mint/redeem are live.'
-            : 'PSM deployed. Requires addAgent() on AXUSD token before mint/redeem are live.',
+            ? 'PSM active. Canonical PSM holds AGENT_ROLE on AXUSD — mint/redeem are live.'
+            : 'PSM deployed. Requires grantRole(AGENT_ROLE) on AXUSD token before mint/redeem are live.',
         },
         legacy: {
           address: ACTIVE_PSM,

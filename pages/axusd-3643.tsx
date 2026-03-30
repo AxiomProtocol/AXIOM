@@ -1559,7 +1559,7 @@ function PsmMintRedeemPanel({
           onClick={op === 'mint' ? handleMint : handleRedeem}
           disabled={!inputWei || !isConnected || !agentRegistered}
           size="sm"
-          title={!agentRegistered ? 'PSM not yet activated — awaiting addAgent() governance call' : undefined}
+          title={!agentRegistered ? 'PSM not yet activated — awaiting grantRole(AGENT_ROLE) call' : undefined}
         >
           {op === 'mint' ? 'Approve USDC + Mint AXUSD' : 'Redeem AXUSD for USDC'}
         </SolidButton>
