@@ -1,13 +1,15 @@
 /**
  * POST /api/erc3643/admin/activate-psm
  *
- * Grants the AGENT_ROLE on the AXUSD token to the Canonical PSM via grantRole().
- * The AXUSD token uses OpenZeppelin AccessControl (not T-REX addAgent).
+ * Grants MINTER_ROLE + AGENT_ROLE on the AXUSD token to the Canonical PSM.
+ * AXUSD uses OpenZeppelin AccessControl — mint() requires MINTER_ROLE.
  *
- * AGENT_ROLE = keccak256("AGENT_ROLE") = 0xcab5a0bfe0b79d2c4b1c2e02599fa044d115b7511f9659307cb4276950967709
- * The deployer EOA holds DEFAULT_ADMIN_ROLE and can grant any role.
+ * Roles:
+ *   MINTER_ROLE = keccak256("MINTER_ROLE") = 0x9f2df0fe...  ← gates mint() / burn()
+ *   AGENT_ROLE  = keccak256("AGENT_ROLE")  = 0xcab5a0bf...  ← agent-level access
  *
- * Safe to call multiple times — returns 200 with status:'already_active' if PSM already has AGENT_ROLE.
+ * The deployer EOA holds DEFAULT_ADMIN_ROLE and can grant both roles.
+ * Idempotent — returns already_active if both roles are already held.
  *
  * Auth: x-admin-key header (ADMIN_SOLVENCY_KEY)
  */
@@ -23,7 +25,8 @@ const ARBITRUM_RPC = process.env.ALCHEMY_API_KEY
   ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
   : 'https://arb1.arbitrum.io/rpc';
 
-const AGENT_ROLE = '0xcab5a0bfe0b79d2c4b1c2e02599fa044d115b7511f9659307cb4276950967709';
+const MINTER_ROLE = '0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6'; // keccak256("MINTER_ROLE")
+const AGENT_ROLE  = '0xcab5a0bfe0b79d2c4b1c2e02599fa044d115b7511f9659307cb4276950967709'; // keccak256("AGENT_ROLE")
 
 const ACCESS_CONTROL_ABI = [
   'function hasRole(bytes32 role, address account) view returns (bool)',
@@ -42,32 +45,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
     const wallet = new ethers.Wallet(pk, provider);
-
     const token = new ethers.Contract(ACTIVE_AXUSD, ACCESS_CONTROL_ABI, wallet);
 
-    const alreadyAgent: boolean = await token.hasRole(AGENT_ROLE, CANONICAL_PSM).catch(() => false);
-    if (alreadyAgent) {
+    const [hasMinter, hasAgent] = await Promise.all([
+      token.hasRole(MINTER_ROLE, CANONICAL_PSM).catch(() => false),
+      token.hasRole(AGENT_ROLE, CANONICAL_PSM).catch(() => false),
+    ]);
+
+    if (hasMinter && hasAgent) {
       return res.status(200).json({
         success: true,
         data: {
           status: 'already_active',
           psmAddress: CANONICAL_PSM,
           axusdToken: ACTIVE_AXUSD,
-          message: 'Canonical PSM already holds AGENT_ROLE on AXUSD. Mint and redeem are live.',
+          minterRole: hasMinter,
+          agentRole: hasAgent,
+          message: 'Canonical PSM already holds MINTER_ROLE + AGENT_ROLE on AXUSD. Mint/redeem are live.',
         },
       });
     }
 
-    const tx = await token.grantRole(AGENT_ROLE, CANONICAL_PSM);
-    const receipt = await tx.wait();
+    const txHashes: string[] = [];
+
+    if (!hasMinter) {
+      const tx = await token.grantRole(MINTER_ROLE, CANONICAL_PSM);
+      const receipt = await tx.wait();
+      txHashes.push(receipt.hash ?? tx.hash);
+      console.log('[activate-psm] Granted MINTER_ROLE tx:', receipt.hash ?? tx.hash);
+    }
+
+    if (!hasAgent) {
+      const tx = await token.grantRole(AGENT_ROLE, CANONICAL_PSM);
+      const receipt = await tx.wait();
+      txHashes.push(receipt.hash ?? tx.hash);
+      console.log('[activate-psm] Granted AGENT_ROLE tx:', receipt.hash ?? tx.hash);
+    }
 
     await db.insert(adminActionLog).values({
       actionType: 'activatePsm',
       callerAddress: wallet.address,
       targetAddress: CANONICAL_PSM,
-      txHash: receipt.hash ?? tx.hash,
+      txHash: txHashes[0] ?? 'multi',
       status: 'success',
-      metadata: { axusdToken: ACTIVE_AXUSD, psmAddress: CANONICAL_PSM, agentRole: AGENT_ROLE },
+      metadata: {
+        axusdToken: ACTIVE_AXUSD,
+        psmAddress: CANONICAL_PSM,
+        minterRole: MINTER_ROLE,
+        agentRole: AGENT_ROLE,
+        txHashes,
+        grantedMinter: !hasMinter,
+        grantedAgent: !hasAgent,
+      },
     }).catch((logErr: unknown) => {
       console.error('[activate-psm] Log write failed (non-fatal):', logErr);
     });
@@ -76,12 +105,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       data: {
         status: 'activated',
-        txHash: receipt.hash ?? tx.hash,
+        txHashes,
         psmAddress: CANONICAL_PSM,
         axusdToken: ACTIVE_AXUSD,
-        agentRole: AGENT_ROLE,
+        minterRoleGranted: !hasMinter,
+        agentRoleGranted: !hasAgent,
         callerAddress: wallet.address,
-        message: 'Canonical PSM granted AGENT_ROLE on AXUSD. Mint and redeem are now live.',
+        message: 'Canonical PSM granted MINTER_ROLE + AGENT_ROLE on AXUSD. Mint/redeem are now live.',
       },
     });
   } catch (err: unknown) {

@@ -12,8 +12,8 @@ const ERC20_ABI = [
   'function totalSupply() view returns (uint256)',
 ];
 
-// AXUSD uses OZ AccessControl — agent check via hasRole(AGENT_ROLE, address)
-const AGENT_ROLE = '0xcab5a0bfe0b79d2c4b1c2e02599fa044d115b7511f9659307cb4276950967709';
+// AXUSD uses OZ AccessControl — mint() requires MINTER_ROLE, not AGENT_ROLE
+const MINTER_ROLE = '0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6'; // keccak256("MINTER_ROLE")
 const AXUSD_AGENT_ABI = [
   'function hasRole(bytes32 role, address account) view returns (bool)',
 ];
@@ -84,7 +84,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       canonicalPsm.availableCapacity().catch(() => BigInt(0)),
       usdc.balanceOf(CANONICAL_PSM).catch(() => BigInt(0)),
       axusdCanonical.totalSupply().catch(() => BigInt(0)),
-      axusdCanonical.hasRole(AGENT_ROLE, CANONICAL_PSM).catch(() => false),
+      axusdCanonical.hasRole(MINTER_ROLE, CANONICAL_PSM).catch(() => false),
       legacyPsm.mintFee().catch(() => BigInt(0)),
       legacyPsm.redeemFee().catch(() => BigInt(0)),
       legacyPsm.debtCeiling().catch(() => BigInt(0)),
@@ -130,8 +130,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           owner: canonicalOwner,
           agentRegistered: canonicalAgentRegistered,
           note: canonicalAgentRegistered
-            ? 'PSM active. Canonical PSM holds AGENT_ROLE on AXUSD — mint/redeem are live.'
-            : 'PSM deployed. Requires grantRole(AGENT_ROLE) on AXUSD token before mint/redeem are live.',
+            ? 'PSM active. Canonical PSM holds MINTER_ROLE on AXUSD — mint/redeem are live.'
+            : 'PSM deployed. Requires grantRole(MINTER_ROLE) on AXUSD token before mint/redeem are live.',
         },
         legacy: {
           address: ACTIVE_PSM,
