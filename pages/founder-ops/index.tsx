@@ -359,7 +359,7 @@ export default function FounderOpsPage() {
         if (!res.ok) {
           setKycMsg({ id: submissionId, type: 'error', text: json.error || 'Approval failed' });
         } else {
-          setKycMsg({ id: submissionId, type: 'success', text: json.data?.errors?.length ? `Approved (partial: ${json.data.errors.join('; ')})` : 'Approved — identity + claims issued.' });
+          setKycMsg({ id: submissionId, type: 'success', text: 'Approved — identity registered, Topics 1 (KYC) and 3 (Sanctions) issued.' });
           setKycQueue(prev => prev.filter(s => s.id !== submissionId));
           loadComplianceLog(complianceAdminKey);
         }
@@ -388,7 +388,7 @@ export default function FounderOpsPage() {
       const res = await fetch('/api/erc3643/accreditation/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': complianceAdminKey },
-        body: JSON.stringify({ submissionId, action, adminWallet: 'compliance-operator', reviewNote }),
+        body: JSON.stringify({ submissionId, action, reviewNote }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -411,7 +411,7 @@ export default function FounderOpsPage() {
       const res = await fetch('/api/erc3643/identity/revoke', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': complianceAdminKey },
-        body: JSON.stringify({ claimId, adminWallet: 'compliance-operator' }),
+        body: JSON.stringify({ claimId }),
       });
       const json = await res.json();
       if (!res.ok) {

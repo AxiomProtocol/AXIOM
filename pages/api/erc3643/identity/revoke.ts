@@ -10,13 +10,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!checkAdminKey(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-  const { claimId, adminWallet } = req.body as { claimId?: string; adminWallet?: string };
+  const { claimId } = req.body as { claimId?: string };
 
   if (!claimId || typeof claimId !== 'string') {
     return res.status(400).json({ error: 'claimId required' });
   }
 
-  const operator = adminWallet ?? 'compliance-operator';
+  const operator = 'compliance-operator';
 
   try {
     const result = await ERC3643Service.revokeClaim(claimId, operator);

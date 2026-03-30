@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { db } from '../../server/db';
-import { t3Identities, t3Claims, t3ComplianceEvents, t3PlatformWhitelist, t3AccreditationSubmissions, t3ComplianceOpsLog, CLAIM_VALIDITY_DAYS, CLAIM_REFRESH_WARNING_DAYS, adminActionLog } from '../../shared/erc3643Schema';
+import { t3Identities, t3Claims, t3ComplianceEvents, t3PlatformWhitelist, t3AccreditationSubmissions, t3ComplianceOpsLog, t3KycSubmissions, CLAIM_VALIDITY_DAYS, CLAIM_REFRESH_WARNING_DAYS, adminActionLog } from '../../shared/erc3643Schema';
 import { eq, and, lte, gte, or, isNull, desc } from 'drizzle-orm';
 import {
   ERC3643_CONTRACTS,
@@ -231,6 +231,124 @@ export class ERC3643Service {
       identityAddress: identityAddr,
       expiresAt,
       refreshRequiredBy,
+    };
+  }
+
+  static async atomicKycApproval(params: {
+    submissionId: string;
+    walletAddress: string;
+    countryCode?: number;
+    reviewNote?: string;
+  }) {
+    const { submissionId, walletAddress, countryCode = 840, reviewNote } = params;
+
+    const regResult = await ERC3643Service.registerIdentity(walletAddress, countryCode);
+
+    const signer = getSigner();
+    const [dbIdentity] = await db.select()
+      .from(t3Identities)
+      .where(eq(t3Identities.wallet, walletAddress.toLowerCase()))
+      .limit(1);
+    if (!dbIdentity) throw new Error('Identity record not found after registration');
+
+    const now = new Date();
+
+    function computeClaimInsertValues(topic: number) {
+      const validityDays = CLAIM_VALIDITY_DAYS[topic] || 365;
+      const validityMs = validityDays * 24 * 3600 * 1000;
+      const refreshWarningMs = CLAIM_REFRESH_WARNING_DAYS * 24 * 3600 * 1000;
+      const expiresAt = new Date(now.getTime() + validityMs);
+      const refreshRequiredBy = new Date(expiresAt.getTime() - refreshWarningMs);
+      const claimData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ['address', 'uint256', 'uint256'],
+        [walletAddress, topic, Math.floor(now.getTime() / 1000) + validityDays * 24 * 3600]
+      );
+      const dataHash = ethers.keccak256(
+        ethers.AbiCoder.defaultAbiCoder().encode(
+          ['address', 'uint256', 'bytes'],
+          [dbIdentity.onchainIdAddress, topic, claimData]
+        )
+      );
+      return { validityDays, validityMs, refreshWarningMs, expiresAt, refreshRequiredBy, claimData, dataHash };
+    }
+
+    const t1Meta = computeClaimInsertValues(1);
+    const t3Meta = computeClaimInsertValues(3);
+
+    const t1Sig = await signer.signMessage(ethers.getBytes(t1Meta.dataHash));
+    const t3Sig = await signer.signMessage(ethers.getBytes(t3Meta.dataHash));
+
+    const { t1Claim, t3Claim } = await db.transaction(async (tx) => {
+      const [t1Claim] = await tx.insert(t3Claims).values({
+        identityId: dbIdentity.id,
+        topic: 1,
+        issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
+        claimData: ethers.hexlify(t1Meta.claimData),
+        signature: t1Sig,
+        validFrom: now,
+        validUntil: t1Meta.expiresAt,
+        expiresAt: t1Meta.expiresAt,
+        refreshRequiredBy: t1Meta.refreshRequiredBy,
+        revoked: false,
+      }).returning();
+
+      const [t3Claim] = await tx.insert(t3Claims).values({
+        identityId: dbIdentity.id,
+        topic: 3,
+        issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
+        claimData: ethers.hexlify(t3Meta.claimData),
+        signature: t3Sig,
+        validFrom: now,
+        validUntil: t3Meta.expiresAt,
+        expiresAt: t3Meta.expiresAt,
+        refreshRequiredBy: t3Meta.refreshRequiredBy,
+        revoked: false,
+      }).returning();
+
+      await tx.update(t3KycSubmissions)
+        .set({
+          status: 'bridged',
+          reviewNote: reviewNote ?? null,
+          reviewedAt: now,
+          bridgedAt: now,
+          bridgeError: null,
+          updatedAt: now,
+        })
+        .where(eq(t3KycSubmissions.id, submissionId));
+
+      return { t1Claim, t3Claim };
+    });
+
+    await db.insert(t3ComplianceOpsLog).values([
+      {
+        wallet: walletAddress,
+        action: 'issuance',
+        topic: 1,
+        claimId: t1Claim.id,
+        operatorAddress: 'compliance-operator',
+        result: 'success',
+        notes: 'Topic 1 (KYC) issued — part of atomic KYC approval (registerIdentity + T1 + T3)',
+        metadata: { identityAddress: regResult.onchainIdAddress, registryTxHash: regResult.registryTxHash, expiresAt: t1Meta.expiresAt },
+      },
+      {
+        wallet: walletAddress,
+        action: 'issuance',
+        topic: 3,
+        claimId: t3Claim.id,
+        operatorAddress: 'compliance-operator',
+        result: 'success',
+        notes: 'Topic 3 (Sanctions) issued — part of atomic KYC approval',
+        metadata: { expiresAt: t3Meta.expiresAt },
+      },
+    ]).catch((e) => {
+      console.error('[atomicKycApproval] compliance log insert failed (non-fatal):', e);
+    });
+
+    return {
+      identityAddress: regResult.onchainIdAddress,
+      registryTxHash: regResult.registryTxHash,
+      t1Claim: { claimId: t1Claim.id, expiresAt: t1Meta.expiresAt },
+      t3Claim: { claimId: t3Claim.id, expiresAt: t3Meta.expiresAt },
     };
   }
 
