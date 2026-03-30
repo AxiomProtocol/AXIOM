@@ -1,24 +1,29 @@
 /**
  * POST /api/erc3643/admin/forced-transfer
- * Execute a forced transfer of AXUSD between addresses (compliance recovery).
+ * Propose a forced transfer of AXUSD via the Governance Safe (3-of-5).
  *
- * Required role: EMERGENCY_ROLE
+ * Required role: EMERGENCY_ROLE (held by GOVERNANCE_SAFE only)
  * Auth: x-admin-key header (ADMIN_SOLVENCY_KEY)
  *
- * The caller identity is derived server-side from DEPLOYER_PRIVATE_KEY.
- * DB-backed role check enforces EMERGENCY_ROLE from admin_roles table.
- * All forced transfers are logged to admin_action_log.
+ * Because EMERGENCY_ROLE is only held by the Governance Safe (0x2Bb2...),
+ * this endpoint cannot execute a forcedTransfer as a deployer EOA.
+ * Instead, it creates a Safe transaction proposal via @safe-global/api-kit
+ * that is immediately visible at app.safe.global for 3-of-5 signers to approve.
+ *
+ * The deployer EOA is the proposer of the Safe transaction — it initiates
+ * the proposal but cannot unilaterally execute it.
  *
  * Body: { fromAddress: string, toAddress: string, amountAxusd: string, reason?: string }
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { AdminRoleService } from '../../../../lib/services/AdminRoleService';
-import { validateAdminKey } from '../../../../src/config/adminRoles';
+import { validateAdminKey, GOVERNANCE_SAFE } from '../../../../src/config/adminRoles';
 import { db } from '../../../../server/db';
 import { adminActionLog } from '../../../../shared/erc3643Schema';
 import { ERC3643_CONTRACTS, AXUSD_3643_ABI } from '../../../../shared/contracts-3643';
+
+const TOKEN_INTERFACE = new ethers.Interface(AXUSD_3643_ABI);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -42,71 +47,77 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const pk = process.env.DEPLOYER_PRIVATE_KEY;
   if (!pk) return res.status(500).json({ error: 'DEPLOYER_PRIVATE_KEY not configured' });
 
-  const callerAddress = new ethers.Wallet(pk).address;
+  const proposerAddress = new ethers.Wallet(pk).address;
+  const amountWei = ethers.parseUnits(amountAxusd, 18);
 
-  const hasRole = await AdminRoleService.hasRoleDb(callerAddress, 'EMERGENCY_ROLE');
-  if (!hasRole) {
-    await db.insert(adminActionLog).values({
-      actionType: 'forcedTransfer',
-      callerAddress: callerAddress.toLowerCase(),
-      targetAddress: fromAddress.toLowerCase(),
-      amount: amountAxusd,
-      role: 'EMERGENCY_ROLE',
-      status: 'failed',
-      errorMessage: 'Caller does not hold EMERGENCY_ROLE',
-      metadata: JSON.stringify({ reason, toAddress }),
-    });
-    return res.status(403).json({
-      error: 'Forbidden — caller does not hold EMERGENCY_ROLE in the admin_roles registry',
-      callerAddress,
-      role: 'EMERGENCY_ROLE',
-      note: 'Forced transfer requires Governance Safe (3-of-5). EOA does not hold EMERGENCY_ROLE.',
-    });
-  }
+  const calldata = TOKEN_INTERFACE.encodeFunctionData('forcedTransfer', [
+    fromAddress,
+    toAddress,
+    amountWei,
+  ]);
 
   try {
+    const SafeApiKit = (await import('@safe-global/api-kit')).default;
+    const ProtocolKit = (await import('@safe-global/protocol-kit')).default;
+
     const rpcUrl = process.env.ALCHEMY_API_KEY
       ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
       : 'https://arb1.arbitrum.io/rpc';
 
-    const provider = new ethers.JsonRpcProvider(rpcUrl);
-    const signer = new ethers.Wallet(pk, provider);
+    const apiKit = new SafeApiKit({ chainId: BigInt(42161) });
 
-    const token = new ethers.Contract(
-      ERC3643_CONTRACTS.AXUSD_TOKEN,
-      AXUSD_3643_ABI,
-      signer
-    );
+    const protocolKit = await ProtocolKit.init({
+      provider: rpcUrl,
+      signer: pk,
+      safeAddress: GOVERNANCE_SAFE,
+    });
 
-    const amountWei = ethers.parseUnits(amountAxusd, 18);
-    const tx = await token.forcedTransfer(fromAddress, toAddress, amountWei);
-    await tx.wait();
+    const safeTransaction = await protocolKit.createTransaction({
+      transactions: [{
+        to: ERC3643_CONTRACTS.AXUSD_TOKEN,
+        value: '0',
+        data: calldata,
+      }],
+    });
+
+    const safeTxHash = await protocolKit.getTransactionHash(safeTransaction);
+    const senderSignature = await protocolKit.signHash(safeTxHash);
+
+    await apiKit.proposeTransaction({
+      safeAddress: GOVERNANCE_SAFE,
+      safeTransactionData: safeTransaction.data,
+      safeTxHash,
+      senderAddress: proposerAddress,
+      senderSignature: senderSignature.data,
+    });
 
     await db.insert(adminActionLog).values({
       actionType: 'forcedTransfer',
-      callerAddress: callerAddress.toLowerCase(),
+      callerAddress: proposerAddress.toLowerCase(),
       targetAddress: fromAddress.toLowerCase(),
       amount: amountAxusd,
-      txHash: tx.hash,
       role: 'EMERGENCY_ROLE',
-      status: 'success',
-      metadata: JSON.stringify({ reason, toAddress }),
+      status: 'pending_safe',
+      metadata: JSON.stringify({ reason, toAddress, safeTxHash, safeAddress: GOVERNANCE_SAFE }),
     });
 
     return res.status(200).json({
       success: true,
-      txHash: tx.hash,
+      status: 'pending_safe',
+      message: 'Safe proposal submitted for forcedTransfer. Requires 3-of-5 Safe signatures at app.safe.global',
+      safeTxHash,
+      safeAddress: GOVERNANCE_SAFE,
       fromAddress,
       toAddress,
       amountAxusd,
     });
   } catch (err: unknown) {
     const e = err as { message?: string };
-    console.error('[forced-transfer] Error:', e);
+    console.error('[forced-transfer] Safe proposal error:', e);
 
     await db.insert(adminActionLog).values({
       actionType: 'forcedTransfer',
-      callerAddress: callerAddress.toLowerCase(),
+      callerAddress: proposerAddress.toLowerCase(),
       targetAddress: fromAddress.toLowerCase(),
       amount: amountAxusd,
       role: 'EMERGENCY_ROLE',
@@ -115,6 +126,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       metadata: JSON.stringify({ reason, toAddress }),
     });
 
-    return res.status(500).json({ error: e?.message ?? String(err) });
+    return res.status(500).json({ error: e?.message ?? 'Safe proposal failed' });
   }
 }

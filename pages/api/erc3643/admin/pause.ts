@@ -1,29 +1,32 @@
 /**
  * POST /api/erc3643/admin/pause
- * Pause or unpause all pausable AXUSD and protocol contracts.
+ * Propose a pause or unpause transaction to the Governance Safe (3-of-5).
  *
- * Required role: EMERGENCY_ROLE
+ * Required role: EMERGENCY_ROLE (held by GOVERNANCE_SAFE only)
  * Auth: x-admin-key header (ADMIN_SOLVENCY_KEY)
  *
- * The caller identity is derived server-side from DEPLOYER_PRIVATE_KEY.
- * DB-backed role check enforces EMERGENCY_ROLE from admin_roles table.
- * All pause/unpause actions are logged to admin_action_log.
+ * Because EMERGENCY_ROLE is only held by the Governance Safe (0x2Bb2...),
+ * this endpoint cannot execute directly as a deployer EOA. Instead, it
+ * creates a Safe transaction proposal via @safe-global/api-kit that is
+ * immediately visible at app.safe.global for 3-of-5 co-signers to approve.
+ *
+ * The deployer EOA is the proposer of the Safe transaction — it initiates
+ * the proposal but cannot unilaterally execute it.
  *
  * Body: { pause: boolean, contractTarget?: string, reason?: string }
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { AdminRoleService } from '../../../../lib/services/AdminRoleService';
-import { validateAdminKey } from '../../../../src/config/adminRoles';
+import { validateAdminKey, GOVERNANCE_SAFE } from '../../../../src/config/adminRoles';
 import { db } from '../../../../server/db';
 import { adminActionLog } from '../../../../shared/erc3643Schema';
+import { ERC3643_CONTRACTS } from '../../../../shared/contracts-3643';
 
-const PAUSE_ABI = [
-  'function pause() external',
-  'function unpause() external',
-  'function paused() view returns (bool)',
-];
+const PAUSE_INTERFACE = new ethers.Interface([
+  'function pause()',
+  'function unpause()',
+]);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -41,71 +44,79 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const pk = process.env.DEPLOYER_PRIVATE_KEY;
   if (!pk) return res.status(500).json({ error: 'DEPLOYER_PRIVATE_KEY not configured' });
 
-  const callerAddress = new ethers.Wallet(pk).address;
+  const proposerAddress = new ethers.Wallet(pk).address;
+  const target = contractTarget ?? ERC3643_CONTRACTS.AXUSD_TOKEN;
 
-  const hasRole = await AdminRoleService.hasRoleDb(callerAddress, 'EMERGENCY_ROLE');
-  if (!hasRole) {
+  const calldata = pause
+    ? PAUSE_INTERFACE.encodeFunctionData('pause')
+    : PAUSE_INTERFACE.encodeFunctionData('unpause');
+
+  try {
+    const SafeApiKit = (await import('@safe-global/api-kit')).default;
+    const ProtocolKit = (await import('@safe-global/protocol-kit')).default;
+
+    const rpcUrl = process.env.ALCHEMY_API_KEY
+      ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
+      : 'https://arb1.arbitrum.io/rpc';
+
+    const apiKit = new SafeApiKit({ chainId: BigInt(42161) });
+
+    const protocolKit = await ProtocolKit.init({
+      provider: rpcUrl,
+      signer: pk,
+      safeAddress: GOVERNANCE_SAFE,
+    });
+
+    const safeTransaction = await protocolKit.createTransaction({
+      transactions: [{
+        to: target,
+        value: '0',
+        data: calldata,
+      }],
+    });
+
+    const safeTxHash = await protocolKit.getTransactionHash(safeTransaction);
+    const senderSignature = await protocolKit.signHash(safeTxHash);
+
+    await apiKit.proposeTransaction({
+      safeAddress: GOVERNANCE_SAFE,
+      safeTransactionData: safeTransaction.data,
+      safeTxHash,
+      senderAddress: proposerAddress,
+      senderSignature: senderSignature.data,
+    });
+
     await db.insert(adminActionLog).values({
       actionType: pause ? 'pause' : 'unpause',
-      callerAddress: callerAddress.toLowerCase(),
+      callerAddress: proposerAddress.toLowerCase(),
+      targetAddress: target.toLowerCase(),
+      role: 'EMERGENCY_ROLE',
+      status: 'pending_safe',
+      metadata: JSON.stringify({ reason, safeTxHash, safeAddress: GOVERNANCE_SAFE }),
+    });
+
+    return res.status(200).json({
+      success: true,
+      status: 'pending_safe',
+      message: `Safe proposal submitted for ${pause ? 'pause' : 'unpause'}. Requires 3-of-5 Safe signatures at app.safe.global`,
+      safeTxHash,
+      safeAddress: GOVERNANCE_SAFE,
+      contractTarget: target,
+    });
+  } catch (err: unknown) {
+    const e = err as { message?: string };
+    console.error('[pause] Safe proposal error:', e);
+
+    await db.insert(adminActionLog).values({
+      actionType: pause ? 'pause' : 'unpause',
+      callerAddress: proposerAddress.toLowerCase(),
+      targetAddress: target.toLowerCase(),
       role: 'EMERGENCY_ROLE',
       status: 'failed',
-      errorMessage: 'Caller does not hold EMERGENCY_ROLE',
+      errorMessage: e?.message ?? String(err),
       metadata: JSON.stringify({ reason }),
     });
-    return res.status(403).json({
-      error: 'Forbidden — caller does not hold EMERGENCY_ROLE in the admin_roles registry',
-      callerAddress,
-      role: 'EMERGENCY_ROLE',
-      note: 'Emergency pause requires Governance Safe (3-of-5). This deployer EOA does not currently hold EMERGENCY_ROLE.',
-    });
+
+    return res.status(500).json({ error: e?.message ?? 'Safe proposal failed' });
   }
-
-  const rpcUrl = process.env.ALCHEMY_API_KEY
-    ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
-    : 'https://arb1.arbitrum.io/rpc';
-
-  const provider = new ethers.JsonRpcProvider(rpcUrl);
-  const signer = new ethers.Wallet(pk, provider);
-
-  const { ERC3643_CONTRACTS } = await import('../../../../shared/contracts-3643');
-  const targets = contractTarget
-    ? [contractTarget]
-    : [ERC3643_CONTRACTS.AXUSD_TOKEN];
-
-  const results: { contract: string; txHash?: string; error?: string }[] = [];
-
-  for (const target of targets) {
-    try {
-      const contract = new ethers.Contract(target, PAUSE_ABI, signer);
-      const tx = pause ? await contract.pause() : await contract.unpause();
-      await tx.wait();
-
-      await db.insert(adminActionLog).values({
-        actionType: pause ? 'pause' : 'unpause',
-        callerAddress: callerAddress.toLowerCase(),
-        targetAddress: target.toLowerCase(),
-        txHash: tx.hash,
-        role: 'EMERGENCY_ROLE',
-        status: 'success',
-        metadata: JSON.stringify({ reason }),
-      });
-
-      results.push({ contract: target, txHash: tx.hash });
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : String(err);
-      await db.insert(adminActionLog).values({
-        actionType: pause ? 'pause' : 'unpause',
-        callerAddress: callerAddress.toLowerCase(),
-        targetAddress: target.toLowerCase(),
-        role: 'EMERGENCY_ROLE',
-        status: 'failed',
-        errorMessage: errMsg,
-        metadata: JSON.stringify({ reason }),
-      });
-      results.push({ contract: target, error: errMsg });
-    }
-  }
-
-  return res.status(200).json({ success: true, pause, results });
 }

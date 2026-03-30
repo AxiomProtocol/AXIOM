@@ -79,8 +79,8 @@ export const ADMIN_ROLES: Record<AdminRole, RoleDefinition> = {
   },
   EMERGENCY_ROLE: {
     role: 'EMERGENCY_ROLE',
-    description: 'Emergency operations: pause/unpause all contracts, forced transfer, emergency sweep — no timelock required, two-person rule applies',
-    holders: [GOVERNANCE_SAFE, DEPLOYER_EOA],
+    description: 'Emergency operations: pause/unpause all contracts, forced transfer, emergency sweep — no timelock required, two-person rule applies (3-of-5 Safe only)',
+    holders: [GOVERNANCE_SAFE],
     functions: ['pause', 'unpause', 'forcedTransfer', 'emergencySweep'],
     requiresTimelock: false,
     requiresSafeProposal: true,

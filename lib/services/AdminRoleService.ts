@@ -2,8 +2,12 @@
  * AdminRoleService — DB-backed role lookup and enforcement
  *
  * Uses the admin_roles table as the source of truth for who holds
- * which administrative role. The static config in src/config/adminRoles.ts
- * serves as the initial seed and fallback for the in-memory role registry.
+ * which administrative role.
+ *
+ * SECURITY: hasRoleDb is FAIL-CLOSED for privileged roles (EMERGENCY_ROLE,
+ * UPGRADER_ROLE, MINTER_ROLE). If the DB is unavailable, those checks
+ * return false (deny). Non-privileged roles may use static config fallback
+ * only for read-only observability queries.
  */
 
 import { db } from '../../server/db';
@@ -11,10 +15,13 @@ import { adminRoles } from '../../shared/erc3643Schema';
 import { eq, and } from 'drizzle-orm';
 import type { AdminRole } from '../../src/config/adminRoles';
 
+const PRIVILEGED_ROLES: AdminRole[] = ['EMERGENCY_ROLE', 'UPGRADER_ROLE', 'MINTER_ROLE'];
+
 export class AdminRoleService {
   /**
    * Check if an address holds a specific role via the database.
-   * Falls back to the static config if the DB is unavailable.
+   * FAIL-CLOSED: privileged roles deny on DB outage (never fallback to static config).
+   * Non-privileged roles (OPERATOR_ROLE, COMPLIANCE_ROLE) fallback to static config.
    */
   static async hasRoleDb(address: string, role: AdminRole): Promise<boolean> {
     try {
@@ -30,7 +37,11 @@ export class AdminRoleService {
         .limit(1);
       return rows.length > 0;
     } catch (err) {
-      console.error('[AdminRoleService] DB lookup failed, using static config fallback:', err);
+      console.error('[AdminRoleService] DB lookup failed for role check:', role, err);
+      if (PRIVILEGED_ROLES.includes(role)) {
+        console.error(`[AdminRoleService] FAIL-CLOSED: denying ${role} check due to DB outage`);
+        return false;
+      }
       const { hasRole } = await import('../../src/config/adminRoles');
       return hasRole(address, role);
     }
