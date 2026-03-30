@@ -42,3 +42,9 @@ id = "3SB3oX7uowPTxHViht5D_"
 uri = "file://documents/Axiom_Protocol_White_Paper_v3.md"
 type = "text"
 title = "Axiom Protocol — White Paper v3.0 (Markdown)"
+
+[[outputs]]
+id = "p3ubS0_r8XCo94WRfVuKP"
+uri = "file://documents/axiom-protocol-whitepaper-v1.1.md"
+type = "text"
+title = "Axiom Protocol — Institutional Whitepaper v1.1"
