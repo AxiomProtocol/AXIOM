@@ -211,7 +211,8 @@ function ClaimExpiryBadge({ status }: { status: 'valid' | 'expiring_soon' | 'exp
 }
 
 export default function AXUSD3643Page() {
-  const { address, isConnected } = useWallet();
+  const { walletState } = useWallet();
+  const { address, isConnected } = walletState;
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
