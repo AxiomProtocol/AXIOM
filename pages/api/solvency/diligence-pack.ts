@@ -134,6 +134,62 @@ export default async function handler(
 
       solvency: solvencySection,
 
+      reserveMethodologySummary: {
+        version: '1.0',
+        documentUrl: '/docs/reserve-methodology.md',
+        canonicalToken: {
+          address: ACTIVE_AXUSD,
+          standard: 'ERC-3643 (T-REX)',
+          network: 'Arbitrum One',
+          decimals: 6,
+        },
+        reserveAssets: [
+          {
+            category: 'A',
+            name: 'Canonical PSM USDC',
+            contract: CANONICAL_PSM,
+            asset: 'USDC (0xaf88d065e77c8cC2239327C5EDb3A432268e5831)',
+            valuation: '1 USDC = 1.00 USD (no market adjustment)',
+            status: 'Configured-Inactive — requires addAgent() activation',
+            ceiling: '1,000,000 AXUSD',
+            fee: '10 bps mint and redeem',
+          },
+          {
+            category: 'B',
+            name: 'Legacy GENIUS PSM USDC',
+            contract: ACTIVE_PSM,
+            asset: 'USDC',
+            valuation: '1 USDC = 1.00 USD',
+            status: 'Configured-Inactive — no new mint/redeem; reserves valid for solvency accounting pending migration',
+            ceiling: '5,000,000 AXUSD (legacy)',
+            fee: 'None (inactive)',
+          },
+          {
+            category: 'C',
+            name: 'Backstop USDC',
+            contract: '0x54438249457694eB5431811f3f19444Af0a01B29',
+            asset: 'USDC',
+            valuation: '1 USDC = 1.00 USD',
+            status: 'Live',
+            withdrawalDelay: '24-hour timelock',
+          },
+        ],
+        formulas: {
+          totalReserves: 'Category_A_USDC + Category_B_USDC + Category_C_USDC',
+          backingRatio: 'totalReserves / totalSupply',
+          reserveRatio: 'Designated_Reserves / liabilitiesTotalUsd',
+        },
+        excludedFromReserves: [
+          'AXM token holdings (price-volatile)',
+          'ETH in backstop ETH vault (price-volatile)',
+          'Euler vault positions (illiquid lending market)',
+          'Loan receivables (illiquid, default-risk)',
+          'Real estate pipeline (not on-chain liquid)',
+        ],
+        attestationStatus: 'Pending — no independent reserve attestation completed',
+        dataSource: 'Arbitrum One RPC (Alchemy) — on-demand point-in-time snapshots',
+      },
+
       policyThresholds: {
         NORMAL:     { coverageRatio: 1.5, reserveRatio: 0.10 },
         CAUTION:    { coverageRatio: 1.0, reserveRatio: 0.05 },

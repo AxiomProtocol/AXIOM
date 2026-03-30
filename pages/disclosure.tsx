@@ -1195,49 +1195,66 @@ export default function DisclosurePage() {
                 title: 'Reserve Methodology',
                 path: '/docs/reserve-methodology.md',
                 purpose: 'AXUSD reserve pool definitions, backing ratio formula, PSM utilization, stress scenarios, and on-chain data sources',
-                version: '1.0 — 2026-03-30',
+                lastUpdated: '2026-03-30',
+                version: 'v1.0',
               },
               {
                 title: 'Solvency Methodology',
                 path: '/docs/solvency-methodology.md',
                 purpose: 'Coverage ratio, reserve ratio, loss buffer, liquidity depth formulas; policy mode thresholds; snapshot construction and checksum logic',
-                version: '1.0 — 2026-03-30',
+                lastUpdated: '2026-03-30',
+                version: 'v1.0',
               },
               {
                 title: 'Admin Controls Disclosure',
                 path: '/docs/admin-controls-disclosure.md',
                 purpose: 'Every privileged function across the ERC-3643 stack; authority holders; migration status toward multi-party governance',
-                version: '1.0 — 2026-03-30',
+                lastUpdated: '2026-03-30',
+                version: 'v1.0',
               },
               {
                 title: 'Claim Topic Registry',
                 path: '/docs/claim-topic-registry.md',
                 purpose: 'ERC-3643 claim topics (KYC_VERIFIED, ACCREDITED_INVESTOR, SANCTIONS_CLEAR); validity periods; revocation mechanics; country allowlist',
-                version: '1.0 — 2026-03-30',
+                lastUpdated: '2026-03-30',
+                version: 'v1.0',
               },
               {
                 title: 'Legal Entity Disclosure',
                 path: '/docs/legal-entity-disclosure.md',
                 purpose: 'Axiom Nexus LLC entity description; regulatory framework; token classification notice; no-guarantee disclaimer',
-                version: '1.0 — 2026-03-30',
+                lastUpdated: '2026-03-30',
+                version: 'v1.0',
               },
               {
                 title: 'Whitepaper v1.1 Corrections',
                 path: '/docs/whitepaper-v1.1-corrections.md',
-                purpose: 'Corrections and supersessions relative to prior protocol descriptions; dual-ecosystem retirement; vault version updates; GENIUS Act language standardization',
-                version: '1.1 — 2026-03-30',
+                purpose: 'Section-level corrections and supersessions relative to prior protocol descriptions; 14 correction entries covering dual-ecosystem retirement, vault versioning, and GENIUS Act language',
+                lastUpdated: '2026-03-30',
+                version: 'v1.1',
               },
               {
                 title: 'Audit Readiness Checklist',
                 path: '/docs/audit-readiness-checklist.md',
-                purpose: 'Contract inventory; access control review; code quality status; known issues; blockers to audit commencement',
-                version: '1.0 — 2026-03-30',
+                purpose: 'Contract inventory with Arbiscan status; access control review; code quality; known issues KI-001–KI-006; blockers to audit commencement',
+                lastUpdated: '2026-03-30',
+                version: 'v1.0',
               },
             ].map((doc, i) => (
               <div key={i} className={`grid grid-cols-1 sm:grid-cols-3 px-6 py-3 border-b border-dl-border ${i % 2 === 0 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
-                <p className="text-sm text-dl-navy font-semibold">{doc.title}</p>
+                <div>
+                  <a
+                    href={doc.path}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-dl-navy font-semibold underline"
+                  >
+                    {doc.title}
+                  </a>
+                  <p className="text-xs font-dl-mono text-dl-gray mt-0.5">{doc.version}</p>
+                </div>
                 <p className="text-sm text-dl-gray">{doc.purpose}</p>
-                <p className="text-xs font-dl-mono text-dl-gray">{doc.version}</p>
+                <p className="text-xs font-dl-mono text-dl-gray">Last updated: {doc.lastUpdated}</p>
               </div>
             ))}
           </div>
