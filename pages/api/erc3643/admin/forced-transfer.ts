@@ -19,6 +19,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { validateAdminKey, GOVERNANCE_SAFE } from '../../../../src/config/adminRoles';
+import { AdminRoleService } from '../../../../lib/services/AdminRoleService';
 import { db } from '../../../../server/db';
 import { adminActionLog } from '../../../../shared/erc3643Schema';
 import { ERC3643_CONTRACTS, AXUSD_3643_ABI } from '../../../../shared/contracts-3643';
@@ -48,6 +49,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!pk) return res.status(500).json({ error: 'DEPLOYER_PRIVATE_KEY not configured' });
 
   const proposerAddress = new ethers.Wallet(pk).address;
+
+  const callerHasDirectEmergencyRole = await AdminRoleService.hasRoleDb(proposerAddress, 'EMERGENCY_ROLE');
+  if (callerHasDirectEmergencyRole) {
+    return res.status(403).json({
+      error: 'EMERGENCY_ROLE should be held by the Governance Safe only. EOA caller detected as direct role holder — this is a configuration error.',
+      proposerAddress,
+    });
+  }
+
   const amountWei = ethers.parseUnits(amountAxusd, 18);
 
   const calldata = TOKEN_INTERFACE.encodeFunctionData('forcedTransfer', [

@@ -446,6 +446,7 @@ export class ERC3643Service {
         console.error('[ERC3643Service] Safe proposal failed:', proposalError);
       }
 
+      const logStatus = proposalError ? 'failed' : 'pending_safe';
       await writeAdminLog({
         actionType: 'mint',
         callerAddress,
@@ -453,27 +454,28 @@ export class ERC3643Service {
         amount: amountAxusd,
         txHash: safeTxHash,
         role: 'MINTER_ROLE',
-        status: 'pending_safe',
+        status: logStatus,
+        errorMessage: proposalError,
         metadata: {
           reason,
           safeAddress: GOVERNANCE_SAFE,
           safeTxHash,
-          proposalError,
-          note: `Amount ${amountAxusd} AXUSD >= threshold ${SAFE_MINT_THRESHOLD_AXUSD}. Safe proposal submitted to Transaction Service.`,
+          note: `Amount ${amountAxusd} AXUSD >= threshold ${SAFE_MINT_THRESHOLD_AXUSD}. Safe proposal path.`,
         },
       });
 
+      if (proposalError) {
+        throw new Error(`Safe proposal failed: ${proposalError}`);
+      }
+
       return {
         status: 'pending_safe',
-        message: proposalError
-          ? `Safe proposal attempted but encountered an error: ${proposalError}. Navigate to app.safe.global to create manually.`
-          : `Safe transaction proposal submitted. Navigate to app.safe.global for remaining signatures.`,
+        message: 'Safe transaction proposal submitted. Navigate to app.safe.global for remaining signatures.',
         safeUrl: `https://app.safe.global/transactions/queue?safe=arb1:${GOVERNANCE_SAFE}`,
         safeTxHash,
         requiresSafe: true,
         amountAxusd,
         toAddress,
-        proposalError,
       };
     }
 
@@ -510,8 +512,9 @@ export class ERC3643Service {
   }
 
   /**
-   * Burn AXUSD (forcedTransfer-equivalent for compliance-gated recovery).
-   * All burns are logged to the admin action log.
+   * Burn AXUSD via Safe proposal (all amounts).
+   * Burns require MINTER_ROLE held by the Governance Safe.
+   * The deployer EOA proposes the Safe transaction; 3-of-5 signers execute.
    */
   static async burnAXUSD(params: {
     fromAddress: string;
@@ -520,33 +523,84 @@ export class ERC3643Service {
     reason?: string;
   }) {
     const { fromAddress, amountAxusd, callerAddress, reason } = params;
-    const signer = getSigner();
+
+    const pk = process.env.DEPLOYER_PRIVATE_KEY;
+    if (!pk) throw new Error('DEPLOYER_PRIVATE_KEY not set');
 
     const BURN_ABI = ['function burn(address from, uint256 amount) external'];
-    const token = new ethers.Contract(
-      ERC3643_CONTRACTS.AXUSD_TOKEN,
-      BURN_ABI,
-      signer
-    );
-
+    const burnInterface = new ethers.Interface(BURN_ABI);
     const amountWei = ethers.parseUnits(amountAxusd, 18);
-    const tx = await token.burn(fromAddress, amountWei);
-    await tx.wait();
+    const burnData = burnInterface.encodeFunctionData('burn', [fromAddress, amountWei]);
 
+    let safeTxHash: string | undefined;
+    let proposalError: string | undefined;
+
+    try {
+      const Safe = (await import('@safe-global/protocol-kit')).default;
+      const SafeApiKit = (await import('@safe-global/api-kit')).default;
+
+      const rpcUrl = process.env.ALCHEMY_API_KEY
+        ? `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
+        : 'https://arb1.arbitrum.io/rpc';
+
+      const protocolKit = await Safe.init({
+        provider: rpcUrl,
+        signer: pk,
+        safeAddress: GOVERNANCE_SAFE,
+      });
+
+      const safeTransaction = await protocolKit.createTransaction({
+        transactions: [{
+          to: ERC3643_CONTRACTS.AXUSD_TOKEN,
+          value: '0',
+          data: burnData,
+        }],
+      });
+
+      safeTxHash = await protocolKit.getTransactionHash(safeTransaction);
+      const signature = await protocolKit.signHash(safeTxHash);
+
+      const signerAddress = new ethers.Wallet(pk).address;
+      const apiKit = new SafeApiKit({ chainId: 42161n });
+      await apiKit.proposeTransaction({
+        safeAddress: GOVERNANCE_SAFE,
+        safeTransactionData: safeTransaction.data,
+        safeTxHash,
+        senderAddress: signerAddress,
+        senderSignature: signature.data,
+      });
+    } catch (err) {
+      proposalError = err instanceof Error ? err.message : String(err);
+      console.error('[ERC3643Service] burnAXUSD Safe proposal failed:', proposalError);
+    }
+
+    const logStatus = proposalError ? 'failed' : 'pending_safe';
     await writeAdminLog({
       actionType: 'burn',
       callerAddress,
       targetAddress: fromAddress,
       amount: amountAxusd,
-      txHash: tx.hash,
+      txHash: safeTxHash,
       role: 'MINTER_ROLE',
-      status: 'success',
-      metadata: { reason },
+      status: logStatus,
+      errorMessage: proposalError,
+      metadata: {
+        reason,
+        safeAddress: GOVERNANCE_SAFE,
+        safeTxHash,
+        note: 'All AXUSD burns route through Governance Safe proposal.',
+      },
     });
 
+    if (proposalError) {
+      throw new Error(`burnAXUSD Safe proposal failed: ${proposalError}`);
+    }
+
     return {
-      status: 'success',
-      txHash: tx.hash,
+      status: 'pending_safe',
+      message: 'Safe burn proposal submitted. Navigate to app.safe.global for remaining signatures.',
+      safeUrl: `https://app.safe.global/transactions/queue?safe=arb1:${GOVERNANCE_SAFE}`,
+      safeTxHash,
       amountAxusd,
       fromAddress,
     };
