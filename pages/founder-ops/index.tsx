@@ -223,6 +223,8 @@ export default function FounderOpsPage() {
 
   const [govStatus, setGovStatus] = useState<any | null>(null);
   const [govLoading, setGovLoading] = useState(false);
+  const [adminActions, setAdminActions] = useState<any[]>([]);
+  const [adminActionsLoading, setAdminActionsLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -276,6 +278,18 @@ export default function FounderOpsPage() {
       if (res?.success) setGovStatus(res);
     } finally {
       setGovLoading(false);
+    }
+  };
+
+  const loadAdminActions = async (adminKey?: string) => {
+    setAdminActionsLoading(true);
+    try {
+      const headers: Record<string, string> = {};
+      if (adminKey) headers['x-admin-key'] = adminKey;
+      const res = await fetch('/api/governance/admin-actions?limit=50', { headers }).then(r => r.json()).catch(() => null);
+      if (res?.success) setAdminActions(res.actions ?? []);
+    } finally {
+      setAdminActionsLoading(false);
     }
   };
 
@@ -419,7 +433,7 @@ export default function FounderOpsPage() {
                   onClick={() => {
                     setActiveTab(tab.id);
                     if (tab.id === 'system') { loadOutcomes(); loadVariances(); }
-                    if (tab.id === 'governance') { loadGovernanceStatus(); }
+                    if (tab.id === 'governance') { loadGovernanceStatus(); loadAdminActions(outcomeAdminKey || undefined); }
                   }}
                   className={`px-4 py-2 text-sm border-b-2 -mb-px ${
                     activeTab === tab.id
@@ -1174,6 +1188,90 @@ export default function FounderOpsPage() {
                           </div>
                         ))}
                       </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <SectionHeading>Admin Action Log</SectionHeading>
+                      <div className="border border-dl-border border-l-4 border-l-dl-navy px-5 py-3 mb-3 bg-dl-bg-alt">
+                        <p className="font-dl-mono text-xs text-dl-gray">
+                          Every mint, burn, freeze, claim issuance, registry update, and whitelist action is logged here.
+                          All pending Safe proposals appear as <span className="text-dl-gold">PENDING_SAFE</span>.
+                          Admin key required to view. See <code className="text-xs bg-dl-bg px-1">docs/emergency-powers-policy.md</code> for disclosure rules.
+                        </p>
+                      </div>
+                      {adminActionsLoading && (
+                        <div className="border border-dl-border p-6 text-center">
+                          <p className="font-dl-mono text-sm text-dl-gray">Loading admin action log…</p>
+                        </div>
+                      )}
+                      {!adminActionsLoading && adminActions.length === 0 && (
+                        <div className="border border-dl-border">
+                          <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+                            <p className="font-dl-mono text-xs text-dl-gray">
+                              No actions logged yet — or admin key not provided. Enter your admin key in the System Status tab, then reload this tab.
+                            </p>
+                          </div>
+                          <div className="px-4 py-3 text-center">
+                            <p className="font-dl-mono text-xs text-dl-gray">
+                              Log is populated when admin API endpoints (freeze, mint, claim issuance, etc.) are invoked.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {!adminActionsLoading && adminActions.length > 0 && (
+                        <div className="border border-dl-border">
+                          <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border grid grid-cols-5 gap-2">
+                            <p className="font-dl-mono text-xs text-dl-gray uppercase">Action</p>
+                            <p className="font-dl-mono text-xs text-dl-gray uppercase">Caller</p>
+                            <p className="font-dl-mono text-xs text-dl-gray uppercase">Target / Amount</p>
+                            <p className="font-dl-mono text-xs text-dl-gray uppercase">Role</p>
+                            <p className="font-dl-mono text-xs text-dl-gray uppercase">Status / Time</p>
+                          </div>
+                          {adminActions.map((action: any, i: number) => (
+                            <div key={action.id} className={`px-4 py-3 border-b border-dl-border last:border-0 ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                              <div className="grid grid-cols-5 gap-2 items-start">
+                                <div>
+                                  <p className="font-dl-mono text-xs font-medium text-dl-navy">{action.actionType}</p>
+                                </div>
+                                <div>
+                                  <p className="font-dl-mono text-xs text-dl-gray break-all">
+                                    {action.callerAddress ? `${action.callerAddress.slice(0, 8)}…${action.callerAddress.slice(-4)}` : '—'}
+                                  </p>
+                                </div>
+                                <div>
+                                  {action.targetAddress && (
+                                    <p className="font-dl-mono text-xs text-dl-gray">
+                                      {`${action.targetAddress.slice(0, 8)}…${action.targetAddress.slice(-4)}`}
+                                    </p>
+                                  )}
+                                  {action.amount && (
+                                    <p className="font-dl-mono text-xs text-dl-navy">{action.amount} AXUSD</p>
+                                  )}
+                                  {action.txHash && (
+                                    <a href={`https://arbiscan.io/tx/${action.txHash}`} target="_blank" rel="noopener noreferrer"
+                                      className="font-dl-mono text-xs text-dl-navy underline">
+                                      {`${action.txHash.slice(0, 8)}…`}
+                                    </a>
+                                  )}
+                                </div>
+                                <div>
+                                  <span className="font-dl-mono text-xs text-dl-gray">{action.role ?? '—'}</span>
+                                </div>
+                                <div>
+                                  <span className={`font-dl-mono text-xs px-1.5 py-0.5 border ${
+                                    action.status === 'success' ? 'border-dl-forest text-dl-forest' :
+                                    action.status === 'pending_safe' ? 'border-dl-gold text-dl-gold' :
+                                    'border-dl-error text-dl-error'
+                                  }`}>{action.status?.toUpperCase()}</span>
+                                  <p className="font-dl-mono text-xs text-dl-gray mt-1">
+                                    {new Date(action.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </>
                 )}

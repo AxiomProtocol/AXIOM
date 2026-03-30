@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { db } from '../../server/db';
-import { t3Identities, t3Claims, t3ComplianceEvents, t3PlatformWhitelist, CLAIM_VALIDITY_DAYS, CLAIM_REFRESH_WARNING_DAYS } from '../../shared/erc3643Schema';
-import { eq, and, lte, gte, or, isNull } from 'drizzle-orm';
+import { t3Identities, t3Claims, t3ComplianceEvents, t3PlatformWhitelist, CLAIM_VALIDITY_DAYS, CLAIM_REFRESH_WARNING_DAYS, adminActionLog } from '../../shared/erc3643Schema';
+import { eq, and, lte, gte, or, isNull, desc } from 'drizzle-orm';
 import {
   ERC3643_CONTRACTS,
   CLAIM_TOPICS,
@@ -12,6 +12,7 @@ import {
   MODULAR_COMPLIANCE_ABI,
   LENDING_PLATFORM_MODULE_ABI,
 } from '../../shared/contracts-3643';
+import { GOVERNANCE_SAFE, SAFE_MINT_THRESHOLD_AXUSD } from '../../src/config/adminRoles';
 
 function getProvider() {
   const rpcUrl = process.env.ALCHEMY_API_KEY
@@ -24,6 +25,34 @@ function getSigner() {
   const provider = getProvider();
   if (!process.env.DEPLOYER_PRIVATE_KEY) throw new Error('DEPLOYER_PRIVATE_KEY not set');
   return new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY, provider);
+}
+
+async function writeAdminLog(params: {
+  actionType: string;
+  callerAddress: string;
+  targetAddress?: string;
+  amount?: string;
+  txHash?: string;
+  role?: string;
+  status?: 'success' | 'failed' | 'pending_safe';
+  errorMessage?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    await db.insert(adminActionLog).values({
+      actionType: params.actionType,
+      callerAddress: params.callerAddress.toLowerCase(),
+      targetAddress: params.targetAddress?.toLowerCase(),
+      amount: params.amount,
+      txHash: params.txHash,
+      role: params.role,
+      status: params.status ?? 'success',
+      errorMessage: params.errorMessage,
+      metadata: params.metadata ? JSON.stringify(params.metadata) : undefined,
+    });
+  } catch (err) {
+    console.error('[ERC3643Service] Failed to write admin log:', err);
+  }
 }
 
 export class ERC3643Service {
@@ -128,6 +157,15 @@ export class ERC3643Service {
       status: 'active',
     }).returning();
 
+    await writeAdminLog({
+      actionType: 'registerIdentity',
+      callerAddress: await signer.getAddress(),
+      targetAddress: wallet,
+      txHash: tx.hash,
+      role: 'COMPLIANCE_ROLE',
+      metadata: { identityAddr, countryCode, registryTxHash: regTx.hash },
+    });
+
     return {
       identityId: inserted.id,
       wallet,
@@ -177,6 +215,14 @@ export class ERC3643Service {
       refreshRequiredBy,
       revoked: false,
     }).returning();
+
+    await writeAdminLog({
+      actionType: 'issueClaim',
+      callerAddress: await signer.getAddress(),
+      targetAddress: wallet,
+      role: 'COMPLIANCE_ROLE',
+      metadata: { topic, claimId: inserted.id, expiresAt: expiresAt.toISOString() },
+    });
 
     return {
       claimId: inserted.id,
@@ -245,6 +291,15 @@ export class ERC3643Service {
       .where(eq(t3Claims.id, claimId));
 
     const result = await this.issueClaim(identity.wallet, existing.topic);
+
+    await writeAdminLog({
+      actionType: 'renewClaim',
+      callerAddress: adminWallet,
+      targetAddress: identity.wallet,
+      role: 'OPERATOR_ROLE',
+      metadata: { oldClaimId: claimId, newClaimId: result.claimId, topic: existing.topic },
+    });
+
     return {
       oldClaimId: claimId,
       newClaimId: result.claimId,
@@ -273,6 +328,15 @@ export class ERC3643Service {
       active: true,
     }).returning();
 
+    await writeAdminLog({
+      actionType: 'whitelistPlatform',
+      callerAddress: await signer.getAddress(),
+      targetAddress: contractAddress,
+      txHash: tx.hash,
+      role: 'COMPLIANCE_ROLE',
+      metadata: { platformName },
+    });
+
     return {
       id: inserted.id,
       contractAddress,
@@ -296,7 +360,136 @@ export class ERC3643Service {
       .set({ status: freeze ? 'frozen' : 'active', updatedAt: new Date() })
       .where(eq(t3Identities.wallet, wallet.toLowerCase()));
 
+    await writeAdminLog({
+      actionType: freeze ? 'freezeAddress' : 'unfreezeAddress',
+      callerAddress: await signer.getAddress(),
+      targetAddress: wallet,
+      txHash: tx.hash,
+      role: 'OPERATOR_ROLE',
+      metadata: { freeze },
+    });
+
     return { wallet, frozen: freeze, txHash: tx.hash };
+  }
+
+  /**
+   * Mint AXUSD via Safe proposal (amounts >= SAFE_MINT_THRESHOLD) or direct EOA signing.
+   *
+   * For amounts below the threshold, the deployer EOA signs directly.
+   * For amounts at or above the threshold, a Safe transaction proposal is created
+   * that must be approved by Safe owners at app.safe.global before execution.
+   *
+   * NOTE: On-chain minting requires the caller to hold MINTER_ROLE on the AXUSD token.
+   * The ERC-3643 T-REX token exposes mint(address,uint256) gated by MINTER_ROLE.
+   */
+  static async mintAXUSD(params: {
+    toAddress: string;
+    amountAxusd: string;
+    callerAddress: string;
+    reason?: string;
+  }) {
+    const { toAddress, amountAxusd, callerAddress, reason } = params;
+    const amountFloat = parseFloat(amountAxusd);
+    const requiresSafe = amountFloat >= SAFE_MINT_THRESHOLD_AXUSD;
+
+    if (requiresSafe) {
+      await writeAdminLog({
+        actionType: 'mint',
+        callerAddress,
+        targetAddress: toAddress,
+        amount: amountAxusd,
+        role: 'MINTER_ROLE',
+        status: 'pending_safe',
+        metadata: {
+          reason,
+          safeAddress: GOVERNANCE_SAFE,
+          note: `Amount ${amountAxusd} AXUSD >= threshold ${SAFE_MINT_THRESHOLD_AXUSD}. Safe proposal required at app.safe.global`,
+        },
+      });
+
+      return {
+        status: 'pending_safe',
+        message: `Amount ${amountAxusd} AXUSD meets or exceeds the ${SAFE_MINT_THRESHOLD_AXUSD} AXUSD Safe-proposal threshold. A multisig transaction must be proposed and executed at app.safe.global/arb1:${GOVERNANCE_SAFE}`,
+        safeUrl: `https://app.safe.global/transactions/queue?safe=arb1:${GOVERNANCE_SAFE}`,
+        requiresSafe: true,
+        amountAxusd,
+        toAddress,
+      };
+    }
+
+    const signer = getSigner();
+    const MINT_ABI = ['function mint(address to, uint256 amount) external'];
+    const token = new ethers.Contract(
+      ERC3643_CONTRACTS.AXUSD_TOKEN,
+      MINT_ABI,
+      signer
+    );
+
+    const amountWei = ethers.parseUnits(amountAxusd, 18);
+    const tx = await token.mint(toAddress, amountWei);
+    await tx.wait();
+
+    await writeAdminLog({
+      actionType: 'mint',
+      callerAddress,
+      targetAddress: toAddress,
+      amount: amountAxusd,
+      txHash: tx.hash,
+      role: 'MINTER_ROLE',
+      status: 'success',
+      metadata: { reason },
+    });
+
+    return {
+      status: 'success',
+      txHash: tx.hash,
+      amountAxusd,
+      toAddress,
+      requiresSafe: false,
+    };
+  }
+
+  /**
+   * Burn AXUSD (forcedTransfer-equivalent for compliance-gated recovery).
+   * All burns are logged to the admin action log.
+   */
+  static async burnAXUSD(params: {
+    fromAddress: string;
+    amountAxusd: string;
+    callerAddress: string;
+    reason?: string;
+  }) {
+    const { fromAddress, amountAxusd, callerAddress, reason } = params;
+    const signer = getSigner();
+
+    const BURN_ABI = ['function burn(address from, uint256 amount) external'];
+    const token = new ethers.Contract(
+      ERC3643_CONTRACTS.AXUSD_TOKEN,
+      BURN_ABI,
+      signer
+    );
+
+    const amountWei = ethers.parseUnits(amountAxusd, 18);
+    const tx = await token.burn(fromAddress, amountWei);
+    await tx.wait();
+
+    await writeAdminLog({
+      actionType: 'burn',
+      callerAddress,
+      targetAddress: fromAddress,
+      amount: amountAxusd,
+      txHash: tx.hash,
+      role: 'MINTER_ROLE',
+      status: 'success',
+      metadata: { reason },
+    });
+
+    return {
+      status: 'success',
+      txHash: tx.hash,
+      amountAxusd,
+      fromAddress,
+    };
   }
 
   static async getComplianceModules() {
@@ -344,5 +537,12 @@ export class ERC3643Service {
       reason: event.reason,
     }).returning();
     return inserted;
+  }
+
+  static async getAdminActionLog(limit = 50) {
+    return db.select()
+      .from(adminActionLog)
+      .orderBy(desc(adminActionLog.createdAt))
+      .limit(limit);
   }
 }

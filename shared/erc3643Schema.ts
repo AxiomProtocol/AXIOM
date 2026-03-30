@@ -8,6 +8,7 @@ import {
   decimal,
   integer,
   boolean,
+  serial,
 } from "drizzle-orm/pg-core";
 
 export const t3Identities = pgTable("t3_identities", {
@@ -107,3 +108,24 @@ export type T3PlatformWhitelist = typeof t3PlatformWhitelist.$inferSelect;
 export type InsertT3PlatformWhitelist = typeof t3PlatformWhitelist.$inferInsert;
 export type T3KycSubmission = typeof t3KycSubmissions.$inferSelect;
 export type InsertT3KycSubmission = typeof t3KycSubmissions.$inferInsert;
+
+export const adminActionLog = pgTable("admin_action_log", {
+  id: serial("id").primaryKey(),
+  actionType: varchar("action_type", { length: 64 }).notNull(),
+  callerAddress: varchar("caller_address", { length: 42 }).notNull(),
+  targetAddress: varchar("target_address", { length: 42 }),
+  amount: varchar("amount", { length: 78 }),
+  txHash: varchar("tx_hash", { length: 66 }),
+  role: varchar("role", { length: 64 }),
+  status: varchar("status", { length: 20 }).notNull().default("success"),
+  errorMessage: text("error_message"),
+  metadata: text("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  actionTypeIdx: index("idx_admin_action_type").on(table.actionType),
+  callerIdx: index("idx_admin_action_caller").on(table.callerAddress),
+  createdIdx: index("idx_admin_action_created").on(table.createdAt),
+}));
+
+export type AdminActionLog = typeof adminActionLog.$inferSelect;
+export type InsertAdminActionLog = typeof adminActionLog.$inferInsert;

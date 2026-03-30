@@ -19,6 +19,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
+import { validateAdminKey } from '../../../src/config/adminRoles';
 
 const RPC_URL = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 
@@ -36,8 +37,7 @@ const IDENTITY_ABI = [
 ];
 
 function verifyAdmin(req: NextApiRequest): boolean {
-  const key = req.headers['x-admin-key'] ?? req.headers['x-admin-solvency-key'];
-  return key === process.env.ADMIN_SOLVENCY_KEY && !!process.env.ADMIN_SOLVENCY_KEY;
+  return validateAdminKey(req as unknown as { headers: Record<string, string | string[] | undefined> });
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
