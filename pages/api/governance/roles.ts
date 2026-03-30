@@ -49,13 +49,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const callerAddress = new ethers.Wallet(pk).address;
 
-    const hasUpgrader = await AdminRoleService.hasRoleDb(callerAddress, 'UPGRADER_ROLE');
-    if (!hasUpgrader) {
-      return res.status(403).json({
-        error: 'Forbidden — role management requires UPGRADER_ROLE',
-        callerAddress,
-        role: 'UPGRADER_ROLE',
-      });
+    const HIGH_PRIVILEGE_ROLES: AdminRole[] = ['EMERGENCY_ROLE', 'UPGRADER_ROLE'];
+    const targetRoleIsHighPrivilege = HIGH_PRIVILEGE_ROLES.includes(roleName as AdminRole);
+
+    if (targetRoleIsHighPrivilege) {
+      const hasUpgrader = await AdminRoleService.hasRoleDb(callerAddress, 'UPGRADER_ROLE');
+      if (!hasUpgrader) {
+        return res.status(403).json({
+          error: `Forbidden — granting/revoking ${roleName} requires UPGRADER_ROLE (held by the Timelock or Governance Safe)`,
+          callerAddress,
+          role: 'UPGRADER_ROLE',
+          requiredFor: roleName,
+        });
+      }
+    } else {
+      const hasOperator = await AdminRoleService.hasRoleDb(callerAddress, 'OPERATOR_ROLE');
+      if (!hasOperator) {
+        return res.status(403).json({
+          error: 'Forbidden — role administration requires OPERATOR_ROLE',
+          callerAddress,
+          role: 'OPERATOR_ROLE',
+        });
+      }
     }
 
     try {

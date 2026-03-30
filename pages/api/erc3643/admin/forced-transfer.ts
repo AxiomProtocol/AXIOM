@@ -108,7 +108,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       amount: amountAxusd,
       role: 'EMERGENCY_ROLE',
       status: 'pending_safe',
-      metadata: JSON.stringify({ reason, toAddress, safeTxHash, safeAddress: GOVERNANCE_SAFE }),
+      metadata: { reason, toAddress, safeTxHash, safeAddress: GOVERNANCE_SAFE },
     });
 
     return res.status(200).json({
@@ -133,7 +133,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       role: 'EMERGENCY_ROLE',
       status: 'failed',
       errorMessage: e?.message ?? String(err),
-      metadata: JSON.stringify({ reason, toAddress }),
+      metadata: { reason, toAddress },
     });
 
     return res.status(500).json({ error: e?.message ?? 'Safe proposal failed' });

@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS "admin_action_log" (
   "role" varchar(32) NOT NULL,
   "status" varchar(32) NOT NULL DEFAULT 'pending',
   "error_message" text,
-  "metadata" jsonb,
+  "metadata" jsonb,  -- Object storage for action context; text columns cast to jsonb on existing DBs
   "created_at" timestamp DEFAULT now() NOT NULL
 );
 
@@ -53,3 +53,16 @@ INSERT INTO "admin_roles" ("role_name", "holder_address", "holder_type", "contra
   ('UPGRADER_ROLE', '0xf1b1d594d6edc9f045df55b32006a24e666ed899', 'TIMELOCK', 'All Upgradeable Contracts', '0x8d7892cf226b43d48b6e3ce988a1274e6d114c96', 'Timelock 24h — Safe holds PROPOSER_ROLE'),
   ('DEFAULT_ADMIN_ROLE', '0x8d7892cf226b43d48b6e3ce988a1274e6d114c96', 'EOA', 'AXIOMFixedLoan, AXIOMCreditMarket, TreasuryHub, GovernanceHub', '0x8d7892cf226b43d48b6e3ce988a1274e6d114c96', 'CRITICAL — pending migration to Timelock via Safe proposal')
 ON CONFLICT ON CONSTRAINT "uq_admin_roles_role_holder" DO NOTHING;
+
+-- Migration patch for existing databases (text -> jsonb for admin_action_log.metadata)
+-- Idempotent: only runs if column is still text type
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'admin_action_log'
+      AND column_name = 'metadata'
+      AND data_type = 'text'
+  ) THEN
+    ALTER TABLE admin_action_log ALTER COLUMN metadata TYPE jsonb USING metadata::jsonb;
+  END IF;
+END $$;

@@ -48,7 +48,7 @@ async function writeAdminLog(params: {
       role: params.role,
       status: params.status ?? 'success',
       errorMessage: params.errorMessage,
-      metadata: params.metadata ? JSON.stringify(params.metadata) : undefined,
+      metadata: params.metadata ?? null,
     });
   } catch (err) {
     console.error('[ERC3643Service] Failed to write admin log:', err);

@@ -10,6 +10,7 @@ import {
   integer,
   boolean,
   serial,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 export const t3Identities = pgTable("t3_identities", {
@@ -120,7 +121,7 @@ export const adminActionLog = pgTable("admin_action_log", {
   role: varchar("role", { length: 64 }),
   status: varchar("status", { length: 20 }).notNull().default("success"),
   errorMessage: text("error_message"),
-  metadata: text("metadata"),
+  metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => ({
   actionTypeIdx: index("idx_admin_action_type").on(table.actionType),
