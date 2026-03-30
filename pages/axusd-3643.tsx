@@ -211,8 +211,12 @@ function ClaimExpiryBadge({ status }: { status: 'valid' | 'expiring_soon' | 'exp
 }
 
 export default function AXUSD3643Page() {
-  const { walletState } = useWallet();
-  const { address, isConnected } = walletState;
+  const { walletState, siweState } = useWallet();
+  // Prefer wagmi address; fall back to SIWE-authenticated address so the
+  // dashboard fetches the correct on-chain balance after a page refresh
+  // where wagmi hasn't reconnected yet but the SIWE session is still active.
+  const address = walletState.address || siweState.authenticatedAddress || null;
+  const isConnected = walletState.isConnected || siweState.isAuthenticated;
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
