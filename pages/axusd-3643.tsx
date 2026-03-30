@@ -114,6 +114,8 @@ interface PsmApiData {
     axusdToken: string;
     label: string;
     deployedAt: string;
+    mintFee: number;
+    redeemFee: number;
     mintFeePct: string;
     redeemFeePct: string;
     debtCeiling: string;
@@ -1218,6 +1220,286 @@ function OracleTab({
   );
 }
 
+// ─── PSM Mint/Redeem Panel ──────────────────────────────────────────────────
+// PSM contract ABIs (minimal, just what the UI needs)
+const USDC_APPROVE_ABI = ['function approve(address spender, uint256 amount) returns (bool)'];
+const PSM_MINT_ABI     = ['function mint(uint256 axusdAmount) external'];
+const PSM_REDEEM_ABI   = ['function redeem(uint256 axusdAmount) external'];
+const CANONICAL_PSM_ADDR = '0xDB669bb6cA07215C5B055B62072AAED2F821E53F';
+const USDC_ADDR          = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+
+type PsmOp = 'mint' | 'redeem';
+type TxPhase = 'idle' | 'approve_pending' | 'approve_done' | 'tx_pending' | 'success' | 'error';
+
+interface IdentityStatus {
+  hasIdentity: boolean;
+  isVerified: boolean;
+  identityAddress: string | null;
+}
+
+function computeUsdcForMint(axusdWei: bigint, mintFeeBps: number): bigint {
+  // axusd is 18 dec, USDC is 6 dec; scale = 1e12
+  // USDC cost = ceil(axusdWei * (10000 + fee) / 10000 / 1e12)
+  const numerator = axusdWei * BigInt(10000 + mintFeeBps);
+  const gross = numerator / BigInt(10000);
+  const usdc6 = gross / BigInt(1e12);
+  const remainder = gross % BigInt(1e12);
+  return remainder > 0n ? usdc6 + 1n : usdc6;
+}
+
+function computeUsdcFromRedeem(axusdWei: bigint, redeemFeeBps: number): bigint {
+  // USDC received = axusdWei * (10000 - fee) / 10000 / 1e12
+  const numerator = axusdWei * BigInt(10000 - redeemFeeBps);
+  const gross = numerator / BigInt(10000);
+  return gross / BigInt(1e12);
+}
+
+function PsmMintRedeemPanel({
+  address,
+  isConnected,
+  mintFeeBps,
+  redeemFeeBps,
+  paused,
+}: {
+  address: string | null;
+  isConnected: boolean;
+  mintFeeBps: number;
+  redeemFeeBps: number;
+  paused: boolean;
+}) {
+  const [op, setOp] = useState<PsmOp>('mint');
+  const [amountStr, setAmountStr] = useState('');
+  const [phase, setPhase] = useState<TxPhase>('idle');
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [identityStatus, setIdentityStatus] = useState<IdentityStatus | null>(null);
+  const [identityLoading, setIdentityLoading] = useState(false);
+
+  // Fetch identity status when wallet connects
+  useEffect(() => {
+    if (!address) { setIdentityStatus(null); return; }
+    setIdentityLoading(true);
+    fetch(`/api/erc3643/identity/status?wallet=${address}`)
+      .then(r => r.json())
+      .then(json => {
+        setIdentityStatus({
+          hasIdentity: json.data?.hasIdentity ?? false,
+          isVerified: json.data?.isVerified ?? false,
+          identityAddress: json.data?.identityAddress ?? null,
+        });
+      })
+      .catch(() => setIdentityStatus({ hasIdentity: false, isVerified: false, identityAddress: null }))
+      .finally(() => setIdentityLoading(false));
+  }, [address]);
+
+  const axusdWei = (() => {
+    try {
+      const n = parseFloat(amountStr);
+      if (!n || n <= 0) return null;
+      return BigInt(Math.floor(n * 1e18));
+    } catch { return null; }
+  })();
+
+  const usdcPreview = axusdWei
+    ? (op === 'mint'
+        ? computeUsdcForMint(axusdWei, mintFeeBps)
+        : computeUsdcFromRedeem(axusdWei, redeemFeeBps))
+    : null;
+
+  const fmtUsdc6 = (wei: bigint) =>
+    (Number(wei) / 1e6).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 });
+
+  async function getProvider() {
+    if (typeof window === 'undefined') throw new Error('Browser only');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const eth = (window as unknown as Record<string, unknown>).ethereum;
+    if (!eth) throw new Error('No injected wallet found. Install MetaMask.');
+    const { ethers } = await import('ethers');
+    const provider = new ethers.BrowserProvider(eth as Parameters<typeof ethers.BrowserProvider>[0]);
+    const signer = await provider.getSigner();
+    return { ethers, signer };
+  }
+
+  async function handleApproveAndMint() {
+    if (!axusdWei || !address) return;
+    setPhase('approve_pending'); setErrMsg(null); setTxHash(null);
+    try {
+      const { ethers, signer } = await getProvider();
+      const usdcNeeded = computeUsdcForMint(axusdWei, mintFeeBps);
+
+      // Step 1: approve USDC
+      const usdc = new ethers.Contract(USDC_ADDR, USDC_APPROVE_ABI, signer);
+      const approveTx = await usdc.approve(CANONICAL_PSM_ADDR, usdcNeeded);
+      await approveTx.wait();
+      setPhase('approve_done');
+
+      // Step 2: mint
+      setPhase('tx_pending');
+      const psm = new ethers.Contract(CANONICAL_PSM_ADDR, PSM_MINT_ABI, signer);
+      const mintTx = await psm.mint(axusdWei);
+      setTxHash(mintTx.hash);
+      await mintTx.wait();
+      setPhase('success');
+    } catch (err: unknown) {
+      setErrMsg(err instanceof Error ? err.message : String(err));
+      setPhase('error');
+    }
+  }
+
+  async function handleRedeem() {
+    if (!axusdWei || !address) return;
+    setPhase('tx_pending'); setErrMsg(null); setTxHash(null);
+    try {
+      const { ethers, signer } = await getProvider();
+      const psm = new ethers.Contract(CANONICAL_PSM_ADDR, PSM_REDEEM_ABI, signer);
+      const tx = await psm.redeem(axusdWei);
+      setTxHash(tx.hash);
+      await tx.wait();
+      setPhase('success');
+    } catch (err: unknown) {
+      setErrMsg(err instanceof Error ? err.message : String(err));
+      setPhase('error');
+    }
+  }
+
+  function reset() { setPhase('idle'); setTxHash(null); setErrMsg(null); setAmountStr(''); }
+
+  if (!isConnected) {
+    return (
+      <div className="border border-dl-border p-6 mb-8 text-center">
+        <p className="text-sm text-dl-gray">Connect your wallet to use the Canonical PSM.</p>
+      </div>
+    );
+  }
+
+  if (identityLoading) {
+    return <p className="text-sm text-dl-gray font-dl-mono py-4">Checking identity status...</p>;
+  }
+
+  if (identityStatus && !identityStatus.isVerified) {
+    return (
+      <div className="border border-dl-border p-4 mb-8">
+        <p className="text-xs font-dl-mono text-dl-navy font-semibold mb-2">Identity Verification Required</p>
+        <p className="text-xs text-dl-gray font-dl-mono mb-2">
+          Your wallet (<span className="text-dl-navy">{shortAddr(address)}</span>) is not verified in the ERC-3643 Identity Registry.
+          The Canonical PSM checks <span className="text-dl-navy">isVerified()</span> on every mint and redeem — unverified wallets are rejected on-chain.
+        </p>
+        <p className="text-xs text-dl-gray font-dl-mono">
+          {identityStatus.hasIdentity
+            ? 'Identity registered but claims are incomplete or expired. Contact your claim issuer.'
+            : 'No on-chain identity found. Submit KYC verification on the Identity tab to begin the process.'}
+        </p>
+      </div>
+    );
+  }
+
+  if (paused) {
+    return (
+      <div className="border border-dl-border p-4 mb-8 text-xs text-dl-gray font-dl-mono">
+        <span className="text-dl-navy font-semibold">PSM Paused</span> — Mint and redeem are currently suspended. Contact governance.
+      </div>
+    );
+  }
+
+  return (
+    <div className="border border-dl-border p-4 mb-8">
+      {/* Identity verified notice */}
+      <div className="flex items-center gap-2 mb-4 text-xs font-dl-mono text-green-700 border border-green-200 bg-green-50 px-3 py-2">
+        <span>Identity verified — wallet {shortAddr(address)} is cleared for PSM operations.</span>
+      </div>
+
+      {/* Operation toggle */}
+      <div className="flex gap-0 border-b border-dl-border mb-4">
+        {(['mint', 'redeem'] as PsmOp[]).map(o => (
+          <button
+            key={o}
+            onClick={() => { setOp(o); reset(); }}
+            className={`px-4 py-1.5 text-sm border-b-2 -mb-px capitalize ${op === o ? 'border-dl-navy text-dl-navy font-medium' : 'border-transparent text-dl-gray'}`}
+          >
+            {o === 'mint' ? 'Mint AXUSD' : 'Redeem AXUSD'}
+          </button>
+        ))}
+      </div>
+
+      {/* Amount input */}
+      <div className="mb-3">
+        <label className="text-xs text-dl-gray mb-1 block font-dl-mono">
+          {op === 'mint' ? 'AXUSD to Mint' : 'AXUSD to Redeem'}
+        </label>
+        <input
+          type="number"
+          min="0"
+          step="1"
+          value={amountStr}
+          onChange={e => { setAmountStr(e.target.value); if (phase !== 'idle') reset(); }}
+          placeholder="100.00"
+          className="w-full border border-dl-border px-3 py-1.5 text-sm font-dl-mono bg-white"
+        />
+      </div>
+
+      {/* Preview */}
+      {usdcPreview !== null && axusdWei !== null && (
+        <div className="border border-dl-border bg-dl-bg-alt px-3 py-2 mb-4 text-xs font-dl-mono">
+          {op === 'mint' ? (
+            <p>USDC to approve + deposit: <span className="text-dl-navy font-semibold">{fmtUsdc6(usdcPreview)} USDC</span> (includes {mintFeeBps / 100}% fee)</p>
+          ) : (
+            <p>USDC to receive: <span className="text-dl-navy font-semibold">{fmtUsdc6(usdcPreview)} USDC</span> (after {redeemFeeBps / 100}% fee)</p>
+          )}
+        </div>
+      )}
+
+      {/* Status messages */}
+      {phase === 'approve_pending' && (
+        <p className="text-xs text-dl-gray font-dl-mono mb-3">Step 1/2 — Awaiting USDC approval in wallet...</p>
+      )}
+      {phase === 'approve_done' && (
+        <p className="text-xs text-dl-gray font-dl-mono mb-3">Step 1/2 complete — USDC approved. Awaiting mint transaction...</p>
+      )}
+      {phase === 'tx_pending' && (
+        <p className="text-xs text-dl-gray font-dl-mono mb-3">
+          {op === 'mint' ? 'Step 2/2' : 'Step 1/1'} — Transaction submitted. Awaiting confirmation...
+          {txHash && (
+            <> <a href={blockscoutLink(txHash)} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline ml-1">View on Blockscout</a></>
+          )}
+        </p>
+      )}
+      {phase === 'success' && (
+        <div className="border border-green-200 bg-green-50 px-3 py-2 mb-3 text-xs font-dl-mono text-green-700">
+          Transaction confirmed.
+          {txHash && (
+            <> <a href={blockscoutLink(txHash)} target="_blank" rel="noopener noreferrer" className="underline ml-1">View TX</a></>
+          )}
+          <button onClick={reset} className="ml-4 text-dl-navy underline bg-transparent border-0 p-0 text-xs font-dl-mono cursor-pointer">New operation</button>
+        </div>
+      )}
+      {phase === 'error' && (
+        <div className="border border-red-200 bg-red-50 px-3 py-2 mb-3 text-xs font-dl-mono text-red-700">
+          Error: {errMsg}
+          <button onClick={reset} className="ml-4 text-dl-navy underline bg-transparent border-0 p-0 text-xs font-dl-mono cursor-pointer">Try again</button>
+        </div>
+      )}
+
+      {/* Action button */}
+      {phase === 'idle' && (
+        <SolidButton
+          onClick={op === 'mint' ? handleApproveAndMint : handleRedeem}
+          disabled={!axusdWei || !isConnected}
+          size="sm"
+        >
+          {op === 'mint' ? 'Approve USDC + Mint AXUSD' : 'Redeem AXUSD for USDC'}
+        </SolidButton>
+      )}
+
+      {/* Pending activation banner */}
+      <div className="mt-4 border border-dl-border bg-white px-3 py-2 text-xs font-dl-mono text-dl-gray">
+        <span className="text-dl-navy font-semibold">Activation Pending:</span> Canonical PSM requires Governance Safe to call{' '}
+        <span className="text-dl-navy">addAgent(CANONICAL_PSM)</span> on the AXUSD token before mint/redeem succeed on-chain.
+        The form is ready — transactions will revert until activated.
+      </div>
+    </div>
+  );
+}
+
 function PsmTab({
   psmData,
   psmLoading,
@@ -1287,7 +1569,7 @@ function PsmTab({
             ]}
           />
 
-          <SectionHeading>Canonical PSM — Reserve Metrics</SectionHeading>
+          <SectionHeading>Reserve Metrics</SectionHeading>
           <DetailGrid
             left={[
               { label: 'USDC Reserves', value: `${parseFloat(psmData.canonical.usdcReserves).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC` },
@@ -1304,29 +1586,13 @@ function PsmTab({
           />
 
           <SectionHeading>Mint / Redeem</SectionHeading>
-          <div className="border border-dl-border p-4 mb-8">
-            {!isConnected ? (
-              <p className="text-sm text-dl-gray text-center py-4">Connect your wallet to use the PSM.</p>
-            ) : (
-              <div className="space-y-3">
-                <div className="border border-dl-border bg-dl-bg-alt px-4 py-3 text-xs text-dl-gray font-dl-mono">
-                  <p className="mb-1 font-semibold text-dl-navy">Identity Gate Active</p>
-                  <p>Your wallet must hold a registered on-chain identity with KYC_VERIFIED (Topic 1) and SANCTIONS_CLEAR (Topic 3) claims to use the Canonical PSM. Unverified wallets will be rejected.</p>
-                </div>
-                <div className="border border-dl-border bg-white px-4 py-3 text-xs text-dl-gray font-dl-mono">
-                  <p className="font-semibold text-dl-navy mb-1">Activation Pending</p>
-                  <p>
-                    The Canonical PSM is deployed and audited but awaiting two Governance Safe transactions before mint/redeem are live: <span className="text-dl-navy">addAgent(CANONICAL_PSM)</span> on the AXUSD token, and <span className="text-dl-navy">LendingPlatformModule.addPlatform(AXUSD, CANONICAL_PSM)</span>.
-                    On-chain activity will appear here once activated.
-                  </p>
-                </div>
-                <div className="text-xs text-dl-gray font-dl-mono pt-2">
-                  <p>Connected wallet: <span className="text-dl-navy">{address ? shortAddr(address) : '—'}</span></p>
-                  <p className="mt-1">To check your identity status, visit the <button className="text-dl-navy underline cursor-pointer bg-transparent border-0 p-0 font-dl-mono text-xs" onClick={() => {}}>Identity tab</button>.</p>
-                </div>
-              </div>
-            )}
-          </div>
+          <PsmMintRedeemPanel
+            address={address}
+            isConnected={isConnected}
+            mintFeeBps={psmData.canonical.mintFee ?? 10}
+            redeemFeeBps={psmData.canonical.redeemFee ?? 10}
+            paused={psmData.canonical.paused}
+          />
 
           <SectionHeading>Legacy PSM (GENIUS — Configured-Inactive)</SectionHeading>
           <div className="border border-dl-border p-4 mb-4 text-xs text-dl-gray font-dl-mono bg-dl-bg-alt">
