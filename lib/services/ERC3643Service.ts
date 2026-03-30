@@ -218,34 +218,31 @@ export class ERC3643Service {
     return { inserted, expiresAt, refreshRequiredBy, signature };
   }
 
-  static async issueClaim(wallet: string, topic: number, data: string = '') {
+  static async issueClaim(wallet: string, topic: number, data: string = '', opts?: { tx?: DbTx }) {
     const signer = getSigner();
     const dbIdentity = await db.select().from(t3Identities).where(eq(t3Identities.wallet, wallet.toLowerCase())).limit(1);
     if (dbIdentity.length === 0) throw new Error('Identity not found for wallet');
 
-    const existingActiveClaim = await db.select({ id: t3Claims.id })
-      .from(t3Claims)
-      .where(and(
-        eq(t3Claims.identityId, dbIdentity[0].id),
-        eq(t3Claims.topic, topic),
-        eq(t3Claims.revoked, false),
-        gte(t3Claims.expiresAt, new Date()),
-      ))
-      .limit(1);
-    const isRenewal = existingActiveClaim.length > 0;
+    const isRenewal = opts?.tx
+      ? false
+      : (await db.select({ id: t3Claims.id })
+          .from(t3Claims)
+          .where(and(
+            eq(t3Claims.identityId, dbIdentity[0].id),
+            eq(t3Claims.topic, topic),
+            eq(t3Claims.revoked, false),
+            gte(t3Claims.expiresAt, new Date()),
+          ))
+          .limit(1)).length > 0;
 
     const identityAddr = dbIdentity[0].onchainIdAddress;
     const now = new Date();
-    const { inserted, expiresAt, refreshRequiredBy, signature } = await db.transaction(async (tx) => {
-      return ERC3643Service._buildAndInsertClaim(
-        tx,
-        wallet,
-        topic,
-        { id: dbIdentity[0].id, onchainIdAddress: identityAddr ?? '' },
-        signer,
-        now
-      );
-    });
+    const buildClaim = (tx: DbTx) => ERC3643Service._buildAndInsertClaim(
+      tx, wallet, topic, { id: dbIdentity[0].id, onchainIdAddress: identityAddr ?? '' }, signer, now
+    );
+    const { inserted, expiresAt, refreshRequiredBy, signature } = opts?.tx
+      ? await buildClaim(opts.tx)
+      : await db.transaction(async (tx) => buildClaim(tx));
 
     const callerAddress = await signer.getAddress();
 
@@ -341,24 +338,16 @@ export class ERC3643Service {
 
     try {
       const txResult = await db.transaction(async (tx) => {
-        const t1 = await ERC3643Service._buildAndInsertClaim(
-          tx, walletAddress, 1,
-          { id: dbIdentity.id, onchainIdAddress: dbIdentity.onchainIdAddress ?? '' },
-          signer, now
-        );
-        const t3 = await ERC3643Service._buildAndInsertClaim(
-          tx, walletAddress, 3,
-          { id: dbIdentity.id, onchainIdAddress: dbIdentity.onchainIdAddress ?? '' },
-          signer, now
-        );
+        const t1 = await ERC3643Service.issueClaim(walletAddress, 1, '', { tx });
+        const t3 = await ERC3643Service.issueClaim(walletAddress, 3, '', { tx });
         await tx.update(t3KycSubmissions)
           .set({ status: 'bridged', bridgedAt: now, bridgeError: null, updatedAt: now })
           .where(eq(t3KycSubmissions.id, submissionId));
         return { t1, t3 };
       });
 
-      t1Claim = txResult.t1.inserted as typeof t1Claim;
-      t3Claim = txResult.t3.inserted as typeof t3Claim;
+      t1Claim = { id: txResult.t1.claimId } as typeof t1Claim;
+      t3Claim = { id: txResult.t3.claimId } as typeof t3Claim;
       t1ExpiresAt = txResult.t1.expiresAt;
       t3ExpiresAt = txResult.t3.expiresAt;
     } catch (txErr: unknown) {
