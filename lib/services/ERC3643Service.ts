@@ -94,6 +94,7 @@ export class ERC3643Service {
       verificationLevel: dbIdentity[0]?.verificationLevel ?? 0,
       status: dbIdentity[0]?.status ?? 'unregistered',
       claims: claims.map(c => ({
+        id: c.id,
         topic: c.topic,
         issuer: c.issuerAddress,
         validFrom: c.validFrom,
