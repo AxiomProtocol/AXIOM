@@ -34,53 +34,95 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const adminWallet = 'compliance-operator';
-  const results: Record<string, unknown> = {};
-  const errors: string[] = [];
+
+  let regResult: Awaited<ReturnType<typeof ERC3643Service.registerIdentity>>;
+  let kyc: Awaited<ReturnType<typeof ERC3643Service.issueClaim>>;
+  let sanctions: Awaited<ReturnType<typeof ERC3643Service.issueClaim>>;
+
+  try {
+    regResult = await ERC3643Service.registerIdentity(submission.walletAddress, countryCode ?? 840);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await db.insert(t3ComplianceOpsLog).values({
+      wallet: submission.walletAddress,
+      action: 'issuance',
+      topic: null,
+      operatorAddress: adminWallet,
+      result: 'failed',
+      notes: `registerIdentity failed: ${msg}`,
+    }).catch(() => {});
+    return res.status(500).json({ error: `registerIdentity failed: ${msg}` });
+  }
+
+  try {
+    kyc = await ERC3643Service.issueClaim(submission.walletAddress, 1);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await db.insert(t3ComplianceOpsLog).values({
+      wallet: submission.walletAddress,
+      action: 'issuance',
+      topic: 1,
+      operatorAddress: adminWallet,
+      result: 'failed',
+      notes: `issueClaim(Topic 1 KYC) failed: ${msg}`,
+    }).catch(() => {});
+    return res.status(500).json({ error: `issueClaim(Topic 1 KYC) failed: ${msg}` });
+  }
+
+  try {
+    sanctions = await ERC3643Service.issueClaim(submission.walletAddress, 3);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await db.insert(t3ComplianceOpsLog).values({
+      wallet: submission.walletAddress,
+      action: 'issuance',
+      topic: 3,
+      operatorAddress: adminWallet,
+      result: 'failed',
+      notes: `issueClaim(Topic 3 Sanctions) failed: ${msg}`,
+    }).catch(() => {});
+    return res.status(500).json({ error: `issueClaim(Topic 3 Sanctions) failed: ${msg}` });
+  }
 
   await db.update(t3KycSubmissions)
-    .set({ status: 'approved', reviewNote: reviewNote ?? null, reviewedAt: new Date(), updatedAt: new Date() })
-    .where(eq(t3KycSubmissions.id, submissionId));
-
-  try {
-    const regResult = await ERC3643Service.registerIdentity(submission.walletAddress, countryCode ?? 840);
-    results.registerIdentity = { txHash: regResult.txHash, registryTxHash: regResult.registryTxHash, identityAddress: regResult.onchainIdAddress };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    errors.push(`registerIdentity: ${msg}`);
-    results.registerIdentity = { error: msg };
-  }
-
-  try {
-    const kyc = await ERC3643Service.issueClaim(submission.walletAddress, 1);
-    results.kycClaim = { claimId: kyc.claimId, expiresAt: kyc.expiresAt };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    errors.push(`issueClaim(topic 1): ${msg}`);
-    results.kycClaim = { error: msg };
-  }
-
-  try {
-    const sanctions = await ERC3643Service.issueClaim(submission.walletAddress, 3);
-    results.sanctionsClaim = { claimId: sanctions.claimId, expiresAt: sanctions.expiresAt };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    errors.push(`issueClaim(topic 3): ${msg}`);
-    results.sanctionsClaim = { error: msg };
-  }
-
-  const bridged = errors.length === 0;
-  await db.update(t3KycSubmissions)
-    .set({ status: bridged ? 'bridged' : 'approved', bridgedAt: bridged ? new Date() : null, bridgeError: errors.length ? errors.join('; ') : null, updatedAt: new Date() })
+    .set({
+      status: 'bridged',
+      reviewNote: reviewNote ?? null,
+      reviewedAt: new Date(),
+      bridgedAt: new Date(),
+      bridgeError: null,
+      updatedAt: new Date(),
+    })
     .where(eq(t3KycSubmissions.id, submissionId)).catch(() => {});
 
   await db.insert(t3ComplianceOpsLog).values({
     wallet: submission.walletAddress,
     action: 'issuance',
-    topic: null,
+    topic: 1,
+    claimId: kyc.claimId,
     operatorAddress: adminWallet,
-    result: bridged ? 'success' : 'partial',
-    notes: bridged ? 'KYC approved — Topics 1 and 3 issued' : `Partial: ${errors.join('; ')}`,
-    metadata: results,
+    txHash: kyc.txHash ?? null,
+    result: 'success',
+    notes: 'KYC approved — registerIdentity + Topic 1 (KYC) + Topic 3 (Sanctions) issued atomically',
+    metadata: {
+      identityAddress: regResult.onchainIdAddress,
+      registryTxHash: regResult.registryTxHash,
+      kycClaimId: kyc.claimId,
+      kycExpiresAt: kyc.expiresAt,
+      sanctionsClaimId: sanctions.claimId,
+      sanctionsExpiresAt: sanctions.expiresAt,
+    },
+  }).catch(() => {});
+
+  await db.insert(t3ComplianceOpsLog).values({
+    wallet: submission.walletAddress,
+    action: 'issuance',
+    topic: 3,
+    claimId: sanctions.claimId,
+    operatorAddress: adminWallet,
+    txHash: sanctions.txHash ?? null,
+    result: 'success',
+    notes: 'Topic 3 (Sanctions) issued as part of atomic KYC approval',
   }).catch(() => {});
 
   return res.status(200).json({
@@ -88,9 +130,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     data: {
       submissionId,
       walletAddress: submission.walletAddress,
-      status: bridged ? 'bridged' : 'approved',
-      results,
-      errors: errors.length ? errors : undefined,
+      status: 'bridged',
+      identityAddress: regResult.onchainIdAddress,
+      kycClaim: { claimId: kyc.claimId, expiresAt: kyc.expiresAt },
+      sanctionsClaim: { claimId: sanctions.claimId, expiresAt: sanctions.expiresAt },
     },
   });
 }

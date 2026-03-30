@@ -310,7 +310,7 @@ export default function FounderOpsPage() {
     setKycLoading(true);
     try {
       const k = key ?? complianceAdminKey;
-      const res = await fetch('/api/erc3643/identity/review?status=submitted', { headers: { 'x-admin-key': k } }).then(r => r.json()).catch(() => null);
+      const res = await fetch('/api/erc3643/identity/review?status=submitted,under_review', { headers: { 'x-admin-key': k } }).then(r => r.json()).catch(() => null);
       if (res?.success) setKycQueue(res.data ?? []);
     } finally {
       setKycLoading(false);
@@ -1829,10 +1829,10 @@ export default function FounderOpsPage() {
                       {accredQueue.map((sub: any) => (
                         <div key={sub.id} className="border border-dl-border p-4 bg-dl-bg-alt">
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Wallet</p><p className="font-dl-mono text-xs text-dl-navy break-all">{sub.wallet_address}</p></div>
-                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Basis</p><p className="font-dl-mono text-xs">{sub.accreditation_basis ?? '—'}</p></div>
-                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Self-Cert</p><p className="font-dl-mono text-xs">{sub.self_certification ? 'Yes' : 'No'}</p></div>
-                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Submitted</p><p className="font-dl-mono text-xs">{sub.created_at ? new Date(sub.created_at).toISOString().slice(0, 10) : '—'}</p></div>
+                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Wallet</p><p className="font-dl-mono text-xs text-dl-navy break-all">{sub.walletAddress}</p></div>
+                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Basis</p><p className="font-dl-mono text-xs">{sub.accreditationBasis ?? '—'}</p></div>
+                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Self-Cert</p><p className="font-dl-mono text-xs">{sub.selfCertification ? 'Yes' : 'No'}</p></div>
+                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Submitted</p><p className="font-dl-mono text-xs">{sub.createdAt ? new Date(sub.createdAt).toISOString().slice(0, 10) : '—'}</p></div>
                           </div>
                           {sub.notes && <p className="font-dl-mono text-xs text-dl-gray mb-3 italic">{sub.notes}</p>}
                           {accredMsg && accredMsg.id === sub.id && (

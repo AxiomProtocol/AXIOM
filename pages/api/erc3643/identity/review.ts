@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import { t3KycSubmissions } from '../../../../shared/erc3643Schema';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { IdentityBridgeService } from '../../../../lib/services/IdentityBridgeService';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -11,14 +11,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const statusFilter = (req.query.status as string) || undefined;
+    const statusParam = (req.query.status as string) || undefined;
+    const statuses = statusParam ? statusParam.split(',').map(s => s.trim()).filter(Boolean) : [];
 
     try {
       let submissions;
-      if (statusFilter) {
+      if (statuses.length === 1) {
         submissions = await db.select()
           .from(t3KycSubmissions)
-          .where(eq(t3KycSubmissions.status, statusFilter))
+          .where(eq(t3KycSubmissions.status, statuses[0]))
+          .orderBy(t3KycSubmissions.createdAt);
+      } else if (statuses.length > 1) {
+        submissions = await db.select()
+          .from(t3KycSubmissions)
+          .where(inArray(t3KycSubmissions.status, statuses))
           .orderBy(t3KycSubmissions.createdAt);
       } else {
         submissions = await db.select()
