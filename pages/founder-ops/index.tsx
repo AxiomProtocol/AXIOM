@@ -109,7 +109,8 @@ type TabId =
   | 'community'
   | 'log'
   | 'system'
-  | 'governance';
+  | 'governance'
+  | 'compliance';
 
 const FRAMEWORK_PRINCIPLE = `This is not a personal budget. This is a disciplined capital deployment system designed to build a machine-verifiable operating record across Axiom's live rails. The objective is not to maximize short-term return. The objective is to systematically produce proof that Axiom's infrastructure is active, capitalized, measurable, and compounding across on-chain liquidity, real asset intelligence, and community coordination.`;
 
@@ -226,6 +227,18 @@ export default function FounderOpsPage() {
   const [adminActions, setAdminActions] = useState<any[]>([]);
   const [adminActionsLoading, setAdminActionsLoading] = useState(false);
 
+  const [complianceAdminKey, setComplianceAdminKey] = useState('');
+  const [kycQueue, setKycQueue] = useState<any[]>([]);
+  const [kycLoading, setKycLoading] = useState(false);
+  const [kycMsg, setKycMsg] = useState<{ id: string; type: 'success' | 'error'; text: string } | null>(null);
+  const [accredQueue, setAccredQueue] = useState<any[]>([]);
+  const [accredLoading, setAccredLoading] = useState(false);
+  const [accredMsg, setAccredMsg] = useState<{ id: string; type: 'success' | 'error'; text: string } | null>(null);
+  const [complianceLog, setComplianceLog] = useState<any[]>([]);
+  const [complianceLogLoading, setComplianceLogLoading] = useState(false);
+  const [revokeMsg, setRevokeMsg] = useState<{ id: string; type: 'success' | 'error'; text: string } | null>(null);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
+
   useEffect(() => {
     Promise.all([
       fetch('/api/founder-ops/overview').then(r => r.json()).catch(() => null),
@@ -290,6 +303,127 @@ export default function FounderOpsPage() {
       if (res?.success) setAdminActions(res.actions ?? []);
     } finally {
       setAdminActionsLoading(false);
+    }
+  };
+
+  const loadKycQueue = async (key?: string) => {
+    setKycLoading(true);
+    try {
+      const k = key ?? complianceAdminKey;
+      const res = await fetch('/api/erc3643/identity/review?status=submitted', { headers: { 'x-admin-key': k } }).then(r => r.json()).catch(() => null);
+      if (res?.success) setKycQueue(res.data ?? []);
+    } finally {
+      setKycLoading(false);
+    }
+  };
+
+  const loadAccredQueue = async (key?: string) => {
+    setAccredLoading(true);
+    try {
+      const k = key ?? complianceAdminKey;
+      const res = await fetch('/api/erc3643/accreditation/approve', { headers: { 'x-admin-key': k } }).then(r => r.json()).catch(() => null);
+      if (res?.success) setAccredQueue(res.data ?? []);
+    } finally {
+      setAccredLoading(false);
+    }
+  };
+
+  const loadComplianceLog = async (key?: string) => {
+    setComplianceLogLoading(true);
+    try {
+      const k = key ?? complianceAdminKey;
+      const res = await fetch('/api/erc3643/identity/compliance-log?limit=50', { headers: { 'x-admin-key': k } }).then(r => r.json()).catch(() => null);
+      if (res?.success) setComplianceLog(res.data ?? []);
+    } finally {
+      setComplianceLogLoading(false);
+    }
+  };
+
+  const loadComplianceTab = (key?: string) => {
+    const k = key ?? complianceAdminKey;
+    loadKycQueue(k);
+    loadAccredQueue(k);
+    loadComplianceLog(k);
+  };
+
+  const handleKycAction = async (submissionId: string, action: 'approve' | 'reject', reviewNote?: string) => {
+    setKycMsg(null);
+    try {
+      if (action === 'approve') {
+        const res = await fetch('/api/erc3643/identity/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-key': complianceAdminKey },
+          body: JSON.stringify({ submissionId, reviewNote }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          setKycMsg({ id: submissionId, type: 'error', text: json.error || 'Approval failed' });
+        } else {
+          setKycMsg({ id: submissionId, type: 'success', text: json.data?.errors?.length ? `Approved (partial: ${json.data.errors.join('; ')})` : 'Approved — identity + claims issued.' });
+          setKycQueue(prev => prev.filter(s => s.id !== submissionId));
+          loadComplianceLog(complianceAdminKey);
+        }
+      } else {
+        const res = await fetch('/api/erc3643/identity/review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-key': complianceAdminKey },
+          body: JSON.stringify({ submissionId, action: 'reject', reviewNote }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          setKycMsg({ id: submissionId, type: 'error', text: json.error || 'Rejection failed' });
+        } else {
+          setKycMsg({ id: submissionId, type: 'success', text: 'Submission rejected.' });
+          setKycQueue(prev => prev.filter(s => s.id !== submissionId));
+        }
+      }
+    } catch (e: unknown) {
+      setKycMsg({ id: submissionId, type: 'error', text: e instanceof Error ? e.message : String(e) });
+    }
+  };
+
+  const handleAccredAction = async (submissionId: string, action: 'approve' | 'reject', reviewNote?: string) => {
+    setAccredMsg(null);
+    try {
+      const res = await fetch('/api/erc3643/accreditation/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': complianceAdminKey },
+        body: JSON.stringify({ submissionId, action, adminWallet: 'compliance-operator', reviewNote }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setAccredMsg({ id: submissionId, type: 'error', text: json.error || 'Action failed' });
+      } else {
+        setAccredMsg({ id: submissionId, type: 'success', text: action === 'approve' ? 'Accreditation approved — Topic 2 claim issued.' : 'Accreditation rejected.' });
+        setAccredQueue(prev => prev.filter(s => s.id !== submissionId));
+        loadComplianceLog(complianceAdminKey);
+      }
+    } catch (e: unknown) {
+      setAccredMsg({ id: submissionId, type: 'error', text: e instanceof Error ? e.message : String(e) });
+    }
+  };
+
+  const handleRevoke = async (claimId: string) => {
+    if (!confirm('Revoke this claim on-chain? This action cannot be undone.')) return;
+    setRevokingId(claimId);
+    setRevokeMsg(null);
+    try {
+      const res = await fetch('/api/erc3643/identity/revoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': complianceAdminKey },
+        body: JSON.stringify({ claimId, adminWallet: 'compliance-operator' }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setRevokeMsg({ id: claimId, type: 'error', text: json.error || 'Revocation failed' });
+      } else {
+        setRevokeMsg({ id: claimId, type: 'success', text: `Claim revoked. TX: ${json.data?.txHash?.slice(0, 10)}…` });
+        loadComplianceLog(complianceAdminKey);
+      }
+    } catch (e: unknown) {
+      setRevokeMsg({ id: claimId, type: 'error', text: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setRevokingId(null);
     }
   };
 
@@ -393,6 +527,7 @@ export default function FounderOpsPage() {
     { id: 'log', label: `Log${logs.length > 0 ? ` (${logs.length})` : ''}` },
     { id: 'governance', label: 'Governance Migration' },
     { id: 'system', label: 'System Status' },
+    { id: 'compliance', label: `Compliance${kycQueue.length > 0 || accredQueue.length > 0 ? ` (${kycQueue.length + accredQueue.length})` : ''}` },
   ];
 
   const primaryPool = pools.find(p => p.reserve0Label && p.reserve1Label) || pools[0] || null;
@@ -1606,6 +1741,179 @@ export default function FounderOpsPage() {
                               <td className="p-3 text-right font-dl-mono text-xs text-dl-navy">{Number(v.actual_value).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                               <td className={`p-3 text-right font-dl-mono text-xs font-bold ${Number(v.variance_pct) > 15 ? 'text-dl-error' : Number(v.variance_pct) < -15 ? 'text-dl-forest' : 'text-dl-navy'}`}>
                                 {Number(v.variance_pct) > 0 ? '+' : ''}{Number(v.variance_pct).toFixed(2)}%
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* ── TAB: COMPLIANCE QUEUE ───────────────────────────────── */}
+            {activeTab === 'compliance' && (
+              <>
+                <div className="mb-6">
+                  <p className="font-dl-mono text-xs text-dl-gray mb-1">All compliance actions require the admin key. KYC approval issues Topics 1 and 3 atomically. Accreditation approval issues Topic 2 only — separate gated process.</p>
+                  <div className="flex gap-2 mb-4">
+                    <input
+                      type="password"
+                      placeholder="Admin key"
+                      value={complianceAdminKey}
+                      onChange={e => setComplianceAdminKey(e.target.value)}
+                      className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-bg w-48"
+                    />
+                    <button
+                      onClick={() => loadComplianceTab(complianceAdminKey)}
+                      disabled={!complianceAdminKey}
+                      className="bg-dl-navy text-white px-4 py-2 font-dl-mono text-xs disabled:opacity-40"
+                    >
+                      Load
+                    </button>
+                  </div>
+                </div>
+
+                {/* KYC Queue */}
+                <div className="mb-8">
+                  <SectionHeading>KYC Compliance Queue</SectionHeading>
+                  <p className="font-dl-mono text-xs text-dl-gray mb-4">Pending KYC submissions awaiting review. Approve runs registerIdentity + issueClaim(Topic 1: KYC) + issueClaim(Topic 3: Sanctions) atomically.</p>
+                  {kycLoading ? (
+                    <p className="font-dl-mono text-sm text-dl-gray py-4">Loading KYC queue...</p>
+                  ) : kycQueue.length === 0 ? (
+                    <div className="border border-dl-border p-6 text-center">
+                      <p className="font-dl-mono text-sm text-dl-muted">No pending KYC submissions.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {kycQueue.map((sub: any) => (
+                        <div key={sub.id} className="border border-dl-border p-4 bg-dl-bg-alt">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Wallet</p><p className="font-dl-mono text-xs text-dl-navy break-all">{sub.walletAddress}</p></div>
+                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Name</p><p className="font-dl-mono text-xs">{sub.fullName}</p></div>
+                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Country</p><p className="font-dl-mono text-xs">{sub.country}</p></div>
+                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Submitted</p><p className="font-dl-mono text-xs">{sub.createdAt ? new Date(sub.createdAt).toISOString().slice(0, 10) : '—'}</p></div>
+                          </div>
+                          {kycMsg && kycMsg.id === sub.id && (
+                            <p className={`font-dl-mono text-xs mb-3 ${kycMsg.type === 'success' ? 'text-dl-forest' : 'text-dl-error'}`}>{kycMsg.text}</p>
+                          )}
+                          <div className="flex flex-wrap gap-2">
+                            <button onClick={() => handleKycAction(sub.id, 'approve')} disabled={!complianceAdminKey}
+                              className="bg-dl-forest text-white px-4 py-2 font-dl-mono text-xs disabled:opacity-40">
+                              Approve + Issue Claims
+                            </button>
+                            <button onClick={() => handleKycAction(sub.id, 'reject')} disabled={!complianceAdminKey}
+                              className="border border-dl-error text-dl-error px-4 py-2 font-dl-mono text-xs disabled:opacity-40">
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Accreditation Queue */}
+                <div className="mb-8">
+                  <SectionHeading>Accreditation Queue</SectionHeading>
+                  <p className="font-dl-mono text-xs text-dl-gray mb-4">Pending accreditation (Topic 2: Accredited Investor) submissions. Requires separate explicit approval — does not auto-approve with KYC.</p>
+                  {accredLoading ? (
+                    <p className="font-dl-mono text-sm text-dl-gray py-4">Loading accreditation queue...</p>
+                  ) : accredQueue.length === 0 ? (
+                    <div className="border border-dl-border p-6 text-center">
+                      <p className="font-dl-mono text-sm text-dl-muted">No pending accreditation submissions.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {accredQueue.map((sub: any) => (
+                        <div key={sub.id} className="border border-dl-border p-4 bg-dl-bg-alt">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Wallet</p><p className="font-dl-mono text-xs text-dl-navy break-all">{sub.wallet_address}</p></div>
+                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Basis</p><p className="font-dl-mono text-xs">{sub.accreditation_basis ?? '—'}</p></div>
+                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Self-Cert</p><p className="font-dl-mono text-xs">{sub.self_certification ? 'Yes' : 'No'}</p></div>
+                            <div><p className="font-dl-mono text-xs text-dl-gray uppercase mb-0.5">Submitted</p><p className="font-dl-mono text-xs">{sub.created_at ? new Date(sub.created_at).toISOString().slice(0, 10) : '—'}</p></div>
+                          </div>
+                          {sub.notes && <p className="font-dl-mono text-xs text-dl-gray mb-3 italic">{sub.notes}</p>}
+                          {accredMsg && accredMsg.id === sub.id && (
+                            <p className={`font-dl-mono text-xs mb-3 ${accredMsg.type === 'success' ? 'text-dl-forest' : 'text-dl-error'}`}>{accredMsg.text}</p>
+                          )}
+                          <div className="flex flex-wrap gap-2">
+                            <button onClick={() => handleAccredAction(sub.id, 'approve')} disabled={!complianceAdminKey}
+                              className="bg-dl-forest text-white px-4 py-2 font-dl-mono text-xs disabled:opacity-40">
+                              Issue Topic 2
+                            </button>
+                            <button onClick={() => handleAccredAction(sub.id, 'reject')} disabled={!complianceAdminKey}
+                              className="border border-dl-error text-dl-error px-4 py-2 font-dl-mono text-xs disabled:opacity-40">
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Compliance Event Log */}
+                <div className="mb-8">
+                  <SectionHeading>Compliance Event Log</SectionHeading>
+                  <p className="font-dl-mono text-xs text-dl-gray mb-4">All claim issuances, renewals, revocations, and expiry alerts. Use the Revoke button to call ClaimIssuer.revokeClaimBySignature on-chain.</p>
+                  {complianceLogLoading ? (
+                    <p className="font-dl-mono text-sm text-dl-gray py-4">Loading compliance log...</p>
+                  ) : complianceLog.length === 0 ? (
+                    <div className="border border-dl-border p-6 text-center">
+                      <p className="font-dl-mono text-sm text-dl-muted">No compliance events logged yet.</p>
+                    </div>
+                  ) : (
+                    <div className="border border-dl-border overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-dl-border bg-dl-bg-alt">
+                            <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Timestamp</th>
+                            <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Wallet</th>
+                            <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Action</th>
+                            <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Topic</th>
+                            <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Result</th>
+                            <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">TX / Claim</th>
+                            <th className="text-left p-3 font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Revoke</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {complianceLog.map((entry: any) => (
+                            <tr key={entry.id} className="border-b border-dl-border last:border-0 hover:bg-dl-bg-alt">
+                              <td className="p-3 font-dl-mono text-xs text-dl-gray whitespace-nowrap">{entry.createdAt ? new Date(entry.createdAt).toISOString().replace('T', ' ').slice(0, 19) + ' UTC' : '—'}</td>
+                              <td className="p-3 font-dl-mono text-xs text-dl-navy break-all max-w-[120px]">{entry.wallet?.slice(0, 8)}…{entry.wallet?.slice(-4)}</td>
+                              <td className="p-3 font-dl-mono text-xs uppercase text-dl-navy">{entry.action}</td>
+                              <td className="p-3 font-dl-mono text-xs">{entry.topic ? ({ 1: 'KYC', 2: 'Accred', 3: 'Sanctions' } as Record<number, string>)[entry.topic] ?? `T${entry.topic}` : '—'}</td>
+                              <td className="p-3 font-dl-mono text-xs">
+                                <span className={`uppercase ${entry.result === 'success' ? 'text-dl-forest' : entry.result === 'rejected' ? 'text-dl-error' : 'text-dl-gold'}`}>
+                                  {entry.result}
+                                </span>
+                              </td>
+                              <td className="p-3 font-dl-mono text-xs">
+                                {entry.txHash ? (
+                                  <a href={`https://arbiscan.io/tx/${entry.txHash}`} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline">
+                                    {entry.txHash.slice(0, 8)}…
+                                  </a>
+                                ) : entry.claimId ? (
+                                  <span className="text-dl-gray">{entry.claimId.slice(0, 8)}…</span>
+                                ) : '—'}
+                              </td>
+                              <td className="p-3">
+                                {entry.claimId && entry.action === 'issuance' ? (
+                                  <>
+                                    {revokeMsg && revokeMsg.id === entry.claimId && (
+                                      <p className={`font-dl-mono text-xs mb-1 ${revokeMsg.type === 'success' ? 'text-dl-forest' : 'text-dl-error'}`}>{revokeMsg.text}</p>
+                                    )}
+                                    <button
+                                      onClick={() => handleRevoke(entry.claimId)}
+                                      disabled={!!revokingId || !complianceAdminKey}
+                                      className="border border-dl-error text-dl-error px-3 py-1 font-dl-mono text-xs disabled:opacity-40"
+                                    >
+                                      {revokingId === entry.claimId ? 'Revoking…' : 'Revoke'}
+                                    </button>
+                                  </>
+                                ) : '—'}
                               </td>
                             </tr>
                           ))}
