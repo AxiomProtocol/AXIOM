@@ -25,8 +25,11 @@ export const increaseParticipants = pgTable(
     cardStatus: varchar('card_status', { length: 30 }).notNull().default('not_requested'),
     cardId: varchar('card_id', { length: 100 }),
     cardLast4: varchar('card_last4', { length: 4 }),
-    // Increase entity/account references — stores shared Axiom entity+account IDs
-    // (B2B single-entity model; no per-participant entities on Increase)
+    // Per-participant Increase entity and account IDs.
+    // Each participant receives their own KYC entity (increaseEntityId) and
+    // dedicated deposit account (increaseAccountId) provisioned at onboarding.
+    // Both must be set for a participant to be considered fully provisioned.
+    // Null means onboarding has not completed the entity/account step yet.
     increaseEntityId: varchar('increase_entity_id', { length: 100 }),
     increaseAccountId: varchar('increase_account_id', { length: 100 }),
     notes: text('notes'),
