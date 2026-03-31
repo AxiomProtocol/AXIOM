@@ -53,13 +53,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const adminOk = isAdmin(req);
+  // Derive authoritative wallet from SIWE session for non-admin paths.
+  // In dev mode, fall back to the query param. In production, SIWE wallet is the ONLY identity.
+  let resolvedWallet = wallet;
   if (!adminOk) {
     const siweWallet = await getSiweWallet(req);
     if (!siweWallet) {
       return res.status(401).json({ error: 'Wallet sign-in required' });
     }
-    if (siweWallet !== '__dev__' && siweWallet.toLowerCase() !== wallet) {
-      return res.status(403).json({ error: 'You may only view your own status' });
+    resolvedWallet = siweWallet === '__dev__' ? wallet : siweWallet;
+    if (!resolvedWallet || !/^0x[a-fA-F0-9]{40}$/i.test(resolvedWallet)) {
+      return res.status(400).json({ error: 'Wallet address could not be determined from session' });
     }
   }
 
@@ -67,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const rows = await db
       .select()
       .from(increaseParticipants)
-      .where(eq(increaseParticipants.walletAddress, wallet))
+      .where(eq(increaseParticipants.walletAddress, resolvedWallet))
       .limit(1);
 
     if (rows.length === 0) {

@@ -50,6 +50,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const wallet = walletAddress.toLowerCase();
 
   const adminOk = isAdmin(req);
+  // For non-admin paths, derive identity from SIWE and verify it matches the URL param.
+  // In dev mode, trust the URL param. In production, SIWE must match.
   if (!adminOk) {
     const siweWallet = await getSiweWallet(req);
     if (!siweWallet) {

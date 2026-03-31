@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useAccount } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law/DesignLawLayout';
 
 interface AnalyticsStats {
@@ -78,6 +79,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function WealthPracticePage() {
+  const { address: connectedAddress } = useAccount();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [stats, setStats] = useState<AnalyticsStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
@@ -114,7 +116,7 @@ export default function WealthPracticePage() {
     id: number; walletAddress: string; participantRef: string; fullName: string; email: string; status: string;
   } | null>(null);
   const [participantHolds, setParticipantHolds] = useState<Array<{
-    id: number; groupId: string; groupDisplayName: string | null; requiredAmountCents: number; depositedAmountCents: number; status: string; fundedAt: string | null;
+    id: number; groupId: string | null; groupDisplayName: string | null; amountCents: number; depositedAmountCents: number; status: string; fundedAt: string | null;
   }>>([]);
   const [regForm, setRegForm] = useState({ fullName: '', email: '', phone: '' });
   const [regLoading, setRegLoading] = useState(false);
@@ -143,6 +145,14 @@ export default function WealthPracticePage() {
   const [creatingHub, setCreatingHub] = useState(false);
   const [hubCreateMsg, setHubCreateMsg] = useState('');
   const [hubCreateError, setHubCreateError] = useState('');
+
+  // Sync wagmi connected wallet → practiceAddress + joinWallet automatically
+  useEffect(() => {
+    if (connectedAddress) {
+      setPracticeAddress(connectedAddress);
+      setJoinWallet(connectedAddress);
+    }
+  }, [connectedAddress]);
 
   useEffect(() => {
     if (activeTab === 'overview') {
@@ -235,10 +245,17 @@ export default function WealthPracticePage() {
     if (!/^0x[a-fA-F0-9]{40}$/i.test(address)) return;
     setParticipantLoading(true);
     try {
-      const res = await fetch(`/api/banking/participant/${encodeURIComponent(address)}`);
+      const res = await fetch(`/api/banking/participant/status?wallet=${encodeURIComponent(address)}`);
       const data = await res.json();
-      if (data.success && data.registered) {
-        setParticipant(data.participant);
+      if (data.registered) {
+        setParticipant({
+          id: 0,
+          walletAddress: address,
+          participantRef: data.participantRef,
+          fullName: data.fullName,
+          email: '',
+          status: data.status,
+        });
         setParticipantHolds(data.insuranceHolds || []);
       } else {
         setParticipant(null);
@@ -268,7 +285,7 @@ export default function WealthPracticePage() {
     setRegError('');
     setRegMsg('');
     try {
-      const res = await fetch('/api/banking/participant/register', {
+      const res = await fetch('/api/banking/participant/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -281,8 +298,9 @@ export default function WealthPracticePage() {
       const data = await res.json();
       if (data.success) {
         setParticipant(data.participant);
-        setRegMsg('Banking account registered. Your reference code is ready.');
+        setRegMsg('Axiom Nexus account provisioned. Your reference code is ready.');
         setRegForm({ fullName: '', email: '', phone: '' });
+        fetchParticipantInfo(practiceAddress.trim());
       } else {
         setRegError(data.error || 'Registration failed');
       }
@@ -1222,7 +1240,7 @@ export default function WealthPracticePage() {
                               <div>
                                 <div className="font-dl-mono text-sm text-dl-navy font-bold">{hold.groupDisplayName || hold.groupId}</div>
                                 <div className="text-dl-gray text-xs mt-1">
-                                  Required: <span className="font-dl-mono text-dl-navy">${(hold.requiredAmountCents / 100).toFixed(2)}</span>
+                                  Required: <span className="font-dl-mono text-dl-navy">${(hold.amountCents / 100).toFixed(2)}</span>
                                   {' '}· Deposited: <span className="font-dl-mono text-dl-navy">${(hold.depositedAmountCents / 100).toFixed(2)}</span>
                                 </div>
                               </div>
@@ -1232,7 +1250,7 @@ export default function WealthPracticePage() {
                             </div>
                             {hold.status === 'pending' && (
                               <p className="text-dl-gray text-xs mt-2 leading-relaxed">
-                                Your hold is pending. Send <span className="font-dl-mono font-semibold text-dl-navy">${(hold.requiredAmountCents / 100).toFixed(2)}</span> via ACH to the Axiom Nexus Account (routing 071006486, payee: Axiom Protocol LLC) with memo <span className="font-dl-mono font-semibold text-dl-navy">{participant.participantRef}</span>. Operations will confirm within 1-2 business days.
+                                Your hold is pending. Send <span className="font-dl-mono font-semibold text-dl-navy">${(hold.amountCents / 100).toFixed(2)}</span> via ACH to the Axiom Nexus Account (routing 071006486, payee: Axiom Protocol LLC) with memo <span className="font-dl-mono font-semibold text-dl-navy">{participant.participantRef}</span>. Operations will confirm within 1-2 business days.
                               </p>
                             )}
                             {hold.status === 'funded' && (

@@ -113,9 +113,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { walletAddress, groupId, groupDisplayName, contributionAmountCents } = req.body;
 
-  if (!walletAddress || !/^0x[a-fA-F0-9]{40}$/i.test(walletAddress)) {
-    return res.status(400).json({ error: 'Valid wallet address required' });
-  }
   if (!groupId || typeof groupId !== 'string') {
     return res.status(400).json({ error: 'groupId (string) required' });
   }
@@ -123,9 +120,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'contributionAmountCents must be a number >= 100' });
   }
 
-  const wallet = walletAddress.toLowerCase();
-  if (siweWallet !== '__dev__' && siweWallet.toLowerCase() !== wallet) {
-    return res.status(403).json({ error: 'You may only create holds for your own wallet' });
+  // Derive wallet from SIWE session — in dev mode fall back to body param
+  const wallet = siweWallet === '__dev__'
+    ? (walletAddress as string | undefined)?.toLowerCase()
+    : siweWallet;
+
+  if (!wallet || !/^0x[a-fA-F0-9]{40}$/i.test(wallet)) {
+    return res.status(400).json({ error: 'Wallet address could not be determined from session' });
   }
 
   try {
