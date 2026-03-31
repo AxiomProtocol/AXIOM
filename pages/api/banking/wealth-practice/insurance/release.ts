@@ -15,13 +15,18 @@ function isAdmin(req: NextApiRequest): boolean {
 
 // POST /api/banking/wealth-practice/insurance/release
 // Admin-only: release a funded insurance hold and initiate outbound ACH return.
-// Body: {
-//   holdId,
-//   reason: 'completed' | 'forfeited' | 'cancelled',
-//   // Required for 'completed' releases (to return funds via ACH):
-//   externalRoutingNumber?,
-//   externalAccountNumber?,
-// }
+//
+// Body:
+//   holdId                  number  — required
+//   reason                  string  — 'completed' | 'forfeited' | 'cancelled'
+//   externalRoutingNumber   string  — REQUIRED when reason=completed (9-digit ABA)
+//   externalAccountNumber   string  — REQUIRED when reason=completed
+//
+// Invariants:
+//   reason=completed → externalRoutingNumber + externalAccountNumber REQUIRED.
+//   ACH return MUST succeed before hold status is set to 'released'.
+//   If ACH fails, 502 is returned and hold remains unchanged.
+//   reason=forfeited|cancelled → no ACH; hold transitions to 'forfeited'.
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -36,6 +41,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   if (!reason || !['completed', 'forfeited', 'cancelled'].includes(reason)) {
     return res.status(400).json({ error: 'reason must be completed|forfeited|cancelled' });
+  }
+
+  // Hard upfront validation for completed releases — enforce before any DB reads
+  if (reason === 'completed') {
+    if (!externalRoutingNumber || !/^\d{9}$/.test(String(externalRoutingNumber).trim())) {
+      return res.status(400).json({
+        error: 'externalRoutingNumber (9-digit ABA routing number) is required for reason=completed',
+        code: 'ROUTING_REQUIRED',
+      });
+    }
+    if (!externalAccountNumber || String(externalAccountNumber).trim().length < 4) {
+      return res.status(400).json({
+        error: 'externalAccountNumber is required for reason=completed',
+        code: 'ACCOUNT_REQUIRED',
+      });
+    }
   }
 
   try {
@@ -59,50 +80,69 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let transferId: string | null = null;
     let transferStatus: string | null = null;
 
-    // For completed releases: initiate ACH return to participant's external account
-    if (reason === 'completed' && externalRoutingNumber && externalAccountNumber && hold.depositedAmountCents > 0) {
-      // Look up participant to get their name for the ACH descriptor
-      const participants = await db
+    // For completed releases: ACH return is MANDATORY — must succeed BEFORE updating hold status
+    if (reason === 'completed') {
+      if (hold.depositedAmountCents <= 0) {
+        return res.status(400).json({
+          error: 'Hold has no deposited amount to return — use reason=cancelled for zero-balance holds',
+          code: 'NO_DEPOSIT_TO_RETURN',
+          depositedAmountCents: hold.depositedAmountCents,
+        });
+      }
+
+      const participant = await db
         .select()
         .from(increaseParticipants)
         .where(eq(increaseParticipants.id, hold.participantId))
-        .limit(1);
+        .limit(1)
+        .then((rows) => rows[0] ?? null);
 
-      const participant = participants[0];
-      const accountId = getAccountId();
-
-      if (accountId && participant) {
-        try {
-          const transfer = await IncreaseService.initiateAchTransfer({
-            account_id: accountId,
-            account_number: externalAccountNumber,
-            routing_number: externalRoutingNumber,
-            amount: hold.depositedAmountCents,
-            statement_descriptor: `Axiom Nexus Insurance Hold Release — ${participant.participantRef}`,
-            company_name: 'Axiom Protocol LLC',
-          });
-          transferId = transfer.id;
-          transferStatus = transfer.status;
-
-          // Record the outbound distribution
-          await db.insert(increaseDistributions).values({
-            participantId: participant.id,
-            product: 'wealth-practice',
-            amountCents: hold.depositedAmountCents,
-            status: 'pending',
-            increaseTransferId: transfer.id,
-            description: `Insurance hold release — group ${hold.groupDisplayName || hold.groupId}`,
-            sentAt: now,
-          });
-        } catch (err) {
-          return res.status(502).json({
-            error: `ACH return failed: ${err instanceof Error ? err.message : String(err)}`,
-            note: 'Hold status not updated — resolve ACH error and retry.',
-          });
-        }
+      if (!participant) {
+        return res.status(404).json({ error: 'Participant record not found for this hold' });
       }
+
+      const accountId = getAccountId();
+      if (!accountId) {
+        return res.status(503).json({
+          error: 'Banking account not configured — set INCREASE_ACCOUNT_ID in environment',
+          code: 'ACCOUNT_NOT_CONFIGURED',
+        });
+      }
+
+      // Initiate ACH return — if this throws, hold status is NOT updated
+      try {
+        const transfer = await IncreaseService.initiateAchTransfer({
+          account_id: accountId,
+          account_number: String(externalAccountNumber).trim(),
+          routing_number: String(externalRoutingNumber).trim(),
+          amount: hold.depositedAmountCents,
+          statement_descriptor: `Axiom Nexus Hold Release — ${participant.participantRef}`,
+          company_name: 'Axiom Protocol LLC',
+        });
+        transferId = transfer.id;
+        transferStatus = transfer.status;
+      } catch (err) {
+        // ACH failed — do NOT update hold; return 502 with diagnostic info
+        return res.status(502).json({
+          error: `ACH return initiation failed: ${err instanceof Error ? err.message : String(err)}`,
+          code: 'ACH_TRANSFER_FAILED',
+          note: 'Hold status has NOT been updated. Resolve the ACH error and retry.',
+        });
+      }
+
+      // Record outbound distribution (only after successful ACH initiation)
+      await db.insert(increaseDistributions).values({
+        participantId: participant.id,
+        product: 'wealth-practice',
+        amountCents: hold.depositedAmountCents,
+        status: 'pending',
+        increaseTransferId: transferId,
+        description: `Insurance hold release — group ${hold.groupDisplayName || hold.groupId}`,
+        sentAt: now,
+      });
     }
 
+    // Update hold status only after ACH is confirmed (or for non-completed reasons)
     const newStatus = reason === 'completed' ? 'released' : 'forfeited';
 
     const [updated] = await db
@@ -113,7 +153,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         forfeitedAt: reason === 'forfeited' ? now : undefined,
         notes: [
           hold.notes,
-          `Released: ${reason}${transferId ? ` | ACH return: ${transferId}` : ''}`,
+          `${reason === 'completed' ? 'Released' : 'Forfeited'}: ${reason}${transferId ? ` | ACH return: ${transferId} (${transferStatus})` : ''}`,
         ].filter(Boolean).join(' | ') || null,
       })
       .where(eq(increaseInsuranceHolds.id, holdId))

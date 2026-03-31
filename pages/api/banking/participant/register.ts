@@ -1,3 +1,7 @@
+// DEPRECATED: This endpoint is a legacy registration path (wallet-address + body fields, no KYC).
+// The canonical participant onboarding endpoint is POST /api/banking/participant/onboard
+// which performs full SIWE authentication, KYC field collection, entity + account + card provisioning.
+// This endpoint is kept for backward compatibility but should not be used in new integrations.
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db, pool } from '../../../../server/db';
 import { increaseParticipants } from '../../../../shared/increaseParticipantSchema';

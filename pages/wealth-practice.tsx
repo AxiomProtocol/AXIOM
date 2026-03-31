@@ -122,6 +122,15 @@ export default function WealthPracticePage() {
   const [regError, setRegError] = useState('');
   const [participantLoading, setParticipantLoading] = useState(false);
 
+  // Join flow state (gated by insurance status check)
+  const [joiningGroupId, setJoiningGroupId] = useState<number | null>(null);
+  const [joinWallet, setJoinWallet] = useState('');
+  type JoinStatus = 'idle' | 'checking' | 'needs-registration' | 'needs-funding' | 'pending-funding' | 'ready' | 'joining' | 'success' | 'error';
+  const [joinStatus, setJoinStatus] = useState<JoinStatus>('idle');
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
+  const [joinInsuranceData, setJoinInsuranceData] = useState<Record<string, unknown> | null>(null);
+
   const [showHubForm, setShowHubForm] = useState(false);
   const [hubForm, setHubForm] = useState({
     hubName: '',
@@ -385,6 +394,82 @@ export default function WealthPracticePage() {
       setHubCreateError('Failed to create hub');
     } finally {
       setCreatingHub(false);
+    }
+  };
+
+  // Open inline join panel for a group
+  const handleStartJoin = (groupId: number) => {
+    setJoiningGroupId(prev => prev === groupId ? null : groupId);
+    setJoinStatus('idle');
+    setJoinError(null);
+    setJoinSuccess(null);
+    setJoinInsuranceData(null);
+  };
+
+  // Check insurance status then gate join or show deposit instructions
+  const handleCheckInsuranceAndJoin = async (group: Group) => {
+    if (!joinWallet || !/^0x[a-fA-F0-9]{40}$/i.test(joinWallet.trim())) {
+      setJoinError('Enter a valid wallet address (0x...) to continue.');
+      return;
+    }
+    setJoinStatus('checking');
+    setJoinError(null);
+    try {
+      const insRes = await fetch(
+        `/api/banking/wealth-practice/insurance/status?wallet=${encodeURIComponent(joinWallet.trim())}&groupId=${group.id}`
+      );
+      const insData = await insRes.json();
+      setJoinInsuranceData(insData);
+
+      if (!insData.registered) {
+        setJoinStatus('needs-registration');
+        return;
+      }
+
+      const holdStatus: string = insData.groupHoldStatus ?? '';
+      if (holdStatus === 'funded') {
+        // Insurance is funded — proceed with group join
+        setJoinStatus('joining');
+        const joinRes = await fetch('/api/wealth-practice/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ groupId: String(group.id), memberAddress: joinWallet.trim() }),
+        });
+        const joinData = await joinRes.json();
+        if (joinData.success) {
+          setJoinStatus('success');
+          setJoinSuccess(`You have joined ${group.display_name || 'the group'}. Your membership is now active.`);
+        } else {
+          setJoinStatus('error');
+          setJoinError(joinData.error || 'Join failed. Please try again.');
+        }
+      } else if (holdStatus === 'pending' || holdStatus === 'partial') {
+        setJoinStatus('pending-funding');
+      } else {
+        // No hold yet — initiate hold creation + show deposit instructions
+        const contributionAmountCents = Math.round(parseFloat(String(group.contribution_amount || '0')) * 100);
+        const fundRes = await fetch('/api/banking/wealth-practice/insurance/fund', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            walletAddress: joinWallet.trim(),
+            groupId: String(group.id),
+            groupDisplayName: group.display_name || `Group #${group.id}`,
+            contributionAmountCents,
+          }),
+        });
+        const fundData = await fundRes.json();
+        if (fundRes.ok) {
+          setJoinInsuranceData({ ...insData, ...fundData });
+          setJoinStatus('needs-funding');
+        } else {
+          setJoinStatus('error');
+          setJoinError(fundData.error || 'Failed to create insurance hold. Please try again.');
+        }
+      }
+    } catch {
+      setJoinStatus('error');
+      setJoinError('Network error. Please check your connection and try again.');
     }
   };
 
@@ -768,7 +853,7 @@ export default function WealthPracticePage() {
                           <span className="text-dl-navy ml-1">{group.region_display || '—'}</span>
                         </div>
                       </div>
-                      <div>
+                      <div className="mb-3">
                         <div className="flex items-center justify-between text-xs mb-1">
                           <span className="text-dl-gray">Trust Score</span>
                           <span className="font-dl-mono text-dl-navy">{group.trust_score}/100</span>
@@ -780,6 +865,97 @@ export default function WealthPracticePage() {
                           />
                         </div>
                       </div>
+
+                      {/* Join CTA */}
+                      {group.status === 'active' && (group.member_count || 0) < (group.max_members || 12) ? (
+                        <button
+                          onClick={() => handleStartJoin(group.id)}
+                          className="w-full border border-dl-navy bg-dl-navy text-white text-xs font-dl-mono uppercase tracking-wider py-2 hover:bg-dl-bg hover:text-dl-navy transition-none"
+                        >
+                          {joiningGroupId === group.id ? 'Close' : 'Join Group'}
+                        </button>
+                      ) : (
+                        <div className="text-center text-xs font-dl-mono text-dl-gray py-2 border border-dl-border">
+                          {group.status !== 'active' ? 'Inactive' : 'Full'}
+                        </div>
+                      )}
+
+                      {/* Inline join flow panel — insurance gating */}
+                      {joiningGroupId === group.id && (
+                        <div className="border border-dl-border mt-3 p-4 bg-dl-bg-alt">
+                          {joinStatus === 'success' ? (
+                            <p className="text-xs text-dl-forest font-semibold">{joinSuccess}</p>
+                          ) : (
+                            <>
+                              <p className="text-xs text-dl-gray mb-3 leading-relaxed">
+                                To join this group, your Axiom Nexus Account must have a funded insurance hold
+                                of <strong className="text-dl-navy">${((Math.round(parseFloat(String(group.contribution_amount || '0')) * 100)) / 4 / 100).toFixed(2)}</strong> (1-week equivalent of the ${group.contribution_amount}/mo contribution).
+                              </p>
+                              <div className="flex gap-2 mb-3">
+                                <input
+                                  type="text"
+                                  placeholder="Your wallet address (0x...)"
+                                  value={joinWallet}
+                                  onChange={(e) => setJoinWallet(e.target.value)}
+                                  className="flex-1 border border-dl-border bg-dl-bg px-3 py-2 text-xs text-dl-navy font-dl-mono focus:outline-none min-h-[36px]"
+                                />
+                                <button
+                                  onClick={() => handleCheckInsuranceAndJoin(group)}
+                                  disabled={joinStatus === 'checking' || joinStatus === 'joining'}
+                                  className="border border-dl-navy bg-dl-navy text-white text-xs font-dl-mono uppercase px-4 py-2 disabled:opacity-50"
+                                >
+                                  {joinStatus === 'checking' ? 'Checking…' : joinStatus === 'joining' ? 'Joining…' : 'Continue'}
+                                </button>
+                              </div>
+
+                              {joinError && (
+                                <p className="text-xs text-red-700 mb-2">{joinError}</p>
+                              )}
+
+                              {joinStatus === 'needs-registration' && (
+                                <div className="border border-dl-border p-3 text-xs text-dl-gray leading-relaxed">
+                                  <strong className="text-dl-navy block mb-1">Nexus Account Required</strong>
+                                  This wallet address is not registered with the Axiom Nexus Account banking layer.
+                                  {' '}
+                                  <a href="/banking/my-account" className="text-dl-navy underline">Register your account</a> first, then return here to join.
+                                </div>
+                              )}
+
+                              {(joinStatus === 'needs-funding' || joinStatus === 'pending-funding') && joinInsuranceData && (
+                                <div className="border border-dl-gold p-3 text-xs leading-relaxed">
+                                  <strong className="text-dl-navy block mb-2">
+                                    {joinStatus === 'pending-funding' ? 'Deposit Pending Settlement' : 'Insurance Hold Required'}
+                                  </strong>
+                                  {joinStatus === 'pending-funding' ? (
+                                    <p className="text-dl-gray">
+                                      Your insurance deposit is on its way — we are waiting for ACH settlement (1–2 business days).
+                                      You can join this group once the hold is confirmed funded.
+                                    </p>
+                                  ) : (
+                                    <>
+                                      <p className="text-dl-gray mb-2">
+                                        Send exactly <strong className="text-dl-navy">${(Number((joinInsuranceData as Record<string, unknown>).requiredAmountCents ?? 0) / 100).toFixed(2)}</strong> via ACH with the memo below to activate your hold:
+                                      </p>
+                                      {(() => {
+                                        const instr = (joinInsuranceData as Record<string, unknown>).depositInstructions as Record<string, unknown> | undefined;
+                                        return instr ? (
+                                          <div className="font-dl-mono text-dl-navy space-y-1">
+                                            <div>Bank: <span className="text-dl-gray">{String(instr.bankName ?? '')}</span></div>
+                                            <div>Routing: <span className="text-dl-gray">{String(instr.routingNumber ?? '')}</span></div>
+                                            {instr.accountNumber && <div>Account: <span className="text-dl-gray">{String(instr.accountNumber)}</span></div>}
+                                            <div>Memo: <span className="text-dl-gray font-semibold">{String(instr.memo ?? '')}</span></div>
+                                          </div>
+                                        ) : null;
+                                      })()}
+                                      <p className="text-dl-gray mt-2">Once your deposit settles, return here to complete joining.</p>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
