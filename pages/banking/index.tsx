@@ -1319,6 +1319,34 @@ export default function BankingDashboard() {
                 { icon: <IconZap />, label: 'LP Deposits', value: String(participantsData.counts.deposits) },
               ]} />
 
+              {/* Admin workflow guide */}
+              <div style={{ border: `1px solid ${DL.border}`, marginBottom: 32, padding: 24 }}>
+                <p style={{ ...monoLabel, color: DL.navy, marginBottom: 12 }}>Admin Workflow — Participant Ledger</p>
+                <p style={{ ...mono, color: DL.gray, marginBottom: 16, lineHeight: 1.7, fontSize: 12 }}>
+                  This tab shows every participant who has registered for the Axiom Nexus Account banking layer across all products.
+                  Participants are created when a user submits the registration form on the Wealth Practice or Lending Fund pages.
+                  Each participant receives a unique <strong style={{ color: DL.navy }}>AXM-XXXXXXXX</strong> reference code that links their wallet address to incoming ACH transfers.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 16 }}>
+                  {[
+                    { label: 'To confirm an insurance hold', body: 'When you see a deposit arrive in the Increase dashboard with a participant\'s reference code in the memo, use the API (PATCH /api/banking/insurance/[holdId]) with action "fund" to mark the hold funded.' },
+                    { label: 'To release a hold', body: 'When a Wealth Practice group graduates, call PATCH /api/banking/insurance/[holdId] with action "release". Initiate the ACH credit from the Nexus Account back to the participant\'s bank.' },
+                    { label: 'To apply an LP deposit', body: 'When a Lending Fund deposit arrives with a participant\'s reference code, update the LP deposit record status to "received", then "applied" once you confirm it is allocated to the fund.' },
+                    { label: 'To forfeit an insurance hold', body: 'If a participant exits their group early, call PATCH /api/banking/insurance/[holdId] with action "forfeit". The hold amount stays in the Nexus Account and is redistributed per fund policy.' },
+                  ].map(({ label, body }) => (
+                    <div key={label} style={{ border: `1px solid ${DL.border}`, padding: 16 }}>
+                      <p style={{ ...monoLabel, color: DL.navy, marginBottom: 6 }}>{label}</p>
+                      <p style={{ ...mono, color: DL.gray, lineHeight: 1.65, fontSize: 11 }}>{body}</p>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ ...mono, color: DL.gray, fontSize: 11, lineHeight: 1.65 }}>
+                  All write operations require the <strong style={{ color: DL.navy }}>x-admin-key</strong> header.
+                  The admin key is the same key used to unlock the Transactions and Routing tabs on this page.
+                  Participant records are append-only — do not delete records. Use status fields to track state transitions.
+                </p>
+              </div>
+
               {/* Participants table */}
               <SectionTitle>Registered Participants</SectionTitle>
               {participantsData.participants.length === 0 ? (
@@ -1418,6 +1446,52 @@ export default function BankingDashboard() {
                   </table>
                 </div>
               )}
+
+              {/* Status reference guide */}
+              <SectionTitle>Status Reference Guide</SectionTitle>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 0, border: `1px solid ${DL.border}`, marginBottom: 36 }}>
+                {[
+                  { status: 'pending', what: 'Insurance Hold', meaning: 'Hold created; participant has not yet sent the deposit. Watch for incoming ACH with this participant\'s reference code in the memo.' },
+                  { status: 'funded', what: 'Insurance Hold', meaning: 'Deposit received and confirmed. Participant is cleared to participate in their group\'s contribution cycles.' },
+                  { status: 'released', what: 'Insurance Hold', meaning: 'Group graduated. Hold returned to participant via ACH. No further action needed.' },
+                  { status: 'forfeited', what: 'Insurance Hold', meaning: 'Participant exited the group early. Hold remains in the Nexus Account. Redistribute per fund policy.' },
+                  { status: 'pending', what: 'LP Deposit', meaning: 'Participant has logged their intent to deposit. Awaiting ACH transfer. Match on incoming memo reference.' },
+                  { status: 'received', what: 'LP Deposit', meaning: 'ACH confirmed settled in the Nexus Account. Update to this status once you verify the transfer in Increase.' },
+                  { status: 'applied', what: 'LP Deposit', meaning: 'Capital has been deployed into the Lending Fund. LP position is active.' },
+                ].map((row, i) => (
+                  <div key={i} style={{ padding: 16, borderBottom: i < 6 ? `1px solid ${DL.border}` : 'none', borderRight: i % 2 === 0 ? `1px solid ${DL.border}` : 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <StatusBadge status={row.status} />
+                      <span style={{ ...monoLabel, color: DL.gray, fontSize: 10 }}>{row.what}</span>
+                    </div>
+                    <p style={{ ...mono, color: DL.gray, fontSize: 11, lineHeight: 1.6 }}>{row.meaning}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Admin FAQ */}
+              <FAQ items={[
+                {
+                  q: 'A deposit arrived but there is no matching reference code in the memo. What do I do?',
+                  a: 'Do not apply the deposit to any participant record. Search the Registered Participants table for the sender name or amount. If you can identify the participant, update the deposit record manually and note the discrepancy. If unidentifiable, hold the funds and contact the sender via email for clarification before making any record changes.'
+                },
+                {
+                  q: 'A participant says they sent their deposit but the hold still shows "pending". How do I verify?',
+                  a: 'Log into the Increase dashboard and search incoming ACH transfers for the participant\'s reference code (AXM-XXXXXXXX) in the description or memo field. Confirm the amount matches the required hold amount. If confirmed, call PATCH /api/banking/insurance/[holdId] with action "fund" and the actual depositedAmountCents. If the transfer is not found, advise the participant to check with their bank.'
+                },
+                {
+                  q: 'Can a participant change their email address or legal name after registering?',
+                  a: 'Not through the self-service form — registration fields are set once. Update participant records directly in the database (increase_participants table) if a correction is needed. Always verify the change request against a government ID or prior correspondence before editing.'
+                },
+                {
+                  q: 'What is the difference between "received" and "applied" for LP deposits?',
+                  a: '"Received" means the ACH transfer has settled in the Nexus Account and you have confirmed the deposit in Increase. "Applied" means the capital has been moved into the active Lending Fund deployment — either on-chain or into a monitored allocation vehicle. Update to "applied" only after the capital is actually deployed, not just when it arrives.'
+                },
+                {
+                  q: 'How do I issue a distribution to a participant?',
+                  a: 'Create a record in the increase_distributions table with the participant\'s ID, product, amount in cents, and status "pending". Then initiate the ACH credit from the Axiom Nexus Account in the Increase dashboard to the participant\'s bank account on file. Update the distribution record to "sent" once the ACH is confirmed.'
+                },
+              ]} />
             </>
           )}
         </div>

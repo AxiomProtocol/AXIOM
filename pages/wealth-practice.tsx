@@ -871,15 +871,23 @@ export default function WealthPracticePage() {
 
           {practiceAddress && /^0x[a-fA-F0-9]{40}$/i.test(practiceAddress) && (
             <div className="mt-8">
-              <h3 className="font-dl-serif text-lg text-dl-navy font-bold mb-4">Banking & Insurance</h3>
+              <h3 className="font-dl-serif text-lg text-dl-navy font-bold mb-1">Banking & Insurance Hold</h3>
+              <p className="text-dl-gray text-sm mb-6 leading-relaxed">
+                Wealth Practice groups run on real money. All contributions and insurance deposits flow through the
+                <span className="font-semibold text-dl-navy"> Axiom Nexus Account</span> — an FDIC-insured institutional
+                checking account at First Internet Bank. Each participant gets a unique reference code that ties every
+                ACH transfer directly to their record.
+              </p>
 
               {participantLoading && <p className="text-dl-gray text-sm">Loading banking info...</p>}
 
               {!participantLoading && !participant && (
                 <div className="border border-dl-gold p-6 mb-4">
-                  <div className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Registration Required</div>
+                  <div className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Step 1 — Get Your Reference Code</div>
                   <p className="text-dl-gray text-sm mb-4">
-                    To participate in Wealth Practice groups, you need a banking reference account. This assigns you a unique ACH reference code used to route insurance deposits and distributions through the Axiom Nexus Account.
+                    Register once to receive your personal <span className="font-dl-mono font-semibold text-dl-navy">AXM-XXXXXXXX</span> reference code.
+                    This code is your banking identifier — include it in the memo field of every ACH transfer you send
+                    to the Axiom Nexus Account so your deposits are matched automatically.
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
@@ -950,10 +958,43 @@ export default function WealthPracticePage() {
                     </div>
                   </div>
 
-                  <div className="border border-dl-gold bg-dl-bg p-4 mb-4">
-                    <div className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Insurance Deposit Requirement</div>
-                    <p className="text-dl-gray text-sm">
-                      Before joining an active circle, you must deposit one week&apos;s equivalent of your group contribution as an insurance hold. This deposit is held in the Axiom Nexus Account and released upon graduation or forfeited upon early exit.
+                  {/* Step 2 — Insurance Hold */}
+                  <div className="border border-dl-border p-5 mb-5">
+                    <div className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-2">Step 2 — Fund Your Insurance Hold</div>
+                    <p className="text-dl-gray text-sm mb-3 leading-relaxed">
+                      When you join a Wealth Practice group, a one-time insurance hold is required — equal to one week&apos;s
+                      equivalent of your group contribution amount. This hold is separate from your regular contributions.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border mb-3">
+                      <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
+                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">How It&apos;s Calculated</div>
+                        <div className="text-dl-navy text-sm font-semibold">Monthly ÷ 4</div>
+                        <div className="text-dl-gray text-xs mt-1">E.g. $200/mo → $50 hold</div>
+                      </div>
+                      <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
+                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Held Until</div>
+                        <div className="text-dl-navy text-sm font-semibold">Group Graduation</div>
+                        <div className="text-dl-gray text-xs mt-1">Released when cycle completes</div>
+                      </div>
+                      <div className="p-3">
+                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Early Exit</div>
+                        <div className="text-dl-navy text-sm font-semibold">Hold Forfeited</div>
+                        <div className="text-dl-gray text-xs mt-1">Protects other group members</div>
+                      </div>
+                    </div>
+                    <p className="text-dl-gray text-xs leading-relaxed">
+                      Send your insurance deposit via ACH to the Axiom Nexus Account — use your reference code in the memo field.
+                      Operations confirms receipt within 1-2 business days and marks your hold as funded.
+                    </p>
+                  </div>
+
+                  {/* Step 3 — Contribute Each Cycle */}
+                  <div className="border border-dl-border p-5 mb-5">
+                    <div className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-2">Step 3 — Contribute Each Cycle</div>
+                    <p className="text-dl-gray text-sm leading-relaxed">
+                      Each contribution period, send your group contribution amount via ACH to the Axiom Nexus Account — always with your reference code in the memo.
+                      When your rotation comes, Operations distributes the pooled funds directly to your designated account.
+                      Your group&apos;s trust score increases with every on-time contribution.
                     </p>
                   </div>
 
@@ -962,16 +1003,33 @@ export default function WealthPracticePage() {
                       <div className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-3">Your Insurance Holds</div>
                       <div className="space-y-2">
                         {participantHolds.map((hold) => (
-                          <div key={hold.id} className="border border-dl-border p-3 flex items-center justify-between">
-                            <div>
-                              <div className="font-dl-mono text-sm text-dl-navy">{hold.groupDisplayName || hold.groupId}</div>
-                              <div className="text-dl-gray text-xs">
-                                Required: ${(hold.requiredAmountCents / 100).toFixed(2)} &middot; Deposited: ${(hold.depositedAmountCents / 100).toFixed(2)}
+                          <div key={hold.id} className="border border-dl-border p-4">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <div className="font-dl-mono text-sm text-dl-navy font-bold">{hold.groupDisplayName || hold.groupId}</div>
+                                <div className="text-dl-gray text-xs mt-1">
+                                  Required: <span className="font-dl-mono text-dl-navy">${(hold.requiredAmountCents / 100).toFixed(2)}</span>
+                                  {' '}· Deposited: <span className="font-dl-mono text-dl-navy">${(hold.depositedAmountCents / 100).toFixed(2)}</span>
+                                </div>
                               </div>
+                              <span className={`text-xs px-2 py-0.5 uppercase font-dl-mono border ${hold.status === 'funded' ? 'border-dl-forest text-dl-forest' : hold.status === 'released' ? 'border-dl-navy text-dl-navy' : hold.status === 'forfeited' ? 'border-red-700 text-red-700' : 'border-dl-gold text-dl-gold'}`}>
+                                {hold.status}
+                              </span>
                             </div>
-                            <span className={`text-xs px-2 py-0.5 uppercase font-dl-mono border ${hold.status === 'funded' ? 'border-dl-forest text-dl-forest' : hold.status === 'released' ? 'border-dl-navy text-dl-navy' : hold.status === 'forfeited' ? 'border-red-700 text-red-700' : 'border-dl-gold text-dl-gold'}`}>
-                              {hold.status}
-                            </span>
+                            {hold.status === 'pending' && (
+                              <p className="text-dl-gray text-xs mt-2 leading-relaxed">
+                                Your hold is pending. Send <span className="font-dl-mono font-semibold text-dl-navy">${(hold.requiredAmountCents / 100).toFixed(2)}</span> via ACH to the Axiom Nexus Account (routing 071006486, payee: Axiom Protocol LLC) with memo <span className="font-dl-mono font-semibold text-dl-navy">{participant.participantRef}</span>. Operations will confirm within 1-2 business days.
+                              </p>
+                            )}
+                            {hold.status === 'funded' && (
+                              <p className="text-dl-gray text-xs mt-2">Insurance hold funded. You are cleared to participate in this group&apos;s contribution cycles.</p>
+                            )}
+                            {hold.status === 'released' && (
+                              <p className="text-dl-gray text-xs mt-2">Hold released — your group completed its cycle successfully. Well done.</p>
+                            )}
+                            {hold.status === 'forfeited' && (
+                              <p className="text-xs mt-2" style={{ color: '#991b1b' }}>Hold forfeited on early exit. Contact operations if you believe this is in error.</p>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -979,10 +1037,56 @@ export default function WealthPracticePage() {
                   )}
 
                   {participantHolds.length === 0 && (
-                    <p className="text-dl-gray text-xs">No insurance holds on file. A hold will be created when you join a circle group.</p>
+                    <p className="text-dl-gray text-xs border border-dl-border p-4">
+                      No insurance holds on file yet. A hold is created automatically when you join a circle group. It will appear here once created.
+                    </p>
                   )}
                 </div>
               )}
+
+              {/* FAQ — Banking & Insurance */}
+              <div className="mt-8 border border-dl-border">
+                <div className="px-5 py-3 border-b border-dl-border">
+                  <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider">Frequently Asked Questions — Banking & Insurance</p>
+                </div>
+                <div className="divide-y divide-dl-border">
+                  {[
+                    {
+                      q: 'What is the ACH reference code?',
+                      a: 'Your personal AXM-XXXXXXXX code is a unique identifier assigned to your wallet address when you register. Every ACH transfer you send to the Axiom Nexus Account must include this code in the memo or description field — it is how your payments are matched to your record automatically.'
+                    },
+                    {
+                      q: 'Where do I send my ACH deposits?',
+                      a: 'Send to the Axiom Nexus Account: Routing 071006486 · Bank: First Internet Bank · Payee: Axiom Protocol LLC — Nexus Account. Always include your reference code in the memo field. You will receive the full account number via secure message after registration.'
+                    },
+                    {
+                      q: 'How long does it take for my deposit to be confirmed?',
+                      a: 'Standard ACH transfers settle within 1-2 business days. Once the funds clear, Operations will verify your deposit against the memo reference code and update your record — usually within the same business day as settlement.'
+                    },
+                    {
+                      q: 'What happens to my insurance hold if I leave the group early?',
+                      a: 'Your insurance hold is forfeited if you exit the group before it graduates. This protects the other members who are counting on everyone to complete the cycle. The forfeiture amount stays in the Axiom Nexus Account and is redistributed or held at Operations\' discretion.'
+                    },
+                    {
+                      q: 'When does my insurance hold get returned?',
+                      a: 'Your hold is released when your group completes its full cycle (graduates). Upon graduation, Operations initiates a return ACH to the account on file — or the balance is available for your next group if you re-enroll.'
+                    },
+                    {
+                      q: 'Is my money FDIC insured?',
+                      a: 'Yes. All USD held in the Axiom Nexus Account at First Internet Bank is FDIC-insured up to $250,000 per depositor. Axiom Protocol maintains a single institutional account — your funds are part of this account, not a separate personal account.'
+                    },
+                    {
+                      q: 'Do I need to re-register if I join a second group?',
+                      a: 'No. You register once. Your AXM-XXXXXXXX reference code applies to all Wealth Practice groups you join. Each new group creates a new insurance hold record tied to your existing participant account.'
+                    }
+                  ].map(({ q, a }) => (
+                    <div key={q} className="px-5 py-4">
+                      <p className="text-dl-navy text-sm font-semibold mb-1">{q}</p>
+                      <p className="text-dl-gray text-sm leading-relaxed">{a}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>

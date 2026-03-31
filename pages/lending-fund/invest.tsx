@@ -650,11 +650,28 @@ export default function InvestPage() {
                     <span className="font-dl-mono text-xs text-white opacity-60">Axiom Nexus Account</span>
                   </div>
                   <div className="p-5">
-                    <p className="text-sm text-dl-gray leading-relaxed mb-4">
-                      Accredited participants may fund their position via USD ACH transfer to the Axiom Nexus Account.
-                      Each participant receives a unique reference code — include it in the ACH memo field. Operations
-                      will apply the deposit to your LP record within 1-2 business days of receipt.
+                    <p className="text-sm text-dl-gray leading-relaxed mb-5">
+                      Accredited participants may fund their limited partner position via USD bank transfer (ACH or wire) to the
+                      <span className="font-semibold text-dl-navy"> Axiom Nexus Account</span> — an FDIC-insured institutional
+                      checking account at First Internet Bank. Your deposit is logged against your wallet address and applied
+                      to your LP record within 1-2 business days of confirmed receipt.
                     </p>
+
+                    {/* How it works — steps */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-0 border border-dl-border mb-5">
+                      {[
+                        { step: '1', title: 'Register', body: 'Get your unique AXM-XXXXXXXX reference code — assigned once per wallet.' },
+                        { step: '2', title: 'Initiate ACH', body: 'Log your intended deposit amount here, then send ACH to the Nexus Account with your reference code in the memo.' },
+                        { step: '3', title: 'Operations Reviews', body: 'Axiom Operations matches your deposit to your reference code on the incoming ACH ledger.' },
+                        { step: '4', title: 'LP Record Updated', body: 'Your LP deposit record is marked received and applied within 1-2 business days of settlement.' },
+                      ].map((s, i, arr) => (
+                        <div key={s.step} className={`p-4 ${i < arr.length - 1 ? 'border-b md:border-b-0 md:border-r border-dl-border' : ''}`}>
+                          <div className="font-dl-mono text-xs text-dl-gold mb-1">Step {s.step}</div>
+                          <div className="text-dl-navy font-semibold text-sm mb-1">{s.title}</div>
+                          <div className="text-dl-gray text-xs leading-relaxed">{s.body}</div>
+                        </div>
+                      ))}
+                    </div>
 
                     {lpParticipantLoading && <p className="text-dl-gray text-xs">Loading your banking record...</p>}
 
@@ -691,24 +708,90 @@ export default function InvestPage() {
                     )}
 
                     {lpParticipant && (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border">
-                        <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
-                          <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Your Reference Code</p>
-                          <p className="font-dl-mono text-dl-navy font-bold text-lg">{lpParticipant.participantRef}</p>
-                          <p className="text-dl-gray text-xs mt-1">Include in every ACH memo</p>
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border mb-5">
+                          <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
+                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Your Reference Code</p>
+                            <p className="font-dl-mono text-dl-navy font-bold text-lg">{lpParticipant.participantRef}</p>
+                            <p className="text-dl-gray text-xs mt-1">Include in every ACH memo & wire OBI field</p>
+                          </div>
+                          <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
+                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Routing Number</p>
+                            <p className="font-dl-mono text-dl-navy font-bold">{lpParticipant.depositInstructions.routingNumber}</p>
+                            <p className="text-dl-gray text-xs mt-1">{lpParticipant.depositInstructions.bankName}</p>
+                          </div>
+                          <div className="px-4 py-4">
+                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Payee Name</p>
+                            <p className="font-dl-mono text-dl-navy font-bold text-xs">{lpParticipant.depositInstructions.accountName}</p>
+                            <p className="text-dl-gray text-xs mt-1">Account number provided via secure message</p>
+                          </div>
                         </div>
-                        <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
-                          <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Routing Number</p>
-                          <p className="font-dl-mono text-dl-navy font-bold">{lpParticipant.depositInstructions.routingNumber}</p>
-                          <p className="text-dl-gray text-xs mt-1">{lpParticipant.depositInstructions.bankName}</p>
+
+                        {/* What happens after you send */}
+                        <div className="border border-dl-border p-4 mb-5">
+                          <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-3">After You Send</p>
+                          <ol className="space-y-2">
+                            {[
+                              'Your bank initiates the ACH — typically settles in 1-2 business days.',
+                              'Axiom Operations receives the transfer and matches it to your reference code on the incoming ledger.',
+                              'Your LP deposit record is updated to "received" status and notated with the confirmed amount.',
+                              'Operations applies the deposit to your LP position. You will receive confirmation via the email on file.',
+                              'Your capital is deployed into the Lending Fund strategies as part of the next allocation cycle.',
+                            ].map((item, i) => (
+                              <li key={i} className="flex gap-3 text-xs text-dl-gray leading-relaxed">
+                                <span className="font-dl-mono text-dl-gold shrink-0">{i + 1}.</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ol>
                         </div>
-                        <div className="px-4 py-4">
-                          <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Payee Name</p>
-                          <p className="font-dl-mono text-dl-navy font-bold text-xs">{lpParticipant.depositInstructions.accountName}</p>
-                          <p className="text-dl-gray text-xs mt-1">Account number via secure message</p>
-                        </div>
-                      </div>
+
+                        <p className="text-xs text-dl-gray leading-relaxed">
+                          Questions about your deposit? Contact Axiom Operations with your reference code and the date of transfer.
+                          ACH deposits are non-refundable once applied to your LP record. Review the{' '}
+                          <Link href="/disclosure" className="underline text-dl-navy">Disclosure</Link> before committing capital.
+                          This is a Reg D 506(c) offering — for accredited investors only.
+                        </p>
+                      </>
                     )}
+
+                    {/* FAQ */}
+                    <div className="mt-6 border-t border-dl-border pt-5">
+                      <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-4">ACH Deposit FAQ</p>
+                      <div className="space-y-4">
+                        {[
+                          {
+                            q: 'Why do I need a reference code?',
+                            a: 'The Axiom Nexus Account receives ACH transfers from many participants. Your reference code is how Operations uniquely identifies your deposit and applies it to your LP record — without it, your transfer cannot be matched. Always include it in the ACH memo or wire OBI field.'
+                          },
+                          {
+                            q: 'What is the minimum LP deposit?',
+                            a: 'The minimum initial deposit via the ACH path is $100. There is no published maximum for the ACH path, though large positions ($50,000+) may require coordination with Operations. On-chain deposits via Euler Finance have their own limits set by vault parameters.'
+                          },
+                          {
+                            q: 'Is my deposit FDIC insured while it is in transit?',
+                            a: 'Funds held in the Axiom Nexus Account at First Internet Bank are FDIC-insured up to $250,000. Once capital is deployed into lending strategies (on-chain), it is governed by the smart contract terms and is not FDIC-covered.'
+                          },
+                          {
+                            q: 'Can I deposit via wire instead of ACH?',
+                            a: 'Yes. Wire transfers are accepted. Use the same routing number (071006486) and payee name, and include your reference code in the wire OBI (originator-to-beneficiary information) field. Contact Operations for the full wire details including account number.'
+                          },
+                          {
+                            q: 'How are returns distributed?',
+                            a: 'Distributions from the Lending Fund are calculated based on your pro-rata share of the deployed capital pool. Operations initiates ACH credits to participants on a schedule determined by the fund. Review the fund terms in the Disclosure for current distribution frequency.'
+                          },
+                          {
+                            q: 'What if I already deposited via Euler Finance on-chain?',
+                            a: 'On-chain deposits via Euler Finance and ACH deposits via the Nexus Account are two separate paths. They are not interchangeable. If you deposited on-chain, your position is tracked by the Euler vault contract. The ACH path is for participants who prefer traditional banking rails.'
+                          },
+                        ].map(({ q, a }) => (
+                          <div key={q} className="border-b border-dl-border pb-4 last:border-b-0 last:pb-0">
+                            <p className="text-dl-navy text-sm font-semibold mb-1">{q}</p>
+                            <p className="text-dl-gray text-xs leading-relaxed">{a}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
