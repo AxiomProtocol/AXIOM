@@ -6382,6 +6382,74 @@ END $seed$`, 'seed dp_listings');
         created_at TIMESTAMP DEFAULT NOW()
       )`, 'table income_credit_repayment_history');
 
+      // ═══════════════════════════════════════════
+      //  AXIOM NEXUS BANKING — PARTICIPANT LAYER (Task #47)
+      // ═══════════════════════════════════════════
+
+      await exec(`CREATE TABLE IF NOT EXISTS increase_participants (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) UNIQUE NOT NULL,
+        participant_ref VARCHAR(20) UNIQUE NOT NULL,
+        full_name VARCHAR(200) NOT NULL,
+        email VARCHAR(200) NOT NULL,
+        phone VARCHAR(30),
+        status VARCHAR(30) NOT NULL DEFAULT 'registered',
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table increase_participants');
+
+      await exec(`CREATE INDEX IF NOT EXISTS increase_participants_wallet_idx ON increase_participants(wallet_address)`, 'index increase_participants_wallet_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS increase_participants_ref_idx ON increase_participants(participant_ref)`, 'index increase_participants_ref_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS increase_insurance_holds (
+        id SERIAL PRIMARY KEY,
+        participant_id INTEGER NOT NULL,
+        group_id VARCHAR(100) NOT NULL,
+        group_display_name VARCHAR(200),
+        required_amount_cents INTEGER NOT NULL,
+        deposited_amount_cents INTEGER NOT NULL DEFAULT 0,
+        status VARCHAR(30) NOT NULL DEFAULT 'pending',
+        funded_at TIMESTAMP,
+        released_at TIMESTAMP,
+        forfeited_at TIMESTAMP,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table increase_insurance_holds');
+
+      await exec(`CREATE INDEX IF NOT EXISTS increase_insurance_holds_participant_idx ON increase_insurance_holds(participant_id)`, 'index increase_insurance_holds_participant_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS increase_insurance_holds_group_idx ON increase_insurance_holds(group_id)`, 'index increase_insurance_holds_group_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS increase_lp_deposits (
+        id SERIAL PRIMARY KEY,
+        participant_id INTEGER NOT NULL,
+        amount_cents INTEGER NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'pending',
+        memo_ref VARCHAR(100),
+        product VARCHAR(60) NOT NULL DEFAULT 'lending-fund',
+        received_at TIMESTAMP,
+        applied_at TIMESTAMP,
+        increase_transaction_id VARCHAR(100),
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table increase_lp_deposits');
+
+      await exec(`CREATE INDEX IF NOT EXISTS increase_lp_deposits_participant_idx ON increase_lp_deposits(participant_id)`, 'index increase_lp_deposits_participant_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS increase_distributions (
+        id SERIAL PRIMARY KEY,
+        participant_id INTEGER NOT NULL,
+        product VARCHAR(60) NOT NULL,
+        amount_cents INTEGER NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'pending',
+        increase_transfer_id VARCHAR(100),
+        description TEXT,
+        sent_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table increase_distributions');
+
+      await exec(`CREATE INDEX IF NOT EXISTS increase_distributions_participant_idx ON increase_distributions(participant_id)`, 'index increase_distributions_participant_idx');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
