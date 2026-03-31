@@ -1,0 +1,177 @@
+const BASE_URL = process.env.INCREASE_BASE_URL ?? 'https://sandbox.increase.com';
+const API_KEY  = process.env.INCREASE_API_KEY ?? '';
+
+async function increaseRequest<T>(
+  method: 'GET' | 'POST' | 'PATCH',
+  path: string,
+  body?: Record<string, unknown>,
+): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${API_KEY}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(
+      data?.detail ?? data?.title ?? `Increase API error ${res.status}: ${path}`,
+    );
+  }
+
+  return data as T;
+}
+
+export interface IncreaseAccount {
+  id: string;
+  name: string;
+  status: string;
+  currency: string;
+  balance?: number;
+  bank: string;
+  interest_rate: string;
+  program_id: string;
+  entity_id: string;
+  created_at: string;
+}
+
+export interface IncreaseTransaction {
+  id: string;
+  account_id: string;
+  amount: number;
+  currency: string;
+  created_at: string;
+  description: string;
+  route_type?: string;
+  type: string;
+}
+
+export interface IncreaseAccountNumber {
+  id: string;
+  account_id: string;
+  account_number: string;
+  routing_number: string;
+  name: string;
+  status: string;
+  created_at: string;
+}
+
+export interface IncreasePendingTransaction {
+  id: string;
+  account_id: string;
+  amount: number;
+  currency: string;
+  created_at: string;
+  description: string;
+  status: string;
+  route_type?: string;
+}
+
+export interface IncreaseTransfer {
+  id: string;
+  account_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  created_at: string;
+  description: string;
+  network?: string;
+}
+
+export const IncreaseService = {
+  async getAccount(accountId: string): Promise<IncreaseAccount> {
+    return increaseRequest<IncreaseAccount>('GET', `/accounts/${accountId}`);
+  },
+
+  async listAccounts(): Promise<{ data: IncreaseAccount[] }> {
+    return increaseRequest<{ data: IncreaseAccount[] }>('GET', '/accounts');
+  },
+
+  async getAccountBalance(accountId: string): Promise<{ available_balance: number; current_balance: number; currency: string }> {
+    return increaseRequest('GET', `/accounts/${accountId}/balance`);
+  },
+
+  async listTransactions(accountId: string, limit = 20): Promise<{ data: IncreaseTransaction[] }> {
+    return increaseRequest<{ data: IncreaseTransaction[] }>(
+      'GET',
+      `/transactions?account_id=${accountId}&limit=${limit}`,
+    );
+  },
+
+  async listPendingTransactions(accountId: string): Promise<{ data: IncreasePendingTransaction[] }> {
+    return increaseRequest<{ data: IncreasePendingTransaction[] }>(
+      'GET',
+      `/pending_transactions?account_id=${accountId}`,
+    );
+  },
+
+  async listAccountNumbers(accountId: string): Promise<{ data: IncreaseAccountNumber[] }> {
+    return increaseRequest<{ data: IncreaseAccountNumber[] }>(
+      'GET',
+      `/account_numbers?account_id=${accountId}`,
+    );
+  },
+
+  async createAccountNumber(params: {
+    account_id: string;
+    name: string;
+    inbound_ach?: { debit_status: 'allowed' | 'blocked' };
+    inbound_checks?: { status: 'allowed' | 'check_transfers_only' | 'not_allowed' };
+  }): Promise<IncreaseAccountNumber> {
+    return increaseRequest<IncreaseAccountNumber>('POST', '/account_numbers', params);
+  },
+
+  async initiateAchTransfer(params: {
+    account_id: string;
+    account_number: string;
+    routing_number: string;
+    amount: number;
+    statement_descriptor: string;
+    company_name?: string;
+    effective_date?: string;
+  }): Promise<IncreaseTransfer> {
+    return increaseRequest<IncreaseTransfer>('POST', '/ach_transfers', params);
+  },
+
+  async initiateWireTransfer(params: {
+    account_id: string;
+    account_number: string;
+    routing_number: string;
+    amount: number;
+    message_to_recipient: string;
+    beneficiary_name?: string;
+    beneficiary_address_line1?: string;
+    beneficiary_address_line2?: string;
+    beneficiary_address_line3?: string;
+    originator_name?: string;
+    originator_address_line1?: string;
+  }): Promise<IncreaseTransfer> {
+    return increaseRequest<IncreaseTransfer>('POST', '/wire_transfers', params);
+  },
+
+  async listAchTransfers(accountId: string, limit = 20): Promise<{ data: IncreaseTransfer[] }> {
+    return increaseRequest<{ data: IncreaseTransfer[] }>(
+      'GET',
+      `/ach_transfers?account_id=${accountId}&limit=${limit}`,
+    );
+  },
+
+  async listWireTransfers(accountId: string, limit = 20): Promise<{ data: IncreaseTransfer[] }> {
+    return increaseRequest<{ data: IncreaseTransfer[] }>(
+      'GET',
+      `/wire_transfers?account_id=${accountId}&limit=${limit}`,
+    );
+  },
+
+  formatAmount(cents: number, currency = 'USD'): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+    }).format(cents / 100);
+  },
+};

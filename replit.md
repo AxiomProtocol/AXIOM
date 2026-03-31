@@ -47,7 +47,7 @@ Key features include:
 - Document Ingestion & Extraction: AI-powered document analysis in the Deal Intelligence workspace.
 - Distressed Property Feed (Deal Flow): Aggregates distressed properties from government sources and a wholesaler submission portal.
 - Agent Governance System: Policy-based autonomous agent authorization.
-- Banking Infrastructure (Unit + BitGo): Unified banking layer providing FDIC-insured deposit accounts, ACH, debit cards, KYC, and institutional crypto custody, with a Bridge Service connecting fiat↔crypto.
+- Banking Infrastructure (Increase + BitGo): Primary banking layer via Increase.com — FDIC-insured checking account ("Axiom Nexus Account", First Internet Bank), ACH and wire rails, account number provisioning, and transaction ledger at `/banking`. Environment-aware: `INCREASE_ENVIRONMENT=sandbox` uses `INCREASE_SANDBOX_ACCOUNT_ID`; `production` uses `INCREASE_ACCOUNT_ID`. Service layer in `lib/services/IncreaseService.ts`. API endpoints: `/api/banking/overview`, `/api/banking/account`, `/api/banking/transactions`, `/api/banking/account-numbers`, `/api/banking/transfer`. BitGo CaaS handles institutional crypto custody. Bridge Service connects fiat↔crypto.
 - Multi-Exit Strategy Engine: Provides 8 underwriting strategies with comparison and ranking.
 - Due Diligence Checklist System: Structured DD workflow.
 - Craftsman Cost Database: `rehab_cost_benchmarks` table seeded with 57 reference costs from Craftsman National Construction Estimator (NCE).
@@ -74,6 +74,6 @@ Key features include:
 - **Google AI Stack:** Gemini AI Integration via Replit AI Integrations
 - **Property Data:** RentCast API, Walk Score API
 - **Market Data:** Alpha Vantage, CoinGecko
-- **Banking Rails:** Unit Finance (`@unit-finance/unit-node-sdk` v1.4.1)
+- **Banking Rails:** Increase (REST API, `INCREASE_API_KEY`) — replaces Unit Finance for primary fiat banking
 - **Crypto Custody:** BitGo CaaS (REST API)
 - **Text-to-Speech:** ElevenLabs API

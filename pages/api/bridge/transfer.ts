@@ -22,9 +22,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     direction,
     fiatAmountCents,
     cryptoAsset,
+    increaseAccountId,
     unitAccountId,
     bitgoWalletId,
     quoteSnapshotId,
+    recipientAccountNumber,
+    recipientRoutingNumber,
+    recipientName,
   } = req.body ?? {};
 
   const amtErr = validateDollarAmount(fiatAmountCents);
@@ -36,8 +40,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (direction !== 'fiat_to_crypto' && direction !== 'crypto_to_fiat') {
     return res.status(400).json({ error: 'Direction must be fiat_to_crypto or crypto_to_fiat.' });
   }
-  if (!unitAccountId) return res.status(400).json({ error: 'unitAccountId is required.' });
   if (!bitgoWalletId) return res.status(400).json({ error: 'bitgoWalletId is required.' });
+
+  if (direction === 'crypto_to_fiat') {
+    if (!recipientAccountNumber || !recipientRoutingNumber) {
+      return res.status(400).json({
+        error: 'recipientAccountNumber and recipientRoutingNumber are required for fiat withdrawal.',
+      });
+    }
+  }
 
   const fn = direction === 'fiat_to_crypto' ? bridgeService.fiatToCrypto : bridgeService.cryptoToFiat;
   const result = await fn.call(bridgeService, {
@@ -45,9 +56,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     direction,
     fiatAmountCents: Number(fiatAmountCents),
     cryptoAsset: cryptoAsset as CryptoAsset,
-    unitAccountId: String(unitAccountId),
+    increaseAccountId: increaseAccountId ? String(increaseAccountId) : undefined,
+    unitAccountId: unitAccountId ? String(unitAccountId) : undefined,
     bitgoWalletId: String(bitgoWalletId),
     quoteSnapshotId: quoteSnapshotId ? String(quoteSnapshotId) : undefined,
+    recipientAccountNumber: recipientAccountNumber ? String(recipientAccountNumber) : undefined,
+    recipientRoutingNumber: recipientRoutingNumber ? String(recipientRoutingNumber) : undefined,
+    recipientName: recipientName ? String(recipientName) : undefined,
   });
 
   if (!result.success) return res.status(400).json({ error: result.error });
@@ -56,5 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     success: true,
     transferId: result.transferId,
     status: result.status,
+    depositInfo: result.depositInfo,
+    achTransferId: result.achTransferId,
   });
 }
