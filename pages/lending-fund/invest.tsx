@@ -683,11 +683,11 @@ export default function InvestPage() {
                 </p>
               </div>
 
-              {/* LP Banking / ACH Deposit Panel */}
+              {/* LP Banking / Fiat Deposit Panel */}
               {walletConnected && (
                 <div className="mt-6 border border-dl-navy">
                   <div className="px-5 py-3 bg-dl-navy flex items-center justify-between">
-                    <p className="font-dl-mono text-xs text-white uppercase tracking-wider">ACH Deposit Path</p>
+                    <p className="font-dl-mono text-xs text-white uppercase tracking-wider">Fiat Deposit</p>
                     <span className="font-dl-mono text-xs text-white opacity-60">Axiom Nexus Account</span>
                   </div>
                   <div className="p-5">

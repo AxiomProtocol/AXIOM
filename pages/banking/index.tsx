@@ -1341,10 +1341,10 @@ export default function BankingDashboard() {
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 16 }}>
                   {[
-                    { label: 'To confirm an insurance hold', body: 'When you see a deposit arrive in the Increase dashboard with a participant\'s reference code in the memo, use the API (PATCH /api/banking/insurance/[holdId]) with action "fund" to mark the hold funded.' },
-                    { label: 'To release a hold', body: 'When a Wealth Practice group graduates, call PATCH /api/banking/insurance/[holdId] with action "release". Initiate the ACH credit from the Nexus Account back to the participant\'s bank.' },
+                    { label: 'To confirm an insurance hold', body: 'When you see a deposit arrive in the Increase dashboard with a participant\'s reference code in the memo, call POST /api/banking/wealth-practice/insurance/fund with { holdId, depositedAmountCents } and the x-admin-key header to mark the hold funded.' },
+                    { label: 'To release a hold', body: 'When a Wealth Practice group graduates, call POST /api/banking/wealth-practice/insurance/release with { holdId }. Initiate the ACH credit from the Nexus Account back to the participant\'s bank.' },
                     { label: 'To apply an LP deposit', body: 'When a Lending Fund deposit arrives with a participant\'s reference code, update the LP deposit record status to "received", then "applied" once you confirm it is allocated to the fund.' },
-                    { label: 'To forfeit an insurance hold', body: 'If a participant exits their group early, call PATCH /api/banking/insurance/[holdId] with action "forfeit". The hold amount stays in the Nexus Account and is redistributed per fund policy.' },
+                    { label: 'To forfeit an insurance hold', body: 'If a participant exits their group early, call POST /api/banking/wealth-practice/insurance/forfeit with { holdId }. The hold amount stays in the Nexus Account and is redistributed per fund policy.' },
                   ].map(({ label, body }) => (
                     <div key={label} style={{ border: `1px solid ${DL.border}`, padding: 16 }}>
                       <p style={{ ...monoLabel, color: DL.navy, marginBottom: 6 }}>{label}</p>
@@ -1552,7 +1552,7 @@ export default function BankingDashboard() {
                 },
                 {
                   q: 'A participant says they sent their deposit but the hold still shows "pending". How do I verify?',
-                  a: 'Log into the Increase dashboard and search incoming ACH transfers for the participant\'s reference code (AXM-XXXXXXXX) in the description or memo field. Confirm the amount matches the required hold amount. If confirmed, call PATCH /api/banking/insurance/[holdId] with action "fund" and the actual depositedAmountCents. If the transfer is not found, advise the participant to check with their bank.'
+                  a: 'Log into the Increase dashboard and search incoming ACH transfers for the participant\'s reference code (AXM-XXXXXXXX) in the description or memo field. Confirm the amount matches the required hold amount. If confirmed, call POST /api/banking/wealth-practice/insurance/fund with { holdId, depositedAmountCents } and the x-admin-key header. If the transfer is not found, advise the participant to check with their bank.'
                 },
                 {
                   q: 'Can a participant change their email address or legal name after registering?',

@@ -309,8 +309,8 @@ export const IncreaseService = {
     return increaseRequest<IncreaseEntity>('GET', `/entities/${entityId}`);
   },
 
-  // Creates a sub-account under a given entity.
-  // In the Axiom B2B model this is used for product-level escrow accounts.
+  // Creates a per-participant dedicated account linked to the participant's KYC entity.
+  // Every participant receives their own account; no shared/org-account fallback.
   async createAccount(params: {
     name: string;
     entity_id: string;
