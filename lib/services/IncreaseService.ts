@@ -276,9 +276,8 @@ export const IncreaseService = {
   },
 
   // Entity / identity
-  // NOTE: Axiom Protocol uses a B2B single-entity model — no per-participant entities
-  // are created on Increase. createIndividualEntity is provided for completeness and
-  // future individual-account migration paths only.
+  // Each registered participant receives their own Increase entity (per-participant model).
+  // createIndividualEntity is called during onboarding for every new participant.
   async createIndividualEntity(params: {
     name: string;
     date_of_birth: string;

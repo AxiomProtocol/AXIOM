@@ -39,27 +39,6 @@ export const increaseParticipants = pgTable(
   }),
 );
 
-export const increaseInsuranceHolds = pgTable(
-  'increase_insurance_holds',
-  {
-    id: serial('id').primaryKey(),
-    participantId: integer('participant_id').notNull(),
-    groupId: varchar('group_id', { length: 100 }).notNull(),
-    groupDisplayName: varchar('group_display_name', { length: 200 }),
-    requiredAmountCents: integer('required_amount_cents').notNull(),
-    depositedAmountCents: integer('deposited_amount_cents').notNull().default(0),
-    status: varchar('status', { length: 30 }).notNull().default('pending'),
-    fundedAt: timestamp('funded_at'),
-    releasedAt: timestamp('released_at'),
-    forfeitedAt: timestamp('forfeited_at'),
-    notes: text('notes'),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-  },
-  (t) => ({
-    participantIdx: index('increase_insurance_holds_participant_idx').on(t.participantId),
-    groupIdx: index('increase_insurance_holds_group_idx').on(t.groupId),
-  }),
-);
 
 export const increaseLpDeposits = pgTable(
   'increase_lp_deposits',
@@ -138,8 +117,6 @@ export type NewIncreaseProductEscrow = typeof increaseProductEscrows.$inferInser
 
 export type IncreaseParticipant = typeof increaseParticipants.$inferSelect;
 export type NewIncreaseParticipant = typeof increaseParticipants.$inferInsert;
-export type IncreaseInsuranceHold = typeof increaseInsuranceHolds.$inferSelect;
-export type NewIncreaseInsuranceHold = typeof increaseInsuranceHolds.$inferInsert;
 export type IncreaseLpDeposit = typeof increaseLpDeposits.$inferSelect;
 export type NewIncreaseLpDeposit = typeof increaseLpDeposits.$inferInsert;
 export type IncreaseDistribution = typeof increaseDistributions.$inferSelect;

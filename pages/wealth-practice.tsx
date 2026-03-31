@@ -122,7 +122,10 @@ export default function WealthPracticePage() {
   const [participantHolds, setParticipantHolds] = useState<Array<{
     id: number; groupId: string | null; groupDisplayName: string | null; amountCents: number; depositedAmountCents: number; status: string; fundedAt: string | null;
   }>>([]);
-  const [regForm, setRegForm] = useState({ fullName: '', email: '', phone: '' });
+  const [regForm, setRegForm] = useState({
+    fullName: '', email: '', phone: '',
+    dateOfBirth: '', ssnLast4: '', addressLine1: '', city: '', state: '', zip: '',
+  });
   const [regLoading, setRegLoading] = useState(false);
   const [regMsg, setRegMsg] = useState('');
   const [regError, setRegError] = useState('');
@@ -283,14 +286,14 @@ export default function WealthPracticePage() {
       setRegError('A valid wallet address is required');
       return;
     }
-    if (!regForm.fullName.trim()) {
-      setRegError('Full name is required');
-      return;
-    }
-    if (!regForm.email.trim() || !regForm.email.includes('@')) {
-      setRegError('Valid email is required');
-      return;
-    }
+    if (!regForm.fullName.trim()) { setRegError('Full legal name is required'); return; }
+    if (!regForm.email.trim() || !regForm.email.includes('@')) { setRegError('Valid email address is required'); return; }
+    if (!regForm.dateOfBirth || !/^\d{4}-\d{2}-\d{2}$/.test(regForm.dateOfBirth)) { setRegError('Date of birth required (YYYY-MM-DD)'); return; }
+    if (!regForm.ssnLast4 || !/^\d{4}$/.test(regForm.ssnLast4)) { setRegError('Last 4 digits of SSN required'); return; }
+    if (!regForm.addressLine1.trim()) { setRegError('Street address required'); return; }
+    if (!regForm.city.trim()) { setRegError('City required'); return; }
+    if (!regForm.state || !/^[A-Z]{2}$/.test(regForm.state)) { setRegError('State required (2-letter code, e.g. TX)'); return; }
+    if (!regForm.zip || !/^\d{5}$/.test(regForm.zip)) { setRegError('ZIP code required (5 digits)'); return; }
     setRegLoading(true);
     setRegError('');
     setRegMsg('');
@@ -303,13 +306,19 @@ export default function WealthPracticePage() {
           fullName: regForm.fullName.trim(),
           email: regForm.email.trim(),
           phone: regForm.phone.trim() || undefined,
+          dateOfBirth: regForm.dateOfBirth,
+          ssnLast4: regForm.ssnLast4,
+          addressLine1: regForm.addressLine1.trim(),
+          city: regForm.city.trim(),
+          state: regForm.state.trim().toUpperCase(),
+          zip: regForm.zip.trim(),
         }),
       });
       const data = await res.json();
       if (data.success) {
         setParticipant(data.participant);
-        setRegMsg('Axiom Nexus account provisioned. Your reference code is ready.');
-        setRegForm({ fullName: '', email: '', phone: '' });
+        setRegMsg('Axiom Nexus account provisioned. Your dedicated account number is ready.');
+        setRegForm({ fullName: '', email: '', phone: '', dateOfBirth: '', ssnLast4: '', addressLine1: '', city: '', state: '', zip: '' });
         fetchParticipantInfo(practiceAddress.trim());
       } else {
         setRegError(data.error || 'Registration failed');
@@ -1093,37 +1102,48 @@ export default function WealthPracticePage() {
                     This code is your banking identifier — include it in the memo field of every ACH transfer you send
                     to the Axiom Nexus Account so your deposits are matched automatically.
                   </p>
+                  <p className="text-dl-gray text-xs mb-4 font-dl-mono border-l-2 border-dl-gold pl-3">
+                    Your information is used to provision a dedicated FDIC-insured account with Increase. Submitted once — never stored beyond what is required.
+                  </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Full Legal Name</label>
-                      <input
-                        type="text"
-                        value={regForm.fullName}
-                        onChange={(e) => setRegForm({ ...regForm, fullName: e.target.value })}
-                        placeholder="First Last"
-                        className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
-                      />
+                      <input type="text" value={regForm.fullName} onChange={(e) => setRegForm({ ...regForm, fullName: e.target.value })} placeholder="First Last" className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]" />
                     </div>
                     <div>
                       <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Email Address</label>
-                      <input
-                        type="email"
-                        value={regForm.email}
-                        onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
-                        placeholder="you@example.com"
-                        className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
-                      />
+                      <input type="email" value={regForm.email} onChange={(e) => setRegForm({ ...regForm, email: e.target.value })} placeholder="you@example.com" className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]" />
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Date of Birth</label>
+                      <input type="date" value={regForm.dateOfBirth} onChange={(e) => setRegForm({ ...regForm, dateOfBirth: e.target.value })} className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]" />
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">SSN — Last 4 Digits</label>
+                      <input type="text" value={regForm.ssnLast4} onChange={(e) => setRegForm({ ...regForm, ssnLast4: e.target.value.replace(/\D/g, '').slice(0, 4) })} placeholder="1234" maxLength={4} className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px] font-dl-mono tracking-widest" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="md:col-span-3">
+                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Street Address</label>
+                      <input type="text" value={regForm.addressLine1} onChange={(e) => setRegForm({ ...regForm, addressLine1: e.target.value })} placeholder="123 Main St" className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]" />
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">City</label>
+                      <input type="text" value={regForm.city} onChange={(e) => setRegForm({ ...regForm, city: e.target.value })} placeholder="Houston" className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]" />
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">State</label>
+                      <input type="text" value={regForm.state} onChange={(e) => setRegForm({ ...regForm, state: e.target.value.toUpperCase().slice(0, 2) })} placeholder="TX" maxLength={2} className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px] font-dl-mono uppercase" />
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">ZIP Code</label>
+                      <input type="text" value={regForm.zip} onChange={(e) => setRegForm({ ...regForm, zip: e.target.value.replace(/\D/g, '').slice(0, 5) })} placeholder="77001" maxLength={5} className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px] font-dl-mono" />
                     </div>
                   </div>
                   <div className="mb-4">
                     <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Phone (optional)</label>
-                    <input
-                      type="tel"
-                      value={regForm.phone}
-                      onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
-                      placeholder="+1 (555) 000-0000"
-                      className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px] max-w-xs"
-                    />
+                    <input type="tel" value={regForm.phone} onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })} placeholder="+1 (555) 000-0000" className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px] max-w-xs" />
                   </div>
                   {regError && <p className="text-sm mb-3" style={{ color: '#991b1b' }}>{regError}</p>}
                   {regMsg && <p className="text-dl-forest text-sm mb-3">{regMsg}</p>}
@@ -1132,7 +1152,7 @@ export default function WealthPracticePage() {
                     disabled={regLoading}
                     className="border border-dl-navy bg-dl-navy text-white px-6 py-2.5 min-h-[44px] text-sm font-bold hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-50"
                   >
-                    {regLoading ? 'Registering...' : 'Register Banking Account'}
+                    {regLoading ? 'Provisioning account...' : 'Register Axiom Nexus Account'}
                   </button>
                 </div>
               )}

@@ -133,7 +133,10 @@ export default function InvestPage() {
     accountAccessMode: 'dedicated' | 'virtual-only';
     depositInstructions: { routingNumber: string; accountNumber?: string; bankName: string; accountName: string; memo: string; hasVirtualAccount?: boolean };
   } | null>(null);
-  const [lpRegForm, setLpRegForm] = useState({ fullName: '', email: '' });
+  const [lpRegForm, setLpRegForm] = useState({
+    fullName: '', email: '',
+    dateOfBirth: '', ssnLast4: '', addressLine1: '', city: '', state: '', zip: '',
+  });
   const [lpRegLoading, setLpRegLoading] = useState(false);
   const [lpRegMsg, setLpRegMsg] = useState('');
   const [lpRegError, setLpRegError] = useState('');
@@ -225,18 +228,34 @@ export default function InvestPage() {
 
   const handleLpRegister = async () => {
     if (!walletAddress) { setLpRegError('Wallet not connected'); return; }
-    if (!lpRegForm.fullName.trim()) { setLpRegError('Full name required'); return; }
+    if (!lpRegForm.fullName.trim()) { setLpRegError('Full legal name required'); return; }
     if (!lpRegForm.email.trim() || !lpRegForm.email.includes('@')) { setLpRegError('Valid email required'); return; }
+    if (!lpRegForm.dateOfBirth || !/^\d{4}-\d{2}-\d{2}$/.test(lpRegForm.dateOfBirth)) { setLpRegError('Date of birth required (YYYY-MM-DD)'); return; }
+    if (!lpRegForm.ssnLast4 || !/^\d{4}$/.test(lpRegForm.ssnLast4)) { setLpRegError('Last 4 digits of SSN required'); return; }
+    if (!lpRegForm.addressLine1.trim()) { setLpRegError('Street address required'); return; }
+    if (!lpRegForm.city.trim()) { setLpRegError('City required'); return; }
+    if (!lpRegForm.state || !/^[A-Z]{2}$/.test(lpRegForm.state)) { setLpRegError('State required (2-letter code, e.g. TX)'); return; }
+    if (!lpRegForm.zip || !/^\d{5}$/.test(lpRegForm.zip)) { setLpRegError('ZIP code required (5 digits)'); return; }
     setLpRegLoading(true); setLpRegError(''); setLpRegMsg('');
     try {
       const res = await fetch('/api/banking/participant/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress, fullName: lpRegForm.fullName.trim(), email: lpRegForm.email.trim() }),
+        body: JSON.stringify({
+          walletAddress,
+          fullName: lpRegForm.fullName.trim(),
+          email: lpRegForm.email.trim(),
+          dateOfBirth: lpRegForm.dateOfBirth,
+          ssnLast4: lpRegForm.ssnLast4,
+          addressLine1: lpRegForm.addressLine1.trim(),
+          city: lpRegForm.city.trim(),
+          state: lpRegForm.state.trim().toUpperCase(),
+          zip: lpRegForm.zip.trim(),
+        }),
       });
       const data = await res.json();
       if (data.success) {
-        setLpRegMsg('Axiom Nexus account provisioned. Your ACH reference code is ready.');
+        setLpRegMsg('Axiom Nexus account provisioned. Your dedicated account number is ready.');
         await fetchLpParticipant(walletAddress);
       } else {
         setLpRegError(data.error || 'Registration failed');
@@ -699,23 +718,26 @@ export default function InvestPage() {
 
                     {!lpParticipantLoading && !lpParticipant && (
                       <div className="border border-dl-gold p-4">
-                        <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-3">Setup Required</p>
-                        <p className="text-dl-gray text-xs mb-4">Register to receive your personal ACH reference code.</p>
+                        <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Account Registration Required</p>
+                        <p className="text-dl-gray text-xs mb-1">Provision your dedicated Axiom Nexus banking account. Required for all LP deposit instructions.</p>
+                        <p className="text-dl-gray text-xs mb-4 font-dl-mono border-l-2 border-dl-gold pl-3">Your information provisions a dedicated FDIC-insured account via Increase. Submitted once — for LP identity verification.</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                          <input
-                            type="text"
-                            placeholder="Full legal name"
-                            value={lpRegForm.fullName}
-                            onChange={(e) => setLpRegForm({ ...lpRegForm, fullName: e.target.value })}
-                            className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
-                          />
-                          <input
-                            type="email"
-                            placeholder="Email address"
-                            value={lpRegForm.email}
-                            onChange={(e) => setLpRegForm({ ...lpRegForm, email: e.target.value })}
-                            className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
-                          />
+                          <input type="text" placeholder="Full legal name" value={lpRegForm.fullName} onChange={(e) => setLpRegForm({ ...lpRegForm, fullName: e.target.value })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none" />
+                          <input type="email" placeholder="Email address" value={lpRegForm.email} onChange={(e) => setLpRegForm({ ...lpRegForm, email: e.target.value })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none" />
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] text-dl-gray font-dl-mono uppercase">Date of Birth</label>
+                            <input type="date" value={lpRegForm.dateOfBirth} onChange={(e) => setLpRegForm({ ...lpRegForm, dateOfBirth: e.target.value })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none" />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] text-dl-gray font-dl-mono uppercase">SSN — Last 4 Digits</label>
+                            <input type="text" placeholder="1234" maxLength={4} value={lpRegForm.ssnLast4} onChange={(e) => setLpRegForm({ ...lpRegForm, ssnLast4: e.target.value.replace(/\D/g, '').slice(0, 4) })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none font-dl-mono tracking-widest" />
+                          </div>
+                          <input type="text" placeholder="Street address (123 Main St)" value={lpRegForm.addressLine1} onChange={(e) => setLpRegForm({ ...lpRegForm, addressLine1: e.target.value })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none md:col-span-2" />
+                          <input type="text" placeholder="City" value={lpRegForm.city} onChange={(e) => setLpRegForm({ ...lpRegForm, city: e.target.value })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none" />
+                          <div className="grid grid-cols-2 gap-3">
+                            <input type="text" placeholder="State (TX)" maxLength={2} value={lpRegForm.state} onChange={(e) => setLpRegForm({ ...lpRegForm, state: e.target.value.toUpperCase().slice(0, 2) })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none font-dl-mono uppercase" />
+                            <input type="text" placeholder="ZIP (77001)" maxLength={5} value={lpRegForm.zip} onChange={(e) => setLpRegForm({ ...lpRegForm, zip: e.target.value.replace(/\D/g, '').slice(0, 5) })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none font-dl-mono" />
+                          </div>
                         </div>
                         {lpRegError && <p className="text-xs mb-2" style={{ color: '#991b1b' }}>{lpRegError}</p>}
                         {lpRegMsg && <p className="text-dl-forest text-xs mb-2">{lpRegMsg}</p>}
@@ -724,7 +746,7 @@ export default function InvestPage() {
                           disabled={lpRegLoading}
                           className="border border-dl-navy bg-dl-navy text-white px-5 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-50"
                         >
-                          {lpRegLoading ? 'Registering...' : 'Get Reference Code'}
+                          {lpRegLoading ? 'Provisioning account...' : 'Register Axiom Nexus Account'}
                         </button>
                       </div>
                     )}
