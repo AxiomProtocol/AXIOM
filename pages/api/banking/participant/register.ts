@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db, pool } from '../../../../server/db';
 import { increaseParticipants } from '../../../../shared/increaseParticipantSchema';
+import { IncreaseService } from '../../../../lib/services/IncreaseService';
 import { eq } from 'drizzle-orm';
 
 function parseCookies(header: string | undefined): Record<string, string> {
@@ -85,6 +86,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       attempts++;
     }
 
+    const accountId = process.env.INCREASE_ACCOUNT_ID ?? process.env.INCREASE_SANDBOX_ACCOUNT_ID ?? '';
+
+    let virtualAccountNumberId: string | null = null;
+    let virtualRoutingNumber: string | null = null;
+    let virtualAccountNumber: string | null = null;
+
+    if (accountId) {
+      try {
+        const vAccount = await IncreaseService.createParticipantVirtualAccount({
+          account_id: accountId,
+          participant_ref: participantRef,
+          full_name: fullName.trim(),
+        });
+        virtualAccountNumberId = vAccount.id;
+        virtualRoutingNumber = vAccount.routing_number;
+        virtualAccountNumber = vAccount.account_number;
+      } catch (err) {
+        console.warn('[register] Virtual account provisioning failed (non-fatal):', err instanceof Error ? err.message : err);
+      }
+    }
+
     const [participant] = await db
       .insert(increaseParticipants)
       .values({
@@ -94,6 +116,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         email: email.toLowerCase().trim(),
         phone: phone?.trim() || null,
         status: 'registered',
+        virtualAccountNumberId,
+        virtualRoutingNumber,
+        virtualAccountNumber,
+        cardStatus: 'not_requested',
       })
       .returning();
 

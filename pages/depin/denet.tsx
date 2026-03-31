@@ -4,6 +4,7 @@ import {
   DesignLawLayout,
   PageShell,
   SectionHeading,
+  NexusBankingPanel,
 } from '../../components/design-law';
 
 interface NodeStatus {
@@ -523,6 +524,17 @@ export default function DeNetDePINPage() {
                   <pre className="font-mono text-sm text-dl-navy bg-dl-bg p-3 border border-dl-border overflow-x-auto">ps aux | grep denode{'\n'}tail -f ~/denet/denode.log</pre>
                 </div>
               </div>
+            </div>
+
+            <div className="mb-8">
+              <SectionHeading>Node Reward Disbursement</SectionHeading>
+              <NexusBankingPanel
+                product="depin"
+                context="node-rewards"
+                title="Axiom Nexus — Node Reward Account"
+                description="DePIN node rewards are disbursed directly to your dedicated Axiom Nexus sub-account. Register your address to receive your personal routing and account number. Rewards are settled via ACH after on-chain verification. Connect your wallet to register."
+                collapsible={true}
+              />
             </div>
 
             <div className="mb-8">

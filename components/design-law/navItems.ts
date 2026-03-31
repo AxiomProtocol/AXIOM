@@ -26,6 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/axusd-3643', label: 'Unified AXUSD' },
       { href: '/depin/denet', label: 'DePIN' },
       { href: '/banking', label: 'Banking' },
+      { href: '/banking/my-account', label: 'My Nexus Account' },
     ],
   },
   {

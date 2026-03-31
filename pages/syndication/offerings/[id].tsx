@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
+import { NexusBankingPanel } from '../../../components/design-law';
 import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -1439,6 +1440,13 @@ export default function OfferingBuilder() {
 
         {activeTab === 'subscriptions' && (
           <div className="space-y-4">
+            <NexusBankingPanel
+              product="syndication"
+              context="capital-call"
+              amountLabel={offering?.minimum_investment ? `$${Number(offering.minimum_investment).toLocaleString()} minimum` : undefined}
+              description="Capital call payments for this offering are processed through the Axiom Nexus Account at First Internet Bank. Register your account to receive your dedicated routing details. Your deposit is matched to your subscription and confirmed within 1–2 business days of ACH settlement."
+              collapsible={true}
+            />
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <h2 className="font-dl-serif text-lg text-dl-navy">Subscriptions</h2>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">

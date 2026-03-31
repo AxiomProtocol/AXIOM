@@ -13,6 +13,7 @@ import {
   DLInput,
   SolidButton,
   StatusBadge,
+  NexusBankingPanel,
 } from '../../../components/design-law';
 import type { Column } from '../../../components/design-law';
 import { useWallet } from '../../../components/WalletConnect/WalletContext';
@@ -691,6 +692,17 @@ export default function DealWorkspace() {
               </SolidButton>
             </form>
           )}
+        </div>
+
+        <div className="mb-8">
+          <SectionHeading>Earnest Money & Acquisition Funding</SectionHeading>
+          <NexusBankingPanel
+            product="real-estate"
+            context="earnest-money"
+            amountLabel={deal?.target_purchase_price ? `$${Number(deal.target_purchase_price).toLocaleString()} target acquisition` : undefined}
+            description="Earnest money and acquisition deposits for this deal are held in the Axiom Nexus Account at First Internet Bank — FDIC-insured institutional custody. Register your account to receive your dedicated deposit instructions. Funds are tracked against the deal and applied at closing."
+            collapsible={false}
+          />
         </div>
 
         <DisclosureBlock text={RE_DISCLOSURE} />

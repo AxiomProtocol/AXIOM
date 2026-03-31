@@ -11,3 +11,4 @@ export { SectionHeading } from './SectionHeading';
 export { DetailGrid } from './DetailGrid';
 export { ConnectWalletButton } from './ConnectWalletButton';
 export { DesignLawLayout } from './DesignLawLayout';
+export { NexusBankingPanel } from './NexusBankingPanel';

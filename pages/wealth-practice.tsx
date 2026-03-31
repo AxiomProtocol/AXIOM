@@ -935,56 +935,94 @@ export default function WealthPracticePage() {
 
               {participant && (
                 <div className="border border-dl-forest p-6 mb-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="font-dl-mono text-xs text-dl-forest uppercase tracking-wider">Banking Registered</div>
-                    <span className="font-dl-mono text-xs border border-dl-forest text-dl-forest px-2 py-0.5 uppercase">{participant.status}</span>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="font-dl-mono text-xs text-dl-forest uppercase tracking-wider">Axiom Nexus Account — Active</div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-dl-mono text-xs border border-dl-forest text-dl-forest px-2 py-0.5 uppercase">{participant.status}</span>
+                      <a href="/banking/my-account" className="font-dl-mono text-xs text-dl-navy underline hover:no-underline">
+                        Full Account →
+                      </a>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-                    <div className="border border-dl-border p-4">
-                      <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Your Reference Code</div>
-                      <div className="font-dl-mono text-dl-navy font-bold text-lg">{participant.participantRef}</div>
-                      <div className="text-dl-gray text-xs mt-1">Include in all ACH memo fields</div>
+                  {(participant as { virtualAccountNumber?: string; virtualRoutingNumber?: string }).virtualAccountNumber ? (
+                    <div className="mb-5">
+                      <p className="text-dl-gray text-xs font-dl-mono uppercase mb-3">Your Dedicated Account Details</p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border">
+                        <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
+                          <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Reference Code</div>
+                          <div className="font-dl-mono text-dl-navy font-bold">{participant.participantRef}</div>
+                          <div className="text-dl-gray text-xs mt-1">Backup identifier</div>
+                        </div>
+                        <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
+                          <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Routing</div>
+                          <div className="font-dl-mono text-dl-navy font-bold">{(participant as { virtualRoutingNumber?: string }).virtualRoutingNumber}</div>
+                          <div className="text-dl-gray text-xs mt-1">First Internet Bank</div>
+                        </div>
+                        <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
+                          <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Your Account No.</div>
+                          <div className="font-dl-mono text-dl-navy font-bold">{(participant as { virtualAccountNumber?: string }).virtualAccountNumber}</div>
+                          <div className="text-dl-forest text-xs mt-1">No memo needed</div>
+                        </div>
+                        <div className="p-3">
+                          <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Payee</div>
+                          <div className="font-dl-mono text-dl-navy text-xs font-bold">Axiom Protocol LLC</div>
+                          <div className="text-dl-gray text-xs mt-1">Nexus Account</div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="border border-dl-border p-4">
-                      <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Routing Number</div>
-                      <div className="font-dl-mono text-dl-navy font-bold">071006486</div>
-                      <div className="text-dl-gray text-xs mt-1">First Internet Bank</div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                      <div className="border border-dl-border p-4">
+                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Your Reference Code</div>
+                        <div className="font-dl-mono text-dl-navy font-bold text-lg">{participant.participantRef}</div>
+                        <div className="text-dl-gray text-xs mt-1">Include in all ACH memo fields</div>
+                      </div>
+                      <div className="border border-dl-border p-4">
+                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Routing Number</div>
+                        <div className="font-dl-mono text-dl-navy font-bold">071006486</div>
+                        <div className="text-dl-gray text-xs mt-1">First Internet Bank</div>
+                      </div>
+                      <div className="border border-dl-border p-4">
+                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Payee Name</div>
+                        <div className="font-dl-mono text-dl-navy font-bold text-xs">Axiom Protocol LLC</div>
+                        <div className="text-dl-gray text-xs mt-1">Nexus Account · Account no. via secure message</div>
+                      </div>
                     </div>
-                    <div className="border border-dl-border p-4">
-                      <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Payee Name</div>
-                      <div className="font-dl-mono text-dl-navy font-bold text-xs">Axiom Protocol LLC</div>
-                      <div className="text-dl-gray text-xs mt-1">Nexus Account</div>
-                    </div>
-                  </div>
+                  )}
 
                   {/* Step 2 — Insurance Hold */}
                   <div className="border border-dl-border p-5 mb-5">
                     <div className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-2">Step 2 — Fund Your Insurance Hold</div>
                     <p className="text-dl-gray text-sm mb-3 leading-relaxed">
-                      When you join a Wealth Practice group, a one-time insurance hold is required — equal to one week&apos;s
-                      equivalent of your group contribution amount. This hold is separate from your regular contributions.
+                      Every Wealth Practice group requires a one-time insurance hold before your first contribution cycle.
+                      The hold is equal to one week&apos;s equivalent of your group&apos;s contribution amount. For example:
+                      a $200/month group requires a <span className="font-dl-mono font-semibold text-dl-navy">$50 insurance hold</span>.
+                      A $500/month group requires a <span className="font-dl-mono font-semibold text-dl-navy">$125 hold</span>.
+                      This amount protects all group members and is fully returned when your group completes its cycle.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border mb-3">
                       <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
-                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">How It&apos;s Calculated</div>
-                        <div className="text-dl-navy text-sm font-semibold">Monthly ÷ 4</div>
-                        <div className="text-dl-gray text-xs mt-1">E.g. $200/mo → $50 hold</div>
+                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Hold Amount</div>
+                        <div className="text-dl-navy text-sm font-semibold">One Week Equivalent</div>
+                        <div className="text-dl-gray text-xs mt-1">Monthly contribution ÷ 4</div>
                       </div>
                       <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
-                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Held Until</div>
+                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Released When</div>
                         <div className="text-dl-navy text-sm font-semibold">Group Graduation</div>
-                        <div className="text-dl-gray text-xs mt-1">Released when cycle completes</div>
+                        <div className="text-dl-gray text-xs mt-1">Full ACH return to your bank</div>
                       </div>
                       <div className="p-3">
                         <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Early Exit</div>
                         <div className="text-dl-navy text-sm font-semibold">Hold Forfeited</div>
-                        <div className="text-dl-gray text-xs mt-1">Protects other group members</div>
+                        <div className="text-dl-gray text-xs mt-1">Protects all group members</div>
                       </div>
                     </div>
                     <p className="text-dl-gray text-xs leading-relaxed">
-                      Send your insurance deposit via ACH to the Axiom Nexus Account — use your reference code in the memo field.
-                      Operations confirms receipt within 1-2 business days and marks your hold as funded.
+                      {(participant as { virtualAccountNumber?: string }).virtualAccountNumber
+                        ? `Send your hold via ACH using your dedicated account number above — your deposit is automatically matched, no memo required.`
+                        : `Send your insurance deposit via ACH to the Axiom Nexus Account — include your reference code ${participant.participantRef} in the memo field. Operations confirms receipt within 1-2 business days.`
+                      }
                     </p>
                   </div>
 

@@ -81,6 +81,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const isSandbox = (process.env.INCREASE_ENVIRONMENT ?? 'sandbox') === 'sandbox';
 
+    const hasVirtualAccount = !!(participant.virtualRoutingNumber && participant.virtualAccountNumber);
+
     return res.status(200).json({
       success: true,
       registered: true,
@@ -89,11 +91,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       lpDeposits,
       distributions,
       depositInstructions: {
-        routingNumber: '071006486',
+        routingNumber: hasVirtualAccount ? participant.virtualRoutingNumber : '071006486',
+        accountNumber: hasVirtualAccount ? participant.virtualAccountNumber : null,
         bankName: 'First Internet Bank',
         accountName: 'Axiom Protocol LLC — Nexus Account',
         memo: participant.participantRef,
-        note: `Always include your reference code "${participant.participantRef}" in the ACH memo or wire message field.`,
+        note: hasVirtualAccount
+          ? `Use your dedicated Axiom Nexus account number ${participant.virtualAccountNumber} with routing ${participant.virtualRoutingNumber}. This account number is unique to you — no memo code required when using it.`
+          : `Always include your reference code "${participant.participantRef}" in the ACH memo or wire message field.`,
+        hasVirtualAccount,
         environment: isSandbox ? 'sandbox' : 'production',
       },
     });

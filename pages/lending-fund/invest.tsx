@@ -127,7 +127,8 @@ export default function InvestPage() {
   const [investMode, setInvestMode] = useState<'earn-vault' | 'phase6'>('earn-vault');
 
   const [lpParticipant, setLpParticipant] = useState<{
-    participantRef: string; fullName: string; depositInstructions: { routingNumber: string; bankName: string; accountName: string; memo: string };
+    participantRef: string; fullName: string;
+    depositInstructions: { routingNumber: string; accountNumber?: string; bankName: string; accountName: string; memo: string; hasVirtualAccount?: boolean };
   } | null>(null);
   const [lpRegForm, setLpRegForm] = useState({ fullName: '', email: '' });
   const [lpRegLoading, setLpRegLoading] = useState(false);
@@ -709,21 +710,47 @@ export default function InvestPage() {
 
                     {lpParticipant && (
                       <>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border mb-5">
+                        <div className="border border-dl-forest p-3 mb-4 flex items-center justify-between">
+                          <p className="text-dl-forest text-xs font-dl-mono">
+                            {lpParticipant.depositInstructions.hasVirtualAccount
+                              ? 'Your dedicated Axiom Nexus account is provisioned — no memo required.'
+                              : `Registered as ${lpParticipant.fullName} · Ref: ${lpParticipant.participantRef}`}
+                          </p>
+                          <a href="/banking/my-account" className="text-xs text-dl-navy font-dl-mono underline hover:no-underline shrink-0 ml-4">
+                            My Full Account →
+                          </a>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-0 border border-dl-border mb-5">
                           <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
-                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Your Reference Code</p>
+                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Reference Code</p>
                             <p className="font-dl-mono text-dl-navy font-bold text-lg">{lpParticipant.participantRef}</p>
-                            <p className="text-dl-gray text-xs mt-1">Include in every ACH memo & wire OBI field</p>
+                            <p className="text-dl-gray text-xs mt-1">Backup memo identifier</p>
                           </div>
                           <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
                             <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Routing Number</p>
                             <p className="font-dl-mono text-dl-navy font-bold">{lpParticipant.depositInstructions.routingNumber}</p>
                             <p className="text-dl-gray text-xs mt-1">{lpParticipant.depositInstructions.bankName}</p>
                           </div>
+                          <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
+                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">
+                              {lpParticipant.depositInstructions.hasVirtualAccount ? 'Your Account Number' : 'Account Number'}
+                            </p>
+                            {lpParticipant.depositInstructions.hasVirtualAccount && lpParticipant.depositInstructions.accountNumber ? (
+                              <>
+                                <p className="font-dl-mono text-dl-navy font-bold">{lpParticipant.depositInstructions.accountNumber}</p>
+                                <p className="text-dl-forest text-xs mt-1">Dedicated to you — no memo needed</p>
+                              </>
+                            ) : (
+                              <>
+                                <p className="font-dl-mono text-dl-navy font-bold text-xs">See secure message</p>
+                                <p className="text-dl-gray text-xs mt-1">Sent after registration</p>
+                              </>
+                            )}
+                          </div>
                           <div className="px-4 py-4">
                             <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Payee Name</p>
                             <p className="font-dl-mono text-dl-navy font-bold text-xs">{lpParticipant.depositInstructions.accountName}</p>
-                            <p className="text-dl-gray text-xs mt-1">Account number provided via secure message</p>
                           </div>
                         </div>
 

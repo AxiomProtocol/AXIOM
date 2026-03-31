@@ -168,6 +168,48 @@ export const IncreaseService = {
     );
   },
 
+  async createParticipantVirtualAccount(params: {
+    account_id: string;
+    participant_ref: string;
+    full_name: string;
+  }): Promise<IncreaseAccountNumber> {
+    return increaseRequest<IncreaseAccountNumber>('POST', '/account_numbers', {
+      account_id: params.account_id,
+      name: `${params.full_name} — ${params.participant_ref}`,
+      inbound_ach: { debit_status: 'blocked' },
+      inbound_checks: { status: 'not_allowed' },
+    });
+  },
+
+  async getAccountNumber(accountNumberId: string): Promise<IncreaseAccountNumber> {
+    return increaseRequest<IncreaseAccountNumber>('GET', `/account_numbers/${accountNumberId}`);
+  },
+
+  async issueVirtualCard(params: {
+    account_id: string;
+    description: string;
+  }): Promise<IncreaseCard> {
+    return increaseRequest<IncreaseCard>('POST', '/cards', {
+      account_id: params.account_id,
+      description: params.description,
+      billing_address: {
+        line1: '1 Axiom Protocol',
+        city: 'Atlanta',
+        state: 'GA',
+        postal_code: '30301',
+        country: 'US',
+      },
+    });
+  },
+
+  async getCard(cardId: string): Promise<IncreaseCard> {
+    return increaseRequest<IncreaseCard>('GET', `/cards/${cardId}`);
+  },
+
+  async getCardDetails(cardId: string): Promise<IncreaseCardDetails> {
+    return increaseRequest<IncreaseCardDetails>('GET', `/cards/${cardId}/details`);
+  },
+
   formatAmount(cents: number, currency = 'USD'): string {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -175,3 +217,23 @@ export const IncreaseService = {
     }).format(cents / 100);
   },
 };
+
+export interface IncreaseCard {
+  id: string;
+  account_id: string;
+  description: string;
+  status: string;
+  type: string;
+  last4: string;
+  expiration_month: number;
+  expiration_year: number;
+  created_at: string;
+}
+
+export interface IncreaseCardDetails {
+  id: string;
+  primary_account_number: string;
+  expiration_month: number;
+  expiration_year: number;
+  verification_code: string;
+}

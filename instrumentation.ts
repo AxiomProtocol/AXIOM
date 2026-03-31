@@ -6402,6 +6402,13 @@ END $seed$`, 'seed dp_listings');
       await exec(`CREATE INDEX IF NOT EXISTS increase_participants_wallet_idx ON increase_participants(wallet_address)`, 'index increase_participants_wallet_idx');
       await exec(`CREATE INDEX IF NOT EXISTS increase_participants_ref_idx ON increase_participants(participant_ref)`, 'index increase_participants_ref_idx');
 
+      await exec(`ALTER TABLE increase_participants ADD COLUMN IF NOT EXISTS virtual_account_number_id VARCHAR(100)`, 'col increase_participants.virtual_account_number_id');
+      await exec(`ALTER TABLE increase_participants ADD COLUMN IF NOT EXISTS virtual_routing_number VARCHAR(20)`, 'col increase_participants.virtual_routing_number');
+      await exec(`ALTER TABLE increase_participants ADD COLUMN IF NOT EXISTS virtual_account_number VARCHAR(30)`, 'col increase_participants.virtual_account_number');
+      await exec(`ALTER TABLE increase_participants ADD COLUMN IF NOT EXISTS card_status VARCHAR(30) NOT NULL DEFAULT 'not_requested'`, 'col increase_participants.card_status');
+      await exec(`ALTER TABLE increase_participants ADD COLUMN IF NOT EXISTS card_id VARCHAR(100)`, 'col increase_participants.card_id');
+      await exec(`ALTER TABLE increase_participants ADD COLUMN IF NOT EXISTS card_last4 VARCHAR(4)`, 'col increase_participants.card_last4');
+
       await exec(`CREATE TABLE IF NOT EXISTS increase_insurance_holds (
         id SERIAL PRIMARY KEY,
         participant_id INTEGER NOT NULL,
