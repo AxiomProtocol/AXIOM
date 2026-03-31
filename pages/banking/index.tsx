@@ -357,7 +357,19 @@ export default function BankingDashboard() {
 
   // Participants tab state
   const [participantsData, setParticipantsData] = useState<{
-    participants: Array<{ id: number; walletAddress: string; participantRef: string; fullName: string; email: string; status: string; createdAt: string }>;
+    participants: Array<{
+      id: number;
+      walletAddress: string;
+      participantRef: string;
+      fullName: string;
+      email: string;
+      status: string;
+      cardStatus: string;
+      cardLast4: string | null;
+      virtualAccountNumber: string | null;
+      virtualRoutingNumber: string | null;
+      createdAt: string;
+    }>;
     insuranceHolds: Array<{ id: number; participantId: number; participantRef: string | null; participantName: string | null; groupId: string; groupDisplayName: string | null; requiredAmountCents: number; depositedAmountCents: number; status: string; fundedAt: string | null; createdAt: string }>;
     lpDeposits: Array<{ id: number; participantId: number; participantRef: string | null; participantName: string | null; amountCents: number; product: string; status: string; memoRef: string | null; createdAt: string }>;
     counts: { participants: number; holds: number; pendingHolds: number; fundedHolds: number; deposits: number; pendingDeposits: number; receivedDeposits: number };
@@ -1358,7 +1370,7 @@ export default function BankingDashboard() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${DL.border}` }}>
                     <thead>
                       <tr style={{ background: DL.navy }}>
-                        {['Ref Code', 'Name', 'Email', 'Wallet', 'Status', 'Registered'].map((h) => (
+                        {['Ref Code', 'Name', 'Wallet', 'Account #', 'Status', 'Card', 'Registered'].map((h) => (
                           <th key={h} style={{ ...monoLabel, color: '#fff', textAlign: 'left', padding: '10px 14px', whiteSpace: 'nowrap' }}>{h}</th>
                         ))}
                       </tr>
@@ -1367,10 +1379,22 @@ export default function BankingDashboard() {
                       {participantsData.participants.map((p, i) => (
                         <tr key={p.id} style={{ borderBottom: `1px solid ${DL.border}`, background: i % 2 === 0 ? '#fff' : DL.surface }}>
                           <td style={{ ...mono, padding: '11px 14px', color: DL.navy, fontWeight: 700 }}>{p.participantRef}</td>
-                          <td style={{ ...mono, padding: '11px 14px' }}>{p.fullName}</td>
-                          <td style={{ ...mono, padding: '11px 14px' }}>{p.email}</td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>
+                            <div>{p.fullName}</div>
+                            <div style={{ fontSize: 10, color: DL.gray }}>{p.email}</div>
+                          </td>
                           <td style={{ ...mono, padding: '11px 14px', fontSize: 10 }}>{p.walletAddress.slice(0, 8)}…{p.walletAddress.slice(-6)}</td>
+                          <td style={{ ...mono, padding: '11px 14px', fontSize: 11 }}>
+                            {p.virtualAccountNumber
+                              ? `••••${p.virtualAccountNumber.slice(-4)}`
+                              : <span style={{ color: DL.gray }}>—</span>}
+                          </td>
                           <td style={{ padding: '11px 14px' }}><StatusBadge status={p.status} /></td>
+                          <td style={{ ...mono, padding: '11px 14px', fontSize: 11 }}>
+                            {p.cardStatus === 'active'
+                              ? <span style={{ color: DL.forest }}>••{p.cardLast4 ?? '????'}</span>
+                              : <span style={{ color: DL.gray }}>{p.cardStatus || '—'}</span>}
+                          </td>
                           <td style={{ ...mono, padding: '11px 14px' }}>{new Date(p.createdAt).toLocaleDateString()}</td>
                         </tr>
                       ))}
@@ -1411,6 +1435,57 @@ export default function BankingDashboard() {
                     </tbody>
                   </table>
                 </div>
+              )}
+
+              {/* Open Escrows — pending holds requiring admin action */}
+              {participantsData.insuranceHolds.filter(h => ['pending', 'partial'].includes(h.status)).length > 0 && (
+                <>
+                  <SectionTitle>Open Escrows — Action Required</SectionTitle>
+                  <div style={{ background: '#FFF8EC', border: `1px solid ${DL.gold}`, padding: '12px 16px', marginBottom: 16 }}>
+                    <p style={{ ...mono, fontSize: 11, color: DL.gold, lineHeight: 1.6 }}>
+                      The holds below are pending ACH settlement. Once you confirm receipt in the Increase dashboard, call
+                      <strong style={{ color: DL.navy }}> POST /api/banking/wealth-practice/insurance/fund </strong>
+                      with <code style={{ fontSize: 10 }}>adminConfirm: true</code> + <code style={{ fontSize: 10 }}>holdId</code> to activate the hold.
+                    </p>
+                  </div>
+                  <div style={{ overflowX: 'auto', marginBottom: 36 }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${DL.border}` }}>
+                      <thead>
+                        <tr style={{ background: DL.gold }}>
+                          {['Hold ID', 'Ref', 'Name', 'Group', 'Required', 'Deposited', 'Shortfall', 'Status', 'Memo Ref', 'Created'].map((h) => (
+                            <th key={h} style={{ ...monoLabel, color: '#fff', textAlign: 'left', padding: '10px 14px', whiteSpace: 'nowrap' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {participantsData.insuranceHolds
+                          .filter(h => ['pending', 'partial'].includes(h.status))
+                          .map((h, i) => {
+                            const shortfall = h.requiredAmountCents - h.depositedAmountCents;
+                            const refCode = h.participantRef ?? '—';
+                            return (
+                              <tr key={h.id} style={{ borderBottom: `1px solid ${DL.border}`, background: i % 2 === 0 ? '#FFFDF5' : DL.surface }}>
+                                <td style={{ ...mono, padding: '11px 14px', fontWeight: 700, color: DL.gold }}>{h.id}</td>
+                                <td style={{ ...mono, padding: '11px 14px', color: DL.navy, fontWeight: 700 }}>{refCode}</td>
+                                <td style={{ ...mono, padding: '11px 14px' }}>{h.participantName ?? '—'}</td>
+                                <td style={{ ...mono, padding: '11px 14px', fontSize: 10 }}>{h.groupDisplayName ?? h.groupId}</td>
+                                <td style={{ ...mono, padding: '11px 14px' }}>${(h.requiredAmountCents / 100).toFixed(2)}</td>
+                                <td style={{ ...mono, padding: '11px 14px' }}>${(h.depositedAmountCents / 100).toFixed(2)}</td>
+                                <td style={{ ...mono, padding: '11px 14px', color: shortfall > 0 ? DL.error : DL.forest, fontWeight: 700 }}>
+                                  ${(shortfall / 100).toFixed(2)}
+                                </td>
+                                <td style={{ padding: '11px 14px' }}><StatusBadge status={h.status} /></td>
+                                <td style={{ ...mono, padding: '11px 14px', fontSize: 10 }}>
+                                  HOLD-{refCode}-{h.groupId}
+                                </td>
+                                <td style={{ ...mono, padding: '11px 14px' }}>{new Date(h.createdAt).toLocaleDateString()}</td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
 
               {/* LP Deposits table */}

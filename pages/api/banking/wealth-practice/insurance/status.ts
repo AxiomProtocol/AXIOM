@@ -38,7 +38,9 @@ function isAdmin(req: NextApiRequest): boolean {
 }
 
 // GET /api/banking/wealth-practice/insurance/status?wallet=0x...&groupId=...
-// Returns insurance hold status for a participant and optional group
+// Returns insurance hold status including computed requirement (1-week equivalent),
+// whether the hold is funded, and ACH deposit instructions.
+// Works even before a hold record exists — computes requirement from group data.
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -61,6 +63,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Look up group contribution if groupId provided (to compute requirement)
+    let contributionAmountCents: number | null = null;
+    let requiredHoldCents: number | null = null;
+    let groupDisplayName: string | null = null;
+
+    if (groupId) {
+      try {
+        const groupResult = await pool.query(
+          `SELECT contribution_amount, name FROM susu_purpose_groups WHERE id = $1 LIMIT 1`,
+          [Number(groupId)]
+        );
+        if (groupResult.rows.length > 0) {
+          const g = groupResult.rows[0];
+          groupDisplayName = g.name || null;
+          if (g.contribution_amount) {
+            contributionAmountCents = Math.round(parseFloat(g.contribution_amount) * 100);
+            // Insurance hold = 1 week equivalent (monthly ÷ 4)
+            requiredHoldCents = Math.ceil(contributionAmountCents / 4);
+          }
+        }
+      } catch {
+        // Non-fatal — requirement will be null if group not found
+      }
+    }
+
+    // Look up participant
     const participants = await db
       .select()
       .from(increaseParticipants)
@@ -73,23 +101,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         holds: [],
         canJoin: false,
         groupHoldStatus: null,
+        groupHold: null,
+        requiredHoldCents,
+        contributionAmountCents,
+        groupDisplayName,
+        depositInstructions: null,
       });
     }
 
     const p = participants[0];
 
-    let holdsQuery = db
+    const holds = await db
       .select()
       .from(increaseInsuranceHolds)
       .where(eq(increaseInsuranceHolds.participantId, p.id));
 
-    const holds = await holdsQuery;
-
     const groupHold = groupId
-      ? holds.find((h) => h.groupId === groupId)
+      ? holds.find((h) => h.groupId === groupId) ?? null
       : null;
 
     const hasFundedHold = holds.some((h) => h.status === 'funded');
+    const groupIsFunded = groupHold?.status === 'funded';
+
+    const hasVirtualAccount = !!(p.virtualRoutingNumber && p.virtualAccountNumber);
 
     return res.status(200).json({
       registered: true,
@@ -97,13 +131,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       holds,
       canJoin: hasFundedHold,
       groupHoldStatus: groupHold?.status ?? null,
-      groupHold: groupHold ?? null,
+      groupHold,
+      groupIsFunded,
+      requiredHoldCents: groupHold?.requiredAmountCents ?? requiredHoldCents,
+      depositedAmountCents: groupHold?.depositedAmountCents ?? 0,
+      contributionAmountCents,
+      groupDisplayName,
       depositInstructions: {
+        bankName: 'First Internet Bank',
+        accountName: 'Axiom Protocol LLC — Nexus Account',
         routingNumber: p.virtualRoutingNumber ?? '071006486',
         accountNumber: p.virtualAccountNumber ?? null,
-        bankName: 'First Internet Bank',
-        memo: p.virtualAccountNumber ? undefined : p.participantRef,
-        hasVirtualAccount: !!(p.virtualRoutingNumber && p.virtualAccountNumber),
+        memo: groupId ? `HOLD-${p.participantRef}-${groupId}` : `HOLD-${p.participantRef}`,
+        amountDue: groupHold?.requiredAmountCents ?? requiredHoldCents,
+        hasVirtualAccount,
       },
     });
   } catch (err: unknown) {
