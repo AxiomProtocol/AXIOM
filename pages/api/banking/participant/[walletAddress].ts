@@ -6,6 +6,7 @@ import {
   increaseLpDeposits,
   increaseDistributions,
 } from '../../../../shared/increaseParticipantSchema';
+import { IncreaseService } from '../../../../lib/services/IncreaseService';
 import { eq, and } from 'drizzle-orm';
 
 function parseCookies(header: string | undefined): Record<string, string> {
@@ -91,10 +92,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const hasVirtualAccount = !!(participant.virtualRoutingNumber && participant.virtualAccountNumber);
 
+    // Fetch account balance — ONLY for fully provisioned per-participant accounts.
+    // Requires both increaseAccountId AND increaseEntityId; prevents shared treasury exposure.
+    const isParticipantDedicated = !!(participant.increaseAccountId && participant.increaseEntityId);
+    let accountBalance: { availableBalanceCents: number; currentBalanceCents: number; currency: string } | null = null;
+    if (isParticipantDedicated) {
+      try {
+        const bal = await IncreaseService.getAccountBalance(participant.increaseAccountId!);
+        accountBalance = {
+          availableBalanceCents: bal.available_balance,
+          currentBalanceCents: bal.current_balance,
+          currency: bal.currency,
+        };
+      } catch {
+        // Non-fatal — balance unavailable
+      }
+    }
+
     return res.status(200).json({
       success: true,
       registered: true,
       participant,
+      accountBalance,
+      hasDedicatedAccount: isParticipantDedicated,
       insuranceHolds,
       lpDeposits,
       distributions,

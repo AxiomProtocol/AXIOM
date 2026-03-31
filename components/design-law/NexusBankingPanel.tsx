@@ -18,6 +18,13 @@ interface Participant {
   status: string;
   cardStatus: string;
   cardLast4?: string;
+  virtualAccountNumber?: string;
+}
+
+interface AccountBalance {
+  availableBalanceCents: number;
+  currentBalanceCents: number;
+  currency: string;
 }
 
 interface NexusBankingPanelProps {
@@ -89,6 +96,7 @@ export function NexusBankingPanel({
   const { address, isConnected } = useAccount();
   const [participant, setParticipant] = useState<Participant | null>(null);
   const [instructions, setInstructions] = useState<DepositInstructions | null>(null);
+  const [accountBalance, setAccountBalance] = useState<AccountBalance | null>(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(!collapsible);
   const [copied, setCopied] = useState('');
@@ -105,6 +113,7 @@ export function NexusBankingPanel({
         if (d?.registered) {
           setParticipant(d.participant);
           setInstructions(d.depositInstructions);
+          setAccountBalance(d.accountBalance ?? null);
         }
       })
       .catch(() => {})
@@ -191,6 +200,53 @@ export function NexusBankingPanel({
                   {copied} copied
                 </div>
               )}
+
+              {/* ── Nexus Account Status Card ─────────────────────────────── */}
+              <div className="border border-dl-border mb-4">
+                <div className="px-4 py-2 border-b border-dl-border bg-dl-bg">
+                  <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider">Nexus Account Status</p>
+                </div>
+                <div className="grid grid-cols-3 divide-x divide-dl-border">
+                  {/* Account Number */}
+                  <div className="px-4 py-3">
+                    <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Account No.</p>
+                    {participant.virtualAccountNumber ? (
+                      <p className="font-dl-mono text-dl-navy font-bold text-sm">
+                        ···· {participant.virtualAccountNumber.slice(-4)}
+                      </p>
+                    ) : (
+                      <p className="font-dl-mono text-dl-gray text-xs">Pending provisioning</p>
+                    )}
+                  </div>
+                  {/* Card Status */}
+                  <div className="px-4 py-3">
+                    <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Nexus Card</p>
+                    {participant.cardStatus === 'issued' ? (
+                      <p className="font-dl-mono text-dl-forest font-bold text-sm">
+                        ACTIVE {participant.cardLast4 ? `···· ${participant.cardLast4}` : ''}
+                      </p>
+                    ) : participant.cardStatus === 'pending' ? (
+                      <p className="font-dl-mono text-dl-gold font-bold text-sm">PENDING ISSUANCE</p>
+                    ) : (
+                      <p className="font-dl-mono text-dl-gray text-xs">Not yet issued</p>
+                    )}
+                  </div>
+                  {/* Available Balance */}
+                  <div className="px-4 py-3">
+                    <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Available Balance</p>
+                    {accountBalance !== null ? (
+                      <p className="font-dl-mono text-dl-navy font-bold text-sm">
+                        ${(accountBalance.availableBalanceCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </p>
+                    ) : (
+                      <p className="font-dl-mono text-dl-gray text-xs">
+                        {participant.virtualAccountNumber ? 'Unavailable' : 'Pending provisioning'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {/* ────────────────────────────────────────────────────────────── */}
 
               {instructions.hasVirtualAccount ? (
                 <div className="border border-dl-forest mb-4">
