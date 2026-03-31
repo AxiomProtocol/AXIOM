@@ -2,15 +2,22 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import {
   increaseInsuranceHolds,
-  increaseParticipants,
 } from '../../../../shared/increaseParticipantSchema';
 import { eq } from 'drizzle-orm';
+
+function isAdmin(req: NextApiRequest): boolean {
+  const key = req.headers['x-admin-key'];
+  return typeof key === 'string' && key === process.env.ADMIN_SOLVENCY_KEY;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const holdId = parseInt(String(req.query.holdId), 10);
   if (isNaN(holdId)) return res.status(400).json({ error: 'Invalid holdId' });
 
   if (req.method === 'GET') {
+    if (!isAdmin(req)) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
     try {
       const holds = await db
         .select()
@@ -25,9 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'PATCH') {
-    const adminKey = req.headers['x-admin-key'];
-    if (!adminKey || adminKey !== process.env.ADMIN_SOLVENCY_KEY) {
-      return res.status(403).json({ error: 'Forbidden' });
+    if (!isAdmin(req)) {
+      return res.status(403).json({ error: 'Admin access required' });
     }
 
     const { action, depositedAmountCents } = req.body;
