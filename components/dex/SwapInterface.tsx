@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSwapQuote } from '../../lib/hooks/useDex';
-import { useWallet } from '../../lib/web3/useWallet';
+import { useAccount, usePublicClient } from 'wagmi';
+import { erc20Abi } from 'viem';
 
 // Fix 1: Canonical token addresses aligned with quote.ts and price.ts.
 // Only tokens with live EulerSwap pool support are included.
@@ -10,10 +11,9 @@ const TOKENS = [
   { symbol: 'AXM',   address: '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D', decimals: 18, isNative: false },
 ];
 
-const ERC20_ABI = ['function balanceOf(address) view returns (uint256)'];
-
 export default function SwapInterface() {
-  const { isConnected, address, provider } = useWallet();
+  const { address, isConnected } = useAccount();
+  const publicClient = usePublicClient();
   const [tokenIn, setTokenIn]   = useState(TOKENS[0]);
   const [tokenOut, setTokenOut] = useState(TOKENS[1]);
   const [amountIn, setAmountIn] = useState('');
@@ -29,19 +29,24 @@ export default function SwapInterface() {
   );
 
   const fetchBalance = useCallback(async (token: typeof TOKENS[0], setBalance: (b: string) => void) => {
-    if (!address || !provider) { setBalance('0.00'); return; }
+    if (!address || !publicClient) { setBalance('0.00'); return; }
     try {
-      const { ethers } = await import('ethers');
-      const contract = new ethers.Contract(token.address, ERC20_ABI, provider);
-      const balance = await contract.balanceOf(address);
-      setBalance(parseFloat(ethers.formatUnits(balance, token.decimals)).toFixed(token.decimals === 6 ? 2 : 4));
+      const raw = await publicClient.readContract({
+        address: token.address as `0x${string}`,
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: [address as `0x${string}`],
+      });
+      const { formatUnits } = await import('viem');
+      const formatted = parseFloat(formatUnits(raw as bigint, token.decimals));
+      setBalance(formatted.toFixed(token.decimals === 6 ? 2 : 4));
     } catch {
       setBalance('0.00');
     }
-  }, [address, provider]);
+  }, [address, publicClient]);
 
-  useEffect(() => { fetchBalance(tokenIn, setBalanceIn); }, [tokenIn, address, provider, fetchBalance]);
-  useEffect(() => { fetchBalance(tokenOut, setBalanceOut); }, [tokenOut, address, provider, fetchBalance]);
+  useEffect(() => { fetchBalance(tokenIn, setBalanceIn); }, [tokenIn, address, publicClient, fetchBalance]);
+  useEffect(() => { fetchBalance(tokenOut, setBalanceOut); }, [tokenOut, address, publicClient, fetchBalance]);
 
   const handleSwapTokens = () => {
     const temp = tokenIn;
