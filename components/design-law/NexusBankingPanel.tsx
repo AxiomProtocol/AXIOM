@@ -221,11 +221,11 @@ export function NexusBankingPanel({
                   {/* Card Status */}
                   <div className="px-4 py-3">
                     <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Nexus Card</p>
-                    {participant.cardStatus === 'issued' ? (
+                    {(participant.cardStatus === 'issued' || participant.cardStatus === 'active') ? (
                       <p className="font-dl-mono text-dl-forest font-bold text-sm">
                         ACTIVE {participant.cardLast4 ? `···· ${participant.cardLast4}` : ''}
                       </p>
-                    ) : participant.cardStatus === 'pending' ? (
+                    ) : (participant.cardStatus === 'card_pending' || participant.cardStatus === 'pending') ? (
                       <p className="font-dl-mono text-dl-gold font-bold text-sm">PENDING ISSUANCE</p>
                     ) : (
                       <p className="font-dl-mono text-dl-gray text-xs">Not yet issued</p>

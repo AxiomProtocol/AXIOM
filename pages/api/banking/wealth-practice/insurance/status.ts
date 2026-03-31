@@ -37,29 +37,40 @@ function isAdmin(req: NextApiRequest): boolean {
   return typeof key === 'string' && key === process.env.ADMIN_SOLVENCY_KEY;
 }
 
-// GET /api/banking/wealth-practice/insurance/status?wallet=0x...&groupId=...
+// GET /api/banking/wealth-practice/insurance/status?groupId=...
+//
+// Participant path: wallet is derived from SIWE session (no ?wallet= needed).
+// Admin path  : requires x-admin-key header + ?wallet=0x... query param.
+// Dev mode    : SIWE returns '__dev__'; falls back to optional ?wallet= query param for testing.
 //
 // Returns insurance hold status from increase_product_escrows (purpose='insurance-hold').
 // Always computes requiredHoldCents (= contributionAmountCents ÷ 4) from the group record
-// even when no escrow row exists yet. Works for both participant (SIWE) and admin (x-admin-key).
+// even when no escrow row exists yet.
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const wallet = typeof req.query.wallet === 'string'
-    ? req.query.wallet.toLowerCase()
-    : null;
   const groupId = typeof req.query.groupId === 'string' ? req.query.groupId : null;
 
-  if (!wallet || !/^0x[a-fA-F0-9]{40}$/i.test(wallet)) {
-    return res.status(400).json({ error: 'Valid wallet address required (?wallet=0x...)' });
-  }
-
   const adminOk = isAdmin(req);
-  if (!adminOk) {
+  let wallet: string | null = null;
+
+  if (adminOk) {
+    // Admin path: must supply ?wallet=0x... explicitly
+    const qw = typeof req.query.wallet === 'string' ? req.query.wallet.toLowerCase() : null;
+    if (!qw || !/^0x[a-fA-F0-9]{40}$/i.test(qw)) {
+      return res.status(400).json({ error: 'Admin path requires ?wallet=0x... query param' });
+    }
+    wallet = qw;
+  } else {
+    // Participant path: derive wallet from SIWE session
     const siweWallet = await getSiweWallet(req);
     if (!siweWallet) return res.status(401).json({ error: 'Wallet sign-in required' });
-    if (siweWallet !== '__dev__' && siweWallet.toLowerCase() !== wallet) {
-      return res.status(403).json({ error: 'Forbidden' });
+    if (siweWallet === '__dev__') {
+      // Dev mode fallback — accept ?wallet= for testing, or use a dev placeholder
+      const qw = typeof req.query.wallet === 'string' ? req.query.wallet.toLowerCase() : null;
+      wallet = (qw && /^0x[a-fA-F0-9]{40}$/i.test(qw)) ? qw : '0x0000000000000000000000000000000000000001';
+    } else {
+      wallet = siweWallet.toLowerCase();
     }
   }
 

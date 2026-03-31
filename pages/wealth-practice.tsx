@@ -443,17 +443,19 @@ export default function WealthPracticePage() {
     setJoinInsuranceData(null);
   };
 
-  // Check insurance status then gate join or show deposit instructions
+  // Check insurance status then gate join or show deposit instructions.
+  // Wallet is derived from the connected wagmi address — no manual wallet input required.
   const handleCheckInsuranceAndJoin = async (group: Group) => {
-    if (!joinWallet || !/^0x[a-fA-F0-9]{40}$/i.test(joinWallet.trim())) {
-      setJoinError('Enter a valid wallet address (0x...) to continue.');
+    if (!connectedAddress) {
+      setJoinError('Connect your wallet to continue.');
       return;
     }
     setJoinStatus('checking');
     setJoinError(null);
     try {
+      // Participant path: SIWE derives wallet on server — no ?wallet= param sent
       const insRes = await fetch(
-        `/api/banking/wealth-practice/insurance/status?wallet=${encodeURIComponent(joinWallet.trim())}&groupId=${group.id}`
+        `/api/banking/wealth-practice/insurance/status?groupId=${group.id}`
       );
       const insData = await insRes.json();
       setJoinInsuranceData(insData);
@@ -470,7 +472,7 @@ export default function WealthPracticePage() {
         const joinRes = await fetch('/api/wealth-practice/join', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ groupId: String(group.id), memberAddress: joinWallet.trim() }),
+          body: JSON.stringify({ groupId: String(group.id), memberAddress: connectedAddress }),
         });
         const joinData = await joinRes.json();
         if (joinData.success) {
@@ -483,13 +485,14 @@ export default function WealthPracticePage() {
       } else if (holdStatus === 'pending' || holdStatus === 'partial') {
         setJoinStatus('pending-funding');
       } else {
-        // No hold yet — initiate hold creation + show deposit instructions
+        // No hold yet — initiate hold creation + return deposit instructions
         const contributionAmountCents = Math.round(parseFloat(String(group.contribution_amount || '0')) * 100);
         const fundRes = await fetch('/api/banking/wealth-practice/insurance/fund', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            walletAddress: joinWallet.trim(),
+            // walletAddress included for dev-mode SIWE fallback (fund.ts checks siweWallet === '__dev__')
+            walletAddress: connectedAddress,
             groupId: String(group.id),
             groupDisplayName: group.display_name || `Group #${group.id}`,
             contributionAmountCents,
@@ -928,22 +931,24 @@ export default function WealthPracticePage() {
                                 To join this group, your Axiom Nexus Account must have a funded insurance hold
                                 of <strong className="text-dl-navy">${((Math.round(parseFloat(String(group.contribution_amount || '0')) * 100)) / 4 / 100).toFixed(2)}</strong> (1-week equivalent of the ${group.contribution_amount}/mo contribution).
                               </p>
-                              <div className="flex gap-2 mb-3">
-                                <input
-                                  type="text"
-                                  placeholder="Your wallet address (0x...)"
-                                  value={joinWallet}
-                                  onChange={(e) => setJoinWallet(e.target.value)}
-                                  className="flex-1 border border-dl-border bg-dl-bg px-3 py-2 text-xs text-dl-navy font-dl-mono focus:outline-none min-h-[36px]"
-                                />
-                                <button
-                                  onClick={() => handleCheckInsuranceAndJoin(group)}
-                                  disabled={joinStatus === 'checking' || joinStatus === 'joining'}
-                                  className="border border-dl-navy bg-dl-navy text-white text-xs font-dl-mono uppercase px-4 py-2 disabled:opacity-50"
-                                >
-                                  {joinStatus === 'checking' ? 'Checking…' : joinStatus === 'joining' ? 'Joining…' : 'Continue'}
-                                </button>
-                              </div>
+                              {connectedAddress ? (
+                                <div className="flex gap-2 mb-3">
+                                  <div className="flex-1 border border-dl-border bg-dl-bg px-3 py-2 text-xs text-dl-navy font-dl-mono min-h-[36px] flex items-center">
+                                    {connectedAddress.slice(0, 8)}···{connectedAddress.slice(-6)}
+                                  </div>
+                                  <button
+                                    onClick={() => handleCheckInsuranceAndJoin(group)}
+                                    disabled={joinStatus === 'checking' || joinStatus === 'joining'}
+                                    className="border border-dl-navy bg-dl-navy text-white text-xs font-dl-mono uppercase px-4 py-2 disabled:opacity-50"
+                                  >
+                                    {joinStatus === 'checking' ? 'Checking…' : joinStatus === 'joining' ? 'Joining…' : 'Continue'}
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="mb-3 border border-dl-border p-3 text-xs text-dl-gray">
+                                  Connect your wallet to continue joining this group.
+                                </div>
+                              )}
 
                               {joinError && (
                                 <p className="text-xs text-red-700 mb-2">{joinError}</p>
