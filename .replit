@@ -46,6 +46,11 @@ MIRDT_SCAN_KEY = "aS0hcvK9a0mTvKa9Vyb4G/T44+iM/DW10p3C+kFrYmQ="
 AUTH0_BASE_URL = "https://axiomprotocol.app"
 AUTH0_ISSUER_BASE_URL = "https://axiomprotocol.us.auth0.com"
 AUTH0_CLIENT_ID = "ANFrOlrbookIKC8OJNPfx1GLZmLElnzy"
+INCREASE_ACCOUNT_ID = "account_3q7ro70b6ma4w5ijgivz"
+INCREASE_ENTITY_ID = "entity_7jmkhj5m3qcy17y6wn38"
+INCREASE_PROGRAM_ID = "program_fwsguluhuinbvvuz4xjy"
+INCREASE_BANK = "first_internet_bank"
+INCREASE_ACCOUNT_NAME = "Axiom Nexus Account"
 
 [userenv.development]
 MIRDT_SCAN_KEY = "mirdt-dev-scan-2026"
