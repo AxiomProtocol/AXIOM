@@ -1,17 +1,64 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
 
+function parseCookies(header: string | undefined): Record<string, string> {
+  if (!header) return {};
+  return Object.fromEntries(
+    header.split(';').map((c) => {
+      const [k, ...v] = c.trim().split('=');
+      return [k.trim(), v.join('=')];
+    }).filter(([k]) => k.length > 0)
+  );
+}
+
+async function getSiweWallet(req: NextApiRequest): Promise<string | null> {
+  if (process.env.NODE_ENV === 'development') return '__dev__';
+  const cookies = parseCookies(req.headers.cookie);
+  const token = cookies['siwe_session'];
+  if (!token) return null;
+  try {
+    const result = await pool.query(
+      `SELECT wallet_address FROM wallet_sessions WHERE session_token = $1 AND expires_at > NOW() LIMIT 1`,
+      [token]
+    );
+    return result.rows[0]?.wallet_address ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { groupId, memberAddress } = req.body;
+  // Derive memberAddress from SIWE session to prevent IDOR/unauthorized membership mutation.
+  // In dev mode, fall back to the body-supplied address.
+  const siweWallet = await getSiweWallet(req);
+  if (!siweWallet) {
+    return res.status(401).json({ success: false, error: 'Wallet sign-in required — connect your wallet and sign in to join a group' });
+  }
 
-  if (!groupId || !memberAddress) {
+  const { groupId, memberAddress: bodyMemberAddress } = req.body;
+
+  // Derive canonical memberAddress from SIWE (dev falls back to body param)
+  const memberAddress: string | null | undefined = siweWallet === '__dev__'
+    ? bodyMemberAddress
+    : siweWallet;
+
+  if (!memberAddress || !/^0x[a-fA-F0-9]{40}$/i.test(memberAddress)) {
+    return res.status(400).json({ success: false, error: 'Valid wallet address could not be determined from your session' });
+  }
+
+  // In production, if a body memberAddress is provided, it must match the SIWE wallet
+  if (siweWallet !== '__dev__' && bodyMemberAddress && bodyMemberAddress.toLowerCase() !== siweWallet.toLowerCase()) {
+    return res.status(403).json({ success: false, error: 'You may only join groups as your own connected wallet' });
+  }
+
+  if (!groupId) {
     return res.status(400).json({
       success: false,
-      error: 'groupId and memberAddress are required',
+      error: 'groupId is required',
     });
   }
 

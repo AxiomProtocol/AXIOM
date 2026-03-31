@@ -191,10 +191,24 @@ export default function InvestPage() {
     if (!/^0x[a-fA-F0-9]{40}$/i.test(address)) return;
     setLpParticipantLoading(true);
     try {
-      const res = await fetch(`/api/banking/participant/${encodeURIComponent(address)}`);
+      const res = await fetch(`/api/banking/participant/status?wallet=${encodeURIComponent(address)}`);
       const data = await res.json();
-      if (data.success && data.registered) {
-        setLpParticipant({ participantRef: data.participant.participantRef, fullName: data.participant.fullName, depositInstructions: data.depositInstructions });
+      if (data.registered) {
+        setLpParticipant({
+          participantRef: data.participantRef,
+          fullName: data.fullName,
+          depositInstructions: {
+            routingNumber: data.virtualRoutingNumber,
+            accountNumber: data.virtualAccountNumber,
+            bankName: 'First Internet Bank',
+            accountName: 'Axiom Protocol LLC — Nexus Account',
+            memo: data.participantRef,
+            hasVirtualAccount: data.hasVirtualAccount,
+            note: data.hasVirtualAccount
+              ? `Use your dedicated Axiom Nexus account number ${data.virtualAccountNumber} with routing ${data.virtualRoutingNumber}. No memo required.`
+              : `Include your reference code "${data.participantRef}" in the ACH memo field.`,
+          },
+        });
       } else {
         setLpParticipant(null);
       }
@@ -208,14 +222,14 @@ export default function InvestPage() {
     if (!lpRegForm.email.trim() || !lpRegForm.email.includes('@')) { setLpRegError('Valid email required'); return; }
     setLpRegLoading(true); setLpRegError(''); setLpRegMsg('');
     try {
-      const res = await fetch('/api/banking/participant/register', {
+      const res = await fetch('/api/banking/participant/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ walletAddress, fullName: lpRegForm.fullName.trim(), email: lpRegForm.email.trim() }),
       });
       const data = await res.json();
       if (data.success) {
-        setLpRegMsg('Registered. Your ACH reference code is ready.');
+        setLpRegMsg('Axiom Nexus account provisioned. Your ACH reference code is ready.');
         await fetchLpParticipant(walletAddress);
       } else {
         setLpRegError(data.error || 'Registration failed');
