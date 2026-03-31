@@ -6481,6 +6481,13 @@ END $seed$`, 'seed dp_listings');
       await exec(`CREATE INDEX IF NOT EXISTS increase_product_escrows_participant_idx ON increase_product_escrows(participant_id)`, 'index increase_product_escrows_participant_idx');
       await exec(`CREATE INDEX IF NOT EXISTS increase_product_escrows_deal_idx ON increase_product_escrows(deal_id)`, 'index increase_product_escrows_deal_idx');
 
+      // Wealth Practice insurance-hold support columns on increase_product_escrows
+      await exec(`ALTER TABLE increase_product_escrows ADD COLUMN IF NOT EXISTS group_id VARCHAR(100)`, 'col increase_product_escrows.group_id');
+      await exec(`ALTER TABLE increase_product_escrows ADD COLUMN IF NOT EXISTS group_display_name VARCHAR(200)`, 'col increase_product_escrows.group_display_name');
+      await exec(`ALTER TABLE increase_product_escrows ADD COLUMN IF NOT EXISTS deposited_amount_cents INTEGER NOT NULL DEFAULT 0`, 'col increase_product_escrows.deposited_amount_cents');
+      await exec(`ALTER TABLE increase_product_escrows ADD COLUMN IF NOT EXISTS funded_at TIMESTAMP`, 'col increase_product_escrows.funded_at');
+      await exec(`CREATE INDEX IF NOT EXISTS increase_product_escrows_group_idx ON increase_product_escrows(group_id)`, 'index increase_product_escrows_group_idx');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();

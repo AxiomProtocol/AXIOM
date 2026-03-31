@@ -2,10 +2,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db, pool } from '../../../../server/db';
 import {
   increaseParticipants,
-  increaseInsuranceHolds,
+  increaseProductEscrows,
 } from '../../../../shared/increaseParticipantSchema';
 import { IncreaseService, getAccountId } from '../../../../lib/services/IncreaseService';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 function parseCookies(header: string | undefined): Record<string, string> {
   if (!header) return {};
@@ -39,7 +39,8 @@ function isAdmin(req: NextApiRequest): boolean {
 }
 
 // GET /api/banking/participant/status?wallet=0x...
-// Returns full participant status including Increase account balance and card details
+// Returns full participant status including Increase account balance and card details.
+// Insurance holds are read from increase_product_escrows (product='wealth-practice', purpose='insurance-hold').
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -84,16 +85,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const p = rows[0];
     const hasVirtualAccount = !!(p.virtualRoutingNumber && p.virtualAccountNumber);
 
-    // Fetch insurance holds
+    // Fetch insurance-hold escrows from increase_product_escrows
     const holds = await db
       .select()
-      .from(increaseInsuranceHolds)
-      .where(eq(increaseInsuranceHolds.participantId, p.id));
+      .from(increaseProductEscrows)
+      .where(
+        and(
+          eq(increaseProductEscrows.participantId, p.id),
+          eq(increaseProductEscrows.product, 'wealth-practice'),
+          eq(increaseProductEscrows.purpose, 'insurance-hold'),
+        )
+      );
 
     const fundedHold = holds.find((h) => h.status === 'funded');
     const pendingHold = holds.find((h) => h.status === 'pending');
 
-    // Fetch real account balance from Increase (use participant's dedicated account or shared account)
+    // Fetch real account balance from Increase
     let accountBalance: { availableBalanceCents: number; currentBalanceCents: number; currency: string } | null = null;
     const targetAccountId = p.increaseAccountId || getAccountId();
     if (targetAccountId) {

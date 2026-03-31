@@ -1,9 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import {
-  increaseInsuranceHolds,
+  increaseProductEscrows,
 } from '../../../../shared/increaseParticipantSchema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
+
+// GET  /api/banking/insurance/[holdId]  — retrieve an insurance-hold escrow (admin only)
+// PATCH /api/banking/insurance/[holdId] — update hold status (admin only)
+//
+// Reads/writes increase_product_escrows with purpose='insurance-hold'.
+// Preferred alternatives: /api/banking/wealth-practice/insurance/{fund,release,status}
 
 function isAdmin(req: NextApiRequest): boolean {
   const key = req.headers['x-admin-key'];
@@ -19,13 +25,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ error: 'Admin access required' });
     }
     try {
-      const holds = await db
+      const rows = await db
         .select()
-        .from(increaseInsuranceHolds)
-        .where(eq(increaseInsuranceHolds.id, holdId))
+        .from(increaseProductEscrows)
+        .where(
+          and(
+            eq(increaseProductEscrows.id, holdId),
+            eq(increaseProductEscrows.purpose, 'insurance-hold'),
+          )
+        )
         .limit(1);
-      if (holds.length === 0) return res.status(404).json({ error: 'Hold not found' });
-      return res.status(200).json({ success: true, hold: holds[0] });
+      if (rows.length === 0) return res.status(404).json({ error: 'Insurance hold not found' });
+      return res.status(200).json({ success: true, hold: rows[0] });
     } catch (err: unknown) {
       return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
@@ -43,22 +54,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      const holds = await db
+      const rows = await db
         .select()
-        .from(increaseInsuranceHolds)
-        .where(eq(increaseInsuranceHolds.id, holdId))
+        .from(increaseProductEscrows)
+        .where(
+          and(
+            eq(increaseProductEscrows.id, holdId),
+            eq(increaseProductEscrows.purpose, 'insurance-hold'),
+          )
+        )
         .limit(1);
 
-      if (holds.length === 0) return res.status(404).json({ error: 'Hold not found' });
-      const hold = holds[0];
+      if (rows.length === 0) return res.status(404).json({ error: 'Insurance hold not found' });
+      const hold = rows[0];
 
       const now = new Date();
-      let updateData: Partial<typeof hold> = {};
+      let updateData: Record<string, unknown> = {};
 
       if (action === 'fund') {
+        const deposited = depositedAmountCents ?? hold.amountCents;
         updateData = {
           status: 'funded',
-          depositedAmountCents: depositedAmountCents ?? hold.requiredAmountCents,
+          depositedAmountCents: deposited,
           fundedAt: now,
         };
       } else if (action === 'forfeit') {
@@ -68,9 +85,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const [updated] = await db
-        .update(increaseInsuranceHolds)
+        .update(increaseProductEscrows)
         .set(updateData)
-        .where(eq(increaseInsuranceHolds.id, holdId))
+        .where(eq(increaseProductEscrows.id, holdId))
         .returning();
 
       return res.status(200).json({ success: true, hold: updated });

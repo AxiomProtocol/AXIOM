@@ -2,9 +2,9 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db, pool } from '../../../../../server/db';
 import {
   increaseParticipants,
-  increaseInsuranceHolds,
+  increaseProductEscrows,
 } from '../../../../../shared/increaseParticipantSchema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 function parseCookies(header: string | undefined): Record<string, string> {
   if (!header) return {};
@@ -37,6 +37,8 @@ function isAdmin(req: NextApiRequest): boolean {
   return typeof key === 'string' && key === process.env.ADMIN_SOLVENCY_KEY;
 }
 
+// GET /api/banking/insurance/wallet/[walletAddress]
+// Returns insurance-hold escrows for a participant from increase_product_escrows.
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -72,8 +74,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const participant = participants[0];
     const holds = await db
       .select()
-      .from(increaseInsuranceHolds)
-      .where(eq(increaseInsuranceHolds.participantId, participant.id));
+      .from(increaseProductEscrows)
+      .where(
+        and(
+          eq(increaseProductEscrows.participantId, participant.id),
+          eq(increaseProductEscrows.product, 'wealth-practice'),
+          eq(increaseProductEscrows.purpose, 'insurance-hold'),
+        )
+      );
 
     return res.status(200).json({
       success: true,

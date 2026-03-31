@@ -2,11 +2,11 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../../server/db';
 import {
   increaseParticipants,
-  increaseInsuranceHolds,
+  increaseProductEscrows,
   increaseDistributions,
 } from '../../../../../shared/increaseParticipantSchema';
 import { IncreaseService, getAccountId } from '../../../../../lib/services/IncreaseService';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 function isAdmin(req: NextApiRequest): boolean {
   const key = req.headers['x-admin-key'];
@@ -14,19 +14,19 @@ function isAdmin(req: NextApiRequest): boolean {
 }
 
 // POST /api/banking/wealth-practice/insurance/release
-// Admin-only: release a funded insurance hold and initiate outbound ACH return.
+// Admin-only: release a funded insurance hold (increase_product_escrows purpose='insurance-hold')
+// and initiate outbound ACH return to participant's external account.
 //
 // Body:
-//   holdId                  number  — required
+//   holdId                  number  — required (product escrow row ID)
 //   reason                  string  — 'completed' | 'forfeited' | 'cancelled'
 //   externalRoutingNumber   string  — REQUIRED when reason=completed (9-digit ABA)
 //   externalAccountNumber   string  — REQUIRED when reason=completed
 //
 // Invariants:
-//   reason=completed → externalRoutingNumber + externalAccountNumber REQUIRED.
-//   ACH return MUST succeed before hold status is set to 'released'.
-//   If ACH fails, 502 is returned and hold remains unchanged.
-//   reason=forfeited|cancelled → no ACH; hold transitions to 'forfeited'.
+//   reason=completed → routing + account REQUIRED; ACH must succeed before hold is set released.
+//   reason=forfeited|cancelled → no ACH; hold transitions to forfeited.
+//   If ACH fails → 502 returned and hold status unchanged.
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -43,11 +43,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'reason must be completed|forfeited|cancelled' });
   }
 
-  // Hard upfront validation for completed releases — enforce before any DB reads
+  // Hard upfront validation for completed releases
   if (reason === 'completed') {
     if (!externalRoutingNumber || !/^\d{9}$/.test(String(externalRoutingNumber).trim())) {
       return res.status(400).json({
-        error: 'externalRoutingNumber (9-digit ABA routing number) is required for reason=completed',
+        error: 'externalRoutingNumber (9-digit ABA) is required for reason=completed',
         code: 'ROUTING_REQUIRED',
       });
     }
@@ -62,12 +62,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const existing = await db
       .select()
-      .from(increaseInsuranceHolds)
-      .where(eq(increaseInsuranceHolds.id, holdId))
+      .from(increaseProductEscrows)
+      .where(
+        and(
+          eq(increaseProductEscrows.id, holdId),
+          eq(increaseProductEscrows.purpose, 'insurance-hold')
+        )
+      )
       .limit(1);
 
     if (existing.length === 0) {
-      return res.status(404).json({ error: 'Hold not found' });
+      return res.status(404).json({ error: 'Insurance hold not found in product escrows' });
     }
 
     const hold = existing[0];
@@ -80,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let transferId: string | null = null;
     let transferStatus: string | null = null;
 
-    // For completed releases: ACH return is MANDATORY — must succeed BEFORE updating hold status
+    // Completed releases: ACH return is MANDATORY — must succeed BEFORE updating hold status
     if (reason === 'completed') {
       if (hold.depositedAmountCents <= 0) {
         return res.status(400).json({
@@ -122,7 +127,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         transferId = transfer.id;
         transferStatus = transfer.status;
       } catch (err) {
-        // ACH failed — do NOT update hold; return 502 with diagnostic info
         return res.status(502).json({
           error: `ACH return initiation failed: ${err instanceof Error ? err.message : String(err)}`,
           code: 'ACH_TRANSFER_FAILED',
@@ -130,9 +134,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
 
-      // Record outbound distribution (only after successful ACH initiation)
+      // Record outbound distribution only after successful ACH initiation
       await db.insert(increaseDistributions).values({
-        participantId: participant.id,
+        participantId: hold.participantId,
         product: 'wealth-practice',
         amountCents: hold.depositedAmountCents,
         status: 'pending',
@@ -146,17 +150,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const newStatus = reason === 'completed' ? 'released' : 'forfeited';
 
     const [updated] = await db
-      .update(increaseInsuranceHolds)
+      .update(increaseProductEscrows)
       .set({
         status: newStatus,
         releasedAt: reason === 'completed' ? now : undefined,
         forfeitedAt: reason === 'forfeited' ? now : undefined,
         notes: [
           hold.notes,
-          `${reason === 'completed' ? 'Released' : 'Forfeited'}: ${reason}${transferId ? ` | ACH return: ${transferId} (${transferStatus})` : ''}`,
+          `${reason === 'completed' ? 'Released' : 'Forfeited'}: ${reason}${transferId ? ` | ACH: ${transferId} (${transferStatus})` : ''}`,
         ].filter(Boolean).join(' | ') || null,
       })
-      .where(eq(increaseInsuranceHolds.id, holdId))
+      .where(eq(increaseProductEscrows.id, holdId))
       .returning();
 
     return res.status(200).json({

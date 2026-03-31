@@ -2,11 +2,11 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db, pool } from '../../../../server/db';
 import {
   increaseParticipants,
-  increaseInsuranceHolds,
+  increaseProductEscrows,
   increaseLpDeposits,
   increaseDistributions,
 } from '../../../../shared/increaseParticipantSchema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 function parseCookies(header: string | undefined): Record<string, string> {
   if (!header) return {};
@@ -74,7 +74,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const participant = participants[0];
 
     const [insuranceHolds, lpDeposits, distributions] = await Promise.all([
-      db.select().from(increaseInsuranceHolds).where(eq(increaseInsuranceHolds.participantId, participant.id)),
+      db.select().from(increaseProductEscrows).where(
+        and(
+          eq(increaseProductEscrows.participantId, participant.id),
+          eq(increaseProductEscrows.product, 'wealth-practice'),
+          eq(increaseProductEscrows.purpose, 'insurance-hold'),
+        )
+      ),
       db.select().from(increaseLpDeposits).where(eq(increaseLpDeposits.participantId, participant.id)),
       db.select().from(increaseDistributions).where(eq(increaseDistributions.participantId, participant.id)),
     ]);

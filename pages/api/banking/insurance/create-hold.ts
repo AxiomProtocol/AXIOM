@@ -2,9 +2,12 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db, pool } from '../../../../server/db';
 import {
   increaseParticipants,
-  increaseInsuranceHolds,
+  increaseProductEscrows,
 } from '../../../../shared/increaseParticipantSchema';
 import { eq, and } from 'drizzle-orm';
+
+// NOTE: This endpoint is superseded by /api/banking/wealth-practice/insurance/fund
+// It is retained for backwards compatibility and now writes to increase_product_escrows.
 
 function parseCookies(header: string | undefined): Record<string, string> {
   if (!header) return {};
@@ -65,35 +68,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .limit(1);
 
     if (participants.length === 0) {
-      return res.status(404).json({ error: 'Participant not registered. Please register first.' });
+      return res.status(404).json({
+        error: 'Participant not registered — please register first.',
+        code: 'NEXUS_NOT_REGISTERED',
+      });
     }
 
     const participant = participants[0];
 
-    const existingHolds = await db
+    const existingEscrows = await db
       .select()
-      .from(increaseInsuranceHolds)
+      .from(increaseProductEscrows)
       .where(
         and(
-          eq(increaseInsuranceHolds.participantId, participant.id),
-          eq(increaseInsuranceHolds.groupId, groupId),
-        ),
+          eq(increaseProductEscrows.participantId, participant.id),
+          eq(increaseProductEscrows.product, 'wealth-practice'),
+          eq(increaseProductEscrows.purpose, 'insurance-hold'),
+          eq(increaseProductEscrows.groupId, groupId),
+        )
       )
       .limit(1);
 
-    if (existingHolds.length > 0) {
-      return res.status(200).json({ success: true, hold: existingHolds[0], isNew: false });
+    if (existingEscrows.length > 0 && !['released', 'forfeited'].includes(existingEscrows[0].status)) {
+      return res.status(200).json({ success: true, hold: existingEscrows[0], isNew: false });
     }
 
     const weeklyEquivalentCents = Math.ceil(contributionAmountCents / 4);
 
     const [hold] = await db
-      .insert(increaseInsuranceHolds)
+      .insert(increaseProductEscrows)
       .values({
+        product: 'wealth-practice',
+        purpose: 'insurance-hold',
         participantId: participant.id,
         groupId,
         groupDisplayName: groupDisplayName ?? null,
-        requiredAmountCents: weeklyEquivalentCents,
+        amountCents: weeklyEquivalentCents,
         depositedAmountCents: 0,
         status: 'pending',
       })

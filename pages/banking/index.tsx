@@ -1334,7 +1334,7 @@ export default function BankingDashboard() {
               {/* Admin workflow guide */}
               <div style={{ border: `1px solid ${DL.border}`, marginBottom: 32, padding: 24 }}>
                 <p style={{ ...monoLabel, color: DL.navy, marginBottom: 12 }}>Admin Workflow — Participant Ledger</p>
-                <p style={{ ...mono, color: DL.gray, marginBottom: 16, lineHeight: 1.7, fontSize: 12 }}>
+                <p style={{ ...mono, color: DL.muted, marginBottom: 16, lineHeight: 1.7, fontSize: 12 }}>
                   This tab shows every participant who has registered for the Axiom Nexus Account banking layer across all products.
                   Participants are created when a user submits the registration form on the Wealth Practice or Lending Fund pages.
                   Each participant receives a unique <strong style={{ color: DL.navy }}>AXM-XXXXXXXX</strong> reference code that links their wallet address to incoming ACH transfers.
@@ -1348,11 +1348,11 @@ export default function BankingDashboard() {
                   ].map(({ label, body }) => (
                     <div key={label} style={{ border: `1px solid ${DL.border}`, padding: 16 }}>
                       <p style={{ ...monoLabel, color: DL.navy, marginBottom: 6 }}>{label}</p>
-                      <p style={{ ...mono, color: DL.gray, lineHeight: 1.65, fontSize: 11 }}>{body}</p>
+                      <p style={{ ...mono, color: DL.muted, lineHeight: 1.65, fontSize: 11 }}>{body}</p>
                     </div>
                   ))}
                 </div>
-                <p style={{ ...mono, color: DL.gray, fontSize: 11, lineHeight: 1.65 }}>
+                <p style={{ ...mono, color: DL.muted, fontSize: 11, lineHeight: 1.65 }}>
                   All write operations require the <strong style={{ color: DL.navy }}>x-admin-key</strong> header.
                   The admin key is the same key used to unlock the Transactions and Routing tabs on this page.
                   Participant records are append-only — do not delete records. Use status fields to track state transitions.
@@ -1381,19 +1381,19 @@ export default function BankingDashboard() {
                           <td style={{ ...mono, padding: '11px 14px', color: DL.navy, fontWeight: 700 }}>{p.participantRef}</td>
                           <td style={{ ...mono, padding: '11px 14px' }}>
                             <div>{p.fullName}</div>
-                            <div style={{ fontSize: 10, color: DL.gray }}>{p.email}</div>
+                            <div style={{ fontSize: 10, color: DL.muted }}>{p.email}</div>
                           </td>
                           <td style={{ ...mono, padding: '11px 14px', fontSize: 10 }}>{p.walletAddress.slice(0, 8)}…{p.walletAddress.slice(-6)}</td>
                           <td style={{ ...mono, padding: '11px 14px', fontSize: 11 }}>
                             {p.virtualAccountNumber
                               ? `••••${p.virtualAccountNumber.slice(-4)}`
-                              : <span style={{ color: DL.gray }}>—</span>}
+                              : <span style={{ color: DL.muted }}>—</span>}
                           </td>
                           <td style={{ padding: '11px 14px' }}><StatusBadge status={p.status} /></td>
                           <td style={{ ...mono, padding: '11px 14px', fontSize: 11 }}>
                             {p.cardStatus === 'active'
                               ? <span style={{ color: DL.forest }}>••{p.cardLast4 ?? '????'}</span>
-                              : <span style={{ color: DL.gray }}>{p.cardStatus || '—'}</span>}
+                              : <span style={{ color: DL.muted }}>{p.cardStatus || '—'}</span>}
                           </td>
                           <td style={{ ...mono, padding: '11px 14px' }}>{new Date(p.createdAt).toLocaleDateString()}</td>
                         </tr>
@@ -1537,9 +1537,9 @@ export default function BankingDashboard() {
                   <div key={i} style={{ padding: 16, borderBottom: i < 6 ? `1px solid ${DL.border}` : 'none', borderRight: i % 2 === 0 ? `1px solid ${DL.border}` : 'none' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                       <StatusBadge status={row.status} />
-                      <span style={{ ...monoLabel, color: DL.gray, fontSize: 10 }}>{row.what}</span>
+                      <span style={{ ...monoLabel, color: DL.muted, fontSize: 10 }}>{row.what}</span>
                     </div>
-                    <p style={{ ...mono, color: DL.gray, fontSize: 11, lineHeight: 1.6 }}>{row.meaning}</p>
+                    <p style={{ ...mono, color: DL.muted, fontSize: 11, lineHeight: 1.6 }}>{row.meaning}</p>
                   </div>
                 ))}
               </div>

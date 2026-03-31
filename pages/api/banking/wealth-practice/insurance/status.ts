@@ -2,9 +2,9 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db, pool } from '../../../../../server/db';
 import {
   increaseParticipants,
-  increaseInsuranceHolds,
+  increaseProductEscrows,
 } from '../../../../../shared/increaseParticipantSchema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 function parseCookies(header: string | undefined): Record<string, string> {
   if (!header) return {};
@@ -38,9 +38,10 @@ function isAdmin(req: NextApiRequest): boolean {
 }
 
 // GET /api/banking/wealth-practice/insurance/status?wallet=0x...&groupId=...
-// Returns insurance hold status including computed requirement (1-week equivalent),
-// whether the hold is funded, and ACH deposit instructions.
-// Works even before a hold record exists — computes requirement from group data.
+//
+// Returns insurance hold status from increase_product_escrows (purpose='insurance-hold').
+// Always computes requiredHoldCents (= contributionAmountCents ÷ 4) from the group record
+// even when no escrow row exists yet. Works for both participant (SIWE) and admin (x-admin-key).
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -63,7 +64,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Look up group contribution if groupId provided (to compute requirement)
+    // Look up group contribution amount to compute required hold even before a hold exists
     let contributionAmountCents: number | null = null;
     let requiredHoldCents: number | null = null;
     let groupDisplayName: string | null = null;
@@ -79,12 +80,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           groupDisplayName = g.name || null;
           if (g.contribution_amount) {
             contributionAmountCents = Math.round(parseFloat(g.contribution_amount) * 100);
-            // Insurance hold = 1 week equivalent (monthly ÷ 4)
             requiredHoldCents = Math.ceil(contributionAmountCents / 4);
           }
         }
       } catch {
-        // Non-fatal — requirement will be null if group not found
+        // Non-fatal — requirement will be null if group lookup fails
       }
     }
 
@@ -98,11 +98,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (participants.length === 0) {
       return res.status(200).json({
         registered: false,
-        holds: [],
+        escrows: [],
         canJoin: false,
-        groupHoldStatus: null,
         groupHold: null,
+        groupHoldStatus: null,
+        groupIsFunded: false,
         requiredHoldCents,
+        depositedAmountCents: 0,
         contributionAmountCents,
         groupDisplayName,
         depositInstructions: null,
@@ -111,16 +113,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const p = participants[0];
 
-    const holds = await db
+    // Fetch all insurance-hold escrows for this participant
+    const escrows = await db
       .select()
-      .from(increaseInsuranceHolds)
-      .where(eq(increaseInsuranceHolds.participantId, p.id));
+      .from(increaseProductEscrows)
+      .where(
+        and(
+          eq(increaseProductEscrows.participantId, p.id),
+          eq(increaseProductEscrows.product, 'wealth-practice'),
+          eq(increaseProductEscrows.purpose, 'insurance-hold'),
+        )
+      );
 
     const groupHold = groupId
-      ? holds.find((h) => h.groupId === groupId) ?? null
+      ? escrows.find((e) => e.groupId === groupId) ?? null
       : null;
 
-    const hasFundedHold = holds.some((h) => h.status === 'funded');
+    const hasFundedHold = escrows.some((e) => e.status === 'funded');
     const groupIsFunded = groupHold?.status === 'funded';
 
     const hasVirtualAccount = !!(p.virtualRoutingNumber && p.virtualAccountNumber);
@@ -128,12 +137,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       registered: true,
       participantRef: p.participantRef,
-      holds,
+      escrows,
       canJoin: hasFundedHold,
-      groupHoldStatus: groupHold?.status ?? null,
       groupHold,
+      groupHoldStatus: groupHold?.status ?? null,
       groupIsFunded,
-      requiredHoldCents: groupHold?.requiredAmountCents ?? requiredHoldCents,
+      requiredHoldCents: groupHold?.amountCents ?? requiredHoldCents,
       depositedAmountCents: groupHold?.depositedAmountCents ?? 0,
       contributionAmountCents,
       groupDisplayName,
@@ -143,7 +152,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         routingNumber: p.virtualRoutingNumber ?? '071006486',
         accountNumber: p.virtualAccountNumber ?? null,
         memo: groupId ? `HOLD-${p.participantRef}-${groupId}` : `HOLD-${p.participantRef}`,
-        amountDue: groupHold?.requiredAmountCents ?? requiredHoldCents,
+        amountDue: groupHold?.amountCents ?? requiredHoldCents,
         hasVirtualAccount,
       },
     });

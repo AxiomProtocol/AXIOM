@@ -2,9 +2,16 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db, pool } from '../../../../server/db';
 import {
   increaseParticipants,
-  increaseInsuranceHolds,
+  increaseProductEscrows,
 } from '../../../../shared/increaseParticipantSchema';
 import { eq, and } from 'drizzle-orm';
+
+// NOTE: This combined GET/POST handler is legacy.
+// Preferred endpoints:
+//   GET  → /api/banking/wealth-practice/insurance/status
+//   POST → /api/banking/wealth-practice/insurance/fund   (participant)
+//          /api/banking/wealth-practice/insurance/release (admin)
+// This file remains for backwards compatibility and delegates to increaseProductEscrows.
 
 function parseCookies(header: string | undefined): Record<string, string> {
   if (!header) return {};
@@ -37,8 +44,8 @@ function isAdmin(req: NextApiRequest): boolean {
   return typeof key === 'string' && key === process.env.ADMIN_SOLVENCY_KEY;
 }
 
-// GET  /api/banking/wealth-practice/insurance?wallet=0x... — list holds for a participant
-// POST /api/banking/wealth-practice/insurance — create a new insurance hold
+// GET  /api/banking/wealth-practice/insurance?wallet=0x... — list insurance-hold escrows
+// POST /api/banking/wealth-practice/insurance — create a pending insurance-hold escrow
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     const wallet = typeof req.query.wallet === 'string'
@@ -69,12 +76,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).json({ error: 'Participant not found', registered: false });
       }
 
-      const holds = await db
+      const escrows = await db
         .select()
-        .from(increaseInsuranceHolds)
-        .where(eq(increaseInsuranceHolds.participantId, rows[0].id));
+        .from(increaseProductEscrows)
+        .where(
+          and(
+            eq(increaseProductEscrows.participantId, rows[0].id),
+            eq(increaseProductEscrows.product, 'wealth-practice'),
+            eq(increaseProductEscrows.purpose, 'insurance-hold'),
+          )
+        );
 
-      return res.status(200).json({ success: true, holds });
+      return res.status(200).json({ success: true, holds: escrows });
     } catch (err: unknown) {
       return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
@@ -109,19 +122,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .limit(1);
 
       if (rows.length === 0) {
-        return res.status(404).json({ error: 'Participant not found — register your Axiom Nexus account first' });
+        return res.status(404).json({
+          error: 'Participant not found — register your Axiom Nexus account first',
+          code: 'NEXUS_NOT_REGISTERED',
+        });
       }
 
       const participant = rows[0];
 
-      // Prevent duplicates for same group
+      // Prevent duplicates for same group in product_escrows
       const existing = await db
         .select()
-        .from(increaseInsuranceHolds)
+        .from(increaseProductEscrows)
         .where(
           and(
-            eq(increaseInsuranceHolds.participantId, participant.id),
-            eq(increaseInsuranceHolds.groupId, groupId),
+            eq(increaseProductEscrows.participantId, participant.id),
+            eq(increaseProductEscrows.product, 'wealth-practice'),
+            eq(increaseProductEscrows.purpose, 'insurance-hold'),
+            eq(increaseProductEscrows.groupId, groupId),
           )
         )
         .limit(1);
@@ -133,16 +151,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
 
-      // Insurance hold = 1 week of monthly contribution (monthly ÷ 4)
       const requiredAmountCents = Math.ceil(contributionAmountCents / 4);
 
       const [hold] = await db
-        .insert(increaseInsuranceHolds)
+        .insert(increaseProductEscrows)
         .values({
+          product: 'wealth-practice',
+          purpose: 'insurance-hold',
           participantId: participant.id,
           groupId,
           groupDisplayName: groupDisplayName || groupId,
-          requiredAmountCents,
+          amountCents: requiredAmountCents,
           depositedAmountCents: 0,
           status: 'pending',
         })
@@ -156,9 +175,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           routingNumber: participant.virtualRoutingNumber ?? '071006486',
           accountNumber: participant.virtualAccountNumber ?? null,
           bankName: 'First Internet Bank',
-          memo: participant.virtualAccountNumber
-            ? `HOLD-${participant.participantRef}`
-            : `HOLD-${participant.participantRef}`,
+          memo: `HOLD-${participant.participantRef}-${groupId}`,
           note: `Insurance hold for group ${groupDisplayName || groupId}. Amount: $${(requiredAmountCents / 100).toFixed(2)}. Once received, your hold is marked funded and you may join the group.`,
           hasVirtualAccount: !!(participant.virtualRoutingNumber && participant.virtualAccountNumber),
         },

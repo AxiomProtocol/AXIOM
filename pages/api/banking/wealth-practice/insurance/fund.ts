@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db, pool } from '../../../../../server/db';
 import {
   increaseParticipants,
-  increaseInsuranceHolds,
+  increaseProductEscrows,
 } from '../../../../../shared/increaseParticipantSchema';
 import { eq, and } from 'drizzle-orm';
 
@@ -39,10 +39,12 @@ function isAdmin(req: NextApiRequest): boolean {
 
 // POST /api/banking/wealth-practice/insurance/fund
 //
-// PARTICIPANT (SIWE) — create a pending insurance hold for a group and return ACH deposit instructions.
+// PARTICIPANT (SIWE) — Create a pending insurance hold (product escrow) for a Wealth Practice
+// group and return ACH deposit instructions. Insurance holds are stored in
+// increase_product_escrows with product='wealth-practice' and purpose='insurance-hold'.
 // Body: { walletAddress, groupId, groupDisplayName?, contributionAmountCents }
 //
-// ADMIN (x-admin-key) — confirm that a hold has been funded after ACH settlement.
+// ADMIN (x-admin-key + adminConfirm: true) — Confirm ACH receipt and mark hold as funded.
 // Body: { holdId, depositedAmountCents, increaseTransactionId?, adminConfirm: true }
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -58,17 +60,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'holdId (number) required' });
     }
     if (typeof depositedAmountCents !== 'number' || depositedAmountCents < 0) {
-      return res.status(400).json({ error: 'depositedAmountCents required' });
+      return res.status(400).json({ error: 'depositedAmountCents (number >= 0) required' });
     }
 
     try {
       const existing = await db
         .select()
-        .from(increaseInsuranceHolds)
-        .where(eq(increaseInsuranceHolds.id, holdId))
+        .from(increaseProductEscrows)
+        .where(
+          and(
+            eq(increaseProductEscrows.id, holdId),
+            eq(increaseProductEscrows.purpose, 'insurance-hold')
+          )
+        )
         .limit(1);
 
-      if (existing.length === 0) return res.status(404).json({ error: 'Hold not found' });
+      if (existing.length === 0) return res.status(404).json({ error: 'Insurance hold not found' });
 
       const hold = existing[0];
       if (hold.status === 'funded') {
@@ -76,26 +83,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const totalDeposited = hold.depositedAmountCents + depositedAmountCents;
-      const isFunded = totalDeposited >= hold.requiredAmountCents;
+      const isFunded = totalDeposited >= hold.amountCents;
 
       const [updated] = await db
-        .update(increaseInsuranceHolds)
+        .update(increaseProductEscrows)
         .set({
           depositedAmountCents: totalDeposited,
           status: isFunded ? 'funded' : 'pending',
           fundedAt: isFunded ? new Date() : undefined,
-          notes: increaseTransactionId
-            ? `Increase txn: ${increaseTransactionId}`
-            : hold.notes ?? undefined,
+          increaseTransactionId: increaseTransactionId ?? hold.increaseTransactionId,
         })
-        .where(eq(increaseInsuranceHolds.id, holdId))
+        .where(eq(increaseProductEscrows.id, holdId))
         .returning();
 
       return res.status(200).json({
         success: true,
         hold: updated,
         funded: isFunded,
-        shortfallCents: isFunded ? 0 : hold.requiredAmountCents - totalDeposited,
+        shortfallCents: isFunded ? 0 : hold.amountCents - totalDeposited,
       });
     } catch (err: unknown) {
       return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
@@ -112,10 +117,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Valid wallet address required' });
   }
   if (!groupId || typeof groupId !== 'string') {
-    return res.status(400).json({ error: 'groupId required' });
+    return res.status(400).json({ error: 'groupId (string) required' });
   }
   if (typeof contributionAmountCents !== 'number' || contributionAmountCents < 100) {
-    return res.status(400).json({ error: 'contributionAmountCents must be >= 100' });
+    return res.status(400).json({ error: 'contributionAmountCents must be a number >= 100' });
   }
 
   const wallet = walletAddress.toLowerCase();
@@ -124,55 +129,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const rows = await db
+    const participants = await db
       .select()
       .from(increaseParticipants)
       .where(eq(increaseParticipants.walletAddress, wallet))
       .limit(1);
 
-    if (rows.length === 0) {
+    if (participants.length === 0) {
       return res.status(404).json({
         error: 'Nexus account not found — register your Axiom Nexus account first',
         code: 'NEXUS_NOT_REGISTERED',
       });
     }
 
-    const participant = rows[0];
+    const participant = participants[0];
 
-    // Check for existing non-terminal hold for this group
+    // Check for existing non-terminal hold for this group in product_escrows
     const existing = await db
       .select()
-      .from(increaseInsuranceHolds)
+      .from(increaseProductEscrows)
       .where(
         and(
-          eq(increaseInsuranceHolds.participantId, participant.id),
-          eq(increaseInsuranceHolds.groupId, groupId),
+          eq(increaseProductEscrows.participantId, participant.id),
+          eq(increaseProductEscrows.product, 'wealth-practice'),
+          eq(increaseProductEscrows.purpose, 'insurance-hold'),
+          eq(increaseProductEscrows.groupId, groupId),
         )
       )
       .limit(1);
 
     if (existing.length > 0 && !['released', 'forfeited'].includes(existing[0].status)) {
-      // Return existing hold with ACH instructions (idempotent)
       const hold = existing[0];
       return res.status(200).json({
         success: true,
         hold,
         isNew: false,
-        requiredAmountCents: hold.requiredAmountCents,
-        depositInstructions: buildDepositInstructions(participant, hold.requiredAmountCents, groupId),
+        requiredAmountCents: hold.amountCents,
+        depositInstructions: buildDepositInstructions(participant, hold.amountCents, groupId),
       });
     }
 
-    // Insurance hold = 1 week equivalent (monthly contribution ÷ 4)
+    // Insurance hold = 1-week equivalent (monthly contribution ÷ 4)
     const requiredAmountCents = Math.ceil(contributionAmountCents / 4);
 
     const [hold] = await db
-      .insert(increaseInsuranceHolds)
+      .insert(increaseProductEscrows)
       .values({
+        product: 'wealth-practice',
+        purpose: 'insurance-hold',
         participantId: participant.id,
         groupId,
         groupDisplayName: groupDisplayName || groupId,
-        requiredAmountCents,
+        amountCents: requiredAmountCents,
         depositedAmountCents: 0,
         status: 'pending',
       })
@@ -196,6 +204,7 @@ function buildDepositInstructions(
   groupId: string,
 ) {
   const hasVirtualAccount = !!(participant.virtualRoutingNumber && participant.virtualAccountNumber);
+  const amountFormatted = `$${(requiredAmountCents / 100).toFixed(2)}`;
   return {
     bankName: 'First Internet Bank',
     accountName: 'Axiom Protocol LLC — Nexus Account',
@@ -203,10 +212,10 @@ function buildDepositInstructions(
     accountNumber: participant.virtualAccountNumber ?? null,
     memo: `HOLD-${participant.participantRef}-${groupId}`,
     amountDue: requiredAmountCents,
-    amountDueFormatted: `$${(requiredAmountCents / 100).toFixed(2)}`,
+    amountDueFormatted: amountFormatted,
     note: hasVirtualAccount
-      ? `Send exactly $${(requiredAmountCents / 100).toFixed(2)} to your dedicated Nexus account number ${participant.virtualAccountNumber} (routing ${participant.virtualRoutingNumber}). Your hold is activated once payment settles (1–2 business days).`
-      : `Send exactly $${(requiredAmountCents / 100).toFixed(2)} via ACH to routing ${participant.virtualRoutingNumber ?? '071006486'}. Include memo: HOLD-${participant.participantRef}-${groupId}.`,
+      ? `Send exactly ${amountFormatted} to account ${participant.virtualAccountNumber} (routing ${participant.virtualRoutingNumber}). Your hold activates once payment settles (1–2 business days).`
+      : `Send exactly ${amountFormatted} via ACH to routing 071006486. Include memo: HOLD-${participant.participantRef}-${groupId}.`,
     hasVirtualAccount,
   };
 }

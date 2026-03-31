@@ -43,10 +43,21 @@ function generateRef(): string {
 }
 
 // POST /api/banking/participant/onboard
-// Full KYC onboarding: accepts identity fields, creates entity + virtual account number + card,
-// and persists all IDs to the participant record in one SIWE-authenticated transaction.
-// If the Increase program does not support individual entity creation (B2B model),
-// provisioning falls back to virtual account number only and cardStatus='program_required'.
+//
+// Full KYC onboarding for Axiom Nexus accounts.
+// Accepts identity fields, creates entity + virtual account number + card,
+// and persists all IDs to the participant record.
+//
+// Failure policy:
+//   - KYC entity provisioning failure  → 502 (caller must retry — no silent fallback)
+//   - Sub-account creation failure     → 502 (caller must retry)
+//   - Virtual account number failure   → 502 (participant cannot receive ACH without it)
+//   - Card issuance failure            → best-effort; response includes cardStatus detail
+//
+// When KYC fields are omitted (B2B / virtual-account-only mode):
+//   - entity = shared org entity (entityId env var)
+//   - sub-account = skipped (program_id not required)
+//   - virtual account + card still attempted
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -55,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     fullName,
     email,
     phone,
-    // KYC fields — optional in B2B/virtual-account mode; required for full entity provisioning
+    // KYC fields — required only for full individual entity provisioning
     dateOfBirth,
     ssnLast4,
     addressLine1,
@@ -85,7 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Return existing participant if already onboarded
+    // Return existing participant immediately — idempotent
     const existing = await db
       .select()
       .from(increaseParticipants)
@@ -120,66 +131,78 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let cardLast4: string | null = null;
     let cardStatus = 'not_requested';
 
-    const hasKyc = dateOfBirth && ssnLast4 && addressLine1 && city && state && zip;
-    const provisioningLog: string[] = [];
+    const hasKyc = !!(dateOfBirth && ssnLast4 && addressLine1 && city && state && zip);
 
-    // Step 1: Create individual entity (if KYC fields provided)
+    // Step 1: Create individual entity (KYC mode) — HARD FAIL if this fails
     if (hasKyc) {
+      let entity: { id: string };
       try {
-        const entity = await IncreaseService.createIndividualEntity({
+        entity = await IncreaseService.createIndividualEntity({
           name: fullName.trim(),
           date_of_birth: dateOfBirth,
           identification: { ssn_last4: ssnLast4 },
           address: { line1: addressLine1, city, state, zip },
         });
-        increaseEntityId = entity.id;
-        provisioningLog.push(`entity:${entity.id}`);
-
-        // Step 2: Create a sub-account for this entity
-        const programId = getProgramId();
-        if (programId) {
-          try {
-            const account = await IncreaseService.createAccount({
-              name: `${fullName.trim()} — ${participantRef}`,
-              entity_id: entity.id,
-              program_id: programId,
-            });
-            increaseAccountId = account.id;
-            provisioningLog.push(`account:${account.id}`);
-          } catch (err) {
-            provisioningLog.push(`account:failed:${err instanceof Error ? err.message : String(err)}`);
-          }
-        }
       } catch (err) {
-        provisioningLog.push(`entity:failed:${err instanceof Error ? err.message : String(err)}`);
-        // Fall back to B2B shared entity
-        increaseEntityId = entityId || null;
+        return res.status(502).json({
+          error: `KYC entity provisioning failed: ${err instanceof Error ? err.message : String(err)}`,
+          code: 'ENTITY_PROVISIONING_FAILED',
+          note: 'Participant was NOT created. Please retry.',
+        });
+      }
+      increaseEntityId = entity.id;
+
+      // Step 2: Create sub-account — HARD FAIL if this fails (participant needs an account for ACH)
+      const programId = getProgramId();
+      if (programId) {
+        let account: { id: string };
+        try {
+          account = await IncreaseService.createAccount({
+            name: `${fullName.trim()} — ${participantRef}`,
+            entity_id: entity.id,
+            program_id: programId,
+          });
+        } catch (err) {
+          return res.status(502).json({
+            error: `Sub-account provisioning failed: ${err instanceof Error ? err.message : String(err)}`,
+            code: 'ACCOUNT_PROVISIONING_FAILED',
+            note: 'Entity was created but the account could not be provisioned. Please retry or contact support.',
+            increaseEntityId: entity.id,
+          });
+        }
+        increaseAccountId = account.id;
       }
     } else {
-      // B2B mode — use shared entity ID
+      // B2B / virtual-account-only mode — use shared org entity
       increaseEntityId = entityId || null;
     }
 
-    // Step 3: Provision virtual account number (sub-account of Axiom Nexus Account)
+    // Step 3: Provision virtual account number — HARD FAIL (participant cannot receive ACH without it)
     const targetAccountId = increaseAccountId || accountId;
     if (targetAccountId) {
+      let vAccount: { id: string; routing_number: string; account_number: string };
       try {
-        const vAccount = await IncreaseService.createParticipantVirtualAccount({
+        vAccount = await IncreaseService.createParticipantVirtualAccount({
           account_id: targetAccountId,
           participant_ref: participantRef,
           full_name: fullName.trim(),
         });
-        virtualAccountNumberId = vAccount.id;
-        virtualRoutingNumber = vAccount.routing_number;
-        virtualAccountNumber = vAccount.account_number;
-        increaseAccountId = increaseAccountId || targetAccountId;
-        provisioningLog.push(`virtual_account:${vAccount.id}`);
       } catch (err) {
-        provisioningLog.push(`virtual_account:failed:${err instanceof Error ? err.message : String(err)}`);
+        return res.status(502).json({
+          error: `Virtual account provisioning failed: ${err instanceof Error ? err.message : String(err)}`,
+          code: 'VIRTUAL_ACCOUNT_PROVISIONING_FAILED',
+          note: 'Participant was NOT created. Please retry.',
+          increaseEntityId: increaseEntityId ?? undefined,
+          increaseAccountId: increaseAccountId ?? undefined,
+        });
       }
+      virtualAccountNumberId = vAccount.id;
+      virtualRoutingNumber = vAccount.routing_number;
+      virtualAccountNumber = vAccount.account_number;
+      increaseAccountId = increaseAccountId || targetAccountId;
     }
 
-    // Step 4: Issue virtual card
+    // Step 4: Issue virtual card — BEST EFFORT (card is a convenience feature, not blocking)
     if (targetAccountId) {
       try {
         const card = await IncreaseService.issueVirtualCard({
@@ -189,10 +212,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         cardId = card.id;
         cardLast4 = card.last4;
         cardStatus = 'active';
-        provisioningLog.push(`card:${card.id}`);
-      } catch (err) {
+      } catch {
+        // Card issuance is best-effort — program may not support it in sandbox/B2B mode
         cardStatus = 'program_required';
-        provisioningLog.push(`card:failed:${err instanceof Error ? err.message : String(err)}`);
       }
     }
 
@@ -220,11 +242,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       participant,
       isNew: true,
-      provisioning: {
-        virtualAccount: !!(virtualRoutingNumber && virtualAccountNumber),
-        card: cardStatus === 'active',
-        entity: !!increaseEntityId,
-        log: provisioningLog,
+      provisioningStatus: {
+        entity: !!increaseEntityId ? 'ok' : 'skipped',
+        account: !!increaseAccountId ? 'ok' : 'skipped',
+        virtualAccount: !!(virtualRoutingNumber && virtualAccountNumber) ? 'ok' : 'skipped',
+        card: cardStatus === 'active' ? 'ok' : cardStatus,
       },
     });
   } catch (err: unknown) {

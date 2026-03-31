@@ -104,13 +104,21 @@ export const increaseProductEscrows = pgTable(
   {
     id: serial('id').primaryKey(),
     product: varchar('product', { length: 60 }).notNull(),
+    // Real-estate / deal escrow fields
     dealId: varchar('deal_id', { length: 100 }),
     dealDisplayName: varchar('deal_display_name', { length: 200 }),
+    // Wealth Practice insurance hold fields (purpose='insurance-hold')
+    groupId: varchar('group_id', { length: 100 }),
+    groupDisplayName: varchar('group_display_name', { length: 200 }),
     participantId: integer('participant_id').notNull(),
+    // amountCents = required / target escrow amount
     amountCents: integer('amount_cents').notNull(),
+    // depositedAmountCents = amount received so far (for partial-deposit tracking)
+    depositedAmountCents: integer('deposited_amount_cents').notNull().default(0),
     status: varchar('status', { length: 30 }).notNull().default('pending'),
     purpose: varchar('purpose', { length: 60 }).notNull().default('earnest-money'),
     increaseTransactionId: varchar('increase_transaction_id', { length: 100 }),
+    fundedAt: timestamp('funded_at'),
     releasedAt: timestamp('released_at'),
     appliedAt: timestamp('applied_at'),
     forfeitedAt: timestamp('forfeited_at'),
@@ -121,6 +129,7 @@ export const increaseProductEscrows = pgTable(
     productIdx: index('increase_product_escrows_product_idx').on(t.product),
     participantIdx: index('increase_product_escrows_participant_idx').on(t.participantId),
     dealIdx: index('increase_product_escrows_deal_idx').on(t.dealId),
+    groupIdx: index('increase_product_escrows_group_idx').on(t.groupId),
   }),
 );
 

@@ -57,8 +57,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // ── Insurance hold gate ──────────────────────────────────────────────────
-    // Require a funded insurance hold for this participant + group before joining.
-    // The hold = 1 week of the group's monthly contribution (monthly ÷ 4).
+    // Require a funded insurance-hold escrow in increase_product_escrows for this
+    // participant + group before allowing them to join.
+    // The required hold = 1 week equivalent (monthly contribution ÷ 4).
     // In development mode we skip this gate to enable local testing.
     if (process.env.NODE_ENV !== 'development') {
       const participantResult = await client.query(
@@ -77,9 +78,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const participantId = participantResult.rows[0].id;
 
+      // Check for a funded insurance-hold in increase_product_escrows for this group
       const holdResult = await client.query(
-        `SELECT id, status FROM increase_insurance_holds
-         WHERE participant_id = $1 AND group_id = $2
+        `SELECT id, status FROM increase_product_escrows
+         WHERE participant_id = $1
+           AND product = 'wealth-practice'
+           AND purpose = 'insurance-hold'
+           AND group_id = $2
            AND status = 'funded'
          LIMIT 1`,
         [participantId, String(groupId)]
@@ -128,13 +133,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       message: 'Joined group successfully',
     });
-  } catch (error: any) {
+  } catch (err: unknown) {
     await client.query('ROLLBACK');
-    console.error('Wealth Practice join error:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to join group',
-    });
+    const msg = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ success: false, error: msg });
   } finally {
     client.release();
   }
