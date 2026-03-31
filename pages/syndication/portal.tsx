@@ -622,6 +622,30 @@ function CapitalCallsTab({ capitalCalls, nexusParticipant }: { capitalCalls: any
                   <p className="font-dl-mono text-dl-navy text-sm">Axiom Protocol LLC — Nexus Account</p>
                   <p className="text-[10px] text-dl-gray mt-0.5">FDIC-insured · First Internet Bank</p>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
+                  <div className="px-4 py-3 border-b md:border-b-0 md:border-r border-dl-border">
+                    <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Account Balance</p>
+                    {nexusParticipant.accountBalance ? (
+                      <p className="font-dl-mono text-dl-navy font-bold text-sm">
+                        ${(nexusParticipant.accountBalance.availableBalanceCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                    ) : (
+                      <p className="font-dl-mono text-dl-gray text-sm">—</p>
+                    )}
+                    <p className="text-[10px] text-dl-gray mt-0.5">Available balance · {nexusParticipant.accountAccessMode === 'dedicated' ? 'Dedicated account' : 'Virtual account'}</p>
+                  </div>
+                  <div className="px-4 py-3">
+                    <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Debit Card</p>
+                    {nexusParticipant.cardStatus === 'active' && nexusParticipant.cardLast4 ? (
+                      <p className="font-dl-mono text-dl-navy font-bold text-sm">••••&nbsp;{nexusParticipant.cardLast4}</p>
+                    ) : nexusParticipant.cardStatus === 'issued' ? (
+                      <p className="font-dl-mono text-dl-forest text-sm">Issued — activation pending</p>
+                    ) : (
+                      <p className="font-dl-mono text-dl-gray text-sm">Not issued</p>
+                    )}
+                    <p className="text-[10px] text-dl-gray mt-0.5">Axiom Nexus Debit · {nexusParticipant.cardStatus ?? 'not requested'}</p>
+                  </div>
+                </div>
                 <p className="text-[10px] text-dl-gray font-dl-mono">
                   ACH transfers settle in 1–2 business days. Operations applies your capital call within the same business day as settlement.
                   <a href="/banking/my-account" className="text-dl-navy underline ml-1 hover:no-underline">View full account details</a>

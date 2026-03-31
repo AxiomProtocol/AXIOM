@@ -1226,6 +1226,30 @@ export default function DealWorkspacePage() {
                             <p className="text-sm text-dl-navy">Axiom Protocol LLC — Nexus Account</p>
                           </div>
                         </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
+                          <div className="px-4 py-3 border-b md:border-b-0 md:border-r border-dl-border">
+                            <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Account Balance</p>
+                            {nexusParticipant.accountBalance ? (
+                              <p className="font-dl-mono text-dl-navy font-bold">
+                                ${(nexusParticipant.accountBalance.availableBalanceCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </p>
+                            ) : (
+                              <p className="font-dl-mono text-dl-gray text-sm">—</p>
+                            )}
+                            <p className="text-[10px] text-dl-gray mt-0.5">Available balance · {nexusParticipant.accountAccessMode === 'dedicated' ? 'Dedicated account' : 'Virtual account'}</p>
+                          </div>
+                          <div className="px-4 py-3">
+                            <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Debit Card</p>
+                            {nexusParticipant.cardStatus === 'active' && nexusParticipant.cardLast4 ? (
+                              <p className="font-dl-mono text-dl-navy font-bold">••••&nbsp;{nexusParticipant.cardLast4}</p>
+                            ) : nexusParticipant.cardStatus === 'issued' ? (
+                              <p className="font-dl-mono text-dl-forest text-sm">Issued — activation pending</p>
+                            ) : (
+                              <p className="font-dl-mono text-dl-gray text-sm">Not issued</p>
+                            )}
+                            <p className="text-[10px] text-dl-gray mt-0.5">Axiom Nexus Debit · {nexusParticipant.cardStatus ?? 'not requested'}</p>
+                          </div>
+                        </div>
                         <p className="text-[10px] text-dl-gray font-dl-mono">
                           Earnest money is held in escrow pending contract execution. Upon closing, it is applied to the purchase price. Upon contract cancellation, it is returned per the terms of the purchase agreement.
                           <a href="/banking/my-account" className="text-dl-navy underline ml-1 hover:no-underline">Manage your account</a>

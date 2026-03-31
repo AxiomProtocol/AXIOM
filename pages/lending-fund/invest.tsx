@@ -128,6 +128,9 @@ export default function InvestPage() {
 
   const [lpParticipant, setLpParticipant] = useState<{
     participantRef: string; fullName: string;
+    cardStatus: string | null; cardLast4: string | null;
+    accountBalance: { availableBalanceCents: number; currentBalanceCents: number; currency: string } | null;
+    accountAccessMode: 'dedicated' | 'virtual-only';
     depositInstructions: { routingNumber: string; accountNumber?: string; bankName: string; accountName: string; memo: string; hasVirtualAccount?: boolean };
   } | null>(null);
   const [lpRegForm, setLpRegForm] = useState({ fullName: '', email: '' });
@@ -197,6 +200,10 @@ export default function InvestPage() {
         setLpParticipant({
           participantRef: data.participantRef,
           fullName: data.fullName,
+          cardStatus: data.cardStatus ?? null,
+          cardLast4: data.cardLast4 ?? null,
+          accountBalance: data.accountBalance ?? null,
+          accountAccessMode: data.accountAccessMode ?? 'virtual-only',
           depositInstructions: {
             routingNumber: data.virtualRoutingNumber,
             accountNumber: data.virtualAccountNumber,
@@ -765,6 +772,31 @@ export default function InvestPage() {
                           <div className="px-4 py-4">
                             <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Payee Name</p>
                             <p className="font-dl-mono text-dl-navy font-bold text-xs">{lpParticipant.depositInstructions.accountName}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border mb-5">
+                          <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
+                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Account Balance</p>
+                            {lpParticipant.accountBalance ? (
+                              <p className="font-dl-mono text-dl-navy font-bold">
+                                ${(lpParticipant.accountBalance.availableBalanceCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </p>
+                            ) : (
+                              <p className="font-dl-mono text-dl-gray">—</p>
+                            )}
+                            <p className="text-dl-gray text-xs mt-1">Available · {lpParticipant.accountAccessMode === 'dedicated' ? 'Dedicated account' : 'Virtual account'}</p>
+                          </div>
+                          <div className="px-4 py-4">
+                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Debit Card</p>
+                            {lpParticipant.cardStatus === 'active' && lpParticipant.cardLast4 ? (
+                              <p className="font-dl-mono text-dl-navy font-bold">••••&nbsp;{lpParticipant.cardLast4}</p>
+                            ) : lpParticipant.cardStatus === 'issued' ? (
+                              <p className="font-dl-mono text-dl-forest">Issued — activation pending</p>
+                            ) : (
+                              <p className="font-dl-mono text-dl-gray">Not issued</p>
+                            )}
+                            <p className="text-dl-gray text-xs mt-1">Axiom Nexus Debit · {lpParticipant.cardStatus ?? 'not requested'}</p>
                           </div>
                         </div>
 

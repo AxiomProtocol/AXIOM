@@ -4,7 +4,7 @@ import {
   increaseParticipants,
   increaseProductEscrows,
 } from '../../../../shared/increaseParticipantSchema';
-import { IncreaseService, getAccountId } from '../../../../lib/services/IncreaseService';
+import { IncreaseService } from '../../../../lib/services/IncreaseService';
 import { eq, and } from 'drizzle-orm';
 
 function parseCookies(header: string | undefined): Record<string, string> {
@@ -38,32 +38,51 @@ function isAdmin(req: NextApiRequest): boolean {
   return typeof key === 'string' && key === process.env.ADMIN_SOLVENCY_KEY;
 }
 
-// GET /api/banking/participant/status?wallet=0x...
-// Returns full participant status including Increase account balance and card details.
-// Insurance holds are read from increase_product_escrows (product='wealth-practice', purpose='insurance-hold').
+// GET /api/banking/participant/status
+// GET /api/banking/participant/status?wallet=0x...  (admin or SIWE wallet matching param)
+//
+// Self-status mode (no ?wallet param): wallet derived EXCLUSIVELY from SIWE session.
+//   This is the canonical self-service path — UI never needs to thread the wallet address.
+// Wallet-param mode: admin OR SIWE wallet must match the param.
+//   In dev mode both paths accept the query param as fallback.
+//
+// Returns: account number, card status, account balance (dedicated only), insurance holds.
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const wallet = typeof req.query.wallet === 'string'
+  const walletParam = typeof req.query.wallet === 'string'
     ? req.query.wallet.toLowerCase()
     : null;
 
-  if (!wallet || !/^0x[a-fA-F0-9]{40}$/i.test(wallet)) {
-    return res.status(400).json({ error: 'Valid wallet address required (?wallet=0x...)' });
-  }
-
   const adminOk = isAdmin(req);
-  // Derive authoritative wallet from SIWE session for non-admin paths.
-  // In dev mode, fall back to the query param. In production, SIWE wallet is the ONLY identity.
-  let resolvedWallet = wallet;
-  if (!adminOk) {
+  let resolvedWallet: string;
+
+  if (!walletParam) {
+    // ── Self-status mode: SIWE-derived wallet, no param required ──
     const siweWallet = await getSiweWallet(req);
     if (!siweWallet) {
-      return res.status(401).json({ error: 'Wallet sign-in required' });
+      return res.status(401).json({ error: 'Wallet sign-in required — connect and sign in to view your account status' });
     }
-    resolvedWallet = siweWallet === '__dev__' ? wallet : siweWallet;
-    if (!resolvedWallet || !/^0x[a-fA-F0-9]{40}$/i.test(resolvedWallet)) {
-      return res.status(400).json({ error: 'Wallet address could not be determined from session' });
+    if (siweWallet === '__dev__') {
+      return res.status(400).json({ error: 'Dev mode: pass ?wallet=0x... to identify the participant' });
+    }
+    resolvedWallet = siweWallet;
+  } else {
+    // ── Wallet-param mode: format validation ──
+    if (!/^0x[a-fA-F0-9]{40}$/i.test(walletParam)) {
+      return res.status(400).json({ error: 'Invalid wallet address format' });
+    }
+    if (!adminOk) {
+      const siweWallet = await getSiweWallet(req);
+      if (!siweWallet) {
+        return res.status(401).json({ error: 'Wallet sign-in required' });
+      }
+      resolvedWallet = siweWallet === '__dev__' ? walletParam : siweWallet;
+      if (!/^0x[a-fA-F0-9]{40}$/i.test(resolvedWallet)) {
+        return res.status(400).json({ error: 'Wallet address could not be determined from session' });
+      }
+    } else {
+      resolvedWallet = walletParam;
     }
   }
 

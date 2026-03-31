@@ -114,6 +114,10 @@ export default function WealthPracticePage() {
 
   const [participant, setParticipant] = useState<{
     id: number; walletAddress: string; participantRef: string; fullName: string; email: string; status: string;
+    cardStatus?: string; cardLast4?: string;
+    accountBalance?: { availableBalanceCents: number; currentBalanceCents: number; currency: string } | null;
+    accountAccessMode?: 'dedicated' | 'virtual-only';
+    virtualRoutingNumber?: string; virtualAccountNumber?: string;
   } | null>(null);
   const [participantHolds, setParticipantHolds] = useState<Array<{
     id: number; groupId: string | null; groupDisplayName: string | null; amountCents: number; depositedAmountCents: number; status: string; fundedAt: string | null;
@@ -255,6 +259,12 @@ export default function WealthPracticePage() {
           fullName: data.fullName,
           email: '',
           status: data.status,
+          cardStatus: data.cardStatus ?? undefined,
+          cardLast4: data.cardLast4 ?? undefined,
+          accountBalance: data.accountBalance ?? null,
+          accountAccessMode: data.accountAccessMode ?? 'virtual-only',
+          virtualRoutingNumber: data.virtualRoutingNumber ?? undefined,
+          virtualAccountNumber: data.virtualAccountNumber ?? undefined,
         });
         setParticipantHolds(data.insuranceHolds || []);
       } else {
@@ -1139,7 +1149,7 @@ export default function WealthPracticePage() {
                     </div>
                   </div>
 
-                  {(participant as { virtualAccountNumber?: string; virtualRoutingNumber?: string }).virtualAccountNumber ? (
+                  {participant.virtualAccountNumber ? (
                     <div className="mb-5">
                       <p className="text-dl-gray text-xs font-dl-mono uppercase mb-3">Your Dedicated Account Details</p>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border">
@@ -1150,18 +1160,42 @@ export default function WealthPracticePage() {
                         </div>
                         <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
                           <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Routing</div>
-                          <div className="font-dl-mono text-dl-navy font-bold">{(participant as { virtualRoutingNumber?: string }).virtualRoutingNumber}</div>
+                          <div className="font-dl-mono text-dl-navy font-bold">{participant.virtualRoutingNumber}</div>
                           <div className="text-dl-gray text-xs mt-1">First Internet Bank</div>
                         </div>
                         <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
                           <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Your Account No.</div>
-                          <div className="font-dl-mono text-dl-navy font-bold">{(participant as { virtualAccountNumber?: string }).virtualAccountNumber}</div>
+                          <div className="font-dl-mono text-dl-navy font-bold">{participant.virtualAccountNumber}</div>
                           <div className="text-dl-forest text-xs mt-1">No memo needed</div>
                         </div>
                         <div className="p-3">
                           <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Payee</div>
                           <div className="font-dl-mono text-dl-navy text-xs font-bold">Axiom Protocol LLC</div>
                           <div className="text-dl-gray text-xs mt-1">Nexus Account</div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-0 border border-dl-border border-t-0">
+                        <div className="p-3 border-r border-dl-border">
+                          <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Account Balance</div>
+                          {participant.accountBalance ? (
+                            <div className="font-dl-mono text-dl-navy font-bold">
+                              ${(participant.accountBalance.availableBalanceCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
+                          ) : (
+                            <div className="font-dl-mono text-dl-gray">—</div>
+                          )}
+                          <div className="text-dl-gray text-xs mt-1">Available · {participant.accountAccessMode === 'dedicated' ? 'Dedicated account' : 'Virtual account'}</div>
+                        </div>
+                        <div className="p-3">
+                          <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Debit Card</div>
+                          {participant.cardStatus === 'active' && participant.cardLast4 ? (
+                            <div className="font-dl-mono text-dl-navy font-bold">••••&nbsp;{participant.cardLast4}</div>
+                          ) : participant.cardStatus === 'issued' ? (
+                            <div className="font-dl-mono text-dl-forest">Issued — activation pending</div>
+                          ) : (
+                            <div className="font-dl-mono text-dl-gray">Not issued</div>
+                          )}
+                          <div className="text-dl-gray text-xs mt-1">Axiom Nexus Debit · {participant.cardStatus ?? 'not requested'}</div>
                         </div>
                       </div>
                     </div>
