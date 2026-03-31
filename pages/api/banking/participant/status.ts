@@ -123,13 +123,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const fundedHold = holds.find((h) => h.status === 'funded');
     const pendingHold = holds.find((h) => h.status === 'pending');
 
-    // Fetch account balance — only from participant's DEDICATED account.
-    // Never fall back to the shared treasury account (getAccountId()) as that would
-    // expose aggregate treasury balance to individual participants.
+    // Fetch account balance — ONLY for participant-dedicated accounts.
+    // Requires BOTH increaseAccountId AND increaseEntityId to be set.
+    // increaseEntityId proves the account was provisioned via the per-participant entity path.
+    // This prevents any historical fallback records (where increaseAccountId == shared treasury)
+    // from exposing the treasury balance to participants.
+    const isParticipantDedicated = !!(p.increaseAccountId && p.increaseEntityId);
     let accountBalance: { availableBalanceCents: number; currentBalanceCents: number; currency: string } | null = null;
-    if (p.increaseAccountId) {
+    if (isParticipantDedicated) {
       try {
-        const bal = await IncreaseService.getAccountBalance(p.increaseAccountId);
+        const bal = await IncreaseService.getAccountBalance(p.increaseAccountId!);
         accountBalance = {
           availableBalanceCents: bal.available_balance,
           currentBalanceCents: bal.current_balance,
@@ -139,8 +142,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Non-fatal — balance unavailable (e.g. API error or sandbox lag)
       }
     }
-    // If no dedicated account, accountBalance stays null (virtual-account-only participants
-    // track their holdings via ACH deposit records, not an Increase account balance)
+    // If participant does not have a dedicated entity+account, accountBalance is null.
 
     // Fetch card details if issued
     let cardDetails: { id: string; last4: string; expirationMonth: number; expirationYear: number; status: string } | null = null;
@@ -160,9 +162,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Account access mode for UI disclosure:
-    //  - 'dedicated'     : participant has a per-participant Increase entity + account (KYC provisioned)
-    //  - 'virtual-only'  : participant has a virtual account number under the shared org account (no KYC entity)
-    const accountAccessMode: 'dedicated' | 'virtual-only' = p.increaseAccountId ? 'dedicated' : 'virtual-only';
+    //  - 'dedicated'     : participant has both a per-participant entity AND account (KYC provisioned)
+    //  - 'virtual-only'  : participant has a virtual account number only (no dedicated entity/account)
+    const accountAccessMode: 'dedicated' | 'virtual-only' = isParticipantDedicated ? 'dedicated' : 'virtual-only';
 
     return res.status(200).json({
       registered: true,
@@ -170,7 +172,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fullName: p.fullName,
       status: p.status,
       hasVirtualAccount,
-      hasDedicatedAccount: !!p.increaseAccountId,
+      hasDedicatedAccount: isParticipantDedicated,
       accountAccessMode,
       virtualRoutingNumber: hasVirtualAccount ? p.virtualRoutingNumber : null,
       virtualAccountNumber: hasVirtualAccount ? p.virtualAccountNumber : null,

@@ -3,7 +3,6 @@ import { db, pool } from '../../../../server/db';
 import { increaseParticipants } from '../../../../shared/increaseParticipantSchema';
 import {
   IncreaseService,
-  getAccountId,
   getProgramId,
 } from '../../../../lib/services/IncreaseService';
 import { eq } from 'drizzle-orm';
@@ -160,7 +159,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // ── Step 2: Create per-participant account — HARD FAIL ────────────────────
     const programId = getProgramId();
-    const baseAccountId = getAccountId();
 
     let increaseAccountId: string;
 
@@ -182,16 +180,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       increaseAccountId = account.id;
     } else {
-      // Sandbox fallback: no program_id configured — use the base account for virtual
-      // account number routing. This only applies in development/sandbox environments
-      // where INCREASE_SANDBOX_PROGRAM_ID is not set.
-      if (!baseAccountId) {
-        return res.status(502).json({
-          error: 'No Increase account or program configured — cannot provision participant account',
-          code: 'NO_ACCOUNT_CONFIGURED',
-        });
-      }
-      increaseAccountId = baseAccountId;
+      // No program_id configured — every participant requires a dedicated account.
+      // This is a hard configuration error; the shared account must never be used as a fallback.
+      return res.status(502).json({
+        error: 'Increase program ID not configured — per-participant account provisioning requires INCREASE_PROGRAM_ID (or INCREASE_SANDBOX_PROGRAM_ID in sandbox).',
+        code: 'PROGRAM_ID_MISSING',
+        note: 'Set INCREASE_SANDBOX_PROGRAM_ID / INCREASE_PROGRAM_ID to enable per-participant account provisioning.',
+      });
     }
 
     // ── Step 3: Provision virtual account number — HARD FAIL ──────────────────

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db, pool } from '../../../../server/db';
 import { increaseParticipants } from '../../../../shared/increaseParticipantSchema';
-import { IncreaseService } from '../../../../lib/services/IncreaseService';
+import { IncreaseService, getAccountId } from '../../../../lib/services/IncreaseService';
 import { eq } from 'drizzle-orm';
 
 function parseCookies(header: string | undefined): Record<string, string> {
@@ -69,7 +69,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ message: 'Card already issued or pending', cardStatus: participant.cardStatus });
     }
 
-    const accountId = process.env.INCREASE_ACCOUNT_ID ?? process.env.INCREASE_SANDBOX_ACCOUNT_ID ?? '';
+    // Use participant's dedicated account when available; fall back to org account only if not set
+    const accountId = participant.increaseAccountId ?? getAccountId();
     if (!accountId) return res.status(503).json({ error: 'Banking account not configured' });
 
     try {
