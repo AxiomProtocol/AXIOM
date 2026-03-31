@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../../server/db';
+import { db, pool } from '../../../../server/db';
 import {
   increaseParticipants,
   increaseInsuranceHolds,
@@ -7,6 +7,37 @@ import {
   increaseDistributions,
 } from '../../../../shared/increaseParticipantSchema';
 import { eq } from 'drizzle-orm';
+
+function parseCookies(header: string | undefined): Record<string, string> {
+  if (!header) return {};
+  return Object.fromEntries(
+    header.split(';').map((c) => {
+      const [k, ...v] = c.trim().split('=');
+      return [k.trim(), v.join('=')];
+    }).filter(([k]) => k.length > 0)
+  );
+}
+
+async function getSiweWallet(req: NextApiRequest): Promise<string | null> {
+  if (process.env.NODE_ENV === 'development') return '__dev__';
+  const cookies = parseCookies(req.headers.cookie);
+  const token = cookies['siwe_session'];
+  if (!token) return null;
+  try {
+    const result = await pool.query(
+      `SELECT wallet_address FROM wallet_sessions WHERE session_token = $1 AND expires_at > NOW() LIMIT 1`,
+      [token]
+    );
+    return result.rows[0]?.wallet_address ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function isAdmin(req: NextApiRequest): boolean {
+  const key = req.headers['x-admin-key'];
+  return typeof key === 'string' && key === process.env.ADMIN_SOLVENCY_KEY;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -17,6 +48,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const wallet = walletAddress.toLowerCase();
+
+  const adminOk = isAdmin(req);
+  if (!adminOk) {
+    const siweWallet = await getSiweWallet(req);
+    if (!siweWallet) {
+      return res.status(401).json({ error: 'Wallet sign-in required' });
+    }
+    if (siweWallet !== '__dev__' && siweWallet.toLowerCase() !== wallet) {
+      return res.status(403).json({ error: 'You may only view your own participant record' });
+    }
+  }
 
   try {
     const participants = await db
@@ -38,9 +80,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ]);
 
     const isSandbox = (process.env.INCREASE_ENVIRONMENT ?? 'sandbox') === 'sandbox';
-    const nexusAccountId = isSandbox
-      ? (process.env.INCREASE_SANDBOX_ACCOUNT_ID ?? 'sandbox_account_nqaq96bjvvhfn2tstwmh')
-      : (process.env.INCREASE_ACCOUNT_ID ?? 'account_3q7ro70b6ma4w5ijgivz');
 
     return res.status(200).json({
       success: true,
