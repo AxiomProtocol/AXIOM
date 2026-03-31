@@ -370,7 +370,7 @@ export default function BankingDashboard() {
       virtualRoutingNumber: string | null;
       createdAt: string;
     }>;
-    insuranceHolds: Array<{ id: number; participantId: number; participantRef: string | null; participantName: string | null; groupId: string; groupDisplayName: string | null; requiredAmountCents: number; depositedAmountCents: number; status: string; fundedAt: string | null; createdAt: string }>;
+    insuranceHolds: Array<{ id: number; participantId: number; participantRef: string | null; participantName: string | null; groupId: string; groupDisplayName: string | null; amountCents: number; depositedAmountCents: number; status: string; fundedAt: string | null; createdAt: string }>;
     lpDeposits: Array<{ id: number; participantId: number; participantRef: string | null; participantName: string | null; amountCents: number; product: string; status: string; memoRef: string | null; createdAt: string }>;
     counts: { participants: number; holds: number; pendingHolds: number; fundedHolds: number; deposits: number; pendingDeposits: number; receivedDeposits: number };
   } | null>(null);
@@ -1426,7 +1426,7 @@ export default function BankingDashboard() {
                           <td style={{ ...mono, padding: '11px 14px', color: DL.navy, fontWeight: 700 }}>{h.participantRef ?? '—'}</td>
                           <td style={{ ...mono, padding: '11px 14px' }}>{h.participantName ?? '—'}</td>
                           <td style={{ ...mono, padding: '11px 14px', fontSize: 10 }}>{h.groupDisplayName ?? h.groupId}</td>
-                          <td style={{ ...mono, padding: '11px 14px' }}>${(h.requiredAmountCents / 100).toFixed(2)}</td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>${(h.amountCents / 100).toFixed(2)}</td>
                           <td style={{ ...mono, padding: '11px 14px' }}>${(h.depositedAmountCents / 100).toFixed(2)}</td>
                           <td style={{ padding: '11px 14px' }}><StatusBadge status={h.status} /></td>
                           <td style={{ ...mono, padding: '11px 14px' }}>{new Date(h.createdAt).toLocaleDateString()}</td>
@@ -1461,7 +1461,7 @@ export default function BankingDashboard() {
                         {participantsData.insuranceHolds
                           .filter(h => ['pending', 'partial'].includes(h.status))
                           .map((h, i) => {
-                            const shortfall = h.requiredAmountCents - h.depositedAmountCents;
+                            const shortfall = h.amountCents - h.depositedAmountCents;
                             const refCode = h.participantRef ?? '—';
                             return (
                               <tr key={h.id} style={{ borderBottom: `1px solid ${DL.border}`, background: i % 2 === 0 ? '#FFFDF5' : DL.surface }}>
@@ -1469,7 +1469,7 @@ export default function BankingDashboard() {
                                 <td style={{ ...mono, padding: '11px 14px', color: DL.navy, fontWeight: 700 }}>{refCode}</td>
                                 <td style={{ ...mono, padding: '11px 14px' }}>{h.participantName ?? '—'}</td>
                                 <td style={{ ...mono, padding: '11px 14px', fontSize: 10 }}>{h.groupDisplayName ?? h.groupId}</td>
-                                <td style={{ ...mono, padding: '11px 14px' }}>${(h.requiredAmountCents / 100).toFixed(2)}</td>
+                                <td style={{ ...mono, padding: '11px 14px' }}>${(h.amountCents / 100).toFixed(2)}</td>
                                 <td style={{ ...mono, padding: '11px 14px' }}>${(h.depositedAmountCents / 100).toFixed(2)}</td>
                                 <td style={{ ...mono, padding: '11px 14px', color: shortfall > 0 ? DL.error : DL.forest, fontWeight: 700 }}>
                                   ${(shortfall / 100).toFixed(2)}
