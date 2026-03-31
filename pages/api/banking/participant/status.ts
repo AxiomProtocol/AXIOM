@@ -4,6 +4,7 @@ import {
   increaseParticipants,
   increaseInsuranceHolds,
 } from '../../../../shared/increaseParticipantSchema';
+import { IncreaseService, getAccountId } from '../../../../lib/services/IncreaseService';
 import { eq } from 'drizzle-orm';
 
 function parseCookies(header: string | undefined): Record<string, string> {
@@ -38,7 +39,7 @@ function isAdmin(req: NextApiRequest): boolean {
 }
 
 // GET /api/banking/participant/status?wallet=0x...
-// Returns lightweight status object for UI gating checks
+// Returns full participant status including Increase account balance and card details
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -75,13 +76,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         cardStatus: 'not_requested',
         insuranceHoldStatus: null,
         canJoinWealthPractice: false,
+        accountBalance: null,
+        card: null,
       });
     }
 
     const p = rows[0];
     const hasVirtualAccount = !!(p.virtualRoutingNumber && p.virtualAccountNumber);
 
-    // Check for any funded insurance hold
+    // Fetch insurance holds
     const holds = await db
       .select()
       .from(increaseInsuranceHolds)
@@ -90,15 +93,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const fundedHold = holds.find((h) => h.status === 'funded');
     const pendingHold = holds.find((h) => h.status === 'pending');
 
+    // Fetch real account balance from Increase (use participant's dedicated account or shared account)
+    let accountBalance: { availableBalanceCents: number; currentBalanceCents: number; currency: string } | null = null;
+    const targetAccountId = p.increaseAccountId || getAccountId();
+    if (targetAccountId) {
+      try {
+        const bal = await IncreaseService.getAccountBalance(targetAccountId);
+        accountBalance = {
+          availableBalanceCents: bal.available_balance,
+          currentBalanceCents: bal.current_balance,
+          currency: bal.currency,
+        };
+      } catch {
+        // Non-fatal — balance unavailable
+      }
+    }
+
+    // Fetch card details if issued
+    let cardDetails: { id: string; last4: string; expirationMonth: number; expirationYear: number; status: string } | null = null;
+    if (p.cardId) {
+      try {
+        const card = await IncreaseService.getCard(p.cardId);
+        cardDetails = {
+          id: card.id,
+          last4: card.last4,
+          expirationMonth: card.expiration_month,
+          expirationYear: card.expiration_year,
+          status: card.status,
+        };
+      } catch {
+        // Non-fatal
+      }
+    }
+
     return res.status(200).json({
       registered: true,
       participantRef: p.participantRef,
+      fullName: p.fullName,
       status: p.status,
       hasVirtualAccount,
       virtualRoutingNumber: hasVirtualAccount ? p.virtualRoutingNumber : null,
       virtualAccountNumber: hasVirtualAccount ? p.virtualAccountNumber : null,
+      increaseEntityId: p.increaseEntityId ?? null,
+      increaseAccountId: p.increaseAccountId ?? null,
       cardStatus: p.cardStatus,
       cardLast4: p.cardLast4 ?? null,
+      card: cardDetails,
+      accountBalance,
+      insuranceHolds: holds,
       insuranceHoldStatus: fundedHold ? 'funded' : pendingHold ? 'pending' : 'none',
       canJoinWealthPractice: !!fundedHold,
     });
