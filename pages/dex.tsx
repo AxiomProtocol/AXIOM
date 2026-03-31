@@ -203,16 +203,20 @@ function EulerSwapLpTab() {
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="font-dl-mono text-xs text-dl-gray uppercase">Add Liquidity</p>
+                <p className="font-dl-mono text-xs text-dl-gray uppercase">Pool Verification</p>
                 <a
-                  href={`https://app.euler.finance/swap?network=arbitrumone&pool=${selectedPoolData.address}`}
+                  href={`https://arbiscan.io/address/${selectedPoolData.address}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full py-3 bg-dl-navy text-white text-center font-dl-mono text-sm"
+                  className="block w-full py-3 border border-dl-navy text-dl-navy text-center font-dl-mono text-sm hover:bg-dl-navy hover:text-white transition-colors"
                 >
-                  Add Liquidity via EulerSwap →
+                  Verify Pool on Arbiscan →
                 </a>
-                <p className="text-dl-gray text-xs">Identity verification required. Ensure your address is registered in the Axiom identity registry before proceeding.</p>
+                <div className="border border-dl-border p-3 bg-dl-bg">
+                  <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Pool Address</p>
+                  <p className="font-dl-mono text-xs text-dl-navy break-all">{selectedPoolData.address}</p>
+                </div>
+                <p className="text-dl-gray text-xs leading-relaxed">These are Axiom protocol-owned EulerSwap V2 pools deployed directly on Arbitrum One. They are not listed on Euler&apos;s public UI — use the Swap interface above to interact with them. Identity verification is required for AXUSD transfers.</p>
               </div>
             )}
           </div>
