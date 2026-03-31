@@ -30,6 +30,31 @@ const nextConfig = {
 
   swcMinify: true,
 
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'plus.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 's.gravatar.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
+    ],
+  },
+
   experimental: {
     instrumentationHook: true,
     serverComponentsExternalPackages: ['pg', 'hardhat', '@nomiclabs/hardhat-ethers', '@nomicfoundation/hardhat-toolbox'],
