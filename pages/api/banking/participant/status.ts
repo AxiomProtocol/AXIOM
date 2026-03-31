@@ -104,21 +104,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const fundedHold = holds.find((h) => h.status === 'funded');
     const pendingHold = holds.find((h) => h.status === 'pending');
 
-    // Fetch real account balance from Increase
+    // Fetch account balance — only from participant's DEDICATED account.
+    // Never fall back to the shared treasury account (getAccountId()) as that would
+    // expose aggregate treasury balance to individual participants.
     let accountBalance: { availableBalanceCents: number; currentBalanceCents: number; currency: string } | null = null;
-    const targetAccountId = p.increaseAccountId || getAccountId();
-    if (targetAccountId) {
+    if (p.increaseAccountId) {
       try {
-        const bal = await IncreaseService.getAccountBalance(targetAccountId);
+        const bal = await IncreaseService.getAccountBalance(p.increaseAccountId);
         accountBalance = {
           availableBalanceCents: bal.available_balance,
           currentBalanceCents: bal.current_balance,
           currency: bal.currency,
         };
       } catch {
-        // Non-fatal — balance unavailable
+        // Non-fatal — balance unavailable (e.g. API error or sandbox lag)
       }
     }
+    // If no dedicated account, accountBalance stays null (virtual-account-only participants
+    // track their holdings via ACH deposit records, not an Increase account balance)
 
     // Fetch card details if issued
     let cardDetails: { id: string; last4: string; expirationMonth: number; expirationYear: number; status: string } | null = null;
@@ -137,12 +140,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    // Account access mode for UI disclosure:
+    //  - 'dedicated'     : participant has a per-participant Increase entity + account (KYC provisioned)
+    //  - 'virtual-only'  : participant has a virtual account number under the shared org account (no KYC entity)
+    const accountAccessMode: 'dedicated' | 'virtual-only' = p.increaseAccountId ? 'dedicated' : 'virtual-only';
+
     return res.status(200).json({
       registered: true,
       participantRef: p.participantRef,
       fullName: p.fullName,
       status: p.status,
       hasVirtualAccount,
+      hasDedicatedAccount: !!p.increaseAccountId,
+      accountAccessMode,
       virtualRoutingNumber: hasVirtualAccount ? p.virtualRoutingNumber : null,
       virtualAccountNumber: hasVirtualAccount ? p.virtualAccountNumber : null,
       increaseEntityId: p.increaseEntityId ?? null,
@@ -150,6 +160,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       cardStatus: p.cardStatus,
       cardLast4: p.cardLast4 ?? null,
       card: cardDetails,
+      // accountBalance is ONLY the participant's dedicated account balance.
+      // null when in virtual-only mode — never exposes shared treasury balance.
       accountBalance,
       insuranceHolds: holds,
       insuranceHoldStatus: fundedHold ? 'funded' : pendingHold ? 'pending' : 'none',

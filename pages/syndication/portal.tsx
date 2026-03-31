@@ -78,6 +78,7 @@ export default function InvestorPortal() {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<Tab>('holdings');
+  const [nexusParticipant, setNexusParticipant] = useState<Record<string, any> | null>(null);
 
   const loadPortal = useCallback(async () => {
     setLoading(true);
@@ -97,13 +98,26 @@ export default function InvestorPortal() {
     }
   }, []);
 
+  const loadNexusParticipant = useCallback(async (wallet: string) => {
+    try {
+      const res = await fetch(`/api/banking/participant/status?wallet=${encodeURIComponent(wallet)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.registered) setNexusParticipant(json);
+      }
+    } catch {
+      // Non-fatal — ACH panel degrades gracefully
+    }
+  }, []);
+
   useEffect(() => {
     if (isConnected && address) {
       loadPortal();
+      loadNexusParticipant(address);
     } else {
       setLoading(false);
     }
-  }, [isConnected, address, loadPortal]);
+  }, [isConnected, address, loadPortal, loadNexusParticipant]);
 
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: 'holdings', label: 'My Holdings', count: data?.holdings?.length },
@@ -248,7 +262,7 @@ export default function InvestorPortal() {
               documents={data.documents}
             />
           )}
-          {activeTab === 'capitalCalls' && <CapitalCallsTab capitalCalls={data.capitalCalls} />}
+          {activeTab === 'capitalCalls' && <CapitalCallsTab capitalCalls={data.capitalCalls} nexusParticipant={nexusParticipant} />}
           {activeTab === 'distributions' && <DistributionsTab distributions={data.distributions} />}
         </>
       )}
@@ -497,7 +511,9 @@ function DocumentsSection({ documents }: { documents: any[] }) {
   );
 }
 
-function CapitalCallsTab({ capitalCalls }: { capitalCalls: any[] }) {
+function CapitalCallsTab({ capitalCalls, nexusParticipant }: { capitalCalls: any[]; nexusParticipant?: Record<string, any> | null }) {
+  const openCalls = capitalCalls.filter((cc: any) => cc.status === 'sent' || cc.status === 'pending');
+
   if (capitalCalls.length === 0) {
     return (
       <div className="border border-dl-border p-6 sm:p-8 text-center">
@@ -513,48 +529,135 @@ function CapitalCallsTab({ capitalCalls }: { capitalCalls: any[] }) {
   }
 
   return (
-    <div>
-      <h2 className="font-dl-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-2">Capital Calls</h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {capitalCalls.map((cc: any) => {
-          const meta = cc.meta || {};
-          const isOverdue = cc.due_date && cc.status === 'sent' && new Date(cc.due_date) < new Date();
-          return (
-            <div key={cc.id} className={`border p-4 ${isOverdue ? 'border-red-300 bg-red-50' : 'border-dl-border'}`}>
-              <div className="flex items-start justify-between mb-2">
-                <Link href={`/syndication/offerings/${cc.offering_id}`} className="font-dl-serif text-sm text-dl-navy underline pr-2">
-                  {cc.offering_name}
-                </Link>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <span className={`inline-block px-2 py-0.5 text-[10px] ${STATUS_COLORS[cc.status] || 'bg-gray-100 text-gray-600'}`}>
-                    {cc.status}
-                  </span>
-                  {isOverdue && <span className="text-[10px] text-red-600 font-bold">OVERDUE</span>}
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-dl-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-2">Capital Calls</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {capitalCalls.map((cc: any) => {
+            const meta = cc.meta || {};
+            const isOverdue = cc.due_date && cc.status === 'sent' && new Date(cc.due_date) < new Date();
+            return (
+              <div key={cc.id} className={`border p-4 ${isOverdue ? 'border-red-300 bg-red-50' : 'border-dl-border'}`}>
+                <div className="flex items-start justify-between mb-2">
+                  <Link href={`/syndication/offerings/${cc.offering_id}`} className="font-dl-serif text-sm text-dl-navy underline pr-2">
+                    {cc.offering_name}
+                  </Link>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <span className={`inline-block px-2 py-0.5 text-[10px] ${STATUS_COLORS[cc.status] || 'bg-gray-100 text-gray-600'}`}>
+                      {cc.status}
+                    </span>
+                    {isOverdue && <span className="text-[10px] text-red-600 font-bold">OVERDUE</span>}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs font-dl-mono">
+                  <div>
+                    <p className="text-dl-muted text-[10px] uppercase">Amount</p>
+                    <p className="text-dl-navy">{fmtFull(parseFloat(cc.amount_called || '0'))}</p>
+                  </div>
+                  <div>
+                    <p className="text-dl-muted text-[10px] uppercase">Currency</p>
+                    <p className="text-dl-navy">{cc.currency || 'USD'}</p>
+                  </div>
+                  <div>
+                    <p className="text-dl-muted text-[10px] uppercase">Due Date</p>
+                    <p className={isOverdue ? 'text-red-600' : 'text-dl-navy'}>{fmtDate(cc.due_date)}</p>
+                  </div>
+                  <div>
+                    <p className="text-dl-muted text-[10px] uppercase">Ref</p>
+                    <p className="text-dl-navy">{meta.memoCode || '\u2014'}</p>
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs font-dl-mono">
-                <div>
-                  <p className="text-dl-muted text-[10px] uppercase">Amount</p>
-                  <p className="text-dl-navy">{fmtFull(parseFloat(cc.amount_called || '0'))}</p>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Axiom Nexus ACH Funding Panel ── */}
+      {openCalls.length > 0 && (
+        <div className="border border-dl-navy">
+          <div className="px-5 py-3 bg-dl-navy">
+            <p className="font-dl-mono text-xs text-white uppercase tracking-wider">Fund via Axiom Nexus — ACH Instructions</p>
+          </div>
+          <div className="p-5 space-y-4">
+            <p className="text-sm text-dl-gray leading-relaxed">
+              Capital calls are funded via USD bank transfer (ACH or wire) to the Axiom Nexus Account at First Internet Bank.
+              Use your dedicated account number or include your reference code in the memo to ensure your transfer is matched
+              to your investor record.
+            </p>
+
+            {nexusParticipant ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
+                  {nexusParticipant.hasVirtualAccount ? (
+                    <>
+                      <div className="px-4 py-3 border-b md:border-b-0 md:border-r border-dl-border">
+                        <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Routing Number</p>
+                        <p className="font-dl-mono text-dl-navy font-bold text-sm">{nexusParticipant.virtualRoutingNumber}</p>
+                        <p className="text-[10px] text-dl-gray mt-0.5">First Internet Bank · ABA</p>
+                      </div>
+                      <div className="px-4 py-3">
+                        <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Account Number</p>
+                        <p className="font-dl-mono text-dl-navy font-bold text-sm">{nexusParticipant.virtualAccountNumber}</p>
+                        <p className="text-[10px] text-dl-gray mt-0.5">Dedicated — no memo required</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="px-4 py-3 border-b md:border-b-0 md:border-r border-dl-border">
+                        <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Routing Number</p>
+                        <p className="font-dl-mono text-dl-navy font-bold text-sm">071006486</p>
+                        <p className="text-[10px] text-dl-gray mt-0.5">First Internet Bank · ABA</p>
+                      </div>
+                      <div className="px-4 py-3">
+                        <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Memo Field (Required)</p>
+                        <p className="font-dl-mono text-dl-navy font-bold text-sm">{nexusParticipant.participantRef}</p>
+                        <p className="text-[10px] text-dl-gray mt-0.5">Your unique investor reference code</p>
+                      </div>
+                    </>
+                  )}
                 </div>
-                <div>
-                  <p className="text-dl-muted text-[10px] uppercase">Currency</p>
-                  <p className="text-dl-navy">{cc.currency || 'USD'}</p>
+                <div className="border border-dl-border px-4 py-3">
+                  <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Payee Name</p>
+                  <p className="font-dl-mono text-dl-navy text-sm">Axiom Protocol LLC — Nexus Account</p>
+                  <p className="text-[10px] text-dl-gray mt-0.5">FDIC-insured · First Internet Bank</p>
                 </div>
-                <div>
-                  <p className="text-dl-muted text-[10px] uppercase">Due Date</p>
-                  <p className={isOverdue ? 'text-red-600' : 'text-dl-navy'}>{fmtDate(cc.due_date)}</p>
-                </div>
-                <div>
-                  <p className="text-dl-muted text-[10px] uppercase">Ref</p>
-                  <p className="text-dl-navy">{meta.memoCode || '\u2014'}</p>
-                </div>
+                <p className="text-[10px] text-dl-gray font-dl-mono">
+                  ACH transfers settle in 1–2 business days. Operations applies your capital call within the same business day as settlement.
+                  <a href="/banking/my-account" className="text-dl-navy underline ml-1 hover:no-underline">View full account details</a>
+                </p>
+              </div>
+            ) : (
+              <div className="border border-dl-gold p-4">
+                <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Nexus Account Required</p>
+                <p className="text-sm text-dl-gray leading-relaxed mb-3">
+                  You must register an Axiom Nexus Account before funding a capital call via ACH.
+                  Registration takes under 2 minutes and provisions your dedicated account number and reference code.
+                </p>
+                <a href="/lending-fund/invest" className="inline-block border border-dl-navy bg-dl-navy text-white px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-navy">
+                  Register Nexus Account
+                </a>
+              </div>
+            )}
+
+            <div className="border-t border-dl-border pt-3">
+              <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-2">Capital Call FAQ</p>
+              <div className="space-y-2">
+                {[
+                  { q: 'What happens after I send the ACH?', a: 'Operations matches your incoming transfer to your reference code on the Nexus ledger and applies it to your capital call record — typically the same business day as ACH settlement.' },
+                  { q: 'Can I fund via wire instead of ACH?', a: 'Yes. Domestic wires settle same-day. Use the same routing number and account number. Include your reference code in the OBI (wire memo) field.' },
+                  { q: 'Is there a deadline?', a: 'Capital calls have a stated due date. Transfers must settle by the due date to be counted as timely. Operations will notify you if your transfer arrives late.' },
+                ].map((item, i) => (
+                  <details key={i} className="border border-dl-border">
+                    <summary className="px-3 py-2 text-xs font-dl-mono text-dl-navy cursor-pointer">{item.q}</summary>
+                    <p className="px-3 pb-3 pt-1 text-xs text-dl-gray leading-relaxed">{item.a}</p>
+                  </details>
+                ))}
               </div>
             </div>
-          );
-        })}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -34,7 +34,7 @@ interface InsuranceHold {
   id: number;
   groupId: string;
   groupDisplayName?: string;
-  requiredAmountCents: number;
+  amountCents: number;
   depositedAmountCents: number;
   status: string;
   fundedAt?: string;
@@ -522,7 +522,7 @@ export default function MyAccountPage() {
                         <div className="grid grid-cols-3 gap-0 border border-dl-border mb-3">
                           <div className="px-3 py-2 border-r border-dl-border">
                             <p className="text-xs text-dl-gray font-dl-mono uppercase mb-0.5">Required</p>
-                            <p className="font-dl-mono text-dl-navy font-bold text-sm">{fmt(hold.requiredAmountCents)}</p>
+                            <p className="font-dl-mono text-dl-navy font-bold text-sm">{fmt(hold.amountCents)}</p>
                           </div>
                           <div className="px-3 py-2 border-r border-dl-border">
                             <p className="text-xs text-dl-gray font-dl-mono uppercase mb-0.5">Deposited</p>
@@ -530,8 +530,8 @@ export default function MyAccountPage() {
                           </div>
                           <div className="px-3 py-2">
                             <p className="text-xs text-dl-gray font-dl-mono uppercase mb-0.5">Remaining</p>
-                            <p className={`font-dl-mono font-bold text-sm ${hold.depositedAmountCents >= hold.requiredAmountCents ? 'text-dl-forest' : 'text-dl-gold'}`}>
-                              {fmt(Math.max(0, hold.requiredAmountCents - hold.depositedAmountCents))}
+                            <p className={`font-dl-mono font-bold text-sm ${hold.depositedAmountCents >= hold.amountCents ? 'text-dl-forest' : 'text-dl-gold'}`}>
+                              {fmt(Math.max(0, hold.amountCents - hold.depositedAmountCents))}
                             </p>
                           </div>
                         </div>
@@ -539,7 +539,7 @@ export default function MyAccountPage() {
                           <div className="border border-dl-gold p-4">
                             <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Action Required — Fund Your Insurance Hold</p>
                             <p className="text-dl-gray text-sm leading-relaxed mb-3">
-                              Send <span className="font-dl-mono font-bold text-dl-navy">{fmt(hold.requiredAmountCents)}</span> via ACH to fund this hold.
+                              Send <span className="font-dl-mono font-bold text-dl-navy">{fmt(hold.amountCents)}</span> via ACH to fund this hold.
                               {data.depositInstructions.hasVirtualAccount
                                 ? ` Use your dedicated account number — no memo required.`
                                 : ` Include memo: ${data.participant.participantRef}`

@@ -952,7 +952,7 @@ export default function WealthPracticePage() {
                                   ) : (
                                     <>
                                       <p className="text-dl-gray mb-2">
-                                        Send exactly <strong className="text-dl-navy">${(Number((joinInsuranceData as Record<string, unknown>).requiredAmountCents ?? 0) / 100).toFixed(2)}</strong> via ACH with the memo below to activate your hold:
+                                        Send exactly <strong className="text-dl-navy">${(Number((joinInsuranceData as Record<string, unknown>).amountCents ?? 0) / 100).toFixed(2)}</strong> via ACH with the memo below to activate your hold:
                                       </p>
                                       {(() => {
                                         const instr = (joinInsuranceData as Record<string, unknown>).depositInstructions as Record<string, unknown> | undefined;

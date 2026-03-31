@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAccount } from 'wagmi';
 import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
@@ -69,7 +70,8 @@ export default function DealWorkspacePage() {
   const [summary, setSummary] = useState<DealSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions' | 'ivcee' | 'documents' | 'dueDiligence' | 'strategies' | 'memo' | 'fieldIntelligence' | 'outcomes' | 'costIntelligence' | 'dealAssistant'>('assumptions');
+  const { address, isConnected } = useAccount();
+  const [activeTab, setActiveTab] = useState<'assumptions' | 'metrics' | 'risks' | 'comps' | 'analysis' | 'decisions' | 'ivcee' | 'documents' | 'dueDiligence' | 'strategies' | 'memo' | 'fieldIntelligence' | 'outcomes' | 'costIntelligence' | 'dealAssistant' | 'escrow'>('assumptions');
   const [assumptions, setAssumptions] = useState<AssumptionsState>(DEFAULT_ASSUMPTIONS);
   const [saving, setSaving] = useState(false);
   const [computing, setComputing] = useState(false);
@@ -86,6 +88,8 @@ export default function DealWorkspacePage() {
   const [savingAnalysis, setSavingAnalysis] = useState(false);
   const [analysisSavedAt, setAnalysisSavedAt] = useState<string | null>(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [nexusParticipant, setNexusParticipant] = useState<Record<string, any> | null>(null);
+  const [nexusLoading, setNexusLoading] = useState(false);
 
   const loadSummary = useCallback(async () => {
     if (!id) return;
@@ -360,6 +364,16 @@ export default function DealWorkspacePage() {
     }
   }, [id, compsLoaded, loadComps]);
 
+  useEffect(() => {
+    if (!address) return;
+    setNexusLoading(true);
+    fetch(`/api/banking/participant/status?wallet=${encodeURIComponent(address)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(json => { if (json?.registered) setNexusParticipant(json); })
+      .catch(() => {})
+      .finally(() => setNexusLoading(false));
+  }, [address]);
+
   const handleField = (field: keyof AssumptionsState, value: string) => {
     setAssumptions(prev => ({ ...prev, [field]: value }));
   };
@@ -408,6 +422,7 @@ export default function DealWorkspacePage() {
     { key: 'costIntelligence' as const, label: 'Cost Intelligence' },
     { key: 'outcomes' as const, label: 'Outcomes' },
     { key: 'dealAssistant' as const, label: 'Deal Assistant' },
+    { key: 'escrow' as const, label: 'Earnest Money ACH' },
   ];
 
   const inputField = (label: string, field: keyof AssumptionsState, prefix = '', suffix = '') => (
@@ -1120,6 +1135,137 @@ export default function DealWorkspacePage() {
                 scenarioId={activeScenarioId}
                 dealName={summary?.deal?.deal_name}
               />
+            )}
+
+            {activeTab === 'escrow' && (
+              <div className="space-y-6">
+                <div className="border border-dl-navy">
+                  <div className="px-5 py-3 bg-dl-navy">
+                    <p className="font-dl-mono text-xs text-white uppercase tracking-wider">Earnest Money Deposit — Axiom Nexus ACH</p>
+                  </div>
+                  <div className="p-5 space-y-5">
+                    <p className="text-sm text-dl-gray leading-relaxed">
+                      Earnest money deposits for this deal are held in the Axiom Nexus escrow account at First Internet Bank (FDIC-insured).
+                      Send your deposit via ACH or wire using the instructions below. Operations confirms receipt within 1–2 business days.
+                    </p>
+
+                    {/* Deal context */}
+                    {deal && (
+                      <div className="border border-dl-border">
+                        <div className="px-4 py-2 border-b border-dl-border bg-dl-bg">
+                          <p className="font-dl-mono text-xs text-dl-navy uppercase">Deal Reference</p>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-0 divide-x divide-dl-border">
+                          <div className="px-4 py-3">
+                            <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-0.5">Property</p>
+                            <p className="text-sm text-dl-navy font-semibold leading-tight">{deal.deal_name || '—'}</p>
+                          </div>
+                          <div className="px-4 py-3">
+                            <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-0.5">Purchase Price</p>
+                            <p className="font-dl-mono text-dl-navy text-sm">
+                              {assumptions.purchasePrice
+                                ? `$${Number(assumptions.purchasePrice).toLocaleString('en-US')}`
+                                : '—'}
+                            </p>
+                          </div>
+                          <div className="px-4 py-3">
+                            <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-0.5">Earnest (Typical)</p>
+                            <p className="font-dl-mono text-dl-navy text-sm">
+                              {assumptions.purchasePrice
+                                ? `$${(Number(assumptions.purchasePrice) * 0.01).toLocaleString('en-US', { maximumFractionDigits: 0 })} – $${(Number(assumptions.purchasePrice) * 0.03).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                                : '—'}
+                            </p>
+                            <p className="text-[10px] text-dl-gray mt-0.5">1%–3% of purchase price</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ACH Instructions */}
+                    {nexusLoading ? (
+                      <p className="text-sm text-dl-gray font-dl-mono animate-pulse">Loading your banking record...</p>
+                    ) : nexusParticipant ? (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
+                          {nexusParticipant.hasVirtualAccount ? (
+                            <>
+                              <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
+                                <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Routing Number</p>
+                                <p className="font-dl-mono text-dl-navy font-bold">{nexusParticipant.virtualRoutingNumber}</p>
+                                <p className="text-[10px] text-dl-gray mt-0.5">First Internet Bank · ABA</p>
+                              </div>
+                              <div className="px-4 py-4">
+                                <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Account Number</p>
+                                <p className="font-dl-mono text-dl-navy font-bold">{nexusParticipant.virtualAccountNumber}</p>
+                                <p className="text-[10px] text-dl-gray mt-0.5">Your dedicated number — no memo required</p>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
+                                <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Routing Number</p>
+                                <p className="font-dl-mono text-dl-navy font-bold">071006486</p>
+                                <p className="text-[10px] text-dl-gray mt-0.5">First Internet Bank · ABA</p>
+                              </div>
+                              <div className="px-4 py-4">
+                                <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Memo Field (Required)</p>
+                                <p className="font-dl-mono text-dl-navy font-bold">{nexusParticipant.participantRef}</p>
+                                <p className="text-[10px] text-dl-gray mt-0.5">Your reference code — must appear in ACH memo</p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
+                          <div className="px-4 py-3 border-b md:border-b-0 md:border-r border-dl-border">
+                            <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Bank</p>
+                            <p className="text-sm text-dl-navy">First Internet Bank</p>
+                            <p className="text-[10px] text-dl-gray mt-0.5">FDIC-insured</p>
+                          </div>
+                          <div className="px-4 py-3">
+                            <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Payee</p>
+                            <p className="text-sm text-dl-navy">Axiom Protocol LLC — Nexus Account</p>
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-dl-gray font-dl-mono">
+                          Earnest money is held in escrow pending contract execution. Upon closing, it is applied to the purchase price. Upon contract cancellation, it is returned per the terms of the purchase agreement.
+                          <a href="/banking/my-account" className="text-dl-navy underline ml-1 hover:no-underline">Manage your account</a>
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="border border-dl-gold p-4">
+                        <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Nexus Account Required</p>
+                        <p className="text-sm text-dl-gray leading-relaxed mb-3">
+                          {isConnected
+                            ? 'Register an Axiom Nexus Account to receive your dedicated earnest money ACH instructions. Registration takes under 2 minutes.'
+                            : 'Connect your wallet and register an Axiom Nexus Account to receive your dedicated earnest money ACH instructions.'}
+                        </p>
+                        <a href="/lending-fund/invest" className="inline-block border border-dl-navy bg-dl-navy text-white px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-navy">
+                          Register Nexus Account
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Earnest Money FAQ */}
+                    <div className="border-t border-dl-border pt-4">
+                      <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-3">Earnest Money FAQ</p>
+                      <div className="space-y-2">
+                        {[
+                          { q: 'How much is a typical earnest money deposit?', a: 'Earnest money typically ranges from 1% to 3% of the purchase price. The exact amount is negotiated with the seller and stated in the purchase agreement.' },
+                          { q: 'Is my earnest money FDIC insured?', a: 'Yes. All earnest money held in the Axiom Nexus Account at First Internet Bank is FDIC-insured up to applicable limits. Your funds are segregated from operating accounts.' },
+                          { q: 'What happens if the deal falls through?', a: 'If the deal is cancelled within the contingency period (inspection, financing, or title), your earnest money is returned in full via ACH to your originating bank account. If you cancel outside contingency, the seller may have the right to retain the deposit per the purchase agreement.' },
+                          { q: 'How long does the ACH take?', a: 'Standard ACH transfers settle in 1–2 business days. Same-day ACH or wire transfers settle faster. Operations confirms deposit receipt within the same business day as settlement.' },
+                          { q: 'Can I send a wire instead?', a: 'Yes. Use the same routing number and account number with "Earnest Money" and your reference code in the wire OBI field. Wires settle same-day.' },
+                        ].map((item, i) => (
+                          <details key={i} className="border border-dl-border">
+                            <summary className="px-4 py-2 text-xs font-dl-mono text-dl-navy cursor-pointer">{item.q}</summary>
+                            <p className="px-4 pb-3 pt-1 text-xs text-dl-gray leading-relaxed">{item.a}</p>
+                          </details>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             {activeTab === 'decisions' && (
