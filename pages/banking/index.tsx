@@ -1344,7 +1344,7 @@ export default function BankingDashboard() {
                     { label: 'To confirm an insurance hold', body: 'When you see a deposit arrive in the Increase dashboard with a participant\'s reference code in the memo, call POST /api/banking/wealth-practice/insurance/fund with { holdId, depositedAmountCents } and the x-admin-key header to mark the hold funded.' },
                     { label: 'To release a hold', body: 'When a Wealth Practice group graduates, call POST /api/banking/wealth-practice/insurance/release with { holdId }. Initiate the ACH credit from the Nexus Account back to the participant\'s bank.' },
                     { label: 'To apply an LP deposit', body: 'When a Lending Fund deposit arrives with a participant\'s reference code, update the LP deposit record status to "received", then "applied" once you confirm it is allocated to the fund.' },
-                    { label: 'To forfeit an insurance hold', body: 'If a participant exits their group early, call POST /api/banking/wealth-practice/insurance/forfeit with { holdId }. The hold amount stays in the Nexus Account and is redistributed per fund policy.' },
+                    { label: 'To forfeit an insurance hold', body: 'If a participant exits their group early, call POST /api/banking/wealth-practice/insurance/release with { holdId, reason: "forfeited" }. The hold remains in the Nexus Account and is redistributed per fund policy.' },
                   ].map(({ label, body }) => (
                     <div key={label} style={{ border: `1px solid ${DL.border}`, padding: 16 }}>
                       <p style={{ ...monoLabel, color: DL.navy, marginBottom: 6 }}>{label}</p>

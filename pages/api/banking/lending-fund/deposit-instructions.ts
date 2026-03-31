@@ -29,25 +29,40 @@ async function getSiweWallet(req: NextApiRequest): Promise<string | null> {
   }
 }
 
-// GET /api/banking/lending-fund/deposit-instructions?wallet=0x...
-// Returns LP capital call deposit instructions for the Lending Fund product
+// GET /api/banking/lending-fund/deposit-instructions?groupId=...
+//
+// Participant path: wallet is derived from SIWE session (no ?wallet= needed).
+// Admin path      : requires x-admin-key header + optional ?wallet=0x... override.
+// Dev mode        : SIWE returns '__dev__'; falls back to optional ?wallet= query param.
+//
+// Returns LP capital call deposit instructions for the Lending Fund product.
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const wallet = typeof req.query.wallet === 'string'
-    ? req.query.wallet.toLowerCase()
-    : null;
-
-  if (!wallet || !/^0x[a-fA-F0-9]{40}$/i.test(wallet)) {
-    return res.status(400).json({ error: 'Valid wallet address required (?wallet=0x...)' });
-  }
+  const isAdmin = typeof req.headers['x-admin-key'] === 'string'
+    && req.headers['x-admin-key'] === process.env.ADMIN_SOLVENCY_KEY;
 
   const siweWallet = await getSiweWallet(req);
-  if (!siweWallet) {
-    return res.status(401).json({ error: 'Wallet sign-in required' });
-  }
-  if (siweWallet !== '__dev__' && siweWallet.toLowerCase() !== wallet) {
-    return res.status(403).json({ error: 'You may only view your own deposit instructions' });
+
+  let wallet: string | null = null;
+
+  if (isAdmin) {
+    // Admin path: accept ?wallet= override, or use SIWE as fallback
+    const qw = typeof req.query.wallet === 'string' ? req.query.wallet.toLowerCase() : null;
+    wallet = (qw && /^0x[a-fA-F0-9]{40}$/i.test(qw))
+      ? qw
+      : (siweWallet && siweWallet !== '__dev__' ? siweWallet.toLowerCase() : null);
+    if (!wallet) return res.status(400).json({ error: 'Admin path: supply ?wallet=0x... or authenticate via SIWE' });
+  } else {
+    // Participant path: derive wallet from SIWE session
+    if (!siweWallet) return res.status(401).json({ error: 'Wallet sign-in required' });
+    if (siweWallet === '__dev__') {
+      // Dev mode: accept optional ?wallet= for testing
+      const qw = typeof req.query.wallet === 'string' ? req.query.wallet.toLowerCase() : null;
+      wallet = (qw && /^0x[a-fA-F0-9]{40}$/i.test(qw)) ? qw : '0x0000000000000000000000000000000000000001';
+    } else {
+      wallet = siweWallet.toLowerCase();
+    }
   }
 
   try {
