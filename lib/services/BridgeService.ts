@@ -30,7 +30,6 @@ export interface BridgeQuoteParams {
 
 export interface BridgeTransferParams extends BridgeQuoteParams {
   increaseAccountId?: string;
-  unitAccountId?: string;
   bitgoWalletId: string;
   quoteSnapshotId?: string;
   recipientAccountNumber?: string;
