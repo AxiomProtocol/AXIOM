@@ -126,6 +126,15 @@ export default function InvestPage() {
   /** Primary entry mode: Euler Earn vault or Phase 6 direct deposit */
   const [investMode, setInvestMode] = useState<'earn-vault' | 'phase6'>('earn-vault');
 
+  const [lpParticipant, setLpParticipant] = useState<{
+    participantRef: string; fullName: string; depositInstructions: { routingNumber: string; bankName: string; accountName: string; memo: string };
+  } | null>(null);
+  const [lpRegForm, setLpRegForm] = useState({ fullName: '', email: '' });
+  const [lpRegLoading, setLpRegLoading] = useState(false);
+  const [lpRegMsg, setLpRegMsg] = useState('');
+  const [lpRegError, setLpRegError] = useState('');
+  const [lpParticipantLoading, setLpParticipantLoading] = useState(false);
+
   interface EarnStatsData {
     vaultAddress: string;
     deployed: boolean;
@@ -177,6 +186,43 @@ export default function InvestPage() {
       .finally(() => setEarnLoading(false));
   }, []);
 
+  const fetchLpParticipant = async (address: string) => {
+    if (!/^0x[a-fA-F0-9]{40}$/i.test(address)) return;
+    setLpParticipantLoading(true);
+    try {
+      const res = await fetch(`/api/banking/participant/${encodeURIComponent(address)}`);
+      const data = await res.json();
+      if (data.success && data.registered) {
+        setLpParticipant({ participantRef: data.participant.participantRef, fullName: data.participant.fullName, depositInstructions: data.depositInstructions });
+      } else {
+        setLpParticipant(null);
+      }
+    } catch { setLpParticipant(null); }
+    finally { setLpParticipantLoading(false); }
+  };
+
+  const handleLpRegister = async () => {
+    if (!walletAddress) { setLpRegError('Wallet not connected'); return; }
+    if (!lpRegForm.fullName.trim()) { setLpRegError('Full name required'); return; }
+    if (!lpRegForm.email.trim() || !lpRegForm.email.includes('@')) { setLpRegError('Valid email required'); return; }
+    setLpRegLoading(true); setLpRegError(''); setLpRegMsg('');
+    try {
+      const res = await fetch('/api/banking/participant/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress, fullName: lpRegForm.fullName.trim(), email: lpRegForm.email.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLpRegMsg('Registered. Your ACH reference code is ready.');
+        await fetchLpParticipant(walletAddress);
+      } else {
+        setLpRegError(data.error || 'Registration failed');
+      }
+    } catch { setLpRegError('Registration failed'); }
+    finally { setLpRegLoading(false); }
+  };
+
   const checkWalletConnection = async () => {
     const eth = getEth();
     if (!eth) return;
@@ -189,6 +235,7 @@ export default function InvestPage() {
         setCurrentStep(2);
         fetchVaultPosition(accounts[0]);
         restoreAccreditationState(accounts[0]);
+        fetchLpParticipant(accounts[0]);
       }
     } catch (error) {
       console.error('Wallet check error:', error);
@@ -265,6 +312,7 @@ export default function InvestPage() {
         setCurrentStep(2);
         fetchVaultPosition(accounts[0]);
         restoreAccreditationState(accounts[0]);
+        fetchLpParticipant(accounts[0]);
       }
     } catch (error) {
       console.error('Failed to connect wallet:', error);
@@ -593,6 +641,77 @@ export default function InvestPage() {
                   Review the <Link href="/disclosure" className="underline text-dl-navy">Disclosure</Link> before depositing.
                 </p>
               </div>
+
+              {/* LP Banking / ACH Deposit Panel */}
+              {walletConnected && (
+                <div className="mt-6 border border-dl-navy">
+                  <div className="px-5 py-3 bg-dl-navy flex items-center justify-between">
+                    <p className="font-dl-mono text-xs text-white uppercase tracking-wider">ACH Deposit Path</p>
+                    <span className="font-dl-mono text-xs text-white opacity-60">Axiom Nexus Account</span>
+                  </div>
+                  <div className="p-5">
+                    <p className="text-sm text-dl-gray leading-relaxed mb-4">
+                      Accredited participants may fund their position via USD ACH transfer to the Axiom Nexus Account.
+                      Each participant receives a unique reference code — include it in the ACH memo field. Operations
+                      will apply the deposit to your LP record within 1-2 business days of receipt.
+                    </p>
+
+                    {lpParticipantLoading && <p className="text-dl-gray text-xs">Loading your banking record...</p>}
+
+                    {!lpParticipantLoading && !lpParticipant && (
+                      <div className="border border-dl-gold p-4">
+                        <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-3">Setup Required</p>
+                        <p className="text-dl-gray text-xs mb-4">Register to receive your personal ACH reference code.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                          <input
+                            type="text"
+                            placeholder="Full legal name"
+                            value={lpRegForm.fullName}
+                            onChange={(e) => setLpRegForm({ ...lpRegForm, fullName: e.target.value })}
+                            className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                          />
+                          <input
+                            type="email"
+                            placeholder="Email address"
+                            value={lpRegForm.email}
+                            onChange={(e) => setLpRegForm({ ...lpRegForm, email: e.target.value })}
+                            className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                          />
+                        </div>
+                        {lpRegError && <p className="text-xs mb-2" style={{ color: '#991b1b' }}>{lpRegError}</p>}
+                        {lpRegMsg && <p className="text-dl-forest text-xs mb-2">{lpRegMsg}</p>}
+                        <button
+                          onClick={handleLpRegister}
+                          disabled={lpRegLoading}
+                          className="border border-dl-navy bg-dl-navy text-white px-5 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-50"
+                        >
+                          {lpRegLoading ? 'Registering...' : 'Get Reference Code'}
+                        </button>
+                      </div>
+                    )}
+
+                    {lpParticipant && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border">
+                        <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
+                          <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Your Reference Code</p>
+                          <p className="font-dl-mono text-dl-navy font-bold text-lg">{lpParticipant.participantRef}</p>
+                          <p className="text-dl-gray text-xs mt-1">Include in every ACH memo</p>
+                        </div>
+                        <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
+                          <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Routing Number</p>
+                          <p className="font-dl-mono text-dl-navy font-bold">{lpParticipant.depositInstructions.routingNumber}</p>
+                          <p className="text-dl-gray text-xs mt-1">{lpParticipant.depositInstructions.bankName}</p>
+                        </div>
+                        <div className="px-4 py-4">
+                          <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Payee Name</p>
+                          <p className="font-dl-mono text-dl-navy font-bold text-xs">{lpParticipant.depositInstructions.accountName}</p>
+                          <p className="text-dl-gray text-xs mt-1">Account number via secure message</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </>
           )}
 

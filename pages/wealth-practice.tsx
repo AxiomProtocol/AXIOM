@@ -110,6 +110,18 @@ export default function WealthPracticePage() {
   const [myPracticeError, setMyPracticeError] = useState('');
   const [practiceAddress, setPracticeAddress] = useState('');
 
+  const [participant, setParticipant] = useState<{
+    id: number; walletAddress: string; participantRef: string; fullName: string; email: string; status: string;
+  } | null>(null);
+  const [participantHolds, setParticipantHolds] = useState<Array<{
+    id: number; groupId: string; groupDisplayName: string | null; requiredAmountCents: number; depositedAmountCents: number; status: string; fundedAt: string | null;
+  }>>([]);
+  const [regForm, setRegForm] = useState({ fullName: '', email: '', phone: '' });
+  const [regLoading, setRegLoading] = useState(false);
+  const [regMsg, setRegMsg] = useState('');
+  const [regError, setRegError] = useState('');
+  const [participantLoading, setParticipantLoading] = useState(false);
+
   const [showHubForm, setShowHubForm] = useState(false);
   const [hubForm, setHubForm] = useState({
     hubName: '',
@@ -206,6 +218,69 @@ export default function WealthPracticePage() {
   const handleLookupPractice = () => {
     if (practiceAddress.trim()) {
       fetchMyPractice(practiceAddress.trim());
+      fetchParticipantInfo(practiceAddress.trim());
+    }
+  };
+
+  const fetchParticipantInfo = async (address: string) => {
+    if (!/^0x[a-fA-F0-9]{40}$/i.test(address)) return;
+    setParticipantLoading(true);
+    try {
+      const res = await fetch(`/api/banking/participant/${encodeURIComponent(address)}`);
+      const data = await res.json();
+      if (data.success && data.registered) {
+        setParticipant(data.participant);
+        setParticipantHolds(data.insuranceHolds || []);
+      } else {
+        setParticipant(null);
+        setParticipantHolds([]);
+      }
+    } catch {
+      setParticipant(null);
+    } finally {
+      setParticipantLoading(false);
+    }
+  };
+
+  const handleRegisterParticipant = async () => {
+    if (!practiceAddress.trim() || !/^0x[a-fA-F0-9]{40}$/i.test(practiceAddress.trim())) {
+      setRegError('A valid wallet address is required');
+      return;
+    }
+    if (!regForm.fullName.trim()) {
+      setRegError('Full name is required');
+      return;
+    }
+    if (!regForm.email.trim() || !regForm.email.includes('@')) {
+      setRegError('Valid email is required');
+      return;
+    }
+    setRegLoading(true);
+    setRegError('');
+    setRegMsg('');
+    try {
+      const res = await fetch('/api/banking/participant/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress: practiceAddress.trim(),
+          fullName: regForm.fullName.trim(),
+          email: regForm.email.trim(),
+          phone: regForm.phone.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setParticipant(data.participant);
+        setRegMsg('Banking account registered. Your reference code is ready.');
+        setRegForm({ fullName: '', email: '', phone: '' });
+      } else {
+        setRegError(data.error || 'Registration failed');
+      }
+    } catch {
+      setRegError('Registration failed');
+    } finally {
+      setRegLoading(false);
     }
   };
 
@@ -791,6 +866,123 @@ export default function WealthPracticePage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {practiceAddress && /^0x[a-fA-F0-9]{40}$/i.test(practiceAddress) && (
+            <div className="mt-8">
+              <h3 className="font-dl-serif text-lg text-dl-navy font-bold mb-4">Banking & Insurance</h3>
+
+              {participantLoading && <p className="text-dl-gray text-sm">Loading banking info...</p>}
+
+              {!participantLoading && !participant && (
+                <div className="border border-dl-gold p-6 mb-4">
+                  <div className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Registration Required</div>
+                  <p className="text-dl-gray text-sm mb-4">
+                    To participate in Wealth Practice groups, you need a banking reference account. This assigns you a unique ACH reference code used to route insurance deposits and distributions through the Axiom Nexus Account.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Full Legal Name</label>
+                      <input
+                        type="text"
+                        value={regForm.fullName}
+                        onChange={(e) => setRegForm({ ...regForm, fullName: e.target.value })}
+                        placeholder="First Last"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Email Address</label>
+                      <input
+                        type="email"
+                        value={regForm.email}
+                        onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
+                        placeholder="you@example.com"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
+                      />
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Phone (optional)</label>
+                    <input
+                      type="tel"
+                      value={regForm.phone}
+                      onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
+                      placeholder="+1 (555) 000-0000"
+                      className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px] max-w-xs"
+                    />
+                  </div>
+                  {regError && <p className="text-sm mb-3" style={{ color: '#991b1b' }}>{regError}</p>}
+                  {regMsg && <p className="text-dl-forest text-sm mb-3">{regMsg}</p>}
+                  <button
+                    onClick={handleRegisterParticipant}
+                    disabled={regLoading}
+                    className="border border-dl-navy bg-dl-navy text-white px-6 py-2.5 min-h-[44px] text-sm font-bold hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-50"
+                  >
+                    {regLoading ? 'Registering...' : 'Register Banking Account'}
+                  </button>
+                </div>
+              )}
+
+              {participant && (
+                <div className="border border-dl-forest p-6 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="font-dl-mono text-xs text-dl-forest uppercase tracking-wider">Banking Registered</div>
+                    <span className="font-dl-mono text-xs border border-dl-forest text-dl-forest px-2 py-0.5 uppercase">{participant.status}</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                    <div className="border border-dl-border p-4">
+                      <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Your Reference Code</div>
+                      <div className="font-dl-mono text-dl-navy font-bold text-lg">{participant.participantRef}</div>
+                      <div className="text-dl-gray text-xs mt-1">Include in all ACH memo fields</div>
+                    </div>
+                    <div className="border border-dl-border p-4">
+                      <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Routing Number</div>
+                      <div className="font-dl-mono text-dl-navy font-bold">071006486</div>
+                      <div className="text-dl-gray text-xs mt-1">First Internet Bank</div>
+                    </div>
+                    <div className="border border-dl-border p-4">
+                      <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Payee Name</div>
+                      <div className="font-dl-mono text-dl-navy font-bold text-xs">Axiom Protocol LLC</div>
+                      <div className="text-dl-gray text-xs mt-1">Nexus Account</div>
+                    </div>
+                  </div>
+
+                  <div className="border border-dl-gold bg-dl-bg p-4 mb-4">
+                    <div className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Insurance Deposit Requirement</div>
+                    <p className="text-dl-gray text-sm">
+                      Before joining an active circle, you must deposit one week&apos;s equivalent of your group contribution as an insurance hold. This deposit is held in the Axiom Nexus Account and released upon graduation or forfeited upon early exit.
+                    </p>
+                  </div>
+
+                  {participantHolds.length > 0 && (
+                    <div>
+                      <div className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-3">Your Insurance Holds</div>
+                      <div className="space-y-2">
+                        {participantHolds.map((hold) => (
+                          <div key={hold.id} className="border border-dl-border p-3 flex items-center justify-between">
+                            <div>
+                              <div className="font-dl-mono text-sm text-dl-navy">{hold.groupDisplayName || hold.groupId}</div>
+                              <div className="text-dl-gray text-xs">
+                                Required: ${(hold.requiredAmountCents / 100).toFixed(2)} &middot; Deposited: ${(hold.depositedAmountCents / 100).toFixed(2)}
+                              </div>
+                            </div>
+                            <span className={`text-xs px-2 py-0.5 uppercase font-dl-mono border ${hold.status === 'funded' ? 'border-dl-forest text-dl-forest' : hold.status === 'released' ? 'border-dl-navy text-dl-navy' : hold.status === 'forfeited' ? 'border-red-700 text-red-700' : 'border-dl-gold text-dl-gold'}`}>
+                              {hold.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {participantHolds.length === 0 && (
+                    <p className="text-dl-gray text-xs">No insurance holds on file. A hold will be created when you join a circle group.</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

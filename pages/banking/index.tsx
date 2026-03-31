@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 
-type TabId = 'overview' | 'transactions' | 'routing' | 'transfer' | 'ramp';
+type TabId = 'overview' | 'transactions' | 'routing' | 'transfer' | 'ramp' | 'participants';
 
 interface BridgeQuote {
   fiatAmountCents: number;
@@ -355,6 +355,16 @@ export default function BankingDashboard() {
   const [rampHistory, setRampHistory] = useState<BridgeTransfer[]>([]);
   const [rampHistoryLoading, setRampHistoryLoading] = useState(false);
 
+  // Participants tab state
+  const [participantsData, setParticipantsData] = useState<{
+    participants: Array<{ id: number; walletAddress: string; participantRef: string; fullName: string; email: string; status: string; createdAt: string }>;
+    insuranceHolds: Array<{ id: number; participantId: number; participantRef: string | null; participantName: string | null; groupId: string; groupDisplayName: string | null; requiredAmountCents: number; depositedAmountCents: number; status: string; fundedAt: string | null; createdAt: string }>;
+    lpDeposits: Array<{ id: number; participantId: number; participantRef: string | null; participantName: string | null; amountCents: number; product: string; status: string; memoRef: string | null; createdAt: string }>;
+    counts: { participants: number; holds: number; pendingHolds: number; fundedHolds: number; deposits: number; pendingDeposits: number; receivedDeposits: number };
+  } | null>(null);
+  const [participantsLoading, setParticipantsLoading] = useState(false);
+  const [participantsError, setParticipantsError] = useState<string | null>(null);
+
   // --- Data fetchers ---
   const fetchOverview = useCallback(async () => {
     setOverviewLoading(true); setOverviewError(null);
@@ -391,6 +401,18 @@ export default function BankingDashboard() {
     finally { setRoutingLoading(false); }
   }, []);
 
+  const fetchParticipants = useCallback(async (key: string) => {
+    if (!key) return;
+    setParticipantsLoading(true); setParticipantsError(null);
+    try {
+      const res = await fetch('/api/banking/participants', { headers: { 'x-admin-key': key } });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      setParticipantsData(data);
+    } catch (e: unknown) { setParticipantsError(e instanceof Error ? e.message : String(e)); }
+    finally { setParticipantsLoading(false); }
+  }, []);
+
   const fetchRampHistory = useCallback(async () => {
     setRampHistoryLoading(true);
     try {
@@ -407,7 +429,8 @@ export default function BankingDashboard() {
     if (activeTab === 'transactions' && adminKey) fetchTransactions(adminKey);
     if (activeTab === 'routing' && adminKey) fetchRouting(adminKey);
     if (activeTab === 'ramp') fetchRampHistory();
-  }, [activeTab, adminKey, fetchTransactions, fetchRouting, fetchRampHistory]);
+    if (activeTab === 'participants' && adminKey) fetchParticipants(adminKey);
+  }, [activeTab, adminKey, fetchTransactions, fetchRouting, fetchRampHistory, fetchParticipants]);
 
   // --- Handlers ---
   const handleCreateAccountNumber = async () => {
@@ -488,11 +511,12 @@ export default function BankingDashboard() {
   };
 
   const TABS: { id: TabId; label: string }[] = [
-    { id: 'overview',     label: 'Overview' },
-    { id: 'transactions', label: 'Transactions' },
-    { id: 'routing',      label: 'Routing & Numbers' },
-    { id: 'transfer',     label: 'Initiate Transfer' },
-    { id: 'ramp',         label: 'Fiat Ramp' },
+    { id: 'overview',      label: 'Overview' },
+    { id: 'transactions',  label: 'Transactions' },
+    { id: 'routing',       label: 'Routing & Numbers' },
+    { id: 'transfer',      label: 'Initiate Transfer' },
+    { id: 'ramp',          label: 'Fiat Ramp' },
+    { id: 'participants',  label: 'Participants' },
   ];
 
   const environment = overview?.environment ?? 'sandbox';
@@ -1249,6 +1273,153 @@ export default function BankingDashboard() {
             { q: 'Is there a minimum or maximum?', a: 'Minimum is $10 per transaction. Maximum is $25,000 per transaction. For larger conversions, contact Axiom operations to arrange a direct settlement outside the standard ramp limits.' },
             { q: 'What happens if my ACH deposit is returned?', a: 'If an ACH deposit is returned (e.g., due to insufficient funds at your bank), no AXUSD will be minted. The Nexus Account ledger will show a return credit. You will need to re-initiate the deposit with a new quote. Returns typically take 2-3 business days to process.' },
           ]} />
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          PARTICIPANTS TAB
+      ══════════════════════════════════════════════════ */}
+      {activeTab === 'participants' && (
+        <div>
+          <TabHero
+            img="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1200&q=80"
+            title="Participant Registry"
+            subtitle="Registered banking participants · insurance holds · LP deposit ledger"
+            badge="Admin"
+          />
+
+          {!adminKey && (
+            <div style={{ border: `1px solid ${DL.border}`, padding: '28px 24px', textAlign: 'center', marginBottom: 32 }}>
+              <p style={{ ...mono, marginBottom: 12 }}>Enter your admin key in the Transactions tab to load participant data.</p>
+            </div>
+          )}
+
+          {adminKey && !participantsData && !participantsLoading && (
+            <div style={{ textAlign: 'center', marginBottom: 32 }}>
+              <button
+                onClick={() => fetchParticipants(adminKey)}
+                style={{ fontFamily: 'monospace', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', background: DL.navy, color: '#fff', border: 'none', padding: '12px 28px', cursor: 'pointer' }}
+              >
+                Load Participants
+              </button>
+            </div>
+          )}
+
+          {participantsLoading && <p style={mono}>Loading participants...</p>}
+          {participantsError && <p style={{ ...mono, color: DL.error }}>{participantsError}</p>}
+
+          {participantsData && (
+            <>
+              {/* Counts strip */}
+              <FeatureStrip items={[
+                { icon: <IconBank />, label: 'Registered', value: String(participantsData.counts.participants) },
+                { icon: <IconShield />, label: 'Insurance Holds', value: String(participantsData.counts.holds) },
+                { icon: <IconLock />, label: 'Pending Holds', value: String(participantsData.counts.pendingHolds) },
+                { icon: <IconCheck />, label: 'Funded Holds', value: String(participantsData.counts.fundedHolds) },
+                { icon: <IconZap />, label: 'LP Deposits', value: String(participantsData.counts.deposits) },
+              ]} />
+
+              {/* Participants table */}
+              <SectionTitle>Registered Participants</SectionTitle>
+              {participantsData.participants.length === 0 ? (
+                <div style={{ border: `2px dashed ${DL.border}`, padding: 32, textAlign: 'center', marginBottom: 32 }}>
+                  <p style={mono}>No participants registered yet.</p>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto', marginBottom: 36 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${DL.border}` }}>
+                    <thead>
+                      <tr style={{ background: DL.navy }}>
+                        {['Ref Code', 'Name', 'Email', 'Wallet', 'Status', 'Registered'].map((h) => (
+                          <th key={h} style={{ ...monoLabel, color: '#fff', textAlign: 'left', padding: '10px 14px', whiteSpace: 'nowrap' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {participantsData.participants.map((p, i) => (
+                        <tr key={p.id} style={{ borderBottom: `1px solid ${DL.border}`, background: i % 2 === 0 ? '#fff' : DL.surface }}>
+                          <td style={{ ...mono, padding: '11px 14px', color: DL.navy, fontWeight: 700 }}>{p.participantRef}</td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>{p.fullName}</td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>{p.email}</td>
+                          <td style={{ ...mono, padding: '11px 14px', fontSize: 10 }}>{p.walletAddress.slice(0, 8)}…{p.walletAddress.slice(-6)}</td>
+                          <td style={{ padding: '11px 14px' }}><StatusBadge status={p.status} /></td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>{new Date(p.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Insurance Holds table */}
+              <SectionTitle>Insurance Holds — Wealth Practice</SectionTitle>
+              {participantsData.insuranceHolds.length === 0 ? (
+                <div style={{ border: `2px dashed ${DL.border}`, padding: 32, textAlign: 'center', marginBottom: 32 }}>
+                  <p style={mono}>No insurance holds created yet.</p>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto', marginBottom: 36 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${DL.border}` }}>
+                    <thead>
+                      <tr style={{ background: DL.navy }}>
+                        {['ID', 'Ref', 'Name', 'Group', 'Required', 'Deposited', 'Status', 'Created'].map((h) => (
+                          <th key={h} style={{ ...monoLabel, color: '#fff', textAlign: 'left', padding: '10px 14px', whiteSpace: 'nowrap' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {participantsData.insuranceHolds.map((h, i) => (
+                        <tr key={h.id} style={{ borderBottom: `1px solid ${DL.border}`, background: i % 2 === 0 ? '#fff' : DL.surface }}>
+                          <td style={{ ...mono, padding: '11px 14px' }}>{h.id}</td>
+                          <td style={{ ...mono, padding: '11px 14px', color: DL.navy, fontWeight: 700 }}>{h.participantRef ?? '—'}</td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>{h.participantName ?? '—'}</td>
+                          <td style={{ ...mono, padding: '11px 14px', fontSize: 10 }}>{h.groupDisplayName ?? h.groupId}</td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>${(h.requiredAmountCents / 100).toFixed(2)}</td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>${(h.depositedAmountCents / 100).toFixed(2)}</td>
+                          <td style={{ padding: '11px 14px' }}><StatusBadge status={h.status} /></td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>{new Date(h.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* LP Deposits table */}
+              <SectionTitle>LP Deposits — Lending Fund</SectionTitle>
+              {participantsData.lpDeposits.length === 0 ? (
+                <div style={{ border: `2px dashed ${DL.border}`, padding: 32, textAlign: 'center', marginBottom: 36 }}>
+                  <p style={mono}>No LP deposit records yet.</p>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto', marginBottom: 36 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${DL.border}` }}>
+                    <thead>
+                      <tr style={{ background: DL.navy }}>
+                        {['ID', 'Ref', 'Name', 'Product', 'Amount', 'Status', 'Memo Ref', 'Created'].map((h) => (
+                          <th key={h} style={{ ...monoLabel, color: '#fff', textAlign: 'left', padding: '10px 14px', whiteSpace: 'nowrap' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {participantsData.lpDeposits.map((d, i) => (
+                        <tr key={d.id} style={{ borderBottom: `1px solid ${DL.border}`, background: i % 2 === 0 ? '#fff' : DL.surface }}>
+                          <td style={{ ...mono, padding: '11px 14px' }}>{d.id}</td>
+                          <td style={{ ...mono, padding: '11px 14px', color: DL.navy, fontWeight: 700 }}>{d.participantRef ?? '—'}</td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>{d.participantName ?? '—'}</td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>{d.product}</td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>${(d.amountCents / 100).toFixed(2)}</td>
+                          <td style={{ padding: '11px 14px' }}><StatusBadge status={d.status} /></td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>{d.memoRef ?? '—'}</td>
+                          <td style={{ ...mono, padding: '11px 14px' }}>{new Date(d.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 

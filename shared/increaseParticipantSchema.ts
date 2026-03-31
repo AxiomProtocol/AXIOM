@@ -1,0 +1,99 @@
+import { sql } from 'drizzle-orm';
+import {
+  pgTable,
+  serial,
+  varchar,
+  integer,
+  text,
+  timestamp,
+  index,
+} from 'drizzle-orm/pg-core';
+
+export const increaseParticipants = pgTable(
+  'increase_participants',
+  {
+    id: serial('id').primaryKey(),
+    walletAddress: varchar('wallet_address', { length: 42 }).unique().notNull(),
+    participantRef: varchar('participant_ref', { length: 20 }).unique().notNull(),
+    fullName: varchar('full_name', { length: 200 }).notNull(),
+    email: varchar('email', { length: 200 }).notNull(),
+    phone: varchar('phone', { length: 30 }),
+    status: varchar('status', { length: 30 }).notNull().default('registered'),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    walletIdx: index('increase_participants_wallet_idx').on(t.walletAddress),
+    refIdx: index('increase_participants_ref_idx').on(t.participantRef),
+  }),
+);
+
+export const increaseInsuranceHolds = pgTable(
+  'increase_insurance_holds',
+  {
+    id: serial('id').primaryKey(),
+    participantId: integer('participant_id').notNull(),
+    groupId: varchar('group_id', { length: 100 }).notNull(),
+    groupDisplayName: varchar('group_display_name', { length: 200 }),
+    requiredAmountCents: integer('required_amount_cents').notNull(),
+    depositedAmountCents: integer('deposited_amount_cents').notNull().default(0),
+    status: varchar('status', { length: 30 }).notNull().default('pending'),
+    fundedAt: timestamp('funded_at'),
+    releasedAt: timestamp('released_at'),
+    forfeitedAt: timestamp('forfeited_at'),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    participantIdx: index('increase_insurance_holds_participant_idx').on(t.participantId),
+    groupIdx: index('increase_insurance_holds_group_idx').on(t.groupId),
+  }),
+);
+
+export const increaseLpDeposits = pgTable(
+  'increase_lp_deposits',
+  {
+    id: serial('id').primaryKey(),
+    participantId: integer('participant_id').notNull(),
+    amountCents: integer('amount_cents').notNull(),
+    status: varchar('status', { length: 30 }).notNull().default('pending'),
+    memoRef: varchar('memo_ref', { length: 100 }),
+    product: varchar('product', { length: 60 }).notNull().default('lending-fund'),
+    receivedAt: timestamp('received_at'),
+    appliedAt: timestamp('applied_at'),
+    increaseTransactionId: varchar('increase_transaction_id', { length: 100 }),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    participantIdx: index('increase_lp_deposits_participant_idx').on(t.participantId),
+  }),
+);
+
+export const increaseDistributions = pgTable(
+  'increase_distributions',
+  {
+    id: serial('id').primaryKey(),
+    participantId: integer('participant_id').notNull(),
+    product: varchar('product', { length: 60 }).notNull(),
+    amountCents: integer('amount_cents').notNull(),
+    status: varchar('status', { length: 30 }).notNull().default('pending'),
+    increaseTransferId: varchar('increase_transfer_id', { length: 100 }),
+    description: text('description'),
+    sentAt: timestamp('sent_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    participantIdx: index('increase_distributions_participant_idx').on(t.participantId),
+  }),
+);
+
+export type IncreaseParticipant = typeof increaseParticipants.$inferSelect;
+export type NewIncreaseParticipant = typeof increaseParticipants.$inferInsert;
+export type IncreaseInsuranceHold = typeof increaseInsuranceHolds.$inferSelect;
+export type NewIncreaseInsuranceHold = typeof increaseInsuranceHolds.$inferInsert;
+export type IncreaseLpDeposit = typeof increaseLpDeposits.$inferSelect;
+export type NewIncreaseLpDeposit = typeof increaseLpDeposits.$inferInsert;
+export type IncreaseDistribution = typeof increaseDistributions.$inferSelect;
+export type NewIncreaseDistribution = typeof increaseDistributions.$inferInsert;
