@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db, pool } from '../../../../server/db';
 import { increaseParticipants } from '../../../../shared/increaseParticipantSchema';
-import { IncreaseService } from '../../../../lib/services/IncreaseService';
+import { IncreaseService, getAccountId, getEntityId } from '../../../../lib/services/IncreaseService';
 import { eq } from 'drizzle-orm';
 
 function parseCookies(header: string | undefined): Record<string, string> {
@@ -86,7 +86,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       attempts++;
     }
 
-    const accountId = process.env.INCREASE_ACCOUNT_ID ?? process.env.INCREASE_SANDBOX_ACCOUNT_ID ?? '';
+    const accountId = getAccountId();
 
     let virtualAccountNumberId: string | null = null;
     let virtualRoutingNumber: string | null = null;
@@ -120,6 +120,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         virtualRoutingNumber,
         virtualAccountNumber,
         cardStatus: 'not_requested',
+        // Store shared entity/account IDs (B2B model — no per-participant entities)
+        increaseEntityId: getEntityId() || null,
+        increaseAccountId: accountId || null,
       })
       .returning();
 

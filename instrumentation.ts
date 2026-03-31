@@ -6457,6 +6457,30 @@ END $seed$`, 'seed dp_listings');
 
       await exec(`CREATE INDEX IF NOT EXISTS increase_distributions_participant_idx ON increase_distributions(participant_id)`, 'index increase_distributions_participant_idx');
 
+      await exec(`ALTER TABLE increase_participants ADD COLUMN IF NOT EXISTS increase_entity_id VARCHAR(100)`, 'col increase_participants.increase_entity_id');
+      await exec(`ALTER TABLE increase_participants ADD COLUMN IF NOT EXISTS increase_account_id VARCHAR(100)`, 'col increase_participants.increase_account_id');
+
+      await exec(`CREATE TABLE IF NOT EXISTS increase_product_escrows (
+        id SERIAL PRIMARY KEY,
+        product VARCHAR(60) NOT NULL,
+        deal_id VARCHAR(100),
+        deal_display_name VARCHAR(200),
+        participant_id INTEGER NOT NULL,
+        amount_cents INTEGER NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'pending',
+        purpose VARCHAR(60) NOT NULL DEFAULT 'earnest-money',
+        increase_transaction_id VARCHAR(100),
+        released_at TIMESTAMP,
+        applied_at TIMESTAMP,
+        forfeited_at TIMESTAMP,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table increase_product_escrows');
+
+      await exec(`CREATE INDEX IF NOT EXISTS increase_product_escrows_product_idx ON increase_product_escrows(product)`, 'index increase_product_escrows_product_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS increase_product_escrows_participant_idx ON increase_product_escrows(participant_id)`, 'index increase_product_escrows_participant_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS increase_product_escrows_deal_idx ON increase_product_escrows(deal_id)`, 'index increase_product_escrows_deal_idx');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();

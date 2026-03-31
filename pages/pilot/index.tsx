@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { DesignLawLayout, SectionHeading } from '../../components/design-law';
+import { DesignLawLayout, SectionHeading, NexusBankingPanel } from '../../components/design-law';
 import PilotNav from '../../components/pilot/PilotNav';
 
 interface SpvData {
@@ -279,6 +279,17 @@ export default function PilotDashboard() {
           </div>
         </>
       ) : null}
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <SectionHeading>Capital Program Deposit Account</SectionHeading>
+        <NexusBankingPanel
+          product="pilot"
+          context="capital-program"
+          title="Axiom Nexus — Capital Program Account"
+          description="Capital program contributions and SPV distributions are processed through the Axiom Nexus Account at First Internet Bank. Register your account to receive dedicated deposit routing instructions. Contributions are tracked against your program participation record."
+          collapsible={true}
+        />
+      </div>
     </DesignLawLayout>
   );
 }

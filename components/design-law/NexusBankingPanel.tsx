@@ -21,8 +21,8 @@ interface Participant {
 }
 
 interface NexusBankingPanelProps {
-  product: 'real-estate' | 'syndication' | 'lending-fund' | 'wealth-practice' | 'depin';
-  context: 'earnest-money' | 'capital-call' | 'lp-deposit' | 'insurance-hold' | 'node-reward' | 'general';
+  product: 'real-estate' | 'syndication' | 'lending-fund' | 'wealth-practice' | 'depin' | 'pilot' | 'exchange';
+  context: 'earnest-money' | 'capital-call' | 'lp-deposit' | 'insurance-hold' | 'node-reward' | 'node-rewards' | 'capital-program' | 'settlement' | 'general';
   amountLabel?: string;
   title?: string;
   description?: string;
@@ -35,6 +35,8 @@ const PRODUCT_CONFIG: Record<NexusBankingPanelProps['product'], { label: string;
   'lending-fund': { label: 'Lending Fund', color: '#1D3D2A' },
   'wealth-practice': { label: 'Wealth Practice', color: '#1D3D2A' },
   'depin': { label: 'DePIN', color: '#B8973A' },
+  'pilot': { label: 'Capital Program', color: '#1B2A4A' },
+  'exchange': { label: 'Exchange', color: '#1D3D2A' },
 };
 
 const CONTEXT_CONFIG: Record<NexusBankingPanelProps['context'], { heading: string; instruction: string }> = {
@@ -57,6 +59,18 @@ const CONTEXT_CONFIG: Record<NexusBankingPanelProps['context'], { heading: strin
   'node-reward': {
     heading: 'Node Reward Disbursement Account',
     instruction: 'Your DePIN node rewards are disbursed via ACH to your Axiom Nexus Account. Register to set up your disbursement account.',
+  },
+  'node-rewards': {
+    heading: 'Node Reward Disbursement Account',
+    instruction: 'Your DePIN node rewards are disbursed via ACH to your Axiom Nexus Account. Register to set up your disbursement account.',
+  },
+  'capital-program': {
+    heading: 'Capital Program Contribution Account',
+    instruction: 'Fund your Capital Program contribution via ACH or wire. Your deposit is tracked against your program participation and applied each funding cycle.',
+  },
+  'settlement': {
+    heading: 'Exchange Settlement & Withdrawal Account',
+    instruction: 'Fiat settlements from the Exchange are disbursed via ACH to your Axiom Nexus Account. Register to receive your dedicated settlement routing details.',
   },
   'general': {
     heading: 'Axiom Nexus Account — Deposit Instructions',

@@ -25,6 +25,10 @@ export const increaseParticipants = pgTable(
     cardStatus: varchar('card_status', { length: 30 }).notNull().default('not_requested'),
     cardId: varchar('card_id', { length: 100 }),
     cardLast4: varchar('card_last4', { length: 4 }),
+    // Increase entity/account references — stores shared Axiom entity+account IDs
+    // (B2B single-entity model; no per-participant entities on Increase)
+    increaseEntityId: varchar('increase_entity_id', { length: 100 }),
+    increaseAccountId: varchar('increase_account_id', { length: 100 }),
     notes: text('notes'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -94,6 +98,34 @@ export const increaseDistributions = pgTable(
     participantIdx: index('increase_distributions_participant_idx').on(t.participantId),
   }),
 );
+
+export const increaseProductEscrows = pgTable(
+  'increase_product_escrows',
+  {
+    id: serial('id').primaryKey(),
+    product: varchar('product', { length: 60 }).notNull(),
+    dealId: varchar('deal_id', { length: 100 }),
+    dealDisplayName: varchar('deal_display_name', { length: 200 }),
+    participantId: integer('participant_id').notNull(),
+    amountCents: integer('amount_cents').notNull(),
+    status: varchar('status', { length: 30 }).notNull().default('pending'),
+    purpose: varchar('purpose', { length: 60 }).notNull().default('earnest-money'),
+    increaseTransactionId: varchar('increase_transaction_id', { length: 100 }),
+    releasedAt: timestamp('released_at'),
+    appliedAt: timestamp('applied_at'),
+    forfeitedAt: timestamp('forfeited_at'),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    productIdx: index('increase_product_escrows_product_idx').on(t.product),
+    participantIdx: index('increase_product_escrows_participant_idx').on(t.participantId),
+    dealIdx: index('increase_product_escrows_deal_idx').on(t.dealId),
+  }),
+);
+
+export type IncreaseProductEscrow = typeof increaseProductEscrows.$inferSelect;
+export type NewIncreaseProductEscrow = typeof increaseProductEscrows.$inferInsert;
 
 export type IncreaseParticipant = typeof increaseParticipants.$inferSelect;
 export type NewIncreaseParticipant = typeof increaseParticipants.$inferInsert;

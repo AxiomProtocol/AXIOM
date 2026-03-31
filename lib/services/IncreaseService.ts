@@ -1,5 +1,32 @@
-const BASE_URL = process.env.INCREASE_BASE_URL ?? 'https://sandbox.increase.com';
-const API_KEY  = process.env.INCREASE_API_KEY ?? '';
+// Environment-aware base URL:
+// In production (NODE_ENV=production), always use INCREASE_BASE_URL (live API).
+// In development, use sandbox unless INCREASE_ALLOW_LIVE_IN_DEV=true is explicitly set.
+const IS_LIVE =
+  process.env.NODE_ENV === 'production' ||
+  (process.env.INCREASE_ENVIRONMENT === 'production' &&
+    process.env.INCREASE_ALLOW_LIVE_IN_DEV === 'true');
+
+const BASE_URL = IS_LIVE
+  ? (process.env.INCREASE_BASE_URL ?? 'https://api.increase.com')
+  : 'https://sandbox.increase.com';
+
+const API_KEY = process.env.INCREASE_API_KEY ?? '';
+
+// Account/entity IDs — resolved per environment so dev never touches live accounts
+export function getAccountId(): string {
+  if (!IS_LIVE) return process.env.INCREASE_SANDBOX_ACCOUNT_ID ?? '';
+  return process.env.INCREASE_ACCOUNT_ID ?? '';
+}
+
+export function getEntityId(): string {
+  if (!IS_LIVE) return process.env.INCREASE_SANDBOX_ENTITY_ID ?? '';
+  return process.env.INCREASE_ENTITY_ID ?? '';
+}
+
+export function getProgramId(): string {
+  if (!IS_LIVE) return process.env.INCREASE_SANDBOX_PROGRAM_ID ?? '';
+  return process.env.INCREASE_PROGRAM_ID ?? '';
+}
 
 async function increaseRequest<T>(
   method: 'GET' | 'POST' | 'PATCH',
@@ -83,6 +110,34 @@ export interface IncreaseTransfer {
   network?: string;
 }
 
+export interface IncreaseCard {
+  id: string;
+  account_id: string;
+  description: string;
+  status: string;
+  type: string;
+  last4: string;
+  expiration_month: number;
+  expiration_year: number;
+  created_at: string;
+}
+
+export interface IncreaseCardDetails {
+  id: string;
+  primary_account_number: string;
+  expiration_month: number;
+  expiration_year: number;
+  verification_code: string;
+}
+
+export interface IncreaseEntity {
+  id: string;
+  structure: string;
+  status: string;
+  created_at: string;
+  description?: string;
+}
+
 export const IncreaseService = {
   async getAccount(accountId: string): Promise<IncreaseAccount> {
     return increaseRequest<IncreaseAccount>('GET', `/accounts/${accountId}`);
@@ -124,6 +179,10 @@ export const IncreaseService = {
     inbound_checks?: { status: 'allowed' | 'check_transfers_only' | 'not_allowed' };
   }): Promise<IncreaseAccountNumber> {
     return increaseRequest<IncreaseAccountNumber>('POST', '/account_numbers', params);
+  },
+
+  async getAccountNumber(accountNumberId: string): Promise<IncreaseAccountNumber> {
+    return increaseRequest<IncreaseAccountNumber>('GET', `/account_numbers/${accountNumberId}`);
   },
 
   async initiateAchTransfer(params: {
@@ -168,6 +227,8 @@ export const IncreaseService = {
     );
   },
 
+  // Creates a dedicated virtual account number (sub-account) for a participant.
+  // All sub-accounts route into the shared Axiom Nexus Account — no per-participant entity needed.
   async createParticipantVirtualAccount(params: {
     account_id: string;
     participant_ref: string;
@@ -181,10 +242,7 @@ export const IncreaseService = {
     });
   },
 
-  async getAccountNumber(accountNumberId: string): Promise<IncreaseAccountNumber> {
-    return increaseRequest<IncreaseAccountNumber>('GET', `/account_numbers/${accountNumberId}`);
-  },
-
+  // Cards
   async issueVirtualCard(params: {
     account_id: string;
     description: string;
@@ -202,12 +260,64 @@ export const IncreaseService = {
     });
   },
 
+  async listCards(accountId: string): Promise<{ data: IncreaseCard[] }> {
+    return increaseRequest<{ data: IncreaseCard[] }>(
+      'GET',
+      `/cards?account_id=${accountId}`,
+    );
+  },
+
   async getCard(cardId: string): Promise<IncreaseCard> {
     return increaseRequest<IncreaseCard>('GET', `/cards/${cardId}`);
   },
 
   async getCardDetails(cardId: string): Promise<IncreaseCardDetails> {
     return increaseRequest<IncreaseCardDetails>('GET', `/cards/${cardId}/details`);
+  },
+
+  // Entity / identity
+  // NOTE: Axiom Protocol uses a B2B single-entity model — no per-participant entities
+  // are created on Increase. createIndividualEntity is provided for completeness and
+  // future individual-account migration paths only.
+  async createIndividualEntity(params: {
+    name: string;
+    date_of_birth: string;
+    identification: { ssn_last4: string };
+    address: { line1: string; city: string; state: string; zip: string };
+  }): Promise<IncreaseEntity> {
+    return increaseRequest<IncreaseEntity>('POST', '/entities', {
+      structure: 'natural_person',
+      natural_person: {
+        name: params.name,
+        date_of_birth: params.date_of_birth,
+        identification: {
+          method: 'social_security_number_last4',
+          number: params.identification.ssn_last4,
+          passport: undefined,
+        },
+        address: {
+          line1: params.address.line1,
+          city: params.address.city,
+          state: params.address.state,
+          zip: params.address.zip,
+          country: 'US',
+        },
+      },
+    });
+  },
+
+  async getEntity(entityId: string): Promise<IncreaseEntity> {
+    return increaseRequest<IncreaseEntity>('GET', `/entities/${entityId}`);
+  },
+
+  // Creates a sub-account under a given entity.
+  // In the Axiom B2B model this is used for product-level escrow accounts.
+  async createAccount(params: {
+    name: string;
+    entity_id: string;
+    program_id: string;
+  }): Promise<IncreaseAccount> {
+    return increaseRequest<IncreaseAccount>('POST', '/accounts', params);
   },
 
   formatAmount(cents: number, currency = 'USD'): string {
@@ -217,23 +327,3 @@ export const IncreaseService = {
     }).format(cents / 100);
   },
 };
-
-export interface IncreaseCard {
-  id: string;
-  account_id: string;
-  description: string;
-  status: string;
-  type: string;
-  last4: string;
-  expiration_month: number;
-  expiration_year: number;
-  created_at: string;
-}
-
-export interface IncreaseCardDetails {
-  id: string;
-  primary_account_number: string;
-  expiration_month: number;
-  expiration_year: number;
-  verification_code: string;
-}
