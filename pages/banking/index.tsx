@@ -1,7 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 
-type TabId = 'overview' | 'transactions' | 'routing' | 'transfer';
+type TabId = 'overview' | 'transactions' | 'routing' | 'transfer' | 'ramp';
+
+interface BridgeQuote {
+  fiatAmountCents: number;
+  fiatAmountFormatted: string;
+  cryptoAmount: string;
+  cryptoAsset: string;
+  exchangeRate: string;
+  feeCents: number;
+  feeFormatted: string;
+  netAmountCents: number;
+  netAmountFormatted: string;
+  expiresAt: string;
+  snapshotId: string;
+  direction: string;
+  depositInfo?: {
+    routingNumber: string;
+    accountNumber: string;
+    bankName: string;
+    accountName: string;
+    memo: string;
+  };
+}
+
+interface BridgeTransfer {
+  id?: string;
+  direction?: string;
+  status?: string;
+  fiatAmountCents?: number;
+  cryptoAsset?: string;
+  createdAt?: string;
+}
 
 interface OverviewData {
   account: {
@@ -135,6 +166,23 @@ export default function BankingDashboard() {
   const [transferMsg, setTransferMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [transferring, setTransferring] = useState(false);
 
+  // Fiat Ramp state
+  const [rampDirection, setRampDirection] = useState<'fiat_to_crypto' | 'crypto_to_fiat'>('fiat_to_crypto');
+  const [rampAsset, setRampAsset] = useState<'AXUSD' | 'USDC'>('AXUSD');
+  const [rampAmount, setRampAmount] = useState('');
+  const [rampQuote, setRampQuote] = useState<BridgeQuote | null>(null);
+  const [rampQuoteLoading, setRampQuoteLoading] = useState(false);
+  const [rampQuoteError, setRampQuoteError] = useState<string | null>(null);
+  const [rampNeedsAuth, setRampNeedsAuth] = useState(false);
+  // withdrawal fields
+  const [rampRecipientAccount, setRampRecipientAccount] = useState('');
+  const [rampRecipientRouting, setRampRecipientRouting] = useState('');
+  const [rampRecipientName, setRampRecipientName] = useState('');
+  const [rampWithdrawMsg, setRampWithdrawMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [rampWithdrawing, setRampWithdrawing] = useState(false);
+  const [rampHistory, setRampHistory] = useState<BridgeTransfer[]>([]);
+  const [rampHistoryLoading, setRampHistoryLoading] = useState(false);
+
   const fetchOverview = useCallback(async () => {
     setOverviewLoading(true);
     setOverviewError(null);
@@ -227,11 +275,93 @@ export default function BankingDashboard() {
     } finally { setTransferring(false); }
   };
 
+  const fetchRampHistory = useCallback(async () => {
+    setRampHistoryLoading(true);
+    try {
+      const res = await fetch('/api/bridge/history');
+      const data = await res.json();
+      if (Array.isArray(data.transfers)) setRampHistory(data.transfers);
+    } catch { /* silent — SIWE required */ }
+    finally { setRampHistoryLoading(false); }
+  }, []);
+
+  const handleGetQuote = async () => {
+    const amountDollars = parseFloat(rampAmount);
+    if (!rampAmount || isNaN(amountDollars) || amountDollars < 10) {
+      setRampQuoteError('Minimum amount is $10.00');
+      return;
+    }
+    setRampQuoteLoading(true);
+    setRampQuoteError(null);
+    setRampNeedsAuth(false);
+    setRampQuote(null);
+    try {
+      const res = await fetch('/api/bridge/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          direction: rampDirection,
+          fiatAmountCents: Math.round(amountDollars * 100),
+          cryptoAsset: rampAsset,
+        }),
+      });
+      const data = await res.json();
+      if (res.status === 401 && data.code === 'SIWE_AUTH_REQUIRED') {
+        setRampNeedsAuth(true);
+        return;
+      }
+      if (!data.success) throw new Error(data.error ?? 'Quote failed');
+      setRampQuote(data.quote);
+    } catch (e: unknown) {
+      setRampQuoteError(e instanceof Error ? e.message : String(e));
+    } finally { setRampQuoteLoading(false); }
+  };
+
+  const handleWithdrawal = async () => {
+    if (!rampQuote || !rampRecipientAccount || !rampRecipientRouting) return;
+    setRampWithdrawing(true);
+    setRampWithdrawMsg(null);
+    try {
+      const res = await fetch('/api/bridge/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          direction: 'crypto_to_fiat',
+          fiatAmountCents: rampQuote.fiatAmountCents,
+          cryptoAsset: rampQuote.cryptoAsset,
+          quoteSnapshotId: rampQuote.snapshotId,
+          bitgoWalletId: 'axiom-custody',
+          recipientAccountNumber: rampRecipientAccount,
+          recipientRoutingNumber: rampRecipientRouting,
+          recipientName: rampRecipientName || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (res.status === 401 && data.code === 'SIWE_AUTH_REQUIRED') {
+        setRampNeedsAuth(true);
+        return;
+      }
+      if (!data.success) throw new Error(data.error ?? 'Withdrawal failed');
+      setRampWithdrawMsg({ type: 'success', text: `ACH transfer initiated — ${rampQuote.netAmountFormatted} to your account. Estimated 1-2 business days. Transfer ID: ${data.transferId ?? 'pending'}` });
+      setRampQuote(null);
+      setRampAmount('');
+      setRampRecipientAccount(''); setRampRecipientRouting(''); setRampRecipientName('');
+      fetchRampHistory();
+    } catch (e: unknown) {
+      setRampWithdrawMsg({ type: 'error', text: e instanceof Error ? e.message : String(e) });
+    } finally { setRampWithdrawing(false); }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'ramp') fetchRampHistory();
+  }, [activeTab, fetchRampHistory]);
+
   const TABS: { id: TabId; label: string }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'transactions', label: 'Transactions' },
     { id: 'routing', label: 'Routing & Numbers' },
     { id: 'transfer', label: 'Initiate Transfer' },
+    { id: 'ramp', label: 'Fiat Ramp' },
   ];
 
   const environment = overview?.environment ?? 'sandbox';
@@ -551,6 +681,218 @@ export default function BankingDashboard() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'ramp' && (
+        <div>
+          {/* Auth notice */}
+          {rampNeedsAuth && (
+            <div style={{ border: `1px solid ${DL.gold}`, padding: 16, marginBottom: 24 }}>
+              <p style={{ ...monoLabel, color: DL.gold, marginBottom: 4 }}>Wallet authentication required</p>
+              <p style={mono}>Connect your wallet and sign in via the Access Platform button in the navigation, then return here to get a live quote with deposit routing information.</p>
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+
+            {/* Left: Quote builder */}
+            <div>
+              <SectionTitle>Fiat ↔ AXUSD Conversion</SectionTitle>
+              <p style={{ ...mono, marginBottom: 20 }}>Convert between USD (via ACH) and AXUSD. A 0.50% bridge fee applies. Minimum $10 — maximum $25,000 per transaction. Wallet sign-in required for deposit routing details.</p>
+
+              {/* Direction toggle */}
+              <div style={{ display: 'flex', marginBottom: 20, border: `1px solid ${DL.border}` }}>
+                {([
+                  { id: 'fiat_to_crypto', label: 'Deposit USD → AXUSD' },
+                  { id: 'crypto_to_fiat', label: 'Redeem AXUSD → USD' },
+                ] as const).map((d) => (
+                  <button key={d.id} onClick={() => { setRampDirection(d.id); setRampQuote(null); setRampQuoteError(null); }}
+                    style={{ flex: 1, padding: '10px 0', fontFamily: 'monospace', fontSize: 10, textTransform: 'uppercase' as const, letterSpacing: '0.07em', border: 'none', background: rampDirection === d.id ? DL.navy : DL.surface, color: rampDirection === d.id ? '#fff' : DL.muted, cursor: 'pointer' }}>
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Asset */}
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ ...monoLabel, marginBottom: 4 }}>Asset</p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {(['AXUSD', 'USDC'] as const).map((a) => (
+                    <button key={a} onClick={() => setRampAsset(a)}
+                      style={{ padding: '8px 20px', fontFamily: 'monospace', fontSize: 11, border: `1px solid ${rampAsset === a ? DL.navy : DL.border}`, background: rampAsset === a ? DL.navy : 'transparent', color: rampAsset === a ? '#fff' : DL.muted, cursor: 'pointer' }}>
+                      {a}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Amount */}
+              <div style={{ marginBottom: 20 }}>
+                <p style={{ ...monoLabel, marginBottom: 4 }}>Amount (USD)</p>
+                <div style={{ position: 'relative' as const }}>
+                  <span style={{ position: 'absolute' as const, left: 12, top: '50%', transform: 'translateY(-50%)', fontFamily: 'monospace', fontSize: 14, color: DL.muted }}>$</span>
+                  <input
+                    type="number"
+                    value={rampAmount}
+                    onChange={(e) => setRampAmount(e.target.value)}
+                    placeholder="100.00"
+                    min="10"
+                    max="25000"
+                    step="0.01"
+                    style={{ width: '100%', fontFamily: 'monospace', fontSize: 16, border: `1px solid ${DL.border}`, padding: '12px 12px 12px 28px', outline: 'none', boxSizing: 'border-box' as const }}
+                  />
+                </div>
+                <p style={{ ...mono, marginTop: 4, fontSize: 10 }}>Min $10 · Max $25,000</p>
+              </div>
+
+              {rampQuoteError && (
+                <div style={{ border: `1px solid ${DL.error}`, padding: 10, marginBottom: 14 }}>
+                  <p style={{ ...mono, color: DL.error }}>{rampQuoteError}</p>
+                </div>
+              )}
+
+              <button
+                onClick={handleGetQuote}
+                disabled={rampQuoteLoading || !rampAmount}
+                style={{ width: '100%', fontFamily: 'monospace', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.08em', background: DL.navy, color: '#fff', border: 'none', padding: '14px 0', cursor: 'pointer', opacity: (rampQuoteLoading || !rampAmount) ? 0.4 : 1 }}>
+                {rampQuoteLoading ? 'Getting quote…' : 'Get Quote'}
+              </button>
+            </div>
+
+            {/* Right: Quote result */}
+            <div>
+              {!rampQuote && !rampNeedsAuth && (
+                <div style={{ border: `1px dashed ${DL.border}`, padding: 32, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', minHeight: 240, gap: 8 }}>
+                  <p style={monoLabel}>Quote will appear here</p>
+                  <p style={{ ...mono, fontSize: 10 }}>Enter an amount and click Get Quote</p>
+                </div>
+              )}
+
+              {rampQuote && (
+                <div style={{ border: `1px solid ${DL.border}`, background: DL.surface }}>
+                  <div style={{ padding: '14px 18px', borderBottom: `1px solid ${DL.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: 'Georgia, serif', fontSize: 16, color: DL.navy }}>{rampDirection === 'fiat_to_crypto' ? 'Deposit Quote' : 'Redemption Quote'}</span>
+                    <span style={{ ...mono, fontSize: 10 }}>Expires {new Date(rampQuote.expiresAt).toLocaleTimeString()}</span>
+                  </div>
+                  <div style={{ padding: '0 18px' }}>
+                    <DataRow label="You send" value={rampQuote.fiatAmountFormatted} />
+                    <DataRow label="Bridge fee (0.50%)" value={rampQuote.feeFormatted} />
+                    <DataRow label="Net amount" value={rampQuote.netAmountFormatted} />
+                    <DataRow label={rampDirection === 'fiat_to_crypto' ? 'You receive' : 'USD sent to your bank'} value={`${rampQuote.cryptoAmount} ${rampQuote.cryptoAsset}`} />
+                    <DataRow label="Rate" value={`1 ${rampQuote.cryptoAsset} = $${rampQuote.exchangeRate}`} />
+                    <DataRow label="Quote ID" value={rampQuote.snapshotId} mono />
+                  </div>
+
+                  {/* Deposit instructions for fiat→AXUSD */}
+                  {rampDirection === 'fiat_to_crypto' && rampQuote.depositInfo && (
+                    <div style={{ margin: 18, background: '#fff', border: `1px solid ${DL.border}`, padding: 16 }}>
+                      <p style={{ ...monoLabel, marginBottom: 12, color: DL.forest }}>ACH Deposit Instructions</p>
+                      <p style={{ ...mono, marginBottom: 12 }}>Send {rampQuote.netAmountFormatted} via ACH to the following account. Once settled, AXUSD will be issued to your wallet.</p>
+                      {[
+                        ['Bank', rampQuote.depositInfo.bankName],
+                        ['Account Name', rampQuote.depositInfo.accountName],
+                        ['Routing Number', rampQuote.depositInfo.routingNumber],
+                        ['Account Number', rampQuote.depositInfo.accountNumber],
+                        ['Memo', rampQuote.depositInfo.memo],
+                      ].map(([label, value]) => (
+                        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: `1px solid ${DL.border}` }}>
+                          <span style={monoLabel}>{label}</span>
+                          <span style={{ fontFamily: 'monospace', fontSize: 12, color: DL.navy, letterSpacing: '0.06em' }}>{value}</span>
+                        </div>
+                      ))}
+                      <p style={{ ...mono, marginTop: 10, fontSize: 10 }}>Include the memo exactly as shown. Settlement takes 1-2 business days.</p>
+                    </div>
+                  )}
+
+                  {/* Withdrawal form for AXUSD→fiat */}
+                  {rampDirection === 'crypto_to_fiat' && (
+                    <div style={{ padding: 18 }}>
+                      <p style={{ ...monoLabel, marginBottom: 12 }}>Your Bank Details</p>
+                      {[
+                        { label: 'Account Number', value: rampRecipientAccount, set: setRampRecipientAccount, placeholder: '000000000000' },
+                        { label: 'Routing Number (9-digit ABA)', value: rampRecipientRouting, set: setRampRecipientRouting, placeholder: '021000021' },
+                        { label: 'Account Holder Name (optional)', value: rampRecipientName, set: setRampRecipientName, placeholder: 'John Smith' },
+                      ].map((f) => (
+                        <div key={f.label} style={{ marginBottom: 12 }}>
+                          <p style={{ ...mono, marginBottom: 4 }}>{f.label}</p>
+                          <input value={f.value} onChange={(e) => f.set(e.target.value)} placeholder={f.placeholder}
+                            style={{ width: '100%', fontFamily: 'monospace', fontSize: 12, border: `1px solid ${DL.border}`, padding: '9px 12px', outline: 'none', boxSizing: 'border-box' as const }} />
+                        </div>
+                      ))}
+                      {rampWithdrawMsg && (
+                        <div style={{ border: `1px solid ${rampWithdrawMsg.type === 'success' ? DL.forest : DL.error}`, padding: 10, marginBottom: 12 }}>
+                          <p style={{ ...mono, color: rampWithdrawMsg.type === 'success' ? DL.forest : DL.error }}>{rampWithdrawMsg.text}</p>
+                        </div>
+                      )}
+                      <button
+                        onClick={handleWithdrawal}
+                        disabled={rampWithdrawing || !rampRecipientAccount || !rampRecipientRouting}
+                        style={{ width: '100%', fontFamily: 'monospace', fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.08em', background: DL.forest, color: '#fff', border: 'none', padding: '13px 0', cursor: 'pointer', opacity: (rampWithdrawing || !rampRecipientAccount || !rampRecipientRouting) ? 0.4 : 1 }}>
+                        {rampWithdrawing ? 'Initiating ACH…' : `Redeem ${rampQuote.netAmountFormatted} → Your Bank`}
+                      </button>
+                      <p style={{ ...mono, marginTop: 8, fontSize: 10 }}>
+                        {environment === 'sandbox' ? 'Sandbox — no real funds moved.' : 'This will initiate a real ACH transfer from the Axiom Nexus Account to your bank. 1-2 business days.'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Fee schedule */}
+          <div style={{ marginTop: 32, border: `1px solid ${DL.border}`, background: DL.surface }}>
+            <div style={{ padding: '14px 18px', borderBottom: `1px solid ${DL.border}` }}><SectionTitle>Fee Schedule &amp; Limits</SectionTitle></div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 0 }}>
+              {[
+                ['Bridge Fee', '0.50%'],
+                ['Min Amount', '$10.00'],
+                ['Max Amount', '$25,000'],
+                ['Direction', 'Bidirectional'],
+                ['Settlement', '1-2 business days'],
+                ['Assets', 'AXUSD, USDC'],
+              ].map(([label, value]) => (
+                <div key={label} style={{ padding: '16px 18px', borderRight: `1px solid ${DL.border}`, borderBottom: `1px solid ${DL.border}` }}>
+                  <p style={monoLabel}>{label}</p>
+                  <p style={{ fontFamily: 'monospace', fontSize: 13, color: DL.navy, marginTop: 6 }}>{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* History */}
+          <div style={{ marginTop: 32 }}>
+            <SectionTitle>Conversion History</SectionTitle>
+            {rampHistoryLoading ? (
+              <p style={mono}>Loading history…</p>
+            ) : rampHistory.length === 0 ? (
+              <div style={{ border: `1px dashed ${DL.border}`, padding: 24, textAlign: 'center' as const }}>
+                <p style={mono}>No conversions yet. Wallet sign-in required to load history.</p>
+              </div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${DL.border}` }}>
+                <thead>
+                  <tr style={{ background: DL.surface }}>
+                    {['Date', 'Direction', 'Asset', 'Amount', 'Status'].map((h) => (
+                      <th key={h} style={{ ...monoLabel, textAlign: 'left', padding: '10px 14px', borderBottom: `1px solid ${DL.border}` }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rampHistory.map((t, i) => (
+                    <tr key={t.id ?? i} style={{ borderBottom: `1px solid ${DL.border}` }}>
+                      <td style={{ ...mono, padding: '10px 14px' }}>{t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '—'}</td>
+                      <td style={{ ...mono, padding: '10px 14px' }}>{t.direction === 'fiat_to_crypto' ? 'Deposit' : 'Redemption'}</td>
+                      <td style={{ ...mono, padding: '10px 14px' }}>{t.cryptoAsset ?? '—'}</td>
+                      <td style={{ ...mono, padding: '10px 14px' }}>{t.fiatAmountCents ? `$${(t.fiatAmountCents / 100).toFixed(2)}` : '—'}</td>
+                      <td style={{ ...mono, padding: '10px 14px' }}><StatusBadge status={t.status ?? 'unknown'} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       )}
 
