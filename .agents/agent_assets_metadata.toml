@@ -89,3 +89,9 @@ id = "7Hn4cVFBTxTo_NZg70IHp"
 uri = "file://attached_assets/stock_images/banking-institutional_2.jpg"
 type = "image"
 title = "institutional banking FDIC federal reserve digital finance professional"
+
+[[outputs]]
+id = "HFYz5Zn0Myazo5cJmG_Y3"
+uri = "file://documents/Axiom_Platform_Content_Package.md"
+type = "text"
+title = "Axiom Platform Content Package"
