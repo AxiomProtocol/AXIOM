@@ -10,6 +10,17 @@ import {
 import { IncreaseService } from '../../../lib/services/IncreaseService';
 import { eq, and } from 'drizzle-orm';
 
+// In-memory idempotency set for recently processed event IDs.
+// Protects against Increase retries within the same process lifecycle.
+// For multi-instance deploys, the DB-level checks below provide additional protection.
+const recentlyProcessed = new Set<string>();
+const DEDUP_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function markProcessed(eventId: string) {
+  recentlyProcessed.add(eventId);
+  setTimeout(() => recentlyProcessed.delete(eventId), DEDUP_TTL_MS);
+}
+
 /**
  * Increase webhook handler.
  *
@@ -96,9 +107,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Increase v2 webhook uses `category` for event type and `associated_object_id` for the object
   const eventType = (payload?.category ?? '') as string;
   const objectId = (payload?.associated_object_id ?? '') as string;
+  const eventId = (payload?.id ?? '') as string;
+
+  // In-process idempotency: skip if this event ID was already processed recently
+  if (eventId && recentlyProcessed.has(eventId)) {
+    console.info('[webhook/increase] duplicate event skipped (in-process dedup)', eventId, eventType);
+    return res.status(200).json({ received: true, duplicate: true });
+  }
 
   try {
     await handleIncreaseEvent(eventType, objectId, payload);
+    if (eventId) markProcessed(eventId);
   } catch (err) {
     console.error('[webhook/increase] handler error for event', eventType, objectId, err);
   }
