@@ -3,36 +3,11 @@
 // which performs full SIWE authentication, KYC field collection, entity + account + card provisioning.
 // This endpoint is kept for backward compatibility but should not be used in new integrations.
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db, pool } from '../../../../server/db';
+import { db } from '../../../../server/db';
 import { increaseParticipants } from '../../../../shared/increaseParticipantSchema';
 import { IncreaseService, getAccountId, getEntityId } from '../../../../lib/services/IncreaseService';
+import { getSiweWallet } from '../../../../lib/server/banking/siweHelper';
 import { eq } from 'drizzle-orm';
-
-function parseCookies(header: string | undefined): Record<string, string> {
-  if (!header) return {};
-  return Object.fromEntries(
-    header.split(';').map((c) => {
-      const [k, ...v] = c.trim().split('=');
-      return [k.trim(), v.join('=')];
-    }).filter(([k]) => k.length > 0)
-  );
-}
-
-async function getSiweWallet(req: NextApiRequest): Promise<string | null> {
-  if (process.env.NODE_ENV === 'development') return '__dev__';
-  const cookies = parseCookies(req.headers.cookie);
-  const token = cookies['siwe_session'];
-  if (!token) return null;
-  try {
-    const result = await pool.query(
-      `SELECT wallet_address FROM wallet_sessions WHERE session_token = $1 AND expires_at > NOW() LIMIT 1`,
-      [token]
-    );
-    return result.rows[0]?.wallet_address ?? null;
-  } catch {
-    return null;
-  }
-}
 
 function generateRef(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
