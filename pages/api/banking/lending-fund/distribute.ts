@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import crypto from 'crypto';
 import { db } from '../../../../server/db';
 import {
   increaseParticipants,
@@ -97,6 +98,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const p = rows[0];
 
+      const isoDate = new Date().toISOString().slice(0, 10);
+      const idempotencyKey = crypto
+        .createHash('sha256')
+        .update(`${accountId}:ach:${externalRoutingNumber}:${externalAccountNumber}:${amountCents}:${isoDate}:${p.participantRef}`)
+        .digest('hex');
+
       const transfer = await IncreaseService.initiateAchTransfer({
         account_id: accountId,
         account_number: externalAccountNumber,
@@ -104,7 +111,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         amount: amountCents,
         statement_descriptor: description || `Axiom Lending Fund Distribution — ${p.participantRef}`,
         company_name: 'Axiom Protocol LLC',
-      });
+      }, idempotencyKey);
 
       const [dist] = await db
         .insert(increaseDistributions)

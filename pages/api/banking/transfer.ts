@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import crypto from 'crypto';
 import { IncreaseService, getAccountId } from '../../../lib/services/IncreaseService';
 
 function checkAdminKey(req: NextApiRequest): boolean {
@@ -41,6 +42,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const amountCents = Math.round(amount_dollars * 100);
+  const isoDate = new Date().toISOString().slice(0, 10);
+  const idempotencyKey = crypto
+    .createHash('sha256')
+    .update(`${AXIOM_ACCOUNT_ID}:${type}:${routing_number}:${account_number}:${amountCents}:${isoDate}`)
+    .digest('hex');
 
   try {
     let result;
@@ -52,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         amount: amountCents,
         statement_descriptor: description.slice(0, 22),
         company_name: 'Axiom Protocol',
-      });
+      }, idempotencyKey);
     } else {
       result = await IncreaseService.initiateWireTransfer({
         account_id: AXIOM_ACCOUNT_ID,
@@ -62,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         message_to_recipient: description.slice(0, 35),
         beneficiary_name: beneficiary_name ?? 'Beneficiary',
         originator_name: 'Axiom Protocol',
-      });
+      }, idempotencyKey);
     }
 
     return res.status(200).json({

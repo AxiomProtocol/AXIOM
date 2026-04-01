@@ -13,8 +13,6 @@ function getBaseUrl(): string {
     : 'https://sandbox.increase.com';
 }
 
-const API_KEY = process.env.INCREASE_API_KEY ?? '';
-
 // Account/entity IDs — resolved per environment
 export function getAccountId(): string {
   if (!isLive()) return process.env.INCREASE_SANDBOX_ACCOUNT_ID ?? '';
@@ -35,14 +33,20 @@ async function increaseRequest<T>(
   method: 'GET' | 'POST' | 'PATCH',
   path: string,
   body?: Record<string, unknown>,
+  idempotencyKey?: string,
 ): Promise<T> {
+  const apiKey = process.env.INCREASE_API_KEY ?? '';
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+  if (idempotencyKey) {
+    headers['Idempotency-Key'] = idempotencyKey;
+  }
   const res = await fetch(`${getBaseUrl()}${path}`, {
     method,
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
 
@@ -196,8 +200,8 @@ export const IncreaseService = {
     statement_descriptor: string;
     company_name?: string;
     effective_date?: string;
-  }): Promise<IncreaseTransfer> {
-    return increaseRequest<IncreaseTransfer>('POST', '/ach_transfers', params);
+  }, idempotencyKey?: string): Promise<IncreaseTransfer> {
+    return increaseRequest<IncreaseTransfer>('POST', '/ach_transfers', params, idempotencyKey);
   },
 
   async initiateWireTransfer(params: {
@@ -212,8 +216,8 @@ export const IncreaseService = {
     beneficiary_address_line3?: string;
     originator_name?: string;
     originator_address_line1?: string;
-  }): Promise<IncreaseTransfer> {
-    return increaseRequest<IncreaseTransfer>('POST', '/wire_transfers', params);
+  }, idempotencyKey?: string): Promise<IncreaseTransfer> {
+    return increaseRequest<IncreaseTransfer>('POST', '/wire_transfers', params, idempotencyKey);
   },
 
   async listAchTransfers(accountId: string, limit = 20): Promise<{ data: IncreaseTransfer[] }> {

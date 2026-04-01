@@ -1,39 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db, pool } from '../../../../server/db';
+import { db } from '../../../../server/db';
 import {
   increaseParticipants,
   increaseProductEscrows,
 } from '../../../../shared/increaseParticipantSchema';
+import { getSiweWallet } from '../../../../lib/server/banking/siweHelper';
 import { eq, and } from 'drizzle-orm';
 
 // NOTE: This endpoint is superseded by /api/banking/wealth-practice/insurance/fund
 // It is retained for backwards compatibility and now writes to increase_product_escrows.
-
-function parseCookies(header: string | undefined): Record<string, string> {
-  if (!header) return {};
-  return Object.fromEntries(
-    header.split(';').map((c) => {
-      const [k, ...v] = c.trim().split('=');
-      return [k.trim(), v.join('=')];
-    }).filter(([k]) => k.length > 0)
-  );
-}
-
-async function getSiweWallet(req: NextApiRequest): Promise<string | null> {
-  if (process.env.NODE_ENV === 'development') return '__dev__';
-  const cookies = parseCookies(req.headers.cookie);
-  const token = cookies['siwe_session'];
-  if (!token) return null;
-  try {
-    const result = await pool.query(
-      `SELECT wallet_address FROM wallet_sessions WHERE session_token = $1 AND expires_at > NOW() LIMIT 1`,
-      [token]
-    );
-    return result.rows[0]?.wallet_address ?? null;
-  } catch {
-    return null;
-  }
-}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
