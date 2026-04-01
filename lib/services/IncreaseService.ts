@@ -158,6 +158,10 @@ export const IncreaseService = {
     return increaseRequest('GET', `/accounts/${accountId}/balance`);
   },
 
+  async getTransaction(transactionId: string): Promise<IncreaseTransaction & { route_id?: string; route_type?: string; description: string }> {
+    return increaseRequest('GET', `/transactions/${transactionId}`);
+  },
+
   async listTransactions(accountId: string, limit = 20): Promise<{ data: IncreaseTransaction[] }> {
     return increaseRequest<{ data: IncreaseTransaction[] }>(
       'GET',
