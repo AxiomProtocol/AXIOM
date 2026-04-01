@@ -3,7 +3,8 @@
 **Audit Date:** 2026-04-01  
 **Auditor:** Axiom Protocol Engineering  
 **Scope:** Increase.com banking integration — all routes, services, schema, webhooks, and environment configuration  
-**Environment at audit time:** `INCREASE_ENVIRONMENT=production`, First Internet Bank (Axiom Nexus Account)
+**Environment at audit time:** `INCREASE_ENVIRONMENT=production`, First Internet Bank (Axiom Nexus Account)  
+**Note:** All findings reflect the state of the codebase at audit time (commit `27406198`). Subsequent work under Task #49 will close the gaps identified here.
 
 ---
 

@@ -2,6 +2,7 @@
 
 **Generated:** 2026-04-01  
 **Source:** Axiom Increase Banking Audit (see `AUDIT_REPORT.md`)  
+**Audit snapshot:** commit `27406198` — all gap descriptions reflect the codebase at that point  
 **Purpose:** Ordered implementation plan for closing all identified gaps
 
 ---
