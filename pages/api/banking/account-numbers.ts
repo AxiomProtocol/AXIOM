@@ -1,10 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { IncreaseService } from '../../../lib/services/IncreaseService';
-
-const isSandbox = (process.env.INCREASE_ENVIRONMENT ?? 'sandbox') === 'sandbox';
-const AXIOM_ACCOUNT_ID = isSandbox
-  ? (process.env.INCREASE_SANDBOX_ACCOUNT_ID ?? 'sandbox_account_nqaq96bjvvhfn2tstwmh')
-  : (process.env.INCREASE_ACCOUNT_ID ?? 'account_3q7ro70b6ma4w5ijgivz');
+import { IncreaseService, getAccountId } from '../../../lib/services/IncreaseService';
 
 function checkAdminKey(req: NextApiRequest): boolean {
   return req.headers['x-admin-key'] === process.env.ADMIN_SOLVENCY_KEY;
@@ -12,6 +7,8 @@ function checkAdminKey(req: NextApiRequest): boolean {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!checkAdminKey(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+  const AXIOM_ACCOUNT_ID = getAccountId();
 
   if (req.method === 'GET') {
     try {

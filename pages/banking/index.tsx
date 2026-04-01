@@ -167,12 +167,12 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 function SandboxBanner({ env }: { env: string }) {
-  if (env === 'production') return null;
+  if (env !== 'sandbox') return null;
   return (
     <div style={{ background: '#FEF9C3', border: '1px solid #A16207', padding: '10px 18px', marginBottom: 24, display: 'flex', gap: 10, alignItems: 'center' }}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <span style={{ fontFamily: 'monospace', fontSize: 10, color: '#92400E', textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>
-        Sandbox mode — Increase test environment. No real money involved. Switch INCREASE_ENVIRONMENT to production when ready.
+        Sandbox mode — Increase test environment. No real money involved.
       </span>
     </div>
   );
@@ -531,7 +531,7 @@ export default function BankingDashboard() {
     { id: 'participants',  label: 'Participants' },
   ];
 
-  const environment = overview?.environment ?? 'sandbox';
+  const environment = overview?.environment ?? 'unknown';
 
   const inputStyle: React.CSSProperties = {
     width: '100%', fontFamily: 'monospace', fontSize: 12, border: `1px solid ${DL.border}`,

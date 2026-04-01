@@ -1,30 +1,33 @@
 // Environment-aware base URL:
-// In production (NODE_ENV=production), always use INCREASE_BASE_URL (live API).
-// In development, use sandbox unless INCREASE_ALLOW_LIVE_IN_DEV=true is explicitly set.
-const IS_LIVE =
-  process.env.NODE_ENV === 'production' ||
-  (process.env.INCREASE_ENVIRONMENT === 'production' &&
-    process.env.INCREASE_ALLOW_LIVE_IN_DEV === 'true');
+// INCREASE_ENVIRONMENT=production → live Increase API (https://api.increase.com)
+// Anything else (or unset) → sandbox (https://sandbox.increase.com)
+// This is the single source of truth — NODE_ENV is not used here so that
+// the dev server can connect to live Increase when configured.
+function isLive(): boolean {
+  return process.env.INCREASE_ENVIRONMENT === 'production';
+}
 
-const BASE_URL = IS_LIVE
-  ? (process.env.INCREASE_BASE_URL ?? 'https://api.increase.com')
-  : 'https://sandbox.increase.com';
+function getBaseUrl(): string {
+  return isLive()
+    ? (process.env.INCREASE_BASE_URL ?? 'https://api.increase.com')
+    : 'https://sandbox.increase.com';
+}
 
 const API_KEY = process.env.INCREASE_API_KEY ?? '';
 
-// Account/entity IDs — resolved per environment so dev never touches live accounts
+// Account/entity IDs — resolved per environment
 export function getAccountId(): string {
-  if (!IS_LIVE) return process.env.INCREASE_SANDBOX_ACCOUNT_ID ?? '';
+  if (!isLive()) return process.env.INCREASE_SANDBOX_ACCOUNT_ID ?? '';
   return process.env.INCREASE_ACCOUNT_ID ?? '';
 }
 
 export function getEntityId(): string {
-  if (!IS_LIVE) return process.env.INCREASE_SANDBOX_ENTITY_ID ?? '';
+  if (!isLive()) return process.env.INCREASE_SANDBOX_ENTITY_ID ?? '';
   return process.env.INCREASE_ENTITY_ID ?? '';
 }
 
 export function getProgramId(): string {
-  if (!IS_LIVE) return process.env.INCREASE_SANDBOX_PROGRAM_ID ?? '';
+  if (!isLive()) return process.env.INCREASE_SANDBOX_PROGRAM_ID ?? '';
   return process.env.INCREASE_PROGRAM_ID ?? '';
 }
 
@@ -33,7 +36,7 @@ async function increaseRequest<T>(
   path: string,
   body?: Record<string, unknown>,
 ): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`${getBaseUrl()}${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${API_KEY}`,
