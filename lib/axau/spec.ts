@@ -252,7 +252,7 @@ export const AUDIT_ROADMAP: AuditMilestone[] = [
   },
   {
     id: 'smart-contract-draft',
-    title: 'Smart Contract Draft and Internal Testing',
+    title: 'Automated Control Layer Draft and Internal Testing',
     status: 'PLANNED',
     triggerCondition: 'Following specification approval and treasury readiness',
     description:
@@ -273,7 +273,7 @@ export const AUDIT_ROADMAP: AuditMilestone[] = [
     status: 'DEFERRED',
     triggerCondition: 'Treasury threshold: sufficient capital to fund a qualified security audit (estimated $50,000–$150,000 USD)',
     description:
-      'External smart contract security audit by a qualified independent security firm. Deferred pending treasury development. This is an explicit, acknowledged risk during the bootstrap and proof-of-execution phase. No external capital is solicited or accepted without prior audit completion.',
+      'External security audit of AXAU automated control layers by a qualified independent security firm. Deferred pending treasury development. This is an explicit, acknowledged risk during the bootstrap and proof-of-execution phase. No external capital is solicited or accepted without prior audit completion.',
     targetFirms: [
       'OpenZeppelin Audits',
       'Trail of Bits',
