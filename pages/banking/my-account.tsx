@@ -90,9 +90,12 @@ const statusColor: Record<string, string> = {
 
 export default function MyAccountPage() {
   const { address, isConnected } = useAccount();
+  const [mounted, setMounted] = useState(false);
   const [data, setData] = useState<AccountData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => { setMounted(true); }, []);
   const [activeTab, setActiveTab] = useState<'overview' | 'account' | 'holds' | 'deposits' | 'card' | 'faq'>('overview');
   const [cardLoading, setCardLoading] = useState(false);
   const [cardMsg, setCardMsg] = useState('');
@@ -210,7 +213,13 @@ export default function MyAccountPage() {
         </p>
       </div>
 
-      {!isConnected && (
+      {!mounted && (
+        <div className="border border-dl-border p-8 text-center mb-8">
+          <p className="font-dl-mono text-xs text-dl-gray animate-pulse">Loading account...</p>
+        </div>
+      )}
+
+      {mounted && !isConnected && (
         <div className="border border-dl-border p-8 text-center mb-8">
           <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-2">Wallet Required</p>
           <p className="text-dl-gray text-sm mb-4">Connect your wallet to view your Axiom Nexus Account details.</p>
