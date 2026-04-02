@@ -171,14 +171,32 @@ export default function MyAccountPage() {
     setSigningIn(true);
     setSignInError('');
     try {
-      const { ethers } = await import('ethers');
-      const provider = new ethers.BrowserProvider((window as any).ethereum);
-      const signer = await provider.getSigner();
-      const network = await provider.getNetwork();
-      const chainId = Number(network.chainId);
       const { siweService } = await import('../../lib/services/SIWEService');
       siweService.resetSigningState();
-      const result = await siweService.signIn(signer, address, chainId || 42161);
+
+      // Prefer WalletService signer (works for MetaMask, WalletConnect, AppKit)
+      // Fall back to window.ethereum if WalletService has no signer yet
+      let signer: any = null;
+      let chainId = 42161;
+      try {
+        const { WalletService } = await import('../../lib/services/WalletService');
+        signer = WalletService.getInstance().getSigner();
+      } catch {}
+
+      if (!signer && typeof window !== 'undefined' && (window as any).ethereum) {
+        const { ethers } = await import('ethers');
+        const provider = new ethers.BrowserProvider((window as any).ethereum);
+        signer = await provider.getSigner();
+        const network = await provider.getNetwork();
+        chainId = Number(network.chainId) || 42161;
+      }
+
+      if (!signer) {
+        setSignInError('No wallet signer available. Please reconnect your wallet and try again.');
+        return;
+      }
+
+      const result = await siweService.signIn(signer, address, chainId);
       if (result.success) {
         setNeedsSignIn(false);
         fetchData(address);

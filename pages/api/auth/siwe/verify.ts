@@ -10,177 +10,165 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Log all relevant headers for debugging production proxy issues
-  console.log('[SIWE Verify] Request headers:', {
-    host: req.headers.host,
-    'x-forwarded-host': req.headers['x-forwarded-host'],
-    'x-forwarded-proto': req.headers['x-forwarded-proto'],
-    'x-real-host': req.headers['x-real-host'],
-    'x-original-host': req.headers['x-original-host'],
-    origin: req.headers.origin,
-    referer: req.headers.referer
-  });
+  let step = 'init';
 
   try {
+    step = 'parse-body';
     const { message, signature } = req.body;
-    
+
     if (!message || !signature) {
       return res.status(400).json({ error: 'Message and signature required' });
     }
-    
+
+    step = 'parse-siwe-message';
     const siweMessage = new SiweMessage(message);
     const { nonce } = siweMessage;
-    
-    // Handle proxy headers for production environments (Replit, Vercel, etc.)
-    // Priority: x-forwarded-host > origin host > referer host > host header
+
+    step = 'extract-headers';
     const forwardedHost = req.headers['x-forwarded-host'];
     const originHeader = req.headers.origin;
     const refererHeader = req.headers.referer;
-    
-    // Extract host from origin or referer as fallback
+
     let originHost: string | undefined;
     let refererHost: string | undefined;
-    
+
     if (originHeader) {
-      try {
-        originHost = new URL(originHeader as string).host;
-      } catch (e) {}
+      try { originHost = new URL(originHeader as string).host; } catch {}
     }
-    
     if (refererHeader) {
-      try {
-        refererHost = new URL(refererHeader as string).host;
-      } catch (e) {}
+      try { refererHost = new URL(refererHeader as string).host; } catch {}
     }
-    
-    const expectedHost = (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) 
-      || originHost 
-      || refererHost 
-      || req.headers.host;
-    
+
+    const expectedHost =
+      (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) ||
+      originHost || refererHost || req.headers.host;
+
     if (!expectedHost) {
-      return res.status(400).json({ 
-        error: 'Invalid request - missing host header',
-        code: 'INVALID_REQUEST'
-      });
+      return res.status(400).json({ error: 'Invalid request - missing host header', code: 'INVALID_REQUEST' });
     }
-    
+
     const messageDomain = siweMessage.domain;
-    
-    // Log for debugging in production
-    console.log('[SIWE Verify] Domain check:', {
+
+    console.log('[SIWE Verify] Step=domain-check', {
       messageDomain,
       expectedHost,
-      forwardedHost: req.headers['x-forwarded-host'],
+      forwardedHost,
       originHost,
       refererHost,
-      rawHost: req.headers.host
+      rawHost: req.headers.host,
     });
-    
-    // Allow if domain matches any of the possible host sources
-    // Include custom domain from environment variable for production
+
+    step = 'domain-check';
     const publicDomain = process.env.PUBLIC_DOMAIN;
     const validHosts = [
       Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost,
-      originHost,
-      refererHost,
-      req.headers.host,
-      publicDomain, // Custom domain (e.g., axiomprotocol.app)
-      publicDomain ? `www.${publicDomain}` : null // www variant
+      originHost, refererHost, req.headers.host,
+      publicDomain,
+      publicDomain ? `www.${publicDomain}` : null,
     ].filter(Boolean) as string[];
-    
+
     if (!validHosts.includes(messageDomain)) {
       console.warn('[SIWE Verify] Domain mismatch:', { messageDomain, validHosts });
-      return res.status(401).json({ 
+      return res.status(401).json({
         error: 'Domain mismatch. The signature was created for a different site.',
         code: 'DOMAIN_MISMATCH',
-        debug: process.env.NODE_ENV !== 'production' ? { validHosts, received: messageDomain } : undefined
+        debug: { validHosts, received: messageDomain },
       });
     }
-    
+
+    step = 'chain-check';
     const messageChainId = siweMessage.chainId;
     if (messageChainId !== ARBITRUM_CHAIN_ID) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         error: `Invalid network. Please connect to Arbitrum One (Chain ID: ${ARBITRUM_CHAIN_ID}).`,
-        code: 'CHAIN_MISMATCH'
+        code: 'CHAIN_MISMATCH',
       });
     }
-    
+
+    step = 'nonce-lookup';
     const nonceResult = await pool.query(
       `SELECT nonce FROM siwe_nonces WHERE nonce = $1 AND expires_at > NOW()`,
       [nonce]
     );
-    
+
     if (nonceResult.rows.length === 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Invalid or expired nonce. Please request a new one.',
-        code: 'NONCE_INVALID'
+        code: 'NONCE_INVALID',
       });
     }
-    
-    // siwe v3: verify() rejects by default on failure — use suppressExceptions:true
-    // so it always resolves and we can inspect fields.success / fields.error ourselves
+
+    // siwe v3: use suppressExceptions:true so verify() always resolves
+    step = 'sig-verify';
     const fields = await siweMessage.verify(
       { signature, nonce, domain: messageDomain },
       { suppressExceptions: true }
     );
-    
+
     if (!fields.success) {
       const errType: string = (fields as any).error?.type ?? 'SIGNATURE_INVALID';
       const errMsg: Record<string, string> = {
-        SIGNATURE_INVALID: 'Signature is invalid. Please try signing again.',
-        NONCE_MISMATCH: 'Nonce mismatch. Please request a new sign-in and try again.',
-        DOMAIN_MISMATCH: 'Domain mismatch. The signature was created for a different site.',
-        EXPIRED_MESSAGE: 'Sign-in request expired. Please try again.',
-        NOT_YET_VALID_MESSAGE: 'Sign-in message is not yet valid. Check your device clock.',
-        ADDRESS_MISMATCH: 'Address mismatch. Signature does not match the provided address.',
+        'Signature does not match address of the message.': 'Signature is invalid. Please try signing again.',
+        'Nonce does not match provided nonce for verification.': 'Nonce mismatch. Please request a new sign-in and try again.',
+        'Domain does not match provided domain for verification.': 'Domain mismatch. The signature was created for a different site.',
+        'Expired message.': 'Sign-in request expired. Please try again.',
+        'Message is not yet valid.': 'Sign-in message is not yet valid. Check your device clock.',
       };
-      console.warn('[SIWE Verify] Verification failed:', errType, (fields as any).error);
-      return res.status(401).json({ 
-        error: errMsg[errType] ?? 'Signature verification failed',
-        code: errType,
+      console.warn('[SIWE Verify] Verification failed type:', errType);
+      return res.status(401).json({
+        error: errMsg[errType] ?? `Signature check failed: ${errType}`,
+        code: 'SIGNATURE_INVALID',
       });
     }
-    
+
+    step = 'nonce-delete';
     await pool.query(`DELETE FROM siwe_nonces WHERE nonce = $1`, [nonce]);
-    
+
+    step = 'session-create';
     const sessionToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    
-    await pool.query(`
-      INSERT INTO wallet_sessions (
-        session_token, wallet_address, chain_id, authenticated_at, expires_at, domain
-      ) VALUES ($1, $2, $3, NOW(), $4, $5)
-      ON CONFLICT (wallet_address) 
-      DO UPDATE SET 
-        session_token = EXCLUDED.session_token,
-        authenticated_at = NOW(),
-        expires_at = EXCLUDED.expires_at,
-        chain_id = EXCLUDED.chain_id,
-        domain = EXCLUDED.domain
-    `, [
-      sessionToken,
-      fields.data.address.toLowerCase(), 
-      fields.data.chainId || ARBITRUM_CHAIN_ID,
-      expiresAt,
-      fields.data.domain
-    ]);
-    
-    res.setHeader('Set-Cookie', `siwe_session=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
-    
-    res.json({ 
-      success: true, 
+
+    await pool.query(
+      `INSERT INTO wallet_sessions (session_token, wallet_address, chain_id, authenticated_at, expires_at, domain)
+       VALUES ($1, $2, $3, NOW(), $4, $5)
+       ON CONFLICT (wallet_address)
+       DO UPDATE SET
+         session_token = EXCLUDED.session_token,
+         authenticated_at = NOW(),
+         expires_at = EXCLUDED.expires_at,
+         chain_id = EXCLUDED.chain_id,
+         domain = EXCLUDED.domain`,
+      [
+        sessionToken,
+        fields.data.address.toLowerCase(),
+        fields.data.chainId || ARBITRUM_CHAIN_ID,
+        expiresAt,
+        fields.data.domain,
+      ]
+    );
+
+    step = 'set-cookie';
+    res.setHeader(
+      'Set-Cookie',
+      `siwe_session=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400${
+        process.env.NODE_ENV === 'production' ? '; Secure' : ''
+      }`
+    );
+
+    console.log('[SIWE Verify] Success for', fields.data.address);
+    return res.json({
+      success: true,
       address: fields.data.address,
       chainId: fields.data.chainId,
-      message: 'Wallet successfully authenticated'
+      message: 'Wallet successfully authenticated',
     });
   } catch (error: any) {
     const msg = error?.message || String(error);
-    console.error('[SIWE Verify] Unexpected error:', msg, error);
-    res.status(500).json({ 
-      error: 'Sign-in failed due to a server error. Please try again.',
+    console.error(`[SIWE Verify] ERROR at step="${step}":`, msg, error);
+    return res.status(500).json({
+      error: `Sign-in failed at step: ${step} — ${msg}`,
       code: 'SERVER_ERROR',
-      detail: process.env.NODE_ENV !== 'production' ? msg : undefined,
+      step,
     });
   }
 }
