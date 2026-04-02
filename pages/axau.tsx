@@ -16,6 +16,7 @@ import {
   AUDIT_ROADMAP,
   DISCLOSURE_NOTICES,
   PROTOCOL_INTEGRATION,
+  ROLLOUT_PHASES,
   type ReserveLayerStatus,
   type RiskTier,
   type AuditMilestone,
@@ -509,59 +510,7 @@ export default function AxauPage() {
           </SectionHeading>
 
           <div className="border border-dl-border">
-            {[
-              {
-                phase: 'Phase 1',
-                label: 'Gold Anchor — Specification and Deployment',
-                items: [
-                  'This specification document published and reviewed',
-                  'AXAUToken (ERC-3643) + CommodityRegistry + AXGoldVault (PAXG adapter)',
-                  'NAVEngine (XAU/USD Chainlink oracle) + MintRedeemController',
-                  'GovernanceTimelock integration with AXM governance',
-                  'Internal testnet deployment and validation',
-                  'Paxos reserve attestation pipeline connected to Solvency Console',
-                ],
-                status: 'ACTIVE — This specification is Phase 1, Step 1',
-                statusCls: 'text-blue-800 border-blue-300 bg-blue-50',
-              },
-              {
-                phase: 'Phase 2',
-                label: 'Silver Addition (First Expansion Event)',
-                items: [
-                  'AXM governance vote approving silver as reserve commodity',
-                  'Custody partner selection and attestation pipeline',
-                  'AXSilverVault deployment and Chainlink XAG/USD integration',
-                  'Component isolation testing (silver fault does not halt gold)',
-                  'Solvency Console multi-asset reserve display',
-                ],
-                status: 'Planned — requires Phase 1 deployment + governance vote',
-                statusCls: 'text-gray-600 border-gray-300 bg-gray-50',
-              },
-              {
-                phase: 'Phase 3',
-                label: 'Land Sleeve — Axiom Physical-Digital Bridge Integration',
-                items: [
-                  'First qualified land parcel acquired through governance-approved pipeline',
-                  'AXLandVault deployment with illiquid sleeve parameters (40% haircut, 10% cap)',
-                  'Land Registry token integration as vault deposit unit',
-                  'Monthly appraisal-cadence NAV update pipeline',
-                  'Solvency Console land allocation display with appraisal timestamp',
-                ],
-                status: 'Planned — runs parallel to Phase 2; land acquisition pipeline prerequisite',
-                statusCls: 'text-gray-600 border-gray-300 bg-gray-50',
-              },
-              {
-                phase: 'Phase 4+',
-                label: 'Energy and Additional Commodity Layers',
-                items: [
-                  'Pending maturation of credible tokenized commodity infrastructure for energy',
-                  'Each addition requires full commodity admission review and governance vote',
-                  'Synthetic and derivatives-based instruments do not qualify',
-                ],
-                status: 'Future — no timeline; contingent on market infrastructure maturity',
-                statusCls: 'text-gray-600 border-gray-300 bg-gray-50',
-              },
-            ].map((phase, i) => (
+            {ROLLOUT_PHASES.map((phase, i) => (
               <div key={phase.phase} className={`border-b border-dl-border ${i % 2 === 1 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
                 <div className="px-6 py-4">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
@@ -569,7 +518,11 @@ export default function AxauPage() {
                       <span className="font-dl-mono text-xs font-semibold border border-dl-gold text-dl-gold px-2 py-0.5">{phase.phase}</span>
                       <p className="text-sm font-semibold text-dl-navy">{phase.label}</p>
                     </div>
-                    <span className={`inline-block px-2 py-0.5 text-xs font-dl-mono border ${phase.statusCls}`}>
+                    <span className={`inline-block px-2 py-0.5 text-xs font-dl-mono border ${
+                      phase.isCurrentPhase
+                        ? 'text-blue-800 border-blue-300 bg-blue-50'
+                        : 'text-gray-600 border-gray-300 bg-gray-50'
+                    }`}>
                       {phase.status.split('—')[0].trim()}
                     </span>
                   </div>

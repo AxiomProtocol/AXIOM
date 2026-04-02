@@ -307,6 +307,68 @@ export const AUDIT_ROADMAP: AuditMilestone[] = [
   },
 ];
 
+export interface RolloutPhase {
+  phase: string;
+  label: string;
+  status: string;
+  isCurrentPhase: boolean;
+  items: string[];
+}
+
+export const ROLLOUT_PHASES: RolloutPhase[] = [
+  {
+    phase: 'Phase 1',
+    label: 'Gold Anchor — Specification and Deployment',
+    status: 'Active — This specification is Phase 1, Step 1',
+    isCurrentPhase: true,
+    items: [
+      'This specification document published and reviewed',
+      'AXAUToken (ERC-3643) + CommodityRegistry + AXGoldVault (PAXG adapter)',
+      'NAVEngine (XAU/USD Chainlink oracle) + MintRedeemController',
+      'GovernanceTimelock integration with AXM governance',
+      'Internal testnet deployment and validation',
+      'Paxos reserve attestation pipeline connected to Solvency Console',
+    ],
+  },
+  {
+    phase: 'Phase 2',
+    label: 'Silver Addition (First Expansion Event)',
+    status: 'Planned — requires Phase 1 deployment + governance vote',
+    isCurrentPhase: false,
+    items: [
+      'AXM governance vote approving silver as reserve commodity',
+      'Custody partner selection and attestation pipeline',
+      'AXSilverVault deployment and Chainlink XAG/USD integration',
+      'Component isolation testing (silver fault does not halt gold)',
+      'Solvency Console multi-asset reserve display',
+    ],
+  },
+  {
+    phase: 'Phase 3',
+    label: 'Land Sleeve — Axiom Physical-Digital Bridge Integration',
+    status: 'Planned — runs parallel to Phase 2; land acquisition pipeline prerequisite',
+    isCurrentPhase: false,
+    items: [
+      'First qualified land parcel acquired through governance-approved pipeline',
+      'AXLandVault deployment with illiquid sleeve parameters (40% haircut, 10% cap)',
+      'Land Registry token integration as vault deposit unit',
+      'Monthly appraisal-cadence NAV update pipeline',
+      'Solvency Console land allocation display with appraisal timestamp',
+    ],
+  },
+  {
+    phase: 'Phase 4+',
+    label: 'Energy and Additional Commodity Layers',
+    status: 'Future — no timeline; contingent on market infrastructure maturity',
+    isCurrentPhase: false,
+    items: [
+      'Pending maturation of credible tokenized commodity infrastructure for energy',
+      'Each addition requires full commodity admission review and governance vote',
+      'Synthetic and derivatives-based instruments do not qualify',
+    ],
+  },
+];
+
 export const DISCLOSURE_NOTICES = [
   'AXAU is currently in specification phase. No token has been deployed. No minting, redemption, or issuance is currently available.',
   'This specification document does not constitute an offer to sell or a solicitation to purchase any security, commodity, or digital asset.',
