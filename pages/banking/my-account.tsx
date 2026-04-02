@@ -94,6 +94,9 @@ export default function MyAccountPage() {
   const [data, setData] = useState<AccountData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [needsSignIn, setNeedsSignIn] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+  const [signInError, setSignInError] = useState('');
 
   useEffect(() => { setMounted(true); }, []);
   const [activeTab, setActiveTab] = useState<'overview' | 'account' | 'holds' | 'deposits' | 'card' | 'convert' | 'faq'>('overview');
@@ -148,8 +151,10 @@ export default function MyAccountPage() {
   const fetchData = useCallback(async (addr: string) => {
     setLoading(true);
     setError('');
+    setNeedsSignIn(false);
     try {
       const res = await fetch(`/api/banking/participant/${addr}`);
+      if (res.status === 401) { setNeedsSignIn(true); setLoading(false); return; }
       if (res.status === 404) { setData(null); setLoading(false); return; }
       if (!res.ok) { const d = await res.json(); setError(d.error || 'Failed to load account'); setLoading(false); return; }
       const d = await res.json();
@@ -160,6 +165,34 @@ export default function MyAccountPage() {
       setLoading(false);
     }
   }, []);
+
+  const handleSignIn = async () => {
+    if (!address || typeof window === 'undefined') return;
+    setSigningIn(true);
+    setSignInError('');
+    try {
+      const { ethers } = await import('ethers');
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      const signer = await provider.getSigner();
+      const network = await provider.getNetwork();
+      const chainId = Number(network.chainId);
+      const { siweService } = await import('../../lib/services/SIWEService');
+      siweService.resetSigningState();
+      const result = await siweService.signIn(signer, address, chainId || 42161);
+      if (result.success) {
+        setNeedsSignIn(false);
+        fetchData(address);
+        fetchBridgeRequests(address);
+      } else {
+        setSignInError(result.error || 'Sign-in failed. Please try again.');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setSignInError(msg || 'Sign-in failed. Please try again.');
+    } finally {
+      setSigningIn(false);
+    }
+  };
 
   useEffect(() => {
     if (isConnected && address) {
@@ -281,13 +314,33 @@ export default function MyAccountPage() {
         </div>
       )}
 
-      {isConnected && !loading && error && (
+      {isConnected && !loading && needsSignIn && (
+        <div className="border border-dl-navy p-6 mb-8">
+          <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-2">Wallet Verification Required</p>
+          <p className="text-dl-gray text-sm mb-4 leading-relaxed">
+            To protect your account, Axiom requires a one-time wallet signature to verify ownership before displaying
+            your Nexus Account details. This does not cost gas and does not move any funds.
+          </p>
+          <button
+            onClick={handleSignIn}
+            disabled={signingIn}
+            className="border border-dl-navy bg-dl-navy text-white px-5 py-2.5 text-xs font-bold font-dl-mono uppercase tracking-wider hover:bg-dl-bg hover:text-dl-navy disabled:opacity-50"
+          >
+            {signingIn ? 'Waiting for signature...' : 'Sign In with Wallet'}
+          </button>
+          {signInError && (
+            <p className="mt-3 text-xs text-red-700 font-dl-mono">{signInError}</p>
+          )}
+        </div>
+      )}
+
+      {isConnected && !loading && !needsSignIn && error && (
         <div className="border border-red-300 p-4 mb-6">
           <p className="text-sm text-red-700 font-dl-mono">{error}</p>
         </div>
       )}
 
-      {isConnected && !loading && !data && !error && (
+      {isConnected && !loading && !data && !error && !needsSignIn && (
         <div className="border border-dl-gold p-6 mb-8">
           <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Not Registered</p>
           <p className="text-dl-gray text-sm mb-4">
