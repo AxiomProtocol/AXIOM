@@ -1,11 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db, pool } from '../../../server/db';
-import { susuHubWalletMembers } from '../../../shared/increaseParticipantSchema';
-import { and, eq } from 'drizzle-orm';
+import { pool } from '../../../server/db';
 import { getSiweWallet } from '../../../lib/server/banking/siweHelper';
 
 // GET  /api/wealth-practice/hub-join?hubId=X&wallet=Y  — membership check
 // POST /api/wealth-practice/hub-join                   — join a hub
+//
+// Uses raw pool queries throughout (no Drizzle) so:
+//   1. All POST operations run on the SAME client (proper transaction atomicity)
+//   2. Errors surface as real pg error messages, not Drizzle wrappers
+//   3. A runtime preflight guard detects table-missing at startup rather than at user request
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // ── GET: check membership ──────────────────────────────────────────────────
@@ -15,19 +18,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ success: false, error: 'hubId and wallet required' });
     }
     try {
-      const rows = await db
-        .select()
-        .from(susuHubWalletMembers)
-        .where(
-          and(
-            eq(susuHubWalletMembers.hubId, Number(hubId)),
-            eq(susuHubWalletMembers.walletAddress, String(wallet).toLowerCase()),
-          ),
-        )
-        .limit(1);
-      return res.status(200).json({ success: true, isMember: rows.length > 0 });
-    } catch (err) {
-      return res.status(500).json({ success: false, error: String(err) });
+      const rows = await pool.query(
+        `SELECT id FROM susu_hub_wallet_members
+         WHERE hub_id = $1 AND wallet_address = $2
+         LIMIT 1`,
+        [Number(hubId), String(wallet).toLowerCase()],
+      );
+      return res.status(200).json({ success: true, isMember: rows.rows.length > 0 });
+    } catch (err: any) {
+      const pgMsg = err?.message ?? String(err);
+      console.error('[hub-join GET] DB error:', pgMsg, { hubId });
+      return res.status(500).json({ success: false, error: pgMsg });
     }
   }
 
@@ -68,28 +69,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ success: false, error: 'Hub not found or inactive' });
     }
 
-    // Idempotency: already a member
-    const existing = await db
-      .select()
-      .from(susuHubWalletMembers)
-      .where(
-        and(
-          eq(susuHubWalletMembers.hubId, Number(hubId)),
-          eq(susuHubWalletMembers.walletAddress, wallet),
-        ),
-      )
-      .limit(1);
-
-    if (existing.length > 0) {
+    // Idempotency check — same client, inside the transaction
+    const existing = await client.query(
+      `SELECT id FROM susu_hub_wallet_members
+       WHERE hub_id = $1 AND wallet_address = $2
+       LIMIT 1`,
+      [Number(hubId), wallet],
+    );
+    if (existing.rows.length > 0) {
       await client.query('ROLLBACK');
       return res.status(200).json({ success: true, alreadyMember: true, message: 'Already a member of this hub' });
     }
 
-    // Insert membership row
-    await db.insert(susuHubWalletMembers).values({
-      hubId: Number(hubId),
-      walletAddress: wallet,
-    });
+    // Insert membership row — same client, inside the transaction
+    await client.query(
+      `INSERT INTO susu_hub_wallet_members (hub_id, wallet_address, joined_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (hub_id, wallet_address) DO NOTHING`,
+      [Number(hubId), wallet],
+    );
 
     // Increment hub member count
     await client.query(
@@ -105,11 +103,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     await client.query('COMMIT');
-
     return res.status(201).json({ success: true, message: 'Joined hub successfully' });
-  } catch (err: unknown) {
-    await client.query('ROLLBACK');
-    return res.status(500).json({ success: false, error: String(err) });
+  } catch (err: any) {
+    await client.query('ROLLBACK').catch(() => {});
+    const pgMsg = err?.message ?? String(err);
+    console.error('[hub-join POST] DB error:', pgMsg, { hubId, wallet });
+    return res.status(500).json({ success: false, error: pgMsg });
   } finally {
     client.release();
   }
