@@ -301,9 +301,8 @@ export const IncreaseService = {
         name: params.name,
         date_of_birth: params.date_of_birth,
         identification: {
-          method: 'social_security_number_last4',
-          number: params.identification.ssn_last4,
-          passport: undefined,
+          method: 'social_security_number',
+          number_last4: params.identification.ssn_last4,
         },
         address: {
           line1: params.address.line1,
