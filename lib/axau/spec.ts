@@ -50,7 +50,7 @@ export const RESERVE_LAYERS: ReserveLayer[] = [
     phase: 1,
     commodity: 'Gold',
     symbol: 'XAU',
-    status: 'PLANNED',
+    status: 'ACTIVE',
     riskTier: 'TIER_1_LIQUID',
     custodyMethod: 'Tokenized gold — PAXG (Paxos Gold, NYDFS-regulated)',
     reserveAsset: 'PAXG (ERC-20, 1 token = 1 troy oz London Good Delivery gold)',
@@ -58,7 +58,7 @@ export const RESERVE_LAYERS: ReserveLayer[] = [
     oracleFallback: 'Secondary signed institutional data feed → bounded TWAP → component pause',
     haircut: 0.05,
     maxWeightPct: null,
-    navUpdateCadence: 'Real-time (on-chain oracle heartbeat)',
+    navUpdateCadence: 'Real-time (on-chain oracle heartbeat — upon deployment)',
     description:
       'Gold is the founding anchor commodity of AXAU. The protocol holds PAXG as its gold reserve. PAXG is issued by Paxos Trust Company under NYDFS regulation; each token is redeemable for one troy ounce of London Good Delivery gold held in Brinks vaults. Paxos publishes monthly third-party reserve attestations. Axiom does not take direct physical custody of gold.',
     custodyNotes:
