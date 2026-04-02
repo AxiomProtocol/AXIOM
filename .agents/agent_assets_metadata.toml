@@ -197,3 +197,9 @@ id = "br-2Gbh9NTVZk6KtM37jI"
 uri = "file://attached_assets/stock_images/community_finance_meeting_2.jpg"
 type = "image"
 title = "diverse community members reviewing financial documents together around a table"
+
+[[outputs]]
+id = "4pC5yeKymKZ3Lh9r8RNtM"
+uri = "file://documents/axau-whitepaper.md"
+type = "text"
+title = "AXAU Reserve Instrument — Institutional White Paper v1.0.0"
