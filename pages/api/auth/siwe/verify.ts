@@ -118,17 +118,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
     
-    // Use the message's own domain for verification since we already validated it
-    const fields = await siweMessage.verify({ 
-      signature,
-      nonce,
-      domain: messageDomain
-    });
+    // siwe v3: verify() rejects by default on failure — use suppressExceptions:true
+    // so it always resolves and we can inspect fields.success / fields.error ourselves
+    const fields = await siweMessage.verify(
+      { signature, nonce, domain: messageDomain },
+      { suppressExceptions: true }
+    );
     
     if (!fields.success) {
+      const errType: string = (fields as any).error?.type ?? 'SIGNATURE_INVALID';
+      const errMsg: Record<string, string> = {
+        SIGNATURE_INVALID: 'Signature is invalid. Please try signing again.',
+        NONCE_MISMATCH: 'Nonce mismatch. Please request a new sign-in and try again.',
+        DOMAIN_MISMATCH: 'Domain mismatch. The signature was created for a different site.',
+        EXPIRED_MESSAGE: 'Sign-in request expired. Please try again.',
+        NOT_YET_VALID_MESSAGE: 'Sign-in message is not yet valid. Check your device clock.',
+        ADDRESS_MISMATCH: 'Address mismatch. Signature does not match the provided address.',
+      };
+      console.warn('[SIWE Verify] Verification failed:', errType, (fields as any).error);
       return res.status(401).json({ 
-        error: 'Invalid signature',
-        code: 'SIGNATURE_INVALID'
+        error: errMsg[errType] ?? 'Signature verification failed',
+        code: errType,
       });
     }
     
@@ -165,9 +175,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: 'Wallet successfully authenticated'
     });
   } catch (error: any) {
-    console.error('SIWE verification error:', error);
-    res.status(401).json({ 
-      error: 'Signature verification failed'
+    const msg = error?.message || String(error);
+    console.error('[SIWE Verify] Unexpected error:', msg, error);
+    res.status(500).json({ 
+      error: 'Sign-in failed due to a server error. Please try again.',
+      code: 'SERVER_ERROR',
+      detail: process.env.NODE_ENV !== 'production' ? msg : undefined,
     });
   }
 }
