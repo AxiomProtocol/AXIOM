@@ -176,7 +176,7 @@ export const IncreaseService = {
     account_id: string;
     name: string;
     inbound_ach?: { debit_status: 'allowed' | 'blocked' };
-    inbound_checks?: { status: 'allowed' | 'check_transfers_only' | 'not_allowed' };
+    inbound_checks?: { status: 'allowed' | 'check_transfers_only' };
   }): Promise<IncreaseAccountNumber> {
     return increaseRequest<IncreaseAccountNumber>('POST', '/account_numbers', params);
   },
@@ -238,7 +238,7 @@ export const IncreaseService = {
       account_id: params.account_id,
       name: `${params.full_name} — ${params.participant_ref}`,
       inbound_ach: { debit_status: 'blocked' },
-      inbound_checks: { status: 'not_allowed' },
+      inbound_checks: { status: 'allowed' },
     });
   },
 
