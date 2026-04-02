@@ -19,11 +19,6 @@ export function getAccountId(): string {
   return process.env.INCREASE_ACCOUNT_ID ?? '';
 }
 
-export function getEntityId(): string {
-  if (!isLive()) return process.env.INCREASE_SANDBOX_ENTITY_ID ?? '';
-  return process.env.INCREASE_ENTITY_ID ?? '';
-}
-
 export function getProgramId(): string {
   if (!isLive()) return process.env.INCREASE_SANDBOX_PROGRAM_ID ?? '';
   return process.env.INCREASE_PROGRAM_ID ?? '';
@@ -138,13 +133,6 @@ export interface IncreaseCardDetails {
   verification_code: string;
 }
 
-export interface IncreaseEntity {
-  id: string;
-  structure: string;
-  status: string;
-  created_at: string;
-  description?: string;
-}
 
 export const IncreaseService = {
   async getAccount(accountId: string): Promise<IncreaseAccount> {
@@ -285,49 +273,6 @@ export const IncreaseService = {
 
   async getCardDetails(cardId: string): Promise<IncreaseCardDetails> {
     return increaseRequest<IncreaseCardDetails>('GET', `/cards/${cardId}/details`);
-  },
-
-  // Entity / identity
-  // Each registered participant receives their own Increase entity (per-participant model).
-  // createIndividualEntity is called during onboarding for every new participant.
-  async createIndividualEntity(params: {
-    name: string;
-    date_of_birth: string;
-    identification: { ssn: string };
-    address: { line1: string; city: string; state: string; zip: string };
-  }): Promise<IncreaseEntity> {
-    return increaseRequest<IncreaseEntity>('POST', '/entities', {
-      structure: 'natural_person',
-      natural_person: {
-        name: params.name,
-        date_of_birth: params.date_of_birth,
-        identification: {
-          method: 'social_security_number',
-          number: params.identification.ssn.replace(/\D/g, ''),
-        },
-        address: {
-          line1: params.address.line1,
-          city: params.address.city,
-          state: params.address.state,
-          zip: params.address.zip,
-          country: 'US',
-        },
-      },
-    });
-  },
-
-  async getEntity(entityId: string): Promise<IncreaseEntity> {
-    return increaseRequest<IncreaseEntity>('GET', `/entities/${entityId}`);
-  },
-
-  // Creates a per-participant dedicated account linked to the participant's KYC entity.
-  // Every participant receives their own account; no shared/org-account fallback.
-  async createAccount(params: {
-    name: string;
-    entity_id: string;
-    program_id: string;
-  }): Promise<IncreaseAccount> {
-    return increaseRequest<IncreaseAccount>('POST', '/accounts', params);
   },
 
   formatAmount(cents: number, currency = 'USD'): string {

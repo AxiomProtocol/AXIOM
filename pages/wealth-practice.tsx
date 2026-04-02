@@ -289,7 +289,7 @@ export default function WealthPracticePage() {
     if (!regForm.fullName.trim()) { setRegError('Full legal name is required'); return; }
     if (!regForm.email.trim() || !regForm.email.includes('@')) { setRegError('Valid email address is required'); return; }
     if (!regForm.dateOfBirth || !/^\d{4}-\d{2}-\d{2}$/.test(regForm.dateOfBirth)) { setRegError('Date of birth required (YYYY-MM-DD)'); return; }
-    if (!regForm.ssn || regForm.ssn.replace(/\D/g, '').length !== 9) { setRegError('Social Security Number required (9 digits)'); return; }
+    if (!regForm.ssn || regForm.ssn.replace(/\D/g, '').length !== 4) { setRegError('Last 4 digits of SSN required'); return; }
     if (!regForm.addressLine1.trim()) { setRegError('Street address required'); return; }
     if (!regForm.city.trim()) { setRegError('City required'); return; }
     if (!regForm.state || !/^[A-Z]{2}$/.test(regForm.state)) { setRegError('State required (2-letter code, e.g. TX)'); return; }
@@ -1124,8 +1124,8 @@ export default function WealthPracticePage() {
                       <input type="date" value={regForm.dateOfBirth} onChange={(e) => setRegForm({ ...regForm, dateOfBirth: e.target.value })} className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]" />
                     </div>
                     <div>
-                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Social Security Number</label>
-                      <input type="password" autoComplete="off" value={regForm.ssn} onChange={(e) => setRegForm({ ...regForm, ssn: e.target.value.replace(/\D/g, '').slice(0, 9) })} placeholder="•••••••••" maxLength={9} className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px] font-dl-mono tracking-widest" />
+                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Last 4 of SSN</label>
+                      <input type="password" autoComplete="off" value={regForm.ssn} onChange={(e) => setRegForm({ ...regForm, ssn: e.target.value.replace(/\D/g, '').slice(0, 4) })} placeholder="••••" maxLength={4} className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px] font-dl-mono tracking-widest" />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">

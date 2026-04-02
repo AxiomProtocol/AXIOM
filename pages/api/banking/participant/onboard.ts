@@ -19,15 +19,11 @@ function generateRef(): string {
 //
 // Issues a dedicated virtual account number under the main Axiom Nexus account.
 // Each participant receives a unique routing + account number for inbound deposits.
+// KYC fields (name, email, DOB, SSN last-4, address) are stored internally.
 //
-// NOTE: Per-participant entity creation (POST /entities) requires Increase
-// Platform / entity management to be enabled on the account — a feature that
-// must be activated by Increase support. Once enabled, this route can be
-// upgraded to the full per-entity model by restoring Steps 1 & 2 below.
-//
-// Current flow:
-//   1. Create virtual account number under main Axiom account — HARD FAIL
-//   2. Persist participant record with KYC fields — HARD FAIL
+// Flow:
+//   1. Create virtual account number under main Axiom account
+//   2. Persist participant record with KYC fields
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -58,8 +54,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Date of birth required (YYYY-MM-DD)' });
   }
   const ssnDigits = typeof ssn === 'string' ? ssn.replace(/\D/g, '') : '';
-  if (ssnDigits.length !== 9) {
-    return res.status(400).json({ error: 'Social Security Number required (9 digits)' });
+  if (ssnDigits.length !== 4) {
+    return res.status(400).json({ error: 'Last 4 digits of SSN required' });
   }
   if (!addressLine1 || typeof addressLine1 !== 'string' || addressLine1.trim().length < 3) {
     return res.status(400).json({ error: 'Street address required' });
