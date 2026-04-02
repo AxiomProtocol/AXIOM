@@ -53,6 +53,7 @@ async function increaseRequest<T>(
   const data = await res.json();
 
   if (!res.ok) {
+    console.error('[Increase API Error]', res.status, path, JSON.stringify(data));
     throw new Error(
       data?.detail ?? data?.title ?? `Increase API error ${res.status}: ${path}`,
     );

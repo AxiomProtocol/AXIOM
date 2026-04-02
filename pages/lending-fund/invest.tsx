@@ -135,7 +135,7 @@ export default function InvestPage() {
   } | null>(null);
   const [lpRegForm, setLpRegForm] = useState({
     fullName: '', email: '',
-    dateOfBirth: '', ssn: '', addressLine1: '', city: '', state: '', zip: '',
+    dateOfBirth: '', ssnLast4: '', addressLine1: '', city: '', state: '', zip: '',
   });
   const [lpRegLoading, setLpRegLoading] = useState(false);
   const [lpRegMsg, setLpRegMsg] = useState('');
@@ -231,7 +231,7 @@ export default function InvestPage() {
     if (!lpRegForm.fullName.trim()) { setLpRegError('Full legal name required'); return; }
     if (!lpRegForm.email.trim() || !lpRegForm.email.includes('@')) { setLpRegError('Valid email required'); return; }
     if (!lpRegForm.dateOfBirth || !/^\d{4}-\d{2}-\d{2}$/.test(lpRegForm.dateOfBirth)) { setLpRegError('Date of birth required (YYYY-MM-DD)'); return; }
-    if (!lpRegForm.ssn || lpRegForm.ssn.replace(/\D/g, '').length !== 9) { setLpRegError('Full Social Security Number required (9 digits)'); return; }
+    if (!lpRegForm.ssnLast4 || !/^\d{4}$/.test(lpRegForm.ssnLast4)) { setLpRegError('Last 4 digits of SSN required'); return; }
     if (!lpRegForm.addressLine1.trim()) { setLpRegError('Street address required'); return; }
     if (!lpRegForm.city.trim()) { setLpRegError('City required'); return; }
     if (!lpRegForm.state || !/^[A-Z]{2}$/.test(lpRegForm.state)) { setLpRegError('State required (2-letter code, e.g. TX)'); return; }
@@ -246,7 +246,7 @@ export default function InvestPage() {
           fullName: lpRegForm.fullName.trim(),
           email: lpRegForm.email.trim(),
           dateOfBirth: lpRegForm.dateOfBirth,
-          ssn: lpRegForm.ssn.replace(/\D/g, ''),
+          ssnLast4: lpRegForm.ssnLast4,
           addressLine1: lpRegForm.addressLine1.trim(),
           city: lpRegForm.city.trim(),
           state: lpRegForm.state.trim().toUpperCase(),
@@ -729,8 +729,8 @@ export default function InvestPage() {
                             <input type="date" value={lpRegForm.dateOfBirth} onChange={(e) => setLpRegForm({ ...lpRegForm, dateOfBirth: e.target.value })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none" />
                           </div>
                           <div className="flex flex-col gap-1">
-                            <label className="text-[10px] text-dl-gray font-dl-mono uppercase">Social Security Number</label>
-                            <input type="password" autoComplete="off" placeholder="•••••••••" maxLength={9} value={lpRegForm.ssn} onChange={(e) => { const raw = e.target.value.replace(/\D/g, '').slice(0, 9); setLpRegForm({ ...lpRegForm, ssn: raw }); }} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none font-dl-mono tracking-widest" />
+                            <label className="text-[10px] text-dl-gray font-dl-mono uppercase">SSN — Last 4 Digits</label>
+                            <input type="text" placeholder="1234" maxLength={4} value={lpRegForm.ssnLast4} onChange={(e) => setLpRegForm({ ...lpRegForm, ssnLast4: e.target.value.replace(/\D/g, '').slice(0, 4) })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none font-dl-mono tracking-widest" />
                           </div>
                           <input type="text" placeholder="Street address (123 Main St)" value={lpRegForm.addressLine1} onChange={(e) => setLpRegForm({ ...lpRegForm, addressLine1: e.target.value })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none md:col-span-2" />
                           <input type="text" placeholder="City" value={lpRegForm.city} onChange={(e) => setLpRegForm({ ...lpRegForm, city: e.target.value })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none" />
