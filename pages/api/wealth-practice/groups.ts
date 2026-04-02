@@ -32,6 +32,9 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
+    // Track hub filter separately so fallbacks can apply it via JS if the column is absent
+    const hubIdNum = hubId ? Number(hubId) : null;
+
     let result;
     try {
       result = await pool.query(
@@ -48,23 +51,48 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
         params
       );
     } catch (colErr: any) {
+      console.error('[groups] primary query failed:', colErr.message);
       if (colErr.message?.includes('column') && colErr.message?.includes('does not exist')) {
-        result = await pool.query(
-          `SELECT
-            spg.*,
-            'monthly' as contribution_frequency,
-            'round-robin' as rotation_method,
-            sih.region_display,
-            sih.region_type
-          FROM susu_purpose_groups spg
-          LEFT JOIN susu_interest_hubs sih ON spg.hub_id = sih.id
-          ${whereClause}
-          ORDER BY spg.created_at DESC`,
-          params
-        );
+        // Fallback 1: hardcode optional columns, keep hub JOIN — same WHERE clause
+        try {
+          result = await pool.query(
+            `SELECT
+              spg.*,
+              'monthly' as contribution_frequency,
+              'round-robin' as rotation_method,
+              sih.region_display,
+              sih.region_type
+            FROM susu_purpose_groups spg
+            LEFT JOIN susu_interest_hubs sih ON spg.hub_id = sih.id
+            ${whereClause}
+            ORDER BY spg.created_at DESC`,
+            params
+          );
+        } catch (fallbackErr: any) {
+          console.error('[groups] fallback-1 query failed:', fallbackErr.message);
+          // Fallback 2: no hub JOIN, no hub filter — apply hub filter in JS afterward
+          result = await pool.query(
+            `SELECT
+              spg.*,
+              'monthly' as contribution_frequency,
+              'round-robin' as rotation_method,
+              null::text as region_display,
+              null::text as region_type
+            FROM susu_purpose_groups spg
+            ORDER BY spg.created_at DESC`
+          );
+        }
       } else {
         throw colErr;
       }
+    }
+
+    // Apply hub_id JS filter when fallback-2 was used (hub JOIN unavailable)
+    if (hubIdNum !== null) {
+      result = {
+        ...result,
+        rows: result.rows.filter((r: any) => Number(r.hub_id) === hubIdNum),
+      };
     }
 
     let groups = result.rows.map((g) => {

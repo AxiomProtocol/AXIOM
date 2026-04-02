@@ -58,12 +58,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (groupId) {
       try {
         const groupResult = await pool.query(
-          `SELECT contribution_amount, name FROM susu_purpose_groups WHERE id = $1 LIMIT 1`,
+          `SELECT contribution_amount, display_name FROM susu_purpose_groups WHERE id = $1 LIMIT 1`,
           [Number(groupId)]
         );
         if (groupResult.rows.length > 0) {
           const g = groupResult.rows[0];
-          groupDisplayName = g.name || null;
+          groupDisplayName = g.display_name || null;
           if (g.contribution_amount) {
             contributionAmountCents = Math.round(parseFloat(g.contribution_amount) * 100);
             requiredHoldCents = Math.ceil(contributionAmountCents / 4);
