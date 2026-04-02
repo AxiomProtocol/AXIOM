@@ -6,9 +6,13 @@ import {
   usePublicClient,
   useWriteContract,
   useWaitForTransactionReceipt,
+  useChainId,
 } from "wagmi";
+
 import { erc20Abi, parseAbi, parseUnits, formatUnits } from "viem";
 import GetPaxgPanel from "./GetPaxgPanel";
+
+const ARBITRUM_ONE = 42161;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -47,6 +51,8 @@ const TAB_CONFIG: { id: Tab; label: string }[] = [
 
 export default function MintRedeemPanel() {
   const { address, isConnected } = useAccount();
+  const chainId                  = useChainId();
+  const isWrongNetwork           = isConnected && chainId !== ARBITRUM_ONE;
   const publicClient             = usePublicClient();
   const { writeContractAsync }   = useWriteContract();
 
@@ -132,6 +138,9 @@ export default function MintRedeemPanel() {
   const handleSubmit = async () => {
     if (!isConnected || !address || !amount || !publicClient) return;
     if (status !== "idle" && status !== "error") return;
+    if (isWrongNetwork) { setErrMsg("Switch to Arbitrum One to continue."); return; }
+    if (tab === "mint" && mintPaused) { setErrMsg("Mint is currently paused."); return; }
+    if (tab === "redeem" && redeemPaused) { setErrMsg("Redeem is currently paused."); return; }
 
     setErrMsg(null);
     setTxHash(null);
@@ -198,7 +207,7 @@ export default function MintRedeemPanel() {
 
   const isPaused     = tab === "mint" ? mintPaused : redeemPaused;
   const parsedAmount = parseFloat(amount) || 0;
-  const canSubmit    = isConnected && parsedAmount > 0 && !quoteLoading && status === "idle";
+  const canSubmit    = isConnected && parsedAmount > 0 && !quoteLoading && status === "idle" && !isPaused && !isWrongNetwork;
 
   const statusLabel: Record<Status, string> = {
     idle:       tab === "mint" ? "Mint AXAU" : "Redeem AXAU",
@@ -242,8 +251,17 @@ export default function MintRedeemPanel() {
       {/* ── Mint / Redeem Tabs ─────────────────────────────────────────────── */}
       {tab !== "get" && (
         <>
+          {/* Wrong Network Banner */}
+          {isWrongNetwork && (
+            <div className="px-5 py-3 bg-red-50 border-b border-red-200">
+              <p className="font-dl-mono text-xs text-red-800 font-bold">
+                WRONG NETWORK — Switch your wallet to Arbitrum One (Chain ID 42161) to continue.
+              </p>
+            </div>
+          )}
+
           {/* Safety Hold Banner */}
-          {isPaused && (
+          {!isWrongNetwork && isPaused && (
             <div className="px-5 py-3 bg-amber-50 border-b border-amber-200">
               <p className="font-dl-mono text-xs text-amber-800">
                 <span className="font-bold">SAFETY HOLD — {tab.toUpperCase()} PAUSED.</span>{" "}
@@ -319,6 +337,10 @@ export default function MintRedeemPanel() {
             {!isConnected ? (
               <div className="px-4 py-3 border border-dl-border text-center font-dl-mono text-sm text-dl-navy/50">
                 Connect wallet to {tab}
+              </div>
+            ) : isWrongNetwork ? (
+              <div className="px-4 py-3 border border-red-200 text-center font-dl-mono text-sm text-red-700 bg-red-50">
+                Switch to Arbitrum One
               </div>
             ) : (
               <button

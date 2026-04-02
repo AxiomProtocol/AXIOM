@@ -6,8 +6,9 @@ import {
   usePublicClient,
   useWriteContract,
   useWaitForTransactionReceipt,
-  useBalance,
+  useChainId,
 } from "wagmi";
+
 import {
   erc20Abi,
   parseAbi,
@@ -15,8 +16,9 @@ import {
   formatUnits,
   encodeFunctionData,
   decodeFunctionResult,
-  parseEther,
 } from "viem";
+
+const ARBITRUM_ONE = 42161;
 
 // ─── Addresses ────────────────────────────────────────────────────────────────
 
@@ -48,10 +50,41 @@ const routerAbi = parseAbi([
 type InputToken = "ETH" | "USDC";
 type GetStatus  = "idle" | "approving" | "approved" | "submitting" | "confirming" | "success" | "error";
 
+// ─── Helper: fetch a live PAXG quote from QuoterV2 ────────────────────────────
+
+async function fetchPaxgQuote(
+  publicClient: ReturnType<typeof usePublicClient>,
+  inputToken: InputToken,
+  amount: string
+): Promise<bigint | null> {
+  if (!publicClient) return null;
+  try {
+    const tokenIn  = inputToken === "ETH" ? WETH_ADDR : USDC_ADDR;
+    const fee      = inputToken === "ETH" ? FEE_ETH_PAXG : FEE_USDC_PAXG;
+    const decimals = inputToken === "USDC" ? USDC_DECIMALS : 18;
+    const amountIn = parseUnits(amount, decimals);
+    const callData = encodeFunctionData({
+      abi: quoterAbi,
+      functionName: "quoteExactInputSingle",
+      args: [{ tokenIn, tokenOut: PAXG_ADDR, amountIn, fee, sqrtPriceLimitX96: 0n }],
+    });
+    const { data } = await publicClient.call({ to: QUOTER_V2, data: callData });
+    if (!data) return null;
+    const [amountOut] = decodeFunctionResult({
+      abi: quoterAbi,
+      functionName: "quoteExactInputSingle",
+      data,
+    }) as [bigint, bigint, number, bigint];
+    return amountOut;
+  } catch { return null; }
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function GetPaxgPanel() {
   const { address, isConnected } = useAccount();
+  const chainId                  = useChainId();
+  const isWrongNetwork           = isConnected && chainId !== ARBITRUM_ONE;
   const publicClient             = usePublicClient();
   const { writeContractAsync }   = useWriteContract();
 
@@ -95,7 +128,7 @@ export default function GetPaxgPanel() {
 
   useEffect(() => { fetchBalances(); }, [fetchBalances]);
 
-  // ── Quote via QuoterV2 ──────────────────────────────────────────────────────
+  // ── Quote via QuoterV2 (debounced display quote) ───────────────────────────
 
   useEffect(() => {
     const parsed = parseFloat(amount);
@@ -105,31 +138,9 @@ export default function GetPaxgPanel() {
     }
     const tid = setTimeout(async () => {
       setQuoteLoading(true);
-      try {
-        const tokenIn  = inputToken === "ETH" ? WETH_ADDR : USDC_ADDR;
-        const fee      = inputToken === "ETH" ? FEE_ETH_PAXG : FEE_USDC_PAXG;
-        const decimals = inputToken === "USDC" ? USDC_DECIMALS : 18;
-        const amountIn = parseUnits(amount, decimals);
-
-        // QuoterV2.quoteExactInputSingle is non-view (uses revert-based return)
-        // Use publicClient.call with manual encode/decode
-        const callData = encodeFunctionData({
-          abi: quoterAbi,
-          functionName: "quoteExactInputSingle",
-          args: [{ tokenIn, tokenOut: PAXG_ADDR, amountIn, fee, sqrtPriceLimitX96: 0n }],
-        });
-
-        const { data } = await publicClient.call({ to: QUOTER_V2, data: callData });
-        if (!data) throw new Error("No quote data");
-
-        const [amountOut] = decodeFunctionResult({
-          abi: quoterAbi,
-          functionName: "quoteExactInputSingle",
-          data,
-        }) as [bigint, bigint, number, bigint];
-
-        setPaxgOut(parseFloat(formatUnits(amountOut, 18)).toFixed(6));
-      } catch { setPaxgOut(null); } finally { setQuoteLoading(false); }
+      const out = await fetchPaxgQuote(publicClient, inputToken, amount);
+      setPaxgOut(out !== null ? parseFloat(formatUnits(out, 18)).toFixed(6) : null);
+      setQuoteLoading(false);
     }, 600);
     return () => clearTimeout(tid);
   }, [amount, inputToken, publicClient]);
@@ -137,8 +148,9 @@ export default function GetPaxgPanel() {
   // ── Swap handler ────────────────────────────────────────────────────────────
 
   const handleSwap = async () => {
-    if (!isConnected || !address || !amount || !publicClient || !paxgOut) return;
+    if (!isConnected || !address || !amount || !publicClient) return;
     if (status !== "idle" && status !== "error") return;
+    if (isWrongNetwork) { setErrMsg("Switch to Arbitrum One to continue."); return; }
 
     setErrMsg(null);
     setTxHash(null);
@@ -148,8 +160,15 @@ export default function GetPaxgPanel() {
       const fee      = inputToken === "ETH" ? FEE_ETH_PAXG : FEE_USDC_PAXG;
       const decimals = inputToken === "USDC" ? USDC_DECIMALS : 18;
       const amountIn = parseUnits(amount, decimals);
-      // 1% slippage tolerance
-      const amountOutMin = (parseUnits(paxgOut, 18) * 99n) / 100n;
+
+      // ── Fetch fresh on-chain quote right before submit ─────────────────────
+      setStatus("approving"); // Show activity while fetching fresh quote
+      const freshOut = await fetchPaxgQuote(publicClient, inputToken, amount);
+      if (!freshOut) throw new Error("Could not fetch live quote. Please try again.");
+      // 1% slippage tolerance applied to the fresh quote
+      const amountOutMin = (freshOut * 99n) / 100n;
+      // Update display quote to match fresh result
+      setPaxgOut(parseFloat(formatUnits(freshOut, 18)).toFixed(6));
 
       // ── USDC: approve router first ─────────────────────────────────────────
       if (inputToken === "USDC") {
@@ -211,11 +230,11 @@ export default function GetPaxgPanel() {
 
   const parsedAmount = parseFloat(amount) || 0;
   const balance      = inputToken === "ETH" ? ethBalance : usdcBalance;
-  const canSwap      = isConnected && parsedAmount > 0 && !!paxgOut && !quoteLoading && status === "idle";
+  const canSwap      = isConnected && parsedAmount > 0 && !!paxgOut && !quoteLoading && status === "idle" && !isWrongNetwork;
 
   const statusLabel: Record<GetStatus, string> = {
     idle:       "Swap for PAXG",
-    approving:  "Approving USDC…",
+    approving:  inputToken === "ETH" ? "Fetching live quote…" : "Approving USDC…",
     approved:   "Approval confirmed",
     submitting: "Submitting swap…",
     confirming: "Confirming on-chain…",
@@ -226,13 +245,24 @@ export default function GetPaxgPanel() {
   return (
     <div className="px-5 py-5 space-y-4">
 
+      {/* Wrong Network Banner */}
+      {isWrongNetwork && (
+        <div className="border border-red-200 px-4 py-3 bg-red-50">
+          <p className="font-dl-mono text-xs text-red-800 font-bold">
+            WRONG NETWORK — Switch your wallet to Arbitrum One (Chain ID 42161) to continue.
+          </p>
+        </div>
+      )}
+
       {/* Info banner */}
-      <div className="border border-dl-border px-4 py-3 bg-dl-bg-alt">
-        <p className="font-dl-mono text-xs text-dl-navy/60 leading-relaxed">
-          Swap ETH or USDC for PAXG (Paxos Gold) directly on Arbitrum One via Uniswap V3.
-          PAXG is required as the reserve asset to mint AXAU.
-        </p>
-      </div>
+      {!isWrongNetwork && (
+        <div className="border border-dl-border px-4 py-3 bg-dl-bg-alt">
+          <p className="font-dl-mono text-xs text-dl-navy/60 leading-relaxed">
+            Swap ETH or USDC for PAXG (Paxos Gold) directly on Arbitrum One via Uniswap V3.
+            PAXG is required as the reserve asset to mint AXAU.
+          </p>
+        </div>
+      )}
 
       {/* Input token selector */}
       <div>
@@ -323,6 +353,10 @@ export default function GetPaxgPanel() {
       {!isConnected ? (
         <div className="px-4 py-3 border border-dl-border text-center font-dl-mono text-sm text-dl-navy/50">
           Connect wallet to swap
+        </div>
+      ) : isWrongNetwork ? (
+        <div className="px-4 py-3 border border-red-200 text-center font-dl-mono text-sm text-red-700 bg-red-50">
+          Switch to Arbitrum One
         </div>
       ) : (
         <button
