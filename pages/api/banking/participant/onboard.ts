@@ -3,7 +3,7 @@ import { db } from '../../../../server/db';
 import { increaseParticipants } from '../../../../shared/increaseParticipantSchema';
 import {
   IncreaseService,
-  getProgramId,
+  getAccountId,
 } from '../../../../lib/services/IncreaseService';
 import { getSiweWallet } from '../../../../lib/server/banking/siweHelper';
 import { eq } from 'drizzle-orm';
@@ -17,12 +17,17 @@ function generateRef(): string {
 
 // POST /api/banking/participant/onboard
 //
-// Per-participant Increase provisioning — mandatory KYC path.
-// Accepts identity + KYC fields, creates:
-//   1. Individual Increase entity (name, DOB, SSN, address) — HARD FAIL
-//   2. Per-participant Increase account (entity_id + program_id) — HARD FAIL
-//   3. Virtual account number under the participant's account — HARD FAIL
-//   4. Virtual debit card — BEST EFFORT (non-blocking)
+// Issues a dedicated virtual account number under the main Axiom Nexus account.
+// Each participant receives a unique routing + account number for inbound deposits.
+//
+// NOTE: Per-participant entity creation (POST /entities) requires Increase
+// Platform / entity management to be enabled on the account — a feature that
+// must be activated by Increase support. Once enabled, this route can be
+// upgraded to the full per-entity model by restoring Steps 1 & 2 below.
+//
+// Current flow:
+//   1. Create virtual account number under main Axiom account — HARD FAIL
+//   2. Persist participant record with KYC fields — HARD FAIL
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -69,6 +74,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'ZIP code required (5 digits)' });
   }
 
+  const mainAccountId = getAccountId();
+  if (!mainAccountId) {
+    return res.status(502).json({
+      error: 'Increase account not configured. Set INCREASE_ACCOUNT_ID (production) or INCREASE_SANDBOX_ACCOUNT_ID (sandbox).',
+      code: 'ACCOUNT_ID_MISSING',
+    });
+  }
+
   const wallet = walletAddress.toLowerCase();
 
   // ── SIWE auth ─────────────────────────────────────────────────────────────────
@@ -104,64 +117,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       participantRef = generateRef();
     }
 
-    // ── Step 1: Create per-participant individual entity — HARD FAIL ──────────
-    let entity: { id: string };
-    try {
-      entity = await IncreaseService.createIndividualEntity({
-        name: fullName.trim(),
-        date_of_birth: dateOfBirth,
-        identification: { ssn: ssnDigits },
-        address: {
-          line1: addressLine1.trim(),
-          city: city.trim(),
-          state: state.trim(),
-          zip: zip.trim(),
-        },
-      });
-    } catch (err) {
-      return res.status(502).json({
-        error: `Identity verification failed: ${err instanceof Error ? err.message : String(err)}`,
-        code: 'ENTITY_PROVISIONING_FAILED',
-        note: 'Your account was NOT created. Please verify your information and retry.',
-      });
-    }
-    const increaseEntityId = entity.id;
-
-    // ── Step 2: Create per-participant account — HARD FAIL ────────────────────
-    const programId = getProgramId();
-
-    let increaseAccountId: string;
-
-    if (programId) {
-      let account: { id: string };
-      try {
-        account = await IncreaseService.createAccount({
-          name: `${fullName.trim()} — ${participantRef}`,
-          entity_id: increaseEntityId,
-          program_id: programId,
-        });
-      } catch (err) {
-        return res.status(502).json({
-          error: `Account provisioning failed: ${err instanceof Error ? err.message : String(err)}`,
-          code: 'ACCOUNT_PROVISIONING_FAILED',
-          note: 'Your entity was created but the account could not be provisioned. Please retry or contact support.',
-          increaseEntityId,
-        });
-      }
-      increaseAccountId = account.id;
-    } else {
-      return res.status(502).json({
-        error: 'Increase program ID not configured — per-participant account provisioning requires INCREASE_PROGRAM_ID (or INCREASE_SANDBOX_PROGRAM_ID in sandbox).',
-        code: 'PROGRAM_ID_MISSING',
-        note: 'Set INCREASE_SANDBOX_PROGRAM_ID / INCREASE_PROGRAM_ID to enable per-participant account provisioning.',
-      });
-    }
-
-    // ── Step 3: Provision virtual account number — HARD FAIL ──────────────────
+    // ── Step 1: Create virtual account number under main Axiom account — HARD FAIL
     let vAccount: { id: string; routing_number: string; account_number: string };
     try {
       vAccount = await IncreaseService.createParticipantVirtualAccount({
-        account_id: increaseAccountId,
+        account_id: mainAccountId,
         participant_ref: participantRef,
         full_name: fullName.trim(),
       });
@@ -169,30 +129,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(502).json({
         error: `Virtual account provisioning failed: ${err instanceof Error ? err.message : String(err)}`,
         code: 'VIRTUAL_ACCOUNT_PROVISIONING_FAILED',
-        note: 'Your entity and account were created but the virtual account number could not be issued. Please retry.',
-        increaseEntityId,
-        increaseAccountId,
+        note: 'Your account was NOT created. Please verify your information and retry.',
       });
     }
 
-    // ── Step 4: Issue virtual debit card — BEST EFFORT ────────────────────────
-    let cardId: string | null = null;
-    let cardLast4: string | null = null;
-    let cardStatus = 'card_pending';
-
-    try {
-      const card = await IncreaseService.issueVirtualCard({
-        account_id: increaseAccountId,
-        description: `Axiom Nexus — ${participantRef}`,
-      });
-      cardId = card.id;
-      cardLast4 = card.last4;
-      cardStatus = 'active';
-    } catch {
-      cardStatus = 'card_pending';
-    }
-
-    // ── Persist complete participant record ────────────────────────────────────
+    // ── Step 2: Persist participant record with KYC fields ────────────────────
+    // SSN is NOT stored — it is collected for identity reference only and discarded.
     const [participant] = await db
       .insert(increaseParticipants)
       .values({
@@ -205,11 +147,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         virtualAccountNumberId: vAccount.id,
         virtualRoutingNumber: vAccount.routing_number,
         virtualAccountNumber: vAccount.account_number,
-        cardStatus,
-        cardId,
-        cardLast4,
-        increaseEntityId,
-        increaseAccountId,
+        cardStatus: 'card_pending',
+        cardId: null,
+        cardLast4: null,
+        increaseEntityId: null,
+        increaseAccountId: mainAccountId,
       })
       .returning();
 
@@ -218,10 +160,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       participant,
       isNew: true,
       provisioningStatus: {
-        entity: 'ok',
-        account: 'dedicated',
+        entity: 'pending-platform-upgrade',
+        account: 'main-account',
         virtualAccount: 'ok',
-        card: cardStatus === 'active' ? 'ok' : 'pending',
+        card: 'pending',
       },
     });
   } catch (err: unknown) {
