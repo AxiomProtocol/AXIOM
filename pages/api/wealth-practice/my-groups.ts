@@ -13,13 +13,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    const normalizedAddress = memberAddress.toLowerCase();
+
     const result = await pool.query(
       `SELECT
-        sgm.id,
-        sgm.group_id,
-        sgm.position,
-        sgm.status,
-        sgm.joined_at,
+        COALESCE(sgm.id, -spg.id) as id,
+        spg.id                    as group_id,
+        COALESCE(sgm.position, 1) as position,
+        COALESCE(sgm.status, 'active') as status,
+        COALESCE(sgm.joined_at, spg.created_at) as joined_at,
         spg.display_name,
         spg.description,
         spg.contribution_amount,
@@ -33,12 +35,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         spg.is_active,
         sih.region_display,
         sih.hub_name
-      FROM susu_group_members sgm
-      JOIN susu_purpose_groups spg ON sgm.group_id = spg.id
+      FROM susu_purpose_groups spg
       LEFT JOIN susu_interest_hubs sih ON spg.hub_id = sih.id
-      WHERE sgm.member_address = $1 AND sgm.status = 'active'
-      ORDER BY sgm.joined_at DESC`,
-      [memberAddress]
+      LEFT JOIN susu_group_members sgm
+        ON sgm.group_id = spg.id AND LOWER(sgm.member_address) = $1 AND sgm.status = 'active'
+      WHERE
+        (sgm.id IS NOT NULL)
+        OR (LOWER(spg.creator_wallet) = $1)
+      ORDER BY joined_at DESC`,
+      [normalizedAddress]
     );
 
     const groups = result.rows.map((g) => {

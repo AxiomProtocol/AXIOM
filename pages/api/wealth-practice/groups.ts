@@ -121,6 +121,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
       maxMembers,
       contributionFrequency,
       rotationMethod,
+      creatorAddress,
     } = req.body;
 
     if (!hubId || contributionAmount === undefined || !cycleLengthDays) {
@@ -135,32 +136,62 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
     const freq = contributionFrequency || 'monthly';
     const rotation = rotationMethod || 'round-robin';
 
-    const result = await pool.query(
-      `INSERT INTO susu_purpose_groups (
-        group_id, hub_id, purpose_category_id, contribution_amount, cycle_length_days,
-        display_name, description, member_count, min_members_to_activate,
-        max_members, contribution_frequency, rotation_method, is_active, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, $10, $11, true, NOW())
-      RETURNING *`,
-      [
-        groupIdStr,
-        Number(hubId),
-        purposeCategoryId ? Number(purposeCategoryId) : 1,
-        contributionAmount,
-        Number(cycleLengthDays),
-        displayName || null,
-        description || null,
-        minMembersToActivate ? Number(minMembersToActivate) : 3,
-        maxMembers ? Number(maxMembers) : 12,
-        freq,
-        rotation,
-      ]
-    );
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    return res.status(201).json({
-      success: true,
-      group: result.rows[0],
-    });
+      const initialMemberCount = creatorAddress ? 1 : 0;
+
+      const creatorWallet = (creatorAddress && typeof creatorAddress === 'string' && creatorAddress.startsWith('0x'))
+        ? creatorAddress.toLowerCase()
+        : null;
+
+      const result = await client.query(
+        `INSERT INTO susu_purpose_groups (
+          group_id, hub_id, purpose_category_id, contribution_amount, cycle_length_days,
+          display_name, description, member_count, min_members_to_activate,
+          max_members, contribution_frequency, rotation_method, is_active, creator_wallet, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true, $13, NOW())
+        RETURNING *`,
+        [
+          groupIdStr,
+          Number(hubId),
+          purposeCategoryId ? Number(purposeCategoryId) : 1,
+          contributionAmount,
+          Number(cycleLengthDays),
+          displayName || null,
+          description || null,
+          initialMemberCount,
+          minMembersToActivate ? Number(minMembersToActivate) : 3,
+          maxMembers ? Number(maxMembers) : 12,
+          freq,
+          rotation,
+          creatorWallet,
+        ]
+      );
+
+      const newGroup = result.rows[0];
+
+      if (creatorAddress && typeof creatorAddress === 'string' && creatorAddress.startsWith('0x')) {
+        await client.query(
+          `INSERT INTO susu_group_members (group_id, member_address, position, status, joined_at)
+           VALUES ($1, $2, 1, 'active', NOW())`,
+          [newGroup.id, creatorAddress.toLowerCase()]
+        );
+      }
+
+      await client.query('COMMIT');
+
+      return res.status(201).json({
+        success: true,
+        group: newGroup,
+      });
+    } catch (txErr) {
+      await client.query('ROLLBACK');
+      throw txErr;
+    } finally {
+      client.release();
+    }
   } catch (error: any) {
     console.error('Wealth Practice groups POST error:', error);
     return res.status(500).json({

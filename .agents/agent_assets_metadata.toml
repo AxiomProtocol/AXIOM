@@ -78,6 +78,30 @@ uri = "file://public/wealth-practice/bridge-land.png"
 type = "image"
 title = "land bridge community"
 
+[[generated]]
+id = "q7q3Z2UkU8OSg22Db4eWK"
+uri = "file://public/wealth-practice/tab-discover.png"
+type = "image"
+title = "discover tab community aerial"
+
+[[generated]]
+id = "iBLx4LAi0XqmofIm2xNRG"
+uri = "file://public/wealth-practice/tab-practice.png"
+type = "image"
+title = "my practice personal finance"
+
+[[generated]]
+id = "gAvC8rVO2xcQY_-Qus7Ae"
+uri = "file://public/wealth-practice/tab-create.png"
+type = "image"
+title = "create group charter signing"
+
+[[generated]]
+id = "UW9Tz8vthBJp6TXsua09Y"
+uri = "file://public/wealth-practice/group-card-bg.png"
+type = "image"
+title = "group contribution visual"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"

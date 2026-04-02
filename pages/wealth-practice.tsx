@@ -1,6 +1,7 @@
 import { Fragment, useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useAccount } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law/DesignLawLayout';
 
@@ -94,7 +95,15 @@ function getHubCityImage(hubName: string, regionDisplay: string): string | null 
 
 export default function WealthPracticePage() {
   const { address: connectedAddress } = useAccount();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
+
+  useEffect(() => {
+    const t = router.query.tab as string | undefined;
+    const valid: TabId[] = ['overview', 'discover', 'practice', 'create'];
+    if (t && valid.includes(t as TabId)) setActiveTab(t as TabId);
+  }, [router.query.tab]);
+
   const [stats, setStats] = useState<AnalyticsStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState('');
@@ -437,7 +446,10 @@ export default function WealthPracticePage() {
       const res = await fetch('/api/wealth-practice/groups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(createForm),
+        body: JSON.stringify({
+          ...createForm,
+          creatorAddress: connectedAddress || undefined,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -774,7 +786,7 @@ export default function WealthPracticePage() {
         </div>
       )}
 
-      {(!practiceAddress || (!myPracticeLoading && myGroups.length === 0)) && (
+      {activeTab === 'overview' && (!practiceAddress || (!myPracticeLoading && myGroups.length === 0)) && (
         <div className="mb-10 border border-dl-forest bg-dl-bg border-l-4 border-l-dl-forest px-6 py-5">
           <p className="text-xs font-dl-mono text-dl-forest uppercase tracking-wider mb-2">No Capital to Start?</p>
           <p className="text-sm text-dl-gray leading-relaxed mb-3">
@@ -794,7 +806,20 @@ export default function WealthPracticePage() {
 
       {activeTab === 'discover' && (
         <div>
-          <h2 className="font-dl-serif text-xl text-dl-navy font-bold mb-4">Discover</h2>
+          {/* Discover cinematic banner */}
+          <div className="relative overflow-hidden mb-8 -mx-6" style={{ height: '200px' }}>
+            <img
+              src="/wealth-practice/tab-discover.png"
+              alt="Discover community hubs and groups"
+              className="w-full h-full object-cover object-center"
+            />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(27,42,74,0.88) 0%, rgba(27,42,74,0.55) 50%, rgba(27,42,74,0.15) 100%)' }} />
+            <div className="absolute inset-0 flex flex-col justify-center px-8">
+              <div className="text-white/55 text-[10px] font-dl-mono uppercase tracking-widest mb-2">Wealth Practice</div>
+              <h2 className="font-dl-serif text-2xl text-white font-bold mb-1">Discover</h2>
+              <p className="text-white/75 text-sm max-w-sm">Find Interest Hubs and active groups in your city. Join the community building wealth together.</p>
+            </div>
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <input
@@ -1026,74 +1051,86 @@ export default function WealthPracticePage() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {groups.map((group) => (
-                    <div key={group.id} className="border border-dl-border p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="font-dl-serif text-dl-navy font-bold">
-                          {group.display_name || group.group_id}
+                    <div key={group.id} className="border border-dl-border flex overflow-hidden">
+                      {/* Gold accent bar */}
+                      <div className="w-1 flex-shrink-0" style={{ background: '#B8973A' }} />
+                      <div className="flex-1 p-4">
+                        {/* Header row */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <div className="font-dl-serif text-dl-navy font-bold text-base leading-tight">
+                              {group.display_name || group.group_id}
+                            </div>
+                            <div className="text-dl-gray text-xs font-dl-mono mt-0.5">{group.region_display || '—'}</div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1.5">
+                            <span className={`text-xs px-2 py-0.5 uppercase ${STATUS_STYLES[group.status] || 'border border-dl-border text-dl-gray'}`}>
+                              {group.status}
+                            </span>
+                            {/* Contribution amount badge */}
+                            <div className="text-right">
+                              <span className="font-dl-mono text-lg font-bold text-dl-navy">${group.contribution_amount}</span>
+                              <span className="text-dl-gray text-xs font-dl-mono ml-1">/{getFrequencyLabel(group.contribution_frequency || 'monthly').toLowerCase()}</span>
+                            </div>
+                          </div>
                         </div>
-                        <span className={`text-xs px-2 py-0.5 uppercase ${STATUS_STYLES[group.status] || 'border border-dl-border text-dl-gray'}`}>
-                          {group.status}
-                        </span>
-                      </div>
-                      {group.description && (
-                        <p className="text-dl-gray text-xs mb-3">{group.description}</p>
-                      )}
-                      <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                        <div>
-                          <span className="text-dl-gray">Contribution:</span>
-                          <span className="font-dl-mono text-dl-navy ml-1">${group.contribution_amount}</span>
+                        {group.description && (
+                          <p className="text-dl-gray text-xs mb-3 leading-relaxed">{group.description}</p>
+                        )}
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs mb-3">
+                          <div>
+                            <span className="text-dl-gray">Rotation:</span>
+                            <span className="font-dl-mono text-dl-navy ml-1">{getRotationLabel(group.rotation_method || 'round-robin')}</span>
+                          </div>
+                          <div>
+                            <span className="text-dl-gray">Cycle:</span>
+                            <span className="font-dl-mono text-dl-navy ml-1">{group.cycle_length_days}d</span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-dl-gray">Frequency:</span>
-                          <span className="font-dl-mono text-dl-navy ml-1">{getFrequencyLabel(group.contribution_frequency || 'monthly')}</span>
+                        {/* Member fill bar */}
+                        <div className="mb-2">
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="text-dl-gray">Members</span>
+                            <span className="font-dl-mono text-dl-navy">{group.member_count}/{group.max_members}</span>
+                          </div>
+                          <div className="w-full border border-dl-border h-1.5 bg-dl-bg">
+                            <div
+                              className="h-full"
+                              style={{ width: `${Math.round(((group.member_count || 0) / (group.max_members || 12)) * 100)}%`, background: '#1B2A4A' }}
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-dl-gray">Rotation:</span>
-                          <span className="font-dl-mono text-dl-navy ml-1">{getRotationLabel(group.rotation_method || 'round-robin')}</span>
+                        {/* Trust score bar */}
+                        <div className="mb-3">
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="text-dl-gray">Trust Score</span>
+                            <span className="font-dl-mono text-dl-navy">{group.trust_score}/100</span>
+                          </div>
+                          <div className="w-full border border-dl-border h-1.5 bg-dl-bg">
+                            <div
+                              className="h-full"
+                              style={{ width: `${group.trust_score}%`, background: '#B8973A' }}
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-dl-gray">Cycle:</span>
-                          <span className="font-dl-mono text-dl-navy ml-1">{group.cycle_length_days}d</span>
-                        </div>
-                        <div>
-                          <span className="text-dl-gray">Members:</span>
-                          <span className="font-dl-mono text-dl-navy ml-1">{group.member_count}/{group.max_members}</span>
-                        </div>
-                        <div>
-                          <span className="text-dl-gray">Region:</span>
-                          <span className="text-dl-navy ml-1">{group.region_display || '—'}</span>
-                        </div>
-                      </div>
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="text-dl-gray">Trust Score</span>
-                          <span className="font-dl-mono text-dl-navy">{group.trust_score}/100</span>
-                        </div>
-                        <div className="w-full border border-dl-border h-2 bg-dl-bg">
-                          <div
-                            className="h-full bg-dl-forest"
-                            style={{ width: `${group.trust_score}%` }}
-                          />
-                        </div>
-                      </div>
 
-                      {/* Join CTA */}
-                      {group.status === 'active' && (group.member_count || 0) < (group.max_members || 12) ? (
-                        <button
-                          onClick={() => handleStartJoin(group.id)}
-                          className="w-full border border-dl-navy bg-dl-navy text-white text-xs font-dl-mono uppercase tracking-wider py-2 hover:bg-dl-bg hover:text-dl-navy transition-none"
-                        >
-                          {joiningGroupId === group.id ? 'Close' : 'Join Group'}
-                        </button>
-                      ) : (
-                        <div className="text-center text-xs font-dl-mono text-dl-gray py-2 border border-dl-border">
-                          {group.status !== 'active' ? 'Inactive' : 'Full'}
-                        </div>
-                      )}
+                        {/* Join CTA */}
+                        {group.status === 'active' && (group.member_count || 0) < (group.max_members || 12) ? (
+                          <button
+                            onClick={() => handleStartJoin(group.id)}
+                            className="w-full border border-dl-navy bg-dl-navy text-white text-xs font-dl-mono uppercase tracking-wider py-2 hover:bg-dl-bg hover:text-dl-navy transition-none"
+                          >
+                            {joiningGroupId === group.id ? 'Close' : 'Join Group'}
+                          </button>
+                        ) : (
+                          <div className="text-center text-xs font-dl-mono text-dl-gray py-2 border border-dl-border">
+                            {group.status !== 'active' ? 'Inactive' : 'Full'}
+                          </div>
+                        )}
 
-                      {/* Inline join flow panel — insurance gating */}
-                      {joiningGroupId === group.id && (
-                        <div className="border border-dl-border mt-3 p-4 bg-dl-bg-alt">
+                        {/* Inline join flow panel — insurance gating */}
+                        {joiningGroupId === group.id && (
+                          <div className="border border-dl-border mt-3 p-4 bg-dl-bg-alt">
                           {joinStatus === 'success' ? (
                             <p className="text-xs text-dl-forest font-semibold">{joinSuccess}</p>
                           ) : (
@@ -1167,8 +1204,9 @@ export default function WealthPracticePage() {
                               )}
                             </>
                           )}
-                        </div>
-                      )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1180,7 +1218,21 @@ export default function WealthPracticePage() {
 
       {activeTab === 'practice' && (
         <div>
-          <h2 className="font-dl-serif text-xl text-dl-navy font-bold mb-4">My Practice</h2>
+          {/* My Practice cinematic banner */}
+          <div className="relative overflow-hidden mb-8 -mx-6" style={{ height: '200px' }}>
+            <img
+              src="/wealth-practice/tab-practice.png"
+              alt="Track your personal wealth practice"
+              className="w-full h-full object-cover"
+              style={{ objectPosition: 'center 40%' }}
+            />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(29,61,42,0.90) 0%, rgba(29,61,42,0.60) 45%, rgba(29,61,42,0.15) 100%)' }} />
+            <div className="absolute inset-0 flex flex-col justify-center px-8">
+              <div className="text-white/55 text-[10px] font-dl-mono uppercase tracking-widest mb-2">Wealth Practice</div>
+              <h2 className="font-dl-serif text-2xl text-white font-bold mb-1">My Practice</h2>
+              <p className="text-white/75 text-sm max-w-sm">Track your active groups, contribution schedule, and rotation history — all from your wallet address.</p>
+            </div>
+          </div>
 
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <input
@@ -1203,16 +1255,39 @@ export default function WealthPracticePage() {
           {myPracticeError && <p className="text-sm" style={{ color: '#991b1b' }}>{myPracticeError}</p>}
 
           {!myPracticeLoading && !myPracticeError && myGroups.length === 0 && practiceAddress && (
-            <div className="border border-dl-border p-8 text-center">
-              <p className="text-dl-gray text-sm">No groups found for this address.</p>
-              <p className="text-dl-gray text-xs mt-2">Join a group from the Discover tab to get started.</p>
+            <div className="border border-dl-border overflow-hidden">
+              <div className="relative h-24 overflow-hidden">
+                <img src="/wealth-practice/tab-practice.png" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 60%' }} />
+                <div className="absolute inset-0" style={{ background: 'rgba(29,61,42,0.80)' }} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-white font-dl-mono text-xs uppercase tracking-widest opacity-70">No groups found</span>
+                </div>
+              </div>
+              <div className="p-6 text-center">
+                <p className="text-dl-navy text-sm font-semibold mb-1">No Wealth Practice groups found for this address.</p>
+                <p className="text-dl-gray text-xs mt-1 mb-4">Discover an Interest Hub and join your first group to begin building wealth together.</p>
+                <button
+                  onClick={() => setActiveTab('discover')}
+                  className="border border-dl-forest bg-dl-forest text-white text-xs font-dl-mono uppercase px-5 py-2"
+                >
+                  Explore Hubs &rarr;
+                </button>
+              </div>
             </div>
           )}
 
           {!myPracticeLoading && !practiceAddress && (
-            <div className="border border-dl-border p-8 text-center">
-              <p className="text-dl-gray text-sm">Enter your wallet address or member ID to view your groups.</p>
-              <p className="text-dl-gray text-xs mt-2">Your active Wealth Practice circles, contribution schedule, and rotation dates will appear here.</p>
+            <div className="border border-dl-border overflow-hidden">
+              <div className="relative h-28 overflow-hidden">
+                <img src="/wealth-practice/tab-practice.png" alt="" className="w-full h-full object-cover" style={{ objectPosition: 'center 50%' }} />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(27,42,74,0.55) 0%, rgba(27,42,74,0.82) 100%)' }} />
+                <div className="absolute inset-0 flex items-center px-8">
+                  <div>
+                    <p className="text-white font-dl-serif text-base font-bold">Track your contribution journey</p>
+                    <p className="text-white/65 text-xs mt-1 font-dl-mono">Enter wallet address above to view groups, schedule &amp; payouts</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1556,10 +1631,21 @@ export default function WealthPracticePage() {
 
       {activeTab === 'create' && (
         <div>
-          <h2 className="font-dl-serif text-xl text-dl-navy font-bold mb-4">Create a Wealth Practice Group</h2>
-          <p className="text-dl-gray text-sm mb-6">
-            Establish a new purpose group within an existing Interest Hub. Groups require minimum participation thresholds before activation.
-          </p>
+          {/* Create tab cinematic banner */}
+          <div className="relative overflow-hidden mb-8 -mx-6" style={{ height: '220px' }}>
+            <img
+              src="/wealth-practice/tab-create.png"
+              alt="Founding a Wealth Practice Group"
+              className="w-full h-full object-cover"
+              style={{ objectPosition: 'center 30%' }}
+            />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(27,42,74,0.30) 0%, rgba(27,42,74,0.92) 100%)' }} />
+            <div className="absolute bottom-0 left-0 right-0 pb-6 px-8">
+              <div className="text-white/55 text-[10px] font-dl-mono uppercase tracking-widest mb-1">Wealth Practice</div>
+              <h2 className="font-dl-serif text-2xl text-white font-bold leading-tight">Create a Group</h2>
+              <p className="text-white/70 text-sm mt-1 max-w-md">Establish a new purpose group within an existing Interest Hub. Groups activate once minimum participation is reached.</p>
+            </div>
+          </div>
 
           <div className="border border-dl-border p-6 max-w-2xl">
             <div className="mb-4">
