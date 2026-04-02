@@ -56,27 +56,65 @@ async function fetchPaxgQuote(
   publicClient: ReturnType<typeof usePublicClient>,
   inputToken: InputToken,
   amount: string
-): Promise<bigint | null> {
+): Promise<{ amountOut: bigint; error?: never } | { amountOut?: never; error: string } | null> {
   if (!publicClient) return null;
+
+  const tokenIn  = inputToken === "ETH" ? WETH_ADDR : USDC_ADDR;
+  const fee      = inputToken === "ETH" ? FEE_ETH_PAXG : FEE_USDC_PAXG;
+  const decimals = inputToken === "USDC" ? USDC_DECIMALS : 18;
+
+  let amountIn: bigint;
+  try { amountIn = parseUnits(amount, decimals); }
+  catch { return { error: "Invalid amount" }; }
+
+  const callData = encodeFunctionData({
+    abi: quoterAbi,
+    functionName: "quoteExactInputSingle",
+    args: [{ tokenIn, tokenOut: PAXG_ADDR, amountIn, fee, sqrtPriceLimitX96: 0n }],
+  });
+
+  // QuoterV2 uses a revert-based mechanism: pool.swap() reverts in the callback,
+  // QuoterV2 catches it and either returns normally OR reverts again with the data.
+  // We handle both paths.
+  let rawData: `0x${string}` | undefined;
+
   try {
-    const tokenIn  = inputToken === "ETH" ? WETH_ADDR : USDC_ADDR;
-    const fee      = inputToken === "ETH" ? FEE_ETH_PAXG : FEE_USDC_PAXG;
-    const decimals = inputToken === "USDC" ? USDC_DECIMALS : 18;
-    const amountIn = parseUnits(amount, decimals);
-    const callData = encodeFunctionData({
-      abi: quoterAbi,
-      functionName: "quoteExactInputSingle",
-      args: [{ tokenIn, tokenOut: PAXG_ADDR, amountIn, fee, sqrtPriceLimitX96: 0n }],
-    });
-    const { data } = await publicClient.call({ to: QUOTER_V2, data: callData });
-    if (!data) return null;
+    const result = await publicClient.call({ to: QUOTER_V2, data: callData });
+    rawData = result.data;
+  } catch (err: any) {
+    // Walk the error chain looking for revert data
+    const candidates = [
+      err?.data,
+      err?.cause?.data,
+      err?.cause?.cause?.data,
+      err?.shortMessage,
+    ];
+    for (const c of candidates) {
+      if (typeof c === "string" && c.startsWith("0x") && c.length > 2) {
+        rawData = c as `0x${string}`;
+        break;
+      }
+    }
+    if (!rawData) {
+      const msg = err?.shortMessage ?? err?.message ?? "Quote failed";
+      console.error("[GetPaxgPanel] quote error:", msg, err);
+      return { error: msg };
+    }
+  }
+
+  if (!rawData || rawData === "0x") return { error: "No quote data returned" };
+
+  try {
     const [amountOut] = decodeFunctionResult({
       abi: quoterAbi,
       functionName: "quoteExactInputSingle",
-      data,
+      data: rawData,
     }) as [bigint, bigint, number, bigint];
-    return amountOut;
-  } catch { return null; }
+    return { amountOut };
+  } catch (err: any) {
+    console.error("[GetPaxgPanel] decode error:", err);
+    return { error: "Could not decode quote" };
+  }
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -134,12 +172,21 @@ export default function GetPaxgPanel() {
     const parsed = parseFloat(amount);
     if (!amount || isNaN(parsed) || parsed <= 0 || !publicClient) {
       setPaxgOut(null);
+      setErrMsg(null);
       return;
     }
     const tid = setTimeout(async () => {
       setQuoteLoading(true);
-      const out = await fetchPaxgQuote(publicClient, inputToken, amount);
-      setPaxgOut(out !== null ? parseFloat(formatUnits(out, 18)).toFixed(6) : null);
+      const result = await fetchPaxgQuote(publicClient, inputToken, amount);
+      if (result && "amountOut" in result) {
+        setPaxgOut(parseFloat(formatUnits(result.amountOut, 18)).toFixed(6));
+        setErrMsg(null);
+      } else if (result && "error" in result) {
+        setPaxgOut(null);
+        setErrMsg(result.error);
+      } else {
+        setPaxgOut(null);
+      }
       setQuoteLoading(false);
     }, 600);
     return () => clearTimeout(tid);
@@ -163,8 +210,11 @@ export default function GetPaxgPanel() {
 
       // ── Fetch fresh on-chain quote right before submit ─────────────────────
       setStatus("approving"); // Show activity while fetching fresh quote
-      const freshOut = await fetchPaxgQuote(publicClient, inputToken, amount);
-      if (!freshOut) throw new Error("Could not fetch live quote. Please try again.");
+      const freshResult = await fetchPaxgQuote(publicClient, inputToken, amount);
+      if (!freshResult || "error" in freshResult) {
+        throw new Error(freshResult?.error ?? "Could not fetch live quote. Please try again.");
+      }
+      const freshOut = freshResult.amountOut;
       // 1% slippage tolerance applied to the fresh quote
       const amountOutMin = (freshOut * 99n) / 100n;
       // Update display quote to match fresh result
