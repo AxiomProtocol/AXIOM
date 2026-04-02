@@ -2082,6 +2082,30 @@ END $seed$`, 'seed dp_listings');
         last_activity_at TIMESTAMPTZ DEFAULT now()
       )`, 'wallet_sessions');
 
+      // Idempotent: ensure UNIQUE constraints exist on wallet_sessions even if the table
+      // was created by an older schema version that lacked the UNIQUE keyword.
+      // Deduplicate first (keep most recent session per wallet/token) so ADD CONSTRAINT succeeds.
+      await exec(`
+        DELETE FROM wallet_sessions w
+        WHERE id NOT IN (
+          SELECT DISTINCT ON (wallet_address) id
+          FROM wallet_sessions
+          ORDER BY wallet_address, authenticated_at DESC NULLS LAST, id DESC
+        )
+      `, 'dedup wallet_sessions.wallet_address');
+      await exec(`
+        DO $$ BEGIN
+          ALTER TABLE wallet_sessions ADD CONSTRAINT wallet_sessions_wallet_address_key UNIQUE (wallet_address);
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$
+      `, 'constraint wallet_sessions_wallet_address_key');
+      await exec(`
+        DO $$ BEGIN
+          ALTER TABLE wallet_sessions ADD CONSTRAINT wallet_sessions_session_token_key UNIQUE (session_token);
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$
+      `, 'constraint wallet_sessions_session_token_key');
+
       await exec(`CREATE TABLE IF NOT EXISTS land_candidates (
         id SERIAL PRIMARY KEY,
         name VARCHAR(200) NOT NULL,
