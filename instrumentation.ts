@@ -1523,13 +1523,26 @@ export async function register() {
         contribution_frequency VARCHAR(20) DEFAULT 'monthly',
         rotation_method VARCHAR(20) DEFAULT 'round-robin'
       )`, 'susu_purpose_groups');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS hub_id INTEGER`, 'susu_groups add hub_id');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS purpose_category_id INTEGER`, 'susu_groups add purpose_category_id');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS custom_purpose_label VARCHAR(200)`, 'susu_groups add custom_purpose_label');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS contribution_amount NUMERIC(18,2)`, 'susu_groups add contribution_amount');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS contribution_currency VARCHAR(10) DEFAULT 'USD'`, 'susu_groups add contribution_currency');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS cycle_length_days INTEGER`, 'susu_groups add cycle_length_days');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS display_name VARCHAR(200)`, 'susu_groups add display_name');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS description TEXT`, 'susu_groups add description');
       await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS member_count INTEGER DEFAULT 0`, 'susu_groups add member_count');
       await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS min_members_to_activate INTEGER DEFAULT 3`, 'susu_groups add min_members_to_activate');
       await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS max_members INTEGER DEFAULT 12`, 'susu_groups add max_members');
       await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`, 'susu_groups add is_active');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS created_by INTEGER`, 'susu_groups add created_by');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS graduated_to_pool_id INTEGER`, 'susu_groups add graduated_to_pool_id');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS graduation_tx_hash VARCHAR(66)`, 'susu_groups add graduation_tx_hash');
       await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS graduated_at TIMESTAMPTZ`, 'susu_groups add graduated_at');
       await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS contribution_frequency VARCHAR(20) DEFAULT 'monthly'`, 'susu add contribution_frequency');
       await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS rotation_method VARCHAR(20) DEFAULT 'round-robin'`, 'susu add rotation_method');
+      await exec(`ALTER TABLE susu_purpose_groups ADD COLUMN IF NOT EXISTS creator_wallet VARCHAR(42)`, 'susu_groups add creator_wallet');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_spg_hub_id ON susu_purpose_groups(hub_id)`, 'index susu_purpose_groups.hub_id');
 
       await exec(`CREATE TABLE IF NOT EXISTS susu_group_members (
         id SERIAL PRIMARY KEY,
