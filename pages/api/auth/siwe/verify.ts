@@ -25,9 +25,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { nonce } = siweMessage;
 
     step = 'extract-headers';
-    const forwardedHost = req.headers['x-forwarded-host'];
+    const rawForwardedHost = req.headers['x-forwarded-host'];
     const originHeader = req.headers.origin;
     const refererHeader = req.headers.referer;
+
+    // Normalize x-forwarded-host: Replit proxy may send "host, host" (comma-separated)
+    // Take only the first value and trim whitespace
+    const normalizeHost = (h: string | string[] | undefined): string | undefined => {
+      if (!h) return undefined;
+      const raw = Array.isArray(h) ? h[0] : h;
+      return raw.split(',')[0].trim() || undefined;
+    };
+
+    const forwardedHost = normalizeHost(rawForwardedHost);
 
     let originHost: string | undefined;
     let refererHost: string | undefined;
@@ -39,40 +49,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try { refererHost = new URL(refererHeader as string).host; } catch {}
     }
 
-    const expectedHost =
-      (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) ||
-      originHost || refererHost || req.headers.host;
-
-    if (!expectedHost) {
-      return res.status(400).json({ error: 'Invalid request - missing host header', code: 'INVALID_REQUEST' });
-    }
-
     const messageDomain = siweMessage.domain;
+    const publicDomain = process.env.PUBLIC_DOMAIN;
+
+    // Build an inclusive set of valid hosts from all available headers
+    const validHostsSet = new Set<string>(
+      [
+        forwardedHost,
+        originHost,
+        refererHost,
+        req.headers.host as string | undefined,
+        publicDomain,
+        publicDomain ? `www.${publicDomain}` : undefined,
+      ].filter((h): h is string => !!h && h.length > 0)
+    );
 
     console.log('[SIWE Verify] Step=domain-check', {
       messageDomain,
-      expectedHost,
       forwardedHost,
       originHost,
       refererHost,
       rawHost: req.headers.host,
+      validHosts: [...validHostsSet],
     });
 
     step = 'domain-check';
-    const publicDomain = process.env.PUBLIC_DOMAIN;
-    const validHosts = [
-      Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost,
-      originHost, refererHost, req.headers.host,
-      publicDomain,
-      publicDomain ? `www.${publicDomain}` : null,
-    ].filter(Boolean) as string[];
-
-    if (!validHosts.includes(messageDomain)) {
-      console.warn('[SIWE Verify] Domain mismatch:', { messageDomain, validHosts });
+    if (!validHostsSet.has(messageDomain)) {
+      console.warn('[SIWE Verify] Domain mismatch:', {
+        messageDomain,
+        validHosts: [...validHostsSet],
+        rawForwardedHost,
+      });
       return res.status(401).json({
         error: 'Domain mismatch. The signature was created for a different site.',
         code: 'DOMAIN_MISMATCH',
-        debug: { validHosts, received: messageDomain },
+        debug: { validHosts: [...validHostsSet], received: messageDomain },
       });
     }
 

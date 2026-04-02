@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useWalletClient } from 'wagmi';
 import { DesignLawLayout } from '../../components/design-law';
 
 interface Participant {
@@ -90,6 +90,7 @@ const statusColor: Record<string, string> = {
 
 export default function MyAccountPage() {
   const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const [mounted, setMounted] = useState(false);
   const [data, setData] = useState<AccountData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -174,21 +175,35 @@ export default function MyAccountPage() {
       const { siweService } = await import('../../lib/services/SIWEService');
       siweService.resetSigningState();
 
-      // Prefer WalletService signer (works for MetaMask, WalletConnect, AppKit)
-      // Fall back to window.ethereum if WalletService has no signer yet
       let signer: any = null;
       let chainId = 42161;
-      try {
-        const { WalletService } = await import('../../lib/services/WalletService');
-        signer = WalletService.getInstance().getSigner();
-      } catch {}
 
-      if (!signer && typeof window !== 'undefined' && (window as any).ethereum) {
+      // Priority 1: wagmi walletClient (AppKit / MetaMask / WalletConnect — always in sync)
+      if (walletClient) {
+        chainId = walletClient.chain?.id ?? 42161;
+        signer = {
+          signMessage: (msg: string) => walletClient.signMessage({ message: msg }),
+        };
+        console.log('[SIWE] Using wagmi walletClient signer, chainId:', chainId);
+      }
+
+      // Priority 2: WalletService singleton signer (legacy MetaMask SDK path)
+      if (!signer) {
+        try {
+          const { WalletService } = await import('../../lib/services/WalletService');
+          signer = WalletService.getInstance().getSigner();
+          if (signer) console.log('[SIWE] Using WalletService signer');
+        } catch {}
+      }
+
+      // Priority 3: window.ethereum direct (injected provider fallback)
+      if (!signer && (window as any).ethereum) {
         const { ethers } = await import('ethers');
         const provider = new ethers.BrowserProvider((window as any).ethereum);
         signer = await provider.getSigner();
         const network = await provider.getNetwork();
         chainId = Number(network.chainId) || 42161;
+        console.log('[SIWE] Using window.ethereum signer, chainId:', chainId);
       }
 
       if (!signer) {
