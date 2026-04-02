@@ -38,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     email,
     phone,
     dateOfBirth,
-    ssnLast4,
+    ssn,
     addressLine1,
     city,
     state,
@@ -58,8 +58,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!dateOfBirth || typeof dateOfBirth !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) {
     return res.status(400).json({ error: 'Date of birth required (YYYY-MM-DD)' });
   }
-  if (!ssnLast4 || typeof ssnLast4 !== 'string' || !/^\d{4}$/.test(ssnLast4)) {
-    return res.status(400).json({ error: 'Last 4 digits of SSN required' });
+  const ssnDigits = typeof ssn === 'string' ? ssn.replace(/\D/g, '') : '';
+  if (!ssnDigits || ssnDigits.length !== 9) {
+    return res.status(400).json({ error: 'Full Social Security Number required (9 digits)' });
   }
   if (!addressLine1 || typeof addressLine1 !== 'string' || addressLine1.trim().length < 3) {
     return res.status(400).json({ error: 'Street address required' });
@@ -115,7 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       entity = await IncreaseService.createIndividualEntity({
         name: fullName.trim(),
         date_of_birth: dateOfBirth,
-        identification: { ssn_last4: ssnLast4 },
+        identification: { ssn: ssnDigits },
         address: {
           line1: addressLine1.trim(),
           city: city.trim(),

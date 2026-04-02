@@ -292,7 +292,7 @@ export const IncreaseService = {
   async createIndividualEntity(params: {
     name: string;
     date_of_birth: string;
-    identification: { ssn_last4: string };
+    identification: { ssn: string };
     address: { line1: string; city: string; state: string; zip: string };
   }): Promise<IncreaseEntity> {
     return increaseRequest<IncreaseEntity>('POST', '/entities', {
@@ -302,7 +302,7 @@ export const IncreaseService = {
         date_of_birth: params.date_of_birth,
         identification: {
           method: 'social_security_number',
-          number_last4: params.identification.ssn_last4,
+          number: params.identification.ssn.replace(/\D/g, ''),
         },
         address: {
           line1: params.address.line1,
