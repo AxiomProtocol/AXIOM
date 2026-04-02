@@ -1,628 +1,587 @@
 import Head from 'next/head';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { DesignLawLayout, SectionHeading } from '../components/design-law';
-import {
-  Layers, Shield, BookOpen, FileText, AlertTriangle, Clock,
-  ChevronRight, CheckCircle, Circle, AlertCircle, Lock,
-  Coins, BarChart3, Scale, Eye, Landmark, Target,
-} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { DesignLawLayout } from '../components/design-law';
+import { ChevronDown, ExternalLink, CheckCircle } from 'lucide-react';
 
 const LiveNavPanel    = dynamic(() => import('../components/axau/LiveNavPanel'),    { ssr: false });
 const MintRedeemPanel = dynamic(() => import('../components/axau/MintRedeemPanel'), { ssr: false });
-import {
-  AXAU_SPEC_VERSION,
-  AXAU_SPEC_EFFECTIVE_DATE,
-  AXAU_SPEC_CLASSIFICATION,
-  AXAU_TOKEN_METADATA,
-  RESERVE_LAYERS,
-  NAV_MECHANICS,
-  GOVERNANCE_RULES,
-  AUDIT_ROADMAP,
-  DISCLOSURE_NOTICES,
-  PROTOCOL_INTEGRATION,
-  ROLLOUT_PHASES,
-  type ReserveLayerStatus,
-  type RiskTier,
-  type AuditMilestone,
-} from '../lib/axau/spec';
 
-function StatusPill({ status }: { status: ReserveLayerStatus }) {
-  const map: Record<ReserveLayerStatus, { label: string; cls: string }> = {
-    ACTIVE: { label: 'Active', cls: 'bg-green-50 text-green-800 border-green-300' },
-    PLANNED: { label: 'Planned', cls: 'bg-blue-50 text-blue-800 border-blue-300' },
-    GOVERNANCE_VOTE_REQUIRED: { label: 'Governance Vote Required', cls: 'bg-yellow-50 text-yellow-800 border-yellow-300' },
-    SPECIFICATION_ONLY: { label: 'Specification Only', cls: 'bg-gray-50 text-gray-600 border-gray-300' },
-  };
-  const s = map[status];
+// ─── Palette ─────────────────────────────────────────────────────────────────
+const C = {
+  navy:      '#1e3a5f',
+  navyLight: '#2a4a73',
+  gold:      '#b8860b',
+  goldBg:    '#fdf8ee',
+  border:    '#d1d5db',
+  borderAlt: '#e5e7eb',
+  bg:        '#ffffff',
+  bgAlt:     '#fafaf8',
+  bgGold:    '#fdf8ee',
+  text:      '#111827',
+  muted:     '#6b7280',
+  green:     '#166534',
+};
+
+// ─── 3D Icon Components ──────────────────────────────────────────────────────
+
+function GoldCoinIcon({ size = 64 }: { size?: number }) {
   return (
-    <span className={`inline-block px-2 py-0.5 text-xs font-dl-mono border ${s.cls}`}>
-      {s.label}
-    </span>
+    <div style={{
+      width: size, height: size, borderRadius: '50%', flexShrink: 0,
+      background: 'radial-gradient(ellipse at 38% 30%, #FFE07A 0%, #C9913A 42%, #7A5010 100%)',
+      boxShadow: 'inset -3px -3px 10px rgba(0,0,0,0.4), inset 2px 2px 6px rgba(255,240,160,0.5), 4px 8px 16px rgba(0,0,0,0.2)',
+      transform: 'perspective(300px) rotateX(18deg) rotateY(-20deg)',
+    }} />
   );
 }
 
-function RiskTierPill({ tier }: { tier: RiskTier }) {
-  const map: Record<RiskTier, { label: string; cls: string }> = {
-    TIER_1_LIQUID: { label: 'Tier 1 — Liquid', cls: 'text-dl-forest border-dl-forest' },
-    TIER_2_SEMI_LIQUID: { label: 'Tier 2 — Semi-Liquid', cls: 'text-dl-gold border-dl-gold' },
-    TIER_3_ILLIQUID: { label: 'Tier 3 — Illiquid', cls: 'text-dl-navy border-dl-navy' },
-  };
-  const s = map[tier];
+function ShieldIcon({ size = 60 }: { size?: number }) {
   return (
-    <span className={`inline-block px-2 py-0.5 text-xs font-dl-mono border ${s.cls}`}>
-      {s.label}
-    </span>
-  );
-}
-
-function AuditStatusPill({ status }: { status: AuditMilestone['status'] }) {
-  const map: Record<AuditMilestone['status'], { label: string; cls: string; icon: React.ReactNode }> = {
-    COMPLETE: { label: 'Complete', cls: 'text-green-800 border-green-300 bg-green-50', icon: <CheckCircle className="w-3 h-3" /> },
-    ACTIVE: { label: 'Active', cls: 'text-blue-800 border-blue-300 bg-blue-50', icon: <Circle className="w-3 h-3" /> },
-    DEFERRED: { label: 'Deferred', cls: 'text-yellow-800 border-yellow-300 bg-yellow-50', icon: <Clock className="w-3 h-3" /> },
-    PLANNED: { label: 'Planned', cls: 'text-gray-600 border-gray-300 bg-gray-50', icon: <Circle className="w-3 h-3" /> },
-  };
-  const s = map[status];
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-dl-mono border ${s.cls}`}>
-      {s.icon}
-      {s.label}
-    </span>
-  );
-}
-
-function DataRow({ label, value, alt }: { label: string; value: React.ReactNode; alt?: boolean }) {
-  return (
-    <div className={`flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-0 px-4 py-3 border-b border-dl-border ${alt ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
-      <div className="sm:w-48 flex-shrink-0">
-        <span className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">{label}</span>
-      </div>
-      <div className="flex-1 text-sm text-dl-navy">{value}</div>
+    <div style={{ width: size, height: size * 1.1, flexShrink: 0, filter: 'drop-shadow(3px 6px 10px rgba(0,0,0,0.18))' }}>
+      <svg viewBox="0 0 60 68" width={size} height={size * 1.13} fill="none">
+        <defs>
+          <linearGradient id="sg" x1="20%" y1="0%" x2="80%" y2="100%">
+            <stop offset="0%" stopColor="#FFE07A" />
+            <stop offset="50%" stopColor="#C9913A" />
+            <stop offset="100%" stopColor="#7A5010" />
+          </linearGradient>
+        </defs>
+        <path d="M30 2L58 13V38C58 52 44 64 30 66C16 64 2 52 2 38V13L30 2Z" fill="url(#sg)" />
+        <path d="M19 34l8 8 14-16" stroke="rgba(255,255,255,0.9)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </div>
   );
 }
+
+function LiquidityIcon({ size = 60 }: { size?: number }) {
+  return (
+    <div style={{ width: size, height: size, flexShrink: 0, filter: 'drop-shadow(3px 6px 10px rgba(0,0,0,0.15))' }}>
+      <svg viewBox="0 0 64 64" width={size} height={size} fill="none">
+        <defs>
+          <linearGradient id="ag" x1="0%" y1="20%" x2="100%" y2="80%">
+            <stop offset="0%" stopColor="#FFE07A" />
+            <stop offset="60%" stopColor="#C9913A" />
+            <stop offset="100%" stopColor="#7A5010" />
+          </linearGradient>
+        </defs>
+        <path d="M10 32H54M54 32L38 16M54 32L38 48" stroke="url(#ag)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M6 20H22M6 44H22" stroke="url(#ag)" strokeWidth="5" strokeLinecap="round" opacity="0.45" />
+      </svg>
+    </div>
+  );
+}
+
+// ─── Hero ────────────────────────────────────────────────────────────────────
+
+function Hero() {
+  const [xauPrice, setXauPrice] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/axau/nav')
+      .then(r => r.json())
+      .then(d => setXauPrice(d.xauUsdPrice))
+      .catch(() => {});
+  }, []);
+
+  return (
+    <section style={{ background: C.bgAlt, borderBottom: `1px solid ${C.border}`, padding: '0 0 0 0', overflow: 'hidden' }}>
+      {/* Hero image strip */}
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '21/6', minHeight: 160, maxHeight: 340 }}>
+        <Image
+          src="/axau/hero-gold-vault.png"
+          alt="Gold vault reserve"
+          fill
+          priority
+          style={{ objectFit: 'cover', objectPosition: 'center 45%' }}
+        />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(250,250,248,0.65) 80%, #fafaf8 100%)' }} />
+        {/* Live badge overlaid on image */}
+        <div style={{ position: 'absolute', bottom: 16, left: 20 }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'rgba(255,255,255,0.9)', border: `1px solid ${C.border}`,
+            padding: '5px 12px',
+            fontFamily: '"Courier New", monospace', fontSize: 10,
+            color: C.navy, letterSpacing: '0.12em', textTransform: 'uppercase',
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#16a34a', display: 'inline-block', flexShrink: 0 }} />
+            Mint Active · Arbitrum One{xauPrice && ` · XAU $${xauPrice}`}
+          </span>
+        </div>
+      </div>
+
+      {/* Headline block */}
+      <div style={{ padding: '32px 0 40px', textAlign: 'center' }}>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 }}>
+          AXAU — Axiom Gold Reserve Unit
+        </p>
+        <h1 style={{
+          fontFamily: '"Cormorant Garamond", Georgia, serif',
+          fontSize: 'clamp(32px, 6vw, 68px)',
+          fontWeight: 700, color: C.navy, lineHeight: 1.08,
+          marginBottom: 14, letterSpacing: '-0.01em',
+        }}>
+          Your Wealth,<br />
+          <span style={{ color: C.gold }}>Anchored in Gold</span>
+        </h1>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 16, color: C.muted, maxWidth: 500, margin: '0 auto 28px', lineHeight: 1.7 }}>
+          AXAU is a gold reserve unit backed by PAXG — Paxos Gold on Arbitrum One. Every token is fully verifiable on-chain.
+        </p>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <a href="#mint-terminal" style={{
+            display: 'inline-block', padding: '12px 28px',
+            background: C.navy, color: '#fff',
+            fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
+            textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700,
+          }}>
+            MINT AXAU →
+          </a>
+          <a href="#how-it-works" style={{
+            display: 'inline-block', padding: '12px 28px',
+            border: `1px solid ${C.border}`, color: C.navy,
+            fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
+            textTransform: 'uppercase', textDecoration: 'none', background: C.bg,
+          }}>
+            HOW IT WORKS
+          </a>
+        </div>
+      </div>
+
+      {/* Token strip */}
+      <div style={{ borderTop: `1px solid ${C.border}`, padding: '12px 0', background: C.bg, display: 'flex', flexWrap: 'wrap', gap: 0 }}>
+        {[
+          ['Token', 'AXAU'],
+          ['Reserve', 'PAXG — Paxos Gold'],
+          ['Network', 'Arbitrum One'],
+          ['Standard', 'ERC-3643'],
+          ['Oracle', 'Chainlink XAU/USD'],
+          ['Coverage', '≥ 105%'],
+        ].map(([label, value], i) => (
+          <div key={label} style={{
+            flex: '1 1 auto', minWidth: 90,
+            padding: '6px 14px', textAlign: 'center',
+            borderRight: `1px solid ${C.borderAlt}`,
+          }}>
+            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: C.muted, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 3 }}>{label}</p>
+            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.navy, fontWeight: 700 }}>{value}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── Value Props ─────────────────────────────────────────────────────────────
+
+function ValueProps() {
+  const cards = [
+    {
+      icon: <GoldCoinIcon />,
+      badge: 'TIER 1 RESERVE',
+      title: 'Pure Gold Backing',
+      body: 'Every AXAU token is backed by PAXG — Paxos Gold on Arbitrum One. One PAXG equals one troy ounce of physical gold held in professional custody.',
+    },
+    {
+      icon: <ShieldIcon />,
+      badge: 'FULLY AUDITABLE',
+      title: 'On-Chain Transparency',
+      body: 'Gold reserves, coverage ratios, and all system parameters are publicly verifiable on-chain, 24 hours a day, 7 days a week. No black boxes.',
+    },
+    {
+      icon: <LiquidityIcon />,
+      badge: 'ARBITRUM SPEED',
+      title: 'Instant Liquidity',
+      body: 'Mint AXAU with PAXG in a single transaction on Arbitrum. Redeem back to PAXG anytime. No lock-ups, no waiting periods, no intermediaries.',
+    },
+  ];
+
+  return (
+    <section style={{ borderBottom: `1px solid ${C.border}`, padding: '60px 0' }}>
+      <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Why AXAU</p>
+        <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(24px, 4vw, 40px)', fontWeight: 600, color: C.navy, lineHeight: 1.2 }}>
+          The gold standard,<br />redesigned for the digital era
+        </h2>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+        {cards.map(card => (
+          <div key={card.title} style={{ border: `1px solid ${C.border}`, background: C.bgAlt, padding: '28px 24px' }}>
+            <div style={{ marginBottom: 20 }}>{card.icon}</div>
+            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 8 }}>{card.badge}</p>
+            <h3 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 20, color: C.navy, fontWeight: 600, marginBottom: 10, lineHeight: 1.2 }}>{card.title}</h3>
+            <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7 }}>{card.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── How It Works ─────────────────────────────────────────────────────────────
+
+function HowItWorks() {
+  const steps = [
+    {
+      num: '01',
+      title: 'Get PAXG on Arbitrum',
+      body: 'Use the built-in swap to exchange ETH or USDC for PAXG (Paxos Gold) directly on Arbitrum One. No need to leave the platform.',
+      note: 'Minimum: any amount of PAXG',
+    },
+    {
+      num: '02',
+      title: 'Mint Your AXAU',
+      body: 'Approve PAXG, then submit the mint. Your PAXG moves to the gold vault and AXAU is issued to your wallet at the current Mint NAV price.',
+      note: '2 wallet signatures total',
+    },
+    {
+      num: '03',
+      title: 'Hold or Redeem Anytime',
+      body: "Hold AXAU as your gold reserve unit. When you're ready, redeem back to PAXG at the Backing NAV price — no lock-up, no waiting.",
+      note: 'Redeem anytime',
+    },
+  ];
+
+  return (
+    <section id="how-it-works" style={{ borderBottom: `1px solid ${C.border}`, padding: '60px 0' }}>
+      <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Get Started</p>
+        <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(24px, 4vw, 40px)', fontWeight: 600, color: C.navy }}>
+          How it works
+        </h2>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 0, border: `1px solid ${C.border}` }}>
+        {steps.map((step, i) => (
+          <div key={step.num} style={{
+            padding: '28px 24px',
+            borderRight: i < steps.length - 1 ? `1px solid ${C.border}` : 'none',
+            background: C.bg,
+          }}>
+            <div style={{
+              fontFamily: '"Cormorant Garamond", Georgia, serif',
+              fontSize: 56, color: C.borderAlt, lineHeight: 1,
+              marginBottom: 16, fontWeight: 700, letterSpacing: '-0.02em',
+            }}>
+              {step.num}
+            </div>
+            <h3 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 18, color: C.navy, fontWeight: 600, marginBottom: 10, lineHeight: 1.3 }}>
+              {step.title}
+            </h3>
+            <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7, marginBottom: 14 }}>
+              {step.body}
+            </p>
+            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+              {step.note}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* PAXG explainer */}
+      <div style={{ marginTop: 20, border: `1px solid ${C.border}`, background: C.bgGold, padding: '20px 24px', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        <div style={{ width: 44, height: 44, flexShrink: 0 }}>
+          <Image src="/axau/gold-coin-3d.png" alt="Gold coin" width={44} height={44} style={{ objectFit: 'cover', borderRadius: '50%' }} />
+        </div>
+        <div style={{ flex: 1, minWidth: 220 }}>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 5 }}>What is PAXG?</p>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.65 }}>
+            PAXG (Paxos Gold) is a regulated digital token where 1 token = 1 troy ounce of physical gold held at Brink's vaults in London. Issued by Paxos Trust Company.
+          </p>
+        </div>
+        <a href="https://paxos.com/paxgold/" target="_blank" rel="noopener noreferrer" style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0, alignSelf: 'center',
+          fontFamily: '"Courier New", monospace', fontSize: 10, color: C.navy, textDecoration: 'none',
+          letterSpacing: '0.1em', textTransform: 'uppercase',
+        }}>
+          Learn More <ExternalLink style={{ width: 11, height: 11 }} />
+        </a>
+      </div>
+    </section>
+  );
+}
+
+// ─── Live Dashboard ───────────────────────────────────────────────────────────
+
+function LiveDashboard() {
+  return (
+    <section style={{ borderBottom: `1px solid ${C.border}`, padding: '60px 0' }}>
+      <div style={{ marginBottom: 28 }}>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>Real-Time Data</p>
+        <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(22px, 3.5vw, 34px)', fontWeight: 600, color: C.navy }}>
+          Live Reserve Dashboard
+        </h2>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, marginTop: 6, maxWidth: 480, lineHeight: 1.6 }}>
+          Every metric pulled directly from Arbitrum One in real time. XAU price is sourced from Chainlink's professional oracle network.
+        </p>
+      </div>
+      <LiveNavPanel />
+    </section>
+  );
+}
+
+// ─── Mint Terminal ────────────────────────────────────────────────────────────
+
+function MintTerminal() {
+  return (
+    <section id="mint-terminal" style={{ borderBottom: `1px solid ${C.border}`, padding: '60px 0' }}>
+      <div style={{ marginBottom: 32 }}>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>On-Chain</p>
+        <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(22px, 3.5vw, 34px)', fontWeight: 600, color: C.navy }}>
+          Mint & Redeem Terminal
+        </h2>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, marginTop: 6, maxWidth: 480, lineHeight: 1.6 }}>
+          Connect your wallet on Arbitrum One and start building your gold reserve in minutes.
+        </p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 20, alignItems: 'start' }}>
+        <MintRedeemPanel />
+
+        {/* Side guide */}
+        <div style={{ border: `1px solid ${C.border}`, background: C.bgAlt, padding: '24px' }}>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Transaction Guide</p>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: C.muted, lineHeight: 1.6, marginBottom: 20, paddingBottom: 16, borderBottom: `1px solid ${C.borderAlt}` }}>
+            All steps completed within Axiom Protocol. No bridging required.
+          </p>
+
+          {[
+            { step: '1', label: 'Connect Wallet', detail: 'Hit "Connect" in the top nav. Select Arbitrum One. MetaMask, Coinbase, or any WalletConnect wallet works.', tag: null },
+            { step: '2', label: 'Get PAXG', detail: 'Use the "Get PAXG" tab to swap ETH or USDC for PAXG on Arbitrum via Uniswap V3. Takes ~30 seconds.', tag: 'Get PAXG tab' },
+            { step: '3', label: 'Approve & Mint', detail: 'Enter your PAXG amount in the Mint tab. Confirm 2 transactions: Approve PAXG, then Mint AXAU.', tag: 'Mint tab' },
+            { step: '4', label: 'Redeem Anytime', detail: 'Want your gold back? Use the Redeem tab to burn AXAU and receive PAXG at Backing NAV.', tag: 'Redeem tab' },
+          ].map((item, i, arr) => (
+            <div key={item.step} style={{ display: 'flex', gap: 12, marginBottom: i < arr.length - 1 ? 16 : 0, paddingBottom: i < arr.length - 1 ? 16 : 0, borderBottom: i < arr.length - 1 ? `1px solid ${C.borderAlt}` : 'none' }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                border: `1px solid ${C.gold}`, background: C.bgGold,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: '"Courier New", monospace', fontSize: 10, color: C.navy, fontWeight: 700,
+              }}>
+                {item.step}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 3 }}>
+                  <span style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.navy, fontWeight: 600 }}>{item.label}</span>
+                  {item.tag && (
+                    <span style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: C.gold, letterSpacing: '0.12em', textTransform: 'uppercase', border: `1px solid ${C.gold}`, padding: '1px 6px', background: C.bgGold }}>
+                      {item.tag}
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: C.muted, lineHeight: 1.55 }}>{item.detail}</p>
+              </div>
+            </div>
+          ))}
+
+          <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${C.borderAlt}` }}>
+            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, lineHeight: 1.65 }}>
+              Reserve: PAXG (Paxos Gold) on Arbitrum One.{' '}
+              <a href="https://arbiscan.io/address/0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8" target="_blank" rel="noopener noreferrer" style={{ color: C.navy, textDecoration: 'none' }}>Gold Vault ↗</a>
+              {' · '}
+              <a href="https://arbiscan.io/address/0x036F05a3fB74d35439c074f25F691b36f5D37792" target="_blank" rel="noopener noreferrer" style={{ color: C.navy, textDecoration: 'none' }}>Controller ↗</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Reserve Architecture ─────────────────────────────────────────────────────
+
+function ReserveArchitecture() {
+  return (
+    <section style={{ borderBottom: `1px solid ${C.border}`, padding: '60px 0' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 40, alignItems: 'start' }}>
+        {/* Left */}
+        <div>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Reserve System</p>
+          <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(22px, 3.5vw, 34px)', fontWeight: 600, color: C.navy, marginBottom: 16, lineHeight: 1.2 }}>
+            How the reserve is structured
+          </h2>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, lineHeight: 1.75, marginBottom: 24 }}>
+            AXAU uses a multi-layer reserve architecture. Gold (XAU) is the founding anchor — the first and most liquid reserve.
+            Additional reserve layers can be added through AXM governance, making the backing richer over time.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {[
+              { label: 'Backing NAV', formula: 'Total Reserve USD ÷ Supply', desc: 'The floor value per AXAU — what each token is worth in reserve backing.' },
+              { label: 'Mint NAV', formula: 'Backing NAV × 1.05', desc: 'The price to mint. The 5% premium builds a reserve buffer with each mint.' },
+              { label: 'Coverage Ratio', formula: 'Reserve USD ÷ (Supply × $1)', desc: 'Must stay ≥ 105%. Minting pauses automatically if it falls below.' },
+            ].map(item => (
+              <div key={item.label} style={{ border: `1px solid ${C.border}`, background: C.bg, padding: '14px 18px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 14, color: C.navy, fontWeight: 600 }}>{item.label}</span>
+                  <code style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, background: C.bgGold, padding: '2px 7px', border: `1px solid ${C.borderAlt}` }}>{item.formula}</code>
+                </div>
+                <p style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: C.muted, lineHeight: 1.55 }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right */}
+        <div>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 14 }}>Reserve Layers</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[
+              { phase: 'Phase 1', name: 'Gold (XAU)', asset: 'PAXG — Paxos Gold', status: 'LIVE', active: true },
+              { phase: 'Phase 2', name: 'Land (Real Estate)', asset: 'Appraised US real estate', status: 'CONFIGURED', active: false },
+              { phase: 'Phase 3', name: 'Silver (XAG)', asset: 'Physical silver via LBMA', status: 'PLANNED', active: false },
+              { phase: 'Phase 4+', name: 'Additional Commodities', asset: 'Governance-approved assets', status: 'FUTURE', active: false },
+            ].map(layer => (
+              <div key={layer.phase} style={{ border: `1px solid ${layer.active ? C.gold : C.border}`, background: layer.active ? C.bgGold : C.bg, padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{
+                  width: 32, height: 32, flexShrink: 0, borderRadius: '50%',
+                  background: layer.active ? 'radial-gradient(ellipse at 35% 30%, #FFE07A, #C9913A, #7A5010)' : C.bgAlt,
+                  border: `1px solid ${layer.active ? C.gold : C.border}`,
+                }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 14, color: C.navy, fontWeight: 600 }}>{layer.name}</span>
+                    <span style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: layer.active ? C.green : C.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{layer.status}</span>
+                  </div>
+                  <span style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: C.muted }}>{layer.asset}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Network image */}
+          <div style={{ marginTop: 16, position: 'relative', height: 180, overflow: 'hidden', border: `1px solid ${C.border}` }}>
+            <Image src="/axau/network-3d.png" alt="On-chain network" fill style={{ objectFit: 'cover', opacity: 0.85 }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(255,255,255,0.7) 0%, transparent 50%)' }} />
+            <div style={{ position: 'absolute', bottom: 12, left: 16 }}>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: C.navy, letterSpacing: '0.14em', textTransform: 'uppercase' }}>7 Contracts · Arbitrum One · All Verified</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── FAQ ──────────────────────────────────────────────────────────────────────
+
+function FAQ() {
+  const [open, setOpen] = useState<number | null>(null);
+
+  const items = [
+    {
+      q: 'What makes AXAU different from buying PAXG directly?',
+      a: 'AXAU is a protocol-managed reserve unit that can hold multiple commodities over time. The 5% mint premium builds a reserve buffer — the protocol becomes more over-collateralized with every mint. It also enables deeper DeFi integration (lending markets, liquidity pools) that raw PAXG cannot access.',
+    },
+    {
+      q: 'Is there any risk of losing my gold?',
+      a: 'PAXG held in the Gold Vault is a smart contract on Arbitrum One. Smart contract risk exists, as with all on-chain protocols. The protocol enforces a ≥105% coverage ratio — if this falls, minting pauses automatically. Redemptions can always be processed as long as the vault holds enough PAXG.',
+    },
+    {
+      q: 'How much does it cost to mint AXAU?',
+      a: 'The only cost is the 5% mint premium built into the NAV price (you receive slightly less AXAU per dollar of PAXG, creating a reserve buffer). Gas fees on Arbitrum One are typically less than $0.05 per transaction.',
+    },
+    {
+      q: 'Can I redeem AXAU for PAXG at any time?',
+      a: 'Yes, as long as the redeem function is active and the vault holds sufficient PAXG. Redemptions occur at the Backing NAV price — the reserve value per AXAU at the moment of redemption.',
+    },
+    {
+      q: 'Where are the smart contracts? Are they audited?',
+      a: 'All 7 AXAU contracts are deployed and verified on Arbitrum One via Blockscout. An external audit is on the roadmap for the next protocol phase. Contract addresses are listed in the Live Reserve Dashboard above.',
+    },
+    {
+      q: 'What does "coverage ratio ≥ 105%" mean?',
+      a: 'The protocol must hold at least $1.05 in reserves for every $1.00 of AXAU in circulation. This 5% buffer provides protection against small oracle price fluctuations and ensures the system is always more than fully backed.',
+    },
+  ];
+
+  return (
+    <section style={{ borderBottom: `1px solid ${C.border}`, padding: '60px 0' }}>
+      <div style={{ maxWidth: 720 }}>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Questions</p>
+        <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(24px, 4vw, 38px)', fontWeight: 600, color: C.navy, marginBottom: 32 }}>
+          Frequently asked questions
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {items.map((item, i) => (
+            <div key={i} style={{ border: `1px solid ${C.border}`, background: open === i ? C.bgAlt : C.bg }}>
+              <button
+                onClick={() => setOpen(open === i ? null : i)}
+                style={{ width: '100%', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+              >
+                <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 15, color: C.navy, fontWeight: 600, lineHeight: 1.3, flex: 1 }}>{item.q}</span>
+                <ChevronDown style={{ width: 16, height: 16, color: C.gold, transform: open === i ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
+              </button>
+              {open === i && (
+                <div style={{ padding: '0 20px 16px', borderTop: `1px solid ${C.borderAlt}` }}>
+                  <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.75, paddingTop: 14 }}>{item.a}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Disclosures ─────────────────────────────────────────────────────────────
+
+function Disclosures() {
+  return (
+    <section style={{ padding: '48px 0' }}>
+      <div style={{ border: `1px solid ${C.border}`, background: C.bgAlt, padding: '24px' }}>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 14 }}>Important Disclosures</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 20 }}>
+          {[
+            'AXAU is not a security, investment contract, or regulated financial product. It is a protocol-managed reserve instrument.',
+            'Smart contract risk exists. All contracts are unaudited at this stage. Use only funds you can afford to lose.',
+            'PAXG prices fluctuate with the gold market. The value of AXAU in USD terms may increase or decrease.',
+            'The protocol is designed to align with applicable digital asset regulations, including the GENIUS Act framework. No legal compliance is guaranteed.',
+            'Mint and redeem functions may be paused by governance at any time for protocol safety.',
+            'AXAU is issued under the ERC-3643 standard with identity compliance controls. Transfer restrictions may apply.',
+          ].map((notice, i) => (
+            <p key={i} style={{ fontFamily: 'Georgia, serif', fontSize: 11, color: C.muted, lineHeight: 1.6, paddingLeft: 12, borderLeft: `2px solid ${C.borderAlt}` }}>
+              {notice}
+            </p>
+          ))}
+        </div>
+        <div style={{ paddingTop: 16, borderTop: `1px solid ${C.borderAlt}`, display: 'flex', flexWrap: 'wrap', gap: 20 }}>
+          {[
+            ['Token Contract', '0xbcCA4D937d427829914498423aE6E04C846dB0Bb', 'https://arbitrum.blockscout.com/address/0xbcCA4D937d427829914498423aE6E04C846dB0Bb'],
+            ['MintRedeem Controller', '0x036F05a3fB74d35439c074f25F691b36f5D37792', 'https://arbitrum.blockscout.com/address/0x036F05a3fB74d35439c074f25F691b36f5D37792'],
+            ['NAV Engine', '0x80F8634a43B26a2bd403396A42465F138aeCC519', 'https://arbitrum.blockscout.com/address/0x80F8634a43B26a2bd403396A42465F138aeCC519'],
+            ['Gold Vault', '0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8', 'https://arbitrum.blockscout.com/address/0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8'],
+          ].map(([label, addr, url]) => (
+            <a key={label} href={url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: C.muted, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 2 }}>{label}</p>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.navy }}>{addr.slice(0, 10)}…{addr.slice(-6)} ↗</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AxauPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>AXAU Reserve Layers — System Specification | Axiom Protocol</title>
-        <meta name="description" content="AXAU institutional specification: monetary policy, reserve architecture, governance rules, and audit roadmap for the Axiom Gold Reserve Unit." />
+        <title>AXAU — Axiom Gold Reserve Unit | Your Wealth, Anchored in Gold</title>
+        <meta name="description" content="AXAU is a gold reserve unit backed by PAXG on Arbitrum One. Mint, hold, and redeem your gold position on-chain with full transparency." />
       </Head>
 
-      <div className="max-w-4xl mx-auto">
-
-        {/* ── Header ───────────────────────────────────────────────── */}
-        <div className="mb-10">
-          <div className="flex items-start gap-3 mb-4">
-            <Landmark className="w-8 h-8 text-dl-gold flex-shrink-0 mt-1" />
-            <div>
-              <h1 className="font-dl-serif text-3xl text-dl-navy">AXAU Reserve Layers</h1>
-              <p className="text-dl-gray mt-1">Axiom Protocol — Store-of-Value and Wealth Preservation Instrument</p>
-            </div>
-          </div>
-
-          <div className="border border-dl-border border-l-4 border-l-dl-gold px-6 py-3 bg-dl-bg-alt mb-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-dl-navy flex-shrink-0" />
-                <span className="text-sm font-dl-mono text-dl-navy">{AXAU_SPEC_CLASSIFICATION}</span>
-              </div>
-              <div className="flex items-center gap-4 font-dl-mono text-xs text-dl-gray">
-                <span>Spec v{AXAU_SPEC_VERSION}</span>
-                <span>Effective {AXAU_SPEC_EFFECTIVE_DATE}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="border border-dl-border border-t-0 px-6 py-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="inline-block px-2 py-0.5 text-xs font-dl-mono border border-dl-forest text-dl-forest">
-                DEPLOYED — ARBITRUM ONE
-              </span>
-              <span className="inline-block px-2 py-0.5 text-xs font-dl-mono border border-dl-forest text-dl-forest bg-green-50">
-                MINT ACTIVE
-              </span>
-              <span className="text-xs text-dl-gray font-dl-mono">7 contracts live · Mint &amp; redeem open · XAU/USD Chainlink oracle</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Disclosure notices ────────────────────────────────────── */}
-        <div className="mb-8 border border-dl-border border-l-4 border-l-dl-navy px-6 py-5 bg-dl-bg-alt">
-          <div className="flex items-start gap-2 mb-3">
-            <AlertCircle className="w-4 h-4 text-dl-navy flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-semibold text-dl-navy uppercase tracking-wide font-dl-mono">Important Disclosures</p>
-          </div>
-          <ul className="space-y-2">
-            {DISCLOSURE_NOTICES.map((notice, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <AlertTriangle className="w-3 h-3 text-dl-gold mt-1 flex-shrink-0" />
-                <p className="text-xs text-dl-navy leading-relaxed">{notice}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* ── Live System Dashboard ─────────────────────────────────── */}
-        <section className="mb-12">
-          <SectionHeading>
-            <span className="inline-flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-dl-navy" />
-              Live System State
-            </span>
-          </SectionHeading>
-          <LiveNavPanel />
-        </section>
-
-        {/* ── Mint / Redeem Terminal ────────────────────────────────── */}
-        <section className="mb-12">
-          <SectionHeading>
-            <span className="inline-flex items-center gap-2">
-              <Coins className="w-5 h-5 text-dl-navy" />
-              Mint / Redeem Terminal
-            </span>
-          </SectionHeading>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <MintRedeemPanel />
-            <div className="border border-dl-border p-5 bg-dl-bg-alt">
-              <p className="font-dl-mono text-[10px] uppercase tracking-widest text-dl-navy/40 mb-1">Transaction Guide</p>
-              <p className="font-dl-mono text-[10px] text-dl-navy/40 mb-3">All steps completed within Axiom Protocol.</p>
-              <ul className="space-y-3">
-                {[
-                  { step: "1", label: "Connect Wallet", detail: "Connect via the nav bar. Arbitrum One network required. All steps below happen within this page.", tag: null },
-                  { step: "2", label: "Get PAXG — in-platform", detail: "Use the Get PAXG tab to swap ETH or USDC for PAXG (Paxos Gold) via Uniswap V3. No need to leave Axiom.", tag: "Get PAXG tab" },
-                  { step: "3", label: "Mint AXAU — in-platform", detail: "Use the Mint tab. Approval and minting are handled in two sequential wallet confirmations. PAXG is deposited to the Gold Vault; AXAU is issued to your wallet at Mint NAV.", tag: "Mint tab" },
-                  { step: "4", label: "Redeem AXAU — in-platform", detail: "Use the Redeem tab. Burn AXAU and receive PAXG back at Backing NAV, subject to coverage ratio.", tag: "Redeem tab" },
-                ].map(item => (
-                  <li key={item.step} className="flex gap-3">
-                    <span className="font-dl-mono text-xs text-dl-navy/30 w-4 flex-shrink-0 mt-0.5">{item.step}</span>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-dl-mono text-xs text-dl-navy font-semibold">{item.label}</p>
-                        {item.tag && (
-                          <span className="font-dl-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5 bg-dl-navy/10 text-dl-navy/70">
-                            {item.tag}
-                          </span>
-                        )}
-                      </div>
-                      <p className="font-dl-mono text-xs text-dl-navy/60 mt-0.5">{item.detail}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-4 pt-4 border-t border-dl-border">
-                <p className="font-dl-mono text-[10px] text-dl-navy/40">
-                  Reserve: PAXG (Paxos Gold, 18 dec) on Arbitrum One.
-                  XAU vault: <a href="https://arbiscan.io/address/0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8" target="_blank" rel="noopener noreferrer" className="underline hover:text-dl-navy">0xaCc9…CF8</a>
-                  · PAXG: <a href="https://arbiscan.io/address/0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429" target="_blank" rel="noopener noreferrer" className="underline hover:text-dl-navy">0xfEb4…429</a>
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Section 1: Token Overview ─────────────────────────────── */}
-        <section className="mb-12">
-          <SectionHeading>
-            <span className="inline-flex items-center gap-2">
-              <Coins className="w-5 h-5 text-dl-navy" />
-              Section 1 — Token Overview
-            </span>
-          </SectionHeading>
-
-          <p className="text-dl-navy text-sm leading-relaxed mb-6">
-            {AXAU_TOKEN_METADATA.description}
-          </p>
-
-          <div className="border border-dl-border mb-6">
-            <DataRow label="Token Name" value={AXAU_TOKEN_METADATA.name} />
-            <DataRow label="Symbol" value={<span className="font-dl-mono font-semibold text-dl-gold">{AXAU_TOKEN_METADATA.symbol}</span>} alt />
-            <DataRow label="Architecture Brand" value={<span className="font-semibold">{AXAU_TOKEN_METADATA.architectureBrand}</span>} />
-            <DataRow label="Token Standard" value={AXAU_TOKEN_METADATA.standard} alt />
-            <DataRow label="Network" value={`${AXAU_TOKEN_METADATA.network} (Chain ID ${AXAU_TOKEN_METADATA.chainId})`} />
-            <DataRow label="Decimals" value={<span className="font-dl-mono">{AXAU_TOKEN_METADATA.decimals}</span>} alt />
-            <DataRow label="Peg Mechanism" value={AXAU_TOKEN_METADATA.pegMechanism} />
-            <DataRow label="Deployment Status" value={
-              <span className="inline-block px-2 py-0.5 text-xs font-dl-mono border border-dl-gold text-dl-gold">
-                {AXAU_TOKEN_METADATA.deploymentStatus.replace('_', ' ')}
-              </span>
-            } alt />
-            <DataRow label="Contract Address" value={<span className="font-dl-mono text-dl-gray">Pending deployment</span>} />
-          </div>
-
-          <div className="border border-dl-border px-6 py-4 bg-dl-bg-alt">
-            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-3">Identity and Compliance (ERC-3643)</p>
-            <p className="text-sm text-dl-navy leading-relaxed">
-              AXAU will be issued under the ERC-3643 (T-REX) standard — the same identity-gated compliance framework used for Unified AXUSD. All AXAU holders must complete on-chain identity verification through Axiom's Identity Registry. This enforces compliance controls at the transfer level through modular automated control layers, and restricts participation to verified wallets.
-            </p>
-          </div>
-        </section>
-
-        {/* ── Section 2: Reserve Architecture ──────────────────────── */}
-        <section className="mb-12">
-          <SectionHeading>
-            <span className="inline-flex items-center gap-2">
-              <Layers className="w-5 h-5 text-dl-navy" />
-              Section 2 — Reserve Architecture
-            </span>
-          </SectionHeading>
-
-          <p className="text-dl-navy text-sm leading-relaxed mb-4">
-            AXAU's reserve basket is designed for additive expansion. Gold (XAU) is the founding anchor commodity. Each subsequent reserve layer is added through AXM governance approval, a commodity admission review, and a verified reserve deposit. Every expansion event increases the Backing NAV per outstanding AXAU — holder-accretive by design.
-          </p>
-
-          <div className="border border-dl-border px-6 py-4 mb-6 bg-dl-bg-alt">
-            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Automated Control Layer Architecture (Planned)</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-dl-navy font-dl-mono">
-              {[
-                ['AXAUToken', 'ERC-3643 identity-gated transfer controls'],
-                ['CommodityRegistry', 'Governance-managed component list, risk tiers, oracle configs'],
-                ['ReserveVaultRouter', 'Per-commodity vault adapter routing layer'],
-                ['NAVEngine', 'Multi-commodity Backing NAV calculation (oracle × quantity × haircut)'],
-                ['MintRedeemController', 'Coverage enforcement, circuit breakers, redemption logic'],
-                ['GovernanceTimelock', 'AXM voting + timelock delay on all parameter changes'],
-              ].map(([name, desc]) => (
-                <div key={name} className="flex items-start gap-2">
-                  <ChevronRight className="w-3 h-3 text-dl-gold mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-xs">{name}</p>
-                    <p className="text-xs text-dl-gray">{desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Commodity Registry Table */}
-          <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Commodity Registry</p>
-          <div className="border border-dl-border mb-8 overflow-x-auto">
-            <table className="w-full min-w-[540px] text-xs">
-              <thead>
-                <tr className="border-b border-dl-border bg-dl-bg text-dl-gray font-dl-mono uppercase tracking-wider">
-                  <th className="px-4 py-2 text-left font-normal w-8">Ph.</th>
-                  <th className="px-4 py-2 text-left font-normal">Commodity</th>
-                  <th className="px-4 py-2 text-left font-normal">Status</th>
-                  <th className="px-4 py-2 text-left font-normal">Risk Tier</th>
-                  <th className="px-4 py-2 text-right font-normal">Haircut</th>
-                  <th className="px-4 py-2 text-right font-normal">Max Weight</th>
-                </tr>
-              </thead>
-              <tbody>
-                {RESERVE_LAYERS.map((layer, i) => (
-                  <tr key={layer.id} className={`border-b border-dl-border ${i % 2 === 1 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
-                    <td className="px-4 py-3 font-dl-mono text-dl-gray">{layer.phase}</td>
-                    <td className="px-4 py-3">
-                      <p className="font-semibold text-dl-navy">{layer.commodity}</p>
-                      <p className="text-dl-gray font-dl-mono">{layer.symbol}</p>
-                    </td>
-                    <td className="px-4 py-3"><StatusPill status={layer.status} /></td>
-                    <td className="px-4 py-3"><RiskTierPill tier={layer.riskTier} /></td>
-                    <td className="px-4 py-3 text-right font-dl-mono text-dl-navy">{(layer.haircut * 100).toFixed(0)}%</td>
-                    <td className="px-4 py-3 text-right font-dl-mono text-dl-navy">
-                      {layer.maxWeightPct !== null ? `${layer.maxWeightPct}%` : 'Uncapped'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Reserve Layer Detail Cards */}
-          <div className="space-y-6">
-            {RESERVE_LAYERS.map((layer) => (
-              <div key={layer.id} className="border border-dl-border">
-                <div className="px-6 py-4 border-b border-dl-border bg-dl-bg-alt flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Phase {layer.phase}</span>
-                    <h3 className="font-dl-serif text-base text-dl-navy font-semibold">{layer.commodity} ({layer.symbol})</h3>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <StatusPill status={layer.status} />
-                    <RiskTierPill tier={layer.riskTier} />
-                  </div>
-                </div>
-                <div className="px-6 py-4">
-                  <p className="text-sm text-dl-navy leading-relaxed mb-4">{layer.description}</p>
-                  <div className="border border-dl-border">
-                    <DataRow label="Reserve Asset" value={<span className="text-xs">{layer.reserveAsset}</span>} />
-                    <DataRow label="Custody Method" value={<span className="text-xs">{layer.custodyMethod}</span>} alt />
-                    <DataRow label="Primary Oracle" value={<span className="text-xs font-dl-mono">{layer.oracleSource}</span>} />
-                    <DataRow label="Oracle Fallback" value={<span className="text-xs">{layer.oracleFallback}</span>} alt />
-                    <DataRow label="NAV Haircut" value={<span className="font-dl-mono text-xs font-semibold">{(layer.haircut * 100).toFixed(0)}%</span>} />
-                    <DataRow label="Max Basket Weight" value={<span className="font-dl-mono text-xs">{layer.maxWeightPct !== null ? `${layer.maxWeightPct}%` : 'Uncapped (gold anchor)'}</span>} alt />
-                    <DataRow label="NAV Update Cadence" value={<span className="text-xs">{layer.navUpdateCadence}</span>} />
-                  </div>
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="border border-dl-border px-4 py-3">
-                      <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-1">Custody Notes</p>
-                      <p className="text-xs text-dl-navy leading-relaxed">{layer.custodyNotes}</p>
-                    </div>
-                    <div className="border border-dl-border px-4 py-3">
-                      <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-1">Regulatory Notes</p>
-                      <p className="text-xs text-dl-navy leading-relaxed">{layer.regulatoryNotes}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Section 3: NAV and Mint/Redeem Mechanics ─────────────── */}
-        <section className="mb-12">
-          <SectionHeading>
-            <span className="inline-flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-dl-navy" />
-              Section 3 — NAV and Mint/Redeem Mechanics
-            </span>
-          </SectionHeading>
-
-          <p className="text-dl-navy text-sm leading-relaxed mb-6">
-            AXAU uses a dual-NAV accounting model that separates the floor value backing each outstanding token (Backing NAV) from the minimum reserve required to issue new tokens (Mint NAV). This design ensures that expanding the commodity basket is holder-accretive — not dilutive.
-          </p>
-
-          <div className="space-y-4 mb-6">
-            {[NAV_MECHANICS.backingNAV, NAV_MECHANICS.mintNAV].map((nav, i) => (
-              <div key={nav.name} className="border border-dl-border">
-                <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
-                  <p className="text-sm font-semibold text-dl-navy">{nav.name}</p>
-                </div>
-                <div className="px-6 py-4">
-                  <div className="bg-dl-bg border border-dl-border px-4 py-3 mb-3 font-dl-mono text-xs text-dl-navy overflow-x-auto">
-                    {nav.formula}
-                  </div>
-                  <p className="text-sm text-dl-navy leading-relaxed">{nav.definition}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="border border-dl-border mb-4">
-            <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt flex items-center justify-between">
-              <p className="text-sm font-semibold text-dl-navy">Coverage Ratio Floor</p>
-              <span className="font-dl-mono text-lg font-bold text-dl-gold">{NAV_MECHANICS.coverageRatioFloor.label}</span>
-            </div>
-            <div className="px-6 py-4">
-              <p className="text-sm text-dl-navy leading-relaxed">{NAV_MECHANICS.coverageRatioFloor.definition}</p>
-            </div>
-          </div>
-
-          <div className="border border-dl-border mb-4">
-            <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
-              <p className="text-sm font-semibold text-dl-navy">{NAV_MECHANICS.expansionEvent.name}</p>
-            </div>
-            <div className="px-6 py-4">
-              <p className="text-sm text-dl-navy leading-relaxed mb-3">{NAV_MECHANICS.expansionEvent.definition}</p>
-              <div className="flex items-start gap-2">
-                <ChevronRight className="w-3 h-3 text-dl-gold mt-1 flex-shrink-0" />
-                <p className="text-xs text-dl-gray font-dl-mono">{NAV_MECHANICS.expansionEvent.trigger}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="border border-dl-border">
-            <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
-              <p className="text-sm font-semibold text-dl-navy">{NAV_MECHANICS.redemption.name}</p>
-            </div>
-            <div className="px-6 py-4">
-              <p className="text-sm text-dl-navy leading-relaxed">{NAV_MECHANICS.redemption.definition}</p>
-            </div>
-          </div>
-
-          {/* AXUSD / AXM Integration */}
-          <div className="mt-6 border border-dl-border">
-            <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
-              <p className="text-sm font-semibold text-dl-navy">Protocol Integration — AXUSD and AXM</p>
-            </div>
-            <div className="px-6 py-4 space-y-4">
-              <div>
-                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-1">AXAU and AXUSD</p>
-                <p className="text-sm text-dl-navy leading-relaxed">{PROTOCOL_INTEGRATION.axusdRelationship}</p>
-              </div>
-              <div>
-                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-1">AXAU and AXM Governance</p>
-                <p className="text-sm text-dl-navy leading-relaxed">{PROTOCOL_INTEGRATION.axmRelationship}</p>
-              </div>
-              <div>
-                <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-1">AXAU and Land Pipeline (Phase 3)</p>
-                <p className="text-sm text-dl-navy leading-relaxed">{PROTOCOL_INTEGRATION.landPipelineRelationship}</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Section 4: Governance Rules ───────────────────────────── */}
-        <section className="mb-12">
-          <SectionHeading>
-            <span className="inline-flex items-center gap-2">
-              <Scale className="w-5 h-5 text-dl-navy" />
-              Section 4 — Governance Rules
-            </span>
-          </SectionHeading>
-
-          <p className="text-dl-navy text-sm leading-relaxed mb-6">
-            AXAU governance operates through AXM token-weighted voting, timelock controls, and an Emergency Guardian (Governance Safe 3-of-5 multi-party authorization). During the Bootstrap Phase, Founder Ops retains operational authority pending the governance transition milestone.
-          </p>
-
-          {/* Core governance parameters */}
-          <div className="border border-dl-border mb-6">
-            <div className="px-4 py-2 border-b border-dl-border bg-dl-bg text-xs text-dl-gray font-dl-mono uppercase tracking-wider grid grid-cols-3">
-              <div>Parameter</div>
-              <div>Value</div>
-              <div>Notes</div>
-            </div>
-            {GOVERNANCE_RULES.parameters.map((row, i) => (
-              <div key={row.parameter} className={`grid grid-cols-3 border-b border-dl-border px-4 py-3 text-sm ${i % 2 === 1 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
-                <p className="font-semibold text-dl-navy text-xs">{row.parameter}</p>
-                <p className="font-dl-mono text-xs text-dl-forest">{row.value}</p>
-                <p className="text-xs text-dl-gray">{row.notes}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Commodity admission criteria */}
-          <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-3">Commodity Admission Criteria</p>
-          <div className="border border-dl-border mb-6">
-            {GOVERNANCE_RULES.commodityAdmissionCriteria.map((c, i) => (
-              <div key={c.criterion} className={`px-6 py-4 border-b border-dl-border ${i % 2 === 1 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-dl-forest flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-dl-navy mb-1">{c.criterion}</p>
-                    <p className="text-sm text-dl-navy leading-relaxed">{c.description}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Emergency removal */}
-          <div className="border border-dl-border mb-6">
-            <div className="px-6 py-3 border-b border-dl-border bg-dl-bg-alt">
-              <p className="text-sm font-semibold text-dl-navy">Emergency Removal Procedure</p>
-            </div>
-            <div className="px-6 py-4">
-              <p className="text-xs text-dl-gray font-dl-mono mb-2 uppercase tracking-wider">Trigger Conditions</p>
-              <p className="text-sm text-dl-navy mb-3">{GOVERNANCE_RULES.commodityRemoval.trigger}</p>
-              <p className="text-xs text-dl-gray font-dl-mono mb-2 uppercase tracking-wider">Process</p>
-              <ol className="space-y-2">
-                {GOVERNANCE_RULES.commodityRemoval.process.map((step, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm text-dl-navy">
-                    <span className="font-dl-mono text-xs text-dl-gold font-semibold w-4 flex-shrink-0 mt-0.5">{i + 1}.</span>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </div>
-
-          {/* Governance summary */}
-          <div className="border border-dl-border">
-            <DataRow label="Governance Token" value={GOVERNANCE_RULES.governanceToken} />
-            <DataRow label="Quorum Threshold" value={<span className="font-dl-mono">{GOVERNANCE_RULES.quorumThreshold}</span>} alt />
-            <DataRow label="Pass Threshold" value={GOVERNANCE_RULES.passThreshold} />
-            <DataRow label="Timelock Delay" value={<span className="font-dl-mono">{GOVERNANCE_RULES.timelockDelay}</span>} alt />
-            <DataRow label="Emergency Guardian" value={GOVERNANCE_RULES.emergencyGuardian} />
-            <DataRow label="Founding Period" value={GOVERNANCE_RULES.foundingPeriod} alt />
-          </div>
-        </section>
-
-        {/* ── Section 5: Audit and Compliance Roadmap ───────────────── */}
-        <section className="mb-12">
-          <SectionHeading>
-            <span className="inline-flex items-center gap-2">
-              <Shield className="w-5 h-5 text-dl-navy" />
-              Section 5 — Audit and Compliance Roadmap
-            </span>
-          </SectionHeading>
-
-          <p className="text-dl-navy text-sm leading-relaxed mb-6">
-            The AXAU audit roadmap is structured around the bootstrap-to-deployment lifecycle. External security audits are explicitly deferred pending treasury development. This is an acknowledged risk, documented transparently as a proof-of-execution artifact. No external capital is solicited or accepted without prior audit completion.
-          </p>
-
-          <div className="space-y-4">
-            {AUDIT_ROADMAP.map((milestone) => (
-              <div key={milestone.id} className="border border-dl-border">
-                <div className="px-6 py-4 border-b border-dl-border bg-dl-bg-alt flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <p className="text-sm font-semibold text-dl-navy">{milestone.title}</p>
-                  <AuditStatusPill status={milestone.status} />
-                </div>
-                <div className="px-6 py-4">
-                  <div className="flex items-start gap-2 mb-3">
-                    <Clock className="w-3 h-3 text-dl-gold flex-shrink-0 mt-1" />
-                    <p className="text-xs text-dl-gray font-dl-mono">{milestone.triggerCondition}</p>
-                  </div>
-                  <p className="text-sm text-dl-navy leading-relaxed mb-3">{milestone.description}</p>
-                  {milestone.scope && (
-                    <div className="mb-3">
-                      <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Audit Scope</p>
-                      <ul className="space-y-1">
-                        {milestone.scope.map((item, i) => (
-                          <li key={i} className="flex items-start gap-2 text-xs text-dl-navy">
-                            <ChevronRight className="w-3 h-3 text-dl-gold flex-shrink-0 mt-0.5" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {milestone.targetFirms && (
-                    <div>
-                      <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Target Audit Firms</p>
-                      <div className="flex flex-wrap gap-2">
-                        {milestone.targetFirms.map((firm) => (
-                          <span key={firm} className="text-xs font-dl-mono border border-dl-border px-2 py-0.5 text-dl-gray">
-                            {firm}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Phased Rollout Summary ────────────────────────────────── */}
-        <section className="mb-12">
-          <SectionHeading>
-            <span className="inline-flex items-center gap-2">
-              <Target className="w-5 h-5 text-dl-navy" />
-              Phased Rollout Summary
-            </span>
-          </SectionHeading>
-
-          <div className="border border-dl-border">
-            {ROLLOUT_PHASES.map((phase, i) => (
-              <div key={phase.phase} className={`border-b border-dl-border ${i % 2 === 1 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
-                <div className="px-6 py-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-3">
-                      <span className="font-dl-mono text-xs font-semibold border border-dl-gold text-dl-gold px-2 py-0.5">{phase.phase}</span>
-                      <p className="text-sm font-semibold text-dl-navy">{phase.label}</p>
-                    </div>
-                    <span className={`inline-block px-2 py-0.5 text-xs font-dl-mono border ${
-                      phase.isCurrentPhase
-                        ? 'text-blue-800 border-blue-300 bg-blue-50'
-                        : 'text-gray-600 border-gray-300 bg-gray-50'
-                    }`}>
-                      {phase.status.split('—')[0].trim()}
-                    </span>
-                  </div>
-                  <p className="text-xs text-dl-gray font-dl-mono mb-2">{phase.status}</p>
-                  <ul className="space-y-1">
-                    {phase.items.map((item, j) => (
-                      <li key={j} className="flex items-start gap-2 text-xs text-dl-navy">
-                        <ChevronRight className="w-3 h-3 text-dl-gold flex-shrink-0 mt-0.5" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Footer notice ─────────────────────────────────────────── */}
-        <div className="border border-dl-border border-l-4 border-l-dl-navy px-6 py-5 bg-dl-bg-alt mb-8">
-          <div className="flex items-start gap-2">
-            <Lock className="w-4 h-4 text-dl-navy flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-dl-navy mb-2">Specification Status and Limitations</p>
-              <p className="text-sm text-dl-navy leading-relaxed">
-                This document is the authoritative AXAU system specification as of version {AXAU_SPEC_VERSION} (effective {AXAU_SPEC_EFFECTIVE_DATE}). It constitutes a proof-of-execution record establishing the design, policy, and governance intent of the AXAU instrument prior to deployment. No contracts have been deployed. No tokens have been issued. Parameters and procedures are subject to change through the governance process prior to and after deployment.
-              </p>
-              <p className="text-xs text-dl-gray mt-3">
-                Axiom Protocol · Arbitrum One (Chain ID 42161) · Spec v{AXAU_SPEC_VERSION} · {AXAU_SPEC_EFFECTIVE_DATE}
-              </p>
-            </div>
-          </div>
-        </div>
-
-      </div>
+      <Hero />
+      <ValueProps />
+      <HowItWorks />
+      <LiveDashboard />
+      <MintTerminal />
+      <ReserveArchitecture />
+      <FAQ />
+      <Disclosures />
     </DesignLawLayout>
   );
 }

@@ -102,6 +102,24 @@ uri = "file://public/wealth-practice/group-card-bg.png"
 type = "image"
 title = "group contribution visual"
 
+[[generated]]
+id = "qAezKkFagianLEhvXrm54"
+uri = "file://public/axau/hero-gold-vault.png"
+type = "image"
+title = "gold vault hero"
+
+[[generated]]
+id = "gUTBBjDyqEWc4h5oaiGtR"
+uri = "file://public/axau/gold-coin-3d.png"
+type = "image"
+title = "3d gold coin"
+
+[[generated]]
+id = "7KXmDjAlamy4K3M8qWmeQ"
+uri = "file://public/axau/network-3d.png"
+type = "image"
+title = "gold network nodes"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
