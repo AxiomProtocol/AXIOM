@@ -139,10 +139,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const sessionToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
+    const walletAddr = fields.data.address.toLowerCase();
     await pool.query(
       `INSERT INTO wallet_sessions (session_token, wallet_address, chain_id, authenticated_at, expires_at, domain)
        VALUES ($1, $2, $3, NOW(), $4, $5)
-       ON CONFLICT (wallet_address)
+       ON CONFLICT ON CONSTRAINT wallet_sessions_wallet_address_key
        DO UPDATE SET
          session_token = EXCLUDED.session_token,
          authenticated_at = NOW(),
@@ -151,7 +152,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
          domain = EXCLUDED.domain`,
       [
         sessionToken,
-        fields.data.address.toLowerCase(),
+        walletAddr,
         fields.data.chainId || ARBITRUM_CHAIN_ID,
         expiresAt,
         fields.data.domain,
