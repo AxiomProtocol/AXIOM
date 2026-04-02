@@ -928,7 +928,7 @@ export default function WealthPracticePage() {
                             </button>
                           ) : (
                             <button
-                              onClick={() => { setCreateForm(f => ({ ...f, hubId: String(hub.id) })); }}
+                              onClick={() => { setCreateForm(f => ({ ...f, hubId: String(hub.id) })); setActiveTab('create'); }}
                               className="w-full border border-dl-forest text-dl-forest px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-forest hover:text-white transition-none min-h-[36px]"
                             >
                               Create Group in Hub
