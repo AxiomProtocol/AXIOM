@@ -166,19 +166,26 @@ export default function AxauPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <MintRedeemPanel />
             <div className="border border-dl-border p-5 bg-dl-bg-alt">
-              <p className="font-dl-mono text-[10px] uppercase tracking-widest text-dl-navy/40 mb-3">Transaction Guide</p>
+              <p className="font-dl-mono text-[10px] uppercase tracking-widest text-dl-navy/40 mb-1">Transaction Guide</p>
+              <p className="font-dl-mono text-[10px] text-dl-navy/40 mb-3">All steps completed within Axiom Protocol.</p>
               <ul className="space-y-3">
                 {[
-                  { step: "1", label: "Connect Wallet", detail: "Use the Connect button in the nav bar. Requires Arbitrum One network." },
-                  { step: "2", label: "Acquire PAXG", detail: "PAXG is tokenized gold (1 oz/token) bridged to Arbitrum. Available on Arbitrum DEXes or bridge from Ethereum." },
-                  { step: "3", label: "Approve PAXG", detail: "One-time approval grants the controller permission to pull your PAXG into the Gold Vault." },
-                  { step: "4", label: "Mint AXAU", detail: "Controller pulls PAXG, deposits to Gold Vault, mints AXAU to your wallet at Mint NAV." },
-                  { step: "5", label: "Redeem AXAU", detail: "Burn AXAU, receive proportional PAXG back at Backing NAV. Subject to coverage ratio." },
+                  { step: "1", label: "Connect Wallet", detail: "Connect via the nav bar. Arbitrum One network required. All steps below happen within this page.", tag: null },
+                  { step: "2", label: "Get PAXG — in-platform", detail: "Use the Get PAXG tab to swap ETH or USDC for PAXG (Paxos Gold) via Uniswap V3. No need to leave Axiom.", tag: "Get PAXG tab" },
+                  { step: "3", label: "Mint AXAU — in-platform", detail: "Use the Mint tab. Approval and minting are handled in two sequential wallet confirmations. PAXG is deposited to the Gold Vault; AXAU is issued to your wallet at Mint NAV.", tag: "Mint tab" },
+                  { step: "4", label: "Redeem AXAU — in-platform", detail: "Use the Redeem tab. Burn AXAU and receive PAXG back at Backing NAV, subject to coverage ratio.", tag: "Redeem tab" },
                 ].map(item => (
                   <li key={item.step} className="flex gap-3">
                     <span className="font-dl-mono text-xs text-dl-navy/30 w-4 flex-shrink-0 mt-0.5">{item.step}</span>
                     <div>
-                      <p className="font-dl-mono text-xs text-dl-navy font-semibold">{item.label}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-dl-mono text-xs text-dl-navy font-semibold">{item.label}</p>
+                        {item.tag && (
+                          <span className="font-dl-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5 bg-dl-navy/10 text-dl-navy/70">
+                            {item.tag}
+                          </span>
+                        )}
+                      </div>
                       <p className="font-dl-mono text-xs text-dl-navy/60 mt-0.5">{item.detail}</p>
                     </div>
                   </li>

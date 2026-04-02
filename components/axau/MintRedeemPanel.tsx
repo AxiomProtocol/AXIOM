@@ -8,12 +8,12 @@ import {
   useWaitForTransactionReceipt,
 } from "wagmi";
 import { erc20Abi, parseAbi, parseUnits, formatUnits } from "viem";
+import GetPaxgPanel from "./GetPaxgPanel";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CONTROLLER   = "0x036F05a3fB74d35439c074f25F691b36f5D37792" as `0x${string}`;
 const AXAU_TOKEN   = "0xbcCA4D937d427829914498423aE6E04C846dB0Bb" as `0x${string}`;
-// PAXG on Arbitrum One (bridged from Ethereum 0x45804880…) — official Arbitrum Standard Bridge
 const PAXG_ADDR    = "0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429" as `0x${string}`;
 const XAU_VAULT_ID = "0x7c687a3207cd9c05b4b11d8dd7ac337919c2200102d72989a597ebc5afcf180b" as `0x${string}`;
 
@@ -24,19 +24,24 @@ const CONTROLLER_ABI = parseAbi([
   "function redeemPaused() view returns (bool)",
 ]);
 
-type Tab    = "mint" | "redeem";
+type Tab    = "get" | "mint" | "redeem";
 type Status = "idle" | "approving" | "approved" | "submitting" | "confirming" | "success" | "error";
 
 interface Quote {
-  // mint fields
   axauOutFormatted?: string;
   mintNavFormatted?: string;
   mintPaused?: boolean;
-  // redeem fields
   reserveOutFormatted?: string;
   backingNavFormatted?: string;
   redeemPaused?: boolean;
 }
+
+// Tab display config
+const TAB_CONFIG: { id: Tab; label: string }[] = [
+  { id: "get",    label: "Get PAXG" },
+  { id: "mint",   label: "Mint" },
+  { id: "redeem", label: "Redeem" },
+];
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -45,7 +50,7 @@ export default function MintRedeemPanel() {
   const publicClient             = usePublicClient();
   const { writeContractAsync }   = useWriteContract();
 
-  const [tab, setTab]               = useState<Tab>("mint");
+  const [tab, setTab]               = useState<Tab>("get");
   const [amount, setAmount]         = useState("");
   const [balance, setBalance]       = useState("0");
   const [mintPaused, setMintPaused] = useState(true);
@@ -57,7 +62,6 @@ export default function MintRedeemPanel() {
   const [txHash, setTxHash]         = useState<`0x${string}` | null>(null);
   const [errMsg, setErrMsg]         = useState<string | null>(null);
 
-  // Track confirmation
   const { isSuccess: confirmed } = useWaitForTransactionReceipt({
     hash: txHash ?? undefined,
   });
@@ -74,7 +78,7 @@ export default function MintRedeemPanel() {
   // ── Fetch balances ─────────────────────────────────────────────────────────
 
   const fetchBalance = useCallback(async () => {
-    if (!address || !publicClient) return;
+    if (!address || !publicClient || tab === "get") return;
     const tokenAddr = tab === "mint" ? PAXG_ADDR : AXAU_TOKEN;
     try {
       const raw = await publicClient.readContract({
@@ -106,6 +110,7 @@ export default function MintRedeemPanel() {
   // ── Quote via API ──────────────────────────────────────────────────────────
 
   useEffect(() => {
+    if (tab === "get") return;
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       setQuote(null);
       return;
@@ -133,9 +138,8 @@ export default function MintRedeemPanel() {
     const paused = tab === "mint" ? mintPaused : redeemPaused;
 
     try {
-      const amountWei = parseUnits(amount, 18);
-      const spender   = CONTROLLER;
-      const tokenToApprove = tab === "mint" ? WETH_ADDR : AXAU_TOKEN;
+      const amountWei      = parseUnits(amount, 18);
+      const tokenToApprove = tab === "mint" ? PAXG_ADDR : AXAU_TOKEN;
 
       // ── Step 1: Check and approve ──────────────────────────────────────────
       setStatus("approving");
@@ -143,7 +147,7 @@ export default function MintRedeemPanel() {
         address: tokenToApprove,
         abi: erc20Abi,
         functionName: "allowance",
-        args: [address, spender],
+        args: [address, CONTROLLER],
       }) as bigint;
 
       if (allowance < amountWei) {
@@ -151,7 +155,7 @@ export default function MintRedeemPanel() {
           address: tokenToApprove,
           abi: erc20Abi,
           functionName: "approve",
-          args: [spender, amountWei],
+          args: [CONTROLLER, amountWei],
         });
         await publicClient.waitForTransactionReceipt({ hash: approveTx });
       }
@@ -198,7 +202,7 @@ export default function MintRedeemPanel() {
 
   const statusLabel: Record<Status, string> = {
     idle:       tab === "mint" ? "Mint AXAU" : "Redeem AXAU",
-    approving:  "Approving…",
+    approving:  `Approving ${tab === "mint" ? "PAXG" : "AXAU"}…`,
     approved:   "Approval confirmed",
     submitting: "Submitting transaction…",
     confirming: "Confirming on-chain…",
@@ -209,175 +213,189 @@ export default function MintRedeemPanel() {
   return (
     <div className="border border-dl-border">
 
-      {/* Tabs */}
+      {/* Tabs — 3 columns */}
       <div className="flex border-b border-dl-border">
-        {(["mint", "redeem"] as Tab[]).map(t => (
+        {TAB_CONFIG.map((t, i) => (
           <button
-            key={t}
-            onClick={() => { setTab(t); setAmount(""); setQuote(null); setStatus("idle"); setErrMsg(null); }}
+            key={t.id}
+            onClick={() => {
+              setTab(t.id);
+              setAmount("");
+              setQuote(null);
+              setStatus("idle");
+              setErrMsg(null);
+            }}
             className={`flex-1 py-3 text-sm font-dl-mono uppercase tracking-widest transition-colors ${
-              tab === t
+              tab === t.id
                 ? "bg-dl-navy text-white"
-                : "bg-dl-bg text-dl-navy/60 hover:text-dl-navy border-r border-dl-border"
-            }`}
+                : "bg-dl-bg text-dl-navy/60 hover:text-dl-navy"
+            } ${i < TAB_CONFIG.length - 1 ? "border-r border-dl-border" : ""}`}
           >
-            {t}
+            {t.label}
           </button>
         ))}
       </div>
 
-      {/* Safety Hold Banner */}
-      {isPaused && (
-        <div className="px-5 py-3 bg-amber-50 border-b border-amber-200">
-          <p className="font-dl-mono text-xs text-amber-800">
-            <span className="font-bold">SAFETY HOLD — {tab.toUpperCase()} PAUSED.</span>{" "}
-            {tab === "mint"
-              ? "Reserve asset activation pending (WETH placeholder → PAXG). Quote preview is live; transactions activate on governor authorization."
-              : "Redemption is paused while reserve transition is in progress."}
-          </p>
-        </div>
-      )}
+      {/* ── Get PAXG Tab ───────────────────────────────────────────────────── */}
+      {tab === "get" && <GetPaxgPanel />}
 
-      <div className="px-5 py-5 space-y-4">
+      {/* ── Mint / Redeem Tabs ─────────────────────────────────────────────── */}
+      {tab !== "get" && (
+        <>
+          {/* Safety Hold Banner */}
+          {isPaused && (
+            <div className="px-5 py-3 bg-amber-50 border-b border-amber-200">
+              <p className="font-dl-mono text-xs text-amber-800">
+                <span className="font-bold">SAFETY HOLD — {tab.toUpperCase()} PAUSED.</span>{" "}
+                {tab === "mint"
+                  ? "Mint transactions activate on governor authorization."
+                  : "Redemption is paused pending reserve confirmation."}
+              </p>
+            </div>
+          )}
 
-        {/* Amount Input */}
-        <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <label className="font-dl-mono text-xs uppercase tracking-widest text-dl-navy/60">
-              {tab === "mint" ? "PAXG Amount" : "AXAU Amount"}
-            </label>
-            {isConnected && (
-              <button
-                onClick={() => setAmount(balance)}
-                className="font-dl-mono text-xs text-dl-navy/50 hover:text-dl-navy"
-              >
-                Balance: {balance}
-              </button>
-            )}
-          </div>
-          <div className="flex border border-dl-border">
-            <input
-              type="number"
-              value={amount}
-              onChange={e => setAmount(e.target.value)}
-              placeholder="0.00"
-              min="0"
-              step="any"
-              className="flex-1 px-4 py-3 font-dl-mono text-lg text-dl-navy bg-transparent outline-none placeholder:text-dl-navy/20"
-            />
-            <span className="px-4 py-3 font-dl-mono text-sm text-dl-navy/60 bg-dl-bg-alt border-l border-dl-border self-center">
-              {tab === "mint" ? "PAXG" : "AXAU"}
-            </span>
-          </div>
-        </div>
+          <div className="px-5 py-5 space-y-4">
 
-        {/* Quote Display */}
-        <div className="border border-dl-border px-4 py-3 bg-dl-bg-alt min-h-[60px]">
-          {quoteLoading ? (
-            <p className="font-dl-mono text-xs text-dl-navy/40">Computing quote…</p>
-          ) : quote && parsedAmount > 0 ? (
-            <div className="space-y-1.5">
-              <div className="flex justify-between font-dl-mono text-sm">
-                <span className="text-dl-navy/60">
-                  {tab === "mint" ? "AXAU you receive" : "PAXG you receive"}
-                </span>
-                <span className="text-dl-navy font-semibold">
-                  {tab === "mint"
-                    ? `${quote.axauOutFormatted ?? "—"} AXAU`
-                    : `${quote.reserveOutFormatted ?? "—"} PAXG`}
+            {/* Amount Input */}
+            <div>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="font-dl-mono text-xs uppercase tracking-widest text-dl-navy/60">
+                  {tab === "mint" ? "PAXG Amount" : "AXAU Amount"}
+                </label>
+                {isConnected && (
+                  <button
+                    onClick={() => setAmount(balance)}
+                    className="font-dl-mono text-xs text-dl-navy/50 hover:text-dl-navy"
+                  >
+                    Balance: {balance}
+                  </button>
+                )}
+              </div>
+              <div className="flex border border-dl-border">
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={e => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  min="0"
+                  step="any"
+                  className="flex-1 px-4 py-3 font-dl-mono text-lg text-dl-navy bg-transparent outline-none placeholder:text-dl-navy/20"
+                />
+                <span className="px-4 py-3 font-dl-mono text-sm text-dl-navy/60 bg-dl-bg-alt border-l border-dl-border self-center">
+                  {tab === "mint" ? "PAXG" : "AXAU"}
                 </span>
               </div>
-              {(quote.mintNavFormatted || quote.backingNavFormatted) && (
-                <div className="flex justify-between font-dl-mono text-xs text-dl-navy/50">
-                  <span>{tab === "mint" ? "Mint NAV / token" : "Backing NAV / token"}</span>
-                  <span>${tab === "mint" ? quote.mintNavFormatted : quote.backingNavFormatted}</span>
+            </div>
+
+            {/* Quote Display */}
+            <div className="border border-dl-border px-4 py-3 bg-dl-bg-alt min-h-[60px]">
+              {quoteLoading ? (
+                <p className="font-dl-mono text-xs text-dl-navy/40">Computing quote…</p>
+              ) : quote && parsedAmount > 0 ? (
+                <div className="space-y-1.5">
+                  <div className="flex justify-between font-dl-mono text-sm">
+                    <span className="text-dl-navy/60">
+                      {tab === "mint" ? "AXAU you receive" : "PAXG you receive"}
+                    </span>
+                    <span className="text-dl-navy font-semibold">
+                      {tab === "mint"
+                        ? `${quote.axauOutFormatted ?? "—"} AXAU`
+                        : `${quote.reserveOutFormatted ?? "—"} PAXG`}
+                    </span>
+                  </div>
+                  {(quote.mintNavFormatted || quote.backingNavFormatted) && (
+                    <div className="flex justify-between font-dl-mono text-xs text-dl-navy/50">
+                      <span>{tab === "mint" ? "Mint NAV / token" : "Backing NAV / token"}</span>
+                      <span>${tab === "mint" ? quote.mintNavFormatted : quote.backingNavFormatted}</span>
+                    </div>
+                  )}
                 </div>
+              ) : (
+                <p className="font-dl-mono text-xs text-dl-navy/30">Enter amount to see quote</p>
               )}
             </div>
-          ) : (
-            <p className="font-dl-mono text-xs text-dl-navy/30">Enter amount to see quote</p>
-          )}
-        </div>
 
-        {/* CTA */}
-        {!isConnected ? (
-          <div className="px-4 py-3 border border-dl-border text-center font-dl-mono text-sm text-dl-navy/50">
-            Connect wallet to {tab}
-          </div>
-        ) : (
-          <button
-            onClick={status === "error" ? reset : handleSubmit}
-            disabled={!canSubmit && status !== "error"}
-            className={`w-full py-3 font-dl-mono text-sm uppercase tracking-widest transition-colors ${
-              isPaused
-                ? "bg-dl-navy/10 text-dl-navy/40 border border-dl-border cursor-not-allowed"
-                : canSubmit || status === "error"
-                  ? "bg-dl-navy text-white hover:bg-dl-navy/80"
-                  : "bg-dl-navy/30 text-white/60 cursor-not-allowed"
-            }`}
-          >
-            {isPaused ? `${tab.toUpperCase()} PAUSED (SAFETY HOLD)` : statusLabel[status]}
-          </button>
-        )}
-
-        {/* Error */}
-        {errMsg && (
-          <div className="border border-red-200 px-4 py-3 bg-red-50">
-            <p className="font-dl-mono text-xs text-red-700">{errMsg}</p>
-          </div>
-        )}
-
-        {/* Success */}
-        {status === "success" && txHash && (
-          <div className="border border-dl-forest px-4 py-3 bg-green-50">
-            <p className="font-dl-mono text-xs text-dl-forest">
-              Transaction confirmed.{" "}
-              <a
-                href={`https://arbiscan.io/tx/${txHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
+            {/* CTA */}
+            {!isConnected ? (
+              <div className="px-4 py-3 border border-dl-border text-center font-dl-mono text-sm text-dl-navy/50">
+                Connect wallet to {tab}
+              </div>
+            ) : (
+              <button
+                onClick={status === "error" ? reset : handleSubmit}
+                disabled={!canSubmit && status !== "error"}
+                className={`w-full py-3 font-dl-mono text-sm uppercase tracking-widest transition-colors ${
+                  isPaused
+                    ? "bg-dl-navy/10 text-dl-navy/40 border border-dl-border cursor-not-allowed"
+                    : canSubmit || status === "error"
+                      ? "bg-dl-navy text-white hover:bg-dl-navy/80"
+                      : "bg-dl-navy/30 text-white/60 cursor-not-allowed"
+                }`}
               >
-                View on Arbiscan
-              </a>
-            </p>
-          </div>
-        )}
+                {isPaused ? `${tab.toUpperCase()} PAUSED` : statusLabel[status]}
+              </button>
+            )}
 
-        {/* Confirming state */}
-        {status === "confirming" && txHash && (
-          <div className="border border-dl-border px-4 py-3 bg-dl-bg-alt">
-            <p className="font-dl-mono text-xs text-dl-navy/60">
-              Waiting for on-chain confirmation…{" "}
-              <a
-                href={`https://arbiscan.io/tx/${txHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline text-dl-navy"
-              >
-                {txHash.slice(0, 10)}…{txHash.slice(-6)}
-              </a>
-            </p>
-          </div>
-        )}
+            {/* Error */}
+            {errMsg && (
+              <div className="border border-red-200 px-4 py-3 bg-red-50">
+                <p className="font-dl-mono text-xs text-red-700">{errMsg}</p>
+              </div>
+            )}
 
-        {/* Transaction flow */}
-        {["approving", "approved", "submitting"].includes(status) && (
-          <div className="border border-dl-border px-4 py-3 bg-dl-bg-alt">
-            <div className="space-y-1">
-              {[
-                { label: `Step 1: Approve ${tab === "mint" ? "PAXG" : "AXAU"}`, done: ["approved", "submitting"].includes(status), active: status === "approving" },
-                { label: `Step 2: Submit ${tab}`,                                done: false,                                        active: status === "submitting" },
-              ].map(step => (
-                <div key={step.label} className="flex items-center gap-2 font-dl-mono text-xs">
-                  <span className={`w-2 h-2 flex-shrink-0 ${step.done ? "bg-dl-forest" : step.active ? "bg-dl-gold animate-pulse" : "bg-dl-border"}`} />
-                  <span className={step.done ? "text-dl-forest" : step.active ? "text-dl-navy" : "text-dl-navy/30"}>{step.label}</span>
+            {/* Success */}
+            {status === "success" && txHash && (
+              <div className="border border-dl-forest px-4 py-3 bg-green-50">
+                <p className="font-dl-mono text-xs text-dl-forest">
+                  Transaction confirmed.{" "}
+                  <a
+                    href={`https://arbiscan.io/tx/${txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    View on Arbiscan
+                  </a>
+                </p>
+              </div>
+            )}
+
+            {/* Confirming */}
+            {status === "confirming" && txHash && (
+              <div className="border border-dl-border px-4 py-3 bg-dl-bg-alt">
+                <p className="font-dl-mono text-xs text-dl-navy/60">
+                  Waiting for on-chain confirmation…{" "}
+                  <a
+                    href={`https://arbiscan.io/tx/${txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline text-dl-navy"
+                  >
+                    {txHash.slice(0, 10)}…{txHash.slice(-6)}
+                  </a>
+                </p>
+              </div>
+            )}
+
+            {/* Transaction flow indicator */}
+            {["approving", "approved", "submitting"].includes(status) && (
+              <div className="border border-dl-border px-4 py-3 bg-dl-bg-alt">
+                <div className="space-y-1">
+                  {[
+                    { label: `Step 1: Approve ${tab === "mint" ? "PAXG" : "AXAU"}`, done: ["approved", "submitting"].includes(status), active: status === "approving" },
+                    { label: `Step 2: Submit ${tab}`,                                done: false,                                        active: status === "submitting" },
+                  ].map(step => (
+                    <div key={step.label} className="flex items-center gap-2 font-dl-mono text-xs">
+                      <span className={`w-2 h-2 flex-shrink-0 ${step.done ? "bg-dl-forest" : step.active ? "bg-dl-gold animate-pulse" : "bg-dl-border"}`} />
+                      <span className={step.done ? "text-dl-forest" : step.active ? "text-dl-navy" : "text-dl-navy/30"}>{step.label}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
 
       {/* Footer */}
       <div className="px-5 py-3 border-t border-dl-border bg-dl-bg-alt">
