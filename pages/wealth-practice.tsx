@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAccount } from 'wagmi';
@@ -77,6 +77,20 @@ const STATUS_STYLES: Record<string, string> = {
   active: 'border border-dl-forest text-dl-forest',
   graduated: 'border border-dl-navy text-dl-navy',
 };
+
+const HUB_CITY_IMAGES: [string, string][] = [
+  ['Atlanta', '/wealth-practice/hub-atlanta.png'],
+  ['Houston', '/wealth-practice/hub-houston.png'],
+  ['Charlotte', '/wealth-practice/hub-charlotte.png'],
+];
+
+function getHubCityImage(hubName: string, regionDisplay: string): string | null {
+  const text = `${hubName} ${regionDisplay}`.toLowerCase();
+  for (const [city, img] of HUB_CITY_IMAGES) {
+    if (text.includes(city.toLowerCase())) return img;
+  }
+  return null;
+}
 
 export default function WealthPracticePage() {
   const { address: connectedAddress } = useAccount();
@@ -574,18 +588,22 @@ export default function WealthPracticePage() {
         <title>The Wealth Practice | Axiom Protocol</title>
       </Head>
 
-      <div className="border border-dl-gold bg-dl-bg p-4 mb-6">
-        <div className="flex items-center gap-3">
-          <span className="text-dl-gold text-xs uppercase font-dl-mono font-bold border border-dl-gold px-2 py-0.5">Pilot Mode</span>
-          <p className="text-dl-navy text-sm">
-            Launching in <span className="font-bold">Atlanta</span>, <span className="font-bold">Houston</span>, and <span className="font-bold">Charlotte</span> — the first three cities activating community group economics.
-          </p>
+      {/* Cinematic Hero Banner */}
+      <div className="relative mb-8 overflow-hidden -mx-6" style={{ height: '400px' }}>
+        <img
+          src="/wealth-practice/hero-banner.png"
+          alt="Wealth Practice — Community Group Economics"
+          className="w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(105deg, rgba(27,42,74,0.90) 0%, rgba(27,42,74,0.60) 55%, rgba(27,42,74,0.20) 100%)' }} />
+        <div className="absolute inset-0 flex flex-col justify-end px-6 sm:px-10 pb-8">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <span className="text-xs uppercase font-dl-mono font-bold border border-[#B8973A] text-[#B8973A] px-2 py-0.5">Pilot Mode</span>
+            <p className="text-white/85 text-sm">Launching in <strong className="text-white">Atlanta</strong>, <strong className="text-white">Houston</strong>, and <strong className="text-white">Charlotte</strong></p>
+          </div>
+          <h1 className="font-dl-serif text-3xl sm:text-4xl text-white font-bold leading-tight mb-2">The Wealth Practice</h1>
+          <p className="text-white/75 text-base max-w-lg">Community Group Economics Engine — build wealth together, on-chain, in community.</p>
         </div>
-      </div>
-
-      <div className="mb-8">
-        <h1 className="font-dl-serif text-2xl sm:text-3xl text-dl-navy font-bold">The Wealth Practice</h1>
-        <p className="text-dl-gray mt-1">Community Group Economics Engine</p>
       </div>
 
       <div className="border-b border-dl-border mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
@@ -613,23 +631,45 @@ export default function WealthPracticePage() {
             A structured group savings framework with deterministic scheduling, participant-level transparency, and cryptographic audit trails.
           </p>
 
-          <div className="flex flex-col md:flex-row items-stretch mb-10">
-            <div className="flex-1 border border-dl-border p-6">
-              <div className="font-dl-serif text-lg text-dl-navy font-bold mb-2">1. Interest Hub</div>
-              <p className="text-dl-gray text-sm">Regional community hub. Signal intent and connect with participants in your area.</p>
-            </div>
-            <div className="hidden md:flex items-center px-4 text-dl-gray text-2xl">&rarr;</div>
-            <div className="md:hidden flex justify-center py-2 text-dl-gray text-2xl">&darr;</div>
-            <div className="flex-1 border border-dl-border p-6">
-              <div className="font-dl-serif text-lg text-dl-navy font-bold mb-2">2. Purpose Group</div>
-              <p className="text-dl-gray text-sm">Goal-oriented group with contribution cycles. Build trust through consistent participation.</p>
-            </div>
-            <div className="hidden md:flex items-center px-4 text-dl-gray text-2xl">&rarr;</div>
-            <div className="md:hidden flex justify-center py-2 text-dl-gray text-2xl">&darr;</div>
-            <div className="flex-1 border border-dl-border p-6">
-              <div className="font-dl-serif text-lg text-dl-navy font-bold mb-2">3. On-Chain Pool</div>
-              <p className="text-dl-gray text-sm">Graduated group deployed to automated control layers. Transparent, verifiable, and self-executing.</p>
-            </div>
+          <div className="flex flex-col md:flex-row items-stretch mb-10 gap-0">
+            {[
+              {
+                num: '01', title: 'Interest Hub',
+                desc: 'Regional community hub. Signal intent and connect with participants in your area.',
+                img: '/wealth-practice/stage-hub.png',
+                label: 'STAGE ONE',
+              },
+              {
+                num: '02', title: 'Purpose Group',
+                desc: 'Goal-oriented group with contribution cycles. Build trust through consistent participation.',
+                img: '/wealth-practice/stage-group.png',
+                label: 'STAGE TWO',
+              },
+              {
+                num: '03', title: 'On-Chain Pool',
+                desc: 'Graduated group deployed to automated control layers. Transparent, verifiable, and self-executing.',
+                img: '/wealth-practice/stage-onchain.png',
+                label: 'STAGE THREE',
+              },
+            ].map((stage, idx, arr) => (
+              <Fragment key={stage.num}>
+                <div className="flex-1 relative overflow-hidden" style={{ minHeight: '220px' }}>
+                  <img src={stage.img} alt={stage.title} className="absolute inset-0 w-full h-full object-cover object-center" />
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(27,42,74,0.92) 0%, rgba(27,42,74,0.55) 60%, rgba(27,42,74,0.2) 100%)' }} />
+                  <div className="relative z-10 p-5 h-full flex flex-col justify-end" style={{ minHeight: '220px' }}>
+                    <div className="text-white/50 text-[10px] font-dl-mono uppercase tracking-widest mb-1">{stage.label}</div>
+                    <div className="font-dl-serif text-xl text-white font-bold mb-2">{stage.title}</div>
+                    <p className="text-white/80 text-sm leading-relaxed">{stage.desc}</p>
+                  </div>
+                </div>
+                {idx < arr.length - 1 && (
+                  <>
+                    <div className="hidden md:flex items-center px-2 text-dl-gray text-xl z-10">&rarr;</div>
+                    <div className="md:hidden flex justify-center py-1 text-dl-gray text-xl">&darr;</div>
+                  </>
+                )}
+              </Fragment>
+            ))}
           </div>
 
           <h3 className="font-dl-serif text-lg text-dl-navy font-bold mb-4">Key Metrics</h3>
@@ -652,8 +692,23 @@ export default function WealthPracticePage() {
             </div>
           )}
 
-          <div className="mt-10 border border-dl-border p-6">
-            <h3 className="font-dl-serif text-lg text-dl-navy font-bold mb-3">Physical-Digital Bridge</h3>
+          <div className="mt-10 border border-dl-border overflow-hidden">
+            {/* Land image header */}
+            <div className="relative overflow-hidden" style={{ height: '200px' }}>
+              <img
+                src="/wealth-practice/bridge-land.png"
+                alt="Community land cultivation at golden hour"
+                className="w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(29,61,42,0.25) 0%, rgba(29,61,42,0.80) 100%)' }} />
+              <div className="absolute inset-0 flex items-end px-6 pb-5">
+                <div>
+                  <div className="text-white/60 text-[10px] font-dl-mono uppercase tracking-widest mb-1">Capital Pathway</div>
+                  <h3 className="font-dl-serif text-2xl text-white font-bold">Physical-Digital Bridge</h3>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
             <p className="text-dl-gray text-sm mb-4">
               When a Purpose Group graduates to an On-Chain Pool, its pooled capital can be directed toward community land acquisition. 
               Acquired land produces food and housing that flows back to group members through participation credits.
@@ -684,6 +739,7 @@ export default function WealthPracticePage() {
                 View Land Acquisition Pipeline &rarr;
               </a>
             </div>
+            </div>{/* /p-6 */}
           </div>
 
           <div className="mt-8 border border-dl-navy p-6">
@@ -902,38 +958,58 @@ export default function WealthPracticePage() {
                   {hubs.map((hub) => {
                     const isMember = joinedHubIds.has(hub.id);
                     const isJoining = joiningHubId === hub.id;
+                    const cityImg = getHubCityImage(hub.hub_name || '', hub.region_display || '');
                     return (
-                      <div key={hub.id} className={`border p-4 flex flex-col justify-between ${isMember ? 'border-dl-forest' : 'border-dl-border'}`}>
-                        <div>
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <div className="font-dl-serif text-dl-navy font-bold leading-snug">{hub.hub_name || hub.region_display}</div>
+                      <div key={hub.id} className={`border flex flex-col overflow-hidden ${isMember ? 'border-dl-forest' : 'border-dl-border'}`}>
+                        {/* City image header */}
+                        {cityImg ? (
+                          <div className="relative overflow-hidden" style={{ height: '130px' }}>
+                            <img src={cityImg} alt={hub.region_display} className="w-full h-full object-cover object-center" />
+                            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(27,42,74,0.15) 0%, rgba(27,42,74,0.70) 100%)' }} />
+                            <div className="absolute bottom-0 left-0 right-0 px-4 pb-3">
+                              <div className="font-dl-serif text-white font-bold leading-snug text-base drop-shadow">{hub.hub_name || hub.region_display}</div>
+                              <div className="font-dl-mono text-white/70 text-[10px]">{hub.region_display} &middot; {hub.region_type}</div>
+                            </div>
                             {isMember && (
-                              <span className="text-xs font-dl-mono px-2 py-0.5 border border-dl-forest text-dl-forest whitespace-nowrap">Member</span>
+                              <span className="absolute top-2 right-2 text-xs font-dl-mono px-2 py-0.5 border border-dl-forest text-white bg-dl-forest whitespace-nowrap">Member</span>
                             )}
                           </div>
-                          <div className="font-dl-mono text-xs text-dl-gray">{hub.region_display} &middot; {hub.region_type}</div>
-                          <div className="font-dl-mono text-sm text-dl-forest mt-1">{hub.member_count} members</div>
-                          {hub.description && (
-                            <p className="text-dl-gray text-xs mt-2 leading-relaxed">{hub.description}</p>
-                          )}
-                        </div>
-                        <div className="mt-4">
-                          {!isMember ? (
-                            <button
-                              onClick={() => handleJoinHub(hub.id)}
-                              disabled={isJoining || !connectedAddress}
-                              className="w-full border border-dl-navy bg-dl-navy text-white px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-40 min-h-[36px]"
-                            >
-                              {isJoining ? 'Joining...' : connectedAddress ? 'Join Hub' : 'Connect Wallet'}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => { setCreateForm(f => ({ ...f, hubId: String(hub.id) })); setActiveTab('create'); }}
-                              className="w-full border border-dl-forest text-dl-forest px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-forest hover:text-white transition-none min-h-[36px]"
-                            >
-                              Create Group in Hub
-                            </button>
-                          )}
+                        ) : (
+                          <div className="px-4 pt-4">
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <div className="font-dl-serif text-dl-navy font-bold leading-snug">{hub.hub_name || hub.region_display}</div>
+                              {isMember && (
+                                <span className="text-xs font-dl-mono px-2 py-0.5 border border-dl-forest text-dl-forest whitespace-nowrap">Member</span>
+                              )}
+                            </div>
+                            <div className="font-dl-mono text-xs text-dl-gray">{hub.region_display} &middot; {hub.region_type}</div>
+                          </div>
+                        )}
+                        <div className="p-4 flex flex-col flex-1 justify-between">
+                          <div>
+                            <div className="font-dl-mono text-sm text-dl-forest mb-1">{hub.member_count} members</div>
+                            {hub.description && (
+                              <p className="text-dl-gray text-xs leading-relaxed">{hub.description}</p>
+                            )}
+                          </div>
+                          <div className="mt-4">
+                            {!isMember ? (
+                              <button
+                                onClick={() => handleJoinHub(hub.id)}
+                                disabled={isJoining || !connectedAddress}
+                                className="w-full border border-dl-navy bg-dl-navy text-white px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-40 min-h-[36px]"
+                              >
+                                {isJoining ? 'Joining...' : connectedAddress ? 'Join Hub' : 'Connect Wallet'}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => { setCreateForm(f => ({ ...f, hubId: String(hub.id) })); setActiveTab('create'); }}
+                                className="w-full border border-dl-forest text-dl-forest px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-forest hover:text-white transition-none min-h-[36px]"
+                              >
+                                Create Group in Hub
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );

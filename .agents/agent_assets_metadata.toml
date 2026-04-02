@@ -30,6 +30,54 @@ uri = "file://public/images/banking/hero-transfer.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "N3prYrLKWq0_K0RMpv2cj"
+uri = "file://public/wealth-practice/hero-banner.png"
+type = "image"
+title = "wealth practice hero banner"
+
+[[generated]]
+id = "_kQnyI_seqDEhBPef3MmG"
+uri = "file://public/wealth-practice/hub-atlanta.png"
+type = "image"
+title = "atlanta hub city"
+
+[[generated]]
+id = "TQVCrqjkYYTXtfNv74Bcf"
+uri = "file://public/wealth-practice/hub-houston.png"
+type = "image"
+title = "houston hub city"
+
+[[generated]]
+id = "KSyPXmVHsqDjdOdo2el4Q"
+uri = "file://public/wealth-practice/hub-charlotte.png"
+type = "image"
+title = "charlotte hub city"
+
+[[generated]]
+id = "HkPfer2rvUmasK8GcZPYp"
+uri = "file://public/wealth-practice/stage-hub.png"
+type = "image"
+title = "interest hub trust"
+
+[[generated]]
+id = "Puji4feEyVRp0zkGTCcOd"
+uri = "file://public/wealth-practice/stage-group.png"
+type = "image"
+title = "purpose group meeting"
+
+[[generated]]
+id = "8mQpWvPcgUkwaAycAtD8b"
+uri = "file://public/wealth-practice/stage-onchain.png"
+type = "image"
+title = "onchain pool visualization"
+
+[[generated]]
+id = "jl6-ZOTcR8gkNXI43X6nI"
+uri = "file://public/wealth-practice/bridge-land.png"
+type = "image"
+title = "land bridge community"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
@@ -95,3 +143,15 @@ id = "HFYz5Zn0Myazo5cJmG_Y3"
 uri = "file://documents/Axiom_Platform_Content_Package.md"
 type = "text"
 title = "Axiom Platform Content Package"
+
+[[outputs]]
+id = "-D-BfT2XPvlBimmS57yJi"
+uri = "file://attached_assets/stock_images/community_finance_meeting_1.jpg"
+type = "image"
+title = "diverse community members reviewing financial documents together around a table"
+
+[[outputs]]
+id = "br-2Gbh9NTVZk6KtM37jI"
+uri = "file://attached_assets/stock_images/community_finance_meeting_2.jpg"
+type = "image"
+title = "diverse community members reviewing financial documents together around a table"
