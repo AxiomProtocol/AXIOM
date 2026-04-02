@@ -118,9 +118,54 @@ export const increaseProductEscrows = pgTable(
 export type IncreaseProductEscrow = typeof increaseProductEscrows.$inferSelect;
 export type NewIncreaseProductEscrow = typeof increaseProductEscrows.$inferInsert;
 
+// Wallet-based hub membership (no user FK — purely wallet address driven)
+export const susuHubWalletMembers = pgTable(
+  'susu_hub_wallet_members',
+  {
+    id: serial('id').primaryKey(),
+    hubId: integer('hub_id').notNull(),
+    walletAddress: varchar('wallet_address', { length: 42 }).notNull(),
+    joinedAt: timestamp('joined_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    hubWalletIdx: index('susu_hub_wallet_members_hub_wallet_idx').on(t.hubId, t.walletAddress),
+    walletIdx: index('susu_hub_wallet_members_wallet_idx').on(t.walletAddress),
+  }),
+);
+
+// Fiat ↔ AXUSD conversion request queue.
+// Conversions are fulfilled by the operator (manual settlement for now).
+export const bridgeConversionRequests = pgTable(
+  'bridge_conversion_requests',
+  {
+    id: serial('id').primaryKey(),
+    participantId: integer('participant_id').notNull(),
+    walletAddress: varchar('wallet_address', { length: 42 }).notNull(),
+    // 'fiat_to_axusd' | 'axusd_to_fiat'
+    direction: varchar('direction', { length: 20 }).notNull(),
+    amountCents: integer('amount_cents').notNull(),
+    axusdAmount: varchar('axusd_amount', { length: 50 }),
+    // 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+    status: varchar('status', { length: 30 }).notNull().default('pending'),
+    notes: text('notes'),
+    increaseTransactionId: varchar('increase_transaction_id', { length: 100 }),
+    onchainTxHash: varchar('onchain_tx_hash', { length: 66 }),
+    requestedAt: timestamp('requested_at').defaultNow().notNull(),
+    processedAt: timestamp('processed_at'),
+    completedAt: timestamp('completed_at'),
+  },
+  (t) => ({
+    participantIdx: index('bridge_conversion_requests_participant_idx').on(t.participantId),
+    walletIdx: index('bridge_conversion_requests_wallet_idx').on(t.walletAddress),
+    statusIdx: index('bridge_conversion_requests_status_idx').on(t.status),
+  }),
+);
+
 export type IncreaseParticipant = typeof increaseParticipants.$inferSelect;
 export type NewIncreaseParticipant = typeof increaseParticipants.$inferInsert;
 export type IncreaseLpDeposit = typeof increaseLpDeposits.$inferSelect;
 export type NewIncreaseLpDeposit = typeof increaseLpDeposits.$inferInsert;
 export type IncreaseDistribution = typeof increaseDistributions.$inferSelect;
 export type NewIncreaseDistribution = typeof increaseDistributions.$inferInsert;
+export type SusuHubWalletMember = typeof susuHubWalletMembers.$inferSelect;
+export type BridgeConversionRequest = typeof bridgeConversionRequests.$inferSelect;

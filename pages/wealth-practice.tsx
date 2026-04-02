@@ -140,6 +140,11 @@ export default function WealthPracticePage() {
   const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
   const [joinInsuranceData, setJoinInsuranceData] = useState<Record<string, unknown> | null>(null);
 
+  const [joinedHubIds, setJoinedHubIds] = useState<Set<number>>(new Set());
+  const [joiningHubId, setJoiningHubId] = useState<number | null>(null);
+  const [hubJoinMsg, setHubJoinMsg] = useState('');
+  const [hubJoinError, setHubJoinError] = useState('');
+
   const [showHubForm, setShowHubForm] = useState(false);
   const [hubForm, setHubForm] = useState({
     hubName: '',
@@ -207,7 +212,24 @@ export default function WealthPracticePage() {
       const hubsData = await hubsRes.json();
       const groupsData = await groupsRes.json();
 
-      if (hubsData.success) setHubs(hubsData.hubs || []);
+      if (hubsData.success) {
+        const loadedHubs: Hub[] = hubsData.hubs || [];
+        setHubs(loadedHubs);
+        // Check which hubs this wallet has already joined
+        if (connectedAddress && loadedHubs.length > 0) {
+          try {
+            const memberChecks = await Promise.all(
+              loadedHubs.map((h) =>
+                fetch(`/api/wealth-practice/hub-join?hubId=${h.id}&wallet=${connectedAddress.toLowerCase()}`)
+                  .then((r) => r.json())
+                  .then((d) => (d.isMember ? h.id : null))
+                  .catch(() => null),
+              ),
+            );
+            setJoinedHubIds(new Set(memberChecks.filter((id): id is number => id !== null)));
+          } catch { /* non-fatal */ }
+        }
+      }
       if (groupsData.success) setGroups(groupsData.groups || []);
       if (!hubsData.success && !groupsData.success) {
         setDiscoverError('Failed to load data');
@@ -216,6 +238,39 @@ export default function WealthPracticePage() {
       setDiscoverError('Failed to load data');
     } finally {
       setDiscoverLoading(false);
+    }
+  };
+
+  const handleJoinHub = async (hubId: number) => {
+    if (!connectedAddress) {
+      setHubJoinError('Connect your wallet to join a hub');
+      return;
+    }
+    setJoiningHubId(hubId);
+    setHubJoinMsg('');
+    setHubJoinError('');
+    try {
+      const res = await fetch('/api/wealth-practice/hub-join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hubId, walletAddress: connectedAddress }),
+      });
+      const d = await res.json();
+      if (d.success) {
+        setJoinedHubIds((prev) => new Set([...prev, hubId]));
+        setHubs((prev) =>
+          prev.map((h) =>
+            h.id === hubId ? { ...h, member_count: (h.member_count || 0) + (d.alreadyMember ? 0 : 1) } : h,
+          ),
+        );
+        setHubJoinMsg(d.alreadyMember ? 'You are already a member of this hub.' : 'Joined hub successfully.');
+      } else {
+        setHubJoinError(d.error || 'Failed to join hub');
+      }
+    } catch {
+      setHubJoinError('Network error — please try again');
+    } finally {
+      setJoiningHubId(null);
     }
   };
 
@@ -821,6 +876,17 @@ export default function WealthPracticePage() {
                 </div>
               )}
 
+              {hubJoinMsg && (
+                <div className="border border-dl-forest bg-dl-bg p-3 mb-4">
+                  <p className="text-dl-forest text-sm">{hubJoinMsg}</p>
+                </div>
+              )}
+              {hubJoinError && (
+                <div className="border p-3 mb-4" style={{ borderColor: '#991b1b' }}>
+                  <p className="text-sm" style={{ color: '#991b1b' }}>{hubJoinError}</p>
+                </div>
+              )}
+
               {hubs.length === 0 && !showHubForm ? (
                 <div className="border border-dl-border bg-dl-bg p-6 mb-8 text-center">
                   <p className="text-dl-gray text-sm mb-2">No Interest Hubs yet. Be the first to create one for your city or region.</p>
@@ -833,16 +899,45 @@ export default function WealthPracticePage() {
                 </div>
               ) : hubs.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                  {hubs.map((hub) => (
-                    <div key={hub.id} className="border border-dl-border p-4">
-                      <div className="font-dl-serif text-dl-navy font-bold">{hub.hub_name || hub.region_display}</div>
-                      <div className="font-dl-mono text-xs text-dl-gray mt-1">{hub.region_display} &middot; {hub.region_type}</div>
-                      <div className="font-dl-mono text-sm text-dl-forest mt-1">{hub.member_count} members</div>
-                      {hub.description && (
-                        <p className="text-dl-gray text-xs mt-2">{hub.description}</p>
-                      )}
-                    </div>
-                  ))}
+                  {hubs.map((hub) => {
+                    const isMember = joinedHubIds.has(hub.id);
+                    const isJoining = joiningHubId === hub.id;
+                    return (
+                      <div key={hub.id} className={`border p-4 flex flex-col justify-between ${isMember ? 'border-dl-forest' : 'border-dl-border'}`}>
+                        <div>
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <div className="font-dl-serif text-dl-navy font-bold leading-snug">{hub.hub_name || hub.region_display}</div>
+                            {isMember && (
+                              <span className="text-xs font-dl-mono px-2 py-0.5 border border-dl-forest text-dl-forest whitespace-nowrap">Member</span>
+                            )}
+                          </div>
+                          <div className="font-dl-mono text-xs text-dl-gray">{hub.region_display} &middot; {hub.region_type}</div>
+                          <div className="font-dl-mono text-sm text-dl-forest mt-1">{hub.member_count} members</div>
+                          {hub.description && (
+                            <p className="text-dl-gray text-xs mt-2 leading-relaxed">{hub.description}</p>
+                          )}
+                        </div>
+                        <div className="mt-4">
+                          {!isMember ? (
+                            <button
+                              onClick={() => handleJoinHub(hub.id)}
+                              disabled={isJoining || !connectedAddress}
+                              className="w-full border border-dl-navy bg-dl-navy text-white px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-40 min-h-[36px]"
+                            >
+                              {isJoining ? 'Joining...' : connectedAddress ? 'Join Hub' : 'Connect Wallet'}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => { setCreateForm(f => ({ ...f, hubId: String(hub.id) })); }}
+                              className="w-full border border-dl-forest text-dl-forest px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-forest hover:text-white transition-none min-h-[36px]"
+                            >
+                              Create Group in Hub
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : null}
 

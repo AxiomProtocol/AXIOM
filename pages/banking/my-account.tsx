@@ -96,10 +96,54 @@ export default function MyAccountPage() {
   const [error, setError] = useState('');
 
   useEffect(() => { setMounted(true); }, []);
-  const [activeTab, setActiveTab] = useState<'overview' | 'account' | 'holds' | 'deposits' | 'card' | 'faq'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'account' | 'holds' | 'deposits' | 'card' | 'convert' | 'faq'>('overview');
   const [cardLoading, setCardLoading] = useState(false);
   const [cardMsg, setCardMsg] = useState('');
   const [copyMsg, setCopyMsg] = useState('');
+
+  // Bridge / Convert state
+  interface BridgeRequest { id: number; direction: string; amount_cents: number; axusd_amount: string; status: string; notes: string | null; requested_at: string; completed_at: string | null; }
+  const [bridgeRequests, setBridgeRequests] = useState<BridgeRequest[]>([]);
+  const [convertDir, setConvertDir] = useState<'fiat_to_axusd' | 'axusd_to_fiat'>('fiat_to_axusd');
+  const [convertAmount, setConvertAmount] = useState('');
+  const [convertLoading, setConvertLoading] = useState(false);
+  const [convertMsg, setConvertMsg] = useState('');
+  const [convertError, setConvertError] = useState('');
+  const [bridgeLoading, setBridgeLoading] = useState(false);
+
+  const fetchBridgeRequests = useCallback(async (addr: string) => {
+    setBridgeLoading(true);
+    try {
+      const res = await fetch(`/api/banking/bridge/request?wallet=${addr.toLowerCase()}`);
+      const d = await res.json();
+      if (d.success) setBridgeRequests(d.requests || []);
+    } catch { /* non-fatal */ } finally { setBridgeLoading(false); }
+  }, []);
+
+  const handleConvert = async () => {
+    if (!address) return;
+    const cents = Math.round(parseFloat(convertAmount || '0') * 100);
+    if (!cents || cents < 100) { setConvertError('Minimum conversion is $1.00'); return; }
+    setConvertLoading(true);
+    setConvertMsg('');
+    setConvertError('');
+    try {
+      const res = await fetch('/api/banking/bridge/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ direction: convertDir, amountCents: cents, walletAddress: address }),
+      });
+      const d = await res.json();
+      if (d.success) {
+        setConvertMsg(d.message || 'Conversion request submitted.');
+        setConvertAmount('');
+        fetchBridgeRequests(address);
+      } else {
+        setConvertError(d.error || 'Submission failed');
+      }
+    } catch { setConvertError('Network error — please try again'); }
+    finally { setConvertLoading(false); }
+  };
 
   const fetchData = useCallback(async (addr: string) => {
     setLoading(true);
@@ -118,8 +162,11 @@ export default function MyAccountPage() {
   }, []);
 
   useEffect(() => {
-    if (isConnected && address) fetchData(address);
-  }, [isConnected, address, fetchData]);
+    if (isConnected && address) {
+      fetchData(address);
+      fetchBridgeRequests(address);
+    }
+  }, [isConnected, address, fetchData, fetchBridgeRequests]);
 
   const requestCard = async () => {
     if (!address) return;
@@ -156,6 +203,7 @@ export default function MyAccountPage() {
     { id: 'holds', label: 'Insurance Holds' },
     { id: 'deposits', label: 'Deposits & Distributions' },
     { id: 'card', label: 'Nexus Card' },
+    { id: 'convert', label: 'Convert' },
     { id: 'faq', label: 'FAQ' },
   ] as const;
 
@@ -762,6 +810,128 @@ export default function MyAccountPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Convert (Fiat ↔ AXUSD) ── */}
+          {activeTab === 'convert' && (
+            <div className="space-y-6">
+              <div className="border border-dl-border">
+                <div className="px-5 py-3 border-b border-dl-border bg-dl-bg">
+                  <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider">Fiat ↔ AXUSD Conversion</p>
+                </div>
+                <div className="px-5 py-5">
+                  <p className="text-dl-gray text-sm leading-relaxed mb-5">
+                    Submit a conversion request to move funds between your fiat account and AXUSD on Arbitrum One.
+                    Conversions settle 1:1 via the PSM. Requests are processed by Axiom Operations — typically within one business day.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                    <div>
+                      <label className="block text-dl-navy text-xs font-bold mb-2 font-dl-mono uppercase">Direction</label>
+                      <div className="flex gap-0">
+                        <button
+                          onClick={() => setConvertDir('fiat_to_axusd')}
+                          className={`flex-1 px-4 py-2.5 text-sm font-bold border min-h-[44px] ${convertDir === 'fiat_to_axusd' ? 'bg-dl-navy text-white border-dl-navy' : 'bg-dl-bg text-dl-navy border-dl-border hover:bg-dl-navy hover:text-white'}`}
+                        >
+                          USD → AXUSD
+                        </button>
+                        <button
+                          onClick={() => setConvertDir('axusd_to_fiat')}
+                          className={`flex-1 px-4 py-2.5 text-sm font-bold border min-h-[44px] ${convertDir === 'axusd_to_fiat' ? 'bg-dl-navy text-white border-dl-navy' : 'bg-dl-bg text-dl-navy border-dl-border hover:bg-dl-navy hover:text-white'}`}
+                        >
+                          AXUSD → USD
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-xs font-bold mb-2 font-dl-mono uppercase">Amount (USD)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        step="0.01"
+                        value={convertAmount}
+                        onChange={(e) => setConvertAmount(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px] font-dl-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {convertDir === 'fiat_to_axusd' ? (
+                    <div className="border border-dl-border bg-dl-bg p-4 mb-4 text-xs text-dl-gray leading-relaxed">
+                      <span className="font-bold text-dl-navy">Deposit USD first:</span> Send USD via ACH or wire to your dedicated account number (shown in Account &amp; Routing tab).
+                      Once your deposit is confirmed, Axiom Operations will deliver AXUSD to your wallet address at the 1:1 PSM rate.
+                    </div>
+                  ) : (
+                    <div className="border border-dl-border bg-dl-bg p-4 mb-4 text-xs text-dl-gray leading-relaxed">
+                      <span className="font-bold text-dl-navy">Send AXUSD to the PSM first:</span> Go to <a href="/axusd" className="text-dl-navy underline">PSM</a> and swap your AXUSD for USDC.
+                      Once confirmed on-chain, Axiom Operations will send equivalent USD to your bank account via ACH.
+                    </div>
+                  )}
+
+                  {convertMsg && (
+                    <div className="border border-dl-forest p-3 mb-4">
+                      <p className="text-dl-forest text-sm">{convertMsg}</p>
+                    </div>
+                  )}
+                  {convertError && (
+                    <div className="border p-3 mb-4" style={{ borderColor: '#991b1b' }}>
+                      <p className="text-sm" style={{ color: '#991b1b' }}>{convertError}</p>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleConvert}
+                    disabled={convertLoading || !convertAmount}
+                    className="border border-dl-navy bg-dl-navy text-white px-6 py-3 min-h-[44px] text-sm font-bold hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-40"
+                  >
+                    {convertLoading ? 'Submitting...' : 'Submit Conversion Request'}
+                  </button>
+                </div>
+              </div>
+
+              {/* History */}
+              <div className="border border-dl-border">
+                <div className="px-5 py-3 border-b border-dl-border bg-dl-bg flex items-center justify-between">
+                  <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider">Conversion History</p>
+                  {address && (
+                    <button onClick={() => fetchBridgeRequests(address)} className="text-xs text-dl-navy font-dl-mono border border-dl-border px-3 py-1 hover:bg-dl-navy hover:text-white">
+                      Refresh
+                    </button>
+                  )}
+                </div>
+                {bridgeLoading ? (
+                  <div className="px-5 py-4"><p className="text-dl-gray text-sm animate-pulse">Loading...</p></div>
+                ) : bridgeRequests.length === 0 ? (
+                  <div className="px-5 py-4"><p className="text-dl-gray text-sm">No conversion requests yet.</p></div>
+                ) : (
+                  <div className="divide-y divide-dl-border">
+                    {bridgeRequests.map((r) => (
+                      <div key={r.id} className="px-5 py-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                        <div>
+                          <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Direction</p>
+                          <p className="text-dl-navy font-semibold">{r.direction === 'fiat_to_axusd' ? 'USD → AXUSD' : 'AXUSD → USD'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Amount</p>
+                          <p className="font-dl-mono text-dl-navy">${(r.amount_cents / 100).toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Status</p>
+                          <p className={`font-dl-mono text-xs font-bold uppercase ${r.status === 'completed' ? 'text-dl-forest' : r.status === 'pending' ? 'text-dl-gold' : r.status === 'failed' ? 'text-red-700' : 'text-dl-navy'}`}>
+                            {r.status}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Requested</p>
+                          <p className="font-dl-mono text-dl-navy text-xs">{new Date(r.requested_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

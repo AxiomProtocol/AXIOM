@@ -38,7 +38,7 @@ Key features include:
 - Founder Operations Dashboard: Internal dashboard for system overview and operations.
 - Solvency and Reserve Transparency: Provides a three-mode institutional solvency console.
 - Adaptive Metrics Engine (AME): A deterministic financial computation engine with an AME AI Oracle.
-- The Wealth Practice: Manages community group economics with a three-stage trust pipeline.
+- The Wealth Practice: Manages community group economics with a three-stage trust pipeline. Hub Join Onboarding: wallet-based hub membership via `susu_hub_wallet_members` table; `POST/GET /api/wealth-practice/hub-join`; hub cards in Discover tab show Join Hub button, Member badge, and member count; joined members see "Create Group in Hub" shortcut.
 - Physical-Digital Bridge (Land Acquisition Pipeline): Full land acquisition lifecycle with live governance.
 - Property Analysis Tool: Pay-per-report property analysis tool with free, base, and premium tiers.
 - Capital Accounting and Performance Intelligence System: A full-stack capital ledger.
@@ -47,7 +47,7 @@ Key features include:
 - Document Ingestion & Extraction: AI-powered document analysis in the Deal Intelligence workspace.
 - Distressed Property Feed (Deal Flow): Aggregates distressed properties from government sources and a wholesaler submission portal.
 - Agent Governance System: Policy-based autonomous agent authorization.
-- Banking Infrastructure (Increase + BitGo): Primary banking layer via Increase.com — FDIC-insured checking account ("Axiom Nexus Account", First Internet Bank), ACH and wire rails, account number provisioning, and transaction ledger at `/banking`. Environment-aware: `INCREASE_ENVIRONMENT=sandbox` uses `INCREASE_SANDBOX_ACCOUNT_ID`; `production` uses `INCREASE_ACCOUNT_ID`. Service layer in `lib/services/IncreaseService.ts`. API endpoints: `/api/banking/overview`, `/api/banking/account`, `/api/banking/transactions`, `/api/banking/account-numbers`, `/api/banking/transfer`. BitGo CaaS handles institutional crypto custody. Bridge Service connects fiat↔crypto.
+- Banking Infrastructure (Increase + BitGo): Primary banking layer via Increase.com — FDIC-insured checking account ("Axiom Nexus Account", First Internet Bank), ACH and wire rails, account number provisioning, and transaction ledger at `/banking`. Environment-aware: `INCREASE_ENVIRONMENT=sandbox` uses `INCREASE_SANDBOX_ACCOUNT_ID`; `production` uses `INCREASE_ACCOUNT_ID`. Service layer in `lib/services/IncreaseService.ts`. API endpoints: `/api/banking/overview`, `/api/banking/account`, `/api/banking/transactions`, `/api/banking/account-numbers`, `/api/banking/transfer`. BitGo CaaS handles institutional crypto custody. Bridge/Settlement Layer: `bridge_conversion_requests` table + `POST/GET /api/banking/bridge/request`; Convert tab on `/banking/my-account` with USD→AXUSD and AXUSD→USD flows, step-by-step instructions (PSM route), and conversion history. Onboarding flow uses virtual account numbers (no entity creation); SSN is last-4 only; entity creation removed from IncreaseService.
 - Multi-Exit Strategy Engine: Provides 8 underwriting strategies with comparison and ranking.
 - Due Diligence Checklist System: Structured DD workflow.
 - Craftsman Cost Database: `rehab_cost_benchmarks` table seeded with 57 reference costs from Craftsman National Construction Estimator (NCE).
