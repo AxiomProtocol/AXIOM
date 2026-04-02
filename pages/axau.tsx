@@ -187,7 +187,7 @@ export default function AxauPage() {
           </p>
 
           <div className="border border-dl-border px-6 py-4 mb-6 bg-dl-bg-alt">
-            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Smart Contract Architecture (Planned)</p>
+            <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Automated Control Layer Architecture (Planned)</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-dl-navy font-dl-mono">
               {[
                 ['AXAUToken', 'ERC-3643 identity-gated transfer controls'],
@@ -210,32 +210,36 @@ export default function AxauPage() {
 
           {/* Commodity Registry Table */}
           <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Commodity Registry</p>
-          <div className="border border-dl-border mb-8">
-            <div className="grid grid-cols-12 border-b border-dl-border bg-dl-bg px-4 py-2 text-xs text-dl-gray font-dl-mono uppercase tracking-wider">
-              <div className="col-span-1">Ph.</div>
-              <div className="col-span-2">Commodity</div>
-              <div className="col-span-3">Status</div>
-              <div className="col-span-2">Risk Tier</div>
-              <div className="col-span-2 text-right">Haircut</div>
-              <div className="col-span-2 text-right">Max Weight</div>
-            </div>
-            {RESERVE_LAYERS.map((layer, i) => (
-              <div key={layer.id} className={`grid grid-cols-12 border-b border-dl-border px-4 py-3 text-sm items-start ${i % 2 === 1 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
-                <div className="col-span-1 font-dl-mono text-dl-gray text-xs pt-0.5">{layer.phase}</div>
-                <div className="col-span-2">
-                  <p className="font-semibold text-dl-navy text-xs">{layer.commodity}</p>
-                  <p className="text-xs text-dl-gray font-dl-mono">{layer.symbol}</p>
-                </div>
-                <div className="col-span-3"><StatusPill status={layer.status} /></div>
-                <div className="col-span-2"><RiskTierPill tier={layer.riskTier} /></div>
-                <div className="col-span-2 text-right font-dl-mono text-xs text-dl-navy pt-0.5">
-                  {(layer.haircut * 100).toFixed(0)}%
-                </div>
-                <div className="col-span-2 text-right font-dl-mono text-xs text-dl-navy pt-0.5">
-                  {layer.maxWeightPct !== null ? `${layer.maxWeightPct}%` : 'Uncapped'}
-                </div>
-              </div>
-            ))}
+          <div className="border border-dl-border mb-8 overflow-x-auto">
+            <table className="w-full min-w-[540px] text-xs">
+              <thead>
+                <tr className="border-b border-dl-border bg-dl-bg text-dl-gray font-dl-mono uppercase tracking-wider">
+                  <th className="px-4 py-2 text-left font-normal w-8">Ph.</th>
+                  <th className="px-4 py-2 text-left font-normal">Commodity</th>
+                  <th className="px-4 py-2 text-left font-normal">Status</th>
+                  <th className="px-4 py-2 text-left font-normal">Risk Tier</th>
+                  <th className="px-4 py-2 text-right font-normal">Haircut</th>
+                  <th className="px-4 py-2 text-right font-normal">Max Weight</th>
+                </tr>
+              </thead>
+              <tbody>
+                {RESERVE_LAYERS.map((layer, i) => (
+                  <tr key={layer.id} className={`border-b border-dl-border ${i % 2 === 1 ? 'bg-dl-bg-alt' : 'bg-dl-bg'}`}>
+                    <td className="px-4 py-3 font-dl-mono text-dl-gray">{layer.phase}</td>
+                    <td className="px-4 py-3">
+                      <p className="font-semibold text-dl-navy">{layer.commodity}</p>
+                      <p className="text-dl-gray font-dl-mono">{layer.symbol}</p>
+                    </td>
+                    <td className="px-4 py-3"><StatusPill status={layer.status} /></td>
+                    <td className="px-4 py-3"><RiskTierPill tier={layer.riskTier} /></td>
+                    <td className="px-4 py-3 text-right font-dl-mono text-dl-navy">{(layer.haircut * 100).toFixed(0)}%</td>
+                    <td className="px-4 py-3 text-right font-dl-mono text-dl-navy">
+                      {layer.maxWeightPct !== null ? `${layer.maxWeightPct}%` : 'Uncapped'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
           {/* Reserve Layer Detail Cards */}
