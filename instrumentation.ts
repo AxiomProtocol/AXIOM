@@ -1575,6 +1575,17 @@ export async function register() {
         is_active BOOLEAN DEFAULT TRUE
       )`, 'susu_purpose_categories');
 
+      // Wallet-based hub membership — one row per (hub, wallet) pair
+      await exec(`CREATE TABLE IF NOT EXISTS susu_hub_wallet_members (
+        id SERIAL PRIMARY KEY,
+        hub_id INTEGER NOT NULL,
+        wallet_address VARCHAR(42) NOT NULL,
+        joined_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        UNIQUE (hub_id, wallet_address)
+      )`, 'susu_hub_wallet_members');
+      await exec(`CREATE INDEX IF NOT EXISTS susu_hub_wallet_members_hub_wallet_idx ON susu_hub_wallet_members(hub_id, wallet_address)`, 'index susu_hub_wallet_members_hub_wallet_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS susu_hub_wallet_members_wallet_idx ON susu_hub_wallet_members(wallet_address)`, 'index susu_hub_wallet_members_wallet_idx');
+
       // ── Lending Fund Tables (lf_) ──
       await exec(`CREATE TABLE IF NOT EXISTS lf_accreditation_records (
         id SERIAL PRIMARY KEY,
@@ -6524,6 +6535,26 @@ END $seed$`, 'seed dp_listings');
       await exec(`ALTER TABLE increase_product_escrows ADD COLUMN IF NOT EXISTS deposited_amount_cents INTEGER NOT NULL DEFAULT 0`, 'col increase_product_escrows.deposited_amount_cents');
       await exec(`ALTER TABLE increase_product_escrows ADD COLUMN IF NOT EXISTS funded_at TIMESTAMP`, 'col increase_product_escrows.funded_at');
       await exec(`CREATE INDEX IF NOT EXISTS increase_product_escrows_group_idx ON increase_product_escrows(group_id)`, 'index increase_product_escrows_group_idx');
+
+      // Fiat ↔ AXUSD bridge/settlement conversion requests
+      await exec(`CREATE TABLE IF NOT EXISTS bridge_conversion_requests (
+        id SERIAL PRIMARY KEY,
+        participant_id INTEGER NOT NULL,
+        wallet_address VARCHAR(42) NOT NULL,
+        direction VARCHAR(20) NOT NULL,
+        amount_cents INTEGER NOT NULL,
+        axusd_amount VARCHAR(50),
+        status VARCHAR(30) NOT NULL DEFAULT 'pending',
+        notes TEXT,
+        increase_transaction_id VARCHAR(100),
+        onchain_tx_hash VARCHAR(66),
+        requested_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        processed_at TIMESTAMP,
+        completed_at TIMESTAMP
+      )`, 'bridge_conversion_requests');
+      await exec(`CREATE INDEX IF NOT EXISTS bridge_conversion_requests_participant_idx ON bridge_conversion_requests(participant_id)`, 'index bridge_conversion_requests_participant_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS bridge_conversion_requests_wallet_idx ON bridge_conversion_requests(wallet_address)`, 'index bridge_conversion_requests_wallet_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS bridge_conversion_requests_status_idx ON bridge_conversion_requests(status)`, 'index bridge_conversion_requests_status_idx');
 
       console.log('[instrumentation] Database setup complete');
 
