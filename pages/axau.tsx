@@ -120,10 +120,10 @@ export default function AxauPage() {
               <span className="inline-block px-2 py-0.5 text-xs font-dl-mono border border-dl-forest text-dl-forest">
                 DEPLOYED — ARBITRUM ONE
               </span>
-              <span className="inline-block px-2 py-0.5 text-xs font-dl-mono border border-amber-400 text-amber-700">
-                MINT PAUSED — SAFETY HOLD
+              <span className="inline-block px-2 py-0.5 text-xs font-dl-mono border border-dl-forest text-dl-forest bg-green-50">
+                MINT ACTIVE
               </span>
-              <span className="text-xs text-dl-gray font-dl-mono">7 contracts live · Reserve activation pending PAXG bridge · Quotes operational</span>
+              <span className="text-xs text-dl-gray font-dl-mono">7 contracts live · Mint &amp; redeem open · XAU/USD Chainlink oracle</span>
             </div>
           </div>
         </div>
