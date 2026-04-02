@@ -170,10 +170,10 @@ export default function AxauPage() {
               <ul className="space-y-3">
                 {[
                   { step: "1", label: "Connect Wallet", detail: "Use the Connect button in the nav bar. Requires Arbitrum One network." },
-                  { step: "2", label: "Acquire WETH", detail: "WETH on Arbitrum is bridged ETH. Available on any Arbitrum DEX." },
-                  { step: "3", label: "Approve WETH", detail: "One-time approval grants the controller permission to pull your WETH." },
-                  { step: "4", label: "Mint AXAU", detail: "Controller pulls WETH, deposits to Gold Vault, mints AXAU to your wallet." },
-                  { step: "5", label: "Redeem AXAU", detail: "Burn AXAU, receive proportional reserve asset. Subject to coverage ratio." },
+                  { step: "2", label: "Acquire PAXG", detail: "PAXG is tokenized gold (1 oz/token) bridged to Arbitrum. Available on Arbitrum DEXes or bridge from Ethereum." },
+                  { step: "3", label: "Approve PAXG", detail: "One-time approval grants the controller permission to pull your PAXG into the Gold Vault." },
+                  { step: "4", label: "Mint AXAU", detail: "Controller pulls PAXG, deposits to Gold Vault, mints AXAU to your wallet at Mint NAV." },
+                  { step: "5", label: "Redeem AXAU", detail: "Burn AXAU, receive proportional PAXG back at Backing NAV. Subject to coverage ratio." },
                 ].map(item => (
                   <li key={item.step} className="flex gap-3">
                     <span className="font-dl-mono text-xs text-dl-navy/30 w-4 flex-shrink-0 mt-0.5">{item.step}</span>
@@ -186,8 +186,9 @@ export default function AxauPage() {
               </ul>
               <div className="mt-4 pt-4 border-t border-dl-border">
                 <p className="font-dl-mono text-[10px] text-dl-navy/40">
-                  Mint/redeem currently in safety hold pending PAXG bridge activation.
+                  Reserve: PAXG (Paxos Gold, 18 dec) on Arbitrum One.
                   XAU vault: <a href="https://arbiscan.io/address/0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8" target="_blank" rel="noopener noreferrer" className="underline hover:text-dl-navy">0xaCc9…CF8</a>
+                  · PAXG: <a href="https://arbiscan.io/address/0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429" target="_blank" rel="noopener noreferrer" className="underline hover:text-dl-navy">0xfEb4…429</a>
                 </p>
               </div>
             </div>

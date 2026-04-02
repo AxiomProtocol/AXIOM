@@ -177,9 +177,11 @@ export default function LiveNavPanel() {
         <span>Redeem fee: <span className="text-dl-navy">{state.redeemFeeBps} bps</span></span>
         <span>Total minted: <span className="text-dl-navy">{state.totalMinted} AXAU</span></span>
         <span>Reserve asset: <span className="text-dl-navy font-semibold">
-          {state.goldReserveAsset.toLowerCase() === '0x82af49447d8a07e3bd95bd0d56f35241523fbab1'
-            ? 'WETH (placeholder — PAXG activation pending)'
-            : state.goldReserveAsset.slice(0, 6) + '...' + state.goldReserveAsset.slice(-4)}
+          {state.goldReserveAsset.toLowerCase() === '0xfeb4dfc8c4cf7ed305bb08065d08ec6ee6728429'
+            ? 'PAXG — Paxos Gold (Arbitrum One)'
+            : state.goldReserveAsset.toLowerCase() === '0x82af49447d8a07e3bd95bd0d56f35241523fbab1'
+              ? 'WETH (legacy placeholder)'
+              : state.goldReserveAsset.slice(0, 6) + '...' + state.goldReserveAsset.slice(-4)}
         </span></span>
       </div>
 

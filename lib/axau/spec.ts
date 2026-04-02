@@ -370,7 +370,7 @@ export const ROLLOUT_PHASES: RolloutPhase[] = [
 ];
 
 export const DISCLOSURE_NOTICES = [
-  'AXAU is deployed on Arbitrum One mainnet. Minting and redemption are open against the current reserve asset (WETH). No independent third-party security audit has been completed. Participants should conduct independent due diligence before engaging.',
+  'AXAU is deployed on Arbitrum One mainnet. Minting and redemption are open against PAXG (Paxos Gold, 1 troy oz/token). No independent third-party security audit has been completed. Participants should conduct independent due diligence before engaging.',
   'This specification document does not constitute an offer to sell or a solicitation to purchase any security, commodity, or digital asset.',
   'Past performance of referenced commodities (gold, silver, real property) is not indicative of future performance of AXAU.',
   'No independent third-party security audit of AXAU automated control layers has been completed. External audit is a deferred milestone pending treasury development.',

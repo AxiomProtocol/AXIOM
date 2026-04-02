@@ -13,7 +13,8 @@ import { erc20Abi, parseAbi, parseUnits, formatUnits } from "viem";
 
 const CONTROLLER   = "0x036F05a3fB74d35439c074f25F691b36f5D37792" as `0x${string}`;
 const AXAU_TOKEN   = "0xbcCA4D937d427829914498423aE6E04C846dB0Bb" as `0x${string}`;
-const WETH_ADDR    = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1" as `0x${string}`;
+// PAXG on Arbitrum One (bridged from Ethereum 0x45804880…) — official Arbitrum Standard Bridge
+const PAXG_ADDR    = "0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429" as `0x${string}`;
 const XAU_VAULT_ID = "0x7c687a3207cd9c05b4b11d8dd7ac337919c2200102d72989a597ebc5afcf180b" as `0x${string}`;
 
 const CONTROLLER_ABI = parseAbi([
@@ -74,7 +75,7 @@ export default function MintRedeemPanel() {
 
   const fetchBalance = useCallback(async () => {
     if (!address || !publicClient) return;
-    const tokenAddr = tab === "mint" ? WETH_ADDR : AXAU_TOKEN;
+    const tokenAddr = tab === "mint" ? PAXG_ADDR : AXAU_TOKEN;
     try {
       const raw = await publicClient.readContract({
         address: tokenAddr,
@@ -243,7 +244,7 @@ export default function MintRedeemPanel() {
         <div>
           <div className="flex justify-between items-center mb-1.5">
             <label className="font-dl-mono text-xs uppercase tracking-widest text-dl-navy/60">
-              {tab === "mint" ? "WETH Amount" : "AXAU Amount"}
+              {tab === "mint" ? "PAXG Amount" : "AXAU Amount"}
             </label>
             {isConnected && (
               <button
@@ -265,7 +266,7 @@ export default function MintRedeemPanel() {
               className="flex-1 px-4 py-3 font-dl-mono text-lg text-dl-navy bg-transparent outline-none placeholder:text-dl-navy/20"
             />
             <span className="px-4 py-3 font-dl-mono text-sm text-dl-navy/60 bg-dl-bg-alt border-l border-dl-border self-center">
-              {tab === "mint" ? "WETH" : "AXAU"}
+              {tab === "mint" ? "PAXG" : "AXAU"}
             </span>
           </div>
         </div>
@@ -278,12 +279,12 @@ export default function MintRedeemPanel() {
             <div className="space-y-1.5">
               <div className="flex justify-between font-dl-mono text-sm">
                 <span className="text-dl-navy/60">
-                  {tab === "mint" ? "AXAU you receive" : "WETH you receive"}
+                  {tab === "mint" ? "AXAU you receive" : "PAXG you receive"}
                 </span>
                 <span className="text-dl-navy font-semibold">
                   {tab === "mint"
                     ? `${quote.axauOutFormatted ?? "—"} AXAU`
-                    : `${quote.reserveOutFormatted ?? "—"} WETH`}
+                    : `${quote.reserveOutFormatted ?? "—"} PAXG`}
                 </span>
               </div>
               {(quote.mintNavFormatted || quote.backingNavFormatted) && (
@@ -365,7 +366,7 @@ export default function MintRedeemPanel() {
           <div className="border border-dl-border px-4 py-3 bg-dl-bg-alt">
             <div className="space-y-1">
               {[
-                { label: `Step 1: Approve ${tab === "mint" ? "WETH" : "AXAU"}`, done: ["approved", "submitting"].includes(status), active: status === "approving" },
+                { label: `Step 1: Approve ${tab === "mint" ? "PAXG" : "AXAU"}`, done: ["approved", "submitting"].includes(status), active: status === "approving" },
                 { label: `Step 2: Submit ${tab}`,                                done: false,                                        active: status === "submitting" },
               ].map(step => (
                 <div key={step.label} className="flex items-center gap-2 font-dl-mono text-xs">
@@ -381,7 +382,7 @@ export default function MintRedeemPanel() {
       {/* Footer */}
       <div className="px-5 py-3 border-t border-dl-border bg-dl-bg-alt">
         <p className="font-dl-mono text-[10px] text-dl-navy/40">
-          Contracts on Arbitrum One. Unregistered tokens subject to transfer restrictions.
+          Contracts on Arbitrum One. Reserve asset: PAXG — Paxos Gold (1 oz/token).
           Mint/redeem subject to coverage ratio and identity compliance.
         </p>
       </div>
