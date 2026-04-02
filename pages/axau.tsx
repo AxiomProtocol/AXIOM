@@ -1,10 +1,14 @@
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
 import {
   Layers, Shield, BookOpen, FileText, AlertTriangle, Clock,
   ChevronRight, CheckCircle, Circle, AlertCircle, Lock,
   Coins, BarChart3, Scale, Eye, Landmark, Target,
 } from 'lucide-react';
+
+const LiveNavPanel    = dynamic(() => import('../components/axau/LiveNavPanel'),    { ssr: false });
+const MintRedeemPanel = dynamic(() => import('../components/axau/MintRedeemPanel'), { ssr: false });
 import {
   AXAU_SPEC_VERSION,
   AXAU_SPEC_EFFECTIVE_DATE,
@@ -112,11 +116,14 @@ export default function AxauPage() {
           </div>
 
           <div className="border border-dl-border border-t-0 px-6 py-3">
-            <div className="flex items-center gap-2">
-              <span className="inline-block px-2 py-0.5 text-xs font-dl-mono border border-dl-gold text-dl-gold">
-                SPECIFICATION PHASE
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-block px-2 py-0.5 text-xs font-dl-mono border border-dl-forest text-dl-forest">
+                DEPLOYED — ARBITRUM ONE
               </span>
-              <span className="text-xs text-dl-gray font-dl-mono">No token deployed · No minting available · Blueprint document only</span>
+              <span className="inline-block px-2 py-0.5 text-xs font-dl-mono border border-amber-400 text-amber-700">
+                MINT PAUSED — SAFETY HOLD
+              </span>
+              <span className="text-xs text-dl-gray font-dl-mono">7 contracts live · Reserve activation pending PAXG bridge · Quotes operational</span>
             </div>
           </div>
         </div>
@@ -136,6 +143,56 @@ export default function AxauPage() {
             ))}
           </ul>
         </div>
+
+        {/* ── Live System Dashboard ─────────────────────────────────── */}
+        <section className="mb-12">
+          <SectionHeading>
+            <span className="inline-flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-dl-navy" />
+              Live System State
+            </span>
+          </SectionHeading>
+          <LiveNavPanel />
+        </section>
+
+        {/* ── Mint / Redeem Terminal ────────────────────────────────── */}
+        <section className="mb-12">
+          <SectionHeading>
+            <span className="inline-flex items-center gap-2">
+              <Coins className="w-5 h-5 text-dl-navy" />
+              Mint / Redeem Terminal
+            </span>
+          </SectionHeading>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <MintRedeemPanel />
+            <div className="border border-dl-border p-5 bg-dl-bg-alt">
+              <p className="font-dl-mono text-[10px] uppercase tracking-widest text-dl-navy/40 mb-3">Transaction Guide</p>
+              <ul className="space-y-3">
+                {[
+                  { step: "1", label: "Connect Wallet", detail: "Use the Connect button in the nav bar. Requires Arbitrum One network." },
+                  { step: "2", label: "Acquire WETH", detail: "WETH on Arbitrum is bridged ETH. Available on any Arbitrum DEX." },
+                  { step: "3", label: "Approve WETH", detail: "One-time approval grants the controller permission to pull your WETH." },
+                  { step: "4", label: "Mint AXAU", detail: "Controller pulls WETH, deposits to Gold Vault, mints AXAU to your wallet." },
+                  { step: "5", label: "Redeem AXAU", detail: "Burn AXAU, receive proportional reserve asset. Subject to coverage ratio." },
+                ].map(item => (
+                  <li key={item.step} className="flex gap-3">
+                    <span className="font-dl-mono text-xs text-dl-navy/30 w-4 flex-shrink-0 mt-0.5">{item.step}</span>
+                    <div>
+                      <p className="font-dl-mono text-xs text-dl-navy font-semibold">{item.label}</p>
+                      <p className="font-dl-mono text-xs text-dl-navy/60 mt-0.5">{item.detail}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 pt-4 border-t border-dl-border">
+                <p className="font-dl-mono text-[10px] text-dl-navy/40">
+                  Mint/redeem currently in safety hold pending PAXG bridge activation.
+                  XAU vault: <a href="https://arbiscan.io/address/0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8" target="_blank" rel="noopener noreferrer" className="underline hover:text-dl-navy">0xaCc9…CF8</a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* ── Section 1: Token Overview ─────────────────────────────── */}
         <section className="mb-12">
