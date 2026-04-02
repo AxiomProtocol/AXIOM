@@ -12,7 +12,7 @@ export function isAdminRequest(req: NextApiRequest): boolean {
   return !!(ADMIN_KEY && req.headers['x-admin-key'] === ADMIN_KEY);
 }
 
-export function verifyCreditAuth(req: NextApiRequest, claimedWallet: string): AuthResult {
+export async function verifyCreditAuth(req: NextApiRequest, claimedWallet: string): Promise<AuthResult> {
   if (isAdminRequest(req)) {
     return { ok: true, verifiedAddress: claimedWallet.toLowerCase() };
   }
@@ -29,7 +29,6 @@ export function verifyCreditAuth(req: NextApiRequest, claimedWallet: string): Au
     };
   }
 
-  // Decode URL-encoding applied by the client to keep the header ISO-8859-1 safe
   let msgHeader: string;
   try {
     msgHeader = decodeURIComponent(rawMsgHeader);
@@ -66,7 +65,7 @@ export function verifyCreditAuth(req: NextApiRequest, claimedWallet: string): Au
     return { ok: false, reason: 'Signature does not match the provided wallet address.' };
   }
 
-  const nonceValid = validateAndConsumeNonce(claimedWallet, nonce);
+  const nonceValid = await validateAndConsumeNonce(claimedWallet, nonce);
   if (!nonceValid) {
     return { ok: false, reason: 'Nonce is invalid, expired, or has already been used. Obtain a fresh nonce and sign again.' };
   }

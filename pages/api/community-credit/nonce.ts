@@ -1,32 +1,18 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { randomBytes } from 'crypto';
-
-// V1: In-memory nonce store. Works correctly in single-instance deployments.
-// For horizontal scaling or serverless environments, replace with a shared durable
-// store (e.g. Redis SETEX, or a database-backed nonce table with TTL cleanup).
-const nonceStore = new Map<string, { nonce: string; expiresAt: number }>();
+import { pool } from '../../../server/db';
 
 const NONCE_TTL_MS = 5 * 60 * 1000;
 
-function cleanExpiredNonces() {
-  const now = Date.now();
-  for (const [key, val] of nonceStore.entries()) {
-    if (val.expiresAt < now) nonceStore.delete(key);
-  }
-}
-
-export function validateAndConsumeNonce(walletAddress: string, nonce: string): boolean {
-  cleanExpiredNonces();
+export async function validateAndConsumeNonce(walletAddress: string, nonce: string): Promise<boolean> {
   const key = walletAddress.toLowerCase();
-  const record = nonceStore.get(key);
-  if (!record) return false;
-  if (record.nonce !== nonce) return false;
-  if (record.expiresAt < Date.now()) {
-    nonceStore.delete(key);
-    return false;
-  }
-  nonceStore.delete(key);
-  return true;
+  const result = await pool.query(
+    `DELETE FROM community_credit_nonces
+     WHERE wallet_address = $1 AND nonce = $2 AND expires_at > NOW()
+     RETURNING id`,
+    [key, nonce]
+  );
+  return result.rowCount != null && result.rowCount > 0;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -39,23 +25,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, error: 'walletAddress is required' });
   }
 
-  cleanExpiredNonces();
-
-  const nonce = randomBytes(16).toString('hex');
-  const expiresAt = Date.now() + NONCE_TTL_MS;
   const key = walletAddress.toLowerCase();
-  nonceStore.set(key, { nonce, expiresAt });
+  const nonce = randomBytes(16).toString('hex');
+  const expiresAt = new Date(Date.now() + NONCE_TTL_MS);
+
+  await pool.query(
+    `DELETE FROM community_credit_nonces WHERE wallet_address = $1`,
+    [key]
+  );
+  await pool.query(
+    `INSERT INTO community_credit_nonces (wallet_address, nonce, expires_at) VALUES ($1, $2, $3)`,
+    [key, nonce, expiresAt]
+  );
 
   const message =
     `Axiom Protocol - Community Entry Credit wallet verification\n` +
-    `Wallet: ${walletAddress.toLowerCase()}\n` +
+    `Wallet: ${key}\n` +
     `Nonce: ${nonce}\n` +
-    `Expires: ${new Date(expiresAt).toISOString()}`;
+    `Expires: ${expiresAt.toISOString()}`;
 
   return res.status(200).json({
     success: true,
     nonce,
     message,
-    expiresAt,
+    expiresAt: expiresAt.getTime(),
   });
 }

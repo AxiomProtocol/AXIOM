@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, error: 'walletAddress and creditLineId are required' });
   }
 
-  const auth = verifyCreditAuth(req, walletAddress);
+  const auth = await verifyCreditAuth(req, walletAddress);
   if (!auth.ok) {
     return res.status(401).json({ success: false, error: auth.reason });
   }
