@@ -2571,16 +2571,23 @@ export default function FounderOpsPage() {
                         </span>
                         <p className="font-dl-mono text-xs text-dl-navy font-bold">Vault Pre-Fund Buffer</p>
                       </div>
-                      {axauBuffer.mintPaused && (
-                        <span className="font-dl-mono text-[9px] border border-dl-error text-dl-error px-2 py-0.5 uppercase tracking-wider">MINT PAUSED — AUTO-FULFILL BLOCKED</span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {axauBuffer.axauCoversOrders ? (
+                          <span className="font-dl-mono text-[9px] border border-dl-forest text-dl-forest px-2 py-0.5 uppercase tracking-wider">PATH A — AXAU RESERVE</span>
+                        ) : (
+                          <span className="font-dl-mono text-[9px] border border-dl-navy text-dl-navy px-2 py-0.5 uppercase tracking-wider">PATH B — PAXG MINT</span>
+                        )}
+                        {axauBuffer.mintPaused && (
+                          <span className="font-dl-mono text-[9px] border border-dl-error text-dl-error px-2 py-0.5 uppercase tracking-wider">MINT PAUSED</span>
+                        )}
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-inherit">
                       {[
-                        { label: 'PAXG in Buffer Wallet', value: `${axauBuffer.paxgBalanceFormatted} PAXG` },
-                        { label: 'Buffer Value (USD)', value: `$${parseFloat(axauBuffer.paxgValueUsd).toLocaleString(undefined, { maximumFractionDigits: 2 })}` },
-                        { label: 'Pending Demand (PAXG)', value: `${axauBuffer.pendingPaxgRequired} PAXG` },
-                        { label: 'Pending Demand (AXUSD)', value: `$${parseFloat(axauBuffer.pendingAxusdTotal).toLocaleString(undefined, { maximumFractionDigits: 2 })}` },
+                        { label: 'AXAU Reserve (buffer)', value: `${parseFloat(axauBuffer.axauBalanceFormatted).toLocaleString(undefined, { maximumFractionDigits: 4 })} AXAU` },
+                        { label: 'PAXG in Wallet', value: `${axauBuffer.paxgBalanceFormatted} PAXG` },
+                        { label: 'Pending Orders (AXAU)', value: `${parseFloat(axauBuffer.pendingAxauTotal ?? '0').toLocaleString(undefined, { maximumFractionDigits: 4 })} AXAU` },
+                        { label: 'Pending Orders (AXUSD)', value: `$${parseFloat(axauBuffer.pendingAxusdTotal).toLocaleString(undefined, { maximumFractionDigits: 2 })}` },
                       ].map(stat => (
                         <div key={stat.label} className="px-5 py-3">
                           <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-1">{stat.label}</p>
@@ -2591,8 +2598,8 @@ export default function FounderOpsPage() {
                     <div className="px-5 py-2 border-t border-inherit">
                       <p className="font-dl-mono text-[9px] text-dl-gray">
                         Buffer wallet: <span className="text-dl-navy">{axauBuffer.deployerAddress}</span>
-                        {' · '}To top up, send PAXG to this address on Arbitrum One.
-                        {' · '}PAXG must be approved to the MintRedeemController before first use (auto-approval on first tx).
+                        {' · '}PATH A uses pre-minted AXAU (zero PAXG, 1 tx). PATH B mints from PAXG (2 tx).
+                        {' · '}To reload PATH A, send AXAU or PAXG to this address on Arbitrum One.
                       </p>
                     </div>
                   </div>
@@ -2724,8 +2731,16 @@ export default function FounderOpsPage() {
                                     {req.status === 'pending' && (
                                       <button
                                         onClick={() => handleAutoFulfill(req.id)}
-                                        disabled={isBusy || !!axauBuffer?.mintPaused}
-                                        title={axauBuffer?.bufferCapacity === 'DEPLETED' ? 'Buffer depleted — top up PAXG first' : axauBuffer?.mintPaused ? 'Mint paused on-chain' : 'Send PAXG → vault, mint AXAU → wallet automatically'}
+                                        disabled={isBusy || (!!axauBuffer?.mintPaused && !axauBuffer?.axauCoversOrders) || axauBuffer?.bufferCapacity === 'DEPLETED'}
+                                        title={
+                                          axauBuffer?.bufferCapacity === 'DEPLETED'
+                                            ? 'Buffer depleted — send AXAU or PAXG to buffer wallet'
+                                            : axauBuffer?.axauCoversOrders
+                                              ? 'PATH A — transfer from pre-minted AXAU reserve (no PAXG consumed)'
+                                              : axauBuffer?.mintPaused
+                                                ? 'Mint paused and no AXAU reserve — cannot fulfill'
+                                                : 'PATH B — mint fresh AXAU from PAXG buffer'
+                                        }
                                         className={`font-dl-mono text-[9px] border px-2 py-1 uppercase tracking-wider disabled:opacity-50 ${
                                           axauBuffer?.bufferCapacity === 'SUFFICIENT'
                                             ? 'border-dl-forest text-dl-forest hover:bg-green-50'
@@ -2734,7 +2749,7 @@ export default function FounderOpsPage() {
                                               : 'border-dl-border text-dl-gray'
                                         }`}
                                       >
-                                        {isBusy ? 'Processing…' : `⚡ Auto-Fulfill${axauBuffer?.bufferCapacity === 'DEPLETED' ? ' (no buffer)' : ''}`}
+                                        {isBusy ? 'Processing…' : axauBuffer?.axauCoversOrders ? '⚡ Auto-Fulfill (PATH A)' : axauBuffer?.bufferCapacity === 'DEPLETED' ? '⚡ Auto-Fulfill (no buffer)' : '⚡ Auto-Fulfill (PATH B)'}
                                       </button>
                                     )}
                                     {/* Manual flow divider */}

@@ -79,10 +79,14 @@ export interface VaultBufferState {
   paxgBalanceRaw: string;
   paxgBalanceFormatted: string;
   paxgValueUsd: string;
+  axauBalanceFormatted: string;
+  axauValueUsd: string;
   xauUsdPrice: string;
   pendingOrdersCount: number;
   pendingAxusdTotal: string;
+  pendingAxauTotal: string;
   pendingPaxgRequired: string;
+  axauCoversOrders: boolean;
   bufferSufficient: boolean;
   bufferCapacity: 'SUFFICIENT' | 'PARTIAL' | 'DEPLETED';
   mintPaused: boolean;
@@ -100,8 +104,13 @@ export async function getVaultBuffer(): Promise<VaultBufferState> {
       .mintPaused(),
   ]);
 
-  const paxg         = new ethers.Contract(reserveAssetAddress, ERC20_ABI, provider);
-  const paxgBalance  = BigInt(await paxg.balanceOf(signer.address));
+  const paxg     = new ethers.Contract(reserveAssetAddress, ERC20_ABI, provider);
+  const axauToken = new ethers.Contract(AXAU_ADDRESSES.AXAUTokenLite3643, ERC20_ABI, provider);
+
+  const [paxgBalance, axauBalance] = await Promise.all([
+    paxg.balanceOf(signer.address).then((b: bigint) => BigInt(b)),
+    axauToken.balanceOf(signer.address).then((b: bigint) => BigInt(b)),
+  ]);
 
   const pendingOrders = await db
     .select()
@@ -109,28 +118,40 @@ export async function getVaultBuffer(): Promise<VaultBufferState> {
     .where(inArray(axauPurchaseRequests.status, ['pending', 'processing']));
 
   const pendingAxusdTotal   = pendingOrders.reduce((s, r) => s + parseFloat(r.axusdAmount ?? '0'), 0);
+  const pendingAxauTotal    = pendingOrders.reduce((s, r) => s + parseFloat(r.axauQuoted ?? '0'), 0);
   const pendingPaxgRequired = pendingAxusdTotal / xauPrice;
-  const paxgBalanceFloat    = Number(paxgBalance) / 1e18;
-  const paxgValueUsd        = paxgBalanceFloat * xauPrice;
 
+  const paxgBalanceFloat = Number(paxgBalance) / 1e18;
+  const axauBalanceFloat = Number(axauBalance) / 1e18;
+  const paxgValueUsd     = paxgBalanceFloat * xauPrice;
+  const axauValueUsd     = axauBalanceFloat * 1.15; // approximate Mint NAV (~$1.15/AXAU)
+
+  // AXAU buffer covers all pending orders if deployer holds ≥ total quoted AXAU
+  const axauCoversOrders = axauBalanceFloat >= pendingAxauTotal;
+
+  // Overall capacity: AXAU reserve OR PAXG mint buffer must cover pending demand
   let bufferCapacity: 'SUFFICIENT' | 'PARTIAL' | 'DEPLETED';
-  if (paxgBalance === 0n)                                   bufferCapacity = 'DEPLETED';
-  else if (paxgBalanceFloat >= pendingPaxgRequired)         bufferCapacity = 'SUFFICIENT';
-  else                                                      bufferCapacity = 'PARTIAL';
+  if (paxgBalance === 0n && axauBalance === 0n)                       bufferCapacity = 'DEPLETED';
+  else if (axauCoversOrders || paxgBalanceFloat >= pendingPaxgRequired) bufferCapacity = 'SUFFICIENT';
+  else                                                                  bufferCapacity = 'PARTIAL';
 
   return {
-    deployerAddress:    signer.address,
-    paxgBalanceRaw:     paxgBalance.toString(),
+    deployerAddress:      signer.address,
+    paxgBalanceRaw:       paxgBalance.toString(),
     paxgBalanceFormatted: paxgBalanceFloat.toFixed(6),
-    paxgValueUsd:       paxgValueUsd.toFixed(2),
-    xauUsdPrice:        xauPrice.toFixed(2),
-    pendingOrdersCount: pendingOrders.length,
-    pendingAxusdTotal:  pendingAxusdTotal.toFixed(2),
-    pendingPaxgRequired: pendingPaxgRequired.toFixed(6),
-    bufferSufficient:   bufferCapacity === 'SUFFICIENT',
+    paxgValueUsd:         paxgValueUsd.toFixed(2),
+    axauBalanceFormatted: axauBalanceFloat.toFixed(6),
+    axauValueUsd:         axauValueUsd.toFixed(2),
+    xauUsdPrice:          xauPrice.toFixed(2),
+    pendingOrdersCount:   pendingOrders.length,
+    pendingAxusdTotal:    pendingAxusdTotal.toFixed(2),
+    pendingAxauTotal:     pendingAxauTotal.toFixed(6),
+    pendingPaxgRequired:  pendingPaxgRequired.toFixed(6),
+    axauCoversOrders,
+    bufferSufficient:     bufferCapacity === 'SUFFICIENT',
     bufferCapacity,
-    mintPaused:         mintPausedRaw,
-    fetchedAt:          new Date().toISOString(),
+    mintPaused:           mintPausedRaw,
+    fetchedAt:            new Date().toISOString(),
   };
 }
 
@@ -158,116 +179,149 @@ export async function autoFulfillRequest(requestId: string): Promise<AutoFulfill
 
   if (!rows.length) return { success: false, requestId, error: 'Request not found' };
   const req = rows[0];
-
   if (req.status !== 'pending') {
     return { success: false, requestId, error: `Request is already ${req.status}` };
   }
 
-  // 2. Resolve reserve asset + current XAU price
+  // 2. Set up AXAU token + check deployer's pre-minted balance
+  const axauToken    = new ethers.Contract(AXAU_ADDRESSES.AXAUTokenLite3643, ERC20_ABI, signer);
+  const axauQuotedWei = ethers.parseUnits(parseFloat(req.axauQuoted).toFixed(18), 18);
+  const axauBalance   = BigInt(await axauToken.balanceOf(signer.address));
+
+  // ── PATH A: deployer already holds enough pre-minted AXAU ──────────────────
+  // Skip mintWithAsset entirely — transfer directly from reserve.
+  // Saves one on-chain tx and conserves the PAXG buffer.
+  if (axauBalance >= axauQuotedWei) {
+    await db.update(axauPurchaseRequests)
+      .set({ status: 'processing', updatedAt: new Date() })
+      .where(eq(axauPurchaseRequests.id, requestId));
+
+    try {
+      const transferTx      = await axauToken.transfer(req.walletAddress, axauQuotedWei);
+      const transferReceipt = await transferTx.wait(1);
+      const transferTxHash: string = transferReceipt.hash;
+      const axauSent = (Number(axauQuotedWei) / 1e18).toFixed(6);
+
+      await db.update(axauPurchaseRequests)
+        .set({
+          status:            'fulfilled',
+          fulfillmentTxHash: transferTxHash,
+          fulfilledBy:       signer.address,
+          fulfilledAt:       new Date(),
+          notes:             `Fulfilled from pre-minted reserve (PATH A). Transfer tx: ${transferTxHash}`,
+          updatedAt:         new Date(),
+        })
+        .where(eq(axauPurchaseRequests.id, requestId));
+
+      return {
+        success:       true,
+        requestId,
+        transferTxHash,
+        axauMinted:    axauSent,
+      };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      await db.update(axauPurchaseRequests)
+        .set({ status: 'failed', notes: `PATH A transfer failed: ${msg}`, updatedAt: new Date() })
+        .where(eq(axauPurchaseRequests.id, requestId));
+      return { success: false, requestId, error: msg };
+    }
+  }
+
+  // ── PATH B: mint fresh AXAU from PAXG buffer ────────────────────────────────
   const [reserveAssetAddress, xauPrice] = await Promise.all([
     getReserveAsset(provider),
     getXauPriceFloat(provider),
   ]);
 
-  // 3. Check mint is not paused
   const controller = new ethers.Contract(AXAU_ADDRESSES.MintRedeemController, WRITE_CONTROLLER_ABI, signer);
   const mintPaused: boolean = await controller.mintPaused();
   if (mintPaused) {
-    return { success: false, requestId, error: 'Mint is currently paused on-chain' };
+    return { success: false, requestId, error: 'Mint is currently paused and pre-minted AXAU reserve is insufficient' };
   }
 
-  // 4. Calculate PAXG needed
-  //    PAXG = AXUSD / XAU_USD  (AXUSD ≈ $1, PAXG ≈ 1 XAU)
-  //    Add 0.05% rounding buffer to avoid rounding-down shortfall
-  const axusdAmount  = parseFloat(req.axusdAmount);
-  const paxgNeeded   = (axusdAmount / xauPrice) * 1.0005;
-  const paxgWei      = ethers.parseUnits(paxgNeeded.toFixed(18), 18);
+  // PAXG needed = AXUSD / XAU_USD + 0.05% rounding buffer
+  const axusdAmount = parseFloat(req.axusdAmount);
+  const paxgNeeded  = (axusdAmount / xauPrice) * 1.0005;
+  const paxgWei     = ethers.parseUnits(paxgNeeded.toFixed(18), 18);
 
-  // 5. Check deployer PAXG balance
   const paxg        = new ethers.Contract(reserveAssetAddress, ERC20_ABI, signer);
   const paxgBalance = BigInt(await paxg.balanceOf(signer.address));
   if (paxgBalance < paxgWei) {
     const have = (Number(paxgBalance) / 1e18).toFixed(6);
     const need = paxgNeeded.toFixed(6);
-    return { success: false, requestId, error: `Insufficient PAXG buffer: have ${have} PAXG, need ${need} PAXG` };
+    return {
+      success: false, requestId,
+      error: `Insufficient buffer: have ${have} PAXG and ${(Number(axauBalance) / 1e18).toFixed(6)} AXAU, need ${need} PAXG or ${(Number(axauQuotedWei) / 1e18).toFixed(6)} AXAU`,
+    };
   }
 
-  // 6. Mark as processing
   await db.update(axauPurchaseRequests)
     .set({ status: 'processing', updatedAt: new Date() })
     .where(eq(axauPurchaseRequests.id, requestId));
 
   try {
-    // 7. Approve MintRedeemController to spend PAXG (skip if already max-approved)
+    // Approve MintRedeemController to spend PAXG (skip if already max-approved)
     const allowance = BigInt(await paxg.allowance(signer.address, AXAU_ADDRESSES.MintRedeemController));
     if (allowance < paxgWei) {
       const approveTx = await paxg.approve(AXAU_ADDRESSES.MintRedeemController, ethers.MaxUint256);
       await approveTx.wait(1);
     }
 
-    // 8. Set up AXAU token contract and snapshot balance before mint
-    const axauToken  = new ethers.Contract(AXAU_ADDRESSES.AXAUTokenLite3643, ERC20_ABI, signer);
+    // Snapshot AXAU balance before mint
     const axauBefore = BigInt(await axauToken.balanceOf(signer.address));
 
-    // 9. Call mintWithAsset — PAXG moves to vault, AXAU minted to deployer wallet
+    // Call mintWithAsset — PAXG moves to vault, AXAU minted to deployer
     const mintTx      = await controller.mintWithAsset(COMPONENT_IDS.XAU, paxgWei);
     const mintReceipt = await mintTx.wait(1);
     const mintTxHash: string = mintReceipt.hash;
 
-    // 10. Parse axauMinted from the ERC-20 Transfer event emitted by the AXAU token.
-    //     Mint events are Transfer(from=0x0, to=recipient, value=amount).
-    //     Prefer event parsing over balance delta — RPC state can lag after wait(1).
+    // Parse axauMinted from Transfer(from=0x0) event — more reliable than balance delta
     const TRANSFER_TOPIC = ethers.id('Transfer(address,address,uint256)');
     const ZERO_PAD       = ethers.zeroPadValue('0x0000000000000000000000000000000000000000', 32);
     const mintLog        = mintReceipt.logs.find((log: ethers.Log) =>
       log.address.toLowerCase() === AXAU_ADDRESSES.AXAUTokenLite3643.toLowerCase() &&
       log.topics[0] === TRANSFER_TOPIC &&
-      log.topics[1] === ZERO_PAD                // from = address(0) → mint event
+      log.topics[1] === ZERO_PAD
     );
 
     let axauMinted: bigint;
     if (mintLog) {
       axauMinted = BigInt(mintLog.data);
     } else {
-      // Fallback: balance delta with 2s delay to allow RPC state to propagate
       await new Promise(resolve => setTimeout(resolve, 2000));
       const axauAfter = BigInt(await axauToken.balanceOf(signer.address));
       axauMinted = axauAfter - axauBefore;
     }
     if (axauMinted === 0n) throw new Error('Mint returned 0 AXAU — possible coverage ratio breach or paused mint');
 
-    // 11. Transfer AXAU to buyer
+    // Transfer AXAU to buyer
     const transferTx      = await axauToken.transfer(req.walletAddress, axauMinted);
     const transferReceipt = await transferTx.wait(1);
     const transferTxHash: string = transferReceipt.hash;
 
-    // 12. Mark fulfilled
     await db.update(axauPurchaseRequests)
       .set({
         status:            'fulfilled',
         fulfillmentTxHash: mintTxHash,
         fulfilledBy:       signer.address,
         fulfilledAt:       new Date(),
-        notes:             `Auto-fulfilled by deployer. Mint tx: ${mintTxHash} | Transfer tx: ${transferTxHash}`,
+        notes:             `Auto-fulfilled via PAXG mint (PATH B). Mint tx: ${mintTxHash} | Transfer tx: ${transferTxHash}`,
         updatedAt:         new Date(),
       })
       .where(eq(axauPurchaseRequests.id, requestId));
 
     return {
-      success:      true,
+      success:       true,
       requestId,
       mintTxHash,
       transferTxHash,
-      axauMinted:   (Number(axauMinted) / 1e18).toFixed(6),
+      axauMinted:    (Number(axauMinted) / 1e18).toFixed(6),
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     await db.update(axauPurchaseRequests)
-      .set({
-        status:    'failed',
-        notes:     `Auto-fulfill failed: ${msg}`,
-        updatedAt: new Date(),
-      })
+      .set({ status: 'failed', notes: `PATH B mint failed: ${msg}`, updatedAt: new Date() })
       .where(eq(axauPurchaseRequests.id, requestId));
     return { success: false, requestId, error: msg };
   }
