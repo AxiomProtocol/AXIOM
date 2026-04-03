@@ -196,3 +196,80 @@ export async function sendWorkbookWelcomeEmail(to: string, firstName: string) {
 
   return result;
 }
+
+export async function sendAxauEarlyAccessConfirmation(params: {
+  to: string;
+  fullName: string;
+  walletAddress: string;
+  submissionId: string;
+}) {
+  const { client, fromEmail } = await getResendClient();
+  const { to, fullName, walletAddress, submissionId } = params;
+  const shortWallet = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+  const shortId = submissionId.slice(0, 8).toUpperCase();
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:Georgia,serif;background:#f5f5f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f0;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #d1d5db;">
+        <tr>
+          <td style="background:#1e3a5f;padding:32px 36px;">
+            <p style="color:#b8860b;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 8px 0;">AXIOM PROTOCOL</p>
+            <h1 style="color:#ffffff;font-family:Georgia,serif;font-size:26px;font-weight:700;margin:0;line-height:1.2;">AXAU Early Access</h1>
+            <p style="color:#94a3b8;font-family:'Courier New',monospace;font-size:11px;margin:8px 0 0 0;letter-spacing:0.1em;">APPLICATION RECEIVED</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px;">
+            <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 20px 0;">Dear ${fullName},</p>
+            <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 24px 0;">
+              Your application for AXAU Early Access has been received and is under review. The Axiom Protocol compliance team will process your identity verification and notify you once your wallet is approved.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;margin:0 0 24px 0;">
+              <tr><td style="padding:20px 24px;">
+                <p style="font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.12em;color:#6b7280;text-transform:uppercase;margin:0 0 12px 0;">Submission Details</p>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:4px 0;">Reference ID</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:4px 0;">#${shortId}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:4px 0;">Wallet</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:4px 0;">${shortWallet}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:4px 0;">Status</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#b8860b;font-weight:700;text-align:right;padding:4px 0;">UNDER REVIEW</td>
+                  </tr>
+                </table>
+              </td></tr>
+            </table>
+            <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
+              Once approved, your wallet address will be registered on-chain as an eligible AXAU minter. You can then access the AXAU mint terminal at <a href="https://axiomprotocol.app/axau#mint-terminal" style="color:#1e3a5f;">axiomprotocol.app/axau</a>.
+            </p>
+            <p style="color:#9ca3af;font-size:13px;line-height:1.5;margin:0;">
+              AXAU is a gold reserve unit. Participation is subject to identity verification and eligibility requirements.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:20px 36px;">
+            <p style="font-family:'Courier New',monospace;font-size:10px;color:#9ca3af;letter-spacing:0.1em;margin:0;">AXIOM PROTOCOL — ARBITRUM ONE — axiomprotocol.app</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  return client.emails.send({
+    from: fromEmail,
+    to: [to],
+    subject: `AXAU Early Access — Application Received (#${shortId})`,
+    html,
+  });
+}

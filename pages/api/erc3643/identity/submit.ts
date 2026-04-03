@@ -1,7 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import { t3KycSubmissions } from '../../../../shared/erc3643Schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, count } from 'drizzle-orm';
+import { sendAxauEarlyAccessConfirmation } from '../../../../lib/email/resend';
+
+const AXAU_EARLY_ACCESS_CAP = 100;
 
 const VALID_DOC_TYPES = ['passport', 'drivers_license', 'national_id', 'residence_permit'];
 
@@ -24,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { walletAddress, fullName, dateOfBirth, country, documentType } = req.body;
+  const { walletAddress, fullName, dateOfBirth, country, documentType, email } = req.body;
 
   if (!walletAddress || typeof walletAddress !== 'string' || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
     return res.status(400).json({ error: 'Valid wallet address required (0x...)' });
@@ -46,6 +49,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    const [capRow] = await db
+      .select({ total: count() })
+      .from(t3KycSubmissions)
+      .where(eq(t3KycSubmissions.status, 'approved'));
+    const approvedCount = Number(capRow?.total ?? 0);
+    if (approvedCount >= AXAU_EARLY_ACCESS_CAP) {
+      return res.status(409).json({
+        error: 'Early Access is full — 100 participants have been approved. No new submissions are being accepted at this time.',
+        isFull: true,
+      });
+    }
+
     const existing = await db.select()
       .from(t3KycSubmissions)
       .where(
@@ -68,6 +83,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       documentType,
       status: 'submitted',
     }).returning();
+
+    if (email && typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      sendAxauEarlyAccessConfirmation({
+        to: email,
+        fullName: fullName.trim(),
+        walletAddress: walletAddress.toLowerCase(),
+        submissionId: inserted.id,
+      }).catch(() => {});
+    }
 
     return res.status(201).json({
       success: true,

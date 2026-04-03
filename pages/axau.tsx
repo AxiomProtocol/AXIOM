@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
+import { useAccount } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
 import { ChevronDown, ExternalLink, CheckCircle } from 'lucide-react';
 
@@ -76,9 +77,11 @@ function LiquidityIcon({ size = 60 }: { size?: number }) {
 // ─── Hero ────────────────────────────────────────────────────────────────────
 
 function Hero() {
+  const { address, isConnected } = useAccount();
   const [xauPrice, setXauPrice]       = useState<string | null>(null);
   const [coveragePct, setCoveragePct] = useState<string | null>(null);
   const [coverageBps, setCoverageBps] = useState<number | null>(null);
+  const [isVerified, setIsVerified]   = useState<boolean | null>(null);
 
   useEffect(() => {
     function fetchNav() {
@@ -95,6 +98,14 @@ function Hero() {
     const id = setInterval(fetchNav, 60_000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (!isConnected || !address) { setIsVerified(null); return; }
+    fetch(`/api/erc3643/identity/check?wallet=${address}`)
+      .then(r => r.json())
+      .then(d => setIsVerified(d.verified === true))
+      .catch(() => setIsVerified(null));
+  }, [address, isConnected]);
 
   return (
     <section style={{ background: C.bgAlt, borderBottom: `1px solid ${C.border}`, padding: '0 0 0 0', overflow: 'hidden' }}>
@@ -141,13 +152,16 @@ function Hero() {
           AXAU is a gold reserve unit backed by PAXG — Paxos Gold on Arbitrum One. Every token is fully verifiable on-chain.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <a href="#mint-terminal" style={{
-            display: 'inline-block', padding: '12px 28px',
-            background: C.navy, color: '#fff',
-            fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
-            textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700,
-          }}>
-            MINT AXAU →
+          <a
+            href={isVerified === true ? '#mint-terminal' : '/axau-access'}
+            style={{
+              display: 'inline-block', padding: '12px 28px',
+              background: C.navy, color: '#fff',
+              fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
+              textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700,
+            }}
+          >
+            {isVerified === true ? 'MINT AXAU →' : 'APPLY FOR ACCESS →'}
           </a>
           <a href="#how-it-works" style={{
             display: 'inline-block', padding: '12px 28px',
