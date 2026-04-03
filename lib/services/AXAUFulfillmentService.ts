@@ -205,7 +205,7 @@ export async function autoFulfillRequest(requestId: string): Promise<AutoFulfill
       await approveTx.wait(1);
     }
 
-    // 8. Snapshot AXAU balance before mint
+    // 8. Set up AXAU token contract and snapshot balance before mint
     const axauToken  = new ethers.Contract(AXAU_ADDRESSES.AXAUTokenLite3643, ERC20_ABI, signer);
     const axauBefore = BigInt(await axauToken.balanceOf(signer.address));
 
@@ -214,9 +214,26 @@ export async function autoFulfillRequest(requestId: string): Promise<AutoFulfill
     const mintReceipt = await mintTx.wait(1);
     const mintTxHash: string = mintReceipt.hash;
 
-    // 10. Compute exact AXAU minted (balance delta)
-    const axauAfter  = BigInt(await axauToken.balanceOf(signer.address));
-    const axauMinted = axauAfter - axauBefore;
+    // 10. Parse axauMinted from the ERC-20 Transfer event emitted by the AXAU token.
+    //     Mint events are Transfer(from=0x0, to=recipient, value=amount).
+    //     Prefer event parsing over balance delta — RPC state can lag after wait(1).
+    const TRANSFER_TOPIC = ethers.id('Transfer(address,address,uint256)');
+    const ZERO_PAD       = ethers.zeroPadValue('0x0000000000000000000000000000000000000000', 32);
+    const mintLog        = mintReceipt.logs.find((log: ethers.Log) =>
+      log.address.toLowerCase() === AXAU_ADDRESSES.AXAUTokenLite3643.toLowerCase() &&
+      log.topics[0] === TRANSFER_TOPIC &&
+      log.topics[1] === ZERO_PAD                // from = address(0) → mint event
+    );
+
+    let axauMinted: bigint;
+    if (mintLog) {
+      axauMinted = BigInt(mintLog.data);
+    } else {
+      // Fallback: balance delta with 2s delay to allow RPC state to propagate
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const axauAfter = BigInt(await axauToken.balanceOf(signer.address));
+      axauMinted = axauAfter - axauBefore;
+    }
     if (axauMinted === 0n) throw new Error('Mint returned 0 AXAU — possible coverage ratio breach or paused mint');
 
     // 11. Transfer AXAU to buyer
