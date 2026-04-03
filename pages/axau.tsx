@@ -276,7 +276,7 @@ function ValueProps() {
 // ─── How It Works ─────────────────────────────────────────────────────────────
 
 function HowItWorks() {
-  const steps = [
+  const paxgSteps = [
     {
       num: '01',
       title: 'Get PAXG on Arbitrum',
@@ -297,51 +297,139 @@ function HowItWorks() {
     },
   ];
 
+  const axusdSteps = [
+    {
+      num: '01',
+      title: 'Enter AXUSD Amount',
+      body: 'Visit the Buy AXAU page, enter how much AXUSD you want to spend, and see a live AXAU quote update instantly based on the current gold price.',
+      note: 'Starting from 25 AXUSD',
+    },
+    {
+      num: '02',
+      title: 'Submit Your Request',
+      body: 'Provide your receiving wallet and submit. The Axiom Protocol operations team acquires PAXG on your behalf and deposits it to the gold vault.',
+      note: 'No PAXG knowledge needed',
+    },
+    {
+      num: '03',
+      title: 'Receive AXAU',
+      body: 'AXAU is minted directly to your wallet once the vault is topped up. You get a confirmation email and can track status in your order history.',
+      note: 'Typically within 1 business day',
+    },
+  ];
+
   return (
     <section id="how-it-works" style={{ borderBottom: `1px solid ${C.border}`, padding: '60px 0' }}>
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Get Started</p>
         <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(24px, 4vw, 40px)', fontWeight: 600, color: C.navy }}>
-          How it works
+          Two ways to get AXAU
         </h2>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, maxWidth: 480, margin: '10px auto 0', lineHeight: 1.65 }}>
+          Mint directly with PAXG for full on-chain control, or use AXUSD for a simpler, hands-off path.
+        </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 0, border: `1px solid ${C.border}` }}>
-        {steps.map((step, i) => (
-          <div key={step.num} style={{
-            padding: '28px 24px',
-            borderRight: i < steps.length - 1 ? `1px solid ${C.border}` : 'none',
-            background: C.bg,
-          }}>
-            <div style={{
-              fontFamily: '"Cormorant Garamond", Georgia, serif',
-              fontSize: 56, color: C.borderAlt, lineHeight: 1,
-              marginBottom: 16, fontWeight: 700, letterSpacing: '-0.02em',
+      {/* Path A — PAXG Direct Mint */}
+      <div style={{ marginBottom: 32 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12,
+          padding: '10px 16px', background: C.bgAlt, border: `1px solid ${C.border}`,
+          borderBottom: 'none',
+        }}>
+          <span style={{
+            fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.16em',
+            textTransform: 'uppercase', color: '#fff', background: C.navy,
+            padding: '3px 10px',
+          }}>PATH A</span>
+          <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 17, fontWeight: 600, color: C.navy }}>
+            Direct Mint with PAXG
+          </span>
+          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginLeft: 'auto' }}>
+            On-chain · Self-custody
+          </span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 0, border: `1px solid ${C.border}` }}>
+          {paxgSteps.map((step, i) => (
+            <div key={step.num} style={{
+              padding: '28px 24px',
+              borderRight: i < paxgSteps.length - 1 ? `1px solid ${C.border}` : 'none',
+              background: C.bg,
             }}>
-              {step.num}
+              <div style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 56, color: C.borderAlt, lineHeight: 1, marginBottom: 16, fontWeight: 700, letterSpacing: '-0.02em' }}>
+                {step.num}
+              </div>
+              <h3 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 18, color: C.navy, fontWeight: 600, marginBottom: 10, lineHeight: 1.3 }}>
+                {step.title}
+              </h3>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7, marginBottom: 14 }}>{step.body}</p>
+              <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{step.note}</span>
             </div>
-            <h3 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 18, color: C.navy, fontWeight: 600, marginBottom: 10, lineHeight: 1.3 }}>
-              {step.title}
-            </h3>
-            <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7, marginBottom: 14 }}>
-              {step.body}
-            </p>
-            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-              {step.note}
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
+      </div>
+
+      {/* Path B — Buy with AXUSD */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12,
+          padding: '10px 16px', background: C.bgGold, border: `1px solid ${C.gold}40`,
+          borderBottom: 'none',
+        }}>
+          <span style={{
+            fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.16em',
+            textTransform: 'uppercase', color: '#fff', background: C.gold,
+            padding: '3px 10px',
+          }}>PATH B</span>
+          <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 17, fontWeight: 600, color: C.navy }}>
+            Buy with AXUSD — Simpler Path
+          </span>
+          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginLeft: 'auto' }}>
+            No PAXG required
+          </span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 0, border: `1px solid ${C.gold}40` }}>
+          {axusdSteps.map((step, i) => (
+            <div key={step.num} style={{
+              padding: '28px 24px',
+              borderRight: i < axusdSteps.length - 1 ? `1px solid ${C.borderAlt}` : 'none',
+              background: C.bgGold,
+            }}>
+              <div style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 56, color: `${C.gold}30`, lineHeight: 1, marginBottom: 16, fontWeight: 700, letterSpacing: '-0.02em' }}>
+                {step.num}
+              </div>
+              <h3 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 18, color: C.navy, fontWeight: 600, marginBottom: 10, lineHeight: 1.3 }}>
+                {step.title}
+              </h3>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7, marginBottom: 14 }}>{step.body}</p>
+              <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{step.note}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ padding: '14px 20px', background: C.bgGold, border: `1px solid ${C.gold}40`, borderTop: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: C.muted, margin: 0 }}>
+            Perfect for users new to gold markets. AXUSD is the protocol&apos;s native stablecoin.
+          </p>
+          <a href="/axau-buy" style={{
+            fontFamily: '"Courier New", monospace', fontSize: 10, color: C.navy,
+            textDecoration: 'none', letterSpacing: '0.12em', textTransform: 'uppercase',
+            fontWeight: 700, border: `1px solid ${C.navy}`, padding: '7px 16px',
+            background: C.bg, flexShrink: 0,
+          }}>
+            START HERE →
+          </a>
+        </div>
       </div>
 
       {/* PAXG explainer */}
-      <div style={{ marginTop: 20, border: `1px solid ${C.border}`, background: C.bgGold, padding: '20px 24px', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+      <div style={{ marginTop: 8, border: `1px solid ${C.border}`, background: C.bgGold, padding: '20px 24px', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         <div style={{ width: 44, height: 44, flexShrink: 0 }}>
           <Image src="/axau/gold-coin-3d.png" alt="Gold coin" width={44} height={44} style={{ objectFit: 'cover', borderRadius: '50%' }} />
         </div>
         <div style={{ flex: 1, minWidth: 220 }}>
           <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 5 }}>What is PAXG?</p>
           <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.65 }}>
-            PAXG (Paxos Gold) is a regulated digital token where 1 token = 1 troy ounce of physical gold held at Brink's vaults in London. Issued by Paxos Trust Company.
+            PAXG (Paxos Gold) is a regulated digital token where 1 token = 1 troy ounce of physical gold held at Brink&apos;s vaults in London. Issued by Paxos Trust Company.
           </p>
         </div>
         <a href="https://paxos.com/paxgold/" target="_blank" rel="noopener noreferrer" style={{
@@ -421,10 +509,28 @@ function MintTerminal() {
 
         {/* Side guide */}
         <div style={{ border: `1px solid ${C.border}`, background: C.bgAlt, padding: '24px' }}>
-          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Transaction Guide</p>
-          <p style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: C.muted, lineHeight: 1.6, marginBottom: 20, paddingBottom: 16, borderBottom: `1px solid ${C.borderAlt}` }}>
-            All steps completed within Axiom Protocol. No bridging required.
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>Direct Mint Guide</p>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: C.muted, lineHeight: 1.6, marginBottom: 16, paddingBottom: 16, borderBottom: `1px solid ${C.borderAlt}` }}>
+            Minting directly with PAXG on Arbitrum One. No bridging required.
           </p>
+
+          {/* AXUSD shortcut */}
+          <div style={{ background: C.bgGold, border: `1px solid ${C.gold}40`, padding: '12px 14px', marginBottom: 20, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 3px' }}>Simpler Option</p>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: C.navy, margin: 0, lineHeight: 1.45 }}>
+                Don&apos;t have PAXG? Use AXUSD — we handle the rest.
+              </p>
+            </div>
+            <a href="/axau-buy" style={{
+              fontFamily: '"Courier New", monospace', fontSize: 9, color: C.navy,
+              textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase',
+              fontWeight: 700, border: `1px solid ${C.navy}`, padding: '6px 12px',
+              background: C.bg, flexShrink: 0, whiteSpace: 'nowrap',
+            }}>
+              BUY WITH AXUSD →
+            </a>
+          </div>
 
           {[
             { step: '1', label: 'Connect Wallet', detail: 'Hit "Connect" in the top nav. Select Arbitrum One. MetaMask, Coinbase, or any WalletConnect wallet works.', tag: null },
