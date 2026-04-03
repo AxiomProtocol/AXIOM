@@ -32,8 +32,8 @@
 8. [Community Infrastructure](#8-community-infrastructure)
 9. [Capital Formation and Syndication](#9-capital-formation-and-syndication)
 10. [DePIN Infrastructure](#10-depin-infrastructure)
-11. [Governance Framework](#11-governance-framework)
-12. [Tiered Access and Verified Participant Architecture](#12-tiered-access-and-verified-participant-architecture)
+11. [Tiered Access and Verified Participant Architecture](#11-tiered-access-and-verified-participant-architecture)
+12. [Governance Framework](#12-governance-framework)
 13. [Regulatory and Institutional Context — IMF Structural Shift Analysis](#13-regulatory-and-institutional-context--imf-structural-shift-analysis)
 14. [Risk Framework](#14-risk-framework)
 15. [Proof of Execution and Key Milestones](#15-proof-of-execution-and-key-milestones)
@@ -513,59 +513,11 @@ The DePIN node economy enables protocol participants to contribute storage infra
 
 ---
 
-## 11. Governance Framework
+## 11. Tiered Access and Verified Participant Architecture
 
-### 11.1 Current Governance Structure
+### 11.1 Identity Framework
 
-| Authority Layer | Mechanism | Scope |
-|---|---|---|
-| Governance Safe (3-of-5) | Multi-party authorization at `0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d` | PSM owner · Emergency pause · Fee sweep · Ceiling changes |
-| Timelock Controller (24h) | Enforces upgrade delay | All upgradeable contracts |
-| Deployer EOA | Bootstrap phase | AXUSD token admin · Identity Registry admin (pending migration) |
-| AXAU Governor (Deployer EOA) | Bootstrap phase | AXAU system parameters · CommodityRegistry · Vault controls |
-| AXM Admin Safe | Multi-party authorization | AXM MINTER_ROLE |
-
-### 11.2 Bootstrap Phase
-
-The protocol is currently operating in Bootstrap Phase governance. The Founder Operations team retains operational authority over system parameters during this phase. The bootstrap configuration is an acknowledged transitional state — full migration to AXM token-weighted governance is a defined roadmap milestone.
-
-All bootstrap-phase administrative actions are logged in the `admin_action_log` database table and visible in the Founder Operations dashboard with transaction hash, action type, target address, amount, and timestamp.
-
-### 11.3 Emergency Powers
-
-| Function | Trigger Conditions | Authorization | Two-Person Rule |
-|---|---|---|---|
-| `pause()` | Active exploit · Regulatory order · Critical vulnerability | 3-of-5 Governance Safe | Yes |
-| `emergencySweep()` | Imminent contract compromise · Regulatory seizure | 3-of-5 Governance Safe | Yes |
-| `freeze(address)` | OFAC designation · Court order · Active exploit from address | Deployer EOA (pending Safe migration) | Yes (policy) |
-| `forcedTransfer()` | Court order · Regulatory asset recovery directive | Governance Safe | Yes |
-
-### 11.4 SEED — Vote-Escrowed Governance
-
-The SEED program enables AXM holders to lock their governance tokens for 1–4 year periods in exchange for enhanced governance weight. Longer lockup periods receive proportionally greater governance weight, creating alignment between long-horizon participants and governance outcomes.
-
-### 11.5 Agent Governance System
-
-The Agent Governance System is a policy-based autonomous agent authorization layer that enables governance-approved software agents to perform defined protocol actions within explicitly bounded parameters. Agents cannot exceed their authorized scope without a new governance approval. This creates a governance-gated framework for protocol automation without delegating unbounded authority to any automated system.
-
-### 11.6 AXAU Governance
-
-The AXAU reserve basket is governed through the `CommodityRegistry` automated control layer. Commodity additions require a six-criterion admission review:
-
-1. Custody attestability by a qualified custodian
-2. Live, redundant on-chain price feed (Chainlink or equivalent)
-3. Legal and operational readiness in relevant jurisdictions
-4. Non-synthetic backing (direct physical or tokenized physical asset only)
-5. Solvency stress test passage
-6. Liquidity profile assessment (determines haircut and max basket weight)
-
----
-
-## 12. Tiered Access and Verified Participant Architecture
-
-### 12.1 Identity Framework
-
-Axiom Protocol uses the ERC-3643 (T-REX) standard for on-chain identity verification. All AXUSD and AXAU transfers are gated by the Identity Registry's `isVerified()` function.
+Axiom Protocol uses the ERC-3643 (T-REX) standard for on-chain identity verification. All AXUSD and AXAU transfers are gated by the Identity Registry's `isVerified()` function. Identity enforcement is not an application-layer checkpoint — it is executed within the automated control layer on every transfer.
 
 **Core Infrastructure:**
 
@@ -579,7 +531,7 @@ Axiom Protocol uses the ERC-3643 (T-REX) standard for on-chain identity verifica
 | Claim Issuer | `0x579A367eaDa7606edc58f43165B53D2526D1B313` | Signs and revokes claims on behalf of Axiom Protocol |
 | Identity Factory | `0x1A7c55AC9A4AB318039f8E2BDfA82500332c86B9` | Deploys EIP-1167 minimal proxy ONCHAINID contracts |
 
-### 12.2 Claim Topics
+### 11.2 Claim Topics
 
 | Topic ID | Name | Validity | Required For |
 |---|---|---|---|
@@ -587,14 +539,14 @@ Axiom Protocol uses the ERC-3643 (T-REX) standard for on-chain identity verifica
 | 2 | ACCREDITED_INVESTOR | 365 days | Lending Fund · Lane A products · LP Investor Portal |
 | 3 | SANCTIONS_CLEAR | 180 days | All AXUSD and AXAU transfers |
 
-### 12.3 Dual-Lane Architecture
+### 11.3 Dual-Lane Architecture
 
 | Lane | Access Level | Identity Requirements | Available Products |
 |---|---|---|---|
 | Lane A | Institutional / Accredited | Topics 1, 2, and 3 | All protocol products including Lending Fund, full Syndication, LP Portal |
 | Lane B | Verified Standard | Topics 1 and 3 | Wealth Practice, AXUSD, AXAU, Community Credit, DePIN, Academy |
 
-### 12.4 Claim Lifecycle
+### 11.4 Claim Lifecycle
 
 ```
 Submission (off-chain)
@@ -621,31 +573,77 @@ Expiry or Revocation
 
 ---
 
+## 12. Governance Framework
+
+### 12.1 Current Governance Structure
+
+| Authority Layer | Mechanism | Scope |
+|---|---|---|
+| Governance Safe (3-of-5) | Multi-party authorization at `0x2Bb2c2A7A1d82097488BF0b9C2A59C1910Cd8d5d` | PSM owner · Emergency pause · Fee sweep · Ceiling changes |
+| Timelock Controller (24h) | Enforces upgrade delay | All upgradeable contracts |
+| Deployer EOA | Bootstrap phase | AXUSD token admin · Identity Registry admin (pending migration) |
+| AXAU Governor (Deployer EOA) | Bootstrap phase | AXAU system parameters · CommodityRegistry · Vault controls |
+| AXM Admin Safe | Multi-party authorization | AXM MINTER_ROLE |
+
+### 12.2 Bootstrap Phase
+
+The protocol is currently operating in Bootstrap Phase governance. The Founder Operations team retains operational authority over system parameters during this phase. The bootstrap configuration is an acknowledged transitional state — full migration to AXM token-weighted governance is a defined roadmap milestone.
+
+All bootstrap-phase administrative actions are logged in the `admin_action_log` database table and visible in the Founder Operations dashboard with transaction hash, action type, target address, amount, and timestamp.
+
+### 12.3 Emergency Powers
+
+| Function | Trigger Conditions | Authorization | Two-Person Rule |
+|---|---|---|---|
+| `pause()` | Active exploit · Regulatory order · Critical vulnerability | 3-of-5 Governance Safe | Yes |
+| `emergencySweep()` | Imminent contract compromise · Regulatory seizure | 3-of-5 Governance Safe | Yes |
+| `freeze(address)` | OFAC designation · Court order · Active exploit from address | Deployer EOA (pending Safe migration) | Yes (policy) |
+| `forcedTransfer()` | Court order · Regulatory asset recovery directive | Governance Safe | Yes |
+
+### 12.4 SEED — Vote-Escrowed Governance
+
+The SEED program enables AXM holders to lock their governance tokens for 1–4 year periods in exchange for enhanced governance weight. Longer lockup periods receive proportionally greater governance weight, creating alignment between long-horizon participants and governance outcomes.
+
+### 12.5 Agent Governance System
+
+The Agent Governance System is a policy-based autonomous agent authorization layer that enables governance-approved software agents to perform defined protocol actions within explicitly bounded parameters. Agents cannot exceed their authorized scope without a new governance approval. This creates a governance-gated framework for protocol automation without delegating unbounded authority to any automated system.
+
+### 12.6 AXAU Governance
+
+The AXAU reserve basket is governed through the `CommodityRegistry` automated control layer. Commodity additions require a six-criterion admission review:
+
+1. Custody attestability by a qualified custodian
+2. Live, redundant on-chain price feed (Chainlink or equivalent)
+3. Legal and operational readiness in relevant jurisdictions
+4. Non-synthetic backing (direct physical or on-chain issued physical asset only)
+5. Solvency stress test passage
+6. Liquidity profile assessment (determines haircut and max basket weight)
+
+---
+
 ## 13. Regulatory and Institutional Context — IMF Structural Shift Analysis
 
 *Note: This section documents Axiom Protocol's relationship to the regulatory and institutional landscape as of April 2026. The analysis below is Axiom's independent interpretation of publicly available regulatory commentary. No regulatory endorsement is claimed or implied.*
 
-### 13.1 The IMF Declaration
+In April 2026, the International Monetary Fund published a formal policy note authored by Tobias Adrian, Financial Counsellor and Director of the Monetary and Capital Markets Department, declaring that asset onboarding and issuance on programmable ledgers constitutes a "structural shift" in financial architecture rather than a marginal efficiency improvement. The note describes how permissioned shared ledgers, programmable financial assets, and automated control layer-based risk management are fundamentally altering how settlement, liquidity, and systemic risk operate within regulated financial systems.
 
-In April 2026, the International Monetary Fund published a formal policy note authored by Tobias Adrian, Financial Counsellor and Director of the Monetary and Capital Markets Department, declaring that tokenization constitutes a "structural shift" in financial architecture rather than a marginal efficiency improvement. The note describes how permissioned shared ledgers, programmable financial assets, and automated control layer-based risk management are fundamentally altering how settlement, liquidity, and systemic risk operate within regulated financial systems.
-
-The IMF identified tokenized real-world assets at approximately $27.5 billion in total value as of early April 2026, with US Treasury products accounting for more than $12 billion. It called for clear policy frameworks, robust code governance, legal certainty, and international regulatory coordination.
+The IMF identified real-world asset issuance at approximately $27.5 billion in total value as of early April 2026, with US Treasury products accounting for more than $12 billion. It called for clear policy frameworks, robust code governance, legal certainty, and international regulatory coordination.
 
 The IMF note describes the phenomenon. Axiom Protocol is building one of the instantiations of it.
 
-### 13.2 Where Axiom Is a Direct Embodiment of the IMF's Thesis
+### 13.1 Direct Embodiment
 
 **Permissioned Shared Ledgers and Embedded Compliance**
 
 The IMF specifically identifies "permissioned shared ledgers" and "embedded compliance" as defining features of the structural shift. Axiom deploys this design pattern in its most technically rigorous form: the ERC-3643 (T-REX) standard, the leading open standard for compliance-gated asset issuance. Identity verification is enforced at the token transfer layer on every transaction — mint, redeem, and wallet-to-wallet — not as an application-layer checkpoint.
 
-**Tokenized Real-World Assets**
+**Real-World Asset Onboarding and Issuance**
 
-The IMF's $27.5 billion in tokenized RWA is the market validation signal for Axiom's founding thesis. Axiom's reserve architecture is RWA asset onboarding across multiple asset classes: gold via PAXG (Paxos Trust Company, NYDFS-regulated), US real estate via the land acquisition pipeline, and planned future commodity layers. The AXAU four-phase reserve system is a direct instantiation of the RWA market the IMF is describing — with the additional dimension of community governance over reserve composition.
+The IMF's $27.5 billion in real-world asset issuance is the market validation signal for Axiom's founding thesis. Axiom's reserve architecture spans multiple asset classes: gold via PAXG (Paxos Trust Company, NYDFS-regulated), US real estate via the land acquisition pipeline, and planned future commodity layers. The AXAU four-phase reserve system is a direct instantiation of the RWA market the IMF is describing — with the additional dimension of community governance over reserve composition.
 
 **Atomic Settlement and Continuous Liquidity Management**
 
-The IMF identifies these as the transformative operating properties of tokenized financial infrastructure. The AXAU MintRedeemController and the AXUSD PSM deliver exactly this: real-time Chainlink oracle pricing, 24-hour-a-day on-chain settlement, and coverage verification computed at transaction execution time — not end-of-day.
+The IMF identifies these as the transformative operating properties of programmable financial infrastructure. The AXAU MintRedeemController and the AXUSD PSM deliver exactly this: real-time Chainlink oracle pricing, 24-hour-a-day on-chain settlement, and coverage verification computed at transaction execution time — not end-of-day.
 
 **Governance as Infrastructure**
 
@@ -653,11 +651,11 @@ The IMF calls for "robust code governance" as a policy requirement. Axiom treats
 
 **Regulatory Framework Alignment**
 
-The IMF calls for "clear policy frameworks" and "international coordination." Axiom's ERC-3643 architecture and its posture with reference to the GENIUS Act framework reflects a deliberate effort to operate inside the emerging regulatory envelope. The three-topic claim system (KYC, Accredited Investor, Sanctions-Clear) implements the identity verification requirements that regulators are actively writing into law.
+The IMF calls for "clear policy frameworks" and "international coordination." Axiom's ERC-3643 architecture and its posture structured with reference to the GENIUS Act framework reflects a deliberate effort to operate inside the emerging regulatory envelope. The three-topic claim system (KYC, Accredited Investor, Sanctions-Clear) implements the identity verification requirements that regulators are actively writing into law.
 
-### 13.3 Where Axiom Goes Further Than the IMF's Scope
+### 13.2 Beyond IMF Scope
 
-The IMF note focuses on tokenization within the regulated institutional financial system — banks, asset managers, and market infrastructure providers. Axiom's scope is broader in three specific ways:
+The IMF note focuses on asset onboarding within the regulated institutional financial system — banks, asset managers, and market infrastructure providers. Axiom's scope is broader in three specific ways:
 
 **Sovereign Individual Wealth, Not Only Institutional Efficiency**
 
@@ -671,7 +669,7 @@ The IMF references real estate in the RWA category. Axiom operates a full-stack 
 
 The IMF does not address physical network infrastructure. Axiom's DePIN integration and the broader sovereign digital-physical economy thesis position on-chain financial rails as one layer of a physical infrastructure sovereignty project — not the entirety of it. The vision extends beyond financial settlement to include storage infrastructure, IoT metering, and eventually utility networks governed by the same community governance that governs capital allocation.
 
-### 13.4 Axiom's Structural Answers to the IMF's Risk Warning
+### 13.3 Risk Warning Responses
 
 The IMF issued a substantive risk warning alongside its structural shift declaration:
 
@@ -683,16 +681,26 @@ Axiom's architecture contains three structural responses to this concern, built 
 The MintRedeemController's 105% coverage floor is a programmable stop valve, not a stress transmitter. When gold prices fall and coverage trends toward the floor, new minting pauses automatically before undercollateralization occurs. The circuit breaker engages on-chain, without human intervention, and without the ability for any administrative key to override it. This is the inverse of an automated margin call cascade — it slows the system under stress rather than accelerating it.
 
 **Response 2 — Illiquid Sleeve Design**
-The AXAU Phase 3 land component carries a 40% haircut and a hard 10% maximum basket weight. The monthly appraisal cadence for land NAV updates means land values do not propagate intraday price movements into the reserve calculation. This is a deliberate design choice to preserve the shock-absorber function of illiquid assets — exactly the mechanism the IMF identifies as a stabilizer in traditional systems that tokenized infrastructure must be careful not to discard.
+The AXAU Phase 3 land component carries a 40% haircut and a hard 10% maximum basket weight. The monthly appraisal cadence for land NAV updates means land values do not propagate intraday price movements into the reserve calculation. This is a deliberate design choice to preserve the shock-absorber function of illiquid assets — exactly the mechanism the IMF identifies as a stabilizer in traditional systems that programmable financial infrastructure must be careful not to discard.
 
 **Response 3 — Component Isolation**
-Each AXAU reserve component operates through an independent vault automated control layer. A failure, oracle outage, or regulatory action affecting one component triggers a component-level pause, not a system-wide halt. The circuit breaker architecture prevents contagion between reserve layers, addressing the IMF's concern about stress transmitting instantly across participants in a tightly interconnected tokenized system.
+Each AXAU reserve component operates through an independent vault automated control layer. A failure, oracle outage, or regulatory action affecting one component triggers a component-level pause, not a system-wide halt. The circuit breaker architecture prevents contagion between reserve layers, addressing the IMF's concern about stress transmitting instantly across participants in a tightly interconnected system.
+
+### 13.4 Most Significant Gap
+
+The IMF frames the structural shift primarily through the lens of institutional settlement efficiency and systemic risk management. Axiom frames it through the lens of individual wealth sovereignty and community economic infrastructure.
+
+These are not in conflict — they are operating at different layers of the same transformation. The IMF is describing the top of the stack: how institutional market infrastructure becomes more efficient, programmable, and compliant. Axiom is building the bottom of the stack: how individuals and communities gain access to the same programmable infrastructure to build wealth outside of traditional financial gatekeepers.
+
+The practical consequence of this divergence is that Axiom must eventually interface with the regulated institutional layer the IMF is describing. The Increase.com banking rail, BitGo institutional custody, and the SEC Regulation D 506(c) Lending Fund structure are the current bridges between those two layers. As the IMF's policy frameworks crystallize and regulatory classification of on-chain instruments matures in major jurisdictions, these integration points become more consequential — not less.
+
+Axiom's governance-first, compliance-embedded architecture is designed to be positioned at these integration points as a participant rather than an adversary of emerging regulatory frameworks. The ERC-3643 identity stack, the GENIUS Act reference architecture, and the three-tier solvency disclosure model are all structural responses to the institutional expectations the IMF is articulating — built before the regulatory requirements are formally codified.
 
 ### 13.5 Summary Judgment
 
-The IMF note is an institutional acknowledgment that the architecture Axiom is building is structurally aligned with the direction of regulated financial infrastructure. The $27.5 billion in existing tokenized real-world assets is the market evidence that this thesis is operationally real. The IMF's risk warnings are materially accurate, and Axiom's circuit breaker and illiquid sleeve design directly address the most acute of them.
+The IMF note is an institutional acknowledgment that the architecture Axiom is building is structurally aligned with the direction of regulated financial infrastructure. The $27.5 billion in existing real-world asset issuance is the market evidence that this thesis is operationally real. The IMF's risk warnings are materially accurate, and Axiom's circuit breaker design and illiquid sleeve architecture directly address the most acute of them.
 
-Where Axiom diverges from the IMF's scope — individual wealth access, land-level physical integration, and decentralized infrastructure — those divergences represent the differentiated thesis, not a departure from sound financial engineering. They represent the protocol's conviction that the structural shift the IMF is describing is not complete until it reaches the community and individual level, not merely the institutional settlement layer.
+Where Axiom diverges from the IMF's scope — individual wealth access, land-level physical integration, and decentralized physical infrastructure — those divergences represent the differentiated thesis, not a departure from sound financial engineering. They represent the protocol's conviction that the structural shift the IMF is describing is not complete until it reaches the community and individual level, not merely the institutional settlement layer.
 
 As the IMF's policy frameworks crystallize and the GENIUS Act framework matures, Axiom's governance-first, compliance-embedded architecture is structurally positioned to engage with that regulated layer rather than operate around it.
 
@@ -700,7 +708,7 @@ As the IMF's policy frameworks crystallize and the GENIUS Act framework matures,
 
 ## 14. Risk Framework
 
-### 14.1 Smart Contract Risk
+### 14.1 Automated Control Layer Risk
 
 **Current Status:** All automated control layers are deployed and verified on Arbitrum Blockscout. No independent third-party security audit has been completed for the AXAU contract system. The AXUSD and governance infrastructure has undergone internal audit with 147 findings remediated.
 
@@ -731,7 +739,7 @@ All protocol price data from third-party oracles (Chainlink, Alpha Vantage, Coin
 **PAXG / Paxos (AXAU Reserve):**
 - Paxos Trust Company regulatory action (NYDFS charter)
 - Brink's vault operational risk (physical gold storage)
-- Smart contract risk in PAXG itself (independent of AXAU contracts)
+- Automated control layer risk in PAXG itself (independent of AXAU contracts)
 
 **USDC / Circle (AXUSD Reserve):**
 - Circle regulatory or operational risk could impair USDC redemption
@@ -778,7 +786,7 @@ The protocol is in an early bootstrap phase with limited total value under manag
 |---|---|---|
 | November 2025 | Phase 1 — Core contracts deployed: AXM, AXUSD v1, Governance Safe | Arbitrum Blockscout |
 | December 2025 | Phase 2 — Identity and compliance infrastructure: ERC-3643 identity stack, 3-topic claim system | Arbitrum Blockscout |
-| January 2026 | Phase 3 — DeFi layer: Euler V2 vaults, EulerSwap pools, PSM | Arbitrum Blockscout |
+| January 2026 | Phase 3 — On-chain financial rails: Euler V2 vaults, EulerSwap pools, PSM | Arbitrum Blockscout |
 | February 2026 | Phase 4 — Capital formation: Syndication module, Lending Fund, Capital Accounting | Arbitrum Blockscout |
 | March 2026 | Phase 5 — Banking integration: Increase.com Nexus Account, BitGo CaaS, LP deposit registry | Arbitrum Blockscout |
 | March 26, 2026 | Unified AXUSD + eAXUSD-6 launched; EulerSwap USDC/AXUSD seeded with 10,000 AXUSD | TX verified |
@@ -830,7 +838,7 @@ The Axiom Protocol is designed for forward migration to Universe Blockchain, a p
 | Phase 1 | Gold (PAXG) | Live |
 | Phase 2 | Silver (XAG) | Governance Vote Required |
 | Phase 3 | Land (Real Estate RWA) | Infrastructure deployed; NAV not yet activated |
-| Phase 4+ | Energy and additional commodities | Future — pending tokenized commodity infrastructure maturity |
+| Phase 4+ | Energy and additional commodities | Future — pending on-chain commodity infrastructure maturity |
 
 ### 16.4 AXAU Third-Party Security Audit
 
@@ -864,7 +872,7 @@ The Axiom Secondary Network V1 infrastructure is deployed. Secondary market acti
 
 8. **Counterparty Risk.** PAXG is issued by Paxos Trust Company. USDC is issued by Circle. FDIC-insured deposits are held at First Internet Bank via Increase.com. Regulatory action, operational failure, or insolvency of any counterparty could impair protocol operations regardless of automated control layer behavior.
 
-9. **Smart Contract Risk.** Automated control layers are software running on a public blockchain. Bugs, exploits, or unexpected interactions may result in partial or total loss of deposited assets. The risk is elevated for unaudited systems.
+9. **Automated Control Layer Risk.** Automated control layers are software running on a public blockchain. Bugs, exploits, or unexpected interactions may result in partial or total loss of deposited assets. The risk is elevated for unaudited systems.
 
 10. **Governance Changes.** All parameters described herein — haircuts, coverage floors, fees, access tiers — are subject to change through the governance process and may be modified without prior notice.
 
