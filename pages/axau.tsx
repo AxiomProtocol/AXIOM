@@ -164,7 +164,7 @@ function Hero() {
         {(['Token', 'Reserve', 'Network', 'Standard', 'Oracle', 'Coverage'] as const).map((label) => {
           const staticValues: Record<string, string> = {
             Token: 'AXAU',
-            Reserve: 'Gold Reserve (XAU)',
+            Reserve: 'PAXG (Paxos Gold)',
             Network: 'Arbitrum One',
             Standard: 'ERC-3643',
             Oracle: 'Chainlink XAU/USD',
