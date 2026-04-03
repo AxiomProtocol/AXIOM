@@ -4,8 +4,27 @@ import { axauPurchaseRequests } from '../../../../shared/axauSchema';
 import { eq, desc } from 'drizzle-orm';
 import { sendAxauPurchaseRequestConfirmation } from '../../../../lib/email/resend';
 
+const ADMIN_KEY = process.env.ADMIN_SOLVENCY_KEY;
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
+    const adminKey = req.headers['x-admin-key'];
+    const isAdmin  = ADMIN_KEY && adminKey === ADMIN_KEY;
+
+    // Admin: return all orders
+    if (isAdmin) {
+      try {
+        const rows = await db
+          .select()
+          .from(axauPurchaseRequests)
+          .orderBy(desc(axauPurchaseRequests.createdAt));
+        return res.status(200).json({ success: true, data: rows });
+      } catch (err: unknown) {
+        return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+
+    // Public: wallet-scoped query
     const { wallet } = req.query;
     if (!wallet || typeof wallet !== 'string' || !/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
       return res.status(400).json({ error: 'Valid wallet address required' });

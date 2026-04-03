@@ -270,6 +270,8 @@ export default function FounderOpsPage() {
   const [axauFulfillMsg, setAxauFulfillMsg] = useState<{ id: string; type: 'success' | 'error'; text: string } | null>(null);
   const [axauFulfilling, setAxauFulfilling] = useState<string | null>(null);
   const [axauVault, setAxauVault] = useState<any | null>(null);
+  const [axauBuffer, setAxauBuffer] = useState<any | null>(null);
+  const [axauBufferLoading, setAxauBufferLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -419,6 +421,15 @@ export default function FounderOpsPage() {
     } finally {
       setAxauQueueLoading(false);
     }
+    // Also fetch vault buffer (non-blocking — failure is non-fatal)
+    if (k) {
+      setAxauBufferLoading(true);
+      fetch('/api/axau/vault-buffer', { headers: { 'x-admin-key': k } })
+        .then(r => r.json())
+        .then(j => { if (j?.data) setAxauBuffer(j.data); })
+        .catch(() => {})
+        .finally(() => setAxauBufferLoading(false));
+    }
   };
 
   const handleAxauFulfill = async (requestId: string, action: 'processing' | 'fulfilled' | 'failed') => {
@@ -436,6 +447,34 @@ export default function FounderOpsPage() {
         setAxauFulfillMsg({ id: requestId, type: 'error', text: json.error || 'Action failed' });
       } else {
         setAxauFulfillMsg({ id: requestId, type: 'success', text: `Marked as ${action}` });
+        await loadAxauQueue();
+      }
+    } catch (e) {
+      setAxauFulfillMsg({ id: requestId, type: 'error', text: String(e) });
+    } finally {
+      setAxauFulfilling(null);
+    }
+  };
+
+  const handleAutoFulfill = async (requestId: string) => {
+    setAxauFulfilling(requestId);
+    setAxauFulfillMsg(null);
+    try {
+      const res  = await fetch('/api/axau/auto-fulfill', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': axauQueueAdminKey },
+        body:    JSON.stringify({ requestId }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setAxauFulfillMsg({ id: requestId, type: 'error', text: json.error || 'Auto-fulfill failed' });
+      } else {
+        const d = json.data;
+        setAxauFulfillMsg({
+          id:   requestId,
+          type: 'success',
+          text: `Fulfilled — minted ${d?.axauMinted ?? '?'} AXAU`,
+        });
         await loadAxauQueue();
       }
     } catch (e) {
@@ -2502,12 +2541,12 @@ export default function FounderOpsPage() {
               <>
                 <div className="mb-6">
                   <h2 className="font-dl-serif text-xl text-dl-navy mb-1">AXAU Purchase Queue</h2>
-                  <p className="font-dl-mono text-xs text-dl-gray">PAXG Buffer Monitor · Pending Purchase Requests · Fulfillment Actions</p>
+                  <p className="font-dl-mono text-xs text-dl-gray">Vault Buffer · Pending Purchase Requests · Auto-Fulfillment</p>
                 </div>
 
                 {/* Vault stats strip */}
                 {axauVault && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-6 bg-dl-bg-alt">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-4 bg-dl-bg-alt">
                     {[
                       { label: 'XAU / USD', value: `$${axauVault.xauUsdPrice}` },
                       { label: 'MINT NAV', value: `$${parseFloat(axauVault.mintNavPerToken ?? '0').toFixed(4)}` },
@@ -2521,6 +2560,51 @@ export default function FounderOpsPage() {
                     ))}
                   </div>
                 )}
+
+                {/* Vault Buffer panel */}
+                {axauBuffer ? (
+                  <div className={`border mb-6 ${axauBuffer.bufferCapacity === 'SUFFICIENT' ? 'border-dl-forest bg-green-50' : axauBuffer.bufferCapacity === 'DEPLETED' ? 'border-dl-error bg-red-50' : 'border-yellow-400 bg-yellow-50'}`}>
+                    <div className="px-5 py-3 border-b border-inherit flex items-center justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        <span className={`font-dl-mono text-[9px] px-2 py-0.5 uppercase tracking-wider border ${axauBuffer.bufferCapacity === 'SUFFICIENT' ? 'border-dl-forest text-dl-forest' : axauBuffer.bufferCapacity === 'DEPLETED' ? 'border-dl-error text-dl-error' : 'border-yellow-500 text-yellow-700'}`}>
+                          {axauBuffer.bufferCapacity === 'SUFFICIENT' ? 'BUFFER SUFFICIENT' : axauBuffer.bufferCapacity === 'DEPLETED' ? 'BUFFER DEPLETED' : 'BUFFER PARTIAL'}
+                        </span>
+                        <p className="font-dl-mono text-xs text-dl-navy font-bold">Vault Pre-Fund Buffer</p>
+                      </div>
+                      {axauBuffer.mintPaused && (
+                        <span className="font-dl-mono text-[9px] border border-dl-error text-dl-error px-2 py-0.5 uppercase tracking-wider">MINT PAUSED — AUTO-FULFILL BLOCKED</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-inherit">
+                      {[
+                        { label: 'PAXG in Buffer Wallet', value: `${axauBuffer.paxgBalanceFormatted} PAXG` },
+                        { label: 'Buffer Value (USD)', value: `$${parseFloat(axauBuffer.paxgValueUsd).toLocaleString(undefined, { maximumFractionDigits: 2 })}` },
+                        { label: 'Pending Demand (PAXG)', value: `${axauBuffer.pendingPaxgRequired} PAXG` },
+                        { label: 'Pending Demand (AXUSD)', value: `$${parseFloat(axauBuffer.pendingAxusdTotal).toLocaleString(undefined, { maximumFractionDigits: 2 })}` },
+                      ].map(stat => (
+                        <div key={stat.label} className="px-5 py-3">
+                          <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-1">{stat.label}</p>
+                          <p className="font-dl-mono text-sm font-bold text-dl-navy">{stat.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="px-5 py-2 border-t border-inherit">
+                      <p className="font-dl-mono text-[9px] text-dl-gray">
+                        Buffer wallet: <span className="text-dl-navy">{axauBuffer.deployerAddress}</span>
+                        {' · '}To top up, send PAXG to this address on Arbitrum One.
+                        {' · '}PAXG must be approved to the MintRedeemController before first use (auto-approval on first tx).
+                      </p>
+                    </div>
+                  </div>
+                ) : axauBufferLoading ? (
+                  <div className="border border-dl-border p-4 mb-6">
+                    <p className="font-dl-mono text-xs text-dl-gray">Loading vault buffer…</p>
+                  </div>
+                ) : axauQueueAdminKey ? (
+                  <div className="border border-dl-border p-4 mb-6">
+                    <p className="font-dl-mono text-xs text-dl-gray">Vault buffer unavailable. Check that the deployer key is configured.</p>
+                  </div>
+                ) : null}
 
                 {/* Queue summary cards */}
                 {axauQueue.length > 0 && (
@@ -2635,7 +2719,26 @@ export default function FounderOpsPage() {
                                     ) : req.status === 'fulfilled' ? 'Fulfilled' : 'Failed'}
                                   </span>
                                 ) : (
-                                  <div className="flex flex-col gap-1.5 min-w-[200px]">
+                                  <div className="flex flex-col gap-1.5 min-w-[220px]">
+                                    {/* Auto-Fulfill (primary action when buffer is available) */}
+                                    {req.status === 'pending' && (
+                                      <button
+                                        onClick={() => handleAutoFulfill(req.id)}
+                                        disabled={isBusy || !!axauBuffer?.mintPaused}
+                                        title={axauBuffer?.bufferCapacity === 'DEPLETED' ? 'Buffer depleted — top up PAXG first' : axauBuffer?.mintPaused ? 'Mint paused on-chain' : 'Send PAXG → vault, mint AXAU → wallet automatically'}
+                                        className={`font-dl-mono text-[9px] border px-2 py-1 uppercase tracking-wider disabled:opacity-50 ${
+                                          axauBuffer?.bufferCapacity === 'SUFFICIENT'
+                                            ? 'border-dl-forest text-dl-forest hover:bg-green-50'
+                                            : axauBuffer?.bufferCapacity === 'PARTIAL'
+                                              ? 'border-yellow-500 text-yellow-700 hover:bg-yellow-50'
+                                              : 'border-dl-border text-dl-gray'
+                                        }`}
+                                      >
+                                        {isBusy ? 'Processing…' : `⚡ Auto-Fulfill${axauBuffer?.bufferCapacity === 'DEPLETED' ? ' (no buffer)' : ''}`}
+                                      </button>
+                                    )}
+                                    {/* Manual flow divider */}
+                                    <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">— or manual —</p>
                                     {req.status === 'pending' && (
                                       <button
                                         onClick={() => handleAxauFulfill(req.id, 'processing')}
@@ -2648,7 +2751,7 @@ export default function FounderOpsPage() {
                                     <div className="flex gap-1">
                                       <input
                                         type="text"
-                                        placeholder="Tx hash (required for Fulfill)"
+                                        placeholder="Tx hash (for manual fulfill)"
                                         value={axauFulfillMap[req.id] ?? ''}
                                         onChange={e => setAxauFulfillMap(m => ({ ...m, [req.id]: e.target.value }))}
                                         className="font-dl-mono text-[9px] border border-dl-border px-2 py-1 flex-1 outline-none bg-dl-surface min-w-0"
