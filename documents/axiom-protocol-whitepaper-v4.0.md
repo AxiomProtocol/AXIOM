@@ -633,7 +633,7 @@ The IMF does not address physical network infrastructure. Axiom's DePIN integrat
 
 The IMF issued a substantive risk warning alongside its structural shift declaration:
 
-> *"Automated margin calls, real-time settlement, and programmable financial flows could accelerate liquidity stress during volatility. Traditional systems have built-in delays that act as shock absorbers. Tokenized systems may transmit stress instantly across participants."*
+> *The IMF warned that automated margin calls, real-time settlement, and programmable financial flows could accelerate liquidity stress during volatility — that traditional systems have built-in delays acting as shock absorbers, and that on-chain financial systems could transmit stress instantly across participants.*
 
 Axiom's architecture contains three structural responses to this concern, built into the protocol at the automated control layer level:
 
