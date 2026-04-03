@@ -263,14 +263,14 @@ function HowItWorks() {
     {
       num: '02',
       title: 'Submit Your Request',
-      body: 'Provide your receiving wallet address and submit. The Axiom Protocol operations team acquires the gold reserve on your behalf and deposits it to the vault.',
+      body: 'Provide your receiving wallet address and submit. Your request is processed automatically — no manual steps required.',
       note: 'No gold market knowledge needed',
     },
     {
       num: '03',
       title: 'Receive AXAU',
       body: 'AXAU is minted directly to your wallet once the vault is topped up. You receive a confirmation email and can track your order status.',
-      note: 'Typically within 1 business day',
+      note: 'Automated — typically within minutes',
     },
   ];
 
@@ -389,7 +389,7 @@ function MintTerminal() {
           <div style={{ borderTop: `1px solid ${C.gold}30`, padding: '16px 28px', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
             {[
               { label: 'Min Amount', value: '25 AXUSD' },
-              { label: 'Fulfillment', value: '≤ 1 business day' },
+              { label: 'Fulfillment', value: 'Automated' },
               { label: 'Email confirm', value: 'Yes' },
             ].map(stat => (
               <div key={stat.label}>
@@ -411,7 +411,7 @@ function MintTerminal() {
             { step: '1', label: 'Connect Your Wallet', detail: 'Connect via the top nav. Your wallet address auto-fills on the purchase form. Any Arbitrum-compatible wallet works.' },
             { step: '2', label: 'Enter AXUSD Amount', detail: 'Type in how much AXUSD you want to spend or pick a quick amount. The AXAU quote updates live as you type.' },
             { step: '3', label: 'Submit the Order', detail: 'Add your email for confirmation, then submit. A branded order confirmation is sent to your inbox immediately.' },
-            { step: '4', label: 'Receive AXAU', detail: 'The operations team processes your request — acquiring the gold reserve and minting AXAU to your wallet. Typically same day.' },
+            { step: '4', label: 'Receive AXAU', detail: 'Your order is fulfilled automatically on-chain. AXAU transfers directly to your wallet — no manual processing required.' },
           ].map((item, i, arr) => (
             <div key={item.step} style={{ display: 'flex', gap: 12, marginBottom: i < arr.length - 1 ? 16 : 0, paddingBottom: i < arr.length - 1 ? 16 : 0, borderBottom: i < arr.length - 1 ? `1px solid ${C.borderAlt}` : 'none' }}>
               <div style={{
@@ -523,7 +523,7 @@ function FAQ() {
   const items = [
     {
       q: 'How do I get AXAU?',
-      a: 'Visit the Buy AXAU page, enter the amount of AXUSD you want to spend, and submit your order. The Axiom Protocol operations team acquires the gold reserve and mints AXAU to your wallet — typically within one business day.',
+      a: 'Visit the Buy AXAU page, enter the amount of AXUSD you want to spend, and submit your order. AXAU is transferred to your wallet automatically on-chain.',
     },
     {
       q: 'What is AXAU backed by?',
