@@ -3,8 +3,7 @@ import { db } from '../../../../server/db';
 import { t3KycSubmissions } from '../../../../shared/erc3643Schema';
 import { eq, and, count } from 'drizzle-orm';
 import { sendAxauEarlyAccessConfirmation } from '../../../../lib/email/resend';
-
-const AXAU_EARLY_ACCESS_CAP = 100;
+import { AXAU_EARLY_ACCESS_CAP } from '../../../../lib/axauEarlyAccess';
 
 const VALID_DOC_TYPES = ['passport', 'drivers_license', 'national_id', 'residence_permit'];
 
@@ -84,13 +83,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status: 'submitted',
     }).returning();
 
-    if (email && typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      sendAxauEarlyAccessConfirmation({
-        to: email,
-        fullName: fullName.trim(),
-        walletAddress: walletAddress.toLowerCase(),
-        submissionId: inserted.id,
-      }).catch(() => {});
+    let emailQueued = false;
+    const emailValid = email && typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (emailValid) {
+      try {
+        await sendAxauEarlyAccessConfirmation({
+          to: email,
+          fullName: fullName.trim(),
+          walletAddress: walletAddress.toLowerCase(),
+          submissionId: inserted.id,
+        });
+        emailQueued = true;
+      } catch {
+        emailQueued = false;
+      }
     }
 
     return res.status(201).json({
@@ -100,6 +106,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         walletAddress: inserted.walletAddress,
         status: inserted.status,
         createdAt: inserted.createdAt,
+        emailQueued,
       },
     });
   } catch (err: any) {

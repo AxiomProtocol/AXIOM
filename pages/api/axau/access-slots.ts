@@ -2,8 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../server/db';
 import { t3KycSubmissions } from '../../../shared/erc3643Schema';
 import { eq, count } from 'drizzle-orm';
-
-export const AXAU_EARLY_ACCESS_CAP = 100;
+import { AXAU_EARLY_ACCESS_CAP } from '../../../lib/axauEarlyAccess';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });

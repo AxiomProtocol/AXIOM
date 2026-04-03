@@ -108,7 +108,7 @@ function SlotMeter({ slots }: { slots: SlotData }) {
   );
 }
 
-function SuccessScreen({ submissionId }: { submissionId: string }) {
+function SuccessScreen({ submissionId, emailQueued }: { submissionId: string; emailQueued: boolean }) {
   const shortId = submissionId.slice(0, 8).toUpperCase();
   return (
     <div style={{ textAlign: 'center', padding: '48px 24px' }}>
@@ -144,6 +144,12 @@ function SuccessScreen({ submissionId }: { submissionId: string }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginTop: 6 }}>
           <span style={{ fontFamily: '"Courier New", monospace', fontSize: 12, color: C.muted }}>Status</span>
           <span style={{ fontFamily: '"Courier New", monospace', fontSize: 12, color: C.gold, fontWeight: 700 }}>UNDER REVIEW</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginTop: 6 }}>
+          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 12, color: C.muted }}>Confirmation</span>
+          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 12, color: emailQueued ? C.green : C.muted, fontWeight: 700 }}>
+            {emailQueued ? 'EMAIL SENT' : 'NO EMAIL'}
+          </span>
         </div>
       </div>
 
@@ -239,6 +245,7 @@ export default function AxauAccessPage() {
   const [slots, setSlots] = useState<SlotData | null>(null);
   const [step, setStep] = useState<Step>('form');
   const [submissionId, setSubmissionId] = useState('');
+  const [emailQueued, setEmailQueued] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -299,6 +306,7 @@ export default function AxauAccessPage() {
         return;
       }
       setSubmissionId(json.data.id ?? '');
+      setEmailQueued(json.data.emailQueued === true);
       setStep('submitted');
     } catch {
       setError('Network error — please check your connection and try again.');
@@ -390,7 +398,7 @@ export default function AxauAccessPage() {
 
         {/* Main content based on step */}
         {step === 'full' && <FullScreen />}
-        {step === 'submitted' && <SuccessScreen submissionId={submissionId} />}
+        {step === 'submitted' && <SuccessScreen submissionId={submissionId} emailQueued={emailQueued} />}
         {step === 'already_submitted' && <AlreadySubmittedScreen />}
 
         {step === 'form' && (
