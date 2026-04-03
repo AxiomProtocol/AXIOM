@@ -163,6 +163,14 @@ function Hero() {
           >
             {isVerified === true ? 'MINT AXAU →' : 'APPLY FOR ACCESS →'}
           </a>
+          <a href="/axau-buy" style={{
+            display: 'inline-block', padding: '12px 28px',
+            border: `1px solid ${C.gold}`, color: C.gold,
+            fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
+            textTransform: 'uppercase', textDecoration: 'none', background: C.bgGold, fontWeight: 700,
+          }}>
+            BUY WITH AXUSD →
+          </a>
           <a href="#how-it-works" style={{
             display: 'inline-block', padding: '12px 28px',
             border: `1px solid ${C.border}`, color: C.navy,
@@ -380,6 +388,32 @@ function MintTerminal() {
         <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, marginTop: 6, maxWidth: 480, lineHeight: 1.6 }}>
           Connect your wallet on Arbitrum One and start building your gold reserve in minutes.
         </p>
+      </div>
+
+      {/* Buy with AXUSD callout */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexWrap: 'wrap', gap: 16,
+        background: C.bgGold, border: `1px solid ${C.gold}40`,
+        padding: '18px 24px', marginBottom: 24,
+      }}>
+        <div>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', margin: '0 0 4px' }}>
+            DON&apos;T HAVE PAXG?
+          </p>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.navy, margin: 0, lineHeight: 1.5 }}>
+            Use <strong>AXUSD</strong> instead — the protocol acquires PAXG and mints to your wallet.
+            No gold market knowledge required.
+          </p>
+        </div>
+        <a href="/axau-buy" style={{
+          display: 'inline-block', padding: '10px 22px', flexShrink: 0,
+          background: C.navy, color: '#fff',
+          fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.12em',
+          textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700,
+        }}>
+          BUY WITH AXUSD →
+        </a>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 20, alignItems: 'start' }}>
