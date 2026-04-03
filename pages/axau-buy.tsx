@@ -54,7 +54,7 @@ function LivePriceBar({ quote }: { quote: QuoteData | null }) {
       background: C.bgAlt,
     }}>
       {[
-        { label: 'XAU / USD', value: `$${quote.xauUsdPrice}` },
+        { label: 'XAU / USD', value: `$${parseFloat(quote.xauUsdPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
         { label: 'MINT NAV', value: `$${parseFloat(quote.mintNavPerToken).toFixed(4)}` },
         { label: 'COVERAGE', value: quote.coverageRatioPct },
         { label: 'MINT STATUS', value: quote.mintPaused ? 'PAUSED' : 'ACTIVE', color: quote.mintPaused ? C.red : C.green },
@@ -104,7 +104,7 @@ function QuoteCard({ axusdInput, quote, loading }: { axusdInput: string; quote: 
       </div>
       {quote && hasAmount && (
         <p style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: C.muted, margin: '12px 0 0', lineHeight: 1.5 }}>
-          At the current Mint NAV of ${parseFloat(quote.mintNavPerToken).toFixed(4)} per AXAU (XAU/USD ${quote.xauUsdPrice}).
+          At the current Mint NAV of ${parseFloat(quote.mintNavPerToken).toFixed(4)} per AXAU (XAU/USD ${parseFloat(quote.xauUsdPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}).
           Final amount locked at execution.
         </p>
       )}
@@ -130,7 +130,7 @@ function SuccessScreen({ requestId, axusdAmount, axauQuoted }: { requestId: stri
         Request Submitted
       </h2>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 460, margin: '0 auto 32px', lineHeight: 1.7 }}>
-        The operations team will acquire PAXG, deposit it to the gold vault, and mint <strong>{axauQuoted} AXAU</strong> to your wallet. You will receive an email once fulfilled.
+        The Axiom Protocol will deposit the gold reserve to the vault and mint <strong>{axauQuoted} AXAU</strong> to your wallet. You will receive an email once fulfilled.
       </p>
 
       <div style={{
@@ -269,7 +269,7 @@ export default function AxauBuyPage() {
     <DesignLawLayout>
       <Head>
         <title>Buy AXAU — Axiom Protocol</title>
-        <meta name="description" content="Buy AXAU gold reserve units using AXUSD. No PAXG required — the Axiom Protocol handles everything." />
+        <meta name="description" content="Buy AXAU gold reserve units using AXUSD. No gold market experience required — the Axiom Protocol handles everything." />
       </Head>
 
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '48px 0 80px' }}>
@@ -277,7 +277,7 @@ export default function AxauBuyPage() {
         {/* Header */}
         <div style={{ marginBottom: 32 }}>
           <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.18em', color: C.gold, textTransform: 'uppercase', margin: '0 0 10px' }}>
-            AXAU RESERVE · POWERED BY PAXG
+            AXAU RESERVE · GOLD BACKED
           </p>
           <h1 style={{
             fontFamily: '"Cormorant Garamond", Georgia, serif',
@@ -287,7 +287,7 @@ export default function AxauBuyPage() {
             Buy AXAU with AXUSD
           </h1>
           <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, lineHeight: 1.7, margin: 0, maxWidth: 520 }}>
-            Use your AXUSD to purchase AXAU — a gold reserve unit backed by PAXG on Arbitrum One. No knowledge of gold markets or DeFi required. The protocol handles the rest.
+            Use your AXUSD to purchase AXAU — a gold reserve unit backed by physical gold on Arbitrum One. No knowledge of gold markets or DeFi required. The protocol handles the rest.
           </p>
         </div>
 
@@ -308,7 +308,7 @@ export default function AxauBuyPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 32 }}>
               {[
                 { n: '1', title: 'Enter Amount', body: 'Type how much AXUSD you want to spend. See the live AXAU quote update instantly.' },
-                { n: '2', title: 'Submit Request', body: 'We acquire PAXG, deposit it to the gold vault, and mint AXAU to your wallet.' },
+                { n: '2', title: 'Submit Request', body: 'The protocol deposits a gold reserve to the vault and mints AXAU directly to your wallet.' },
                 { n: '3', title: 'Receive Gold', body: 'AXAU arrives in your wallet. Each unit represents a verifiable share of physical gold.' },
               ].map(s => (
                 <div key={s.n} style={{ padding: '16px 14px', border: `1px solid ${C.border}`, background: C.bgAlt }}>

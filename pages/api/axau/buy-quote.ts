@@ -40,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       axauOut: parseFloat(axauOut.toFixed(6)),
       axauOutFormatted: axauOut.toFixed(6),
       mintNavPerToken: state.mintNavPerToken,
-      xauUsdPrice: state.xauUsdPrice,
+      xauUsdPrice,
       coverageRatioPct: state.coverageRatioPct,
       mintPaused: state.mintPaused,
       isSolvent: state.isSolvent,

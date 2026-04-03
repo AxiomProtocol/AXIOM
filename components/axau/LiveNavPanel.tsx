@@ -143,7 +143,7 @@ export default function LiveNavPanel() {
         <StatusChip ok={!state.goldFrozen} label={state.goldFrozen ? 'Gold Vault Frozen' : 'Gold Vault Normal'} />
         {!mintActive && (
           <span className="text-xs text-dl-gray font-dl-mono">
-            Reserve activation pending — PAXG bridge required before mint opens
+            Reserve activation pending — gold vault deposit required before mint opens
           </span>
         )}
       </div>
@@ -178,7 +178,7 @@ export default function LiveNavPanel() {
         <span>Total minted: <span className="text-dl-navy">{state.totalMinted} AXAU</span></span>
         <span>Reserve asset: <span className="text-dl-navy font-semibold">
           {state.goldReserveAsset.toLowerCase() === '0xfeb4dfc8c4cf7ed305bb08065d08ec6ee6728429'
-            ? 'PAXG — Paxos Gold (Arbitrum One)'
+            ? 'Gold Reserve (XAU) — Arbitrum One'
             : state.goldReserveAsset.toLowerCase() === '0x82af49447d8a07e3bd95bd0d56f35241523fbab1'
               ? 'WETH (legacy placeholder)'
               : state.goldReserveAsset.slice(0, 6) + '...' + state.goldReserveAsset.slice(-4)}
