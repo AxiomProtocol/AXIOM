@@ -1,38 +1,21 @@
 # Axiom Protocol
-## Institutional White Paper & Executive Summary v4.0
-
-| Field | Value |
-|---|---|
-| Document Classification | Institutional Disclosure — Not Investment Advice |
-| Version | 4.0 |
-| Date | April 3, 2026 |
-| Issuer | Axiom Nexus LLC |
-| Network | Arbitrum One (Chain ID: 42161) |
-| Document Status | Canonical Reference |
-| Supersedes | v2.0 (March 31, 2026), v3.0 (March 23, 2026), v1.1 (March 30, 2026) |
-| Explorer | https://arbitrum.blockscout.com |
-| Disclosure | axiomprotocol.app/disclosure |
-| Solvency | axiomprotocol.app/solvency |
-
----
-
-> This document is provided for informational purposes only and does not constitute an offer to sell or a solicitation of an offer to buy any security or financial instrument. All on-chain references are independently verifiable on Arbitrum One. All rates are variable. No returns are guaranteed. Performance and reserve data cited herein reflect the state of the protocol as of the date above and are subject to change. This document is not legal or investment advice.
+## Institutional White Paper v4.0
 
 ---
 
 ## Table of Contents
 
-1. [Executive Summary](#1-executive-summary)
-2. [System Architecture](#2-system-architecture)
-3. [Token Ecosystem](#3-token-ecosystem)
-4. [Reserve and Solvency Framework](#4-reserve-and-solvency-framework)
-5. [Real Asset Infrastructure](#5-real-asset-infrastructure)
-6. [Intelligence Layer](#6-intelligence-layer)
-7. [Banking and Custody Infrastructure](#7-banking-and-custody-infrastructure)
-8. [Community Infrastructure](#8-community-infrastructure)
-9. [Capital Formation and Syndication](#9-capital-formation-and-syndication)
-10. [DePIN Infrastructure](#10-depin-infrastructure)
-11. [Tiered Access and Verified Participant Architecture](#11-tiered-access-and-verified-participant-architecture)
+1. [Cover & Classification](#1-cover--classification)
+2. [Executive Summary](#2-executive-summary)
+3. [System Architecture](#3-system-architecture)
+4. [Token Ecosystem](#4-token-ecosystem)
+5. [Reserve and Solvency Framework](#5-reserve-and-solvency-framework)
+6. [Real Asset Infrastructure](#6-real-asset-infrastructure)
+7. [Intelligence Layer](#7-intelligence-layer)
+8. [Banking and Custody Infrastructure](#8-banking-and-custody-infrastructure)
+9. [Community Infrastructure](#9-community-infrastructure)
+10. [Capital Formation and Syndication](#10-capital-formation-and-syndication)
+11. [DePIN Infrastructure](#11-depin-infrastructure)
 12. [Governance Framework](#12-governance-framework)
 13. [Regulatory and Institutional Context — IMF Structural Shift Analysis](#13-regulatory-and-institutional-context--imf-structural-shift-analysis)
 14. [Risk Framework](#14-risk-framework)
@@ -44,406 +27,387 @@
 
 ---
 
-## 1. Executive Summary
+## 1. Cover & Classification
 
-### 1.1 Mission
+| Field | Value |
+|---|---|
+| Document Title | Axiom Protocol Institutional White Paper v4.0 |
+| Document Classification | Institutional Disclosure — Not Investment Advice |
+| Version | 4.0 |
+| Date | April 3, 2026 |
+| Issuer | Axiom Nexus LLC |
+| Network | Arbitrum One (Chain ID: 42161) |
+| Document Status | Canonical Reference |
+| Supersedes | v2.0 (March 31, 2026), v3.0 (March 23, 2026), v1.1 (March 30, 2026) |
+| Explorer | https://arbitrum.blockscout.com |
+| Disclosure | axiomprotocol.app/disclosure |
+| Solvency | axiomprotocol.app/solvency |
 
-Axiom Protocol is a governance-first wealth infrastructure platform designed to bridge digital capital formation with physical asset acquisition. The protocol provides institutional-grade transparency, deterministic risk management, and community-governed capital allocation — all anchored to verifiable on-chain operations on Arbitrum One.
+> This document is provided for informational purposes only and does not constitute an offer to sell or a solicitation of an offer to buy any security or financial instrument. All on-chain references are independently verifiable on Arbitrum One. All rates are variable. No returns are guaranteed. Performance and reserve data cited herein reflect the state of the protocol as of the date above and are subject to change. This document is not legal or investment advice.
 
-The core thesis: disciplined savings behavior, transparent treasury operations, and programmable governance can support a framework for community capital formation designed to facilitate physical asset acquisition — land, housing, food production infrastructure — while maintaining cryptographic auditability at every layer.
+---
 
-### 1.2 What Axiom Is — and What It Is Not
+## 2. Executive Summary
 
-**Axiom Protocol is:**
-- Governance-first wealth infrastructure with disclosure-grade transparency
-- A reference architecture for sovereign digital-physical economies
-- A programmable group savings framework with deterministic scheduling and cryptographic audit trails
-- An ERC-20 governance and fee-routing token ecosystem on Arbitrum One
-- An FDIC-insured banking rail (Increase.com / First Internet Bank) serving as the required entry gate for all capital-bearing activities
-- A permissioned on-chain credit market for real asset acquisition and rehabilitation financing
-- A live, gold-backed reserve instrument (AXAU) with seven deployed automated control layers on Arbitrum One mainnet
+### 2.1 Mission
 
-**Axiom Protocol is not:**
-- A bank, broker-dealer, or registered investment advisor
-- FDIC insured at the protocol level — banking accounts through Increase.com carry FDIC insurance per standard limits for that account type; the protocol itself does not
-- A yield guarantee or wealth outcome promise — all rates are variable
-- A claim of current ownership of any physical asset — physical asset targets are subject to market conditions, regulatory requirements, and governance approval
+Axiom Protocol is governance-first wealth infrastructure designed to build a sovereign digital-physical economy. Its founding thesis: that the structural shift in financial architecture now underway — from closed institutional systems to programmable, compliance-embedded, on-chain financial rails — creates the infrastructure moment for communities and individuals to build wealth at the same layer as institutions.
 
-### 1.3 Platform Scale — April 2026
+Axiom is not a prediction market, a speculative yield instrument, or an unregulated liquidity protocol. It is a multi-layer protocol for wealth accumulation, asset registration, community finance, and institutional-grade governance — all on verifiable, publicly auditable automated control layers deployed on Arbitrum One.
+
+### 2.2 What Axiom Is — and What It Is Not
+
+| Axiom Is | Axiom Is Not |
+|---|---|
+| Governance-first wealth infrastructure | A bank or broker-dealer |
+| A multi-token protocol (AXM, AXUSD, AXAU) | A guarantee of returns |
+| An ERC-3643 compliance framework | An unregulated speculative protocol |
+| A land acquisition and real asset pipeline | A claim of current real estate ownership |
+| A community savings coordination system | An investment fund |
+| An institutional solvency disclosure system | FDIC insured |
+| A structured reference architecture | The exclusive platform of its type |
+
+### 2.3 Platform Scale — April 2026
 
 | Metric | Value |
 |---|---|
-| Deployed Automated Control Layers | 84 (7 new AXAU contracts added April 2, 2026) |
-| On-Chain Addresses | 100+ |
-| Frontend Pages | 55 |
+| Automated Control Layers Deployed | 84 |
+| Verified on Arbitrum Blockscout | 84 |
+| Application Pages | 55 |
 | API Endpoints | 133 |
-| UI Components | 142 |
 | Database Tables | 339 |
-| Active Token Supply — AXUSD | 10,019.98 AXUSD |
-| Active Reserve Instrument — AXAU | 5.79 AXAU (genesis supply, April 2, 2026) |
-| AXAU Gold Reserve | 0.0013 PAXG |
-| AXM/AXUSD EulerSwap Pool | Live — 10,000 AXM / 9,000 AXUSD |
-| PSM Debt Ceiling | 1,000,000 AXUSD |
-| Deployment Phases | 6 (November 2025 – April 2026) |
+| Production Networks | Arbitrum One |
+| Banking Rails | Increase.com (FDIC-insured) |
+| Crypto Custody Rails | BitGo CaaS |
+| AXAU Genesis Mint | April 2, 2026 — 0.0013 PAXG → 5.789977 AXAU |
 
-### 1.4 Core Differentiators
+### 2.4 Core Differentiators
 
-**1. Identity-Gated Financial Infrastructure**
-Every AXUSD and AXAU transaction is enforced through the ERC-3643 (T-REX) identity standard. No transfer, mint, or redeem is possible without on-chain verification. This is not a post-hoc compliance layer — it is enforced at the automated control layer level on every transfer.
-
-**2. Dual-Lane Participant Architecture**
-Lane A (institutional/accredited) and Lane B (verified standard) enable differentiated access to protocol products without exposing institutional infrastructure to unverified participants or requiring all participants to meet accredited investor thresholds.
-
-**3. Physical-Digital Bridge**
-The protocol's land acquisition pipeline, field inspection system, and syndication module connect on-chain capital formation to real-world asset acquisition, providing a traceable bridge between digital participation and physical asset interests.
-
-**4. Integrated Fiat Capital Gateway**
-The Axiom Nexus Account (First Internet Bank, via Increase.com) provides a single FDIC-insured banking entry point for all capital-bearing activities. Participants receive unique ACH reference codes enabling precise attribution of incoming fiat payments to on-chain participant records.
-
-**5. Multi-Layer Reserve Infrastructure**
-The AXAU Reserve Instrument adds a commodity-backed reserve layer to the protocol. With seven production automated control layers live on Arbitrum One as of April 2026, AXAU represents the first live instantiation of Axiom's physical asset reserve thesis — beginning with gold, with land and additional commodities planned through governance.
-
-**6. Transparent by Design**
-The Proof of Execution system, solvency console, and reserve methodology documentation create a multi-layer audit record that institutional counterparties can independently verify on-chain at any time.
+- **Governance First** — Every token, reserve component, agent action, and parameter change is subject to documented governance authority before deployment
+- **Compliance Embedded at Transfer Layer** — ERC-3643 identity verification executes on every transfer, not at the application layer
+- **Reserve Transparency** — Three-mode Solvency Console with publicly queryable reserve snapshots
+- **Physical-Digital Bridge** — Full operational stack for bringing land onto on-chain rails, from deal sourcing through title and reserve integration
+- **Community Access** — Wealth Practice, Capital Program, and Academy provide community-layer access to the same infrastructure used by institutional participants
 
 ---
 
-## 2. System Architecture
+## 3. System Architecture
 
-### 2.1 Six-Layer Protocol Stack
-
-```
-+----------------------------------------------------------------------+
-|  Layer 6: Fiat Capital Gateway                                       |
-|  Axiom Nexus Account (FDIC) · ACH Reference Codes                   |
-|  Insurance Holds · LP Deposit Registry · Distributions              |
-+----------------------------------------------------------------------+
-|  Layer 5: Physical World                                             |
-|  Land Acquisition Pipeline · Field Inspections · Asset Onboarding   |
-|  Syndication Closings · AXAU Reserve Vaults                         |
-+----------------------------------------------------------------------+
-|  Layer 4: Capital Formation                                          |
-|  Syndication Module · Lending Fund · Wealth Practice                |
-|  Community Entry Credit · AXAU Mint/Redeem                          |
-+----------------------------------------------------------------------+
-|  Layer 3: On-Chain Financial Rails                                   |
-|  EulerSwap Pools · Euler Lending Vaults · PSM                       |
-|  AXAU NAV Engine · Commodity Registry                                |
-+----------------------------------------------------------------------+
-|  Layer 2: Compliance and Identity                                    |
-|  ERC-3643 · Identity Registry · Claim Topics · Tiered Access        |
-+----------------------------------------------------------------------+
-|  Layer 1: Governance and Token                                       |
-|  AXM Governance Token · Governance Safe · Timelock Controller       |
-+----------------------------------------------------------------------+
-```
-
-### 2.2 Technology Layers
+### 3.1 Six-Layer Protocol Stack
 
 | Layer | Components |
 |---|---|
-| Presentation | Next.js (Pages Router) · 55 pages · Design Law UI System · Cormorant Garamond/monospace typography · Navy/Forest Green/Muted Gold palette |
-| API | 133 Next.js API routes · Rate limiting · SIWE authentication · CORS enforcement |
-| Intelligence | AME (Deterministic) · MIRDT (Probabilistic) · Sentinel (Authorization) · AI Oracle (Gemini) |
-| Data | PostgreSQL (Neon) · Drizzle ORM · 339 tables |
-| Blockchain | Arbitrum One · 84 automated control layers · Alchemy RPC · ethers.js / viem · Wagmi v2.19 · Reown AppKit v1.8 · SIWE |
-| Banking (Capital Gate) | Increase.com: FDIC-insured ACH · First Internet Bank · BitGo CaaS: Institutional crypto custody · Multi-party authorization · Fiat-to-digital bridge |
-| External Integrations | Google Gemini AI · Alpha Vantage · CoinGecko · Chainlink Oracles · RentCast · ATTOM Data · Stripe · Resend · Discord · Google Cloud Storage · Storacha (IPFS) · ElevenLabs |
+| Layer 1 — Presentation | Next.js application · 55 pages · Mobile-optimized · Design Law system |
+| Layer 2 — API | 133 REST endpoints · Next.js API routes · Auth0 + SIWE authentication |
+| Layer 3 — Intelligence | AME (Adaptive Metrics Engine) · MIRDT Capital Terminal · Axiom Sentinel · AI Oracle (Gemini) |
+| Layer 4 — Data | PostgreSQL (339 tables) · Drizzle ORM · MongoDB analytics · Google Cloud Storage |
+| Layer 5 — Banking & Custody | Increase.com (FDIC-insured fiat rails) · BitGo CaaS (institutional crypto custody) |
+| Layer 6 — Blockchain | Arbitrum One · 84 automated control layers · ERC-3643 identity stack · Chainlink oracles |
+
+### 3.2 Technology Layers
+
+| Category | Technology |
+|---|---|
+| Frontend | Next.js · React · Tailwind CSS · Wagmi v2 · Reown AppKit |
+| Authentication | Auth0 v3 · SIWE (Sign-In with Ethereum) · ERC-3643 identity |
+| Blockchain | Arbitrum One · Ethers.js · viem · Alchemy RPC |
+| Database | PostgreSQL (Neon) · Drizzle ORM · MongoDB |
+| AI / Intelligence | Gemini AI · AME deterministic computation engine |
+| Banking | Increase.com REST API · First Internet Bank |
+| Custody | BitGo CaaS REST API |
+| Storage | Google Cloud Storage · Storacha (IPFS/Web3) |
+| Property Data | RentCast API · Walk Score API · Alpha Vantage |
+| Email | Resend |
+| Payments | Stripe |
 
 ---
 
-## 3. Token Ecosystem
+## 4. Token Ecosystem
 
-### 3.1 AXM — Governance Token
-
-AXM is the ERC-20 governance and fee-routing token of the Axiom Protocol ecosystem. It is the primary governance instrument through which community members exercise authority over protocol parameters, commodity basket admission, capital allocation policies, and roadmap prioritization.
+### 4.1 AXM — Governance Token
 
 | Property | Value |
 |---|---|
-| Contract Address | `0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D` |
 | Standard | ERC-20 |
+| Contract | `0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D` |
 | Network | Arbitrum One |
+| Role | Governance · Fee routing · SEED vote-escrow |
+| Minting | Governance-controlled (AXM Admin Safe) |
 | Status | Live |
-| Governance Mechanism | Governance Safe (3-of-5 multi-party authorization) + Timelock Controller (24h) |
 
-**AXM Functions:**
-- **Governance voting** — Protocol parameter changes, commodity admission, capital policy
-- **Fee routing** — Protocol fee revenue denominated or distributed in relation to AXM
-- **Participation lockup** — AXM may be locked to obtain vote-escrowed SEED positions (1–4 year lockup schedules) for enhanced governance weight
-- **Collateral** — AXM serves as collateral in the eAXM-1 Euler lending vault (supply-only mode)
-- **Exchange** — Active AXM/AXUSD EulerSwap pool provides on-chain liquidity
+AXM is the protocol governance token. It does not constitute a security interest or guarantee any financial return. AXM holders may participate in governance votes subject to the bootstrap phase transition schedule. The SEED program enables AXM holders to lock tokens for 1–4 year periods in exchange for enhanced governance weight.
 
-### 3.2 Unified AXUSD — Protocol Stablecoin
+**On-Chain Financial Rails:**
+- AXM/AXUSD EulerSwap Pool: `0x981763699D269E129a08E216b1AeC7caa376A8a8` (10,000 AXM / 9,000 AXUSD seeded March 28, 2026)
+- eAXM-1 (ERC-4626 supply vault): `0x8e28ffa89d168599156004db4f4d12c2af7c250e`
 
-Unified AXUSD is the canonical USD-pegged stablecoin of Axiom Protocol. It supersedes all prior AXUSD generations (GENIUS epoch, Euler epoch) and operates as the single active stablecoin for the ecosystem.
+### 4.2 Unified AXUSD — Protocol Stablecoin
 
 | Property | Value |
 |---|---|
-| Contract Address | `0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7` |
-| Standard | ERC-3643 (T-REX) — Identity-gated transfers |
-| Decimals | 18 |
-| Max Supply | 1,000,000,000 AXUSD |
-| Current Supply | 10,019.98 AXUSD |
-| Reserve Mechanism | Canonical PSM (USDC 1:1) |
-| PSM Address | `0xDB669bb6cA07215C5B055B62072AAED2F821E53F` |
-| Mint/Redeem Fee | 10 basis points (0.10%) |
-| PSM Debt Ceiling | 1,000,000 AXUSD |
+| Standard | ERC-3643 (T-REX) |
+| Contract | `0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7` |
+| Network | Arbitrum One |
+| Target Peg | 1.00 USD |
+| Phase 1 Reserve | USDC (Circle) |
+| PSM Contract | `0xDB669bb6cA07215C5B055B62072AAED2F821E53F` |
 | Status | Live |
 
-**ERC-3643 Enforcement:** Every AXUSD transfer — including mints, redeems, and wallet-to-wallet transfers — passes through the Identity Registry's `isVerified()` check. Wallets without valid KYC and sanctions-clear claims cannot send or receive AXUSD regardless of transaction origin.
+Unified AXUSD is the protocol stablecoin. All previous AXUSD generations (GENIUS AXUSD, Euler AXUSD) are deprecated. AXUSD is not FDIC insured. It is not a bank deposit. Redemption is subject to reserve availability. AXUSD transfers are gated by the ERC-3643 identity layer — only verified wallets can send or receive.
+
+**PSM Mechanics:**
+- Mint: 1 USDC + protocol fee (configurable) → 1 AXUSD
+- Redeem: 1 AXUSD → 1 USDC (minus protocol fee)
+- Ceiling: Governance-controlled mint ceiling
+- Fee Sweep: Governance Safe receives accumulated PSM fees
 
 **Euler V2 Integration:**
-- eAXUSD-6 (AXUSD lending vault): `0xacdA87801f6409bB5157BA78aF1BD9631d6609B2` — Supply + Borrow
-- Euler Earn Vault (AXUSD yield): `0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B`
-- USDC/AXUSD EulerSwap Pool: `0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8`
-- AXM/AXUSD EulerSwap Pool: `0x981763699D269E129a08E216b1AeC7caa376A8a8`
+| Contract | Address | Type | Status |
+|---|---|---|---|
+| eAXUSD-6 | `0xacdA87801f6409bB5157BA78aF1BD9631d6609B2` | ERC-4626 lend/borrow | Live |
+| Euler Earn Vault | `0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B` | AXUSD yield | Live |
+| USDC/AXUSD EulerSwap | `0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8` | AMM Pool | Configured |
 
-### 3.3 AXAU — Gold Reserve Instrument
+### 4.3 AXAU — Gold Reserve Instrument
 
-AXAU is Axiom Protocol's gold-anchored reserve instrument — an on-chain store of value backed by a governance-curated basket of real-world commodity reserves. Phase 1 is anchored entirely by gold via PAXG (Paxos Trust Company, NYDFS-regulated). The genesis mint occurred on April 2, 2026: 0.0013 PAXG minted 5.789977 AXAU at block 448396754 on Arbitrum One.
+AXAU is a gold-anchored reserve instrument backed by PAXG (Paxos Gold) in Phase 1. AXAU is not a stablecoin — its USD value will fluctuate with gold market prices. AXAU uses a subset of the ERC-3643 (T-REX) compliance standard. All mint, redeem, and transfer operations are subject to identity verification.
 
-| Property | Value |
+For the full AXAU technical specification, see `documents/axau-whitepaper.md`.
+
+**Genesis Mint Record:**
+| Field | Value |
 |---|---|
-| Contract Address | `0xbcCA4D937d427829914498423aE6E04C846dB0Bb` |
-| Standard | ERC-3643 (T-REX) — Identity-gated |
-| Network | Arbitrum One |
-| Reserve Asset (Phase 1) | PAXG — Paxos Gold |
-| Coverage Floor | 105% minimum |
-| Mint Premium | 5% above Backing NAV |
-| Mint Fee | 0 bps (genesis) |
-| Redeem Fee | 0 bps (genesis) |
-| Current Supply | 5.789977 AXAU |
-| Gold Reserve | 0.0013 PAXG |
-| Status | Live — Phase 1 Active |
+| Date | April 2, 2026 |
+| Input | 0.0013 PAXG |
+| Output | 5.789977 AXAU |
+| Transaction | `0x73479447...` |
+| Block | 448396754 (Arbitrum One) |
+| Preceding Action | haircutBps set 500 → 0 (TX: `0x115d2b7d...`) |
 
-AXAU is not a stablecoin. Its USD value will fluctuate with gold and future commodity reserve market prices. For the complete AXAU technical specification — including the full NAV mathematical framework, seven-contract architecture, reserve phase design, oracle infrastructure, and governance framework — refer to `documents/axau-whitepaper.md`.
-
-**AXAU Seven-Contract System (All Live on Arbitrum One):**
-
+**AXAU Core Contracts:**
 | Contract | Address | Role |
 |---|---|---|
-| AXAUTokenLite3643 | `0xbcCA4D937d427829914498423aE6E04C846dB0Bb` | ERC-3643 token |
+| AXAUTokenLite3643 | `0xbcCA4D937d427829914498423aE6E04C846dB0Bb` | ERC-3643 AXAU token |
 | CommodityRegistry | `0x6D3aAa92793503B40b3F3593d2fCc409Ca610bDa` | Reserve component registry |
 | AXGoldVault | `0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8` | PAXG reserve vault |
-| LandNAVOracleMultiSig | `0x8FF5D66d4be4C107362e63f8E9E8283E8c5EA0Fc` | Land appraisal oracle (Phase 3, inactive) |
-| AXLandVault | `0x66Aadce66a359609ec5E18fb3d8927a2363449cf` | Land reserve vault (Phase 3, inactive) |
-| NAVEngine | `0x80F8634a43B26a2bd403396A42465F138aeCC519` | NAV computation engine |
+| NAVEngine | `0x80F8634a43B26a2bd403396A42465F138aeCC519` | NAV computation |
 | MintRedeemController | `0x036F05a3fB74d35439c074f25F691b36f5D37792` | Mint/redeem gateway |
+| AXLandVault | `0x66Aadce66a359609ec5E18fb3d8927a2363449cf` | Land reserve vault (inactive) |
+| LandNAVOracleMultiSig | `0x8FF5D66d4be4C107362e63f8E9E8283E8c5EA0Fc` | Land appraisal oracle (inactive) |
 
-### 3.4 Deprecated Tokens
-
-The following tokens have been superseded and carry no new activity:
+### 4.4 Deprecated Tokens
 
 | Token | Address | Status |
 |---|---|---|
-| GENIUS AXUSD | `0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C` | Superseded by Unified AXUSD |
-| Euler AXUSD | `0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c` | Superseded by Unified AXUSD |
-| eAXUSD-4 | `0xe3048078286eA27fF91Eed10AA5FD749F0Ce7059` | WITHDRAW_ONLY — hook config issue |
+| GENIUS AXUSD | `0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C` | Deprecated — No new activity |
+| Euler AXUSD | `0xA7907b6B6169D66012Bf1c36f27a72C06AEC065c` | Deprecated — No new activity |
+| Legacy GENIUS PSM | `0x5db58d9c21369d1532a48Bdd658E4Fe415404922` | Configured-Inactive |
 
 ---
 
-## 4. Reserve and Solvency Framework
+## 5. Reserve and Solvency Framework
 
-### 4.1 AXUSD Reserve Hierarchy
+### 5.1 AXUSD Reserve Hierarchy
 
-AXUSD reserves are held across three segregated pools:
+| Priority | Asset | Role |
+|---|---|---|
+| 1 | USDC | Primary operating reserve (PSM backing) |
+| 2 | PAXG | Secondary commodity reserve |
+| 3 | WETH | Tertiary liquidity reserve |
+| 4 | AXM | Governance token reserve (last resort) |
 
-| Pool | Address | Role | Status |
-|---|---|---|---|
-| Canonical PSM | `0xDB669bb6cA07215C5B055B62072AAED2F821E53F` | Primary reserve — identity-gated; 10 bps fee | Live |
-| Legacy GENIUS PSM | `0x5db58d9c21369d1532a48Bdd658E4Fe415404922` | Supplementary backstop from legacy epoch | Configured-Inactive |
-| Backstop Vault (USDC) | `0x54438249457694eB5431811f3f19444Af0a01B29` | Emergency reserve; 24h timelock on withdrawals | Live |
+### 5.2 Core Solvency Metrics
 
-### 4.2 Core Solvency Metrics
+| Metric | Formula | Purpose |
+|---|---|---|
+| Reserve Ratio (RR) | Total Reserves / Total AXUSD Supply | Fundamental coverage indicator |
+| Coverage Ratio (CR) | Weighted Reserve Value / Circulating Supply | Risk-adjusted adequacy |
+| Liquidity Buffer Ratio (LBR) | Liquid Reserves / 30-Day Average Redemption Volume | Short-term redemption capacity |
 
-**Reserve Ratio (RR)**
-```
-RR = Total USDC Reserves / Canonical AXUSD Total Supply × 100
+**Policy Threshold Table:**
 
-Total USDC Reserves = Canonical PSM USDC
-                    + Legacy GENIUS PSM USDC
-                    + Backstop Vault USDC
-```
-Target: RR ≥ 100% at all times. The protocol targets RR ≥ 105% under normal operations.
+| Mode | CR Threshold | Policy Response |
+|---|---|---|
+| Optimal | ≥ 150% | Normal operations · Full PSM capacity |
+| Adequate | ≥ 120% | Monitoring mode · Governance notified |
+| Caution | ≥ 105% | Ceiling tightened · Governance review required |
+| Alert | ≥ 100% | Emergency protocol · Governance action required |
+| Hard Brake | < 100% | All minting halted · Redemption only |
 
-**Coverage Ratio (CR)**
-```
-CR = Treasury Total Assets / Total Protocol Liabilities
-```
+### 5.3 Adaptive Metrics Engine (AME)
 
-**Liquidity Buffer Ratio (LBR)**
-```
-LBR = Immediately Liquid Reserves / Total Protocol Liabilities
-```
-Immediately liquid reserves = Canonical PSM USDC only (excluding backstop vault with 24-hour timelock and legacy PSM).
+The AME is the deterministic financial computation layer of Axiom Protocol. Unlike probabilistic or AI-driven systems, AME produces deterministic outputs from defined inputs — every metric is a reproducible mathematical function of on-chain and off-chain inputs. AME governs:
 
-### 4.3 Policy Thresholds
-
-| Mode | CR Range | LBR Condition | Protocol Response |
-|---|---|---|---|
-| NORMAL | ≥ 1.05 | LBR ≥ 0.50 | No restriction |
-| CAUTION | 1.00–1.05 | LBR ≥ 0.30 | Alert issued; remediation plan required within 48 hours |
-| RESTRICTED | 0.90–1.00 | LBR < 0.30 | PSM debt ceiling frozen; new product launches paused |
-| EMERGENCY | < 0.90 | Any | Emergency pause eligible; governance vote required |
-| BOOTSTRAP | N/A | Early deployment | Current mode — no restrictions |
-
-### 4.4 Adaptive Metrics Engine (AME)
-
-The Adaptive Metrics Engine is the deterministic financial computation engine at the center of Axiom's solvency infrastructure. AME continuously computes regime scores, adaptive targets, and policy multipliers — providing a real-time systemic health signal that feeds into Sentinel's authorization layer.
+- Regime classification (Optimal, Adequate, Caution, Alert, Hard Brake)
+- Adaptive target computation (policy multipliers applied to CR targets)
+- Emergency circuit breaker activation
+- Reserve policy recommendations
 
 AME's Hard Brake circuit breaker activates automatically when coverage falls below defined thresholds, pausing new capital deployment and triggering governance notification. This circuit breaker is fully automated — it does not depend on any off-chain action to engage.
 
-### 4.5 Three-Mode Solvency Console
+### 5.4 Three-Mode Solvency Console
 
-The Solvency Console at `axiomprotocol.app/solvency` provides three distinct views of protocol health calibrated for different counterparty types:
+The Solvency Console at `axiomprotocol.app/solvency` provides three views of protocol reserves:
 
-- **Allocator Mode** — Headline metrics: treasury NAV, AXUSD supply, reserve ratio, coverage ratio. Designed for investment committee review.
-- **Clearinghouse Mode** — Expanded reserve breakdown, liquidity buffer composition, PSM utilization, stress scenario outputs.
-- **Regulatory Mode** — Full formula disclosure with all input variables, liability classification, and methodology documentation.
+| Mode | Audience | Data Provided |
+|---|---|---|
+| Public | Open access | Reserve ratio, coverage ratio, policy mode |
+| Institutional | Verified participants | Full snapshot with component breakdown |
+| Audit | Governance / Compliance | Full snapshot with on-chain proof links |
 
-### 4.6 AXAU Coverage Mechanics
+### 5.5 AXAU Coverage Mechanics
 
-The AXAU system maintains its own independent coverage floor. The `NAVEngine` contract enforces a 105% coverage ratio as a condition of every mint transaction. If post-mint coverage would fall below 10,500 basis points, the transaction reverts automatically. This operates entirely on-chain and cannot be overridden by any administrative key.
+AXAU maintains a hard 105% minimum coverage floor enforced by the MintRedeemController. The coverage ratio is computed in real-time using Chainlink XAU/USD oracle data. If coverage falls below 105%, the MintRedeemController automatically halts new minting. Key parameter: `haircutBps = 0` for PAXG (Phase 1), meaning no discount is applied to gold backing.
 
 ---
 
-## 5. Real Asset Infrastructure
+## 6. Real Asset Infrastructure
 
-### 5.1 Land Acquisition Pipeline
+### 6.1 Land Acquisition Pipeline
 
-The Physical Asset Pipeline is Axiom's framework for bridging digital capital to real-world asset acquisition. The pipeline encompasses the full land acquisition lifecycle from deal sourcing through governance-approved acquisition, title onboarding, and reserve integration.
+The land acquisition pipeline is Axiom Protocol's operational system for sourcing, underwriting, governing, and onboarding physical land assets onto on-chain rails. The pipeline operates across seven stages:
 
-**Pipeline Stages:**
-1. **Sourcing** — Distressed property feed aggregates off-market, tax-delinquent, and bank-owned listings from third-party data sources (ATTOM Data, county records)
-2. **Analysis** — Deal Intelligence system computes multi-exit underwriting, comps, and capital stack for each candidate
-3. **Due Diligence** — Structured checklist system guides operators through physical and title due diligence
-4. **Field Inspection** — Field Capture System (mobile-first) enables on-site walkthrough documentation with GPS-tagged deficiency reports
-5. **Governance** — Qualified acquisitions are submitted to AXM governance for community approval
-6. **Onboarding** — Approved acquisitions are recorded in the `AxiomLandAndAssetRegistry` automated control layer on Arbitrum One
-7. **Reserve Integration** — In Phase 3, governed land positions may be deposited into the AXLandVault and incorporated into the AXAU reserve basket
+| Stage | Name | Description |
+|---|---|---|
+| 1 | Deal Sourcing | Distressed property feed, MLS integration, agent network |
+| 2 | Preliminary Analysis | Property Analysis Tool + RentCast API screening |
+| 3 | Deal Intelligence | 8-strategy underwriting model + IVCEE capital readiness |
+| 4 | Governance Submission | On-chain governance vote for acquisition authorization |
+| 5 | Due Diligence | DD Checklist System + Craftsman cost database |
+| 6 | Field Inspection | Field Capture System — GPS-tagged walkthrough documentation |
+| 7 | Title and Reserve Integration | Legal title onboarding + AXLandVault registration |
 
-### 5.2 Lending Fund
+### 6.2 Lending Fund
 
-The Axiom Lending Fund is a private credit facility structured under SEC Regulation D, Rule 506(c), providing fix-and-flip and DSCR rental financing for real property acquisition and rehabilitation.
+The Axiom Lending Fund is a fixed-term real estate lending facility structured under SEC Regulation D 506(c). Participation is restricted to accredited investors as defined by applicable law. The fund provides short-term financing for real estate acquisition and rehabilitation operations.
 
-| Feature | Description |
+| Property | Value |
 |---|---|
-| Structure | SEC Reg D 506(c) — Accredited Investors Only |
-| Loan Types | Fix-and-Flip (short-term bridge) · DSCR Rental (term) |
-| Loan Receipt | ERC-721 NFT issued per loan position |
-| Vault Standard | ERC-4626 |
-| Access Control | Lane A only (accredited investor credential required) |
-| Status | Configured — Activation subject to governance approval |
+| Structure | SEC Regulation D 506(c) |
+| Access | Lane A (accredited investors only) |
+| Vault | ERC-4626 standard |
+| Loan Receipt | ERC-721 NFT |
+| Status | Infrastructure deployed; activation pending governance approval |
 
-### 5.3 Property Analysis Tool
+### 6.3 Property Analysis Tool
 
-The Property Analysis Tool at `/property` provides pay-per-report property analysis for verified participants. Reports integrate RentCast rental estimate data, Walk Score infrastructure, Craftsman cost database rehab estimates, and multi-exit underwriting outputs into a single institutional-grade acquisition assessment.
+A pay-per-report property analysis system powered by RentCast API and Walk Score API. The tool provides:
+- Rental comps and estimated rental income
+- Walk Score / Transit Score / Bike Score
+- Neighborhood data and market trend analysis
+- Estimated property value range
 
-### 5.4 Deal Intelligence
+### 6.4 Deal Intelligence
 
-The Deal Intelligence system at `/deal-intelligence` provides an operator-grade workspace for underwriting active acquisitions. It integrates the Craftsman Cost Intelligence Engine, Capital Readiness Card, AI Acquisition Memo Builder (Gemini-powered), and Multi-Exit Strategy Engine to support the full deal evaluation workflow.
+An eight-strategy underwriting system for real estate acquisitions. The Multi-Exit Strategy Engine produces modeled returns across: wholesale, fix-and-flip, long-term rental, short-term rental, house hack, BRRRR, seller finance, and new construction scenarios. The Craftsman Cost Database provides rehabilitation cost estimates grounded in the National Cost Estimator.
 
-**Eight Underwriting Strategies supported:**
-Fix and Flip · BRRRR · Long-Term Rental (DSCR) · Short-Term Rental · Wholesale · Seller Finance · Land Contract · Subject-To
+### 6.5 IVCEE — Underwriting Intelligence Engine
 
-### 5.5 IVCEE — Underwriting Intelligence Engine
+The Institutional Value Creation and Exit Execution Engine (IVCEE) is an allocator-grade underwriting intelligence system. It produces:
+- Capital Readiness Card — scores deal viability against available funding sources
+- AI Acquisition Memo — Gemini-powered institutional memo generator
+- Full due diligence checklist with stage-gated completion tracking
 
-The Investment Value and Capital Efficiency Engine (IVCEE) provides allocator-grade underwriting intelligence by computing capital efficiency scores, risk-adjusted return profiles, and funding source compatibility assessments for real property acquisition candidates.
-
-### 5.6 Field Capture System
+### 6.6 Field Capture System
 
 The Field Capture System is a mobile-first walkthrough platform that enables property inspectors to document physical condition, identify deficiencies, and generate structured inspection records with GPS coordinates and photo documentation. All field data is written to the Field Intelligence database and accessible via the Founder Operations dashboard.
 
 ---
 
-## 6. Intelligence Layer
+## 7. Intelligence Layer
 
-### 6.1 Adaptive Metrics Engine (AME)
+### 7.1 Adaptive Metrics Engine (AME)
 
-The AME is the deterministic financial computation layer of Axiom Protocol. Unlike probabilistic or AI-driven systems, AME produces deterministic outputs from defined inputs — every metric is a reproducible mathematical function of on-chain and off-chain inputs. AME governs:
+The AME is described in Section 5.3. In the Intelligence Layer context, it is the system that receives on-chain and off-chain inputs and produces deterministic regime classifications and adaptive target outputs that govern protocol parameters.
 
-- Coverage ratio computation and threshold classification
-- Capital flow waterfall management
-- Hard Brake circuit breaker logic
-- Adaptive target generation for Sentinel
+### 7.2 MIRDT — Capital Intelligence Terminal
 
-AME outputs are published via the `/api/solvency` route family and consumed by the Solvency Console, Sentinel, and MIRDT.
+The MIRDT (Macro Intelligence, Risk and Decision Terminal) is a nine-dimension advisory signal engine. It produces a Protocol Readiness Score (PRS) on a 0–10 scale, computed from:
 
-### 6.2 MIRDT — Capital Intelligence Terminal
+| Dimension | Signal |
+|---|---|
+| 1. Market Regime | On-chain financial rails market conditions |
+| 2. Protocol Health | Reserve ratios, coverage, liquidity |
+| 3. Treasury Position | Protocol treasury composition and adequacy |
+| 4. Governance Status | Pending votes, bootstrap phase status |
+| 5. Real Asset Pipeline | Active acquisitions, deal flow velocity |
+| 6. Community Activity | Wealth Practice participation, inflows |
+| 7. Regulatory Environment | Jurisdiction monitoring |
+| 8. Counterparty Exposure | PAXG, USDC, banking rail exposure |
+| 9. Operational Readiness | Infrastructure status, audit status |
 
-The Market Intelligence and Risk Disclosure Terminal (MIRDT) is a nine-dimension advisory signal engine that monitors live protocol data streams and produces a composite Protocol Readiness Score (PRS, 0–10). MIRDT operates in advisory-only mode — it has no execution authority.
+PRS is advisory only. It does not constitute investment advice and does not trigger autonomous capital deployment.
 
-**Nine Signal Dimensions:**
-1. Treasury Coverage Health
-2. Reserve Ratio Trend
-3. Liquidity Buffer Status
-4. PSM Utilization Rate
-5. Euler Vault Health
-6. Market Volatility Index
-7. Community Participation Rate
-8. Governance Activity Signal
-9. Operational Execution Score
+### 7.3 Axiom Sentinel
 
-All MIRDT outputs are advisory intelligence only. The Protocol Readiness Score is a composite readiness indicator, not a guarantee of capital performance. MIRDT reports are rendered with a Lexicon Guard layer that enforces institutional vocabulary compliance before any output is displayed.
+Axiom Sentinel is the unified capital decision and risk authorization layer. It converts MIRDT intelligence signals into structured capital recommendations with cryptographic audit trails. Sentinel recommendations require governance authorization before any capital action is executed. Sentinel is not an autonomous execution system.
 
-### 6.3 Axiom Sentinel
+### 7.4 AI Oracle — Gemini Intelligence Layer
 
-Axiom Sentinel is the advisory capital decision layer that converts AME intelligence signals into governance recommendations with cryptographic audit trails. Sentinel classifies the protocol into one of four operational regimes:
+The AI Oracle integrates Google's Gemini AI to provide:
+- Document analysis and information extraction
+- AI Acquisition Memo generation (IVCEE integration)
+- Advisory narrative generation for governance decisions
+- On-chain data interpretation and summarization
 
-| Regime | Trigger Condition | Capital Policy |
-|---|---|---|
-| STABLE | AME score ≥ 8.0; CR ≥ 1.05 | Full deployment authorized |
-| CAUTION | AME score 6.0–8.0; CR 1.00–1.05 | Reduced deployment; enhanced monitoring |
-| DEFENSIVE | AME score 4.0–6.0; CR 0.90–1.00 | Defensive posture; new deployment paused |
-| EMERGENCY | AME score < 4.0; CR < 0.90 | Emergency governance session; pause eligible |
-
-Sentinel currently operates in advisory-only mode. It has no authority to deploy capital without explicit community governance approval.
-
-### 6.4 AI Oracle — Gemini Intelligence Layer
-
-The AME AI Oracle is a Gemini-powered interpretation layer that provides natural-language explanations of AME metric outputs and MIRDT signal readings. It does not execute trades, authorize transactions, or override governance decisions. It translates deterministic metric outputs into plain-language institutional summaries for the Solvency Console and Observer dashboard.
+All AI Oracle outputs are advisory. No AI system has autonomous authority to deploy protocol capital or modify protocol parameters.
 
 ---
 
-## 7. Banking and Custody Infrastructure
+## 8. Banking and Custody Infrastructure
 
-### 7.1 Increase.com — FDIC-Insured Banking Rail
+### 8.1 Increase.com — FDIC-Insured Banking Rail
 
-The primary fiat capital gateway for Axiom Protocol is the Axiom Nexus Account, provided through Increase.com and held at First Internet Bank (FDIC member).
+Axiom Protocol's primary fiat banking infrastructure is provided by Increase.com, a banking-as-a-service platform with deposits held at First Internet Bank, Member FDIC.
 
 | Property | Value |
 |---|---|
 | Provider | Increase.com |
-| Bank | First Internet Bank |
-| FDIC Insurance | Standard deposit insurance limits apply per account type |
-| Rails | ACH · Wire Transfer |
-| Participant Onboarding | Unique ACH reference codes per participant for payment attribution |
+| Bank | First Internet Bank (Member FDIC) |
+| Account | Axiom Nexus Account |
+| Rails | ACH, Wire Transfer |
 | Status | Live |
+| Coverage | Standard FDIC insurance limits apply |
 
-All capital-bearing participant activities flow through this banking layer. Fiat deposits are attributed to individual participant records via ACH reference codes, enabling precise on-chain-to-fiat reconciliation without requiring per-participant banking accounts.
+**Capabilities:**
+- ACH credit/debit for LP subscriptions and distributions
+- Wire transfer for large capital movements
+- Real-time transaction webhooks
+- Programmatic payment initiation via Increase REST API
+- LP deposit attribution and sub-ledger tracking
 
-### 7.2 BitGo CaaS — Institutional Crypto Custody
+### 8.2 BitGo CaaS — Institutional Crypto Custody
 
-Institutional crypto asset custody is provided by BitGo CaaS (Custody-as-a-Service). BitGo provides multi-party authorization custody infrastructure for protocol treasury digital assets, LP deposits, and AXAU reserve holding operations where institutional custody is required.
+BitGo Custody-as-a-Service (CaaS) provides institutional-grade digital asset custody for protocol treasury holdings.
 
 | Property | Value |
 |---|---|
-| Provider | BitGo Trust Company |
-| Model | Multi-party authorization (3-of-5 minimum) |
-| Status | Configured — Active for treasury operations |
+| Provider | BitGo |
+| Model | Custody-as-a-Service (CaaS) |
+| Standard | Qualified Custodian infrastructure |
+| Status | Configured |
 
-### 7.3 Hybrid Custody Model
+### 8.3 Hybrid Custody Model
 
-Axiom operates a hybrid custody model that combines:
-- **Non-custodial on-chain rails** — AXUSD, AXM, and AXAU held in participant wallets are entirely self-custodied; the protocol has no custody authority over participant holdings
-- **Institutional custody** — Protocol treasury assets designated for institutional safekeeping are held under BitGo multi-party authorization
-- **Banking custody** — Fiat reserves held in the Axiom Nexus Account are held by First Internet Bank under FDIC-insured conditions
+The protocol uses a hybrid custody architecture:
+
+| Asset Type | Custodian | Model |
+|---|---|---|
+| Protocol treasury crypto | BitGo CaaS | Institutional custody |
+| Fiat / USD operations | Increase / First Internet Bank | FDIC-insured banking |
+| PAXG (AXAU reserve) | Paxos Trust (Brink's vaults) | Regulated trust custody |
+| USDC (AXUSD reserve) | Circle (on-chain) | Non-custodial (on-chain) |
+| User self-custody assets | User's own wallet | Self-custody |
+
+The protocol does not hold user private keys. Participation in protocol products (Wealth Practice, AXUSD, AXAU, Lending Fund) does not transfer custody of user assets to Axiom Nexus LLC except where explicitly structured in the Lending Fund offering documents.
+
+**Banking custody:** Fiat reserves held in the Axiom Nexus Account are held by First Internet Bank under FDIC-insured conditions
 
 ---
 
-## 8. Community Infrastructure
+## 9. Community Infrastructure
 
-### 8.1 The Wealth Practice
+### 9.1 The Wealth Practice
 
 The Wealth Practice is Axiom Protocol's structured group savings framework — a programmable, discipline-enforced community capital formation system with deterministic scheduling, participant-level transparency, and cryptographic audit trails.
 
@@ -457,19 +421,19 @@ The Wealth Practice is Axiom Protocol's structured group savings framework — a
 
 The Wealth Practice is not an investment product. It does not generate yield, guarantee returns, or constitute a financial product as defined by securities law. It is a structured savings coordination mechanism with transparent controls and community governance.
 
-### 8.2 Community Credit
+### 9.2 Community Credit
 
 The Community Credit system provides verified participants with access to the Capital Program — an entry-level capital facilitation framework designed to expand access to the Wealth Practice and real asset pipeline for participants who meet participation criteria but require capital access assistance.
 
-### 8.3 Axiom Academy
+### 9.3 Axiom Academy
 
 The Axiom Academy is an educational and certification platform offering track-based educational content covering wealth-building fundamentals, on-chain financial participation, and the Wealth Practice methodology. Completion of designated tracks may result in the issuance of certification acknowledgments.
 
 ---
 
-## 9. Capital Formation and Syndication
+## 10. Capital Formation and Syndication
 
-### 9.1 Syndication Module
+### 10.1 Syndication Module
 
 The Axiom Syndication Module is a full-stack capital formation operating system for structuring, managing, and closing real asset acquisition offerings. It supports the complete offering lifecycle from structuring through subscription, closing, and post-close reporting.
 
@@ -480,23 +444,23 @@ The Axiom Syndication Module is a full-stack capital formation operating system 
 - Capital account ledger with distribution calculation engine
 - SEC Reg D 506(c) compliance framework integration
 
-### 9.2 LP Investor Portal
+### 10.2 LP Investor Portal
 
 The Investor Portal at `/syndication` provides accredited LP participants with a dedicated view of their capital account, offering subscriptions, distribution history, and K-1/tax document access. The portal is gated at Lane A (accredited investor) access level.
 
-### 9.3 Axiom Secondary Network V1
+### 10.3 Axiom Secondary Network V1
 
 The Axiom Secondary Network is a permissioned secondary transfer, settlement, registry, and intelligence layer for Axiom-issued private market products. It enables verified participants to access secondary liquidity for protocol-issued instruments under defined regulatory conditions, with all transfers subject to the same ERC-3643 identity compliance enforcement as primary transfers.
 
-### 9.4 Capital Accounting and Performance Intelligence
+### 10.4 Capital Accounting and Performance Intelligence
 
 The Capital Accounting system provides a full-stack capital ledger for all protocol investment activities. It tracks capital deployed, interest accrued, fee revenue, distributions paid, and unrealized NAV for the Lending Fund and Syndication Module. Performance reporting is accessible via the Founder Operations dashboard.
 
 ---
 
-## 10. DePIN Infrastructure
+## 11. DePIN Infrastructure
 
-### 10.1 DeNet Integration
+### 11.1 DeNet Integration
 
 Axiom Protocol integrates with the DeNet decentralized storage network as its primary DePIN (Decentralized Physical Infrastructure Network) partner. DeNet nodes provide decentralized, censorship-resistant storage infrastructure for protocol documents, inspection records, and on-chain data archives.
 
@@ -507,69 +471,9 @@ Axiom Protocol integrates with the DeNet decentralized storage network as its pr
 | Payment | ETH + AXM accepted for node services (DePINNodeSales contract) |
 | Status | Configured — Active Integration |
 
-### 10.2 Node Economy
+### 11.2 Node Economy
 
 The DePIN node economy enables protocol participants to contribute storage infrastructure and receive node-based incentives. The `DePINNodeSuite` automated control layer manages node registration and metering. The `UtilityAndMeteringHub` automated control layer coordinates IoT-level resource metering for future infrastructure expansion.
-
----
-
-## 11. Tiered Access and Verified Participant Architecture
-
-### 11.1 Identity Framework
-
-Axiom Protocol uses the ERC-3643 (T-REX) standard for on-chain identity verification. All AXUSD and AXAU transfers are gated by the Identity Registry's `isVerified()` function. Identity enforcement is not an application-layer checkpoint — it is executed within the automated control layer on every transfer.
-
-**Core Infrastructure:**
-
-| Contract | Address | Role |
-|---|---|---|
-| Identity Registry | `0x58f64a1262d5434d6C7637a2309b0999bB6D1970` | Maps wallets to ONCHAINID contracts |
-| Identity Registry Storage | `0x5A906507f886db1f41b12c75324C96dE27aB2E81` | Persistent identity storage |
-| Modular Compliance | `0xD94a0dAc0c5Ce2D5f0E9FDe4fD5c30Ea82F06A84` | Routes transfer checks to compliance modules |
-| Claim Topics Registry | `0xf4eA4f42fC03a5bE104fcB91e109665ae7b0EB18` | Authoritative list of recognized claim topic IDs |
-| Trusted Issuers Registry | `0x3367c571f5ae60b4E2c5ABca22cA311b413F89D1` | Whitelists claim issuers per topic |
-| Claim Issuer | `0x579A367eaDa7606edc58f43165B53D2526D1B313` | Signs and revokes claims on behalf of Axiom Protocol |
-| Identity Factory | `0x1A7c55AC9A4AB318039f8E2BDfA82500332c86B9` | Deploys EIP-1167 minimal proxy ONCHAINID contracts |
-
-### 11.2 Claim Topics
-
-| Topic ID | Name | Validity | Required For |
-|---|---|---|---|
-| 1 | KYC_VERIFIED | 365 days | All AXUSD and AXAU transfers · PSM mint/redeem |
-| 2 | ACCREDITED_INVESTOR | 365 days | Lending Fund · Lane A products · LP Investor Portal |
-| 3 | SANCTIONS_CLEAR | 180 days | All AXUSD and AXAU transfers |
-
-### 11.3 Dual-Lane Architecture
-
-| Lane | Access Level | Identity Requirements | Available Products |
-|---|---|---|---|
-| Lane A | Institutional / Accredited | Topics 1, 2, and 3 | All protocol products including Lending Fund, full Syndication, LP Portal |
-| Lane B | Verified Standard | Topics 1 and 3 | Wealth Practice, AXUSD, AXAU, Community Credit, DePIN, Academy |
-
-### 11.4 Claim Lifecycle
-
-```
-Submission (off-chain)
-  |  User submits KYC form → database: t3_kyc_submissions
-  |
-Compliance Review (Founder Ops dashboard)
-  |  Operator reviews queue — approves or rejects
-  |
-Atomic On-Chain Approval
-  |  ERC3643Service.atomicKycApproval():
-  |  1. deployIdentity(wallet)       → ONCHAINID contract
-  |  2. registerIdentity(wallet, identity, country)
-  |  3. issueClaim(topic=1)          → KYC_VERIFIED
-  |  4. issueClaim(topic=3)          → SANCTIONS_CLEAR
-  |  All four calls in a single coordinated sequence
-  |
-Active State
-  |  wallet.isVerified() = true → can send/receive AXUSD/AXAU
-  |
-Expiry or Revocation
-     Claim.validTo exceeded → isVerified() = false → transfers blocked
-     Compliance revokes: ClaimIssuer.revokeClaimBySignature()
-```
 
 ---
 
@@ -619,6 +523,62 @@ The AXAU reserve basket is governed through the `CommodityRegistry` automated co
 5. Solvency stress test passage
 6. Liquidity profile assessment (determines haircut and max basket weight)
 
+### 12.7 Identity Framework and Tiered Access
+
+Axiom Protocol uses the ERC-3643 (T-REX) standard for on-chain identity verification. All AXUSD and AXAU transfers are gated by the Identity Registry's `isVerified()` function. Identity enforcement is not an application-layer checkpoint — it is executed within the automated control layer on every transfer.
+
+**Core Infrastructure:**
+
+| Contract | Address | Role |
+|---|---|---|
+| Identity Registry | `0x58f64a1262d5434d6C7637a2309b0999bB6D1970` | Maps wallets to ONCHAINID contracts |
+| Identity Registry Storage | `0x5A906507f886db1f41b12c75324C96dE27aB2E81` | Persistent identity storage |
+| Modular Compliance | `0xD94a0dAc0c5Ce2D5f0E9FDe4fD5c30Ea82F06A84` | Routes transfer checks to compliance modules |
+| Claim Topics Registry | `0xf4eA4f42fC03a5bE104fcB91e109665ae7b0EB18` | Authoritative list of recognized claim topic IDs |
+| Trusted Issuers Registry | `0x3367c571f5ae60b4E2c5ABca22cA311b413F89D1` | Whitelists claim issuers per topic |
+| Claim Issuer | `0x579A367eaDa7606edc58f43165B53D2526D1B313` | Signs and revokes claims on behalf of Axiom Protocol |
+| Identity Factory | `0x1A7c55AC9A4AB318039f8E2BDfA82500332c86B9` | Deploys EIP-1167 minimal proxy ONCHAINID contracts |
+
+### 12.8 Claim Topics
+
+| Topic ID | Name | Validity | Required For |
+|---|---|---|---|
+| 1 | KYC_VERIFIED | 365 days | All AXUSD and AXAU transfers · PSM mint/redeem |
+| 2 | ACCREDITED_INVESTOR | 365 days | Lending Fund · Lane A products · LP Investor Portal |
+| 3 | SANCTIONS_CLEAR | 180 days | All AXUSD and AXAU transfers |
+
+### 12.9 Dual-Lane Architecture
+
+| Lane | Access Level | Identity Requirements | Available Products |
+|---|---|---|---|
+| Lane A | Institutional / Accredited | Topics 1, 2, and 3 | All protocol products including Lending Fund, full Syndication, LP Portal |
+| Lane B | Verified Standard | Topics 1 and 3 | Wealth Practice, AXUSD, AXAU, Community Credit, DePIN, Academy |
+
+### 12.10 Claim Lifecycle
+
+```
+Submission (off-chain)
+  |  User submits KYC form → database: t3_kyc_submissions
+  |
+Compliance Review (Founder Ops dashboard)
+  |  Operator reviews queue — approves or rejects
+  |
+Atomic On-Chain Approval
+  |  ERC3643Service.atomicKycApproval():
+  |  1. deployIdentity(wallet)       → ONCHAINID contract
+  |  2. registerIdentity(wallet, identity, country)
+  |  3. issueClaim(topic=1)          → KYC_VERIFIED
+  |  4. issueClaim(topic=3)          → SANCTIONS_CLEAR
+  |  All four calls in a single coordinated sequence
+  |
+Active State
+  |  wallet.isVerified() = true → can send/receive AXUSD/AXAU
+  |
+Expiry or Revocation
+     Claim.validTo exceeded → isVerified() = false → transfers blocked
+     Compliance revokes: ClaimIssuer.revokeClaimBySignature()
+```
+
 ---
 
 ## 13. Regulatory and Institutional Context — IMF Structural Shift Analysis
@@ -651,7 +611,7 @@ The IMF calls for "robust code governance" as a policy requirement. Axiom treats
 
 **Regulatory Framework Alignment**
 
-The IMF calls for "clear policy frameworks" and "international coordination." Axiom's ERC-3643 architecture and its posture structured with reference to the GENIUS Act framework reflects a deliberate effort to operate inside the emerging regulatory envelope. The three-topic claim system (KYC, Accredited Investor, Sanctions-Clear) implements the identity verification requirements that regulators are actively writing into law.
+The IMF calls for "clear policy frameworks" and "international coordination." Axiom's ERC-3643 architecture and its posture designed to align with the GENIUS Act framework reflects a deliberate effort to operate inside the emerging regulatory envelope. The three-topic claim system (KYC, Accredited Investor, Sanctions-Clear) implements the identity verification requirements that regulators are actively writing into law.
 
 ### 13.2 Beyond IMF Scope
 
@@ -866,7 +826,7 @@ The Axiom Secondary Network V1 infrastructure is deployed. Secondary market acti
 
 5. **Token Classification.** The regulatory classification of AXM, AXUSD, and AXAU may vary across jurisdictions. No definitive regulatory conclusion is made herein. Participants must obtain independent legal and tax advice for their specific jurisdiction before engaging.
 
-6. **GENIUS Act.** AXUSD and AXAU are structured with reference to the GENIUS Act framework and applicable digital asset regulatory guidance. This is a design intent, not a legal determination or compliance guarantee. Compliance posture remains subject to legal and operational review.
+6. **GENIUS Act.** AXUSD and AXAU are designed to align with the GENIUS Act framework and applicable digital asset regulatory guidance. This is a design intent, not a legal determination or compliance guarantee. Compliance posture remains subject to legal and operational review.
 
 7. **Physical Asset Claims.** References to land acquisition, real estate, and physical asset pipelines describe a targeted acquisition framework and governance-governed process. No claim of current ownership of specific parcels is made. Physical asset targets are subject to market conditions, regulatory requirements, and governance approval.
 
@@ -973,7 +933,7 @@ The following terms represent the canonical institutional vocabulary for Axiom P
 | **Capital Intelligence Terminal (MIRDT)** | Nine-dimension advisory signal engine producing a Protocol Readiness Score (0–10) | Not a trading engine. Not an execution system. PRS is advisory only. |
 | **Axiom Sentinel** | Advisory capital decision layer converting intelligence signals into recommendations with cryptographic audit trails | Not an autonomous execution system. No authority to deploy capital without governance approval. |
 | **Physical Asset Pipeline** | Framework for bridging digital capital to real-world assets including land and housing | Not a claim of current ownership. Not a guarantee of acquisition. |
-| **GENIUS Act** | US federal digital asset legislation | Use "structured with reference to the GENIUS Act framework." Never claim compliance. |
+| **GENIUS Act** | US federal digital asset legislation | Use "designed to align with the GENIUS Act framework." Never claim compliance. |
 
 ---
 
