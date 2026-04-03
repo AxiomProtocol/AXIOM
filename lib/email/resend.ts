@@ -273,3 +273,93 @@ export async function sendAxauEarlyAccessConfirmation(params: {
     html,
   });
 }
+
+export async function sendAxauPurchaseRequestConfirmation(params: {
+  to: string;
+  walletAddress: string;
+  requestId: string;
+  axusdAmount: string;
+  axauQuoted: string;
+  xauUsdPrice: string | null;
+}) {
+  const { client, fromEmail } = await getResendClient();
+  const { to, walletAddress, requestId, axusdAmount, axauQuoted, xauUsdPrice } = params;
+  const shortWallet = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+  const shortId = requestId.slice(0, 8).toUpperCase();
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:Georgia,serif;background:#f5f5f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f0;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #d1d5db;">
+        <tr>
+          <td style="background:#1e3a5f;padding:32px 36px;">
+            <p style="color:#b8860b;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 8px 0;">AXIOM PROTOCOL</p>
+            <h1 style="color:#ffffff;font-family:Georgia,serif;font-size:26px;font-weight:700;margin:0;line-height:1.2;">AXAU Purchase Request</h1>
+            <p style="color:#94a3b8;font-family:'Courier New',monospace;font-size:11px;margin:8px 0 0 0;letter-spacing:0.1em;">REQUEST RECEIVED</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px;">
+            <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 24px 0;">
+              Your AXAU purchase request has been received. The Axiom Protocol operations team will process your request — acquiring PAXG, depositing it to the vault, and minting AXAU to your wallet.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;margin:0 0 24px 0;">
+              <tr><td style="padding:20px 24px;">
+                <p style="font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.12em;color:#6b7280;text-transform:uppercase;margin:0 0 14px 0;">Order Summary</p>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Reference ID</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">#${shortId}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">You Spend</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">${axusdAmount} AXUSD</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">You Receive</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#b8860b;font-weight:700;text-align:right;padding:5px 0;">${axauQuoted} AXAU</td>
+                  </tr>
+                  ${xauUsdPrice ? `<tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">XAU/USD at Request</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">$${xauUsdPrice}</td>
+                  </tr>` : ''}
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Wallet</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">${shortWallet}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Status</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#b8860b;font-weight:700;text-align:right;padding:5px 0;">PENDING FULFILLMENT</td>
+                  </tr>
+                </table>
+              </td></tr>
+            </table>
+            <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 8px 0;">
+              You will receive a separate confirmation once AXAU has been minted to your wallet. Processing typically completes within 1 business day.
+            </p>
+            <p style="color:#9ca3af;font-size:13px;line-height:1.5;margin:0;">
+              AXAU is a gold reserve unit backed by PAXG on Arbitrum One. All minting is subject to vault availability and compliance verification.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:20px 36px;">
+            <p style="font-family:'Courier New',monospace;font-size:10px;color:#9ca3af;letter-spacing:0.1em;margin:0;">AXIOM PROTOCOL — ARBITRUM ONE — axiomprotocol.app</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  return client.emails.send({
+    from: fromEmail,
+    to: [to],
+    subject: `AXAU Purchase Request Received — ${axauQuoted} AXAU (#${shortId})`,
+    html,
+  });
+}

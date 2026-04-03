@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "../shared/schema";
 import * as contractSchema from '../shared/contractSchema';
+import * as axauSchema from '../shared/axauSchema';
 import {
   index,
   pgTable,
@@ -21,6 +22,7 @@ let _db: ReturnType<typeof drizzle> | null = null;
 const dbSchema = {
   ...schema,
   ...contractSchema,
+  ...axauSchema,
 };
 
 function getPool(): Pool {

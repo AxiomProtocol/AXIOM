@@ -56,6 +56,7 @@ Key features include:
 - Axiom Secondary Network V1: Permissioned secondary transfer, settlement, registry, and intelligence layer for Axiom-issued private market products.
 - Field Capture System (Layer 5): Mobile-first walkthrough system for property inspections.
 - On-Chain Lending Credit Market: Production smart contracts for fixed-term loans and gated LP pools.
+- AXUSD → AXAU Simplified Purchase Flow: `/axau-buy` page where users spend AXUSD to receive AXAU; ops team acquires PAXG, deposits to vault, and mints. `axau_purchase_requests` table tracks all requests. Founder Ops "AXAU Queue" tab shows pending requests, vault stats, and fulfillment actions (mark processing → enter tx hash → fulfill/fail). Resend confirmation email on submit.
 
 ## External Dependencies
 - **Blockchain Networks:** Arbitrum One, Universe Blockchain (L3)

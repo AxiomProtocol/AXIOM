@@ -111,7 +111,8 @@ type TabId =
   | 'system'
   | 'governance'
   | 'compliance'
-  | 'banking';
+  | 'banking'
+  | 'axauQueue';
 
 const FRAMEWORK_PRINCIPLE = `This is not a personal budget. This is a disciplined capital deployment system designed to build a machine-verifiable operating record across Axiom's live rails. The objective is not to maximize short-term return. The objective is to systematically produce proof that Axiom's infrastructure is active, capitalized, measurable, and compounding across on-chain liquidity, real asset intelligence, and community coordination.`;
 
@@ -260,6 +261,16 @@ export default function FounderOpsPage() {
   const [bankingTxData, setBankingTxData] = useState<{ transactions: any[]; pending: any[] } | null>(null);
   const [bankingAdminKey, setBankingAdminKey] = useState('');
 
+  // AXAU Queue tab state
+  const [axauQueue, setAxauQueue] = useState<any[]>([]);
+  const [axauQueueLoading, setAxauQueueLoading] = useState(false);
+  const [axauQueueError, setAxauQueueError] = useState<string | null>(null);
+  const [axauQueueAdminKey, setAxauQueueAdminKey] = useState('');
+  const [axauFulfillMap, setAxauFulfillMap] = useState<Record<string, string>>({});
+  const [axauFulfillMsg, setAxauFulfillMsg] = useState<{ id: string; type: 'success' | 'error'; text: string } | null>(null);
+  const [axauFulfilling, setAxauFulfilling] = useState<string | null>(null);
+  const [axauVault, setAxauVault] = useState<any | null>(null);
+
   useEffect(() => {
     Promise.all([
       fetch('/api/founder-ops/overview').then(r => r.json()).catch(() => null),
@@ -383,6 +394,54 @@ export default function FounderOpsPage() {
         const txRes = await fetch('/api/banking/transactions?limit=20', { headers: { 'x-admin-key': k } }).then(r => r.json()).catch(() => null);
         if (txRes?.success) setBankingTxData(txRes.data);
       } catch { /* non-fatal */ }
+    }
+  };
+
+  const loadAxauQueue = async (key?: string) => {
+    const k = key ?? axauQueueAdminKey;
+    setAxauQueueLoading(true);
+    setAxauQueueError(null);
+    try {
+      const [queueRes, vaultRes] = await Promise.all([
+        fetch('/api/axau/purchase-request', {
+          headers: k ? { 'x-admin-key': k } : {},
+        }).then(r => r.json()).catch(() => null),
+        fetch('/api/axau/buy-quote?axusdAmount=1').then(r => r.json()).catch(() => null),
+      ]);
+      if (queueRes?.data) {
+        setAxauQueue(queueRes.data);
+      } else if (queueRes?.error) {
+        setAxauQueueError(queueRes.error);
+      }
+      if (vaultRes?.xauUsdPrice) setAxauVault(vaultRes);
+    } catch (e) {
+      setAxauQueueError(String(e));
+    } finally {
+      setAxauQueueLoading(false);
+    }
+  };
+
+  const handleAxauFulfill = async (requestId: string, action: 'processing' | 'fulfilled' | 'failed') => {
+    setAxauFulfilling(requestId);
+    setAxauFulfillMsg(null);
+    try {
+      const txHash = axauFulfillMap[requestId] || '';
+      const res = await fetch('/api/axau/purchase-request/fulfill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': axauQueueAdminKey },
+        body: JSON.stringify({ requestId, action, fulfillmentTxHash: txHash || undefined }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setAxauFulfillMsg({ id: requestId, type: 'error', text: json.error || 'Action failed' });
+      } else {
+        setAxauFulfillMsg({ id: requestId, type: 'success', text: `Marked as ${action}` });
+        await loadAxauQueue();
+      }
+    } catch (e) {
+      setAxauFulfillMsg({ id: requestId, type: 'error', text: String(e) });
+    } finally {
+      setAxauFulfilling(null);
     }
   };
 
@@ -671,6 +730,7 @@ export default function FounderOpsPage() {
     { id: 'system', label: 'System Status' },
     { id: 'compliance', label: `Compliance${kycQueue.length > 0 || accredQueue.length > 0 ? ` (${kycQueue.length + accredQueue.length})` : ''}` },
     { id: 'banking', label: 'Banking' },
+    { id: 'axauQueue', label: `AXAU Queue${axauQueue.filter(r => r.status === 'pending').length > 0 ? ` (${axauQueue.filter(r => r.status === 'pending').length})` : ''}` },
   ];
 
   const primaryPool = pools.find(p => p.reserve0Label && p.reserve1Label) || pools[0] || null;
@@ -713,6 +773,7 @@ export default function FounderOpsPage() {
                     if (tab.id === 'system') { loadOutcomes(); loadVariances(); }
                     if (tab.id === 'governance') { loadGovernanceStatus(); loadAdminActions(outcomeAdminKey || undefined); }
                     if (tab.id === 'banking') { loadBankingData(); }
+                    if (tab.id === 'axauQueue') { loadAxauQueue(); }
                   }}
                   className={`px-4 py-2 text-sm border-b-2 -mb-px ${
                     activeTab === tab.id
@@ -2428,6 +2489,212 @@ export default function FounderOpsPage() {
                     ].map(([lbl, val]) => (
                       <div key={lbl}>
                         <p className="font-dl-mono text-[10px] text-dl-gray uppercase tracking-wider">{lbl}</p>
+                        <p className="font-dl-mono text-xs text-dl-navy mt-1">{val}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── TAB: AXAU QUEUE ──────────────────────────────────── */}
+            {activeTab === 'axauQueue' && (
+              <>
+                <div className="mb-6">
+                  <h2 className="font-dl-serif text-xl text-dl-navy mb-1">AXAU Purchase Queue</h2>
+                  <p className="font-dl-mono text-xs text-dl-gray">PAXG Buffer Monitor · Pending Purchase Requests · Fulfillment Actions</p>
+                </div>
+
+                {/* Vault stats strip */}
+                {axauVault && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-6 bg-dl-bg-alt">
+                    {[
+                      { label: 'XAU / USD', value: `$${axauVault.xauUsdPrice}` },
+                      { label: 'MINT NAV', value: `$${parseFloat(axauVault.mintNavPerToken ?? '0').toFixed(4)}` },
+                      { label: 'COVERAGE', value: axauVault.coverageRatioPct ?? '—' },
+                      { label: 'MINT STATUS', value: axauVault.mintPaused ? 'PAUSED' : 'ACTIVE', red: axauVault.mintPaused },
+                    ].map((item, i) => (
+                      <div key={i} className="p-4 border-r border-dl-border last:border-r-0">
+                        <p className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider mb-1">{item.label}</p>
+                        <p className={`font-dl-mono text-sm font-bold ${item.red ? 'text-red-700' : 'text-dl-navy'}`}>{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Queue summary cards */}
+                {axauQueue.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    {[
+                      { label: 'Pending', value: axauQueue.filter(r => r.status === 'pending').length, color: 'text-yellow-700' },
+                      { label: 'Processing', value: axauQueue.filter(r => r.status === 'processing').length, color: 'text-blue-700' },
+                      { label: 'Fulfilled', value: axauQueue.filter(r => r.status === 'fulfilled').length, color: 'text-dl-forest' },
+                      { label: 'Total AXUSD Pending', value: axauQueue.filter(r => r.status === 'pending').reduce((s: number, r: any) => s + parseFloat(r.axusdAmount ?? 0), 0).toLocaleString(undefined, { maximumFractionDigits: 2 }), color: 'text-dl-navy' },
+                    ].map(card => (
+                      <div key={card.label} className="border border-dl-border bg-dl-bg-alt p-4">
+                        <p className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider mb-1">{card.label}</p>
+                        <p className={`font-dl-mono text-lg font-bold ${card.color}`}>{card.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Admin key + refresh */}
+                <div className="flex gap-3 items-center mb-5 flex-wrap">
+                  <input
+                    type="password"
+                    placeholder="Admin key to load queue"
+                    value={axauQueueAdminKey}
+                    onChange={e => setAxauQueueAdminKey(e.target.value)}
+                    className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-surface w-64 outline-none"
+                  />
+                  <button
+                    onClick={() => loadAxauQueue(axauQueueAdminKey)}
+                    className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 uppercase tracking-wider hover:bg-dl-navy hover:text-white transition-colors"
+                  >
+                    {axauQueueLoading ? 'Loading…' : 'Refresh Queue'}
+                  </button>
+                  <a href="/axau-buy" target="_blank" rel="noopener noreferrer" className="font-dl-mono text-xs border border-dl-border text-dl-gray px-4 py-2 uppercase tracking-wider hover:text-dl-navy">
+                    Buy Page ↗
+                  </a>
+                </div>
+
+                {axauQueueError && (
+                  <div className="border border-dl-error p-4 mb-4">
+                    <p className="font-dl-mono text-xs text-dl-error">{axauQueueError}</p>
+                  </div>
+                )}
+
+                {axauQueueLoading && !axauQueue.length && (
+                  <p className="font-dl-mono text-xs text-dl-gray">Loading purchase queue…</p>
+                )}
+
+                {!axauQueueLoading && axauQueue.length === 0 && !axauQueueError && (
+                  <div className="border border-dl-border p-8 text-center">
+                    <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">No purchase requests found</p>
+                    <p className="font-dl-serif text-sm text-dl-gray mt-2">Enter admin key and click Refresh Queue to load data.</p>
+                  </div>
+                )}
+
+                {axauQueue.length > 0 && (
+                  <div className="overflow-x-auto border border-dl-border">
+                    <table className="w-full text-left min-w-[900px]">
+                      <thead>
+                        <tr className="bg-dl-bg-alt border-b border-dl-border">
+                          {['ID', 'Wallet', 'AXUSD', 'AXAU Quoted', 'XAU Price', 'Email', 'Status', 'Submitted', 'Actions'].map(h => (
+                            <th key={h} className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider px-4 py-3">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {axauQueue.map((req: any) => {
+                          const shortId = req.id?.slice(0, 8)?.toUpperCase();
+                          const shortWallet = req.walletAddress ? `${req.walletAddress.slice(0, 6)}…${req.walletAddress.slice(-4)}` : '—';
+                          const statusColors: Record<string, string> = {
+                            pending:    'border-yellow-400 text-yellow-700 bg-yellow-50',
+                            processing: 'border-blue-400 text-blue-700 bg-blue-50',
+                            fulfilled:  'border-dl-forest text-dl-forest bg-green-50',
+                            failed:     'border-dl-error text-dl-error bg-red-50',
+                          };
+                          const sc = statusColors[req.status] ?? 'border-dl-border text-dl-gray';
+                          const isBusy = axauFulfilling === req.id;
+
+                          return (
+                            <tr key={req.id} className="border-b border-dl-border hover:bg-dl-bg-alt">
+                              <td className="px-4 py-3 font-dl-mono text-xs text-dl-navy">#{shortId}</td>
+                              <td className="px-4 py-3 font-dl-mono text-xs text-dl-gray" title={req.walletAddress}>{shortWallet}</td>
+                              <td className="px-4 py-3 font-dl-mono text-xs text-dl-navy font-bold">
+                                {parseFloat(req.axusdAmount ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                              </td>
+                              <td className="px-4 py-3 font-dl-mono text-xs" style={{ color: '#b8860b', fontWeight: 700 }}>
+                                {parseFloat(req.axauQuoted ?? 0).toFixed(6)}
+                              </td>
+                              <td className="px-4 py-3 font-dl-mono text-xs text-dl-gray">
+                                {req.xauUsdPrice ? `$${parseFloat(req.xauUsdPrice).toLocaleString()}` : '—'}
+                              </td>
+                              <td className="px-4 py-3 font-dl-mono text-xs text-dl-gray">{req.email || '—'}</td>
+                              <td className="px-4 py-3">
+                                <span className={`font-dl-mono text-[9px] border px-2 py-0.5 uppercase tracking-wider ${sc}`}>
+                                  {req.status}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 font-dl-mono text-xs text-dl-gray">
+                                {req.createdAt ? new Date(req.createdAt).toLocaleDateString() : '—'}
+                              </td>
+                              <td className="px-4 py-3">
+                                {req.status === 'fulfilled' || req.status === 'failed' ? (
+                                  <span className="font-dl-mono text-[9px] text-dl-gray">
+                                    {req.status === 'fulfilled' && req.fulfillmentTxHash ? (
+                                      <a
+                                        href={`https://arbiscan.io/tx/${req.fulfillmentTxHash}`}
+                                        target="_blank" rel="noopener noreferrer"
+                                        className="text-dl-navy underline"
+                                      >
+                                        View Tx ↗
+                                      </a>
+                                    ) : req.status === 'fulfilled' ? 'Fulfilled' : 'Failed'}
+                                  </span>
+                                ) : (
+                                  <div className="flex flex-col gap-1.5 min-w-[200px]">
+                                    {req.status === 'pending' && (
+                                      <button
+                                        onClick={() => handleAxauFulfill(req.id, 'processing')}
+                                        disabled={isBusy}
+                                        className="font-dl-mono text-[9px] border border-blue-400 text-blue-700 px-2 py-1 uppercase tracking-wider hover:bg-blue-50 disabled:opacity-50"
+                                      >
+                                        {isBusy ? '…' : 'Mark Processing'}
+                                      </button>
+                                    )}
+                                    <div className="flex gap-1">
+                                      <input
+                                        type="text"
+                                        placeholder="Tx hash (required for Fulfill)"
+                                        value={axauFulfillMap[req.id] ?? ''}
+                                        onChange={e => setAxauFulfillMap(m => ({ ...m, [req.id]: e.target.value }))}
+                                        className="font-dl-mono text-[9px] border border-dl-border px-2 py-1 flex-1 outline-none bg-dl-surface min-w-0"
+                                      />
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <button
+                                        onClick={() => handleAxauFulfill(req.id, 'fulfilled')}
+                                        disabled={isBusy || !axauFulfillMap[req.id]}
+                                        className="font-dl-mono text-[9px] border border-dl-forest text-dl-forest px-2 py-1 uppercase tracking-wider hover:bg-green-50 disabled:opacity-50"
+                                      >
+                                        {isBusy ? '…' : 'Fulfill'}
+                                      </button>
+                                      <button
+                                        onClick={() => handleAxauFulfill(req.id, 'failed')}
+                                        disabled={isBusy}
+                                        className="font-dl-mono text-[9px] border border-dl-error text-dl-error px-2 py-1 uppercase tracking-wider hover:bg-red-50 disabled:opacity-50"
+                                      >
+                                        Fail
+                                      </button>
+                                    </div>
+                                    {axauFulfillMsg?.id === req.id && (
+                                      <p className={`font-dl-mono text-[9px] ${axauFulfillMsg.type === 'success' ? 'text-dl-forest' : 'text-dl-error'}`}>
+                                        {axauFulfillMsg.text}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <div className="border-t border-dl-border pt-6 mt-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {[
+                      ['Reserve Instrument', 'AXAU (ERC-20, Arbitrum One)'],
+                      ['Backing Asset', 'PAXG (PAX Gold)'],
+                      ['Vault Contract', 'AXGoldVault'],
+                    ].map(([lbl, val]) => (
+                      <div key={lbl}>
+                        <p className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider">{lbl}</p>
                         <p className="font-dl-mono text-xs text-dl-navy mt-1">{val}</p>
                       </div>
                     ))}
