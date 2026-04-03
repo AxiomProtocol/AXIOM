@@ -175,13 +175,13 @@ function Hero() {
             ? (coveragePct ?? '…')
             : staticValues[label];
           const coverageColor = isCoverage && coverageBps !== null
-            ? coverageBps >= 11000 ? C.green
-              : coverageBps >= 10500 ? '#92400e'
+            ? coverageBps >= 10600 ? C.green
+              : coverageBps >= 10400 ? '#92400e'
               : '#991b1b'
             : C.navy;
           const dotColor = isCoverage && coverageBps !== null
-            ? coverageBps >= 11000 ? '#16a34a'
-              : coverageBps >= 10500 ? '#d97706'
+            ? coverageBps >= 10600 ? '#16a34a'
+              : coverageBps >= 10400 ? '#d97706'
               : '#dc2626'
             : null;
           return (
