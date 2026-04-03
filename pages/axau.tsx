@@ -76,13 +76,24 @@ function LiquidityIcon({ size = 60 }: { size?: number }) {
 // ─── Hero ────────────────────────────────────────────────────────────────────
 
 function Hero() {
-  const [xauPrice, setXauPrice] = useState<string | null>(null);
+  const [xauPrice, setXauPrice]       = useState<string | null>(null);
+  const [coveragePct, setCoveragePct] = useState<string | null>(null);
+  const [coverageBps, setCoverageBps] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch('/api/axau/nav')
-      .then(r => r.json())
-      .then(d => setXauPrice(d.xauUsdPrice))
-      .catch(() => {});
+    function fetchNav() {
+      fetch('/api/axau/nav')
+        .then(r => r.json())
+        .then(d => {
+          setXauPrice(d.xauUsdPrice);
+          if (typeof d.coverageRatioPct === 'string') setCoveragePct(d.coverageRatioPct);
+          if (typeof d.coverageRatioBps === 'number') setCoverageBps(d.coverageRatioBps);
+        })
+        .catch(() => {});
+    }
+    fetchNav();
+    const id = setInterval(fetchNav, 60_000);
+    return () => clearInterval(id);
   }, []);
 
   return (
@@ -151,23 +162,44 @@ function Hero() {
 
       {/* Token strip */}
       <div style={{ borderTop: `1px solid ${C.border}`, padding: '12px 0', background: C.bg, display: 'flex', flexWrap: 'wrap', gap: 0 }}>
-        {[
-          ['Token', 'AXAU'],
-          ['Reserve', 'PAXG — Paxos Gold'],
-          ['Network', 'Arbitrum One'],
-          ['Standard', 'ERC-3643'],
-          ['Oracle', 'Chainlink XAU/USD'],
-          ['Coverage', '≥ 105%'],
-        ].map(([label, value], i) => (
-          <div key={label} style={{
-            flex: '1 1 auto', minWidth: 90,
-            padding: '6px 14px', textAlign: 'center',
-            borderRight: `1px solid ${C.borderAlt}`,
-          }}>
-            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: C.muted, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 3 }}>{label}</p>
-            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.navy, fontWeight: 700 }}>{value}</p>
-          </div>
-        ))}
+        {(['Token', 'Reserve', 'Network', 'Standard', 'Oracle', 'Coverage'] as const).map((label) => {
+          const staticValues: Record<string, string> = {
+            Token: 'AXAU',
+            Reserve: 'PAXG — Paxos Gold',
+            Network: 'Arbitrum One',
+            Standard: 'ERC-3643',
+            Oracle: 'Chainlink XAU/USD',
+          };
+          const isCoverage = label === 'Coverage';
+          const value = isCoverage
+            ? (coveragePct ?? '…')
+            : staticValues[label];
+          const coverageColor = isCoverage && coverageBps !== null
+            ? coverageBps >= 11000 ? C.green
+              : coverageBps >= 10500 ? '#92400e'
+              : '#991b1b'
+            : C.navy;
+          const dotColor = isCoverage && coverageBps !== null
+            ? coverageBps >= 11000 ? '#16a34a'
+              : coverageBps >= 10500 ? '#d97706'
+              : '#dc2626'
+            : null;
+          return (
+            <div key={label} style={{
+              flex: '1 1 auto', minWidth: 90,
+              padding: '6px 14px', textAlign: 'center',
+              borderRight: `1px solid ${C.borderAlt}`,
+            }}>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: C.muted, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 3 }}>{label}</p>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: coverageColor, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                {dotColor && (
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor, display: 'inline-block', flexShrink: 0 }} />
+                )}
+                {value}
+              </p>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
