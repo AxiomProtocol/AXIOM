@@ -401,12 +401,16 @@ export default function FounderOpsPage() {
 
   const loadAxauQueue = async (key?: string) => {
     const k = key ?? axauQueueAdminKey;
+    if (!k) {
+      setAxauQueueError('Enter admin key above and click Refresh Queue.');
+      return;
+    }
     setAxauQueueLoading(true);
     setAxauQueueError(null);
     try {
       const [queueRes, vaultRes] = await Promise.all([
         fetch('/api/axau/purchase-request', {
-          headers: k ? { 'x-admin-key': k } : {},
+          headers: { 'x-admin-key': k },
         }).then(r => r.json()).catch(() => null),
         fetch('/api/axau/buy-quote?axusdAmount=1').then(r => r.json()).catch(() => null),
       ]);
