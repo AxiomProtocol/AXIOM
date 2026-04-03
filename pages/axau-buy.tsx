@@ -434,7 +434,7 @@ export default function AxauBuyPage() {
                 lineHeight: 1.6, margin: '0 0 20px',
                 padding: '12px 14px', background: C.bgAlt, border: `1px solid ${C.border}`,
               }}>
-                AXAU purchase requests are fulfilled by the Axiom Protocol operations team. The quoted AXAU amount is based on the live Mint NAV at time of request and may vary slightly at execution. Processing typically completes within 1 business day. Your wallet must be KYC-verified to receive AXAU.
+                AXAU is transferred automatically upon submission. The quoted amount is locked at the live Mint NAV at time of request. Your wallet must be identity-verified on Arbitrum One to receive AXAU.
               </p>
 
               <button
