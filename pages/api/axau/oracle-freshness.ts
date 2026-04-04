@@ -6,7 +6,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { oracleStale, oracleUpdatedAt } = await getLightweightOracleFreshness();
     return res.status(200).json({ oracleStale, oracleUpdatedAt });
-  } catch (err: any) {
-    return res.status(500).json({ error: "Oracle freshness check failed", detail: err?.message });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: "Oracle freshness check failed", detail: message });
   }
 }

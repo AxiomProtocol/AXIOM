@@ -105,7 +105,7 @@ export function useDirectMint(getSigner: () => Promise<ethers.Signer>) {
       const receipt = await mintTx.wait();
       if (operationId.current !== opId) return;
 
-      const iface = new ethers.Interface(CONTROLLER_ABI as unknown as string[]);
+      const iface = new ethers.Interface([...CONTROLLER_ABI]);
       let mintedAxau: string | null = null;
       let paxgSpent:  string | null = null;
 

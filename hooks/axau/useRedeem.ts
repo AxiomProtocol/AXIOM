@@ -105,7 +105,7 @@ export function useRedeem(getSigner: () => Promise<ethers.Signer>) {
       const receipt = await redeemTx.wait();
       if (operationId.current !== opId) return;
 
-      const iface = new ethers.Interface(CONTROLLER_ABI as unknown as string[]);
+      const iface = new ethers.Interface([...CONTROLLER_ABI]);
       let paxgReceived: string | null = null;
       let axauBurned:   string | null = null;
 

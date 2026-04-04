@@ -2,7 +2,8 @@ import Head from 'next/head';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAccount, useWalletClient } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
-import { IdentityStatusDisplay, useIdentityStatus } from '../components/design-law/IdentityBadge';
+import { IdentityBadge } from '../components/design-law/IdentityBadge';
+import type { IdentityStatus } from '../components/design-law/IdentityBadge';
 import { useDirectMint, type DirectMintState } from '../hooks/axau/useDirectMint';
 import { useRedeem, type RedeemState } from '../hooks/axau/useRedeem';
 import { walletClientToSigner } from '../lib/utils/walletClientToSigner';
@@ -126,14 +127,14 @@ interface DirectMintTabProps {
 }
 
 function DirectMintTab({ address, isConnected, state, execute, reset }: DirectMintTabProps) {
-  const [paxgInput, setPaxgInput] = useState('');
-  const [quote, setQuote]         = useState<MintQuote | null>(null);
-  const [quoteLoading, setQL]     = useState(false);
-  const [quoteError, setQE]       = useState<string | null>(null);
-  const [oracleStale, setOS]      = useState(false);
-  const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const identityStatus  = useIdentityStatus(address);
-  const identityVerified = identityStatus === 'verified';
+  const [paxgInput, setPaxgInput]       = useState('');
+  const [quote, setQuote]               = useState<MintQuote | null>(null);
+  const [quoteLoading, setQL]           = useState(false);
+  const [quoteError, setQE]             = useState<string | null>(null);
+  const [oracleStale, setOS]            = useState(false);
+  const [identityStatus, setIdentityStatus] = useState<IdentityStatus>('idle');
+  const debounceRef                     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const identityVerified                = identityStatus === 'verified';
   const [paxgBalance, setPaxgBalance] = useState<string | null>(null);
 
   useEffect(() => {
@@ -230,7 +231,7 @@ function DirectMintTab({ address, isConnected, state, execute, reset }: DirectMi
 
       {/* Pre-flight checklist */}
       <div style={{ background: C.bgAlt, border: `1px solid ${C.border}`, padding: '14px 18px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
-        <IdentityStatusDisplay status={identityStatus} />
+        <IdentityBadge address={address} onStatusChange={setIdentityStatus} />
         {quote && (
           <>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', border: `1px solid ${C.border}`, background: C.bg, color: quote.mintPaused ? C.red : C.green }}>
@@ -393,7 +394,7 @@ function RedeemTab({ address, isConnected, state, execute, reset }: RedeemTabPro
   const [quoteError, setQE]       = useState<string | null>(null);
   const [redeemStale, setRS]      = useState(false);
   const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const identityStatus   = useIdentityStatus(address);
+  const [identityStatus, setIdentityStatus] = useState<IdentityStatus>('idle');
   const identityVerified = identityStatus === 'verified';
 
   useEffect(() => {
@@ -499,7 +500,7 @@ function RedeemTab({ address, isConnected, state, execute, reset }: RedeemTabPro
 
       {/* Pre-flight */}
       <div style={{ background: C.bgAlt, border: `1px solid ${C.border}`, padding: '14px 18px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
-        <IdentityStatusDisplay status={identityStatus} />
+        <IdentityBadge address={address} onStatusChange={setIdentityStatus} />
         {quote && (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', border: `1px solid ${C.border}`, background: C.bg, color: quote.redeemPaused ? C.red : C.green }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: quote.redeemPaused ? '#dc2626' : '#16a34a', display: 'inline-block', flexShrink: 0 }} />
