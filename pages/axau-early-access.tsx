@@ -126,7 +126,7 @@ function SuccessScreen({ submissionId, emailQueued }: { submissionId: string; em
         Application Approved
       </h2>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 440, margin: '0 auto 28px', lineHeight: 1.7 }}>
-        Your application has been approved. Your wallet is now registered for early access — go to the AXAU mint terminal to get started.
+        Your application has been approved and is queued for on-chain identity registration. You will receive a confirmation email once your wallet is activated and minting is enabled.
       </p>
 
       <div style={{
@@ -370,7 +370,7 @@ export default function AxauAccessPage() {
           }}>
             {[
               { n: '1', title: 'Apply', body: 'Submit your wallet and identity details. No document upload required.' },
-              { n: '2', title: 'Approved', body: 'Applications are approved instantly. Your wallet is registered on-chain as soon as you submit.' },
+              { n: '2', title: 'Approved', body: 'Applications are approved automatically. Your wallet is queued for on-chain identity activation.' },
               { n: '3', title: 'Mint', body: 'Go to the AXAU mint terminal and deposit PAXG to receive AXAU directly to your wallet.' },
             ].map(s => (
               <div key={s.n} style={{
@@ -521,7 +521,7 @@ export default function AxauAccessPage() {
               lineHeight: 1.6, margin: '0 0 20px',
               padding: '12px 14px', background: C.bgAlt, border: `1px solid ${C.border}`,
             }}>
-              By submitting, you confirm that the information provided is accurate and that you are at least 18 years old. Upon submission, your wallet is immediately registered for early access. Identity verification is required for all AXAU participants. No document upload is required at this stage.
+              By submitting, you confirm that the information provided is accurate and that you are at least 18 years old. Approved applications are queued for on-chain identity activation — you will be notified by email once your wallet is enabled. Identity verification is required for all AXAU participants. No document upload is required at this stage.
             </p>
 
             {/* Submit */}
