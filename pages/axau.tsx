@@ -216,7 +216,7 @@ function ValueProps() {
     },
     {
       icon: <ShieldIcon />,
-      badge: 'FULLY AUDITABLE',
+      badge: 'ON-CHAIN VERIFIABLE',
       title: 'On-Chain Transparency',
       body: 'Gold reserves, coverage ratios, and all system parameters are publicly verifiable on-chain, 24 hours a day, 7 days a week. No black boxes.',
     },
@@ -482,7 +482,7 @@ function ReserveArchitecture() {
               { phase: 'Phase 1', name: 'Gold (XAU)', asset: 'On-chain gold reserve — Arbitrum One', status: 'LIVE', active: true },
               { phase: 'Phase 2', name: 'Land (Real Estate)', asset: 'Appraised US real estate', status: 'CONFIGURED', active: false },
               { phase: 'Phase 3', name: 'Silver (XAG)', asset: 'Physical silver via LBMA', status: 'PLANNED', active: false },
-              { phase: 'Phase 4+', name: 'Additional Commodities', asset: 'Governance-approved assets', status: 'FUTURE', active: false },
+              { phase: 'Phase 4+', name: 'Additional Commodities', asset: 'Governance-approved assets', status: 'PLANNED', active: false },
             ].map(layer => (
               <div key={layer.phase} style={{ border: `1px solid ${layer.active ? C.gold : C.border}`, background: layer.active ? C.bgGold : C.bg, padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{
@@ -623,7 +623,7 @@ export default function AxauPage() {
     <DesignLawLayout>
       <Head>
         <title>AXAU — Axiom Gold Reserve Unit | Your Wealth, Anchored in Gold</title>
-        <meta name="description" content="AXAU is a gold reserve unit on Arbitrum One, backed by PAXG. Mint directly with PAXG or use the AXUSD-assisted path — fully backed, fully verifiable on-chain." />
+        <meta name="description" content="AXAU is a gold reserve unit on Arbitrum One, backed by PAXG. Mint directly with PAXG or use the AXUSD-assisted path — reserve-backed, publicly verifiable on-chain." />
       </Head>
 
       <Hero />

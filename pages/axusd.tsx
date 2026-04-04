@@ -527,7 +527,7 @@ export default function AXUSDStablecoinPage() {
           <div>
             <p className="text-sm font-medium text-dl-navy">AXUSD has been unified under ERC-3643 (T-REX)</p>
             <p className="text-xs text-dl-gray mt-1">
-              The dual-ecosystem (Primary + Euler) has been replaced by a single compliant token with on-chain identity and modular compliance.
+              The dual-ecosystem (Primary + Euler) has been replaced by a single ERC-3643 token with on-chain identity and modular compliance.
             </p>
           </div>
           <a

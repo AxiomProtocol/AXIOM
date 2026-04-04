@@ -207,7 +207,7 @@ function ClaimExpiryBadge({ status }: { status: 'valid' | 'expiring_soon' | 'exp
     expired: { label: 'Expired', color: 'bg-red-100 text-red-800' },
   };
   const s = map[status];
-  return <span className={`px-2 py-0.5 text-xs font-dl-mono rounded ${s.color}`}>{s.label}</span>;
+  return <span className={`px-2 py-0.5 text-xs font-dl-mono ${s.color}`}>{s.label}</span>;
 }
 
 export default function AXUSD3643Page() {
@@ -317,7 +317,7 @@ export default function AXUSD3643Page() {
       <div className="mb-6">
         <h1 className="font-dl-serif text-2xl text-dl-navy mb-1">Unified AXUSD — ERC-3643 (T-REX)</h1>
         <p className="text-sm text-dl-gray font-dl-mono">
-          Institutional-grade compliant stablecoin with on-chain identity and modular compliance
+          Institutional-grade stablecoin with on-chain identity standard and modular compliance
         </p>
       </div>
 
@@ -582,7 +582,7 @@ function KycStatusBadge({ status }: { status: string }) {
     rejected: { label: 'Rejected', color: 'bg-red-100 text-red-800' },
   };
   const s = map[status] || { label: status, color: 'bg-gray-100 text-gray-800' };
-  return <span className={`px-2 py-0.5 text-xs font-dl-mono rounded ${s.color}`}>{s.label}</span>;
+  return <span className={`px-2 py-0.5 text-xs font-dl-mono ${s.color}`}>{s.label}</span>;
 }
 
 function KycSubmissionForm({ address, onSubmitted }: { address: string; onSubmitted: () => void }) {
@@ -1712,7 +1712,7 @@ function PsmTab({
 
 function ContractsTab({ data }: { data: DashboardData }) {
   const contractList = [
-    { label: 'AXUSD Token (ERC-3643)', address: data.contracts.token, role: 'T-REX compliant stablecoin' },
+    { label: 'AXUSD Token (ERC-3643)', address: data.contracts.token, role: 'T-REX identity standard stablecoin' },
     { label: 'Identity Registry', address: data.contracts.identityRegistry, role: 'Manages investor identities and verification' },
     { label: 'Identity Registry Storage', address: data.contracts.identityRegistryStorage, role: 'Persistent storage for identity data' },
     { label: 'Trusted Issuers Registry', address: data.contracts.trustedIssuersRegistry, role: 'Registry of authorized claim issuers' },
@@ -1723,7 +1723,7 @@ function ContractsTab({ data }: { data: DashboardData }) {
     { label: 'Country Allow Module', address: data.contracts.modules.countryAllow, role: 'Jurisdiction whitelist (US: 840)' },
     { label: 'Max Balance Module', address: data.contracts.modules.maxBalance, role: 'Per-holder cap: 10,000,000 AXUSD' },
     { label: 'Transfer Limit Module', address: data.contracts.modules.transferLimit, role: 'Rate limiting on transfers' },
-    { label: 'Lending Platform Module', address: data.contracts.modules.lendingPlatform, role: 'DeFi platform whitelist for compliant lending' },
+    { label: 'Lending Platform Module', address: data.contracts.modules.lendingPlatform, role: 'DeFi platform whitelist for identity-gated lending' },
   ];
 
   return (
@@ -1761,7 +1761,7 @@ function ContractsTab({ data }: { data: DashboardData }) {
       <div className="border border-dl-border p-4 mb-8 text-sm text-dl-gray">
         <p className="mb-2">
           The Unified AXUSD system replaces the dual-ecosystem (GENIUS + Legacy) with a single
-          ERC-3643 (T-REX) compliant token. All transfers are validated through the Modular
+          ERC-3643 (T-REX) identity standard token. All transfers are validated through the Modular
           Compliance contract, which enforces four on-chain rules:
         </p>
         <ul className="list-disc list-inside space-y-1 text-xs font-dl-mono">
