@@ -44,7 +44,7 @@ const FAQ_SECTIONS: { title: string; items: FAQEntry[] }[] = [
         q: 'What network does Axiom Protocol run on?',
         a: (
           <p>
-            All production automated control layers are deployed on <strong>Arbitrum One</strong> (Chain ID 42161). The governance token (AXM), AXAU reserve contract, AXUSD rail, Camelot DEX pools, lending fund vaults, and observer infrastructure are all live on Arbitrum One.
+            All production automated control layers are deployed on <strong>Arbitrum One</strong> (Chain ID 42161). The governance token (AXM), AXAU reserve contract, AXUSD rail, Camelot DEX pools, and observer infrastructure are live on Arbitrum One. The lending fund and capital program are in formation stage (CONFIGURED) — infrastructure is deployed but not yet in full production operation.
             A future migration to Universe Blockchain (an Arbitrum L3) is on the roadmap but has not been executed.
           </p>
         ),
