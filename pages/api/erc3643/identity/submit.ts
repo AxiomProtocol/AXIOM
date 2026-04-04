@@ -65,13 +65,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .where(
         and(
           eq(t3KycSubmissions.walletAddress, walletAddress.toLowerCase()),
-          eq(t3KycSubmissions.status, 'submitted')
+          eq(t3KycSubmissions.status, 'approved')
         )
       )
       .limit(1);
 
     if (existing.length > 0) {
-      return res.status(409).json({ error: 'A pending KYC submission already exists for this wallet' });
+      return res.status(409).json({ error: 'This wallet has already been approved for early access' });
     }
 
     const [inserted] = await db.insert(t3KycSubmissions).values({
@@ -80,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       dateOfBirth,
       country: (country || 'US').toUpperCase().slice(0, 3),
       documentType,
-      status: 'submitted',
+      status: 'approved',
     }).returning();
 
     let emailQueued = false;

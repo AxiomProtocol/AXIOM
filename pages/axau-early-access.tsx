@@ -123,10 +123,10 @@ function SuccessScreen({ submissionId, emailQueued }: { submissionId: string; em
         </svg>
       </div>
       <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 26, fontWeight: 700, color: C.navy, margin: '0 0 12px' }}>
-        Application Submitted
+        Application Approved
       </h2>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 440, margin: '0 auto 28px', lineHeight: 1.7 }}>
-        Your identity information has been received and is queued for review. Once approved, your wallet will be registered on-chain and you can mint AXAU.
+        Your application has been approved. Your wallet is now registered for early access — go to the AXAU mint terminal to get started.
       </p>
 
       <div style={{
@@ -143,7 +143,7 @@ function SuccessScreen({ submissionId, emailQueued }: { submissionId: string; em
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginTop: 6 }}>
           <span style={{ fontFamily: '"Courier New", monospace', fontSize: 12, color: C.muted }}>Status</span>
-          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 12, color: C.gold, fontWeight: 700 }}>UNDER REVIEW</span>
+          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 12, color: C.green, fontWeight: 700 }}>APPROVED</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 24, marginTop: 6 }}>
           <span style={{ fontFamily: '"Courier New", monospace', fontSize: 12, color: C.muted }}>Confirmation</span>
@@ -222,10 +222,10 @@ function AlreadySubmittedScreen() {
         </svg>
       </div>
       <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 26, fontWeight: 700, color: C.navy, margin: '0 0 12px' }}>
-        Application Already Pending
+        Already Approved
       </h2>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 420, margin: '0 auto 32px', lineHeight: 1.7 }}>
-        A verification application for this wallet is already under review. You will be notified once a decision is made.
+        This wallet has already been approved for AXAU early access. Go to the mint terminal to deposit PAXG and receive AXAU.
       </p>
       <a href="/axau" style={{
         display: 'inline-block', padding: '11px 24px',
@@ -370,8 +370,8 @@ export default function AxauAccessPage() {
           }}>
             {[
               { n: '1', title: 'Apply', body: 'Submit your wallet and identity details. No document upload required.' },
-              { n: '2', title: 'Review', body: 'The compliance team reviews your application, typically within 1–2 business days.' },
-              { n: '3', title: 'Mint', body: 'Once approved, your wallet is registered on-chain and you can mint AXAU.' },
+              { n: '2', title: 'Approved', body: 'Applications are approved instantly. Your wallet is registered on-chain as soon as you submit.' },
+              { n: '3', title: 'Mint', body: 'Go to the AXAU mint terminal and deposit PAXG to receive AXAU directly to your wallet.' },
             ].map(s => (
               <div key={s.n} style={{
                 padding: '18px 16px',
@@ -521,7 +521,7 @@ export default function AxauAccessPage() {
               lineHeight: 1.6, margin: '0 0 20px',
               padding: '12px 14px', background: C.bgAlt, border: `1px solid ${C.border}`,
             }}>
-              By submitting, you confirm that the information provided is accurate and that you are at least 18 years old. Identity verification is required for all AXAU participants. No document upload is required at this stage.
+              By submitting, you confirm that the information provided is accurate and that you are at least 18 years old. Upon submission, your wallet is immediately registered for early access. Identity verification is required for all AXAU participants. No document upload is required at this stage.
             </p>
 
             {/* Submit */}
