@@ -143,11 +143,11 @@ function SuccessScreen({ submissionId, emailQueued }: { submissionId: string; em
           </span>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 6,
-            background: '#16a34a', padding: '4px 12px',
+            background: C.navy, padding: '4px 12px',
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block' }} />
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.goldPale, display: 'inline-block' }} />
             <span style={{ fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.14em', color: '#fff', fontWeight: 700 }}>
-              APPROVED
+              RECEIVED
             </span>
           </div>
         </div>
@@ -158,10 +158,10 @@ function SuccessScreen({ submissionId, emailQueued }: { submissionId: string; em
         padding: '36px 40px', marginBottom: 0,
       }}>
         <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 32, fontWeight: 700, color: C.navy, margin: '0 0 14px' }}>
-          Application Approved
+          Application Received
         </h2>
         <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 500, margin: '0 0 32px', lineHeight: 1.75 }}>
-          Your application has been approved and is queued for on-chain identity registration. You will receive a confirmation email once your wallet is activated and minting is enabled.
+          Your application has been received and is queued for ops review. You will receive a confirmation email once your identity has been verified and your wallet is activated for minting.
         </p>
 
         <div style={{
@@ -173,7 +173,7 @@ function SuccessScreen({ submissionId, emailQueued }: { submissionId: string; em
           </p>
           {[
             { label: 'Reference ID', value: `#${shortId}` },
-            { label: 'Status', value: 'APPROVED', color: C.green },
+            { label: 'Status', value: 'SUBMITTED', color: C.navy },
             { label: 'Confirmation', value: emailQueued ? 'EMAIL SENT' : 'NO EMAIL', color: emailQueued ? C.green : C.muted },
           ].map(row => (
             <div key={row.label} style={{
@@ -251,17 +251,17 @@ function AlreadySubmittedScreen() {
         </svg>
       </div>
       <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 30, fontWeight: 700, color: C.navy, margin: '0 0 12px' }}>
-        Already Approved
+        Application on File
       </h2>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 420, margin: '0 auto 32px', lineHeight: 1.75 }}>
-        This wallet has already been approved for AXAU early access. Go to the mint terminal to deposit PAXG and receive AXAU.
+        This wallet already has an active AXAU early access application on file. You will be notified by email once your wallet is activated.
       </p>
       <a href="/axau" style={{
         display: 'inline-block', padding: '12px 28px', background: C.navy, color: '#fff',
         fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.12em',
         textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700,
       }}>
-        GO TO MINT TERMINAL →
+        VIEW AXAU PAGE →
       </a>
     </div>
   );
@@ -277,10 +277,10 @@ const STEPS = [
   },
   {
     n: '02',
-    title: 'Approved',
-    body: 'Applications are approved automatically. Your wallet is queued for on-chain identity activation.',
+    title: 'Review',
+    body: 'Your application is reviewed by the ops team. You will be notified by email once your wallet is cleared for on-chain identity activation.',
     img: '/axau-early-access/icon-approved.png',
-    alt: 'Approved icon — golden seal',
+    alt: 'Review icon — golden seal',
   },
   {
     n: '03',

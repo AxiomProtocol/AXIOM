@@ -1,11 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import { t3KycSubmissions } from '../../../../shared/erc3643Schema';
-import { eq, and, count } from 'drizzle-orm';
+import { eq, and, count, or, inArray } from 'drizzle-orm';
 import { sendAxauEarlyAccessConfirmation } from '../../../../lib/email/resend';
 import { AXAU_EARLY_ACCESS_CAP } from '../../../../lib/axauEarlyAccess';
 
 const VALID_DOC_TYPES = ['passport', 'drivers_license', 'national_id', 'residence_permit'];
+const ACTIVE_STATUSES = ['submitted', 'approved', 'activated'] as const;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
@@ -51,11 +52,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const [capRow] = await db
       .select({ total: count() })
       .from(t3KycSubmissions)
-      .where(eq(t3KycSubmissions.status, 'approved'));
-    const approvedCount = Number(capRow?.total ?? 0);
-    if (approvedCount >= AXAU_EARLY_ACCESS_CAP) {
+      .where(inArray(t3KycSubmissions.status, [...ACTIVE_STATUSES]));
+    const activeCount = Number(capRow?.total ?? 0);
+    if (activeCount >= AXAU_EARLY_ACCESS_CAP) {
       return res.status(409).json({
-        error: 'Early Access is full — 100 participants have been approved. No new submissions are being accepted at this time.',
+        error: 'Early Access is full — 100 applications have been received. No new submissions are being accepted at this time.',
         isFull: true,
       });
     }
@@ -65,13 +66,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .where(
         and(
           eq(t3KycSubmissions.walletAddress, walletAddress.toLowerCase()),
-          eq(t3KycSubmissions.status, 'approved')
+          or(
+            eq(t3KycSubmissions.status, 'submitted'),
+            eq(t3KycSubmissions.status, 'approved'),
+            eq(t3KycSubmissions.status, 'activated')
+          )
         )
       )
       .limit(1);
 
     if (existing.length > 0) {
-      return res.status(409).json({ error: 'This wallet has already been approved for early access' });
+      return res.status(409).json({ error: 'This wallet has already submitted an early access application' });
     }
 
     const [inserted] = await db.insert(t3KycSubmissions).values({
@@ -80,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       dateOfBirth,
       country: (country || 'US').toUpperCase().slice(0, 3),
       documentType,
-      status: 'approved',
+      status: 'submitted',
     }).returning();
 
     let emailQueued = false;
