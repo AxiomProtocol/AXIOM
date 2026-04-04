@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 
+export type IdentityStatus = 'idle' | 'loading' | 'verified' | 'unverified' | 'error';
+
 interface IdentityBadgeProps {
   address: string | null;
+  onStatusChange?: (status: IdentityStatus) => void;
 }
-
-type Status = 'idle' | 'loading' | 'verified' | 'unverified' | 'error';
 
 const C = {
   navy:   '#1e3a5f',
@@ -16,8 +17,8 @@ const C = {
   bg:     '#ffffff',
 };
 
-export function IdentityBadge({ address }: IdentityBadgeProps) {
-  const [status, setStatus] = useState<Status>('idle');
+export function useIdentityStatus(address: string | null): IdentityStatus {
+  const [status, setStatus] = useState<IdentityStatus>('idle');
 
   useEffect(() => {
     if (!address) { setStatus('idle'); return; }
@@ -36,6 +37,16 @@ export function IdentityBadge({ address }: IdentityBadgeProps) {
       .catch(() => { if (!cancelled) setStatus('error'); });
     return () => { cancelled = true; };
   }, [address]);
+
+  return status;
+}
+
+export function IdentityBadge({ address, onStatusChange }: IdentityBadgeProps) {
+  const status = useIdentityStatus(address);
+
+  useEffect(() => {
+    onStatusChange?.(status);
+  }, [status, onStatusChange]);
 
   const base: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 6,

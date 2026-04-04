@@ -2,7 +2,7 @@ import Head from 'next/head';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
-import { IdentityBadge } from '../components/design-law/IdentityBadge';
+import { IdentityBadge, useIdentityStatus } from '../components/design-law/IdentityBadge';
 import { useDirectMint, type DirectMintState } from '../hooks/axau/useDirectMint';
 import { useRedeem, type RedeemState } from '../hooks/axau/useRedeem';
 
@@ -125,6 +125,8 @@ function DirectMintTab({ address, isConnected, state, execute, reset }: DirectMi
   const [quoteError, setQE]       = useState<string | null>(null);
   const [oracleStale, setOS]      = useState(false);
   const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const identityStatus            = useIdentityStatus(address);
+  const identityVerified          = identityStatus === 'verified';
 
   const fetchQuote = useCallback(async (raw: string) => {
     const trimmed = raw.trim();
@@ -152,6 +154,7 @@ function DirectMintTab({ address, isConnected, state, execute, reset }: DirectMi
 
   const canExecute =
     isConnected &&
+    identityVerified &&
     paxgInput.trim() !== '' &&
     parseFloat(paxgInput) > 0 &&
     quote !== null &&
@@ -331,6 +334,10 @@ function DirectMintTab({ address, isConnected, state, execute, reset }: DirectMi
           ? (state.phase === 'approving' ? 'APPROVING PAXG...' : 'MINTING ON-CHAIN...')
           : !isConnected
           ? 'CONNECT WALLET TO MINT'
+          : identityStatus === 'loading'
+          ? 'CHECKING IDENTITY...'
+          : !identityVerified && address
+          ? 'IDENTITY VERIFICATION REQUIRED →'
           : `MINT ${quote ? `${quote.axauOutFormatted} AXAU` : 'AXAU'} WITH PAXG →`}
       </button>
     </div>
@@ -350,17 +357,21 @@ function RedeemTab({ address, isConnected, state, execute, reset }: RedeemTabPro
   const [quote, setQuote]         = useState<RedeemQuote | null>(null);
   const [quoteLoading, setQL]     = useState(false);
   const [quoteError, setQE]       = useState<string | null>(null);
+  const [redeemStale, setRS]      = useState(false);
   const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const identityStatus            = useIdentityStatus(address);
+  const identityVerified          = identityStatus === 'verified';
 
   const fetchQuote = useCallback(async (raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed || isNaN(parseFloat(trimmed)) || parseFloat(trimmed) <= 0) {
-      setQuote(null); setQE(null); return;
+      setQuote(null); setQE(null); setRS(false); return;
     }
-    setQL(true); setQE(null);
+    setQL(true); setQE(null); setRS(false);
     try {
       const res  = await fetch(`/api/axau/quote?action=redeem&amount=${encodeURIComponent(trimmed)}`);
       const body = await res.json();
+      if (res.status === 503 && body.oracleStale) { setRS(true); setQuote(null); setQL(false); return; }
       if (!res.ok) { setQE(body.error || 'Quote unavailable'); setQuote(null); }
       else          { setQuote(body as RedeemQuote); setQE(null); }
     } catch { setQE('Network error — could not fetch quote'); }
@@ -377,10 +388,12 @@ function RedeemTab({ address, isConnected, state, execute, reset }: RedeemTabPro
 
   const canExecute =
     isConnected &&
+    identityVerified &&
     axauInput.trim() !== '' &&
     parseFloat(axauInput) > 0 &&
     quote !== null &&
     !quote.redeemPaused &&
+    !redeemStale &&
     !busy &&
     state.phase !== 'done' &&
     state.phase !== 'error';
@@ -418,6 +431,8 @@ function RedeemTab({ address, isConnected, state, execute, reset }: RedeemTabPro
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.65, margin: '0 0 24px', maxWidth: 540 }}>
         Return AXAU to the vault and receive PAXG in the same on-chain transaction. Requires an identity-verified wallet on Arbitrum One.
       </p>
+
+      {redeemStale && <OracleStaleBanner />}
 
       {/* Pre-flight */}
       <div style={{ background: C.bgAlt, border: `1px solid ${C.border}`, padding: '14px 18px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
@@ -529,6 +544,10 @@ function RedeemTab({ address, isConnected, state, execute, reset }: RedeemTabPro
           ? (state.phase === 'approving' ? 'APPROVING AXAU...' : 'REDEEMING ON-CHAIN...')
           : !isConnected
           ? 'CONNECT WALLET TO REDEEM'
+          : identityStatus === 'loading'
+          ? 'CHECKING IDENTITY...'
+          : !identityVerified && address
+          ? 'IDENTITY VERIFICATION REQUIRED →'
           : `REDEEM ${quote ? `${quote.reserveOutFormatted} PAXG` : 'AXAU'} →`}
       </button>
     </div>

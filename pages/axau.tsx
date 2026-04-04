@@ -523,7 +523,7 @@ function FAQ() {
   const items = [
     {
       q: 'How do I get AXAU?',
-      a: 'Visit the Buy AXAU page, enter the amount of AXUSD you want to spend, and submit your order. AXAU is transferred to your wallet automatically on-chain.',
+      a: 'Visit the Mint & Redeem page and choose your path. Direct Mint: deposit PAXG to receive AXAU on-chain in a single transaction. Assisted Mint: submit a request with AXUSD and the operations team handles fulfillment — typically within 1 business day. Your wallet must be identity-verified on Arbitrum One.',
     },
     {
       q: 'What is AXAU backed by?',
@@ -534,8 +534,8 @@ function FAQ() {
       a: 'The Gold Vault is a smart contract on Arbitrum One. Smart contract risk exists, as with all on-chain protocols. The protocol enforces a ≥105% coverage ratio — if this falls, minting pauses automatically. The reserve dashboard and all contract addresses are publicly available for verification.',
     },
     {
-      q: 'How much does it cost to buy AXAU?',
-      a: 'You pay with AXUSD. The protocol applies a 5% mint premium at the time of purchase — this premium builds a reserve buffer, making the system more over-collateralized with every order. There are no hidden fees.',
+      q: 'How much does it cost to mint AXAU?',
+      a: 'For Direct Mint: deposit PAXG at the current Mint NAV. For Assisted Mint: spend AXUSD — the protocol applies a 5% mint premium at the time of purchase. This premium builds a reserve buffer, making the system more over-collateralized with every order. Arbitrum One gas fees apply to all on-chain transactions.',
     },
     {
       q: 'Where are the smart contracts? Are they audited?',
@@ -623,7 +623,7 @@ export default function AxauPage() {
     <DesignLawLayout>
       <Head>
         <title>AXAU — Axiom Gold Reserve Unit | Your Wealth, Anchored in Gold</title>
-        <meta name="description" content="AXAU is a gold reserve unit on Arbitrum One. Use AXUSD to build your on-chain gold reserve — fully backed, fully verifiable." />
+        <meta name="description" content="AXAU is a gold reserve unit on Arbitrum One, backed by PAXG. Mint directly with PAXG or use the AXUSD-assisted path — fully backed, fully verifiable on-chain." />
       </Head>
 
       <Hero />
