@@ -30,6 +30,9 @@ The core Axiom Protocol Token (AXM) is an ERC20 governance token on Arbitrum One
 The architecture employs a "Product Factory Approach" for scalability. The current blockchain network is Arbitrum One, with a planned migration to Universe Blockchain (L3). Data is managed using PostgreSQL with Drizzle ORM and MongoDB for analytics. The backend features centralized contract configuration, a dedicated contract service, and chain validation middleware.
 
 Key features include:
+- Architecture Diagram Component: `components/design-law/AxiomArchitectureDiagram.tsx` — reusable full and compact variants showing all 7 layers and capital flow. Embeddable anywhere in the site.
+- System Map Page: `/system-map` — 5-section dedicated system architecture page (hero, diagram, capital flow, layer breakdown, direct/assisted paths, trust/verification, CTA). Added to nav under Infrastructure dropdown.
+- Social Content: `content/social/xrp-vs-axiom-thread.md` — ready-to-post X thread (primary 10-post + backup 5-post) positioning Axiom vs XRP. Includes caption/reply one-liners.
 - DEX V2 Ecosystem and Institutional Observer Dashboard.
 - Lending Fund (SEC Reg D 506(c)) and Euler V2 AXUSD Lending Markets.
 - MIRDT Capital Intelligence Terminal: Nine-dimension advisory signal engine.
