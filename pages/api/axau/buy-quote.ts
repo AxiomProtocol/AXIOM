@@ -26,8 +26,18 @@ const RETRY_AFTER_SECONDS = 90;
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
-  const hasPaxg  = "paxgAmount"  in req.query && req.query.paxgAmount  !== undefined;
-  const hasAxusd = "axusdAmount" in req.query && req.query.axusdAmount !== undefined;
+  // Guard against repeated params (array form) — both must be single string values
+  const rawPaxgParam  = req.query.paxgAmount;
+  const rawAxusdParam = req.query.axusdAmount;
+
+  const hasPaxg  = rawPaxgParam  !== undefined && typeof rawPaxgParam  === "string";
+  const hasAxusd = rawAxusdParam !== undefined && typeof rawAxusdParam === "string";
+  const hasPaxgArr  = rawPaxgParam  !== undefined && typeof rawPaxgParam  !== "string";
+  const hasAxusdArr = rawAxusdParam !== undefined && typeof rawAxusdParam !== "string";
+
+  if (hasPaxgArr || hasAxusdArr) {
+    return res.status(400).json({ error: "Duplicate query parameters are not allowed" });
+  }
 
   if (hasPaxg && hasAxusd) {
     return res.status(400).json({ error: "Provide paxgAmount or axusdAmount — not both" });
@@ -36,9 +46,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: "paxgAmount or axusdAmount query parameter required" });
   }
 
-  // ── PAXG path (authoritative) ────────────────────────────────────────────────
+  // ── PAXG path (authoritative — decimal format only, e.g. "0.001") ────────────
   if (hasPaxg) {
-    const rawPaxg = req.query.paxgAmount as string;
+    // paxgAmount must be a decimal string (e.g. "0.001" not "1000000000000000" wei).
+    // validateDecimalInput enforces this contract — no exponential, max 18 decimal places.
+    const rawPaxg = rawPaxgParam as string;
 
     // Input validation before any ethers.parseUnits()
     try {
@@ -106,7 +118,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // ── AXUSD path (legacy, estimated, deprecated) ───────────────────────────────
-  const rawAxusd   = req.query.axusdAmount as string;
+  const rawAxusd   = rawAxusdParam as string;
   const axusdFloat = parseFloat(rawAxusd);
   if (isNaN(axusdFloat) || axusdFloat <= 0) {
     return res.status(400).json({ error: "axusdAmount must be a positive number" });
