@@ -865,7 +865,7 @@ export default function AxauBuyPage() {
         <div style={{ marginBottom: 32 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.border}`, background: C.bgAlt }}>Layer 01 Reserve</span>
-            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.gold}40`, background: C.bgGold }}>Arbitrum One</span>
+            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.gold}40`, background: C.goldBg }}>Arbitrum One</span>
           </div>
           <h1 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(28px, 5vw, 46px)', fontWeight: 700, color: C.navy, lineHeight: 1.08, margin: '0 0 14px' }}>
             AXAU Mint &amp; Redeem Terminal
@@ -880,7 +880,7 @@ export default function AxauBuyPage() {
               <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 3px' }}>Path A — Direct</p>
               <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.navy, fontWeight: 700, margin: 0 }}>PAXG → AXAU · Instant</p>
             </div>
-            <div style={{ border: `1px solid ${C.gold}40`, padding: '10px 16px', background: C.bgGold }}>
+            <div style={{ border: `1px solid ${C.gold}40`, padding: '10px 16px', background: C.goldBg }}>
               <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 3px' }}>Path B — Assisted</p>
               <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.navy, fontWeight: 700, margin: 0 }}>AXUSD → AXAU · ~1 Business Day</p>
             </div>
@@ -967,7 +967,7 @@ export default function AxauBuyPage() {
                   { stage: '03', label: 'Vault Deposit', detail: 'PAXG is deposited to the GoldVault contract on Arbitrum One. The vault confirms receipt and updates the reserve balance. On-chain coverage ratio is verified.', timing: 'Same business day' },
                   { stage: '04', label: 'AXAU Minted to Your Wallet', detail: 'The MintRedeemController mints AXAU to your identity-verified wallet address. The transaction hash is recorded. A fulfillment confirmation email is sent.', timing: '≤ 1 business day' },
                 ].map((item, i, arr) => (
-                  <div key={item.stage} style={{ display: 'flex', gap: 16, paddingBottom: i < arr.length - 1 ? 16 : 0, marginBottom: i < arr.length - 1 ? 16 : 0, borderBottom: i < arr.length - 1 ? `1px solid ${C.borderAlt}` : 'none' }}>
+                  <div key={item.stage} style={{ display: 'flex', gap: 16, paddingBottom: i < arr.length - 1 ? 16 : 0, marginBottom: i < arr.length - 1 ? 16 : 0, borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none' }}>
                     <div style={{ width: 28, height: 28, background: C.navy, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#fff', fontWeight: 700 }}>{item.stage}</span>
                     </div>
@@ -981,7 +981,7 @@ export default function AxauBuyPage() {
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop: 20, padding: '12px 14px', background: C.bg, border: `1px solid ${C.borderAlt}` }}>
+              <div style={{ marginTop: 20, padding: '12px 14px', background: C.bg, border: `1px solid ${C.border}` }}>
                 <p style={{ fontFamily: 'Georgia, serif', fontSize: 11, color: C.muted, lineHeight: 1.6, margin: 0 }}>
                   The indicative AXAU amount shown at submission is based on the current XAU/USD oracle price and may differ at fulfillment due to market price movement between submission and PAXG acquisition. A 5% mint premium applies to assisted requests to build reserve buffer. Your identity-verified wallet must be active on Arbitrum One at the time of minting.
                 </p>
@@ -990,10 +990,38 @@ export default function AxauBuyPage() {
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 24, marginTop: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a href="/axau" style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, textDecoration: 'none' }}>AXAU Reserve page</a>
-          <a href="/axusd-3643" style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, textDecoration: 'none' }}>Get AXUSD</a>
-          <a href="/axau-early-access" style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, textDecoration: 'none' }}>Apply for Identity Verification</a>
+        {/* Queue status + direct mint links */}
+        <div style={{ marginTop: 32, border: `1px solid ${C.border}`, background: C.bg, padding: '20px 22px' }}>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 14 }}>Navigation</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+            <a href="/founder-ops" style={{
+              display: 'block', padding: '14px 16px',
+              border: `1px solid ${C.navy}`, background: '#f0f3f7',
+              textDecoration: 'none',
+            }}>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>Check Status</p>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 12, color: C.navy, fontWeight: 700 }}>View AXAU Queue →</p>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 11, color: C.muted, marginTop: 4, lineHeight: 1.5 }}>Track your assisted mint request in the operations queue. Status updates as ops team processes.</p>
+            </a>
+            <a href="/axau" style={{
+              display: 'block', padding: '14px 16px',
+              border: `1px solid ${C.border}`,
+              textDecoration: 'none',
+            }}>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>Direct Mint Terminal</p>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 12, color: C.navy, fontWeight: 700 }}>On-Chain PAXG Mint →</p>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 11, color: C.muted, marginTop: 4, lineHeight: 1.5 }}>Hold PAXG? Mint AXAU directly on-chain via the MintRedeemController with no ops intermediary.</p>
+            </a>
+            <a href="/axusd-3643" style={{
+              display: 'block', padding: '14px 16px',
+              border: `1px solid ${C.border}`,
+              textDecoration: 'none',
+            }}>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>Identity Credential</p>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 12, color: C.navy, fontWeight: 700 }}>ERC-3643 Terminal →</p>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 11, color: C.muted, marginTop: 4, lineHeight: 1.5 }}>Request or check your on-chain identity credential status. Required for all mint operations.</p>
+            </a>
+          </div>
         </div>
       </div>
     </DesignLawLayout>

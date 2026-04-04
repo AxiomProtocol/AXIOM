@@ -293,6 +293,36 @@ export default function DexPage() {
         ))}
       </div>
 
+      {/* Peg stability mechanism block */}
+      <div className="border border-dl-border bg-dl-bg p-5 mb-6">
+        <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-3">AXUSD Peg Stability — How DEX Liquidity Supports the Peg</p>
+        <div className="grid gap-0" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+          {[
+            {
+              title: 'Concentrated Liquidity Depth',
+              desc: 'EulerSwap concentrates LP capital within a narrow band around $1.0000. High depth at the peg means large AXUSD ↔ USDC flows incur minimal slippage, reducing arbitrage opportunity and making sustained deviation harder to execute.',
+            },
+            {
+              title: 'Arbitrage Closure Loop',
+              desc: 'When AXUSD deviates from $1.00 on the DEX, arbitrageurs can close the gap by using the PSM — swapping USDC to mint AXUSD (if AXUSD > $1) or redeeming AXUSD for USDC (if AXUSD < $1). DEX price and PSM rate converge automatically.',
+            },
+            {
+              title: 'Reserve Conversion Path',
+              desc: 'All protocol reserve conversions — including AXUSD ↔ AXAU swap routes — route through the DEX settlement venue. This ensures reserve operations do not bypass the peg constraint and that every large trade is subject to pool depth conditions.',
+            },
+            {
+              title: 'Peg Defense Threshold',
+              desc: 'If the AXUSD DEX price falls below $0.990 or rises above $1.010, the protocol\'s Market Operations wallet is authorized to place stabilizing liquidity or trigger PSM intervention. The Rate Limiter contract prevents large single-block outflows.',
+            },
+          ].map(item => (
+            <div key={item.title} className="border-r border-dl-border last:border-r-0 p-4">
+              <p className="font-dl-serif text-sm font-bold text-dl-navy mb-2">{item.title}</p>
+              <p className="text-dl-gray" style={{ fontFamily: 'Georgia, serif', fontSize: 12, lineHeight: 1.65 }}>{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <DexStats />
 
       <div className="mt-8 flex flex-col lg:flex-row gap-6">

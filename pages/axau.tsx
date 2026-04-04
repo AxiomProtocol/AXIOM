@@ -550,15 +550,15 @@ function FAQ() {
     },
     {
       q: 'Is there any risk of losing my gold?',
-      a: 'The Gold Vault is a smart contract on Arbitrum One. Smart contract risk exists, as with all on-chain protocols. The protocol enforces a ≥105% coverage ratio — if this falls, minting pauses automatically. The reserve dashboard and all contract addresses are publicly available for verification.',
+      a: 'The GoldVault is an automated control layer on Arbitrum One. On-chain protocol risk exists, as with all on-chain infrastructure. The protocol enforces a ≥105% coverage ratio — if this falls, minting pauses automatically. The reserve dashboard and all contract addresses are publicly available for verification.',
     },
     {
       q: 'How much does it cost to mint AXAU?',
       a: 'For Direct Mint: deposit PAXG at the current Mint NAV. For Assisted Mint: spend AXUSD — the protocol applies a 5% mint premium at the time of purchase. This premium builds a reserve buffer, making the system more over-collateralized with every order. Arbitrum One gas fees apply to all on-chain transactions.',
     },
     {
-      q: 'Where are the smart contracts? Are they audited?',
-      a: 'All 7 AXAU contracts are deployed and verified on Arbitrum One via Blockscout. An external audit is on the roadmap for the next protocol phase. Contract addresses are listed in the Live Reserve Dashboard above.',
+      q: 'Where are the automated control layers deployed? Have they been reviewed?',
+      a: 'All 7 AXAU on-chain control layers are deployed and verified on Arbitrum One via Blockscout. An external security review is on the roadmap for the next protocol phase. Contract addresses are listed in the Live Reserve Dashboard above.',
     },
     {
       q: 'What does "coverage ratio ≥ 105%" mean?',
@@ -606,7 +606,7 @@ function Disclosures() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, marginBottom: 20 }}>
           {[
             'AXAU is not a security, investment contract, or regulated financial product. It is a protocol-managed reserve instrument.',
-            'Smart contract risk exists. All contracts are unaudited at this stage. Use only funds you can afford to lose.',
+            'On-chain protocol risk exists. The automated control layers are unaudited at this stage. Use only funds you can afford to lose.',
             'Gold market prices (XAU/USD) fluctuate. The value of AXAU in USD terms may increase or decrease.',
             'The protocol is designed to align with applicable digital asset regulations, including the GENIUS Act framework. No legal compliance is guaranteed.',
             'Mint and redeem functions may be paused by governance at any time for protocol safety.',

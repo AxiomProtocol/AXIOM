@@ -422,6 +422,66 @@ function IssuanceMechanics() {
   );
 }
 
+// ─── Governance Supply Cap ────────────────────────────────────────────────────
+function GovernanceSupplyCap() {
+  return (
+    <section style={{ background: C.bg, borderBottom: `1px solid ${C.border}`, padding: '56px 0' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 20px' }}>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 8 }}>Supply Governance</p>
+        <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 700, color: C.navy, marginBottom: 12 }}>
+          Governance-Controlled Supply Cap
+        </h2>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, maxWidth: 620, lineHeight: 1.75, marginBottom: 36 }}>
+          AXUSD issuance is bounded by a protocol-level debt ceiling enforced in the PSM contract.
+          The cap is not set unilaterally by a single operator — changes require a governance action
+          authorized through the Axiom Protocol governance process. This mechanism controls maximum
+          circulating supply and limits the reserve exposure the protocol can carry at any given time.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 0, border: `1px solid ${C.border}`, marginBottom: 28 }}>
+          {[
+            {
+              title: 'Debt Ceiling',
+              desc: 'The PSM contract enforces a maximum debt outstanding at the contract level. Mint operations revert when outstanding issuance meets or exceeds this ceiling. The ceiling is a governance-controlled parameter.',
+            },
+            {
+              title: 'Ceiling Adjustment Path',
+              desc: 'A ceiling increase requires a proposal, a governance vote (AXM token weighted), and a time-locked execution delay before the new parameter takes effect on-chain. No single wallet can raise the ceiling unilaterally.',
+            },
+            {
+              title: 'Cap-Change Disclosure',
+              desc: 'Any change to the debt ceiling is publicly visible on-chain and logged in the governance execution history. Protocol participants can monitor pending ceiling proposals via governance tools before they take effect.',
+            },
+            {
+              title: 'Current Utilization',
+              desc: 'PSM debt utilization is reported live at the /disclosure solvency console. When utilization approaches 90%, a protocol alert is triggered. At 100% (ceiling reached), new mint operations are rejected by the contract.',
+            },
+          ].map((item, i) => (
+            <div key={i} style={{
+              padding: '22px 20px',
+              borderRight: i % 2 === 0 ? `1px solid ${C.border}` : 'none',
+              borderBottom: i < 2 ? `1px solid ${C.border}` : 'none',
+            }}>
+              <p style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 16, fontWeight: 700, color: C.navy, marginBottom: 10 }}>{item.title}</p>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.65 }}>{item.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ border: `1px solid ${C.borderAlt}`, background: C.bgNavy, padding: '18px 20px' }}>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.navy, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 8 }}>Important</p>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.text, lineHeight: 1.7 }}>
+            The debt ceiling does not guarantee a fixed maximum circulating supply in perpetuity. Governance may
+            adjust the ceiling upward or downward in response to reserve conditions, regulatory guidance, or
+            protocol capacity. Participants should monitor governance proposals if supply cap changes are material
+            to their position. All governance actions are executed on-chain and verifiable on Arbiscan.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Contract Registry ────────────────────────────────────────────────────────
 function ContractRegistry() {
   const contracts = [
@@ -560,7 +620,7 @@ function Disclosures() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
             {[
               'AXUSD is not a security, investment contract, or regulated financial product. It is a protocol-managed settlement instrument.',
-              'Smart contract risk exists. Contracts are unaudited at this stage. Use only funds you can afford to lose.',
+              'On-chain protocol risk exists. The automated control layers are unaudited at this stage. Use only funds you can afford to lose.',
               'The CDP issuance path (WETH/WBTC collateral) has been retired. The Vault Engine contract is deployed but not in active use.',
               'AXUSD is designed to align with the GENIUS Act framework for payment stablecoins. No legal compliance is guaranteed.',
               'ERC-3643 credential requirements may be updated by governance. Non-credentialed wallets will lose transfer ability.',
@@ -591,6 +651,7 @@ export default function AXUSDPage() {
       <PSMSection />
       <ReserveConnection />
       <IssuanceMechanics />
+      <GovernanceSupplyCap />
       <ContractRegistry />
       <FAQ />
       <Disclosures />
