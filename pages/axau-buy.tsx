@@ -73,11 +73,17 @@ const inputStyle: React.CSSProperties = {
   color: C.text, outline: 'none', boxSizing: 'border-box',
 };
 
-function OracleStaleBanner() {
+function OracleStaleBanner({ context = 'mint' }: { context?: 'mint' | 'redeem' | 'both' }) {
+  const msg =
+    context === 'redeem'
+      ? 'ORACLE STALE — The XAU/USD price feed has not been updated recently. Mint and redeem are temporarily unavailable. Please retry in ~90 seconds.'
+      : context === 'both'
+      ? 'ORACLE STALE — The XAU/USD price feed has not been updated recently. Mint and redeem are temporarily unavailable. Please retry in ~90 seconds.'
+      : 'ORACLE STALE — The XAU/USD price feed has not been updated recently. Minting is temporarily unavailable. Please retry in ~90 seconds.';
   return (
     <div style={{ padding: '12px 16px', background: C.amberBg, border: '1px solid #fed7aa', marginBottom: 20 }}>
       <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.amber, margin: 0, lineHeight: 1.5 }}>
-        ORACLE STALE — The XAU/USD price feed has not been updated recently. Minting is temporarily unavailable. Please retry in ~90 seconds.
+        {msg}
       </p>
     </div>
   );
@@ -489,7 +495,7 @@ function RedeemTab({ address, isConnected, state, execute, reset }: RedeemTabPro
         Return AXAU to the vault and receive PAXG in the same on-chain transaction. Requires an identity-verified wallet on Arbitrum One.
       </p>
 
-      {redeemStale && <OracleStaleBanner />}
+      {redeemStale && <OracleStaleBanner context="redeem" />}
 
       {/* Pre-flight */}
       <div style={{ background: C.bgAlt, border: `1px solid ${C.border}`, padding: '14px 18px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>

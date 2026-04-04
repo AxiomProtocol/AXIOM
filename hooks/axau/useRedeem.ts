@@ -22,9 +22,9 @@ const AXAU_ABI = [
 ] as const;
 
 const CONTROLLER_ABI = [
-  'function redeemFromComponent(bytes32 componentId, uint256 axauAmountIn) external returns (uint256 reserveAmountOut)',
-  'function quoteRedeem(bytes32 vaultId, uint256 axauAmount) view returns (uint256 reserveToUser, uint256 redeemNavWad)',
-  'event Redeemed(address indexed user, bytes32 indexed vaultId, address indexed reserveAsset, uint256 axauAmountIn, uint256 reserveAmountOut, uint256 redeemNavWad)',
+  'function redeemToAsset(bytes32 vaultId, uint256 axauAmount) external returns (uint256 tokenAmountOut)',
+  'function quoteRedeem(bytes32 vaultId, uint256 axauAmount) view returns (uint256 tokenToUser, uint256 backingNavWad)',
+  'event Redeemed(address indexed user, bytes32 indexed vaultId, address indexed reserveAsset, uint256 axauAmountIn, uint256 tokenAmountOut, uint256 navWad, uint256 coverageAfterBps)',
 ] as const;
 
 const INITIAL: RedeemState = {
@@ -98,7 +98,7 @@ export function useRedeem(getSigner: () => Promise<ethers.Signer>) {
       if (operationId.current !== opId) return;
       setState(s => ({ ...s, phase: 'redeeming' }));
 
-      const redeemTx = await controller.redeemFromComponent(XAU_VAULT_ID, axauWei);
+      const redeemTx = await controller.redeemToAsset(XAU_VAULT_ID, axauWei);
       if (operationId.current !== opId) return;
       setState(s => ({ ...s, txHash: redeemTx.hash }));
 
@@ -113,8 +113,8 @@ export function useRedeem(getSigner: () => Promise<ethers.Signer>) {
         try {
           const parsed = iface.parseLog({ topics: [...log.topics], data: log.data });
           if (parsed?.name === 'Redeemed') {
-            paxgReceived = parseFloat(ethers.formatUnits(parsed.args.reserveAmountOut as bigint, 18)).toFixed(6);
-            axauBurned   = parseFloat(ethers.formatUnits(parsed.args.axauAmountIn     as bigint, 18)).toFixed(6);
+            paxgReceived = parseFloat(ethers.formatUnits(parsed.args.tokenAmountOut as bigint, 18)).toFixed(6);
+            axauBurned   = parseFloat(ethers.formatUnits(parsed.args.axauAmountIn   as bigint, 18)).toFixed(6);
             break;
           }
         } catch { /* not our event */ }
