@@ -82,7 +82,7 @@ export function IdentityStatusDisplay({ status }: { status: IdentityStatus }) {
       <span style={{ ...baseStyle, color: C.red, borderColor: '#fca5a5' }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc2626', display: 'inline-block', flexShrink: 0 }} />
         Identity Required —{' '}
-        <a href="/axau-access" style={{ color: C.navy, textDecoration: 'underline', fontFamily: 'inherit', fontSize: 'inherit' }}>
+        <a href="/axau-early-access" style={{ color: C.navy, textDecoration: 'underline', fontFamily: 'inherit', fontSize: 'inherit' }}>
           Apply
         </a>
       </span>

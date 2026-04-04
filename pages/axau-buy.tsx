@@ -938,7 +938,7 @@ export default function AxauBuyPage() {
         <div style={{ display: 'flex', gap: 24, marginTop: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
           <a href="/axau" style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, textDecoration: 'none' }}>AXAU Reserve page</a>
           <a href="/axusd-3643" style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, textDecoration: 'none' }}>Get AXUSD</a>
-          <a href="/axau-access" style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, textDecoration: 'none' }}>Apply for Identity Verification</a>
+          <a href="/axau-early-access" style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, textDecoration: 'none' }}>Apply for Identity Verification</a>
         </div>
       </div>
     </DesignLawLayout>

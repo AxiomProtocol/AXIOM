@@ -7,6 +7,16 @@ const nextConfig = {
   compress: false,
   allowedDevOrigins: ['*'],
 
+  async redirects() {
+    return [
+      {
+        source: '/axau-access',
+        destination: '/axau-early-access',
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
