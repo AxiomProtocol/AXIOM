@@ -262,16 +262,35 @@ export default function DexPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Axiom Exchange | AXUSD Liquidity</title>
-        <meta name="description" content="Swap AXUSD, provide liquidity on EulerSwap for dual yield, and earn rewards on Axiom" />
+        <title>Axiom Exchange — Layer 02 Settlement Liquidity | AXUSD on Arbitrum One</title>
+        <meta name="description" content="The Axiom Protocol's Layer 02 settlement liquidity layer. Swap AXUSD, provide liquidity via EulerSwap for dual swap and lending yield, and earn on Arbitrum One." />
       </Head>
 
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <h1 className="font-dl-serif text-3xl text-dl-navy">Axiom Exchange</h1>
-          <span className="text-xs font-dl-mono border border-dl-forest text-dl-forest px-2 py-0.5">EulerSwap Primary</span>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Layer 02 Settlement</span>
+          <span className="font-dl-mono text-xs text-dl-gold border border-dl-gold px-2 py-0.5">EulerSwap Primary Venue</span>
         </div>
-        <p className="text-dl-gray">AXUSD liquidity, swaps, and dual-yield LP on Arbitrum One</p>
+        <h1 className="font-dl-serif text-3xl text-dl-navy mb-2">Settlement Liquidity Infrastructure</h1>
+        <p className="text-dl-gray text-sm max-w-2xl leading-relaxed">
+          The Axiom Exchange is Layer 02 of the Axiom Protocol financial operating system — the primary on-chain settlement venue for AXUSD. Liquidity is concentrated in EulerSwap pools, where LP capital earns dual yield from swap fees and Euler lending markets simultaneously. All AXUSD on-ramps, off-ramps, and reserve conversions route through this layer.
+        </p>
+      </div>
+
+      {/* Settlement architecture callout */}
+      <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6 flex flex-wrap gap-6">
+        {[
+          { label: 'Settlement Layer', value: 'Layer 02 / AXUSD' },
+          { label: 'Primary Venue', value: 'EulerSwap (AMM)' },
+          { label: 'Reserve Layer', value: 'Layer 01 / AXAU' },
+          { label: 'Network', value: 'Arbitrum One' },
+          { label: 'LP Yield Structure', value: 'Swap Fees + Lending APY' },
+        ].map(item => (
+          <div key={item.label}>
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-0.5">{item.label}</p>
+            <p className="font-dl-mono text-sm text-dl-navy font-bold">{item.value}</p>
+          </div>
+        ))}
       </div>
 
       <DexStats />

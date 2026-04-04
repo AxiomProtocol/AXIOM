@@ -124,20 +124,21 @@ function Hero() {
 
       {/* Headline block */}
       <div style={{ padding: '32px 0 40px', textAlign: 'center' }}>
-        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 }}>
-          AXAU — Axiom Gold Reserve Unit
-        </p>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.border}`, background: C.bg }}>Layer 01 Reserve</span>
+          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.gold}40`, background: C.bgGold }}>AXAU — Axiom Gold Reserve Unit</span>
+        </div>
         <h1 style={{
           fontFamily: '"Cormorant Garamond", Georgia, serif',
-          fontSize: 'clamp(32px, 6vw, 68px)',
+          fontSize: 'clamp(32px, 6vw, 60px)',
           fontWeight: 700, color: C.navy, lineHeight: 1.08,
           marginBottom: 14, letterSpacing: '-0.01em',
         }}>
-          Your Wealth,<br />
-          <span style={{ color: C.gold }}>Anchored in Gold</span>
+          Gold-Backed Reserve Infrastructure<br />
+          <span style={{ color: C.gold }}>On Arbitrum One</span>
         </h1>
-        <p style={{ fontFamily: 'Georgia, serif', fontSize: 16, color: C.muted, maxWidth: 500, margin: '0 auto 28px', lineHeight: 1.7 }}>
-          AXAU is a gold reserve unit on Arbitrum One, backed by PAXG. Mint directly with PAXG, or use the assisted path with AXUSD.
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 560, margin: '0 auto 20px', lineHeight: 1.7 }}>
+          AXAU is the Axiom Protocol&apos;s Layer 01 reserve unit — backed by on-chain PAXG (Paxos Gold), governed by a live coverage ratio, and accessible via direct mint or ops-assisted fulfillment. Identity credential required.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href="/axau-buy" style={{
@@ -148,13 +149,13 @@ function Hero() {
           }}>
             MINT OR REDEEM AXAU →
           </a>
-          <a href="#how-it-works" style={{
+          <a href="/axau-early-access" style={{
             display: 'inline-block', padding: '12px 28px',
             border: `1px solid ${C.border}`, color: C.navy,
             fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
             textTransform: 'uppercase', textDecoration: 'none', background: C.bg,
           }}>
-            HOW IT WORKS
+            APPLY FOR ACCESS
           </a>
         </div>
       </div>
@@ -210,31 +211,34 @@ function ValueProps() {
   const cards = [
     {
       icon: <GoldCoinIcon />,
-      badge: 'TIER 1 RESERVE',
-      title: 'Pure Gold Backing',
-      body: 'Every AXAU token is backed by on-chain gold reserves on Arbitrum One — representing a verifiable share of physical gold held in professional custody.',
+      badge: 'LAYER 01 RESERVE',
+      title: 'Gold Reserve Architecture',
+      body: 'AXAU is the Axiom Protocol\'s foundational reserve layer. Every unit is backed 1:1 by on-chain PAXG (Paxos Gold) held in the protocol vault — a verifiable, on-chain claim against physical gold.',
     },
     {
       icon: <ShieldIcon />,
       badge: 'ON-CHAIN VERIFIABLE',
-      title: 'On-Chain Transparency',
-      body: 'Gold reserves, coverage ratios, and all system parameters are publicly verifiable on-chain, 24 hours a day, 7 days a week. No black boxes.',
+      title: 'Live Coverage Ratio',
+      body: 'Reserve health is enforced on-chain via the NAVEngine contract. Coverage ratio (Total Reserve USD ÷ Supply) must remain ≥105%. If it falls below threshold, minting pauses automatically.',
     },
     {
       icon: <LiquidityIcon />,
-      badge: 'FLEXIBLE ENTRY',
-      title: 'Mint or Redeem On-Chain',
-      body: 'Deposit PAXG to mint AXAU directly, or redeem AXAU to receive PAXG back — both operations settle on-chain. Prefer AXUSD? Use the assisted path via the operations team.',
+      badge: 'IDENTITY GATED',
+      title: 'Two Access Paths',
+      body: 'Direct Mint: deposit PAXG to the vault, receive AXAU in a single on-chain transaction. Assisted Mint: spend AXUSD and the ops team handles PAXG acquisition and vault deposit — typically 1 business day. Both paths require an ERC-3643 identity credential.',
     },
   ];
 
   return (
     <section style={{ borderBottom: `1px solid ${C.border}`, padding: '60px 0' }}>
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Why AXAU</p>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Reserve Architecture</p>
         <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(24px, 4vw, 40px)', fontWeight: 600, color: C.navy, lineHeight: 1.2 }}>
-          The gold standard,<br />redesigned for the digital era
+          Layer 01 Reserve Infrastructure
         </h2>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, maxWidth: 500, margin: '10px auto 0', lineHeight: 1.65 }}>
+          AXAU is designed as a gold-backed reserve layer within the Axiom Protocol&apos;s five-layer financial operating system.
+        </p>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
         {cards.map(card => (
@@ -253,76 +257,91 @@ function ValueProps() {
 // ─── How It Works ─────────────────────────────────────────────────────────────
 
 function HowItWorks() {
-  const steps = [
-    {
-      num: '01',
-      title: 'Connect & Verify Identity',
-      body: 'Connect your Arbitrum One wallet. Your wallet must be identity-verified to receive AXAU — apply once via the Early Access page.',
-      note: 'One-time identity verification',
-    },
-    {
-      num: '02',
-      title: 'Choose Your Path',
-      body: 'Mint directly by depositing PAXG to the vault — or use the Assisted Mint to spend AXUSD and have the operations team handle fulfillment.',
-      note: 'Direct mint or assisted request',
-    },
-    {
-      num: '03',
-      title: 'Receive AXAU',
-      body: 'Direct mint settles on-chain in a single transaction. Assisted requests are fulfilled by the operations team, typically within 1 business day.',
-      note: 'On-chain or ops-assisted',
-    },
-  ];
-
   return (
     <section id="how-it-works" style={{ borderBottom: `1px solid ${C.border}`, padding: '60px 0' }}>
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Get Started</p>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Access Paths</p>
         <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(24px, 4vw, 40px)', fontWeight: 600, color: C.navy }}>
-          How it works
+          Direct Mint vs Assisted Mint
         </h2>
-        <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, maxWidth: 480, margin: '10px auto 0', lineHeight: 1.65 }}>
-          Two paths to AXAU: mint directly with PAXG, or submit an assisted request using AXUSD.
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, maxWidth: 500, margin: '10px auto 0', lineHeight: 1.65 }}>
+          Both paths require a wallet with an active ERC-3643 identity credential on Arbitrum One. Apply once via the Early Access page.
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 0, border: `1px solid ${C.border}` }}>
-        {steps.map((step, i) => (
-          <div key={step.num} style={{
-            padding: '28px 24px',
-            borderRight: i < steps.length - 1 ? `1px solid ${C.border}` : 'none',
-            background: C.bg,
-          }}>
-            <div style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 56, color: C.borderAlt, lineHeight: 1, marginBottom: 16, fontWeight: 700, letterSpacing: '-0.02em' }}>
-              {step.num}
-            </div>
-            <h3 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 18, color: C.navy, fontWeight: 600, marginBottom: 10, lineHeight: 1.3 }}>
-              {step.title}
-            </h3>
-            <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7, marginBottom: 14 }}>{step.body}</p>
-            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{step.note}</span>
+      {/* Path comparison table */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 24 }}>
+
+        {/* Path A: Direct Mint */}
+        <div style={{ border: `2px solid ${C.navy}`, background: C.bg }}>
+          <div style={{ background: C.navy, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: '#fff', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700 }}>Path A — Direct Mint</span>
+            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#94a3b8', letterSpacing: '0.1em' }}>PAXG → AXAU</span>
           </div>
-        ))}
+          <div style={{ padding: '20px' }}>
+            <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7, marginBottom: 20 }}>
+              Deposit PAXG directly to the GoldVault contract. The MintRedeemController verifies your identity, validates the coverage ratio, and mints AXAU to your wallet in a single on-chain transaction.
+            </p>
+            {[
+              { label: 'Input Asset', value: 'PAXG (Paxos Gold ERC-20)' },
+              { label: 'Settlement', value: 'Single on-chain transaction' },
+              { label: 'Speed', value: 'Instant (Arbitrum One)' },
+              { label: 'Identity Check', value: 'Required — ERC-3643 credential' },
+              { label: 'Coverage Check', value: 'Enforced on-chain' },
+            ].map(row => (
+              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: `1px solid ${C.borderAlt}` }}>
+                <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{row.label}</span>
+                <span style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.navy, fontWeight: 700, textAlign: 'right' }}>{row.value}</span>
+              </div>
+            ))}
+            <a href="/axau-buy" style={{ display: 'block', textAlign: 'center', marginTop: 20, padding: '11px 0', background: C.navy, color: '#fff', fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>
+              OPEN DIRECT MINT TERMINAL →
+            </a>
+          </div>
+        </div>
+
+        {/* Path B: Assisted Mint */}
+        <div style={{ border: `1px solid ${C.gold}40`, background: C.bgGold }}>
+          <div style={{ background: C.gold, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: '#fff', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700 }}>Path B — Assisted Mint</span>
+            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.1em' }}>AXUSD → AXAU</span>
+          </div>
+          <div style={{ padding: '20px' }}>
+            <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7, marginBottom: 20 }}>
+              Submit a request using AXUSD. The operations team acquires PAXG, deposits it to the vault, and mints AXAU to your identity-verified wallet. Confirmations are sent by email at each stage.
+            </p>
+            {[
+              { label: 'Input Asset', value: 'AXUSD (Axiom Stablecoin)' },
+              { label: 'Settlement', value: 'Ops team — vault deposit + on-chain mint' },
+              { label: 'Speed', value: 'Typically 1 business day' },
+              { label: 'Identity Check', value: 'Required — ERC-3643 credential' },
+              { label: 'Notifications', value: 'Email at submit, processing, fulfilled' },
+            ].map(row => (
+              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: `1px solid ${C.gold}20` }}>
+                <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{row.label}</span>
+                <span style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.navy, fontWeight: 700, textAlign: 'right' }}>{row.value}</span>
+              </div>
+            ))}
+            <a href="/axau-buy" style={{ display: 'block', textAlign: 'center', marginTop: 20, padding: '11px 0', background: C.gold, color: '#fff', fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>
+              SUBMIT ASSISTED REQUEST →
+            </a>
+          </div>
+        </div>
       </div>
 
-      <div style={{ marginTop: 16, padding: '16px 20px', background: C.bgGold, border: `1px solid ${C.gold}40`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, margin: 0 }}>
-          AXUSD is the Axiom Protocol&apos;s native stablecoin. Get AXUSD first, then use it here to build your gold reserve.
-        </p>
+      {/* Identity prerequisite callout */}
+      <div style={{ padding: '16px 20px', background: C.bgAlt, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 4px' }}>Identity Prerequisite</p>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, margin: 0 }}>
+            Both paths require a one-time identity credential. Apply via the Early Access page — verification is handled by the operations team.
+          </p>
+        </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', flexShrink: 0 }}>
-          <a href="/axau-buy" style={{
-            fontFamily: '"Courier New", monospace', fontSize: 10, color: '#fff',
-            textDecoration: 'none', letterSpacing: '0.12em', textTransform: 'uppercase',
-            fontWeight: 700, background: C.navy, padding: '9px 18px',
-          }}>
-            MINT / REDEEM →
+          <a href="/axau-early-access" style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: '#fff', textDecoration: 'none', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700, background: C.navy, padding: '9px 18px' }}>
+            APPLY FOR ACCESS →
           </a>
-          <a href="/axusd-3643" style={{
-            fontFamily: '"Courier New", monospace', fontSize: 10, color: C.navy,
-            textDecoration: 'none', letterSpacing: '0.12em', textTransform: 'uppercase',
-            fontWeight: 700, border: `1px solid ${C.navy}`, padding: '9px 18px',
-            background: C.bg,
-          }}>
+          <a href="/axusd-3643" style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.navy, textDecoration: 'none', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700, border: `1px solid ${C.navy}`, padding: '9px 18px', background: C.bg }}>
             GET AXUSD →
           </a>
         </div>
@@ -622,8 +641,8 @@ export default function AxauPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>AXAU — Axiom Gold Reserve Unit | Your Wealth, Anchored in Gold</title>
-        <meta name="description" content="AXAU is a gold reserve unit on Arbitrum One, backed by PAXG. Mint directly with PAXG or use the AXUSD-assisted path — reserve-backed, publicly verifiable on-chain." />
+        <title>AXAU — Layer 01 Gold Reserve Infrastructure | Axiom Protocol</title>
+        <meta name="description" content="AXAU is the Axiom Protocol's Layer 01 reserve unit on Arbitrum One — backed by on-chain PAXG, governed by a live coverage ratio, and accessible via direct mint or ops-assisted fulfillment." />
       </Head>
 
       <Hero />

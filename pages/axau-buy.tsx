@@ -863,15 +863,32 @@ export default function AxauBuyPage() {
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 0 80px' }}>
 
         <div style={{ marginBottom: 32 }}>
-          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.18em', color: C.gold, textTransform: 'uppercase', margin: '0 0 10px' }}>
-            AXAU RESERVE · ARBITRUM ONE
-          </p>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.border}`, background: C.bgAlt }}>Layer 01 Reserve</span>
+            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.gold}40`, background: C.bgGold }}>Arbitrum One</span>
+          </div>
           <h1 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(28px, 5vw, 46px)', fontWeight: 700, color: C.navy, lineHeight: 1.08, margin: '0 0 14px' }}>
-            AXAU Mint &amp; Redeem
+            AXAU Mint &amp; Redeem Terminal
           </h1>
-          <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, lineHeight: 1.7, margin: 0, maxWidth: 520 }}>
-            Mint AXAU by depositing PAXG directly to the gold vault, or redeem AXAU to recover PAXG. Both operations settle on-chain on Arbitrum One. Requires an identity-verified wallet.
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, lineHeight: 1.7, margin: '0 0 20px', maxWidth: 560 }}>
+            Two paths to AXAU. <strong>Direct Mint</strong>: deposit PAXG to the GoldVault and receive AXAU in a single on-chain transaction. <strong>Assisted Mint</strong>: spend AXUSD and the operations team handles PAXG acquisition and vault deposit — typically 1 business day. Both paths require an active identity credential.
           </p>
+
+          {/* Path quick-select */}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ border: `1px solid ${C.navy}`, padding: '10px 16px', background: C.bgAlt }}>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 3px' }}>Path A — Direct</p>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.navy, fontWeight: 700, margin: 0 }}>PAXG → AXAU · Instant</p>
+            </div>
+            <div style={{ border: `1px solid ${C.gold}40`, padding: '10px 16px', background: C.bgGold }}>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 3px' }}>Path B — Assisted</p>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.navy, fontWeight: 700, margin: 0 }}>AXUSD → AXAU · ~1 Business Day</p>
+            </div>
+            <div style={{ border: `1px solid ${C.border}`, padding: '10px 16px', background: C.bg }}>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 3px' }}>Redeem</p>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.navy, fontWeight: 700, margin: 0 }}>AXAU → PAXG · Instant</p>
+            </div>
+          </div>
         </div>
 
         {/* Tab bar */}
@@ -933,6 +950,44 @@ export default function AxauBuyPage() {
         )}
         {activeTab === 'assisted-mint' && (
           <AssistedMintTab address={address ?? null} isConnected={isConnected} />
+        )}
+
+        {/* Assisted mint fulfillment queue guidance */}
+        {activeTab === 'assisted-mint' && (
+          <div style={{ marginTop: 32, border: `1px solid ${C.border}`, background: C.bgAlt }}>
+            <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', margin: 0 }}>Assisted Mint — Fulfillment Queue</p>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.1em', margin: 0 }}>Typical timeline: 1 business day</p>
+            </div>
+            <div style={{ padding: '20px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {[
+                  { stage: '01', label: 'Request Submitted', detail: 'Your AXUSD spend request is recorded. A confirmation email is sent to the address you provided. The request appears in the operations queue.', timing: 'Immediate' },
+                  { stage: '02', label: 'Ops Review & Processing', detail: 'The operations team reviews your request, acquires PAXG on the open market at current spot, and marks the order as processing. You receive an email notification.', timing: '< 4 hours (business day)' },
+                  { stage: '03', label: 'Vault Deposit', detail: 'PAXG is deposited to the GoldVault contract on Arbitrum One. The vault confirms receipt and updates the reserve balance. On-chain coverage ratio is verified.', timing: 'Same business day' },
+                  { stage: '04', label: 'AXAU Minted to Your Wallet', detail: 'The MintRedeemController mints AXAU to your identity-verified wallet address. The transaction hash is recorded. A fulfillment confirmation email is sent.', timing: '≤ 1 business day' },
+                ].map((item, i, arr) => (
+                  <div key={item.stage} style={{ display: 'flex', gap: 16, paddingBottom: i < arr.length - 1 ? 16 : 0, marginBottom: i < arr.length - 1 ? 16 : 0, borderBottom: i < arr.length - 1 ? `1px solid ${C.borderAlt}` : 'none' }}>
+                    <div style={{ width: 28, height: 28, background: C.navy, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#fff', fontWeight: 700 }}>{item.stage}</span>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                        <span style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.navy, fontWeight: 700, letterSpacing: '0.08em' }}>{item.label}</span>
+                        <span style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: C.gold, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{item.timing}</span>
+                      </div>
+                      <p style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: C.muted, lineHeight: 1.65, margin: 0 }}>{item.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 20, padding: '12px 14px', background: C.bg, border: `1px solid ${C.borderAlt}` }}>
+                <p style={{ fontFamily: 'Georgia, serif', fontSize: 11, color: C.muted, lineHeight: 1.6, margin: 0 }}>
+                  The indicative AXAU amount shown at submission is based on the current XAU/USD oracle price and may differ at fulfillment due to market price movement between submission and PAXG acquisition. A 5% mint premium applies to assisted requests to build reserve buffer. Your identity-verified wallet must be active on Arbitrum One at the time of minting.
+                </p>
+              </div>
+            </div>
+          </div>
         )}
 
         <div style={{ display: 'flex', gap: 24, marginTop: 32, justifyContent: 'center', flexWrap: 'wrap' }}>

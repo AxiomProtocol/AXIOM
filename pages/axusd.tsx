@@ -518,8 +518,8 @@ export default function AXUSDStablecoinPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>AXUSD Stablecoin | Axiom Protocol</title>
-        <meta name="description" content="AXUSD - A hybrid CDP stablecoin designed to align with the GENIUS Act framework. Reserve-backed, segregated custody, cross-chain enabled. The settlement layer of Axiom Protocol." />
+        <title>AXUSD — Layer 02 Settlement Token | Axiom Protocol</title>
+        <meta name="description" content="AXUSD is the Axiom Protocol's Layer 02 settlement token — 100% reserve-backed, designed to align with the GENIUS Act framework, and unified under ERC-3643 with on-chain identity and modular compliance." />
       </Head>
       
       <div className="border border-dl-border bg-dl-bg-alt px-4 py-3 mb-6">
@@ -578,6 +578,11 @@ export default function AXUSDStablecoinPage() {
               <span className="text-dl-navy font-medium text-sm tracking-wide">DESIGNED TO ALIGN WITH GENIUS ACT</span>
             </div>
             
+            <div className="flex items-center gap-2 mb-4">
+              <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Layer 02 Settlement</span>
+              <span className="font-dl-mono text-xs text-dl-gold border border-dl-gold px-2 py-0.5">ERC-3643 Identity Standard</span>
+            </div>
+
             <h1 className="font-dl-serif text-5xl md:text-6xl mb-4 text-dl-navy">
               AXUSD
             </h1>

@@ -311,14 +311,36 @@ export default function AXUSD3643Page() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Unified AXUSD | ERC-3643 T-REX | Axiom Protocol</title>
+        <title>Unified AXUSD — Layer 02 Settlement Token | ERC-3643 T-REX | Axiom Protocol</title>
+        <meta name="description" content="AXUSD is the Axiom Protocol's Layer 02 settlement token — an ERC-3643 identity standard stablecoin on Arbitrum One. On-chain identity credential required for transfer, swap, and lending." />
       </Head>
 
       <div className="mb-6">
-        <h1 className="font-dl-serif text-2xl text-dl-navy mb-1">Unified AXUSD — ERC-3643 (T-REX)</h1>
-        <p className="text-sm text-dl-gray font-dl-mono">
-          Institutional-grade stablecoin with on-chain identity standard and modular compliance
+        <div className="flex items-center gap-2 mb-2">
+          <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Layer 02 Settlement</span>
+          <span className="font-dl-mono text-xs text-dl-gold border border-dl-gold px-2 py-0.5">ERC-3643 T-REX Identity Standard</span>
+          <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-2 py-0.5">LIVE</span>
+        </div>
+        <h1 className="font-dl-serif text-2xl text-dl-navy mb-2">Unified AXUSD — Settlement Layer Token</h1>
+        <p className="text-sm text-dl-gray leading-relaxed max-w-2xl">
+          AXUSD is the Axiom Protocol&apos;s Layer 02 settlement token — an ERC-3643 identity standard stablecoin on Arbitrum One. It serves as the primary medium of exchange within the protocol: used for AXAU-assisted minting, DEX settlement, Euler lending markets, and capital program participation. On-chain identity credential required for all transfers.
         </p>
+      </div>
+
+      {/* Settlement layer architecture strip */}
+      <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6 flex flex-wrap gap-6">
+        {[
+          { label: 'Token Standard', value: 'ERC-3643 (T-REX)' },
+          { label: 'Role in Protocol', value: 'Layer 02 Settlement' },
+          { label: 'Identity Gate', value: 'Required for all transfers' },
+          { label: 'Reserve Anchor', value: 'Layer 01 AXAU' },
+          { label: 'Primary Venue', value: 'EulerSwap + Euler EVK' },
+        ].map(item => (
+          <div key={item.label}>
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-0.5">{item.label}</p>
+            <p className="font-dl-mono text-sm text-dl-navy font-bold">{item.value}</p>
+          </div>
+        ))}
       </div>
 
       <div className="flex gap-0 border-b border-dl-border mb-6">
