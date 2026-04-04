@@ -56,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (oracleStale) {
         res.setHeader("Retry-After", String(RETRY_AFTER_SECONDS));
         return res.status(503).json({
-          error: "Oracle price stale — pricing unavailable",
+          error: "Oracle price stale — mint unavailable",
           oracleStale: true,
           oracleUpdatedAt,
         });
@@ -76,6 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         axusdAmount:      null,
         axauOut,
         axauOutFormatted: mintQuote.axauOutFormatted,
+        mintNavWad:       mintQuote.mintNavWad,
         mintNavPerToken:  mintQuote.mintNavFormatted,
         xauUsdPrice,
         coverageRatioPct: state.coverageRatioPct,
@@ -117,7 +118,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (oracleStale) {
       res.setHeader("Retry-After", String(RETRY_AFTER_SECONDS));
       return res.status(503).json({
-        error: "Oracle price stale — pricing unavailable",
+        error: "Oracle price stale — mint unavailable",
         oracleStale: true,
         oracleUpdatedAt,
       });

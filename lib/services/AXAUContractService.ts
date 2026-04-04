@@ -25,8 +25,16 @@ export const COMPONENT_IDS = {
   LAND: "0xb0366c216037e04ae0c0a5c253f7e5a16707d3697cf6669be968fc739da1fa87",
 } as const;
 
-// Oracle staleness threshold: Chainlink XAU/USD heartbeat is 24h; allow 26h
-export const ORACLE_STALE_THRESHOLD_SECONDS = 26 * 3600;
+// Oracle staleness threshold: Chainlink XAU/USD heartbeat is 24h; allow 26h.
+// Override via ORACLE_STALE_THRESHOLD_SECONDS env var (seconds, integer).
+export const ORACLE_STALE_THRESHOLD_SECONDS: number = (() => {
+  const envVal = process.env.ORACLE_STALE_THRESHOLD_SECONDS;
+  if (envVal) {
+    const parsed = parseInt(envVal, 10);
+    if (!isNaN(parsed) && parsed > 0) return parsed;
+  }
+  return 26 * 3600;
+})();
 
 // ─── Minimal ABIs (verified against compiled artifacts) ───────────────────────
 

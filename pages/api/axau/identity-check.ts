@@ -20,6 +20,29 @@ const CACHE_TTL_MS  = 30_000;
 const CACHE_MAX     = 500;
 const CACHE_EVICT   = 100;
 
+// ─── Rate limiting (per-IP, 30 requests per 60-second window) ─────────────────
+const RATE_LIMIT_MAX    = 30;
+const RATE_LIMIT_WINDOW = 60_000; // ms
+
+interface RateLimitEntry {
+  count:       number;
+  windowStart: number;
+}
+
+const _rateLimit = new Map<string, RateLimitEntry>();
+
+function checkRateLimit(ip: string): boolean {
+  const now   = Date.now();
+  const entry = _rateLimit.get(ip);
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW) {
+    _rateLimit.set(ip, { count: 1, windowStart: now });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false;
+  entry.count++;
+  return true;
+}
+
 interface CacheEntry {
   verified:  boolean;
   cachedAt:  number;
@@ -60,6 +83,17 @@ function getProvider(): ethers.JsonRpcProvider {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+
+  // Rate limiting: 30 requests per 60s per IP
+  const clientIp =
+    (req.headers["x-forwarded-for"] as string | undefined)?.split(",")[0]?.trim() ??
+    req.socket?.remoteAddress ??
+    "unknown";
+
+  if (!checkRateLimit(clientIp)) {
+    res.setHeader("Retry-After", "60");
+    return res.status(429).json({ error: "Too many requests — try again in 60 seconds" });
+  }
 
   const { wallet } = req.query;
 
