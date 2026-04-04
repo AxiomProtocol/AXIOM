@@ -15,7 +15,12 @@
  */
 
 import { ethers } from 'ethers';
-import { AXAU_ADDRESSES, COMPONENT_IDS } from './AXAUContractService';
+import {
+  AXAU_ADDRESSES,
+  COMPONENT_IDS,
+  assertOracleFresh,
+  isOracleFresh,
+} from './AXAUContractService';
 import { db } from '../../server/db';
 import { axauPurchaseRequests } from '../../shared/axauSchema';
 import { eq, inArray } from 'drizzle-orm';
@@ -42,6 +47,10 @@ const GOLD_VAULT_ABI = [
 const CHAINLINK_ABI = [
   'function latestRoundData() view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)',
 ] as const;
+
+// ─── PATH A stale-oracle dedup guard ─────────────────────────────────────────
+// Emit at most one console.warn per minute to prevent log flooding.
+let _lastPathAStaleWarnAt = 0;
 
 // ─── Provider / Signer ────────────────────────────────────────────────────────
 
@@ -191,7 +200,29 @@ export async function autoFulfillRequest(requestId: string): Promise<AutoFulfill
   // ── PATH A: deployer already holds enough pre-minted AXAU ──────────────────
   // Skip mintWithAsset entirely — transfer directly from reserve.
   // Saves one on-chain tx and conserves the PAXG buffer.
+  // Oracle check: PATH A is not price-sensitive, but we log a deduped warning
+  // when oracle is stale so ops can detect degraded conditions.
   if (axauBalance >= axauQuotedWei) {
+    try {
+      const chainlinkA = new ethers.Contract(AXAU_ADDRESSES.ChainlinkXauUsd, CHAINLINK_ABI, provider);
+      const roundA     = await chainlinkA.latestRoundData();
+      const freshA     = isOracleFresh(
+        BigInt(roundA.updatedAt.toString()),
+        BigInt(roundA.answer.toString()),
+      );
+      if (!freshA) {
+        const now = Date.now();
+        if (now - _lastPathAStaleWarnAt > 60_000) {
+          console.warn(
+            '[axau-fulfill] PATH A executing with stale oracle — axauQuoted may not reflect current NAV',
+          );
+          _lastPathAStaleWarnAt = now;
+        }
+      }
+    } catch {
+      // Non-blocking — PATH A proceeds even if oracle read fails
+    }
+
     await db.update(axauPurchaseRequests)
       .set({ status: 'processing', updatedAt: new Date() })
       .where(eq(axauPurchaseRequests.id, requestId));
@@ -229,6 +260,24 @@ export async function autoFulfillRequest(requestId: string): Promise<AutoFulfill
   }
 
   // ── PATH B: mint fresh AXAU from PAXG buffer ────────────────────────────────
+  // Oracle gate: PATH B uses XAU spot price to compute PAXG needed.
+  // If oracle is stale, the PAXG conversion would be incorrect — block execution.
+  try {
+    const chainlinkB = new ethers.Contract(AXAU_ADDRESSES.ChainlinkXauUsd, CHAINLINK_ABI, provider);
+    const roundB     = await chainlinkB.latestRoundData();
+    assertOracleFresh(
+      BigInt(roundB.updatedAt.toString()),
+      BigInt(roundB.answer.toString()),
+    );
+  } catch (oracleErr: unknown) {
+    const oracleMsg = oracleErr instanceof Error ? oracleErr.message : String(oracleErr);
+    return {
+      success: false,
+      requestId,
+      error: `Oracle price stale — PATH B paused to prevent incorrect PAXG conversion. (${oracleMsg})`,
+    };
+  }
+
   const [reserveAssetAddress, xauPrice] = await Promise.all([
     getReserveAsset(provider),
     getXauPriceFloat(provider),

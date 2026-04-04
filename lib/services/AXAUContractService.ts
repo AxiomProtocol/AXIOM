@@ -25,6 +25,9 @@ export const COMPONENT_IDS = {
   LAND: "0xb0366c216037e04ae0c0a5c253f7e5a16707d3697cf6669be968fc739da1fa87",
 } as const;
 
+// Oracle staleness threshold: Chainlink XAU/USD heartbeat is 24h; allow 26h
+export const ORACLE_STALE_THRESHOLD_SECONDS = 26 * 3600;
+
 // ─── Minimal ABIs (verified against compiled artifacts) ───────────────────────
 
 const NAV_ENGINE_ABI = [
@@ -103,6 +106,107 @@ function formatWad(wad: bigint, dp = 4): string {
   return `${whole}.${frac}`;
 }
 
+// ─── Oracle freshness utilities ───────────────────────────────────────────────
+
+/**
+ * Throws if oracle data is invalid or stale.
+ * Guards (in order):
+ *   1. answer <= 0  → invalid price
+ *   2. updatedAt <= 0 → invalid timestamp
+ *   3. updatedAt > now + 300s → future timestamp (clock-skew tolerance)
+ *   4. age > thresholdSeconds → stale data
+ */
+export function assertOracleFresh(
+  updatedAt: bigint,
+  answer: bigint,
+  thresholdSeconds: number = ORACLE_STALE_THRESHOLD_SECONDS,
+): void {
+  if (answer <= 0n) {
+    throw new Error("Oracle answer is zero or negative — price feed invalid");
+  }
+  if (updatedAt <= 0n) {
+    throw new Error("Oracle updatedAt is zero or negative — price feed invalid");
+  }
+  const nowSeconds = BigInt(Math.floor(Date.now() / 1000));
+  const skewTolerance = 300n;
+  if (updatedAt > nowSeconds + skewTolerance) {
+    throw new Error("Oracle updatedAt is in the future — price feed invalid");
+  }
+  const ageSeconds = nowSeconds - updatedAt;
+  if (ageSeconds > BigInt(thresholdSeconds)) {
+    throw new Error(
+      `Oracle price is stale (age: ${ageSeconds}s, threshold: ${thresholdSeconds}s)`,
+    );
+  }
+}
+
+/**
+ * Non-throwing sibling of assertOracleFresh.
+ * Returns true if the oracle data is fresh and valid, false otherwise.
+ */
+export function isOracleFresh(
+  updatedAt: bigint,
+  answer: bigint,
+  thresholdSeconds: number = ORACLE_STALE_THRESHOLD_SECONDS,
+): boolean {
+  try {
+    assertOracleFresh(updatedAt, answer, thresholdSeconds);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ─── Lightweight oracle freshness (for frequent quote endpoints) ──────────────
+// Module-level short cache to reduce RPC load on hot endpoints.
+
+interface OracleCacheEntry {
+  oracleStale: boolean;
+  oracleUpdatedAt: number;
+  answer: bigint;
+  cachedAt: number;
+}
+
+let _oracleCache: OracleCacheEntry | null = null;
+const ORACLE_CACHE_TTL_MS = 10_000; // 10 seconds
+
+export async function getLightweightOracleFreshness(): Promise<{
+  oracleStale: boolean;
+  oracleUpdatedAt: number;
+  answer: bigint;
+}> {
+  const now = Date.now();
+  if (_oracleCache && now - _oracleCache.cachedAt < ORACLE_CACHE_TTL_MS) {
+    return {
+      oracleStale:    _oracleCache.oracleStale,
+      oracleUpdatedAt: _oracleCache.oracleUpdatedAt,
+      answer:         _oracleCache.answer,
+    };
+  }
+
+  const provider  = getProvider();
+  const chainlink = new ethers.Contract(AXAU_ADDRESSES.ChainlinkXauUsd, CHAINLINK_ABI, provider);
+  const round     = await chainlink.latestRoundData();
+
+  const updatedAt = BigInt(round.updatedAt.toString());
+  const answer    = BigInt(round.answer.toString());
+  const fresh     = isOracleFresh(updatedAt, answer);
+
+  const result: OracleCacheEntry = {
+    oracleStale:     !fresh,
+    oracleUpdatedAt: Number(updatedAt),
+    answer,
+    cachedAt:        now,
+  };
+  _oracleCache = result;
+
+  return {
+    oracleStale:     result.oracleStale,
+    oracleUpdatedAt: result.oracleUpdatedAt,
+    answer:          result.answer,
+  };
+}
+
 // ─── Exported types ───────────────────────────────────────────────────────────
 
 export interface AXAUSystemState {
@@ -137,6 +241,9 @@ export interface AXAUSystemState {
   landLastTimestamp:number;
   // Chainlink XAU price
   xauUsdPrice: string;
+  // Oracle freshness (derived from Chainlink updatedAt)
+  oracleStale:     boolean;
+  oracleUpdatedAt: number;
   // Timestamps
   fetchedAt: string;
 }
@@ -230,6 +337,11 @@ export async function getAXAUSystemState(): Promise<AXAUSystemState> {
     maximumFractionDigits: 2,
   });
 
+  // Oracle freshness (non-throwing — caller decides what to do with stale data)
+  const oracleUpdatedAt = BigInt(chainlinkRound.updatedAt.toString());
+  const oracleAnswer    = BigInt(chainlinkRound.answer.toString());
+  const oracleStale     = !isOracleFresh(oracleUpdatedAt, oracleAnswer);
+
   // Land snapshot
   const landValueUsdWad: bigint = BigInt(landSnap.valueUsdWad.toString());
   const landStale: boolean       = landSnap.stale;
@@ -268,6 +380,8 @@ export async function getAXAUSystemState(): Promise<AXAUSystemState> {
     landLastTimestamp: Number(landLastTimestamp),
 
     xauUsdPrice,
+    oracleStale,
+    oracleUpdatedAt:   Number(oracleUpdatedAt),
     fetchedAt: new Date().toISOString(),
   };
 }
