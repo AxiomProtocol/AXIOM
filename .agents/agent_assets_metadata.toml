@@ -120,6 +120,36 @@ uri = "file://public/axau/network-3d.png"
 type = "image"
 title = "gold network nodes"
 
+[[generated]]
+id = "G10Z3rGVaBy_9OaAAXwEN"
+uri = "file://public/axau-early-access/icon-apply.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "A9R5mReRphKVCZ0TAqTGy"
+uri = "file://public/axau-early-access/icon-mint.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "5r9iYvz6BpIpU2HV-UC_n"
+uri = "file://public/axau-early-access/icon-approved.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "0FD6dx8KRZuRH_giD81TB"
+uri = "file://public/axau-early-access/hero-vault.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "1yex9n-tV1JWQAmLofPNT"
+uri = "file://public/axau-early-access/gold-bar-aerial.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
