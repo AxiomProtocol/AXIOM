@@ -1653,15 +1653,40 @@ export default function SolvencyPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
           <div className="px-5 py-4 border-r border-dl-border">
             <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Allocator View</p>
-            <p className="text-sm text-dl-gray leading-relaxed">Capital adequacy metrics, asset composition, loss-absorption waterfall, and adaptive target compliance. Intended for capital allocation due diligence.</p>
+            <p className="text-sm text-dl-gray leading-relaxed">Capital adequacy metrics (CR, RR, LBR), asset composition, loss-absorption waterfall, and adaptive target compliance. Intended for capital allocation due diligence.</p>
           </div>
           <div className="px-5 py-4 border-r border-dl-border">
             <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Clearinghouse View</p>
-            <p className="text-sm text-dl-gray leading-relaxed">Counterparty risk, AXUSD stability modeling, deterministic stress scenarios, hard brake triggers, and solvency history. Intended for settlement risk assessment.</p>
+            <p className="text-sm text-dl-gray leading-relaxed">Counterparty risk, AXUSD stability modeling, deterministic stress scenarios, hard brake triggers, regime band, and solvency history. Intended for settlement risk assessment.</p>
           </div>
           <div className="px-5 py-4">
             <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Regulatory View</p>
-            <p className="text-sm text-dl-gray leading-relaxed">Full disclosure documentation, metric definitions, audit verification procedures, data integrity controls, and policy mode framework. Intended for compliance review.</p>
+            <p className="text-sm text-dl-gray leading-relaxed">Full disclosure documentation, metric definitions, policy mode states, audit verification procedures, data integrity controls. Intended for compliance review.</p>
+          </div>
+        </div>
+        <div className="border-t border-dl-border">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 border-b border-dl-border">
+            {[
+              { term: 'CR (Coverage Ratio)', def: 'Total available capital ÷ total outstanding liabilities. CR above 1.0 = protocol holds sufficient assets to meet all obligations. Primary capital adequacy measure.' },
+              { term: 'RR (Reserve Ratio)', def: 'Designated reserves ÷ total outstanding liabilities. Measures proportion of obligations directly supported by segregated reserve capital.' },
+              { term: 'LBR (Loss Buffer Ratio)', def: 'Loss buffer capital ÷ total outstanding liabilities. Measures depth of first-loss absorption before reserves are drawn upon.' },
+              { term: 'LD (Liquidity Depth)', def: 'Immediately redeemable capital ÷ total outstanding liabilities. Measures capacity to meet instantaneous redemption demands without asset liquidation.' },
+            ].map((item, i, arr) => (
+              <div key={item.term} className={`px-5 py-3 ${i < arr.length - 1 ? 'border-r border-dl-border' : ''}`}>
+                <p className="font-dl-mono text-xs text-dl-navy font-semibold mb-1">{item.term}</p>
+                <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">{item.def}</p>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+            <div className="px-5 py-3 border-r border-dl-border">
+              <p className="font-dl-mono text-xs text-dl-navy font-semibold mb-1">Policy Mode States</p>
+              <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">BOOTSTRAP → NORMAL → CAUTION → RESTRICTED → EMERGENCY. BOOTSTRAP = metrics are informational only, no stabilization actions active. NORMAL = within targets. CAUTION = advisory threshold crossed. RESTRICTED = intervention constraints on operations. EMERGENCY = governance required.</p>
+            </div>
+            <div className="px-5 py-3">
+              <p className="font-dl-mono text-xs text-dl-navy font-semibold mb-1">Regime Band (AME)</p>
+              <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">Derived from the Regime Score (RS). STABLE (RS &lt; 0.25) → CAUTION (0.25–0.50) → STRESS (0.50–0.80) → CRISIS (RS ≥ 0.80). The regime band applies a Policy Multiplier to adaptive capital targets. Hard brake triggers activate at RS ≥ 0.80.</p>
+            </div>
           </div>
         </div>
         <div className="px-5 py-3 border-t border-dl-border bg-dl-bg">

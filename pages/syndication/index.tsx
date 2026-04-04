@@ -141,9 +141,19 @@ export default function SyndicationDashboard() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
+          <div className="flex gap-2 mb-2 flex-wrap">
+            <span className="text-xs font-dl-mono border border-white/40 text-white/80 px-2 py-0.5">SEC Reg D 506(c)</span>
+            <span className="text-xs font-dl-mono border border-white/40 text-white/80 px-2 py-0.5">Accredited Only</span>
+          </div>
           <h1 className="font-dl-serif text-xl sm:text-2xl lg:text-3xl text-white">Private Capital Formation</h1>
-          <p className="font-dl-mono text-xs sm:text-sm text-gray-300 mt-1">Built for Community. Structured for Institutions.</p>
+          <p className="font-dl-mono text-xs sm:text-sm text-gray-300 mt-1">Structured for accredited investors. Community-graduated deal flow.</p>
         </div>
+      </div>
+
+      <div className="border border-dl-border mb-4 px-5 py-3 bg-dl-bg-alt">
+        <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
+          All offerings on this platform are exempt from SEC registration under Regulation D 506(c). Participation is limited to verified accredited investors. Projected returns shown on offering documents are forward-looking estimates — not guarantees. Capital deployment into real property is subject to market conditions, liquidity risk, and execution risk. Past SPV performance does not predict future results.
+        </p>
       </div>
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">

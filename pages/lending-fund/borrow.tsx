@@ -452,15 +452,17 @@ export default function BorrowPage() {
             <h1 className="font-dl-serif text-3xl md:text-5xl text-dl-navy leading-tight mb-3">
               Borrow<br />Capital
             </h1>
-            <p className="text-sm text-dl-gray max-w-xl leading-relaxed mb-5">
-              Short-term bridge capital for qualified real estate operators. Property-secured loans
-              with competitive rates, flexible terms, and on-chain settlement on Arbitrum One.
+            <p className="text-sm text-dl-gray max-w-xl leading-relaxed mb-3">
+              Short-term bridge capital for GEF Operator-tier and above. Property-secured loans with on-chain settlement on Arbitrum One. Access is gated by GEF tier — Operator status or higher is required to apply.
             </p>
+            <div className="border border-dl-border bg-dl-bg-alt px-4 py-2 mb-5">
+              <p className="font-dl-mono text-xs text-dl-gray">Bridge lending is offered under SEC Reg D 506(c). Borrowers must be accredited and maintain active GEF Operator status. Loans are recourse obligations secured by real property. Failure to repay may result in GEF tier demotion and loss of protocol access privileges.</p>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-6">
               <div className="px-4 py-3 border-r border-dl-border">
                 <p className="text-xs text-dl-gray font-dl-mono mb-1">Rate</p>
                 <p className="font-dl-serif text-lg text-dl-navy font-semibold">14%</p>
-                <p className="text-xs text-dl-gray">Annual</p>
+                <p className="text-xs text-dl-gray">Annual (Fixed)</p>
               </div>
               <div className="px-4 py-3 border-r border-dl-border">
                 <p className="text-xs text-dl-gray font-dl-mono mb-1">Max LTV</p>

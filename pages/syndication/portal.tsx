@@ -141,6 +141,10 @@ export default function InvestorPortal() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
+          <div className="flex gap-2 mb-2 flex-wrap">
+            <span className="text-xs font-dl-mono border border-white/40 text-white/80 px-2 py-0.5">Accredited Investors Only</span>
+            <span className="text-xs font-dl-mono border border-white/40 text-white/80 px-2 py-0.5">SEC Reg D 506(c)</span>
+          </div>
           <h1 className="font-dl-serif text-xl sm:text-2xl text-white">Investor Portal</h1>
           <p className="font-dl-mono text-xs text-gray-300 mt-1">
             {isConnected && data?.profile
@@ -150,6 +154,12 @@ export default function InvestorPortal() {
               : 'Connect your wallet to view your portfolio'}
           </p>
         </div>
+      </div>
+
+      <div className="border border-dl-border mb-5 px-5 py-3 bg-dl-bg-alt">
+        <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
+          This portal displays holdings, capital calls, and distribution records for verified accredited investors participating in Axiom Protocol syndication offerings. All projected distributions are estimates — not contractual guarantees. Capital call notices are binding per the terms of each offering's subscription agreement.
+        </p>
       </div>
 
       {!isConnected && (

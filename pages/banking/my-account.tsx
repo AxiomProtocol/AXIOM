@@ -318,13 +318,32 @@ export default function MyAccountPage() {
 
   return (
     <DesignLawLayout>
-      <div className="mb-8">
-        <div className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Axiom Nexus Banking</div>
+      <div className="mb-5">
+        <div className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Axiom Nexus Banking / FDIC-Insured</div>
         <h1 className="font-dl-serif text-3xl text-dl-navy font-bold mb-2">My Nexus Account</h1>
         <p className="text-dl-gray text-sm max-w-2xl leading-relaxed">
-          Your unified banking account for all Axiom Protocol products — Wealth Practice, Lending Fund, Real Estate, and Syndication.
-          One account. One card. Every product.
+          Your unified participant account within the Axiom Nexus Banking infrastructure — FDIC-insured, held at First Internet Bank through Increase's banking rails.
+          One account. One card. Every Axiom product.
         </p>
+      </div>
+
+      <div className="border border-dl-border mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+          <div className="px-5 py-3 border-r border-dl-border">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Banking Layer</p>
+            <p className="font-dl-mono text-xs text-dl-forest font-semibold">LIVE — First Internet Bank</p>
+            <p className="font-dl-mono text-xs text-dl-gray mt-0.5">FDIC-insured · ACH + wire rails · Powered by Increase</p>
+          </div>
+          <div className="px-5 py-3 border-r border-dl-border">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Coverage</p>
+            <p className="font-dl-mono text-xs text-dl-navy">Up to $250,000 per depositor category</p>
+            <p className="font-dl-mono text-xs text-dl-gray mt-0.5">Standard FDIC limits apply. Not protocol coverage.</p>
+          </div>
+          <div className="px-5 py-3">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Products Connected</p>
+            <p className="font-dl-mono text-xs text-dl-navy">Wealth Practice · Lending Fund · Syndication · Real Estate</p>
+          </div>
+        </div>
       </div>
 
       {!mounted && (

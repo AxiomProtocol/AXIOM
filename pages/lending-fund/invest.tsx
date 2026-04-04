@@ -457,17 +457,21 @@ export default function InvestPage() {
               ← Back to Fund Overview
             </Link>
             <h1 className="font-dl-serif text-3xl md:text-4xl text-dl-navy mb-3">Invest in the Fund</h1>
-            <p className="text-sm text-dl-gray leading-relaxed mb-6 max-w-lg">
-              Accredited investors can provide capital to the Axiom Bridge Lending Pool.
-              Your AXUSD is deployed as property-secured bridge loans and earns pro-rata interest that accumulates daily.
+            <p className="text-sm text-dl-gray leading-relaxed mb-3 max-w-lg">
+              Accredited investors may provide capital to the Axiom Bridge Lending Pool under SEC Reg D 506(c).
+              Capital is deployed as first-lien property-secured bridge loans. Pro-rata interest accumulates daily.
+              Returns are variable — not guaranteed. Past deployment activity does not guarantee future performance.
             </p>
+            <div className="border border-dl-border bg-dl-bg-alt px-4 py-2 mb-5">
+              <p className="font-dl-mono text-xs text-dl-gray">This offering is available to verified accredited investors only. Accreditation verification is required prior to capital commitment. Capital in the on-chain credit market is subject to utilization risk and protocol reserve levels.</p>
+            </div>
             <div className="grid grid-cols-3 gap-0 border border-dl-border mb-6">
               <div className="px-4 py-3 border-r border-dl-border">
-                <p className="text-xs text-dl-gray font-dl-mono mb-1">Target Rate</p>
+                <p className="text-xs text-dl-gray font-dl-mono mb-1">Target Return</p>
                 <p className="font-dl-serif text-lg text-dl-navy font-semibold">
                   {fundRateBps !== null ? `${(fundRateBps / 100).toFixed(0)}%` : '10–14%'}
                 </p>
-                <p className="text-xs text-dl-gray">Variable / Annual</p>
+                <p className="text-xs text-dl-gray">Variable — not guaranteed</p>
               </div>
               <div className="px-4 py-3 border-r border-dl-border">
                 <p className="text-xs text-dl-gray font-dl-mono mb-1">Utilization</p>

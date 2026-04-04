@@ -255,13 +255,27 @@ export default function ProofOfExecutionPage() {
         </p>
       </div>
 
-      <div className="border border-dl-border bg-dl-bg-alt px-5 py-3 mb-8">
-        <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Trust Anchor</p>
-        <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
-          This record is an operational audit log — not performance proof, trading proof, yield evidence, or a return guarantee.
-          It establishes a pre-deployment governance record for allocator due diligence. On-chain transaction references are
-          verifiable on Arbiscan (Chain ID: 42161).
-        </p>
+      <div className="border border-dl-border mb-8">
+        <div className="px-5 py-3 border-b border-dl-border bg-dl-bg-alt">
+          <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">What is Verifiable Here</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+          <div className="px-5 py-4 border-r border-dl-border">
+            <p className="font-dl-mono text-xs text-dl-navy font-semibold uppercase mb-1">Layer 1 — Operations Log</p>
+            <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">Timestamped founder operations entries documenting capital actions, deal activity, team communications, and governance decisions. Each entry is categorized and logged with a reference ID.</p>
+          </div>
+          <div className="px-5 py-4 border-r border-dl-border">
+            <p className="font-dl-mono text-xs text-dl-navy font-semibold uppercase mb-1">Layer 2 — Solvency Hash Chain</p>
+            <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">Cryptographically linked solvency snapshots — each snapshot references the checksum of the prior snapshot, creating a tamper-evident chain. Any modification to a historical snapshot breaks the chain and can be detected.</p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="font-dl-mono text-xs text-dl-navy font-semibold uppercase mb-1">Layer 3 — On-Chain Outcomes</p>
+            <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">Transaction hashes recorded and linkable to Arbiscan (Chain ID: 42161) for independent verification. Includes PSM mints, AXUSD transfers, credit market deposits, and contract deployment records.</p>
+          </div>
+        </div>
+        <div className="px-5 py-3 border-t border-dl-border bg-dl-bg">
+          <p className="font-dl-mono text-xs text-dl-gray">This record is an operational audit log — not performance proof, trading proof, yield evidence, or a return guarantee. It establishes a pre-deployment governance record for allocator due diligence.</p>
+        </div>
       </div>
 
       {loading && (

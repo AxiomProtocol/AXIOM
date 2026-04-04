@@ -171,8 +171,48 @@ export default function TransparencyPage() {
       </Head>
 
       <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Protocol Trust Index</h1>
-      <p className="text-sm text-dl-gray mb-1">Complete visibility into Axiom Protocol's automated control layers, treasury position, and security infrastructure.</p>
-      <p className="text-xs text-dl-gray font-dl-mono mb-8">Arbitrum One (Chain ID: 42161) — Updated continuously from on-chain state</p>
+      <p className="text-sm text-dl-gray mb-1">Complete visibility into Axiom Protocol's automated control layers, treasury position, security infrastructure, and governance records.</p>
+      <p className="text-xs text-dl-gray font-dl-mono mb-6">Arbitrum One (Chain ID: 42161) — Updated continuously from on-chain state</p>
+
+      <div className="border border-dl-border mb-8">
+        <div className="px-5 py-3 border-b border-dl-border bg-dl-bg-alt">
+          <p className="text-xs text-dl-gray uppercase tracking-widest font-dl-mono">Trust Evidence Sources</p>
+        </div>
+        <div className="divide-y divide-dl-border md:divide-y-0">
+          <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-dl-border border-b border-dl-border">
+            {[
+              { label: 'Solvency Dashboard', desc: 'Live CR/RR/LBR ratios, reserve composition, policy mode, and AME stress scenarios. Checksummed snapshots with cryptographic audit trail.', href: '/solvency' },
+              { label: 'Institutional Disclosure', desc: 'Full contract registry, protocol status table (LIVE/CONFIGURED-INACTIVE/PLANNED), regulatory positioning, and operational status segmentation.', href: '/disclosure' },
+              { label: 'Proof of Execution', desc: 'Timestamped operations log, solvency hash chain, field inspection records, and on-chain transaction references verifiable on Arbiscan.', href: '/proof-of-execution' },
+            ].map((item) => (
+              <div key={item.label} className="px-5 py-4">
+                <div className="flex items-start justify-between mb-2 pb-2 border-b border-dl-border">
+                  <p className="font-dl-mono text-xs text-dl-navy font-semibold">{item.label}</p>
+                  <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-1.5 py-0.5 flex-shrink-0 ml-2">LIVE</span>
+                </div>
+                <p className="font-dl-mono text-xs text-dl-gray leading-relaxed mb-2">{item.desc}</p>
+                <Link href={item.href} className="font-dl-mono text-xs text-dl-navy underline">View &rarr;</Link>
+              </div>
+            ))}
+          </div>
+          <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-dl-border">
+            {[
+              { label: 'On-Chain Contracts', desc: '53 actively integrated automated control layers on Arbitrum One. Full registry with addresses, categories, and LIVE/CONFIGURED-INACTIVE/Deprecated status.', href: '#contracts' },
+              { label: 'Governance Records', desc: 'Governance Hub with 24h timelock. All protocol parameter changes require governance authorization. Execution records visible on-chain.', href: '/founder-ops' },
+              { label: 'Treasury Snapshots', desc: 'Reconciliation snapshots published on a controlled disclosure cycle. Each snapshot includes SHA-256 checksum for independent verification.', href: '/solvency' },
+            ].map((item) => (
+              <div key={item.label} className="px-5 py-4">
+                <div className="flex items-start justify-between mb-2 pb-2 border-b border-dl-border">
+                  <p className="font-dl-mono text-xs text-dl-navy font-semibold">{item.label}</p>
+                  <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-1.5 py-0.5 flex-shrink-0 ml-2">LIVE</span>
+                </div>
+                <p className="font-dl-mono text-xs text-dl-gray leading-relaxed mb-2">{item.desc}</p>
+                <Link href={item.href} className="font-dl-mono text-xs text-dl-navy underline">View &rarr;</Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       <section id="treasury" className="mb-10">
         <SectionHeading>Treasury Dashboard</SectionHeading>
