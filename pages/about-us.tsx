@@ -35,7 +35,7 @@ const ACCOUNTABILITY = [
 const PRINCIPLES = [
   { title: 'Transparency', description: 'Every capital movement, governance decision, and operational action is recorded with full audit trails. Verifiable records replace informal trust.', icon: ShieldCheck },
   { title: 'Coordination', description: 'Structure and shared rules create reliable collaboration. Defined roles, accountability loops, and evidence-based processes replace ad-hoc decision making.', icon: Users },
-  { title: 'Security', description: 'Multi-party authorization controls, audited automated control layers, and privacy by default. 53 active automated control layers on Arbitrum One provide independent auditability.', icon: Lock },
+  { title: 'Security', description: 'Multi-party authorization controls, automated control layers, and privacy by default. Deployed automated control layers on Arbitrum One provide independent auditability. A third-party audit is on the development roadmap.', icon: Lock },
   { title: 'Discipline', description: 'Measured onboarding, fixed treasury allocation policies, and institutional-grade reporting. No speculation, no hype, no shortcuts.', icon: TrendingUp },
 ];
 
@@ -44,7 +44,7 @@ const MILESTONES = [
   { period: '2024', event: 'Axiom Protocol concept development, automated control layer architecture design, and initial infrastructure buildout', icon: Layers },
   { period: 'Q1 2025', event: 'Initial automated control layers deployed on Arbitrum One, DEX V2 ecosystem with mainnet contracts', icon: Building2 },
   { period: 'Q2 2025', event: 'Capital Program launch — $1M dual-asset program with two SPVs, institutional reporting, and compliance audit trails', icon: Target },
-  { period: 'Q3 2025', event: 'Lending Fund operational — SEC Reg D 506(c) compliant bridge loan fund for real asset acquisition', icon: BarChart3 },
+  { period: 'Q3 2025', event: 'Lending Fund operational — bridge loan fund designed to align with SEC Reg D 506(c) for real asset acquisition', icon: BarChart3 },
   { period: 'Q4 2025', event: 'Banking infrastructure (Unit + BitGo), Syndication module, ERC-3643 Unified AXUSD, and DePIN node integration', icon: Building2 },
   { period: 'Q1 2026', event: 'Market Intelligence Terminal, Institutional Observer, Sentinel capital decision layer, and expanded platform infrastructure', icon: ShieldCheck },
   { period: 'Q2 2026', event: 'Deal Intelligence workspace, Distressed Property Feed, Investor Portal, and AI acquisition memo builder', icon: TrendingUp },
@@ -64,13 +64,14 @@ export default function AboutUsPage() {
           Disciplined capital infrastructure for real asset ownership
         </h1>
         <p className="text-sm text-dl-gray max-w-3xl leading-relaxed mb-4">
-          Axiom Protocol is designed to make real asset ownership investable, transparent, and governable.
-          The focus is not hype. The focus is disciplined execution: acquire or finance real assets,
-          report performance with institutional-grade clarity, and protect capital with explicit controls.
+          Axiom Protocol is a governance-first financial operating system delivering reserve capital (AXAU),
+          a settlement stablecoin (AXUSD), structured capital programs, and community wealth infrastructure
+          — with full on-chain transparency on Arbitrum One.
         </p>
         <p className="text-sm text-dl-gray max-w-3xl leading-relaxed">
-          Built from real execution — a community farmland purchase, development work, and a founder-led infrastructure roadmap —
-          Axiom exists to turn what already worked into a repeatable system that can scale responsibly.
+          Built from real execution — a community land initiative, USDA-supported development work, and a
+          founder-led infrastructure roadmap — Axiom converts what already worked into a programmable,
+          audit-traceable system that can scale responsibly.
         </p>
       </div>
 

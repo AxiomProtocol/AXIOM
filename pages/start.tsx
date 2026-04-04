@@ -88,6 +88,14 @@ const PROFILES = [
     ctaHref: '/syndication',
     color: 'dl-navy',
   },
+  {
+    label: 'Reserve or protocol participant',
+    subLabel: 'AXAU, AXUSD, or AXM governance access',
+    steps: ['Apply for your ERC-3643 on-chain identity credential', 'Mint AXAU (gold-backed reserve) or AXUSD (settlement rail) directly on-chain', 'Hold AXM governance token and participate in on-chain protocol governance'],
+    cta: 'Apply for Reserve Access',
+    ctaHref: '/axau-early-access',
+    color: 'dl-gold',
+  },
 ];
 
 const COLOR_BORDER_LEFT: Record<string, string> = {
@@ -166,12 +174,11 @@ export default function StartPage() {
       <div className="border-b border-dl-border pb-8 mb-10">
         <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">Your Entry Point</p>
         <h1 className="font-dl-serif text-3xl md:text-4xl text-dl-navy leading-tight mb-4">
-          Start Investing in Real Estate
+          Choose Your Path Into the Protocol
         </h1>
         <p className="text-sm text-dl-gray max-w-3xl leading-relaxed">
-          Axiom is built for W-2 earners in Atlanta, Houston, and Charlotte who are ready to build wealth through real estate ownership —
-          not speculation. You do not need to be accredited to begin. You do not need capital on day one.
-          Here is the clearest path from where you are to where you want to be.
+          Axiom Protocol has multiple entry points depending on your goals and starting position — community wealth building, structured capital deployment, reserve access, or protocol governance.
+          You do not need to be accredited to begin. You do not need capital on day one. Find your path below.
         </p>
       </div>
 
@@ -267,9 +274,9 @@ export default function StartPage() {
 
       <div className="mb-12">
         <SectionHeading>Where Do You Start?</SectionHeading>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
           {PROFILES.map((profile, i) => (
-            <div key={profile.label} className={`p-6 border-t-4 ${COLOR_BORDER_TOP[profile.color] ?? ''} ${i < PROFILES.length - 1 ? 'md:border-r border-b md:border-b-0 border-dl-border' : ''}`}>
+            <div key={profile.label} className={`p-6 border-t-4 ${COLOR_BORDER_TOP[profile.color] ?? ''} ${i % 2 === 0 ? 'md:border-r' : ''} ${i < PROFILES.length - 2 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
               <h3 className="font-dl-serif text-base text-dl-navy font-bold mb-1">{profile.label}</h3>
               <p className="text-xs text-dl-gray mb-4">{profile.subLabel}</p>
               <ol className="space-y-2 mb-6">
