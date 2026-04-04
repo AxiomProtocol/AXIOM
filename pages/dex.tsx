@@ -312,7 +312,7 @@ export default function DexPage() {
             },
             {
               title: 'Peg Defense Threshold',
-              desc: 'If the AXUSD DEX price falls below $0.990 or rises above $1.010, the protocol\'s Market Operations wallet is authorized to place stabilizing liquidity or trigger PSM intervention. The Rate Limiter contract prevents large single-block outflows.',
+              desc: 'If the AXUSD DEX price moves materially outside the $0.990–$1.010 band, the protocol\'s Market Operations wallet may place stabilizing liquidity or trigger PSM intervention, subject to governance authorization and operational conditions. The Rate Limiter is designed to constrain large single-block outflows.',
             },
           ].map(item => (
             <div key={item.title} className="border-r border-dl-border last:border-r-0 p-4">

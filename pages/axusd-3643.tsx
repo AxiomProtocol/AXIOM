@@ -321,9 +321,9 @@ export default function AXUSD3643Page() {
           <span className="font-dl-mono text-xs text-dl-gold border border-dl-gold px-2 py-0.5">ERC-3643 T-REX Identity Standard</span>
           <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-2 py-0.5">LIVE</span>
         </div>
-        <h1 className="font-dl-serif text-2xl text-dl-navy mb-2">Unified AXUSD — Settlement Layer Token</h1>
+        <h1 className="font-dl-serif text-2xl text-dl-navy mb-2">Unified AXUSD — Identity Infrastructure &amp; Settlement Terminal</h1>
         <p className="text-sm text-dl-gray leading-relaxed max-w-2xl">
-          AXUSD is the Axiom Protocol&apos;s Layer 02 settlement token — an ERC-3643 identity standard stablecoin on Arbitrum One. It serves as the primary medium of exchange within the protocol: used for AXAU-assisted minting, DEX settlement, Euler lending markets, and capital program participation. On-chain identity credential required for all transfers.
+          This terminal manages the ERC-3643 identity credential lifecycle for AXUSD — the Axiom Protocol&apos;s Layer 02 settlement token. All AXUSD transfers require a valid on-chain identity claim. Request credential issuance, check verification status, and interact with the PSM (mint/redeem) through this identity-gated interface. Arbitrum One.
         </p>
       </div>
 
