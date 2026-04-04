@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { assertArbitrumOne } from '../../lib/utils/assertArbitrumOne';
 
 export type DirectMintPhase = 'ready' | 'approving' | 'minting' | 'done' | 'error';
 
@@ -13,7 +14,6 @@ export interface DirectMintState {
 const CONTROLLER_ADDR = '0x036F05a3fB74d35439c074f25F691b36f5D37792';
 const PAXG_ADDR       = '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429';
 const XAU_VAULT_ID    = '0x7c687a3207cd9c05b4b11d8dd7ac337919c2200102d72989a597ebc5afcf180b';
-const ARBITRUM_ONE    = 42161n;
 
 const PAXG_ABI = [
   'function approve(address spender, uint256 amount) returns (bool)',
@@ -34,6 +34,32 @@ const INITIAL: DirectMintState = {
   error: null,
 };
 
+function decodeRevertReason(raw: string): string {
+  const lower = raw.toLowerCase();
+  if (lower.includes('user rejected') || lower.includes('user denied') || lower.includes('rejected by user')) {
+    return 'Transaction rejected by wallet.';
+  }
+  if (lower.includes('mintpaused') || lower.includes('mint paused') || lower.includes('paused')) {
+    return 'Minting is currently paused. Please check the AXAU reserve page for status.';
+  }
+  if (lower.includes('notverified') || lower.includes('not verified') || lower.includes('unverified') || lower.includes('identity')) {
+    return 'Your wallet is not identity-verified. Visit the Early Access page to apply.';
+  }
+  if (lower.includes('insufficientreserve') || lower.includes('insufficient reserve') || lower.includes('coverage')) {
+    return 'Insufficient vault coverage ratio. Minting is suspended to protect the reserve.';
+  }
+  if (lower.includes('staleoracleprice') || lower.includes('stale oracle') || lower.includes('oracle')) {
+    return 'Oracle price feed is stale. Please retry in ~90 seconds.';
+  }
+  if (lower.includes('insufficient balance') || lower.includes('transferfrom')) {
+    return 'Insufficient PAXG balance for this transaction. Check your wallet and try again.';
+  }
+  if (lower.includes('allowance') || lower.includes('not approved')) {
+    return 'PAXG approval failed or insufficient. Please try again.';
+  }
+  return raw.length > 220 ? raw.slice(0, 220) + '…' : raw;
+}
+
 export function useDirectMint() {
   const [state, setState] = useState<DirectMintState>(INITIAL);
   const operationId = useRef(0);
@@ -52,12 +78,7 @@ export function useDirectMint() {
       const { ethers } = await import('ethers');
       const provider = new ethers.BrowserProvider(eth as ConstructorParameters<typeof ethers.BrowserProvider>[0]);
 
-      const network = await provider.getNetwork();
-      if (network.chainId !== ARBITRUM_ONE) {
-        throw new Error(
-          `Switch to Arbitrum One to mint AXAU (chain ID 42161). Currently on chain ID ${network.chainId}.`,
-        );
-      }
+      await assertArbitrumOne(provider as Parameters<typeof assertArbitrumOne>[0]);
 
       const signer      = await provider.getSigner();
       const userAddress = await signer.getAddress();
@@ -109,10 +130,7 @@ export function useDirectMint() {
     } catch (err: unknown) {
       if (operationId.current !== opId) return;
       const raw = err instanceof Error ? err.message : String(err);
-      const msg = raw.includes('user rejected') || raw.includes('User denied')
-        ? 'Transaction rejected by wallet.'
-        : raw.length > 200 ? raw.slice(0, 200) + '…' : raw;
-      setState({ ...INITIAL, phase: 'error', error: msg });
+      setState({ ...INITIAL, phase: 'error', error: decodeRevertReason(raw) });
     }
   }, []);
 

@@ -41,8 +41,13 @@ export function useIdentityStatus(address: string | null): IdentityStatus {
   return status;
 }
 
-export function IdentityBadge({ address, onStatusChange }: IdentityBadgeProps) {
-  const status = useIdentityStatus(address);
+export function IdentityStatusDisplay({ status }: { status: IdentityStatus }) {
+  return <IdentityBadge address={null} _overrideStatus={status} />;
+}
+
+export function IdentityBadge({ address, onStatusChange, _overrideStatus }: IdentityBadgeProps & { _overrideStatus?: IdentityStatus }) {
+  const fetched = useIdentityStatus(_overrideStatus !== undefined ? null : address);
+  const status  = _overrideStatus !== undefined ? _overrideStatus : fetched;
 
   useEffect(() => {
     onStatusChange?.(status);

@@ -2,7 +2,7 @@ import Head from 'next/head';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
-import { IdentityBadge, useIdentityStatus } from '../components/design-law/IdentityBadge';
+import { IdentityStatusDisplay, useIdentityStatus } from '../components/design-law/IdentityBadge';
 import { useDirectMint, type DirectMintState } from '../hooks/axau/useDirectMint';
 import { useRedeem, type RedeemState } from '../hooks/axau/useRedeem';
 
@@ -125,8 +125,28 @@ function DirectMintTab({ address, isConnected, state, execute, reset }: DirectMi
   const [quoteError, setQE]       = useState<string | null>(null);
   const [oracleStale, setOS]      = useState(false);
   const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const identityStatus            = useIdentityStatus(address);
-  const identityVerified          = identityStatus === 'verified';
+  const identityStatus  = useIdentityStatus(address);
+  const identityVerified = identityStatus === 'verified';
+  const [paxgBalance, setPaxgBalance] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!address) { setPaxgBalance(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { ethers } = await import('ethers');
+        const provider = new ethers.JsonRpcProvider('https://arb1.arbitrum.io/rpc');
+        const paxg     = new ethers.Contract(
+          '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429',
+          ['function balanceOf(address) view returns (uint256)'],
+          provider,
+        );
+        const bal = (await paxg.balanceOf(address)) as bigint;
+        if (!cancelled) setPaxgBalance(parseFloat(ethers.formatUnits(bal, 18)).toFixed(6));
+      } catch { if (!cancelled) setPaxgBalance(null); }
+    })();
+    return () => { cancelled = true; };
+  }, [address]);
 
   const fetchQuote = useCallback(async (raw: string) => {
     const trimmed = raw.trim();
@@ -203,7 +223,7 @@ function DirectMintTab({ address, isConnected, state, execute, reset }: DirectMi
 
       {/* Pre-flight checklist */}
       <div style={{ background: C.bgAlt, border: `1px solid ${C.border}`, padding: '14px 18px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
-        <IdentityBadge address={address} />
+        <IdentityStatusDisplay status={identityStatus} />
         {quote && (
           <>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', border: `1px solid ${C.border}`, background: C.bg, color: quote.mintPaused ? C.red : C.green }}>
@@ -219,7 +239,14 @@ function DirectMintTab({ address, isConnected, state, execute, reset }: DirectMi
 
       {/* PAXG input */}
       <div style={{ marginBottom: 20 }}>
-        <label style={labelStyle}>PAXG Amount</label>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+          <label style={{ ...labelStyle, marginBottom: 0 }}>PAXG Amount</label>
+          {paxgBalance !== null && (
+            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.1em' }}>
+              BALANCE: {paxgBalance} PAXG
+            </span>
+          )}
+        </div>
         <div style={{ position: 'relative' }}>
           <input
             type="text"
@@ -359,8 +386,28 @@ function RedeemTab({ address, isConnected, state, execute, reset }: RedeemTabPro
   const [quoteError, setQE]       = useState<string | null>(null);
   const [redeemStale, setRS]      = useState(false);
   const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const identityStatus            = useIdentityStatus(address);
-  const identityVerified          = identityStatus === 'verified';
+  const identityStatus   = useIdentityStatus(address);
+  const identityVerified = identityStatus === 'verified';
+  const [axauBalance, setAxauBalance] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!address) { setAxauBalance(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { ethers } = await import('ethers');
+        const provider = new ethers.JsonRpcProvider('https://arb1.arbitrum.io/rpc');
+        const axau     = new ethers.Contract(
+          '0xbcCA4D937d427829914498423aE6E04C846dB0Bb',
+          ['function balanceOf(address) view returns (uint256)'],
+          provider,
+        );
+        const bal = (await axau.balanceOf(address)) as bigint;
+        if (!cancelled) setAxauBalance(parseFloat(ethers.formatUnits(bal, 18)).toFixed(6));
+      } catch { if (!cancelled) setAxauBalance(null); }
+    })();
+    return () => { cancelled = true; };
+  }, [address]);
 
   const fetchQuote = useCallback(async (raw: string) => {
     const trimmed = raw.trim();
@@ -436,7 +483,7 @@ function RedeemTab({ address, isConnected, state, execute, reset }: RedeemTabPro
 
       {/* Pre-flight */}
       <div style={{ background: C.bgAlt, border: `1px solid ${C.border}`, padding: '14px 18px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
-        <IdentityBadge address={address} />
+        <IdentityStatusDisplay status={identityStatus} />
         {quote && (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', border: `1px solid ${C.border}`, background: C.bg, color: quote.redeemPaused ? C.red : C.green }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: quote.redeemPaused ? '#dc2626' : '#16a34a', display: 'inline-block', flexShrink: 0 }} />
@@ -447,7 +494,14 @@ function RedeemTab({ address, isConnected, state, execute, reset }: RedeemTabPro
 
       {/* AXAU input */}
       <div style={{ marginBottom: 20 }}>
-        <label style={labelStyle}>AXAU Amount to Redeem</label>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+          <label style={{ ...labelStyle, marginBottom: 0 }}>AXAU Amount to Redeem</label>
+          {axauBalance !== null && (
+            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.1em' }}>
+              BALANCE: {axauBalance} AXAU
+            </span>
+          )}
+        </div>
         <div style={{ position: 'relative' }}>
           <input
             type="text"
@@ -530,9 +584,14 @@ function RedeemTab({ address, isConnected, state, execute, reset }: RedeemTabPro
       )}
 
       {/* Disclosure */}
-      <p style={{ fontFamily: 'Georgia, serif', fontSize: 11, color: C.muted, lineHeight: 1.65, margin: '0 0 20px', padding: '12px 14px', background: C.bgAlt, border: `1px solid ${C.border}` }}>
-        Redemption requires an identity-verified wallet on Arbitrum One. The PAXG amount received may differ from the displayed quote due to price movement at execution. Fees apply. This interface is non-custodial.
-      </p>
+      <div style={{ margin: '0 0 20px', padding: '12px 14px', background: C.bgAlt, border: `1px solid ${C.border}` }}>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.amber, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 6px' }}>
+          Redemption Notice
+        </p>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 11, color: C.muted, lineHeight: 1.65, margin: 0 }}>
+          You receive <strong>PAXG</strong> (Paxos Gold token) — not AXUSD. Redemption requires an identity-verified wallet on Arbitrum One. The PAXG amount received may differ from the displayed quote due to price movement at execution. This interface is non-custodial.
+        </p>
+      </div>
 
       <button
         type="button"

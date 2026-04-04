@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { assertArbitrumOne } from '../../lib/utils/assertArbitrumOne';
 
 export type RedeemPhase = 'ready' | 'approving' | 'redeeming' | 'done' | 'error';
 
@@ -13,7 +14,6 @@ export interface RedeemState {
 const CONTROLLER_ADDR = '0x036F05a3fB74d35439c074f25F691b36f5D37792';
 const AXAU_ADDR       = '0xbcCA4D937d427829914498423aE6E04C846dB0Bb';
 const XAU_VAULT_ID    = '0x7c687a3207cd9c05b4b11d8dd7ac337919c2200102d72989a597ebc5afcf180b';
-const ARBITRUM_ONE    = 42161n;
 
 const AXAU_ABI = [
   'function approve(address spender, uint256 amount) returns (bool)',
@@ -34,6 +34,32 @@ const INITIAL: RedeemState = {
   error: null,
 };
 
+function decodeRevertReason(raw: string): string {
+  const lower = raw.toLowerCase();
+  if (lower.includes('user rejected') || lower.includes('user denied') || lower.includes('rejected by user')) {
+    return 'Transaction rejected by wallet.';
+  }
+  if (lower.includes('redeempaused') || lower.includes('redeem paused') || lower.includes('paused')) {
+    return 'Redemptions are currently paused. Please check the AXAU reserve page for status.';
+  }
+  if (lower.includes('notverified') || lower.includes('not verified') || lower.includes('unverified') || lower.includes('identity')) {
+    return 'Your wallet is not identity-verified. Visit the Early Access page to apply.';
+  }
+  if (lower.includes('insufficientreserve') || lower.includes('insufficient reserve') || lower.includes('coverage')) {
+    return 'Insufficient vault coverage. Redemption suspended to protect the reserve.';
+  }
+  if (lower.includes('staleoracleprice') || lower.includes('stale oracle') || lower.includes('oracle')) {
+    return 'Oracle price feed is stale. Please retry in ~90 seconds.';
+  }
+  if (lower.includes('insufficient balance') || lower.includes('erc20') || lower.includes('transferfrom')) {
+    return 'Insufficient AXAU balance for this redemption. Check your wallet and try again.';
+  }
+  if (lower.includes('allowance') || lower.includes('not approved')) {
+    return 'AXAU approval failed or insufficient. Please try again.';
+  }
+  return raw.length > 220 ? raw.slice(0, 220) + '…' : raw;
+}
+
 export function useRedeem() {
   const [state, setState] = useState<RedeemState>(INITIAL);
   const operationId = useRef(0);
@@ -52,12 +78,7 @@ export function useRedeem() {
       const { ethers } = await import('ethers');
       const provider = new ethers.BrowserProvider(eth as ConstructorParameters<typeof ethers.BrowserProvider>[0]);
 
-      const network = await provider.getNetwork();
-      if (network.chainId !== ARBITRUM_ONE) {
-        throw new Error(
-          `Switch to Arbitrum One to redeem AXAU (chain ID 42161). Currently on chain ID ${network.chainId}.`,
-        );
-      }
+      await assertArbitrumOne(provider as Parameters<typeof assertArbitrumOne>[0]);
 
       const signer      = await provider.getSigner();
       const userAddress = await signer.getAddress();
@@ -109,10 +130,7 @@ export function useRedeem() {
     } catch (err: unknown) {
       if (operationId.current !== opId) return;
       const raw = err instanceof Error ? err.message : String(err);
-      const msg = raw.includes('user rejected') || raw.includes('User denied')
-        ? 'Transaction rejected by wallet.'
-        : raw.length > 200 ? raw.slice(0, 200) + '…' : raw;
-      setState({ ...INITIAL, phase: 'error', error: msg });
+      setState({ ...INITIAL, phase: 'error', error: decodeRevertReason(raw) });
     }
   }, []);
 
