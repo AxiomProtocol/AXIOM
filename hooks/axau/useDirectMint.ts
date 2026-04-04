@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import type { ethers } from 'ethers';
 import { assertArbitrumOne } from '../../lib/utils/assertArbitrumOne';
 
 export type DirectMintPhase = 'ready' | 'approving' | 'minting' | 'done' | 'error';
@@ -60,7 +61,7 @@ function decodeRevertReason(raw: string): string {
   return raw.length > 220 ? raw.slice(0, 220) + '…' : raw;
 }
 
-export function useDirectMint() {
+export function useDirectMint(getSigner: () => Promise<ethers.Signer>) {
   const [state, setState] = useState<DirectMintState>(INITIAL);
   const operationId = useRef(0);
   const successRef  = useRef(false);
@@ -71,16 +72,12 @@ export function useDirectMint() {
     setState(INITIAL);
 
     try {
-      if (typeof window === 'undefined') throw new Error('Browser only');
-      const eth = (window as unknown as Record<string, unknown>).ethereum;
-      if (!eth) throw new Error('No injected wallet found. Install MetaMask or a compatible wallet.');
-
       const { ethers } = await import('ethers');
-      const provider = new ethers.BrowserProvider(eth as ConstructorParameters<typeof ethers.BrowserProvider>[0]);
+      const signer      = await getSigner();
+      const provider    = signer.provider as ethers.BrowserProvider;
 
       await assertArbitrumOne(provider as Parameters<typeof assertArbitrumOne>[0]);
 
-      const signer      = await provider.getSigner();
       const userAddress = await signer.getAddress();
       const paxgWei     = ethers.parseUnits(paxgAmountFormatted, 18);
 
@@ -132,7 +129,7 @@ export function useDirectMint() {
       const raw = err instanceof Error ? err.message : String(err);
       setState({ ...INITIAL, phase: 'error', error: decodeRevertReason(raw) });
     }
-  }, []);
+  }, [getSigner]);
 
   const reset = useCallback(() => {
     operationId.current++;

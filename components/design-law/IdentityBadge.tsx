@@ -41,29 +41,18 @@ export function useIdentityStatus(address: string | null): IdentityStatus {
   return status;
 }
 
+const baseStyle: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  fontFamily: '"Courier New", monospace', fontSize: 10,
+  letterSpacing: '0.12em', textTransform: 'uppercase' as const,
+  padding: '4px 10px', border: `1px solid ${C.border}`,
+  background: C.bg,
+};
+
 export function IdentityStatusDisplay({ status }: { status: IdentityStatus }) {
-  return <IdentityBadge address={null} _overrideStatus={status} />;
-}
-
-export function IdentityBadge({ address, onStatusChange, _overrideStatus }: IdentityBadgeProps & { _overrideStatus?: IdentityStatus }) {
-  const fetched = useIdentityStatus(_overrideStatus !== undefined ? null : address);
-  const status  = _overrideStatus !== undefined ? _overrideStatus : fetched;
-
-  useEffect(() => {
-    onStatusChange?.(status);
-  }, [status, onStatusChange]);
-
-  const base: React.CSSProperties = {
-    display: 'inline-flex', alignItems: 'center', gap: 6,
-    fontFamily: '"Courier New", monospace', fontSize: 10,
-    letterSpacing: '0.12em', textTransform: 'uppercase' as const,
-    padding: '4px 10px', border: `1px solid ${C.border}`,
-    background: C.bg,
-  };
-
-  if (!address || status === 'idle') {
+  if (status === 'idle') {
     return (
-      <span style={{ ...base, color: C.muted }}>
+      <span style={{ ...baseStyle, color: C.muted }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.muted, display: 'inline-block', flexShrink: 0 }} />
         Wallet not connected
       </span>
@@ -72,7 +61,7 @@ export function IdentityBadge({ address, onStatusChange, _overrideStatus }: Iden
 
   if (status === 'loading') {
     return (
-      <span style={{ ...base, color: C.muted }}>
+      <span style={{ ...baseStyle, color: C.muted }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d1d5db', display: 'inline-block', flexShrink: 0 }} />
         Checking identity...
       </span>
@@ -81,7 +70,7 @@ export function IdentityBadge({ address, onStatusChange, _overrideStatus }: Iden
 
   if (status === 'verified') {
     return (
-      <span style={{ ...base, color: C.green, borderColor: '#86efac' }}>
+      <span style={{ ...baseStyle, color: C.green, borderColor: '#86efac' }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#16a34a', display: 'inline-block', flexShrink: 0 }} />
         Identity Verified
       </span>
@@ -90,7 +79,7 @@ export function IdentityBadge({ address, onStatusChange, _overrideStatus }: Iden
 
   if (status === 'unverified') {
     return (
-      <span style={{ ...base, color: C.red, borderColor: '#fca5a5' }}>
+      <span style={{ ...baseStyle, color: C.red, borderColor: '#fca5a5' }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc2626', display: 'inline-block', flexShrink: 0 }} />
         Identity Required —{' '}
         <a href="/axau-access" style={{ color: C.navy, textDecoration: 'underline', fontFamily: 'inherit', fontSize: 'inherit' }}>
@@ -101,9 +90,19 @@ export function IdentityBadge({ address, onStatusChange, _overrideStatus }: Iden
   }
 
   return (
-    <span style={{ ...base, color: C.muted }}>
+    <span style={{ ...baseStyle, color: C.muted }}>
       <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d1d5db', display: 'inline-block', flexShrink: 0 }} />
       Identity check unavailable
     </span>
   );
+}
+
+export function IdentityBadge({ address, onStatusChange }: IdentityBadgeProps) {
+  const status = useIdentityStatus(address);
+
+  useEffect(() => {
+    onStatusChange?.(status);
+  }, [status, onStatusChange]);
+
+  return <IdentityStatusDisplay status={status} />;
 }

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import type { ethers } from 'ethers';
 import { assertArbitrumOne } from '../../lib/utils/assertArbitrumOne';
 
 export type RedeemPhase = 'ready' | 'approving' | 'redeeming' | 'done' | 'error';
@@ -21,9 +22,9 @@ const AXAU_ABI = [
 ] as const;
 
 const CONTROLLER_ABI = [
-  'function redeemToAsset(bytes32 componentId, uint256 axauAmountIn) external returns (uint256 tokenAmountOut)',
-  'function quoteRedeem(bytes32 vaultId, uint256 axauAmount) view returns (uint256 tokenToUser, uint256 backingNavWad)',
-  'event Redeemed(address indexed user, bytes32 indexed vaultId, address indexed reserveAsset, uint256 axauAmountIn, uint256 tokenAmountOut, uint256 navWad, uint256 coverageAfterBps)',
+  'function redeemFromComponent(bytes32 componentId, uint256 axauAmountIn) external returns (uint256 reserveAmountOut)',
+  'function quoteRedeem(bytes32 vaultId, uint256 axauAmount) view returns (uint256 reserveToUser, uint256 redeemNavWad)',
+  'event Redeemed(address indexed user, bytes32 indexed vaultId, address indexed reserveAsset, uint256 axauAmountIn, uint256 reserveAmountOut, uint256 redeemNavWad)',
 ] as const;
 
 const INITIAL: RedeemState = {
@@ -40,18 +41,18 @@ function decodeRevertReason(raw: string): string {
     return 'Transaction rejected by wallet.';
   }
   if (lower.includes('redeempaused') || lower.includes('redeem paused') || lower.includes('paused')) {
-    return 'Redemptions are currently paused. Please check the AXAU reserve page for status.';
+    return 'Redemption is currently paused. Please check the AXAU reserve page for status.';
   }
   if (lower.includes('notverified') || lower.includes('not verified') || lower.includes('unverified') || lower.includes('identity')) {
     return 'Your wallet is not identity-verified. Visit the Early Access page to apply.';
   }
   if (lower.includes('insufficientreserve') || lower.includes('insufficient reserve') || lower.includes('coverage')) {
-    return 'Insufficient vault coverage. Redemption suspended to protect the reserve.';
+    return 'Insufficient vault reserves for redemption at this time.';
   }
   if (lower.includes('staleoracleprice') || lower.includes('stale oracle') || lower.includes('oracle')) {
-    return 'Oracle price feed is stale. Please retry in ~90 seconds.';
+    return 'Oracle price feed is stale. Redemption requires a fresh oracle price. Please retry in ~90 seconds.';
   }
-  if (lower.includes('insufficient balance') || lower.includes('erc20') || lower.includes('transferfrom')) {
+  if (lower.includes('insufficient balance') || lower.includes('burn')) {
     return 'Insufficient AXAU balance for this redemption. Check your wallet and try again.';
   }
   if (lower.includes('allowance') || lower.includes('not approved')) {
@@ -60,7 +61,7 @@ function decodeRevertReason(raw: string): string {
   return raw.length > 220 ? raw.slice(0, 220) + '…' : raw;
 }
 
-export function useRedeem() {
+export function useRedeem(getSigner: () => Promise<ethers.Signer>) {
   const [state, setState] = useState<RedeemState>(INITIAL);
   const operationId = useRef(0);
   const successRef  = useRef(false);
@@ -71,26 +72,22 @@ export function useRedeem() {
     setState(INITIAL);
 
     try {
-      if (typeof window === 'undefined') throw new Error('Browser only');
-      const eth = (window as unknown as Record<string, unknown>).ethereum;
-      if (!eth) throw new Error('No injected wallet found. Install MetaMask or a compatible wallet.');
-
       const { ethers } = await import('ethers');
-      const provider = new ethers.BrowserProvider(eth as ConstructorParameters<typeof ethers.BrowserProvider>[0]);
+      const signer      = await getSigner();
+      const provider    = signer.provider as ethers.BrowserProvider;
 
       await assertArbitrumOne(provider as Parameters<typeof assertArbitrumOne>[0]);
 
-      const signer      = await provider.getSigner();
       const userAddress = await signer.getAddress();
       const axauWei     = ethers.parseUnits(axauAmountFormatted, 18);
 
-      const axauToken = new ethers.Contract(AXAU_ADDR, AXAU_ABI, signer);
-      const allowance = (await axauToken.allowance(userAddress, CONTROLLER_ADDR)) as bigint;
+      const axau      = new ethers.Contract(AXAU_ADDR, AXAU_ABI, signer);
+      const allowance = (await axau.allowance(userAddress, CONTROLLER_ADDR)) as bigint;
 
       if (allowance < axauWei) {
         if (operationId.current !== opId) return;
         setState(s => ({ ...s, phase: 'approving' }));
-        const approveTx = await axauToken.approve(CONTROLLER_ADDR, axauWei);
+        const approveTx = await axau.approve(CONTROLLER_ADDR, axauWei);
         await approveTx.wait();
         if (operationId.current !== opId) return;
       }
@@ -101,7 +98,7 @@ export function useRedeem() {
       if (operationId.current !== opId) return;
       setState(s => ({ ...s, phase: 'redeeming' }));
 
-      const redeemTx = await controller.redeemToAsset(XAU_VAULT_ID, axauWei);
+      const redeemTx = await controller.redeemFromComponent(XAU_VAULT_ID, axauWei);
       if (operationId.current !== opId) return;
       setState(s => ({ ...s, txHash: redeemTx.hash }));
 
@@ -116,8 +113,8 @@ export function useRedeem() {
         try {
           const parsed = iface.parseLog({ topics: [...log.topics], data: log.data });
           if (parsed?.name === 'Redeemed') {
-            paxgReceived = parseFloat(ethers.formatUnits(parsed.args.tokenAmountOut as bigint, 18)).toFixed(6);
-            axauBurned   = parseFloat(ethers.formatUnits(parsed.args.axauAmountIn   as bigint, 18)).toFixed(6);
+            paxgReceived = parseFloat(ethers.formatUnits(parsed.args.reserveAmountOut as bigint, 18)).toFixed(6);
+            axauBurned   = parseFloat(ethers.formatUnits(parsed.args.axauAmountIn     as bigint, 18)).toFixed(6);
             break;
           }
         } catch { /* not our event */ }
@@ -132,7 +129,7 @@ export function useRedeem() {
       const raw = err instanceof Error ? err.message : String(err);
       setState({ ...INITIAL, phase: 'error', error: decodeRevertReason(raw) });
     }
-  }, []);
+  }, [getSigner]);
 
   const reset = useCallback(() => {
     operationId.current++;

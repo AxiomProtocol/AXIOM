@@ -1,10 +1,11 @@
 import Head from 'next/head';
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useWalletClient } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
 import { IdentityStatusDisplay, useIdentityStatus } from '../components/design-law/IdentityBadge';
 import { useDirectMint, type DirectMintState } from '../hooks/axau/useDirectMint';
 import { useRedeem, type RedeemState } from '../hooks/axau/useRedeem';
+import { walletClientToSigner } from '../lib/utils/walletClientToSigner';
 
 const C = {
   navy:    '#1e3a5f',
@@ -388,6 +389,15 @@ function RedeemTab({ address, isConnected, state, execute, reset }: RedeemTabPro
   const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
   const identityStatus   = useIdentityStatus(address);
   const identityVerified = identityStatus === 'verified';
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/axau/oracle-freshness')
+      .then(r => r.json())
+      .then(d => { if (!cancelled && d.oracleStale) setRS(true); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
   const [axauBalance, setAxauBalance] = useState<string | null>(null);
 
   useEffect(() => {
@@ -815,10 +825,16 @@ function AssistedMintTab({ address, isConnected }: { address: string | null; isC
 
 export default function AxauBuyPage() {
   const { address, isConnected } = useAccount();
+  const { data: walletClient }   = useWalletClient();
   const [activeTab, setActiveTab] = useState<ActiveTab>('direct-mint');
 
-  const mint   = useDirectMint();
-  const redeem = useRedeem();
+  const getSigner = useCallback(async () => {
+    if (!walletClient) throw new Error('Wallet not connected. Please connect your wallet first.');
+    return walletClientToSigner(walletClient);
+  }, [walletClient]);
+
+  const mint   = useDirectMint(getSigner);
+  const redeem = useRedeem(getSigner);
 
   const directBusy = mint.state.phase === 'approving' || mint.state.phase === 'minting';
   const redeemBusy = redeem.state.phase === 'approving' || redeem.state.phase === 'redeeming';
