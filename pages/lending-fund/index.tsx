@@ -306,11 +306,11 @@ export default function LendingFundPage() {
             </p>
             <div className="flex flex-wrap gap-2 mb-6">
               {[
-                '50% APR Hard Cap',
                 'Max 70% LTV',
                 'Arbitrum One',
                 'SEC Reg D 506(c)',
                 'AXUSD Denominated',
+                'Accredited Only',
               ].map(tag => (
                 <span key={tag} className="px-3 py-1 text-xs font-dl-mono text-dl-gray border border-dl-border bg-dl-bg">
                   {tag}
@@ -329,7 +329,7 @@ export default function LendingFundPage() {
               <div className="px-4 py-3 border-r border-dl-border text-center">
                 <p className="font-dl-mono text-xs text-dl-gray mb-1">Target Return</p>
                 <p className="font-dl-serif text-lg text-dl-navy font-semibold">10–14%</p>
-                <p className="text-xs text-dl-gray">Variable / Annual</p>
+                <p className="text-xs text-dl-gray">Variable — not guaranteed</p>
               </div>
               <div className="px-4 py-3 border-r border-dl-border text-center">
                 <p className="font-dl-mono text-xs text-dl-gray mb-1">Max LTV</p>
@@ -372,8 +372,8 @@ export default function LendingFundPage() {
             <p className="font-dl-mono text-lg font-semibold text-dl-navy">{loading ? '...' : `${utilizationRate}%`}</p>
           </div>
           <div className="px-4 py-4 bg-dl-bg-alt">
-            <p className="text-xs text-dl-gray mb-1">Target Annual Rate</p>
-            <p className="font-dl-mono text-lg font-semibold text-dl-navy">{loading ? '...' : stats?.apy || '10-14%'}</p>
+            <p className="text-xs text-dl-gray mb-1">Target Return (Variable)</p>
+            <p className="font-dl-mono text-lg font-semibold text-dl-navy">{loading ? '...' : stats?.apy || '10–14%'}</p>
           </div>
         </div>
       </div>

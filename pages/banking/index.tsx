@@ -541,10 +541,33 @@ export default function BankingDashboard() {
   return (
     <DesignLawLayout>
       {/* Page Header */}
-      <div style={{ marginBottom: 28 }}>
+      <div style={{ marginBottom: 16 }}>
         <p style={monoLabel}>Axiom Protocol / Banking Infrastructure</p>
         <h1 style={{ ...serif(30), marginTop: 6, marginBottom: 6 }}>Axiom Nexus Account</h1>
         <p style={{ ...mono, fontSize: 12 }}>FDIC-insured institutional checking · First Internet Bank · Powered by Increase</p>
+      </div>
+
+      {/* Infrastructure status panel */}
+      <div style={{ border: `1px solid ${DL.border}`, marginBottom: 24 }}>
+        <div style={{ padding: '10px 18px', borderBottom: `1px solid ${DL.border}`, background: DL.surface }}>
+          <p style={{ ...monoLabel, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Banking Infrastructure Status</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+          <div style={{ padding: '14px 18px', borderRight: `1px solid ${DL.border}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <p style={{ ...mono, fontSize: 12, color: DL.navy, fontWeight: 600 }}>Increase (ACH/Wire Rails)</p>
+              <span style={{ fontFamily: 'monospace', fontSize: 10, padding: '2px 8px', border: `1px solid ${DL.forest}`, color: DL.forest, textTransform: 'uppercase', letterSpacing: '0.08em' }}>LIVE</span>
+            </div>
+            <p style={{ ...mono, fontSize: 11 }}>Primary fiat banking layer · FDIC-insured · First Internet Bank · ACH + wire settlement</p>
+          </div>
+          <div style={{ padding: '14px 18px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <p style={{ ...mono, fontSize: 12, color: DL.navy, fontWeight: 600 }}>BitGo CaaS (Crypto Custody)</p>
+              <span style={{ fontFamily: 'monospace', fontSize: 10, padding: '2px 8px', border: `1px solid ${DL.gold}`, color: DL.gold, textTransform: 'uppercase', letterSpacing: '0.08em' }}>CONFIGURED-INACTIVE</span>
+            </div>
+            <p style={{ ...mono, fontSize: 11 }}>Institutional crypto custody layer · Multi-party authorization · Activation pending enterprise onboarding</p>
+          </div>
+        </div>
       </div>
 
       <SandboxBanner env={environment} />
@@ -600,7 +623,7 @@ export default function BankingDashboard() {
             { icon: <IconBank />, label: 'Settlement Bank', value: 'First Internet Bank' },
             { icon: <IconZap />, label: 'ACH Rails', value: 'Same-day & standard' },
             { icon: <IconGlobe />, label: 'Wire Rails', value: 'Domestic wires' },
-            { icon: <IconRefresh />, label: 'Interest Rate', value: overview ? `${(parseFloat(overview.account.interestRate || '0') * 100).toFixed(2)}% APY` : '—' },
+            { icon: <IconRefresh />, label: 'Interest Rate', value: overview ? `${(parseFloat(overview.account.interestRate || '0') * 100).toFixed(2)}% (Variable)` : '—' },
           ]} />
 
           <InfoBox icon={<IconBank />} title="About the Axiom Nexus Account" variant="navy">
@@ -621,7 +644,7 @@ export default function BankingDashboard() {
                   <DataRow label="Account Name" value={overview.account.name} />
                   <DataRow label="Status" value={<StatusBadge status={overview.account.status} />} />
                   <DataRow label="Bank" value={overview.account.bank.replace(/_/g, ' ')} />
-                  <DataRow label="Interest Rate" value={`${(parseFloat(overview.account.interestRate) * 100).toFixed(2)}% APY`} />
+                  <DataRow label="Interest Rate" value={`${(parseFloat(overview.account.interestRate) * 100).toFixed(2)}% (Variable)`} />
                   <DataRow label="Account ID" value={overview.account.id} mono copyable={overview.account.id} />
                   <DataRow label="Opened" value={new Date(overview.account.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} />
                 </div>

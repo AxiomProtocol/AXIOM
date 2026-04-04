@@ -610,11 +610,12 @@ export default function WealthPracticePage() {
         <div className="absolute inset-0" style={{ background: 'linear-gradient(105deg, rgba(27,42,74,0.90) 0%, rgba(27,42,74,0.60) 55%, rgba(27,42,74,0.20) 100%)' }} />
         <div className="absolute inset-0 flex flex-col justify-end px-6 sm:px-10 pb-8">
           <div className="flex flex-wrap items-center gap-3 mb-4">
-            <span className="text-xs uppercase font-dl-mono font-bold border border-[#B8973A] text-[#B8973A] px-2 py-0.5">Pilot Mode</span>
-            <p className="text-white/85 text-sm">Launching in <strong className="text-white">Atlanta</strong>, <strong className="text-white">Houston</strong>, and <strong className="text-white">Charlotte</strong></p>
+            <span className="text-xs uppercase font-dl-mono font-bold border border-[#B8973A] text-[#B8973A] px-2 py-0.5">Groups Forming</span>
+            <span className="text-xs uppercase font-dl-mono font-bold border border-white/40 text-white/80 px-2 py-0.5">LIVE on Arbitrum One</span>
+            <p className="text-white/85 text-sm">Pilot cities: <strong className="text-white">Atlanta</strong>, <strong className="text-white">Houston</strong>, <strong className="text-white">Charlotte</strong></p>
           </div>
           <h1 className="font-dl-serif text-3xl sm:text-4xl text-white font-bold leading-tight mb-2">The Wealth Practice</h1>
-          <p className="text-white/75 text-base max-w-lg">Community Group Economics Engine — build wealth together, on-chain, in community.</p>
+          <p className="text-white/75 text-base max-w-lg">Structured group savings framework with a three-stage trust pipeline — on-chain, transparent, and community-governed.</p>
         </div>
       </div>
 

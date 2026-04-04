@@ -128,15 +128,33 @@ export default function PilotDashboard() {
         <title>Axiom Capital Program — Overview</title>
       </Head>
 
-      <div className="mb-6">
+      <div className="mb-3">
+        <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Capital Program / SEC Reg D 506(c)</p>
         <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Axiom Capital Program</h1>
-        <p className="text-sm text-dl-gray">$1M dual-asset program with institutional-grade reporting and full audit trails</p>
+        <p className="text-sm text-dl-gray">$1M dual-asset program with institutional-grade reporting and full audit trails · Accredited participants only</p>
       </div>
 
       <PilotNav currentTab="dashboard" />
 
+      <div className="border border-dl-border mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+          <div className="px-5 py-3 border-r border-dl-border">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Program Status</p>
+            <p className="font-dl-mono text-xs text-dl-forest font-semibold uppercase">LIVE — Capital Deployed</p>
+          </div>
+          <div className="px-5 py-3 border-r border-dl-border">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Regulatory Framework</p>
+            <p className="font-dl-mono text-xs text-dl-navy">SEC Reg D 506(c) · Accredited Only</p>
+          </div>
+          <div className="px-5 py-3">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Settlement</p>
+            <p className="font-dl-mono text-xs text-dl-navy">AXUSD on Arbitrum One</p>
+          </div>
+        </div>
+      </div>
+
       <div className="border border-dl-border bg-dl-bg-alt p-5 mb-8">
-        <p className="text-sm text-dl-gray leading-relaxed">The Axiom Capital Program is a $1M dual-asset program designed to prove community-driven real estate participation at scale. Two carefully selected properties — a multifamily cash-flow asset and a commercial appreciation play — form the foundation of a model that can expand nationwide.</p>
+        <p className="text-sm text-dl-gray leading-relaxed">The Axiom Capital Program is a $1M dual-asset program designed to demonstrate community-driven real estate participation at scale. All figures shown are live data from the program ledger. Target yields shown are projections — not guarantees. Past performance does not indicate future results.</p>
       </div>
 
       {loading ? (

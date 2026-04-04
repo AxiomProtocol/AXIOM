@@ -1646,6 +1646,29 @@ export default function SolvencyPage() {
         </p>
       </div>
 
+      <div className="border border-dl-border mb-8">
+        <div className="px-5 py-3 border-b border-dl-border bg-dl-bg-alt">
+          <p className="text-xs text-dl-gray uppercase tracking-widest font-dl-mono">How to Read This Report</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+          <div className="px-5 py-4 border-r border-dl-border">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Allocator View</p>
+            <p className="text-sm text-dl-gray leading-relaxed">Capital adequacy metrics, asset composition, loss-absorption waterfall, and adaptive target compliance. Intended for capital allocation due diligence.</p>
+          </div>
+          <div className="px-5 py-4 border-r border-dl-border">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Clearinghouse View</p>
+            <p className="text-sm text-dl-gray leading-relaxed">Counterparty risk, AXUSD stability modeling, deterministic stress scenarios, hard brake triggers, and solvency history. Intended for settlement risk assessment.</p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Regulatory View</p>
+            <p className="text-sm text-dl-gray leading-relaxed">Full disclosure documentation, metric definitions, audit verification procedures, data integrity controls, and policy mode framework. Intended for compliance review.</p>
+          </div>
+        </div>
+        <div className="px-5 py-3 border-t border-dl-border bg-dl-bg">
+          <p className="font-dl-mono text-xs text-dl-gray">All data is derived from reconciliation snapshots with cryptographic checksums. No independent third-party audit has been completed as of this disclosure. Data integrity relies on snapshot checksums, deterministic computation, and administrative controls.</p>
+        </div>
+      </div>
+
       <div className="border border-dl-border p-6 mb-10 bg-dl-bg-alt">
         <p className="font-dl-serif text-sm text-dl-navy font-medium mb-3">Interpretation Guidance</p>
         <ul className="space-y-2">

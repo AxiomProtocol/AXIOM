@@ -80,13 +80,20 @@ export default function ExecutionFrameworkPage() {
         <meta name="description" content="Your participation record. Your platform access level. Your protocol credit score." />
       </Head>
 
-      <div className="mb-10">
-        <p className="text-xs text-dl-gray uppercase tracking-widest font-dl-mono mb-2">Operations</p>
+      <div className="mb-6">
+        <p className="text-xs text-dl-gray uppercase tracking-widest font-dl-mono mb-2">Operations / Protocol Operating Rules</p>
         <SectionHeading>Graduated Execution Framework</SectionHeading>
         <p className="text-dl-gray text-sm leading-relaxed mt-3 max-w-2xl">
-          Your participation record. Your platform access level. Your protocol credit score.
-          GEF tier is determined by contribution history, cycle completions, and governance participation
-          — not capital size.
+          Protocol access is earned, not purchased. The Graduated Execution Framework (GEF) defines how participation
+          history — contribution cycles, governance engagement, and cycle completion — determines platform access tier
+          and credit authority. Capital size is not a criterion.
+        </p>
+      </div>
+
+      <div className="border border-dl-border bg-dl-bg-alt px-5 py-4 mb-8">
+        <p className="text-xs text-dl-gray uppercase tracking-widest font-dl-mono mb-2">Protocol Rule</p>
+        <p className="text-sm text-dl-navy leading-relaxed">
+          Tier advancement is automatic upon verified cycle completion. Real estate bridge capital (Lending Fund borrowing) is reserved for Operator tier and above. All credit lines are recourse obligations against future participation rights — not against physical assets.
         </p>
       </div>
 

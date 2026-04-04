@@ -116,12 +116,12 @@ const CONTRACTS: ContractInfo[] = [
 ];
 
 const SECURITY_FEATURES = [
-  { name: 'OpenZeppelin Contracts', status: 'active', description: 'Battle-tested security standards', icon: '🛡️' },
-  { name: 'Role-Based Access Control', status: 'active', description: 'Granular permission management', icon: '🔐' },
-  { name: 'Pausable Contracts', status: 'active', description: 'Emergency halt capabilities', icon: '⏸️' },
-  { name: 'Reentrancy Guards', status: 'active', description: 'Protection against reentrancy attacks', icon: '🚫' },
-  { name: 'Multi-Sig Treasury', status: 'active', description: 'Multiple approvals for fund movements', icon: '✍️' },
-  { name: 'SafeERC20 Transfers', status: 'active', description: 'Safe token transfer handling', icon: '💸' },
+  { name: 'OpenZeppelin Contracts', status: 'active', description: 'Battle-tested security primitives: AccessControl, Pausable, SafeERC20, ReentrancyGuard, TimelockController.' },
+  { name: 'Role-Based Access Control', status: 'active', description: 'Six-role hierarchy: DEFAULT_ADMIN, RISK_COMMITTEE, SETTLEMENT_AUTHORITY, GUARDIAN (emergency pause), OPERATOR, CIRCUIT_BREAKER.' },
+  { name: 'Pausable Contracts', status: 'active', description: 'Emergency halt authority held by GUARDIAN_ROLE. Immediate pause requires no timelock delay.' },
+  { name: 'Reentrancy Guards', status: 'active', description: 'All external state-changing functions protected via OpenZeppelin ReentrancyGuard. Vault interactions use checks-effects-interactions.' },
+  { name: 'Multi-Party Authorization', status: 'active', description: 'Governance Safe (3-of-5 multi-party) holds PROPOSER_ROLE. All parameter changes require 24-hour timelock before execution.' },
+  { name: 'ERC-3643 Identity Gating', status: 'active', description: 'KYC_VERIFIED + SANCTIONS_CLEAR claims required for AXUSD issuance. On-chain identity registry enforces compliance at the token layer.' },
 ];
 
 const formatCurrency = (value: string | number) => {
@@ -170,8 +170,9 @@ export default function TransparencyPage() {
         <meta name="description" content="Complete visibility into Axiom's smart contracts, security, and governance." />
       </Head>
 
-      <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Transparency Dashboard</h1>
-      <p className="text-sm text-dl-gray mb-8">Complete visibility into Axiom's smart contracts, treasury, and security infrastructure.</p>
+      <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Protocol Trust Index</h1>
+      <p className="text-sm text-dl-gray mb-1">Complete visibility into Axiom Protocol's automated control layers, treasury position, and security infrastructure.</p>
+      <p className="text-xs text-dl-gray font-dl-mono mb-8">Arbitrum One (Chain ID: 42161) — Updated continuously from on-chain state</p>
 
       <section id="treasury" className="mb-10">
         <SectionHeading>Treasury Dashboard</SectionHeading>
@@ -343,14 +344,11 @@ export default function TransparencyPage() {
               key={i}
               className="p-4 border-r border-b border-dl-border last:border-r-0"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">{feature.icon}</span>
-                <h3 className="text-sm font-medium text-dl-navy">{feature.name}</h3>
-              </div>
+              <h3 className="text-sm font-medium text-dl-navy mb-2">{feature.name}</h3>
               <p className="text-xs text-dl-gray leading-relaxed">{feature.description}</p>
               <div className="mt-3 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-dl-forest" />
-                <span className="text-xs text-dl-forest font-dl-mono">Active</span>
+                <span className="text-xs text-dl-forest font-dl-mono">LIVE</span>
               </div>
             </div>
           ))}

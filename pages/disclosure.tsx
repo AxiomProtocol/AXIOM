@@ -102,20 +102,24 @@ export default function DisclosurePage() {
   }, []);
 
   const liveItems = [
-    'AXM governance token (ERC20, verified on Arbiscan)',
-    'Unified AXUSD (ERC-3643, T-REX) — canonical stablecoin with on-chain identity verification and modular compliance enforcement',
-    'Primary Peg Stability Module (USDC collateral, 5M ceiling) — legacy infrastructure; backing consolidated into Unified AXUSD',
-    'Euler Peg Stability Module (USDC collateral, 500K ceiling) — legacy infrastructure; backing consolidated into Unified AXUSD',
-    'Euler V2 Lending Vault (eAXUSD-4, accepting deposits)',
-    'Revenue distribution engine (fee routing configured)',
-    'Identity and Compliance Hub',
-    'Treasury and Revenue Hub (multi-party authorization)',
-    'Citizen Credential Registry',
-    'Land and Asset Registry',
-    'Lease and Rent Engine',
-    'Exchange Hub',
-    'Solvency Disclosure Console',
-    'Adaptive Metrics Engine (AME v1.0.0)',
+    'AXM governance token (ERC20, 15B supply, verified on Arbiscan)',
+    'Unified AXUSD (ERC-3643, T-REX) — canonical stablecoin with on-chain identity gating, modular compliance enforcement (Country Allow, Max Balance, Transfer Limit, Lending Platform), and 100% reserve backing design',
+    'eAXUSD-6 EVK Open Market Vault (Euler V2) — 1M supply cap, 500K borrow cap; USDC collateral at 90% borrow LTV',
+    'Euler Earn AXUSD Vault (earnAXUSD) — yield aggregation over eAXUSD-6; 10% performance fee to AxiomFeeBurner',
+    'EulerSwap AXUSD/USDC Pool — single-LP AMM; idle capital earns lending yield; 0.003% swap fee',
+    'AXIOMCreditMarket v7 — LP pool with ERC-3643 identity gating (Wildcat V2 pattern); accepts AXUSD from verified participants',
+    'Fixed Loan NFT (AXIOMFixedLoan) — ERC721 bridge loan receipts with draw tranches and amortization schedules',
+    'FixFlip Vault and DSCR Pool Vault (ERC4626) — governed by RiskConfig V3; Reg D 506(c) framework',
+    'Revenue distribution engine (fee routing: 50/30/20 split configured)',
+    'Identity and Compliance Hub — on-chain KYC/AML, role-based authorization',
+    'Treasury and Revenue Hub — multi-party authorization, protocol reserves',
+    'Governance Hub — 24-hour timelock on parameter changes; Governance Safe (3-of-5) holds PROPOSER_ROLE',
+    'Citizen Credential Registry — on-chain credential issuance and verification',
+    'DePIN Node Suite — node registration, rewards distributor, slashing engine, capital readiness gate',
+    'Wealth Practice Hub — on-chain rotating savings group engine with three-stage trust pipeline',
+    'Land and Asset Registry — real estate asset onboarding framework',
+    'Solvency Disclosure Console — three-mode institutional solvency reporting',
+    'Adaptive Metrics Engine (AME v1.0.0) — deterministic financial computation',
     'Institutional Observer Dashboard',
     'Founder Operations Dashboard with operational logging',
     'MIRDT Capital Intelligence Terminal (nine-dimension advisory signal engine with cryptographic audit chain)',
@@ -124,19 +128,22 @@ export default function DisclosurePage() {
   ];
 
   const configuredItems = [
-    'SEED participation lockup program (contract deployed, activation planned Weeks 11-13)',
-    'The Wealth Practice savings program (contract deployed, activation planned Weeks 11-13)',
-    'Sentinel capital decision layer (deployed, advisory mode only \u2014 no execution authority)',
-    'Lending Fund vault infrastructure (3 contracts deployed, awaiting first deposit)',
-    'DEX liquidity pools (contracts deployed, awaiting liquidity seeding)',
+    'Canonical PSM (ERC-3643 identity-gated) — 1M AXUSD ceiling, 10 bps fee; requires addAgent() activation before mint/redeem are live',
+    'SEED participation lockup program (curve-style vote-escrow, 1–4 year locks; contract deployed, activation pending governance vote)',
+    'Sentinel capital decision layer (deployed, advisory mode only — no execution authority until post-public governance vote)',
+    'Legacy PSM (Primary AXUSD) — USDC reserves remain valid for solvency accounting; transfer to Canonical PSM pending Governance Safe action',
+    'Lease and Rent Engine — KeyGrow rent-to-own automation; deployed, activation pending product phase',
+    'SUSU Personal Vault — self-custody commitment vaults; deployed, activation pending',
+    'Community Social Hub — on-chain social layer; future product phase',
+    'Liquidity Bootstrapper — protocol-owned DEX liquidity seeding; activation pending product launch',
   ];
 
   const plannedItems = [
-    'DeNet decentralized storage node (activation planned Weeks 14-16)',
-    'Universe Blockchain (L3) migration \u2014 testnet not yet launched',
-    'Independent third-party security audit',
-    'External pilot capital programs',
+    'Universe Blockchain (L3) migration — testnet not yet launched',
+    'Independent third-party security audit — planned, capital-dependent',
+    'External pilot capital programs ($100K–$500K allocations)',
     'Community governance transition from founder-operated to token-weighted voting',
+    'AXUSD extended collateral modules (T-bill, ETH diversification)',
   ];
 
   const definitions = [

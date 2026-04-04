@@ -250,10 +250,17 @@ export default function ProofOfExecutionPage() {
         <h1 className="font-dl-serif text-3xl text-dl-navy mb-2">Proof of Execution</h1>
         <p className="text-sm text-dl-gray max-w-2xl">
           Auditable capital deployment record — timestamped, multi-layer operations log across on-chain,
-          real asset, community, and syndication rails. Credibility supported by evidence, not presentation.
+          real asset, community, and syndication rails. Every entry is time-stamped, categorized, and cryptographically
+          linked into a tamper-evident hash chain. Credibility is supported by evidence, not presentation.
         </p>
-        <p className="font-dl-mono text-xs text-dl-gray mt-2 border-t border-dl-border pt-2">
-          Not performance proof, trading proof, yield evidence, or a return guarantee. Operational audit record only.
+      </div>
+
+      <div className="border border-dl-border bg-dl-bg-alt px-5 py-3 mb-8">
+        <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Trust Anchor</p>
+        <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
+          This record is an operational audit log — not performance proof, trading proof, yield evidence, or a return guarantee.
+          It establishes a pre-deployment governance record for allocator due diligence. On-chain transaction references are
+          verifiable on Arbiscan (Chain ID: 42161).
         </p>
       </div>
 

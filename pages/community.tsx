@@ -52,10 +52,10 @@ const TESTIMONIALS: Testimonial[] = [
 ];
 
 const SUCCESS_STATS = [
-  { value: "2,500+", label: "Active Members", icon: "👥" },
-  { value: "$1.2M+", label: "Total Saved", icon: "💰" },
-  { value: "150+", label: "Wealth Practice Groups", icon: "🤝" },
-  { value: "45", label: "Cities Represented", icon: "🌍" },
+  { value: "Live", label: "Wealth Practice Hub" },
+  { value: "3-Stage", label: "Trust Pipeline" },
+  { value: "On-Chain", label: "Contribution Records" },
+  { value: "Arbitrum", label: "Settlement Layer" },
 ];
 
 export default function CommunityPage() {
@@ -76,22 +76,22 @@ export default function CommunityPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Community Success Stories | Axiom</title>
-        <meta name="description" content="Real stories from Axiom members coordinating capital together through structured community savings." />
+        <title>Community Capital Formation | Axiom Protocol</title>
+        <meta name="description" content="Axiom Protocol members coordinating capital through The Wealth Practice — a structured group savings and trust-building framework on Arbitrum One." />
       </Head>
 
-      <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Community Success Stories</h1>
-      <p className="text-sm text-dl-gray mb-8">Real stories from Axiom members coordinating capital together through structured community savings.</p>
+      <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Community Capital Formation</h1>
+      <p className="text-sm text-dl-gray mb-1">Axiom Protocol members coordinating capital together through The Wealth Practice — a structured group savings and trust-building framework.</p>
+      <p className="text-xs text-dl-gray font-dl-mono mb-8">Wealth Practice Hub is LIVE on Arbitrum One. Three-stage trust pipeline routes graduated members into syndication and land acquisition pathways.</p>
 
       <section className="mb-10">
-        <SectionHeading>Community Stats</SectionHeading>
+        <SectionHeading>Protocol Infrastructure</SectionHeading>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border">
           {SUCCESS_STATS.map((stat, i) => (
             <div
               key={i}
               className="px-4 py-4 bg-dl-bg border-r border-b md:border-b-0 border-dl-border last:border-r-0 text-center"
             >
-              <div className="text-2xl mb-2">{stat.icon}</div>
               <div className="font-dl-mono text-lg font-semibold text-dl-navy">{stat.value}</div>
               <div className="text-xs text-dl-gray mt-1">{stat.label}</div>
             </div>

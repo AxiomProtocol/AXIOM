@@ -42,15 +42,15 @@ function Accordion({ items }: { items: AccordionItem[] }) {
 
 function StatusBadge({ status }: { status: 'live' | 'observation' | 'planned' }) {
   const styles = {
-    live: 'bg-dl-bg-alt text-dl-forest border-dl-border',
-    observation: 'bg-dl-bg-alt text-dl-navy border-dl-border',
+    live: 'bg-dl-bg-alt text-dl-forest border-dl-forest',
+    observation: 'bg-dl-bg-alt text-dl-gold border-dl-gold',
     planned: 'bg-dl-bg-alt text-dl-gray border-dl-border',
   };
 
   const labels = {
-    live: 'Live',
-    observation: 'In Observation',
-    planned: 'Planned',
+    live: 'LIVE',
+    observation: 'CONFIGURED-INACTIVE',
+    planned: 'PLANNED',
   };
 
   return (
@@ -61,7 +61,7 @@ function StatusBadge({ status }: { status: 'live' | 'observation' | 'planned' })
 }
 
 export default function InstitutionalPage() {
-  const lastUpdated = 'February 14, 2026';
+  const lastUpdated = 'April 4, 2026';
   const observationWindowStart = 'January 2026';
 
   return (
@@ -240,19 +240,18 @@ export default function InstitutionalPage() {
               content: (
                 <div className="space-y-3 text-sm text-dl-navy">
                   <p>
-                    AXUSD is the settlement currency for all protocol transactions. It is designed as a 1:1 USD-pegged
-                    stablecoin deployed on Arbitrum One.
+                    AXUSD is the settlement currency for all protocol transactions. Designed as a 1:1 USD-pegged
+                    stablecoin deployed on Arbitrum One under the ERC-3643 (T-REX) standard with on-chain identity
+                    verification, modular compliance enforcement, and 100% reserve backing design.
                   </p>
                   <div className="p-3 bg-dl-bg-alt border border-dl-border text-dl-navy">
-                    <strong>Current Status:</strong> Token deployed. CDP and PSM modules are planned for Phase 1
-                    Treasury Integration. AXUSD is not currently mintable by users.
+                    <strong>Current Status (LIVE):</strong> Unified AXUSD (ERC-3643) is deployed and live. The Canonical PSM is deployed and configured — CONFIGURED-INACTIVE pending addAgent() governance activation. No new issuance through legacy contracts. Structured to align with the GENIUS Act (Public Law 119-27); compliance posture under ongoing legal evaluation.
                   </div>
                   <p>
-                    <strong>Contract (ERC-3643):</strong> <code className="text-xs bg-dl-bg-alt px-1 py-0.5 font-dl-mono">0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7</code>
+                    <strong>Contract (Unified ERC-3643):</strong> <code className="text-xs bg-dl-bg-alt px-1 py-0.5 font-dl-mono">0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7</code>
                   </p>
                   <p>
-                    <strong>Constraints:</strong> No redemption promises. Integration with lending, The Wealth Practice, land acquisition,
-                    and node rewards is planned but dependent on infrastructure readiness.
+                    <strong>Constraints:</strong> No redemption guarantees. PSM redemption capacity is limited to available USDC reserves. Integration with lending markets, The Wealth Practice, land acquisition, and node rewards proceeds as infrastructure readiness is confirmed.
                   </p>
                 </div>
               ),
@@ -542,40 +541,42 @@ export default function InstitutionalPage() {
           <div className="space-y-4">
             <div>
               <h3 className="font-dl-serif text-dl-navy mb-3 flex items-center gap-2">
-                <StatusBadge status="live" /> Live Components
+                <StatusBadge status="live" /> Live
               </h3>
               <ul className="text-sm text-dl-navy space-y-1 ml-4">
-                <li>43 automated control layers deployed on Arbitrum One (34 source-verified)</li>
-                <li>Core infrastructure: AxiomV2, Treasury, Participation, Governance, Identity</li>
-                <li>DEX V2 ecosystem (10 contracts)</li>
-                <li>AXUSD token contract</li>
-                <li>Lending fund infrastructure (3 contracts)</li>
-                <li>Node Operator Portal and Credits Ledger</li>
-                <li>Observer Dashboard (7 pages)</li>
-                <li>Note Acquisition Portal</li>
+                <li>53 automated control layers deployed on Arbitrum One (source-verified on Arbiscan)</li>
+                <li>Core infrastructure: AXM Token, Treasury Hub, Governance Hub (24h timelock), Identity &amp; Compliance Hub, Citizen Credential Registry</li>
+                <li>Unified AXUSD (ERC-3643, T-REX) — canonical stablecoin with identity gating and modular compliance</li>
+                <li>Euler V2 Lending Stack — eAXUSD-6 EVK Vault, Euler Earn Vault, EulerSwap AXUSD/USDC Pool</li>
+                <li>On-Chain Lending Fund — AXIOMCreditMarket v7, FixFlip Vault, DSCR Pool Vault (SEC Reg D 506(c) framework)</li>
+                <li>DePIN Node Suite — node registry, rewards distributor, slashing engine, capital readiness gate</li>
+                <li>Wealth Practice Hub — on-chain rotating savings group engine with three-stage trust pipeline</li>
+                <li>Land and Asset Registry, Reg CF Crowdfunding, Builder &amp; Farmer Credit Facility</li>
+                <li>Observer Dashboard, Founder Operations Dashboard, MIRDT Capital Intelligence Terminal, Proof of Execution Framework</li>
               </ul>
             </div>
             <div>
               <h3 className="font-dl-serif text-dl-navy mb-3 flex items-center gap-2">
-                <StatusBadge status="observation" /> In Observation / Testing
+                <StatusBadge status="observation" /> Configured-Inactive
               </h3>
               <ul className="text-sm text-dl-navy space-y-1 ml-4">
-                <li>Settlement 001 execution preparation</li>
-                <li>Capital Bridge workflow verification</li>
-                <li>Readiness Gate criteria validation</li>
-                <li>Node operator certification pipeline</li>
+                <li>Canonical PSM (ERC-3643 identity-gated) — deployed, requires addAgent() governance activation</li>
+                <li>SEED Participation Lockup — deployed (curve-style vote-escrow), activation pending governance vote</li>
+                <li>Sentinel capital decision layer — deployed, advisory mode only; no execution authority active</li>
+                <li>Lease and Rent Engine / KeyGrow Payment Module — deployed, activation pending product phase</li>
+                <li>SUSU Personal Vault, Community Social Hub, Liquidity Bootstrapper — deployed, activation pending</li>
               </ul>
             </div>
             <div>
               <h3 className="font-dl-serif text-dl-navy mb-3 flex items-center gap-2">
-                <StatusBadge status="planned" /> Planned / Capital-Dependent
+                <StatusBadge status="planned" /> Planned
               </h3>
               <ul className="text-sm text-dl-navy space-y-1 ml-4">
-                <li>AXUSD extended collateral modules</li>
-                <li>Independent third-party security audits</li>
-                <li>Treasury adapter contracts for external capital</li>
-                <li>Universe L3 network migration (testnet not yet launched)</li>
-                <li>External pilot programs ($100K-$500K allocations)</li>
+                <li>Independent third-party security audit — capital-dependent</li>
+                <li>AXUSD extended collateral modules (T-bill backing, ETH diversification)</li>
+                <li>Universe Blockchain (L3) migration — testnet not yet launched</li>
+                <li>External pilot capital programs ($100K–$500K allocations)</li>
+                <li>Community governance transition from founder-operated to token-weighted voting</li>
               </ul>
             </div>
           </div>
