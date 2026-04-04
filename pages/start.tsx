@@ -273,6 +273,59 @@ export default function StartPage() {
       </div>
 
       <div className="mb-12">
+        <SectionHeading>Infrastructure Access Path</SectionHeading>
+        <p className="text-sm text-dl-gray mb-5">
+          For participants whose primary intent is the reserve layer, settlement infrastructure, or protocol governance — rather than the community real estate journey.
+        </p>
+        <div className="border border-dl-border border-l-4 border-l-dl-gold">
+          {[
+            {
+              step: 'A',
+              title: 'Identity Credential',
+              desc: 'Complete identity verification to receive an ERC-3643 on-chain identity credential. This credential gates access to AXAU and AXUSD and is issued by Axiom Protocol after KYC review.',
+              status: 'Required',
+              href: '/axau-early-access',
+              color: 'text-dl-gold',
+            },
+            {
+              step: 'B',
+              title: 'Reserve + Settlement Access',
+              desc: 'With your identity credential active, mint AXAU (gold-backed reserve unit, 1:1 PAXG) or AXUSD (settlement stablecoin) directly on Arbitrum One. Both support direct on-chain and ops-mediated paths.',
+              status: 'Identity Gated',
+              href: '/axau',
+              color: 'text-dl-gold',
+            },
+            {
+              step: 'C',
+              title: 'Governance Participation',
+              desc: 'Hold AXM governance token to participate in on-chain protocol governance — voting on treasury allocation policy, risk parameters, capital program rules, and protocol upgrades.',
+              status: 'AXM Required',
+              href: '/buy-axm',
+              color: 'text-dl-navy',
+            },
+          ].map((stage, i) => (
+            <div key={stage.step} className={`px-6 py-5 ${i < 2 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="font-dl-mono text-xs px-2 py-0.5 border border-dl-gold text-dl-gold">Step {stage.step}</span>
+                    <span className="font-dl-mono text-xs text-dl-gray">{stage.status}</span>
+                  </div>
+                  <h3 className="font-dl-serif text-base text-dl-navy font-bold mb-2">{stage.title}</h3>
+                  <p className="text-sm text-dl-gray leading-relaxed">{stage.desc}</p>
+                </div>
+                <div className="md:w-40 flex-shrink-0">
+                  <Link href={stage.href}>
+                    <SolidButton variant="secondary">Learn More</SolidButton>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-12">
         <SectionHeading>Where Do You Start?</SectionHeading>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
           {PROFILES.map((profile, i) => (

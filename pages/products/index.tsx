@@ -20,7 +20,7 @@ const LAYER_2 = [
   {
     id: 'axusd',
     name: 'AXUSD Settlement Rail',
-    description: 'The protocol\'s identity-gated stablecoin for settlement, transactional capital, and PSM-backed liquidity. ERC-3643 compliant with embedded identity credentials.',
+    description: 'The protocol\'s identity-gated stablecoin for settlement, transactional capital, and PSM-backed liquidity. Identity credential required (ERC-3643) with on-chain KYC embedded at the token level.',
     href: '/axusd-3643',
     status: 'LIVE',
     metrics: [
@@ -49,7 +49,7 @@ const LAYER_3 = [
     name: 'Capital Program',
     description: 'Structured Reg D 506(c) formation with dual-asset SPVs (cash flow + appreciation), a 52-week operational playbook, and a 35/35/20/10 treasury allocation policy.',
     href: '/pilot',
-    status: 'FORMATION',
+    status: 'CONFIGURED',
     metrics: [
       { label: 'Structure', value: 'Dual SPV' },
       { label: 'Allocation', value: '35/35/20/10' },
@@ -61,7 +61,7 @@ const LAYER_3 = [
     name: 'Lending Fund',
     description: 'Bridge loan and DSCR rental fund designed to align with SEC Reg D 506(c). ERC-4626 vault standard, ERC-721 loan receipts, and governance-controlled risk parameters.',
     href: '/lending-fund',
-    status: 'FORMATION',
+    status: 'CONFIGURED',
     metrics: [
       { label: 'Mandate', value: 'Fix & Flip + DSCR' },
       { label: 'Vault', value: 'ERC-4626' },
@@ -73,7 +73,7 @@ const LAYER_3 = [
     name: 'Syndication',
     description: 'Full syndication operating system including deal structuring, LP investor onboarding, accredited investor verification, and an on-chain investor portal.',
     href: '/syndication',
-    status: 'ACTIVE',
+    status: 'LIVE',
     metrics: [
       { label: 'Access', value: 'Accredited LPs' },
       { label: 'Portal', value: 'Investor Portal' },
@@ -159,11 +159,62 @@ const LAYER_4 = [
 
 const LAYER_5 = [
   {
+    id: 'solvency',
+    name: 'Solvency Console',
+    description: 'Three-mode institutional solvency disclosure with an Adaptive Metrics Engine, stress testing across six scenarios, and AI-powered oracle interpretation. All data live and on-chain.',
+    href: '/solvency',
+    status: 'LIVE',
+    metrics: [
+      { label: 'Modes', value: '3 Institutional' },
+      { label: 'Policy States', value: '6' },
+      { label: 'Stress Tests', value: '6 Scenarios' },
+    ],
+  },
+  {
+    id: 'banking',
+    name: 'Banking Infrastructure',
+    description: 'FDIC-insured banking layer via Increase.com with ACH and wire transfer rails for capital intake and disbursement. Configured and awaiting production activation.',
+    href: '/banking',
+    status: 'CONFIGURED',
+    metrics: [
+      { label: 'Provider', value: 'Increase.com' },
+      { label: 'Coverage', value: 'FDIC-Insured' },
+      { label: 'Rails', value: 'ACH + Wire' },
+    ],
+  },
+  {
+    id: 'proof-of-execution',
+    name: 'Proof of Execution',
+    description: 'Hash-chained audit trail of all operational actions, capital movements, and governance decisions. Publicly accessible for independent verification without requiring trust.',
+    href: '/proof-of-execution',
+    status: 'LIVE',
+    metrics: [
+      { label: 'Access', value: 'Public' },
+      { label: 'Chain', value: 'Hash-Chained' },
+      { label: 'Coverage', value: 'All Ops' },
+    ],
+  },
+  {
+    id: 'disclosure',
+    name: 'Institutional Disclosure',
+    description: 'Comprehensive institutional disclosure document including solvency snapshot, policy mode, contract registry, definitions, and GENIUS Act alignment notice.',
+    href: '/disclosure',
+    status: 'LIVE',
+    metrics: [
+      { label: 'Format', value: 'Institutional' },
+      { label: 'Snapshot', value: 'Live Pull' },
+      { label: 'Access', value: 'Public' },
+    ],
+  },
+];
+
+const COMMUNITY_PRODUCTS = [
+  {
     id: 'wealth-practice',
     name: 'The Wealth Practice',
     description: 'Structured community savings groups with a three-stage trust pipeline: Interest Hub → Purpose Group → On-Chain Pool. Deterministic contribution cycles with on-chain audit trails.',
     href: '/wealth-practice',
-    status: 'FORMING',
+    status: 'CONFIGURED',
     metrics: [
       { label: 'Pipeline', value: '3-Stage Trust' },
       { label: 'Hubs', value: '10 Seeded' },
@@ -173,7 +224,7 @@ const LAYER_5 = [
   {
     id: 'land',
     name: 'Land Acquisition Pipeline',
-    description: 'Six-stage land acquisition lifecycle from submission through community pooling, governance vote, and SEC Reg CF targeted crowdfunding infrastructure.',
+    description: 'Six-stage land acquisition lifecycle from submission through community pooling, governance vote, and crowdfunding infrastructure targeting SEC Reg CF.',
     href: '/land',
     status: 'PLANNED',
     metrics: [
@@ -211,9 +262,7 @@ const LAYER_5 = [
 function StatusChip({ status }: { status: string }) {
   const cls: Record<string, string> = {
     LIVE: 'text-dl-forest border-dl-forest/30 bg-dl-forest/5',
-    FORMATION: 'text-dl-gold border-dl-gold/30 bg-dl-gold/5',
-    FORMING: 'text-dl-gold border-dl-gold/30 bg-dl-gold/5',
-    ACTIVE: 'text-dl-navy border-dl-navy/30 bg-dl-navy/5',
+    CONFIGURED: 'text-dl-gold border-dl-gold/30 bg-dl-gold/5',
     PLANNED: 'text-dl-gray border-dl-border',
   };
   return (
@@ -266,7 +315,7 @@ export default function ProductsPage() {
         <p className="text-sm text-dl-gray max-w-3xl leading-relaxed">
           Every component of Axiom Protocol is purpose-built, independently verifiable on Arbitrum One,
           and positioned within a clear hierarchy — from reserve and settlement infrastructure through
-          capital programs, intelligence tools, and community access.
+          capital programs, intelligence tools, trust and compliance, and community access pathways.
         </p>
       </div>
 
@@ -331,25 +380,36 @@ export default function ProductsPage() {
         </div>
       </section>
 
-      {/* LAYER 05 — COMMUNITY ACCESS */}
+      {/* LAYER 05 — TRUST + COMPLIANCE */}
       <section className="mb-12">
         <div className="mb-1">
-          <SectionHeading>Layer 05 — Community Access</SectionHeading>
+          <SectionHeading>Layer 05 — Trust + Compliance</SectionHeading>
         </div>
-        <p className="text-dl-gray text-sm mb-5">Group economics, land pipeline, property tools, and Main Street participant onboarding.</p>
+        <p className="text-dl-gray text-sm mb-5">Solvency disclosure, banking rails, audit trail, and institutional transparency infrastructure.</p>
         <div className="space-y-4">
           {LAYER_5.map((product, i) => <ProductCard key={product.id} product={product} dark={i % 2 === 1} />)}
         </div>
       </section>
 
-      {/* TRUST + DISCLOSURE ANCHOR */}
+      {/* COMMUNITY ACCESS */}
+      <section className="mb-12">
+        <div className="mb-1">
+          <SectionHeading>Community Access Layer</SectionHeading>
+        </div>
+        <p className="text-dl-gray text-sm mb-5">Main Street entry paths — group savings, land acquisition, property tools, and deal flow for non-accredited participants.</p>
+        <div className="space-y-4">
+          {COMMUNITY_PRODUCTS.map((product, i) => <ProductCard key={product.id} product={product} dark={i % 2 === 1} />)}
+        </div>
+      </section>
+
+      {/* CTA ANCHOR */}
       <section className="border border-dl-border border-t-4 border-t-dl-navy p-8">
         <h2 className="font-dl-serif text-xl text-dl-navy mb-3">
-          Transparency and Governance
+          Independent Verification
         </h2>
         <p className="text-sm text-dl-gray mb-6 max-w-2xl leading-relaxed">
           Every capital movement, governance decision, and operational action is recorded with a full on-chain audit trail.
-          The solvency dashboard, observer, and proof-of-execution logs are publicly accessible for independent verification.
+          The solvency dashboard, observer, and proof-of-execution logs are publicly accessible. Verification does not require trust — it requires reading the chain.
         </p>
         <div className="flex flex-wrap gap-3">
           <Link href="/disclosure" className="px-5 py-2.5 bg-dl-navy text-white text-sm font-medium no-underline">
