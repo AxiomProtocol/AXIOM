@@ -86,8 +86,65 @@ export default function InstitutionalPage() {
         <section className="mb-12">
           <SectionHeading>1. Executive Overview</SectionHeading>
           <p className="text-dl-navy leading-relaxed">
-            Axiom Protocol is a governance-first community infrastructure platform built on Arbitrum One with 43 deployed automated control layers (verified contract addresses on Arbiscan). The protocol provides a framework for communities to participate in real asset acquisition, development, and ownership through SEC-compliant crowdfunding, structured group savings (The Wealth Practice), and digitally issued land participation instruments. It bridges traditional real estate finance with decentralized infrastructure, offering institutional-grade treasury management, transparent settlement systems, and community-driven governance. The protocol operates under a targeted land acquisition roadmap toward building a sovereign digital-physical economy.
+            Axiom Protocol is a governance-first community infrastructure platform built on Arbitrum One with 53 deployed automated control layers (contract addresses verifiable on Arbiscan). The protocol provides a framework for communities to participate in real asset acquisition, development, and ownership through SEC-compliant crowdfunding, structured group savings (The Wealth Practice), and digitally issued land participation instruments. It bridges traditional real estate finance with decentralized infrastructure, offering institutional-grade treasury management, transparent settlement systems, and community-driven governance. The protocol operates under a targeted land acquisition roadmap toward building a sovereign digital-physical economy.
           </p>
+        </section>
+
+        <section className="mb-12">
+          <SectionHeading>Access Layers</SectionHeading>
+          <p className="text-sm text-dl-gray mb-5">Axiom Protocol provides three distinct access layers for institutional participants. Each layer has independent trust anchors and entry requirements.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border divide-y md:divide-y-0 md:divide-x divide-dl-border mb-4">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-dl-border">
+                <p className="font-dl-serif text-dl-navy">Protocol Governance</p>
+                <StatusBadge status="live" />
+              </div>
+              <p className="text-sm text-dl-gray mb-3">AXM token-weighted governance with 24h timelock. Participate in on-chain decisions governing risk parameters, treasury allocation, and product activation.</p>
+              <ul className="text-xs font-dl-mono text-dl-gray space-y-1 mb-3">
+                <li>Governance Hub: 24h minimum timelock</li>
+                <li>Role hierarchy: 6 permission categories</li>
+                <li>Risk Committee, Guardian, Circuit Breaker roles</li>
+                <li>SEED Participation Lockup (vote-escrow)</li>
+              </ul>
+              <a href="/disclosure" className="font-dl-mono text-xs text-dl-navy underline">Disclosure &rarr;</a>
+            </div>
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-dl-border">
+                <p className="font-dl-serif text-dl-navy">Fund Investment</p>
+                <StatusBadge status="observation" />
+              </div>
+              <p className="text-sm text-dl-gray mb-3">SEC Reg D 506(c) private offerings. Verified accredited investors may participate in lending fund SPVs, mortgage note participation, and property-backed bridge financing.</p>
+              <ul className="text-xs font-dl-mono text-dl-gray space-y-1 mb-3">
+                <li>Fix &amp; Flip Bridge (75% ARV, 12% target rate)</li>
+                <li>DSCR Rental 30-Year (75% LTV, 8% target rate)</li>
+                <li>Capital call cadence + quarterly reporting</li>
+                <li>AXUSD settlement rails</li>
+              </ul>
+              <a href="/solvency" className="font-dl-mono text-xs text-dl-navy underline">Reserve Transparency &rarr;</a>
+            </div>
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-dl-border">
+                <p className="font-dl-serif text-dl-navy">Secondary Market</p>
+                <StatusBadge status="planned" />
+              </div>
+              <p className="text-sm text-dl-gray mb-3">Permissioned secondary transfer and settlement layer for Axiom-issued private market products. Transfer restrictions enforced on-chain via ERC-3643 identity gating.</p>
+              <ul className="text-xs font-dl-mono text-dl-gray space-y-1 mb-3">
+                <li>Permissioned registry: KYC_VERIFIED + SANCTIONS_CLEAR required</li>
+                <li>Settlement via Canonical PSM (CONFIGURED-INACTIVE)</li>
+                <li>Transfer Limit + Max Balance compliance modules</li>
+                <li>Activation: pending addAgent() governance vote</li>
+              </ul>
+              <a href="/transparency" className="font-dl-mono text-xs text-dl-navy underline">Protocol Trust Index &rarr;</a>
+            </div>
+          </div>
+          <div className="border border-dl-border px-5 py-3 bg-dl-bg-alt">
+            <p className="font-dl-mono text-xs text-dl-gray">Primary trust anchors for due diligence:&nbsp;
+              <a href="/solvency" className="text-dl-navy underline">Solvency Dashboard (CR/RR/LBR live)</a>&nbsp;·&nbsp;
+              <a href="/disclosure" className="text-dl-navy underline">Institutional Disclosure</a>&nbsp;·&nbsp;
+              <a href="/proof-of-execution" className="text-dl-navy underline">Proof of Execution Log</a>&nbsp;·&nbsp;
+              <a href="/transparency" className="text-dl-navy underline">Protocol Trust Index (53 contracts)</a>
+            </p>
+          </div>
         </section>
 
         <section className="mb-12">
@@ -174,12 +231,12 @@ export default function InstitutionalPage() {
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                 <div className="p-3 bg-dl-bg-alt border border-dl-border text-center">
-                  <div className="text-2xl font-dl-mono text-dl-navy">43</div>
-                  <div className="text-dl-gray">Contracts Deployed</div>
+                  <div className="text-2xl font-dl-mono text-dl-navy">53</div>
+                  <div className="text-dl-gray">Control Layers (Active)</div>
                 </div>
                 <div className="p-3 bg-dl-bg-alt border border-dl-border text-center">
-                  <div className="text-2xl font-dl-mono text-dl-navy">34</div>
-                  <div className="text-dl-gray">Verified</div>
+                  <div className="text-2xl font-dl-mono text-dl-navy">58+</div>
+                  <div className="text-dl-gray">Total Deployed</div>
                 </div>
                 <div className="p-3 bg-dl-bg-alt border border-dl-border text-center">
                   <div className="text-2xl font-dl-mono text-dl-navy">24h</div>
@@ -474,7 +531,7 @@ export default function InstitutionalPage() {
             <div className="p-4 bg-dl-bg-alt border border-dl-border">
               <h3 className="font-dl-serif text-dl-navy mb-2">Auditability</h3>
               <ul className="text-sm text-dl-navy space-y-1">
-                <li>43 contracts deployed on Arbiscan (34 source-verified)</li>
+                <li>53 actively integrated automated control layers on Arbitrum One (contract addresses on Arbiscan)</li>
                 <li>Complete event logging for critical operations</li>
                 <li>Credits Ledger with transparent accrual and distribution</li>
                 <li>Observer Dashboard with 7 public transparency pages</li>
@@ -603,7 +660,7 @@ export default function InstitutionalPage() {
                   </a>
                 </li>
                 <li>
-                  <strong>Contract Registry:</strong> 43 contracts deployed on Arbitrum One (34 source-verified on Arbiscan)
+                  <strong>Contract Registry:</strong> 53 actively integrated automated control layers on Arbitrum One (addresses verifiable on Arbiscan)
                 </li>
               </ul>
             </div>
