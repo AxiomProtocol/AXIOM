@@ -23,54 +23,7 @@ const C = {
   green:     '#166534',
 };
 
-// ─── 3D Icon Components ──────────────────────────────────────────────────────
-
-function GoldCoinIcon({ size = 64 }: { size?: number }) {
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: 'radial-gradient(ellipse at 38% 30%, #FFE07A 0%, #C9913A 42%, #7A5010 100%)',
-      boxShadow: 'inset -3px -3px 10px rgba(0,0,0,0.4), inset 2px 2px 6px rgba(255,240,160,0.5), 4px 8px 16px rgba(0,0,0,0.2)',
-      transform: 'perspective(300px) rotateX(18deg) rotateY(-20deg)',
-    }} />
-  );
-}
-
-function ShieldIcon({ size = 60 }: { size?: number }) {
-  return (
-    <div style={{ width: size, height: size * 1.1, flexShrink: 0, filter: 'drop-shadow(3px 6px 10px rgba(0,0,0,0.18))' }}>
-      <svg viewBox="0 0 60 68" width={size} height={size * 1.13} fill="none">
-        <defs>
-          <linearGradient id="sg" x1="20%" y1="0%" x2="80%" y2="100%">
-            <stop offset="0%" stopColor="#FFE07A" />
-            <stop offset="50%" stopColor="#C9913A" />
-            <stop offset="100%" stopColor="#7A5010" />
-          </linearGradient>
-        </defs>
-        <path d="M30 2L58 13V38C58 52 44 64 30 66C16 64 2 52 2 38V13L30 2Z" fill="url(#sg)" />
-        <path d="M19 34l8 8 14-16" stroke="rgba(255,255,255,0.9)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
-  );
-}
-
-function LiquidityIcon({ size = 60 }: { size?: number }) {
-  return (
-    <div style={{ width: size, height: size, flexShrink: 0, filter: 'drop-shadow(3px 6px 10px rgba(0,0,0,0.15))' }}>
-      <svg viewBox="0 0 64 64" width={size} height={size} fill="none">
-        <defs>
-          <linearGradient id="ag" x1="0%" y1="20%" x2="100%" y2="80%">
-            <stop offset="0%" stopColor="#FFE07A" />
-            <stop offset="60%" stopColor="#C9913A" />
-            <stop offset="100%" stopColor="#7A5010" />
-          </linearGradient>
-        </defs>
-        <path d="M10 32H54M54 32L38 16M54 32L38 48" stroke="url(#ag)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M6 20H22M6 44H22" stroke="url(#ag)" strokeWidth="5" strokeLinecap="round" opacity="0.45" />
-      </svg>
-    </div>
-  );
-}
+// ─── Removed decorative 3D icon components in favor of institutional data panels ─
 
 // ─── Hero ────────────────────────────────────────────────────────────────────
 
@@ -78,6 +31,8 @@ function Hero() {
   const [xauPrice, setXauPrice]       = useState<string | null>(null);
   const [coveragePct, setCoveragePct] = useState<string | null>(null);
   const [coverageBps, setCoverageBps] = useState<number | null>(null);
+  const [navPerToken, setNavPerToken] = useState<string | null>(null);
+  const [totalSupply, setTotalSupply] = useState<string | null>(null);
 
   useEffect(() => {
     function fetchNav() {
@@ -87,6 +42,8 @@ function Hero() {
           setXauPrice(d.xauUsdPrice);
           if (typeof d.coverageRatioPct === 'string') setCoveragePct(d.coverageRatioPct);
           if (typeof d.coverageRatioBps === 'number') setCoverageBps(d.coverageRatioBps);
+          if (typeof d.backingNavPerToken === 'string') setNavPerToken(d.backingNavPerToken);
+          if (typeof d.totalSupplyFormatted === 'string') setTotalSupply(d.totalSupplyFormatted);
         })
         .catch(() => {});
     }
@@ -162,18 +119,15 @@ function Hero() {
 
       {/* Token strip */}
       <div style={{ borderTop: `1px solid ${C.border}`, padding: '12px 0', background: C.bg, display: 'flex', flexWrap: 'wrap', gap: 0 }}>
-        {(['Token', 'Reserve', 'Network', 'Standard', 'Oracle', 'Coverage'] as const).map((label) => {
-          const staticValues: Record<string, string> = {
-            Token: 'AXAU',
-            Reserve: 'PAXG (Paxos Gold)',
-            Network: 'Arbitrum One',
-            Standard: 'ERC-3643',
-            Oracle: 'Chainlink XAU/USD',
-          };
-          const isCoverage = label === 'Coverage';
-          const value = isCoverage
-            ? (coveragePct ?? '…')
-            : staticValues[label];
+        {[
+          { label: 'Token', value: 'AXAU', dynamic: false },
+          { label: 'Reserve', value: 'PAXG / Paxos Gold', dynamic: false },
+          { label: 'NAV / Unit', value: navPerToken ? `$${navPerToken}` : '…', dynamic: true },
+          { label: 'Coverage', value: coveragePct ?? '…', dynamic: true, isCoverage: true },
+          { label: 'Supply', value: totalSupply ? `${totalSupply} AXAU` : '…', dynamic: true },
+          { label: 'Network', value: 'Arbitrum One', dynamic: false },
+          { label: 'Oracle', value: 'Chainlink XAU/USD', dynamic: false },
+        ].map(({ label, value, isCoverage }) => {
           const coverageColor = isCoverage && coverageBps !== null
             ? coverageBps >= 10600 ? C.green
               : coverageBps >= 10400 ? '#92400e'
@@ -207,48 +161,94 @@ function Hero() {
 
 // ─── Value Props ─────────────────────────────────────────────────────────────
 
-function ValueProps() {
-  const cards = [
+function ReserveFlow() {
+  const steps = [
     {
-      icon: <GoldCoinIcon />,
-      badge: 'LAYER 01 RESERVE',
-      title: 'Gold Reserve Architecture',
-      body: 'AXAU is the Axiom Protocol\'s foundational reserve layer. Every unit is backed 1:1 by on-chain PAXG (Paxos Gold) held in the protocol vault — a verifiable, on-chain claim against physical gold.',
+      id: 'A',
+      from: 'PAXG',
+      to: 'GoldVault Contract',
+      label: 'Deposit',
+      desc: 'PAXG is transferred to the GoldVault contract (0xaCc9…CF8). The vault holds all gold reserves on Arbitrum One.',
     },
     {
-      icon: <ShieldIcon />,
-      badge: 'ON-CHAIN VERIFIABLE',
-      title: 'Live Coverage Ratio',
-      body: 'Reserve health is enforced on-chain via the NAVEngine contract. Coverage ratio (Total Reserve USD ÷ Supply) must remain ≥105%. If it falls below threshold, minting pauses automatically.',
+      id: 'B',
+      from: 'NAVEngine',
+      to: 'Coverage Check',
+      label: 'Validation',
+      desc: 'The NAVEngine reads the Chainlink XAU/USD oracle to compute reserve NAV. Coverage ratio (Reserve USD ÷ Supply USD) must be ≥105% to proceed.',
     },
     {
-      icon: <LiquidityIcon />,
-      badge: 'IDENTITY GATED',
-      title: 'Two Access Paths',
-      body: 'Direct Mint: deposit PAXG to the vault, receive AXAU in a single on-chain transaction. Assisted Mint: spend AXUSD and the ops team handles PAXG acquisition and vault deposit — typically 1 business day. Both paths require an ERC-3643 identity credential.',
+      id: 'C',
+      from: 'Identity Registry',
+      to: 'ERC-3643 Credential',
+      label: 'Identity Gate',
+      desc: 'The MintRedeemController verifies the recipient wallet has an active ERC-3643 on-chain identity credential. Unregistered wallets are rejected on-chain.',
+    },
+    {
+      id: 'D',
+      from: 'MintRedeemController',
+      to: 'Recipient Wallet',
+      label: 'AXAU Issuance',
+      desc: 'If all checks pass, AXAU is minted to the recipient wallet in the same transaction. Token supply and coverage ratio update on-chain immediately.',
     },
   ];
 
   return (
     <section style={{ borderBottom: `1px solid ${C.border}`, padding: '60px 0' }}>
-      <div style={{ textAlign: 'center', marginBottom: 40 }}>
+      <div style={{ marginBottom: 36 }}>
         <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Reserve Architecture</p>
-        <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(24px, 4vw, 40px)', fontWeight: 600, color: C.navy, lineHeight: 1.2 }}>
-          Layer 01 Reserve Infrastructure
+        <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(24px, 4vw, 38px)', fontWeight: 600, color: C.navy, lineHeight: 1.15 }}>
+          How the Reserve Works
         </h2>
-        <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, maxWidth: 500, margin: '10px auto 0', lineHeight: 1.65 }}>
-          AXAU is designed as a gold-backed reserve layer within the Axiom Protocol&apos;s five-layer financial operating system.
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, maxWidth: 520, marginTop: 10, lineHeight: 1.65 }}>
+          AXAU issuance follows a four-step on-chain validation sequence. Every mint is fully verifiable on Arbitrum One. No off-chain custody, no manual overrides.
         </p>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
-        {cards.map(card => (
-          <div key={card.title} style={{ border: `1px solid ${C.border}`, background: C.bgAlt, padding: '28px 24px' }}>
-            <div style={{ marginBottom: 20 }}>{card.icon}</div>
-            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 8 }}>{card.badge}</p>
-            <h3 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 20, color: C.navy, fontWeight: 600, marginBottom: 10, lineHeight: 1.2 }}>{card.title}</h3>
-            <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7 }}>{card.body}</p>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 0, border: `1px solid ${C.border}` }}>
+        {steps.map((step, i) => (
+          <div key={step.id} style={{
+            padding: '24px 20px',
+            borderRight: i < steps.length - 1 ? `1px solid ${C.border}` : 'none',
+            background: C.bg,
+            display: 'flex', flexDirection: 'column', gap: 12,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{
+                width: 32, height: 32, background: C.navy, color: '#fff', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: '"Courier New", monospace', fontSize: 12, fontWeight: 700,
+              }}>{step.id}</span>
+              <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{step.label}</span>
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <span style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.navy, fontWeight: 700 }}>{step.from}</span>
+                <span style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: C.muted }}>→</span>
+                <span style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, fontWeight: 700 }}>{step.to}</span>
+              </div>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: C.muted, lineHeight: 1.65, margin: 0 }}>{step.desc}</p>
+            </div>
           </div>
         ))}
+      </div>
+
+      {/* Contract address disclosure */}
+      <div style={{ marginTop: 16, padding: '14px 18px', background: C.bgAlt, border: `1px solid ${C.border}` }}>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>Key Reserve Contracts — Arbitrum One</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
+          {[
+            { label: 'GoldVault', addr: '0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8' },
+            { label: 'MintRedeemController', addr: '0x036F05a3fB74d35439c074f25F691b36f5D37792' },
+            { label: 'NAVEngine', addr: '0x80F8634a43B26a2bd403396A42465F138aeCC519' },
+            { label: 'AXAU Token', addr: '0xbcCA4D937d427829914498423aE6E04C846dB0Bb' },
+          ].map(c => (
+            <a key={c.label} href={`https://arbitrum.blockscout.com/address/${c.addr}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: C.muted, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 2px' }}>{c.label}</p>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.navy }}>{c.addr.slice(0, 10)}…{c.addr.slice(-6)} ↗</p>
+            </a>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -646,7 +646,7 @@ export default function AxauPage() {
       </Head>
 
       <Hero />
-      <ValueProps />
+      <ReserveFlow />
       <HowItWorks />
       <LiveDashboard />
       <MintTerminal />
