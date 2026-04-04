@@ -46,7 +46,7 @@ Key features include:
 - Document Ingestion & Extraction: AI-powered document analysis.
 - Distressed Property Feed (Deal Flow): Aggregates distressed properties.
 - Agent Governance System: Policy-based autonomous agent authorization.
-- Banking Infrastructure: Primary banking layer via Increase.com (FDIC-insured, ACH/wire rails), and BitGo CaaS for institutional crypto custody.
+- Banking Infrastructure: Primary banking layer via Increase.com (FDIC-insured, ACH/wire rails) — LIVE; BitGo CaaS for institutional crypto custody on Arbitrum One — LIVE (activated). Banking page `/banking` has 7 tabs including Crypto Custody tab; new admin-gated `/api/bitgo/enterprise/overview` endpoint returns live wallet list, network, enterprise ID, and pending approvals count.
 - Multi-Exit Strategy Engine: Provides 8 underwriting strategies.
 - Due Diligence Checklist System: Structured DD workflow.
 - Craftsman Cost Database and Cost Intelligence Engine: Rehab underwriting grounded in Craftsman NCE data.

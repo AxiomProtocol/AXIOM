@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 
-type TabId = 'overview' | 'transactions' | 'routing' | 'transfer' | 'ramp' | 'participants';
+type TabId = 'overview' | 'transactions' | 'routing' | 'transfer' | 'ramp' | 'participants' | 'custody';
 
 interface BridgeQuote {
   fiatAmountCents: number;
@@ -87,6 +87,28 @@ interface RoutingInfo {
   name: string;
   status: string;
   createdAt: string;
+}
+
+interface CustodyWallet {
+  id: string;
+  label: string;
+  coin: string;
+  type: string;
+  confirmedBalance: number;
+  spendableBalance: number;
+  receiveAddress: string;
+}
+
+interface CustodyOverview {
+  configured: boolean;
+  network: string;
+  apiUrl: string;
+  enterpriseId: string;
+  coin: string;
+  wallets: CustodyWallet[];
+  totalWallets: number;
+  pendingApprovals: number;
+  walletsError?: string;
 }
 
 const DL = {
@@ -377,6 +399,11 @@ export default function BankingDashboard() {
   const [participantsLoading, setParticipantsLoading] = useState(false);
   const [participantsError, setParticipantsError] = useState<string | null>(null);
 
+  // BitGo custody state
+  const [custodyData, setCustodyData] = useState<CustodyOverview | null>(null);
+  const [custodyLoading, setCustodyLoading] = useState(false);
+  const [custodyError, setCustodyError] = useState<string | null>(null);
+
   // --- Data fetchers ---
   const fetchOverview = useCallback(async () => {
     setOverviewLoading(true); setOverviewError(null);
@@ -435,6 +462,18 @@ export default function BankingDashboard() {
     finally { setRampHistoryLoading(false); }
   }, []);
 
+  const fetchCustody = useCallback(async (key: string) => {
+    if (!key) return;
+    setCustodyLoading(true); setCustodyError(null);
+    try {
+      const res = await fetch('/api/bitgo/enterprise/overview', { headers: { 'x-admin-key': key } });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      setCustodyData(data);
+    } catch (e: unknown) { setCustodyError(e instanceof Error ? e.message : String(e)); }
+    finally { setCustodyLoading(false); }
+  }, []);
+
   useEffect(() => { fetchOverview(); }, [fetchOverview]);
 
   useEffect(() => {
@@ -442,7 +481,8 @@ export default function BankingDashboard() {
     if (activeTab === 'routing' && adminKey) fetchRouting(adminKey);
     if (activeTab === 'ramp') fetchRampHistory();
     if (activeTab === 'participants' && adminKey) fetchParticipants(adminKey);
-  }, [activeTab, adminKey, fetchTransactions, fetchRouting, fetchRampHistory, fetchParticipants]);
+    if (activeTab === 'custody' && adminKey) fetchCustody(adminKey);
+  }, [activeTab, adminKey, fetchTransactions, fetchRouting, fetchRampHistory, fetchParticipants, fetchCustody]);
 
   // --- Handlers ---
   const handleCreateAccountNumber = async () => {
@@ -529,6 +569,7 @@ export default function BankingDashboard() {
     { id: 'transfer',      label: 'Initiate Transfer' },
     { id: 'ramp',          label: 'Fiat Ramp' },
     { id: 'participants',  label: 'Participants' },
+    { id: 'custody',       label: 'Crypto Custody' },
   ];
 
   const environment = overview?.environment ?? 'unknown';
@@ -563,9 +604,9 @@ export default function BankingDashboard() {
           <div style={{ padding: '14px 18px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
               <p style={{ ...mono, fontSize: 12, color: DL.navy, fontWeight: 600 }}>BitGo CaaS (Crypto Custody)</p>
-              <span style={{ fontFamily: 'monospace', fontSize: 10, padding: '2px 8px', border: `1px solid ${DL.gold}`, color: DL.gold, textTransform: 'uppercase', letterSpacing: '0.08em' }}>CONFIGURED-INACTIVE</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 10, padding: '2px 8px', border: `1px solid ${DL.forest}`, color: DL.forest, textTransform: 'uppercase', letterSpacing: '0.08em' }}>LIVE</span>
             </div>
-            <p style={{ ...mono, fontSize: 11 }}>Institutional crypto custody layer · Multi-party authorization · Activation pending enterprise onboarding</p>
+            <p style={{ ...mono, fontSize: 11 }}>Institutional crypto custody layer · Multi-party authorization · Arbitrum One · Enterprise-grade key management</p>
           </div>
         </div>
       </div>
@@ -577,7 +618,7 @@ export default function BankingDashboard() {
         <div style={{ color: DL.muted }}><IconLock /></div>
         <input
           type="password"
-          placeholder="Admin key required for Transactions, Routing, and Transfer tabs"
+          placeholder="Admin key required for Transactions, Routing, Transfer, Participants, and Crypto Custody tabs"
           value={adminKey}
           onChange={(e) => setAdminKey(e.target.value)}
           style={{ fontFamily: 'monospace', fontSize: 11, border: `1px solid ${DL.border}`, padding: '8px 12px', background: '#fff', width: 360, outline: 'none' }}
@@ -1592,6 +1633,185 @@ export default function BankingDashboard() {
               ]} />
             </>
           )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          CRYPTO CUSTODY TAB
+      ══════════════════════════════════════════════════ */}
+      {activeTab === 'custody' && (
+        <div>
+          <TabHero
+            img="/images/banking/hero-overview.png"
+            title="BitGo CaaS — Institutional Crypto Custody"
+            subtitle="Enterprise-grade multi-party authorization · Arbitrum One · Qualified custodian infrastructure"
+            badge="Live Custody Infrastructure"
+          />
+
+          <FeatureStrip items={[
+            { icon: <IconShield />, label: 'Custody Model', value: 'Multi-party authorization' },
+            { icon: <IconLock />, label: 'Key Management', value: 'Enterprise HSM' },
+            { icon: <IconGlobe />, label: 'Network', value: custodyData ? custodyData.network.charAt(0).toUpperCase() + custodyData.network.slice(1) : '—' },
+            { icon: <IconZap />, label: 'Chain', value: 'Arbitrum One' },
+            { icon: <IconCheck />, label: 'Status', value: 'Live' },
+          ]} />
+
+          <InfoBox icon={<IconShield />} title="About BitGo Custody" variant="navy">
+            BitGo CaaS provides Axiom Protocol with institutional-grade crypto custody on Arbitrum One. All enterprise assets under custody are managed through multi-party authorization workflows — no single party can unilaterally move funds. Custody wallets are segregated, policy-enforced, and backed by enterprise key management infrastructure. This layer serves as the crypto treasury complement to the Increase fiat rails.
+          </InfoBox>
+
+          {!adminKey && (
+            <div style={{ border: `1px solid ${DL.border}`, padding: 24, marginBottom: 24, background: DL.surface }}>
+              <p style={{ ...serif(14), marginBottom: 8 }}>Admin Authorization Required</p>
+              <p style={{ ...mono, fontSize: 12, lineHeight: 1.7 }}>Enter your admin key in the bar above to access live custody wallet data, enterprise configuration, and pending approval queue.</p>
+            </div>
+          )}
+
+          {adminKey && custodyLoading && (
+            <p style={{ ...mono, marginBottom: 24 }}>Loading custody data from BitGo…</p>
+          )}
+
+          {adminKey && custodyError && (
+            <div style={{ border: `1px solid ${DL.error}`, padding: 16, marginBottom: 24 }}>
+              <p style={{ ...mono, color: DL.error }}>{custodyError}</p>
+            </div>
+          )}
+
+          {adminKey && custodyData && (
+            <>
+              {/* Configuration Panel */}
+              <div style={{ border: `1px solid ${DL.border}`, marginBottom: 28 }}>
+                <div style={{ padding: '12px 18px', borderBottom: `1px solid ${DL.border}`, background: DL.surface, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <SectionTitle>Custody Configuration</SectionTitle>
+                  <span style={{ fontFamily: 'monospace', fontSize: 10, padding: '2px 8px', border: `1px solid ${DL.forest}`, color: DL.forest, textTransform: 'uppercase', letterSpacing: '0.08em' }}>LIVE</span>
+                </div>
+                <div style={{ padding: '0 18px' }}>
+                  <DataRow label="Configuration Status" value={custodyData.configured ? 'Active' : 'Not configured'} />
+                  <DataRow label="Network" value={custodyData.network.charAt(0).toUpperCase() + custodyData.network.slice(1)} />
+                  <DataRow label="Default Coin" value={custodyData.coin.toUpperCase()} />
+                  <DataRow label="Enterprise ID" value={custodyData.enterpriseId ? `${custodyData.enterpriseId.slice(0, 16)}…` : '—'} mono copyable={custodyData.enterpriseId} />
+                  <DataRow label="API Endpoint" value={custodyData.apiUrl ?? '—'} mono />
+                  <DataRow label="Total Wallets" value={String(custodyData.totalWallets)} />
+                  <DataRow label="Pending Approvals" value={
+                    <span style={{ color: custodyData.pendingApprovals > 0 ? DL.gold : DL.forest, fontFamily: 'monospace', fontSize: 12 }}>
+                      {custodyData.pendingApprovals > 0 ? `${custodyData.pendingApprovals} pending` : 'None'}
+                    </span>
+                  } />
+                </div>
+              </div>
+
+              {/* Wallet List */}
+              {custodyData.walletsError ? (
+                <div style={{ border: `1px solid ${DL.gold}20`, background: `${DL.gold}08`, padding: 20, marginBottom: 28 }}>
+                  <p style={{ ...serif(14), color: DL.gold, marginBottom: 6 }}>Wallet Retrieval Notice</p>
+                  <p style={{ ...mono, fontSize: 12, lineHeight: 1.7 }}>{custodyData.walletsError}</p>
+                  <p style={{ ...mono, fontSize: 11, marginTop: 8, color: DL.muted }}>This may indicate that no wallets have been provisioned yet under this enterprise, or the API credentials require additional permissions. Wallet creation is available via the Axiom admin interface.</p>
+                </div>
+              ) : custodyData.wallets.length === 0 ? (
+                <div style={{ border: `1px solid ${DL.border}`, padding: 24, marginBottom: 28, background: DL.surface }}>
+                  <p style={{ ...serif(16), marginBottom: 8 }}>No Wallets Provisioned</p>
+                  <p style={{ ...mono, fontSize: 12, lineHeight: 1.7, marginBottom: 16 }}>No custody wallets have been provisioned under this enterprise yet. Wallets are created on a per-participant basis when they connect their on-chain address and request custody services.</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 1, background: DL.border, border: `1px solid ${DL.border}` }}>
+                    {[
+                      { step: '1', title: 'Connect Wallet', desc: 'Participant connects their Arbitrum wallet via the banking portal.' },
+                      { step: '2', title: 'Provision Custody', desc: 'System calls POST /api/bitgo/wallets/create — BitGo provisions an enterprise-grade custody wallet.' },
+                      { step: '3', title: 'Deposit & Manage', desc: 'Assets are deposited to the receive address. Transfers require multi-party authorization.' },
+                    ].map((s) => (
+                      <div key={s.step} style={{ background: '#fff', padding: '16px 18px' }}>
+                        <div style={{ width: 28, height: 28, background: DL.navy, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', fontSize: 11, fontWeight: 700, marginBottom: 10 }}>{s.step}</div>
+                        <p style={{ ...serif(13), marginBottom: 4, fontWeight: 600 }}>{s.title}</p>
+                        <p style={{ ...mono, fontSize: 11, lineHeight: 1.6 }}>{s.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ border: `1px solid ${DL.border}`, marginBottom: 28 }}>
+                  <div style={{ padding: '12px 18px', borderBottom: `1px solid ${DL.border}`, background: DL.surface }}>
+                    <SectionTitle>Enterprise Custody Wallets</SectionTitle>
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ background: DL.navy }}>
+                        {['Wallet ID', 'Label', 'Coin', 'Type', 'Confirmed Balance', 'Spendable', 'Receive Address'].map((h) => (
+                          <th key={h} style={{ padding: '10px 14px', fontFamily: 'monospace', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', textAlign: 'left', borderRight: `1px solid rgba(255,255,255,0.08)` }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {custodyData.wallets.map((wallet, i) => (
+                        <tr key={wallet.id} style={{ background: i % 2 === 0 ? '#fff' : DL.surface, borderBottom: `1px solid ${DL.border}` }}>
+                          <td style={{ padding: '11px 14px' }}>
+                            <span style={{ fontFamily: 'monospace', fontSize: 10, color: DL.muted }}>{wallet.id.slice(0, 12)}…</span>
+                          </td>
+                          <td style={{ padding: '11px 14px', fontFamily: 'monospace', fontSize: 11, color: DL.navy }}>{wallet.label || '—'}</td>
+                          <td style={{ padding: '11px 14px', fontFamily: 'monospace', fontSize: 10, color: DL.muted, textTransform: 'uppercase' }}>{wallet.coin}</td>
+                          <td style={{ padding: '11px 14px', fontFamily: 'monospace', fontSize: 10, color: DL.muted }}>{wallet.type}</td>
+                          <td style={{ padding: '11px 14px', fontFamily: 'monospace', fontSize: 11, color: DL.forest }}>{wallet.confirmedBalance.toLocaleString()}</td>
+                          <td style={{ padding: '11px 14px', fontFamily: 'monospace', fontSize: 11, color: DL.muted }}>{wallet.spendableBalance.toLocaleString()}</td>
+                          <td style={{ padding: '11px 14px' }}>
+                            {wallet.receiveAddress ? (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'monospace', fontSize: 10, color: DL.muted }}>
+                                {wallet.receiveAddress.slice(0, 14)}…
+                                <IconCopy text={wallet.receiveAddress} />
+                              </span>
+                            ) : <span style={{ fontFamily: 'monospace', fontSize: 10, color: DL.muted }}>—</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Pending Approvals Notice */}
+              {custodyData.pendingApprovals > 0 && (
+                <div style={{ border: `1px solid ${DL.gold}`, background: `${DL.gold}08`, padding: 20, marginBottom: 28 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={DL.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span style={{ ...serif(14), color: DL.gold, fontWeight: 600 }}>{custodyData.pendingApprovals} Pending Approval{custodyData.pendingApprovals > 1 ? 's' : ''}</span>
+                  </div>
+                  <p style={{ ...mono, fontSize: 12, lineHeight: 1.7 }}>
+                    There {custodyData.pendingApprovals === 1 ? 'is' : 'are'} {custodyData.pendingApprovals} pending transaction approval{custodyData.pendingApprovals > 1 ? 's' : ''} in the BitGo enterprise queue. Review and approve or reject via the BitGo admin console or the treasury approval endpoint.
+                  </p>
+                </div>
+              )}
+
+              {/* Refresh button */}
+              <div style={{ marginBottom: 28 }}>
+                <button
+                  onClick={() => fetchCustody(adminKey)}
+                  disabled={custodyLoading}
+                  style={{ fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '10px 24px', background: DL.navy, color: '#fff', border: 'none', cursor: custodyLoading ? 'wait' : 'pointer', opacity: custodyLoading ? 0.6 : 1 }}
+                >
+                  {custodyLoading ? 'Refreshing…' : 'Refresh Custody Data'}
+                </button>
+              </div>
+            </>
+          )}
+
+          <InfoBox icon={<IconLock />} title="Custody Security Model" variant="forest">
+            BitGo custody wallets are governed by enterprise-level policy rules. All outbound transfers require multi-party authorization — no single key holder can unilaterally move funds. The Axiom Protocol enterprise configuration defines spending limits, approval thresholds, and co-signer requirements. Private keys are never exposed to the application layer and are managed exclusively within BitGo&apos;s HSM infrastructure.
+          </InfoBox>
+
+          <FAQ items={[
+            {
+              q: 'What is the difference between the Increase account and BitGo custody?',
+              a: 'The Increase account handles fiat USD — ACH transfers, wire payments, and FDIC-insured checking. BitGo handles crypto assets on Arbitrum One — AXUSD, ARBETH, and other on-chain instruments. Together they form the complete Axiom treasury stack: fiat rails (Increase) + crypto custody (BitGo).'
+            },
+            {
+              q: 'How are custody wallets created for participants?',
+              a: 'Custody wallets are provisioned on-demand when a participant connects their on-chain wallet and requests custody services. The system calls the BitGo enterprise API to create a segregated custodial wallet linked to the participant\'s address. Each wallet is fully isolated and policy-governed.'
+            },
+            {
+              q: 'What does "multi-party authorization" mean for transfers?',
+              a: 'Outbound transfers from custody wallets require co-signing by multiple authorized parties according to the BitGo enterprise policy. The number of required signers and any spending limit thresholds are configured at the enterprise level. This ensures no single point of failure or unauthorized movement of assets.'
+            },
+            {
+              q: 'How do I approve a pending transaction?',
+              a: 'Pending approvals can be reviewed and authorized via the BitGo web console or by calling POST /api/bitgo/treasury/approve with the approval ID and your admin credentials. Rejections follow the same flow. All approval actions are logged on-chain and in the Axiom custody audit trail.'
+            },
+          ]} />
         </div>
       )}
 
