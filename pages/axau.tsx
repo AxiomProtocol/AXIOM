@@ -137,7 +137,7 @@ function Hero() {
           <span style={{ color: C.gold }}>Anchored in Gold</span>
         </h1>
         <p style={{ fontFamily: 'Georgia, serif', fontSize: 16, color: C.muted, maxWidth: 500, margin: '0 auto 28px', lineHeight: 1.7 }}>
-          AXAU is a gold reserve unit on Arbitrum One. Use AXUSD to get started — the protocol acquires and deposits the gold reserve on your behalf.
+          AXAU is a gold reserve unit on Arbitrum One, backed by PAXG. Mint directly with PAXG, or use the assisted path with AXUSD.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href="/axau-buy" style={{
@@ -146,7 +146,7 @@ function Hero() {
             fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
             textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700,
           }}>
-            BUY AXAU WITH AXUSD →
+            MINT OR REDEEM AXAU →
           </a>
           <a href="#how-it-works" style={{
             display: 'inline-block', padding: '12px 28px',
@@ -222,9 +222,9 @@ function ValueProps() {
     },
     {
       icon: <LiquidityIcon />,
-      badge: 'SIMPLE ENTRY',
-      title: 'Buy with AXUSD',
-      body: 'Use AXUSD to purchase AXAU — no gold market knowledge needed. The protocol acquires and deposits the gold reserve on your behalf, then mints to your wallet.',
+      badge: 'FLEXIBLE ENTRY',
+      title: 'Mint or Redeem On-Chain',
+      body: 'Deposit PAXG to mint AXAU directly, or redeem AXAU to receive PAXG back — both operations settle on-chain. Prefer AXUSD? Use the assisted path via the operations team.',
     },
   ];
 
@@ -256,21 +256,21 @@ function HowItWorks() {
   const steps = [
     {
       num: '01',
-      title: 'Enter AXUSD Amount',
-      body: 'Visit the Buy AXAU page, enter how much AXUSD you want to spend, and see a live AXAU quote update instantly based on the current gold price.',
-      note: 'Starting from 25 AXUSD',
+      title: 'Connect & Verify Identity',
+      body: 'Connect your Arbitrum One wallet. Your wallet must be identity-verified to receive AXAU — apply once via the Early Access page.',
+      note: 'One-time identity verification',
     },
     {
       num: '02',
-      title: 'Submit Your Request',
-      body: 'Provide your receiving wallet address and submit. Your request is processed automatically — no manual steps required.',
-      note: 'No gold market knowledge needed',
+      title: 'Choose Your Path',
+      body: 'Mint directly by depositing PAXG to the vault — or use the Assisted Mint to spend AXUSD and have the operations team handle fulfillment.',
+      note: 'Direct mint or assisted request',
     },
     {
       num: '03',
       title: 'Receive AXAU',
-      body: 'AXAU is minted directly to your wallet once the vault is topped up. You receive a confirmation email and can track your order status.',
-      note: 'Automated — typically within minutes',
+      body: 'Direct mint settles on-chain in a single transaction. Assisted requests are fulfilled by the operations team, typically within 1 business day.',
+      note: 'On-chain or ops-assisted',
     },
   ];
 
@@ -282,7 +282,7 @@ function HowItWorks() {
           How it works
         </h2>
         <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, maxWidth: 480, margin: '10px auto 0', lineHeight: 1.65 }}>
-          Use AXUSD to build your gold reserve. The protocol handles everything else.
+          Two paths to AXAU: mint directly with PAXG, or submit an assisted request using AXUSD.
         </p>
       </div>
 
@@ -315,7 +315,7 @@ function HowItWorks() {
             textDecoration: 'none', letterSpacing: '0.12em', textTransform: 'uppercase',
             fontWeight: 700, background: C.navy, padding: '9px 18px',
           }}>
-            BUY AXAU →
+            MINT / REDEEM →
           </a>
           <a href="/axusd-3643" style={{
             fontFamily: '"Courier New", monospace', fontSize: 10, color: C.navy,
@@ -361,7 +361,7 @@ function MintTerminal() {
           Buy AXAU with AXUSD
         </h2>
         <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, marginTop: 6, maxWidth: 520, lineHeight: 1.6 }}>
-          Use your AXUSD to purchase AXAU. The protocol acquires and deposits the gold reserve, then mints AXAU directly to your wallet.
+          Mint AXAU directly with PAXG, or submit an assisted request using AXUSD. Both paths require a verified wallet on Arbitrum One.
         </p>
       </div>
 
@@ -372,10 +372,10 @@ function MintTerminal() {
           <div style={{ padding: '28px 28px 24px' }}>
             <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 14 }}>Live Purchase</p>
             <p style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 22, color: C.navy, fontWeight: 600, marginBottom: 10, lineHeight: 1.2 }}>
-              Get a live quote and submit your order in under 2 minutes.
+              Get a live quote and mint or request AXAU in minutes.
             </p>
             <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.65, marginBottom: 24 }}>
-              Enter your AXUSD amount, confirm your wallet, and submit. The live quote updates in real time based on the current XAU/USD price and the vault&apos;s Mint NAV.
+              Direct Mint: deposit PAXG and receive AXAU on-chain instantly. Assisted Mint: submit a request with AXUSD and the operations team handles fulfillment — typically within 1 business day.
             </p>
             <a href="/axau-buy" style={{
               display: 'block', textAlign: 'center', padding: '14px',
@@ -383,14 +383,14 @@ function MintTerminal() {
               fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.14em',
               textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700,
             }}>
-              OPEN PURCHASE FORM →
+              OPEN MINT &amp; REDEEM →
             </a>
           </div>
           <div style={{ borderTop: `1px solid ${C.gold}30`, padding: '16px 28px', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
             {[
-              { label: 'Min Amount', value: '25 AXUSD' },
-              { label: 'Fulfillment', value: 'Automated' },
-              { label: 'Email confirm', value: 'Yes' },
+              { label: 'Direct Mint', value: 'PAXG → AXAU' },
+              { label: 'Assisted Mint', value: 'AXUSD request' },
+              { label: 'Redeem', value: 'AXAU → PAXG' },
             ].map(stat => (
               <div key={stat.label}>
                 <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 2px' }}>{stat.label}</p>
@@ -410,8 +410,8 @@ function MintTerminal() {
           {[
             { step: '1', label: 'Connect Your Wallet', detail: 'Connect via the top nav. Your wallet address auto-fills on the purchase form. Any Arbitrum-compatible wallet works.' },
             { step: '2', label: 'Enter AXUSD Amount', detail: 'Type in how much AXUSD you want to spend or pick a quick amount. The AXAU quote updates live as you type.' },
-            { step: '3', label: 'Submit the Order', detail: 'Add your email for confirmation, then submit. A branded order confirmation is sent to your inbox immediately.' },
-            { step: '4', label: 'Receive AXAU', detail: 'Your order is fulfilled automatically on-chain. AXAU transfers directly to your wallet — no manual processing required.' },
+            { step: '3', label: 'Submit the Request', detail: 'For assisted mint, add your email and submit. An order confirmation is sent to your inbox. For direct mint, sign the on-chain transaction.' },
+            { step: '4', label: 'Receive AXAU', detail: 'Direct mint settles on-chain in one transaction. Assisted requests are fulfilled by the operations team, typically within 1 business day.' },
           ].map((item, i, arr) => (
             <div key={item.step} style={{ display: 'flex', gap: 12, marginBottom: i < arr.length - 1 ? 16 : 0, paddingBottom: i < arr.length - 1 ? 16 : 0, borderBottom: i < arr.length - 1 ? `1px solid ${C.borderAlt}` : 'none' }}>
               <div style={{
