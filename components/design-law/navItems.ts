@@ -25,6 +25,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/dex', label: 'Exchange' },
       { href: '/axusd-3643', label: 'Unified AXUSD' },
       { href: '/axau', label: 'AXAU Reserve' },
+      { href: '/axau-early-access', label: 'AXAU Early Access' },
       { href: '/depin/denet', label: 'DePIN' },
       { href: '/banking', label: 'Banking' },
       { href: '/banking/my-account', label: 'My Nexus Account' },
