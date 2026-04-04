@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DesignLawLayout } from '../components/design-law/DesignLawLayout';
-import Image from 'next/image';
 import Head from 'next/head';
+import Image from 'next/image';
 
 type Tab = 'feed' | 'submit' | 'buybox';
 
@@ -1196,36 +1196,55 @@ export default function DistressedFeedPage() {
       <Head>
         <title>Deal Flow | AXIOM</title>
       </Head>
-      <div className="relative w-full h-32 sm:h-40 lg:h-48 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
-        <Image
-          src="/images/realestate/distressed_feed_hero.png"
-          alt="Distressed Property Pipeline"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
-          <h1 className="font-dl-serif text-xl sm:text-2xl lg:text-3xl text-white">Deal Flow</h1>
-          <p className="font-dl-mono text-xs sm:text-sm text-gray-300 mt-1">Distressed Property Acquisition Pipeline</p>
+      <div className="w-full mb-6 overflow-hidden border border-dl-border">
+        <div className="relative w-full" style={{ height: '320px' }}>
+          <Image
+            src="/images/realestate/distressed_feed_hero.png"
+            alt="Distressed Property Feed — Deal Flow"
+            fill
+            style={{ objectFit: 'cover' }}
+            priority
+          />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        {[
-          { icon: '/images/realestate/icon_foreclosure.png', label: 'Foreclosure', desc: 'HUD, Fannie, Freddie' },
-          { icon: '/images/realestate/icon_tax_lien.png', label: 'Tax Lien', desc: 'County tax sales' },
-          { icon: '/images/realestate/icon_flip.png', label: 'Wholesale', desc: 'Verified wholesalers' },
-          { icon: '/images/realestate/icon_property_search.png', label: 'Buy Box', desc: 'Automated matching' },
-        ].map((cap) => (
-          <div key={cap.label} className="border border-dl-border p-3 flex flex-col items-center text-center">
-            <div className="relative w-8 h-8 sm:w-10 sm:h-10 mb-1.5">
-              <Image src={cap.icon} alt="" fill className="object-contain" />
-            </div>
-            <p className="font-dl-serif text-xs sm:text-sm text-dl-navy font-bold">{cap.label}</p>
-            <p className="font-dl-mono text-[10px] text-dl-muted mt-0.5">{cap.desc}</p>
+      <div className="mb-2">
+        <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest mb-2">Real Asset Deployment Layer — Deal Flow</p>
+        <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Distressed Property Feed</h1>
+        <p className="text-dl-gray text-sm mb-6">
+          Aggregated distressed property feed sourcing acquisition targets from government REO programs,
+          pre-foreclosure filings, county courthouse records, and tax sales. Listings promoted from this
+          feed enter the Deal Intelligence underwriting workspace directly.
+        </p>
+      </div>
+
+      <div className="border border-dl-border mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-dl-border">
+          <div className="px-4 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Government REO</p>
+            <p className="text-xs text-dl-gray leading-relaxed">
+              HUD HomeStore, Fannie Mae HomePath, Freddie Mac HomeSteps, and USDA rural properties.
+            </p>
           </div>
-        ))}
+          <div className="px-4 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Pre-Foreclosure</p>
+            <p className="text-xs text-dl-gray leading-relaxed">
+              ATTOM pre-foreclosure filings: NOD, Lis Pendens, and Notice of Trustee Sale with 90-day lookback.
+            </p>
+          </div>
+          <div className="px-4 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Tax Sales</p>
+            <p className="text-xs text-dl-gray leading-relaxed">
+              County tax lien and deed sales, sheriff sales, and courthouse public records across 10 target states.
+            </p>
+          </div>
+          <div className="px-4 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Buy Box Match</p>
+            <p className="text-xs text-dl-gray leading-relaxed">
+              Set acquisition criteria — state, price range, property type — and promote matched listings to Deal Intelligence.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto pb-20 sm:pb-8">

@@ -275,18 +275,79 @@ export default function LandPage() {
         <meta name="description" content="Community Land Acquisition Pipeline — from submission to community activation." />
       </Head>
       <DesignLawLayout>
-        <div className="relative w-full h-32 sm:h-40 lg:h-48 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
-          <Image
-            src="/images/realestate/land_bridge_hero.png"
-            alt="Land Acquisition Pipeline"
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
-            <h1 className="font-dl-serif text-xl sm:text-2xl lg:text-3xl text-white">Physical-Digital Bridge</h1>
-            <p className="font-dl-mono text-xs sm:text-sm text-gray-300 mt-1">Community Land Acquisition Pipeline</p>
+        <div className="w-full mb-6 overflow-hidden border border-dl-border">
+          <div className="relative w-full" style={{ height: '320px' }}>
+            <Image
+              src="/images/realestate/land_bridge_hero.png"
+              alt="Land Acquisition Pipeline — Physical-Digital Bridge"
+              fill
+              style={{ objectFit: 'cover' }}
+              priority
+            />
+          </div>
+        </div>
+
+        <div className="mb-2">
+          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest mb-2">Real Asset Deployment Layer — Physical-Digital Bridge</p>
+          <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Land Acquisition Pipeline</h1>
+          <p className="text-dl-gray text-sm mb-6">
+            The physical-digital bridge converts governance-approved land acquisitions into on-chain registered assets.
+            Land acquired through this pipeline anchors the AXAU reserve instrument, expands the protocol's
+            real-asset collateral base, and establishes productive infrastructure for community sovereignty.
+          </p>
+        </div>
+
+        <div className="border border-dl-border mb-6">
+          <div className="border-b border-dl-border px-5 py-3 bg-dl-bg-alt">
+            <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest">Acquisition Thesis — Why Land</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-dl-border">
+            <div className="px-5 py-5">
+              <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Reserve Anchor</p>
+              <p className="font-dl-serif text-sm text-dl-navy mb-2">Real Asset Backing</p>
+              <p className="text-xs text-dl-gray leading-relaxed">
+                Land acquired through the pipeline becomes a verified real asset backing the AXAU reserve instrument.
+                Physical land + PAXG form the dual-layer reserve foundation of the Axiom treasury.
+              </p>
+            </div>
+            <div className="px-5 py-5">
+              <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Community Capital</p>
+              <p className="font-dl-serif text-sm text-dl-navy mb-2">Collective Ownership</p>
+              <p className="text-xs text-dl-gray leading-relaxed">
+                Acquisitions are funded through community capital pools and governed by AXM token holders.
+                Governance votes approve each acquisition before any capital is committed.
+              </p>
+            </div>
+            <div className="px-5 py-5">
+              <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Productive Use</p>
+              <p className="font-dl-serif text-sm text-dl-navy mb-2">Activation at Scale</p>
+              <p className="text-xs text-dl-gray leading-relaxed">
+                Acquired land is activated for food production, housing, DePIN node infrastructure, and community
+                programs — creating real-world utility that drives protocol revenue and participant benefit.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="border border-dl-border mb-6">
+          <div className="border-b border-dl-border px-5 py-3 bg-dl-bg-alt">
+            <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest">Six-Stage Capital Deployment Chain</p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y lg:divide-y-0 sm:divide-x divide-dl-border">
+            {[
+              { stage: '01', label: 'Submission', desc: 'Candidate identified and submitted for review' },
+              { stage: '02', label: 'Due Diligence', desc: 'Title, survey, environmental, and financial checks' },
+              { stage: '03', label: 'Community Vote', desc: 'AXM governance vote on acquisition approval' },
+              { stage: '04', label: 'Funding', desc: 'Capital pool funds committed to escrow' },
+              { stage: '05', label: 'Acquired', desc: 'Title transferred, asset registered on-chain' },
+              { stage: '06', label: 'Activated', desc: 'Land in productive use — revenue generation begins' },
+            ].map((s) => (
+              <div key={s.stage} className="px-4 py-4">
+                <p className="text-xs font-dl-mono text-dl-gold mb-1">{s.stage}</p>
+                <p className="text-sm font-semibold text-dl-navy mb-1">{s.label}</p>
+                <p className="text-xs text-dl-gray leading-relaxed">{s.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
 

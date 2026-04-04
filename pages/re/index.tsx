@@ -155,18 +155,54 @@ export default function REPropertiesSearch() {
         <meta name="description" content="Search property records for deal analysis." />
       </Head>
 
-      <div className="relative w-full h-32 sm:h-40 lg:h-48 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
-        <Image
-          src="/images/realestate/re_property_search_hero.png"
-          alt="RE Intelligence"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
-          <h1 className="font-dl-serif text-xl sm:text-2xl lg:text-3xl text-white">RE Intelligence</h1>
-          <p className="font-dl-mono text-xs sm:text-sm text-gray-300 mt-1">Institutional-grade property search for serious real estate investors.</p>
+      <div className="w-full mb-6 overflow-hidden border border-dl-border">
+        <div className="relative w-full" style={{ height: '320px' }}>
+          <Image
+            src="/images/realestate/re_property_search_hero.png"
+            alt="RE Intelligence — Property Search"
+            fill
+            style={{ objectFit: 'cover' }}
+            priority
+          />
+        </div>
+      </div>
+
+      <div className="mb-2">
+        <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest mb-2">Real Asset Deployment Layer — RE Intelligence</p>
+        <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">RE Intelligence</h1>
+        <p className="text-dl-gray text-sm mb-6">
+          Property search and underwriting data layer within the Axiom capital deployment architecture.
+          RE Intelligence surfaces property records, comps, and deal metrics that feed directly into
+          the Deal Intelligence underwriting workspace and the Land acquisition pipeline.
+        </p>
+      </div>
+
+      <div className="border border-dl-border mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-dl-border">
+          <div className="px-5 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">1 — Identify</p>
+            <p className="font-dl-serif text-sm text-dl-navy mb-1">Property Search</p>
+            <p className="text-xs text-dl-gray leading-relaxed">
+              Search the property registry by address, city, state, or ZIP. Each record links directly
+              to the full Deal Intelligence underwriting workspace.
+            </p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">2 — Analyze</p>
+            <p className="font-dl-serif text-sm text-dl-navy mb-1">Deal Intelligence</p>
+            <p className="text-xs text-dl-gray leading-relaxed">
+              Selected properties flow into the institutional underwriting workspace — value analysis,
+              rehab cost modeling, exit strategies, and deal scoring.
+            </p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">3 — Acquire</p>
+            <p className="font-dl-serif text-sm text-dl-navy mb-1">Land Pipeline</p>
+            <p className="text-xs text-dl-gray leading-relaxed">
+              Qualified acquisitions advance through the six-stage land acquisition pipeline,
+              governance approval, and on-chain registration.
+            </p>
+          </div>
         </div>
       </div>
 

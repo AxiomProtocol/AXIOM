@@ -259,9 +259,42 @@ export default function SentinelIndex() {
     <DesignLawLayout>
       <PageShell
         title="Axiom Sentinel"
-        subtitle="Unified Capital Decision & Risk Authorization Layer. Strategy proposes. Sentinel decides. Execution obeys."
+        subtitle="Capital Authorization Layer — the gate between intelligence and deployment. MIRDT reads the regime. Sentinel decides what moves."
         disclosure={FOOTER_DISCLOSURE}
       >
+        <div className="border border-dl-border mb-6">
+          <div className="border-b border-dl-border px-5 py-3 bg-dl-bg-alt">
+            <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest">Authorization Architecture — Intelligence → Authorization → Execution</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-dl-border">
+            <div className="px-5 py-5">
+              <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Input</p>
+              <p className="font-dl-serif text-base text-dl-navy mb-2">MIRDT Regime Signal</p>
+              <p className="text-sm text-dl-gray leading-relaxed">
+                Sentinel receives the current capital posture from MIRDT — FAVORABLE, NEUTRAL, CAUTION, or RESTRICTED —
+                along with individual dimension grades that define the regime environment.
+              </p>
+            </div>
+            <div className="px-5 py-5">
+              <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Authorization Gate</p>
+              <p className="font-dl-serif text-base text-dl-navy mb-2">Sentinel Decides</p>
+              <p className="text-sm text-dl-gray leading-relaxed">
+                Each capital action — whether a loan origination, asset acquisition, or treasury movement — is submitted
+                to Sentinel. The system evaluates the action against the current regime, position size limits, and risk
+                parameters before returning an APPROVED or DENIED decision with a plain-language reason code.
+              </p>
+            </div>
+            <div className="px-5 py-5">
+              <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Output</p>
+              <p className="font-dl-serif text-base text-dl-navy mb-2">Execution Obeys</p>
+              <p className="text-sm text-dl-gray leading-relaxed">
+                Only Sentinel-approved actions may proceed to execution. Advisory-only mode is active during
+                proof-of-concept — no automated transactions are triggered. All decisions are logged to an
+                immutable audit trail verifiable on-chain.
+              </p>
+            </div>
+          </div>
+        </div>
         <div className="border border-dl-border bg-dl-bg p-4 mb-6">
           <div className="flex items-center justify-between mb-3">
             <SectionHeading>Operations</SectionHeading>

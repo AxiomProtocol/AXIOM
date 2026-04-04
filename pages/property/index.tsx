@@ -179,18 +179,51 @@ export default function PropertyAnalysis() {
         <title>Property Analysis Tool | Axiom Protocol</title>
       </Head>
 
-      <div className="relative w-full h-32 sm:h-40 lg:h-48 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
-        <Image
-          src="/images/realestate/property_analysis_hero.png"
-          alt="Property Analysis"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
-          <h1 className="font-dl-serif text-xl sm:text-2xl lg:text-3xl text-white">Property Analysis Tool</h1>
-          <p className="font-dl-mono text-xs sm:text-sm text-gray-300 mt-1">Structured reports with probabilistic ranges</p>
+      <div className="w-full mb-6 overflow-hidden border border-dl-border">
+        <div className="relative w-full" style={{ height: '320px' }}>
+          <Image
+            src="/images/realestate/property_analysis_hero.png"
+            alt="Property Analysis Tool — Open-Access Underwriting Entry Point"
+            fill
+            style={{ objectFit: 'cover' }}
+            priority
+          />
+        </div>
+      </div>
+
+      <div className="mb-2">
+        <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest mb-2">Real Asset Deployment Layer — Open-Access Underwriting Entry Point</p>
+        <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Property Analysis Tool</h1>
+        <p className="text-dl-gray text-sm mb-6">
+          Pay-per-report property underwriting tool open to any investor. Enter any address to receive a structured
+          analysis with value estimates, rehab cost bands, rental projections, risk flags, and a deal grade.
+          Reports generated here can be forwarded into the Deal Intelligence workspace for full underwriting.
+        </p>
+      </div>
+
+      <div className="border border-dl-border mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-dl-border">
+          <div className="px-5 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Open Access</p>
+            <p className="text-sm text-dl-gray leading-relaxed">
+              No wallet required for the Free tier. Any investor can generate a quick underwriting snapshot
+              for any U.S. address in under 60 seconds.
+            </p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Probabilistic Ranges</p>
+            <p className="text-sm text-dl-gray leading-relaxed">
+              Reports express outputs as probabilistic ranges with confidence scores — not point estimates.
+              Data sources are disclosed per tier. No outcome guarantees are implied.
+            </p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Pipeline Entry</p>
+            <p className="text-sm text-dl-gray leading-relaxed">
+              Premium reports feed directly into Deal Intelligence for full institutional underwriting,
+              multi-exit scenario modeling, and capital readiness review.
+            </p>
+          </div>
         </div>
       </div>
 

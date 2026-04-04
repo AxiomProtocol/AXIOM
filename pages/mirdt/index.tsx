@@ -306,16 +306,52 @@ export default function MIRDTPage() {
       <div className="max-w-5xl mx-auto">
         <div className="mb-8">
             <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest mb-2">
-              Intelligence Layer — MIRDT
+              Intelligence Layer — Capital Regime Intelligence Engine
             </p>
             <h1 className="text-3xl font-dl-serif font-bold text-dl-navy mb-2">
-              Capital Intelligence Terminal
+              MIRDT Capital Intelligence Terminal
             </h1>
             <p className="text-sm text-dl-gray max-w-2xl">
-              Nine-dimension advisory signal engine monitoring digital commodities, protocol health, real asset markets,
-              construction costs, deal flow, credit portfolio, community coordination, model accuracy, and platform growth.
-              All signals are informational. No automated capital deployment.
+              Nine-dimension advisory signal engine that translates market conditions into a structured capital posture.
+              Regime conditions are read across digital commodities, protocol health, real asset markets, construction costs,
+              deal flow, credit portfolio, community coordination, model accuracy, and growth velocity.
+              All signals are informational. No automated capital deployment is permitted.
             </p>
+          </div>
+
+          <div className="border border-dl-border mb-8">
+            <div className="border-b border-dl-border px-5 py-3 bg-dl-bg-alt">
+              <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest">How It Works — Regime → Posture → Decision</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-dl-border">
+              <div className="px-5 py-5">
+                <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Step 1 — Regime</p>
+                <p className="font-dl-serif text-base text-dl-navy mb-2">Read the Environment</p>
+                <p className="text-sm text-dl-gray leading-relaxed">
+                  MIRDT reads nine dimensions of market and protocol data to classify the current capital regime.
+                  Each dimension receives a grade (A–ALERT) based on live signals from on-chain data,
+                  market feeds, and internal operational metrics.
+                </p>
+              </div>
+              <div className="px-5 py-5">
+                <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Step 2 — Posture</p>
+                <p className="font-dl-serif text-base text-dl-navy mb-2">Compute Protocol Readiness</p>
+                <p className="text-sm text-dl-gray leading-relaxed">
+                  Dimension grades are weighted and aggregated into a Protocol Readiness Score (PRS).
+                  The PRS resolves to an overall signal — FAVORABLE, NEUTRAL, CAUTION, or RESTRICTED —
+                  which defines the system's capital posture for the period.
+                </p>
+              </div>
+              <div className="px-5 py-5">
+                <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Step 3 — Decision</p>
+                <p className="font-dl-serif text-base text-dl-navy mb-2">Route to Sentinel</p>
+                <p className="text-sm text-dl-gray leading-relaxed">
+                  The capital posture is forwarded to Axiom Sentinel — the authorization layer — which gates
+                  all capital actions against the current regime. Sentinel approves, denies, or flags capital
+                  deployment requests based on MIRDT output and additional risk parameters.
+                </p>
+              </div>
+            </div>
           </div>
 
           {loading && (

@@ -3,8 +3,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface SearchResult {
   id: string;
@@ -147,36 +147,62 @@ export default function DealIntelligenceSearch() {
         <title>Deal Intelligence - Property Search | AXIOM</title>
       </Head>
 
-      <div className="relative w-full h-32 sm:h-40 lg:h-48 -mt-6 sm:-mt-8 -mx-4 sm:-mx-6 mb-6 overflow-hidden" style={{ width: 'calc(100% + 2rem)' }}>
-        <Image
-          src="/images/realestate/deal_intelligence_hero.png"
-          alt="Deal Intelligence"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-4 sm:pb-6">
-          <h1 className="font-dl-serif text-xl sm:text-2xl lg:text-3xl text-white">Deal Intelligence</h1>
-          <p className="font-dl-mono text-xs sm:text-sm text-gray-300 mt-1">Search properties, analyze deals, and run underwriting scenarios</p>
+      <div className="w-full mb-6 overflow-hidden border border-dl-border">
+        <div className="relative w-full" style={{ height: '320px' }}>
+          <Image
+            src="/images/realestate/deal_intelligence_hero.png"
+            alt="Deal Intelligence — Institutional Underwriting Workspace"
+            fill
+            style={{ objectFit: 'cover' }}
+            priority
+          />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        {[
-          { icon: '/images/realestate/icon_property_search.png', label: 'Search', desc: 'Find and resolve addresses' },
-          { icon: '/images/realestate/icon_deal_analyze.png', label: 'Analyze', desc: 'AI-powered deal analysis' },
-          { icon: '/images/realestate/icon_underwrite.png', label: 'Underwrite', desc: 'Run scenario models' },
-          { icon: '/images/realestate/icon_decision.png', label: 'Decide', desc: 'Structured decision log' },
-        ].map((cap) => (
-          <div key={cap.label} className="border border-dl-border p-3 sm:p-4 flex flex-col items-center text-center">
-            <div className="relative w-10 h-10 sm:w-12 sm:h-12 mb-2">
-              <Image src={cap.icon} alt="" fill className="object-contain" />
-            </div>
-            <p className="font-dl-serif text-xs sm:text-sm text-dl-navy font-bold">{cap.label}</p>
-            <p className="font-dl-mono text-[10px] sm:text-xs text-dl-muted mt-0.5">{cap.desc}</p>
+      <div className="mb-2">
+        <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest mb-2">Real Asset Deployment Layer — Institutional Underwriting Workspace</p>
+        <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Deal Intelligence</h1>
+        <p className="text-dl-gray text-sm mb-6">
+          Structured underwriting workspace for acquisition targets sourced through the Distressed Feed or RE Intelligence.
+          Each property undergoes value analysis, rehab cost modeling, multi-exit scoring, and capital readiness review
+          before advancing to the land acquisition pipeline.
+        </p>
+      </div>
+
+      <div className="border border-dl-border mb-6">
+        <div className="border-b border-dl-border px-5 py-3 bg-dl-bg-alt">
+          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest">Underwriting Chain — Source → Analyze → Score → Advance</p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-dl-border">
+          <div className="px-4 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Source</p>
+            <p className="font-dl-serif text-sm text-dl-navy mb-1">Distressed Feed / RE Intelligence</p>
+            <p className="text-xs text-dl-gray leading-relaxed">
+              Acquisition targets enter from the Distressed Feed (foreclosures, tax liens, wholesale) or RE Intelligence property search.
+            </p>
           </div>
-        ))}
+          <div className="px-4 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Analyze</p>
+            <p className="font-dl-serif text-sm text-dl-navy mb-1">Value + Rehab Modeling</p>
+            <p className="text-xs text-dl-gray leading-relaxed">
+              AI-powered valuation with Craftsman NCE rehab cost bands, rental comp analysis, and tightened confidence intervals.
+            </p>
+          </div>
+          <div className="px-4 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Score</p>
+            <p className="font-dl-serif text-sm text-dl-navy mb-1">Multi-Exit Underwriting</p>
+            <p className="text-xs text-dl-gray leading-relaxed">
+              Eight exit strategies evaluated: fix-and-flip, rental hold, wholesale, BRRRR, land bank, seller finance, short-term, and ground lease.
+            </p>
+          </div>
+          <div className="px-4 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Advance</p>
+            <p className="font-dl-serif text-sm text-dl-navy mb-1">Land Pipeline Submission</p>
+            <p className="text-xs text-dl-gray leading-relaxed">
+              Qualified deals advance through governance approval into the six-stage land acquisition pipeline and on-chain registry.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Contract Status Summary Widget for Search Results */}

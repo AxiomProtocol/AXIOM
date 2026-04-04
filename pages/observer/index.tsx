@@ -191,10 +191,37 @@ export default function ObserverOverview() {
         <meta name="description" content="Executive summary for allocators and auditors" />
       </Head>
 
-      <h1 className="font-dl-serif text-3xl text-dl-navy">Observer</h1>
-      <p className="text-dl-gray mt-1 mb-6">Executive summary for allocators and auditors</p>
+      <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest mb-2">Institutional Transparency Layer</p>
+      <h1 className="font-dl-serif text-3xl text-dl-navy">Axiom Observer</h1>
+      <p className="text-dl-gray mt-1 mb-6">
+        Read-only institutional transparency dashboard. Real-time visibility into treasury positions, governance state,
+        risk exposure, and on-chain proof links — designed for allocators, auditors, and institutional counterparties.
+      </p>
 
       <ObserverNav current="overview" />
+
+      <div className="border border-dl-border mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-dl-border">
+          <div className="px-5 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Treasury</p>
+            <p className="text-sm text-dl-gray leading-relaxed">
+              Live bucket balances, routing rules, draw schedules, and transaction history — all derived from on-chain state.
+            </p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Governance</p>
+            <p className="text-sm text-dl-gray leading-relaxed">
+              Role assignments, timelock queue, configuration parameters, and emergency control states.
+            </p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wide mb-1">Risk &amp; Assets</p>
+            <p className="text-sm text-dl-gray leading-relaxed">
+              Exposure limits, concentration analysis, active alerts, asset registry, revenue streams, and lifecycle events.
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div className="bg-dl-bg-alt border border-dl-border p-4 mb-6">
         <div className="flex items-start">
@@ -203,7 +230,7 @@ export default function ObserverOverview() {
           </svg>
           <div className="ml-3">
             <p className="text-sm text-dl-navy">
-              <strong>Read-Only Dashboard:</strong> No transaction signing or admin actions are possible from this interface.
+              <strong>Read-Only Dashboard:</strong> No transaction signing or admin actions are possible from this interface. All data is sourced from on-chain contracts and internal systems.
             </p>
           </div>
         </div>

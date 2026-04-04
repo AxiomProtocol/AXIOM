@@ -150,6 +150,36 @@ uri = "file://public/axau-early-access/gold-bar-aerial.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "5IoRRDuGN9ouTs_hN8B3-"
+uri = "file://public/images/realestate/land_bridge_hero.png"
+type = "image"
+title = "land acquisition hero"
+
+[[generated]]
+id = "aydGHws7__IbuZgaJ9Rf-"
+uri = "file://public/images/realestate/re_property_search_hero.png"
+type = "image"
+title = "RE intelligence hero"
+
+[[generated]]
+id = "gjLTX0VTszGIcBaJSOEli"
+uri = "file://public/images/realestate/deal_intelligence_hero.png"
+type = "image"
+title = "deal intelligence hero"
+
+[[generated]]
+id = "7ADCu8Ml2yQZg5bkql2lW"
+uri = "file://public/images/realestate/distressed_feed_hero.png"
+type = "image"
+title = "distressed feed hero"
+
+[[generated]]
+id = "hUq-CngHfCiq6WRkTuoJh"
+uri = "file://public/images/realestate/property_analysis_hero.png"
+type = "image"
+title = "property analysis hero"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
