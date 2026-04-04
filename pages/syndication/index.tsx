@@ -154,6 +154,9 @@ export default function SyndicationDashboard() {
         <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
           All offerings on this platform are exempt from SEC registration under Regulation D 506(c). Participation is limited to verified accredited investors. Projected returns shown on offering documents are forward-looking estimates — not guarantees. Capital deployment into real property is subject to market conditions, liquidity risk, and execution risk. Past SPV performance does not predict future results.
         </p>
+        <p className="font-dl-mono text-xs text-dl-gray mt-2 pt-2 border-t border-dl-border leading-relaxed">
+          Settlement model: Subscriptions are received off-chain (ACH/wire) or on-chain via AXUSD. Capital deployment is ops-mediated — physical closings, title, and asset management are executed by the Axiom operations team. On-chain records (AXIOMCreditMarket v7, FixFlip/DSCR vaults) provide immutable LP accounting. Distributions and capital calls follow subscription agreement terms; off-chain K-1 documentation maintained per SEC Reg D requirements.
+        </p>
       </div>
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">

@@ -160,6 +160,9 @@ export default function InvestorPortal() {
         <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
           This portal displays holdings, capital calls, and distribution records for verified accredited investors participating in Axiom Protocol syndication offerings. All projected distributions are estimates — not contractual guarantees. Capital call notices are binding per the terms of each offering's subscription agreement.
         </p>
+        <p className="font-dl-mono text-xs text-dl-gray mt-2 pt-2 border-t border-dl-border leading-relaxed">
+          Settlement model: Subscriptions received off-chain (ACH/wire) or on-chain via AXUSD on Arbitrum One. Capital deployment is ops-mediated — physical property closings and asset management are executed by the Axiom operations team. On-chain vaults (AXIOMCreditMarket v7, FixFlip/DSCR ERC4626 vaults) provide immutable LP position records. Distributions follow subscription agreement terms; K-1 documentation maintained per SEC Reg D 506(c) requirements.
+        </p>
       </div>
 
       {!isConnected && (

@@ -154,7 +154,8 @@ export default function PilotDashboard() {
       </div>
 
       <div className="border border-dl-border bg-dl-bg-alt p-5 mb-8">
-        <p className="text-sm text-dl-gray leading-relaxed">The Axiom Capital Program is a $1M dual-asset program designed to demonstrate community-driven real estate participation at scale. All figures shown are live data from the program ledger. Target yields shown are projections — not guarantees. Past performance does not indicate future results.</p>
+        <p className="text-sm text-dl-gray leading-relaxed">The Axiom Capital Program is a $1M dual-asset program designed to demonstrate community-driven real estate participation at scale. All figures shown are live data from the program ledger. Target returns shown are projections — not guarantees. Past performance does not indicate future results.</p>
+        <p className="font-dl-mono text-xs text-dl-gray mt-2 pt-2 border-t border-dl-border leading-relaxed">Settlement model: Investor capital is received off-chain via ACH/wire or on-chain via AXUSD on Arbitrum One. Capital deployment into real property assets is ops-mediated — the Axiom operations team executes physical closings, title transfers, and asset management. On-chain settlement records (via AXIOMCreditMarket and FixFlip/DSCR vaults) provide immutable accounting of LP positions and distributions. Off-chain documentation (subscription agreements, capital call notices, K-1s) is maintained per SEC Reg D 506(c) requirements.</p>
       </div>
 
       {loading ? (
