@@ -619,6 +619,12 @@ export default function WealthPracticePage() {
         </div>
       </div>
 
+      <div className="border border-dl-border mb-6 px-5 py-3 bg-dl-bg-alt">
+        <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
+          <span className="text-dl-navy font-semibold">Custody model:</span> The Wealth Practice operates on a non-custodial group coordination model for on-chain pools — member funds are held in the Wealth Practice Hub automated control layer on Arbitrum One, not by Axiom Protocol directly. For off-chain coordination (Interest Hub stage), contributions and payouts are facilitated by the operations team via bank rails; no third-party bank holds funds on behalf of protocol participants in that stage. Axiom Protocol does not guarantee payout timing or cycle completion. Members retain the right to exit per group agreement terms.
+        </p>
+      </div>
+
       <div className="border-b border-dl-border mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
         <div className="flex gap-4 sm:gap-6 overflow-x-auto">
           {TABS.map((tab) => (

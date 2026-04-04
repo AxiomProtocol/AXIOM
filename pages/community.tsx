@@ -36,9 +36,15 @@ export default function CommunityPage() {
       <p className="text-sm text-dl-gray mb-1">Structured group capital formation on Arbitrum One — from group savings to institutional fund access via a three-stage trust pipeline.</p>
       <p className="text-xs text-dl-gray font-dl-mono mb-4">Wealth Practice Hub: LIVE on Arbitrum One · Groups currently forming · No completed broad-cycle performance data</p>
 
-      <div className="border border-dl-border mb-8 px-5 py-3 bg-dl-bg-alt">
+      <div className="border border-dl-border mb-4 px-5 py-3 bg-dl-bg-alt">
         <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
           The Wealth Practice is in early-stage formation. The on-chain hub contract is deployed and live on Arbitrum One. Active groups are being seeded. No completed multi-cycle performance data exists as of this disclosure. All claims on this page describe protocol design and current deployment status — not historical outcomes, individual returns, or guarantees of future performance.
+        </p>
+      </div>
+
+      <div className="border border-dl-border mb-8 px-5 py-3 bg-dl-bg">
+        <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
+          <span className="text-dl-navy font-semibold">Custody model:</span> On-chain pools use a non-custodial group coordination model — member funds are held in the Wealth Practice Hub automated control layer on Arbitrum One, not by Axiom Protocol directly. For off-chain coordination (Interest Hub stage), contributions are facilitated by the operations team via bank rails. Axiom Protocol does not guarantee payout timing or cycle completion. Members retain exit rights per group agreement terms. This is not a deposit product and is not FDIC-insured.
         </p>
       </div>
 
