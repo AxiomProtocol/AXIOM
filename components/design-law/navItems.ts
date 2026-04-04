@@ -10,6 +10,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Infrastructure',
     children: [
+      { href: '/infrastructure', label: 'System Overview' },
       { href: '/axau', label: 'AXAU Reserve' },
       { href: '/axusd-3643', label: 'AXUSD Settlement Rail' },
       { href: '/dex', label: 'Protocol Exchange' },

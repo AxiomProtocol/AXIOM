@@ -288,13 +288,17 @@ export default function LendingFundPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Lending Fund — Axiom Protocol</title>
-        <meta name="description" content="SEC Reg D 506(c) compliant bridge loan fund providing short-term capital for real asset acquisition." />
+        <title>Lending Fund — Layer 03 Capital Deployment | Axiom Protocol</title>
+        <meta name="description" content="Axiom Protocol Lending Fund: SEC Reg D 506(c) bridge loan capital program for real asset acquisition. On-chain settlement and institutional reporting on Arbitrum One. Accredited participants only." />
       </Head>
 
       <div className="border-b border-dl-border mb-10 overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-2">
           <div className="py-10 pr-0 lg:pr-10">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Layer 03 Capital Deployment</span>
+              <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-2 py-0.5">FORMATION</span>
+            </div>
             <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">SEC Reg D 506(c) | Accredited Participants Only</p>
             <h1 className="font-dl-serif text-3xl md:text-5xl text-dl-navy leading-tight mb-4">
               Axiom<br />Lending Fund
@@ -302,7 +306,8 @@ export default function LendingFundPage() {
             <p className="text-sm text-dl-gray max-w-xl leading-relaxed mb-5">
               Institutional-grade bridge capital for real asset acquisition and development.
               Every loan is secured by real property with conservative 70% LTV underwriting,
-              on-chain settlement, and a complete audit trail on Arbitrum One.
+              on-chain settlement via AXUSD, and a complete audit trail on Arbitrum One.
+              Designed to align with SEC Reg D 506(c) — accredited participants only.
             </p>
             <div className="flex flex-wrap gap-2 mb-6">
               {[

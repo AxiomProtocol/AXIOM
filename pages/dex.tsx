@@ -262,29 +262,30 @@ export default function DexPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Axiom Exchange — Layer 02 Settlement Liquidity | AXUSD on Arbitrum One</title>
-        <meta name="description" content="The Axiom Protocol's Layer 02 settlement liquidity layer. Swap AXUSD, provide liquidity via EulerSwap for dual swap and lending yield, and earn on Arbitrum One." />
+        <title>Axiom Protocol Exchange — Layer 01.5 Exchange + Peg | AXUSD on Arbitrum One</title>
+        <meta name="description" content="The Axiom Protocol's Layer 01.5 exchange and peg layer. Swap AXUSD, provide liquidity via EulerSwap for dual swap and lending yield, and support PSM-backed peg maintenance on Arbitrum One." />
       </Head>
 
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Layer 02 Settlement</span>
-          <span className="font-dl-mono text-xs text-dl-gold border border-dl-gold px-2 py-0.5">EulerSwap Primary Venue</span>
+          <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Layer 01.5 Exchange + Peg</span>
+          <span className="font-dl-mono text-xs text-dl-gold border border-dl-gold px-2 py-0.5">Camelot V2 + EulerSwap</span>
+          <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-2 py-0.5">LIVE</span>
         </div>
-        <h1 className="font-dl-serif text-3xl text-dl-navy mb-2">Settlement Liquidity Infrastructure</h1>
+        <h1 className="font-dl-serif text-3xl text-dl-navy mb-2">Protocol Exchange Infrastructure</h1>
         <p className="text-dl-gray text-sm max-w-2xl leading-relaxed">
-          The Axiom Exchange is Layer 02 of the Axiom Protocol financial operating system — the primary on-chain settlement venue for AXUSD. Liquidity is concentrated in EulerSwap pools, where LP capital earns dual yield from swap fees and Euler lending markets simultaneously. All AXUSD on-ramps, off-ramps, and reserve conversions route through this layer.
+          The Axiom Exchange is Layer 01.5 of the financial operating system — the primary conversion and peg maintenance venue between AXUSD, USDC, and AXM. EulerSwap pools concentrate LP capital for dual yield. The PSM-backed conversion path supports AXUSD peg stability. All reserve conversions and settlement flows route through this layer.
         </p>
       </div>
 
-      {/* Settlement architecture callout */}
+      {/* Architecture callout */}
       <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6 flex flex-wrap gap-6">
         {[
-          { label: 'Settlement Layer', value: 'Layer 02 / AXUSD' },
-          { label: 'Primary Venue', value: 'EulerSwap (AMM)' },
-          { label: 'Reserve Layer', value: 'Layer 01 / AXAU' },
+          { label: 'Exchange Layer', value: 'Layer 01.5 / Peg + Liquidity' },
+          { label: 'Primary Venue', value: 'Camelot V2 + EulerSwap' },
+          { label: 'Settlement Layer', value: 'Layer 01 / AXUSD' },
+          { label: 'Reserve Layer', value: 'Layer 02 / AXAU' },
           { label: 'Network', value: 'Arbitrum One' },
-          { label: 'LP Yield Structure', value: 'Swap Fees + Lending APY' },
         ].map(item => (
           <div key={item.label}>
             <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-0.5">{item.label}</p>

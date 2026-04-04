@@ -82,7 +82,7 @@ function Hero() {
       {/* Headline block */}
       <div style={{ padding: '32px 0 40px', textAlign: 'center' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.border}`, background: C.bg }}>Layer 01 Reserve</span>
+          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.border}`, background: C.bg }}>Layer 02 Reserve</span>
           <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.gold}40`, background: C.bgGold }}>AXAU — Axiom Gold Reserve Unit</span>
         </div>
         <h1 style={{
@@ -95,7 +95,7 @@ function Hero() {
           <span style={{ color: C.gold }}>On Arbitrum One</span>
         </h1>
         <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 560, margin: '0 auto 20px', lineHeight: 1.7 }}>
-          AXAU is the Axiom Protocol&apos;s Layer 01 reserve unit — backed by on-chain PAXG (Paxos Gold), governed by a live coverage ratio, and accessible via direct mint or ops-assisted fulfillment. Identity credential required.
+          AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — backed by on-chain PAXG (Paxos Gold), governed by a live coverage ratio, and accessible via direct on-chain mint or ops-assisted AXUSD fulfillment. ERC-3643 identity credential required.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href="/axau-buy" style={{
@@ -641,8 +641,8 @@ export default function AxauPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>AXAU — Layer 01 Gold Reserve Infrastructure | Axiom Protocol</title>
-        <meta name="description" content="AXAU is the Axiom Protocol's Layer 01 reserve unit on Arbitrum One — backed by on-chain PAXG, governed by a live coverage ratio, and accessible via direct mint or ops-assisted fulfillment." />
+        <title>AXAU — Layer 02 Gold Reserve Infrastructure | Axiom Protocol</title>
+        <meta name="description" content="AXAU is the Axiom Protocol's Layer 02 reserve unit on Arbitrum One — backed by on-chain PAXG (Paxos Gold), governed by a live coverage ratio, and accessible via direct on-chain mint or ops-assisted fulfillment. ERC-3643 identity credential required." />
       </Head>
 
       <Hero />

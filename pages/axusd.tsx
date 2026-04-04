@@ -66,7 +66,7 @@ function Hero() {
 
   const strip = [
     { label: 'Token', value: 'AXUSD' },
-    { label: 'Layer', value: 'Layer 02 Settlement' },
+    { label: 'Layer', value: 'Layer 01 Settlement' },
     { label: 'Peg', value: data.pegPrice ? `$${data.pegPrice}` : '$1.0000' },
     { label: 'Supply', value: data.totalSupplyFormatted ? `${data.totalSupplyFormatted} AXUSD` : (loading ? '…' : 'N/A') },
     { label: 'PSM Reserve', value: data.psmUsdcReserve ?? (loading ? '…' : 'N/A') },
@@ -82,7 +82,7 @@ function Hero() {
             fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted,
             letterSpacing: '0.18em', textTransform: 'uppercase',
             padding: '3px 8px', border: `1px solid ${C.border}`, background: C.bg,
-          }}>Layer 02 Settlement</span>
+          }}>Layer 01 Settlement</span>
           <span style={{
             fontFamily: '"Courier New", monospace', fontSize: 9, color: C.navy,
             letterSpacing: '0.18em', textTransform: 'uppercase',
@@ -107,10 +107,10 @@ function Hero() {
           fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted,
           maxWidth: 600, margin: '0 auto 24px', lineHeight: 1.75,
         }}>
-          AXUSD is Axiom Protocol&apos;s Layer 02 settlement token — a USD-pegged instrument issued through
+          AXUSD is Axiom Protocol&apos;s Layer 01 settlement token — a USD-pegged instrument issued through
           the Peg Stability Module (PSM) and governed by an ERC-3643 identity framework. It connects
-          directly to Layer 01 reserve infrastructure (AXAU/PAXG) and functions as the primary unit
-          of account across the protocol.
+          to the Layer 02 reserve layer (AXAU/PAXG) and the Layer 01.5 exchange for peg maintenance,
+          functioning as the primary unit of account across the protocol.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href="/axusd-3643" style={{
@@ -154,11 +154,11 @@ function Hero() {
 // ─── Architecture Strip ───────────────────────────────────────────────────────
 function ArchitectureStrip() {
   const layers = [
-    { layer: 'Layer 01', label: 'Reserve', token: 'AXAU', detail: 'PAXG-backed gold reserve instrument' },
-    { layer: 'Layer 02', label: 'Settlement', token: 'AXUSD', detail: 'PSM-issued USD settlement token', active: true },
-    { layer: 'Layer 02', label: 'DEX Venue', token: 'EulerSwap', detail: 'Primary settlement liquidity pool' },
-    { layer: 'Layer 03', label: 'Asset Pipeline', token: 'RE + DePIN', detail: 'Real asset onboarding layer' },
-    { layer: 'Layer 04', label: 'Intelligence', token: 'MIRDT + Sentinel', detail: 'Capital advisory signal engine' },
+    { layer: 'Layer 00', label: 'Banking', token: 'Increase / BitGo', detail: 'FDIC-insured fiat entry layer' },
+    { layer: 'Layer 01', label: 'Settlement', token: 'AXUSD', detail: 'PSM-issued USD settlement token', active: true },
+    { layer: 'Layer 01.5', label: 'Exchange', token: 'Camelot + EulerSwap', detail: 'Peg maintenance and liquidity' },
+    { layer: 'Layer 02', label: 'Reserve', token: 'AXAU', detail: 'PAXG-backed gold reserve unit' },
+    { layer: 'Layer 03', label: 'Capital', token: 'Lending + SPVs', detail: 'Capital deployment programs' },
   ];
 
   return (
@@ -307,8 +307,8 @@ function ReserveConnection() {
           AXUSD → AXAU Reserve Relationship
         </h2>
         <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, maxWidth: 620, lineHeight: 1.75, marginBottom: 36 }}>
-          AXUSD is the protocol&apos;s settlement-layer token. At the reserve layer, AXAU (Layer 01)
-          provides the hard-asset backing. AXUSD participants gain exposure to protocol operations;
+          AXUSD is the protocol&apos;s Layer 01 settlement token. At the reserve layer, AXAU (Layer 02)
+          provides the hard-asset backing via on-chain PAXG. AXUSD participants gain exposure to protocol operations;
           the treasury maintains AXAU coverage positions to anchor reserve depth.
         </p>
 
@@ -316,21 +316,21 @@ function ReserveConnection() {
           {[
             {
               title: 'PAXG (Gold Vault)',
-              sub: 'Layer 01 Reserve Asset',
+              sub: 'Layer 02 Reserve Asset',
               desc: 'On-chain Paxos Gold (PAXG) held in the GoldVault contract. Verified via Chainlink XAU/USD oracle. 100%+ target coverage ratio.',
               href: '/axau',
               cta: 'VIEW AXAU RESERVE',
             },
             {
               title: 'PSM (USDC Pool)',
-              sub: 'Layer 02 Issuance Engine',
+              sub: 'Layer 01 Issuance Engine',
               desc: 'USDC deposited in the Peg Stability Module becomes the primary backing for AXUSD at issuance. Reserve ratio monitored continuously.',
               href: null,
               cta: null,
             },
             {
               title: 'DEX Settlement Venue',
-              sub: 'Layer 02 Liquidity',
+              sub: 'Layer 01.5 Exchange Liquidity',
               desc: 'EulerSwap is the primary on-chain settlement venue for AXUSD. Concentrated liquidity around the $1.00 peg anchors secondary market pricing.',
               href: '/dex',
               cta: 'VIEW DEX VENUE',
@@ -563,7 +563,7 @@ function FAQ() {
     },
     {
       q: 'How does AXUSD relate to AXAU?',
-      a: 'AXAU is the Layer 01 reserve instrument, backed by PAXG (on-chain Paxos Gold). AXUSD is the Layer 02 settlement token backed by USDC in the PSM. The treasury maintains AXAU coverage positions to provide hard-asset depth behind the protocol\'s broader reserve pool. They serve distinct roles within the same capital stack.',
+      a: 'AXAU is the Layer 02 reserve instrument, backed by PAXG (on-chain Paxos Gold). AXUSD is the Layer 01 settlement token backed by USDC in the PSM. The treasury maintains AXAU coverage positions to provide hard-asset depth behind the protocol\'s broader reserve pool. They serve distinct roles within the same capital stack.',
     },
     {
       q: 'What is the protocol fee for PSM operations?',
@@ -642,8 +642,8 @@ export default function AXUSDPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>AXUSD — Layer 02 Settlement Stablecoin | Axiom Protocol</title>
-        <meta name="description" content="AXUSD is Axiom Protocol's Layer 02 settlement token — issued through the Peg Stability Module (PSM), identity-gated via ERC-3643, and anchored to the Layer 01 AXAU reserve infrastructure on Arbitrum One." />
+        <title>AXUSD — Layer 01 Settlement Rail | Axiom Protocol</title>
+        <meta name="description" content="AXUSD is Axiom Protocol's Layer 01 settlement token — issued through the Peg Stability Module (PSM), identity-gated via ERC-3643, and anchored to the Layer 02 AXAU reserve infrastructure on Arbitrum One." />
       </Head>
 
       <Hero />

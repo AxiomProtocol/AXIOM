@@ -864,7 +864,7 @@ export default function AxauBuyPage() {
 
         <div style={{ marginBottom: 32 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.border}`, background: C.bgAlt }}>Layer 01 Reserve</span>
+            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.border}`, background: C.bgAlt }}>Layer 02 Reserve · AXAU</span>
             <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.gold}40`, background: C.goldBg }}>Arbitrum One</span>
           </div>
           <h1 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(28px, 5vw, 46px)', fontWeight: 700, color: C.navy, lineHeight: 1.08, margin: '0 0 14px' }}>
