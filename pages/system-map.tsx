@@ -283,9 +283,87 @@ export default function SystemMapPage() {
         </div>
       </div>
 
-      {/* SECTION 3 — LAYER BREAKDOWN */}
+      {/* WHY THIS ARCHITECTURE MATTERS */}
       <div style={{ marginBottom: 64 }}>
-        <SectionRule n="03" title="Layer-by-Layer Breakdown" />
+        <SectionRule n="03" title="Why This Architecture Matters" />
+        <h2 style={{ fontFamily: SERIF, fontSize: 'clamp(22px, 3.5vw, 32px)', fontWeight: 700, color: C.navy, marginBottom: 12 }}>
+          Most Systems Move Value.<br />Axiom Governs the Architecture Around It.
+        </h2>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, maxWidth: 640, lineHeight: 1.8, marginBottom: 40 }}>
+          Most protocols pick one problem. A payment rail. A stablecoin. A lending market. Axiom integrates all of them — reserve backing, settlement issuance, exchange liquidity, capital deployment, intelligence, and solvency verification — into a single operating system where each layer depends on and reinforces the others.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 1, background: C.border, marginBottom: 40 }}>
+          {[
+            {
+              n: '01',
+              title: 'Reserve-Backed Depth',
+              body: 'AXUSD settlement is anchored by AXAU, which is backed by on-chain PAXG (Paxos Gold). Hard-asset depth sits behind the settlement layer — not as a marketing claim, but as a live coverage ratio verifiable on-chain. Most stablecoins have no hard-asset backing. This one has a gold vault.',
+              anchor: true,
+            },
+            {
+              n: '02',
+              title: 'Integrated, Not Bolt-On',
+              body: 'Each layer was designed to interoperate with the others. Banking feeds settlement. Settlement feeds the exchange. The exchange maintains the peg and routes reserve conversions. Capital deployment draws from settled AXUSD. Intelligence informs every capital decision. Removing any layer degrades the rest.',
+              anchor: false,
+            },
+            {
+              n: '03',
+              title: 'Verifiable, Not Asserted',
+              body: 'Trust in most financial systems is asserted: trust us, we\'ve been audited. In Axiom, it is verifiable: every contract is on-chain, every reserve ratio is computed from live data, and every operational claim is logged in the Proof of Execution. You do not have to take our word for it.',
+              anchor: false,
+            },
+            {
+              n: '04',
+              title: 'Sovereignty Through Architecture',
+              body: 'A sovereign financial system cannot depend on a single point of failure. The Axiom stack is designed for institutional-grade resilience: FDIC-insured fiat entry, non-custodial on-chain settlement, gold reserve backing, and a trust layer that operates independently of any single counterparty.',
+              anchor: false,
+            },
+          ].map((card) => (
+            <div key={card.n} style={{
+              background: C.bg,
+              padding: '26px 22px',
+              borderLeft: card.anchor ? `3px solid ${C.gold}` : '3px solid transparent',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                <span style={{ fontFamily: MONO, fontSize: 8, color: C.gold, border: `1px solid ${C.gold}`, padding: '2px 7px', letterSpacing: '0.12em' }}>{card.n}</span>
+                <h3 style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 700, color: C.navy, margin: 0 }}>{card.title}</h3>
+              </div>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.78, margin: 0 }}>
+                {card.body}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Reserve anchor callout */}
+        <div style={{
+          border: `1px solid ${C.gold}`,
+          background: '#fdf6e8',
+          padding: '22px 26px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 20,
+          flexWrap: 'wrap' as const,
+        }}>
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.2em', color: C.gold, textTransform: 'uppercase' as const, marginBottom: 4 }}>LAYER 02 · RESERVE ANCHOR</div>
+            <div style={{ fontFamily: MONO, fontSize: 22, fontWeight: 700, color: '#7a5c1e', lineHeight: 1 }}>AXAU</div>
+          </div>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.78, margin: 0 }}>
+              AXAU is the reserve anchor of the entire Axiom stack. Backed by on-chain PAXG (Paxos Gold), governed by a live coverage ratio enforced by the GoldVault contract, and priced via Chainlink XAU/USD oracle. The treasury maintains AXAU coverage positions to provide hard-asset depth behind the protocol&apos;s broader reserve pool. AXUSD settlement is ultimately backed by this layer.
+            </p>
+          </div>
+          <a href="/axau" style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.13em', textTransform: 'uppercase' as const, color: '#7a5c1e', border: `1px solid ${C.gold}`, padding: '8px 16px', textDecoration: 'none', background: C.white, flexShrink: 0, alignSelf: 'flex-start' as const }}>
+            VIEW RESERVE →
+          </a>
+        </div>
+      </div>
+
+      {/* SECTION 4 — LAYER BREAKDOWN */}
+      <div style={{ marginBottom: 64 }}>
+        <SectionRule n="04" title="Layer-by-Layer Breakdown" />
         <h2 style={{ fontFamily: SERIF, fontSize: 'clamp(22px, 3.5vw, 32px)', fontWeight: 700, color: C.navy, marginBottom: 12 }}>
           Every Layer. Every Status.
         </h2>
@@ -340,9 +418,9 @@ export default function SystemMapPage() {
         </div>
       </div>
 
-      {/* SECTION 4 — DIRECT VS ASSISTED */}
+      {/* SECTION 5 — DIRECT VS ASSISTED */}
       <div style={{ marginBottom: 64 }}>
-        <SectionRule n="04" title="Direct vs Assisted Paths" />
+        <SectionRule n="05" title="Direct vs Assisted Paths" />
         <h2 style={{ fontFamily: SERIF, fontSize: 'clamp(22px, 3.5vw, 32px)', fontWeight: 700, color: C.navy, marginBottom: 12 }}>
           On-Chain and Ops-Mediated Flows
         </h2>
@@ -381,9 +459,9 @@ export default function SystemMapPage() {
         </div>
       </div>
 
-      {/* SECTION 5 — TRUST AND VERIFICATION */}
+      {/* SECTION 6 — TRUST AND VERIFICATION */}
       <div style={{ marginBottom: 64 }}>
-        <SectionRule n="05" title="Trust and Verification" />
+        <SectionRule n="06" title="Trust and Verification" />
         <h2 style={{ fontFamily: SERIF, fontSize: 'clamp(22px, 3.5vw, 32px)', fontWeight: 700, color: C.navy, marginBottom: 12 }}>
           Every Claim Has a Source.
         </h2>

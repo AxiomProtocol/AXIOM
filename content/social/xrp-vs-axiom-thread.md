@@ -1,135 +1,162 @@
 # XRP vs. Axiom — X Thread
 
-**Purpose:** Capture attention in the XRP conversation. Position Axiom above "payments only." Drive traffic to the system map and infrastructure pages.
+**Purpose:** Capture attention in the XRP conversation. Establish Axiom as a distinct category — not a competing rail, but the capital architecture around the rail. Drive traffic to the system map.
 
-**Tone:** Sharp. High-conviction. Not tribal. Not anti-XRP.
+**Tone:** Sharp. High-conviction. Respectful of XRP's real use case. Category-defining, not tribal.
 
-**Claim standard:** Only statements current implementation can support.
+**Claim standard:** Implementation-accurate only. No regulatory claims. No decentralization overclaims.
 
 ---
 
-## PRIMARY THREAD (10 posts)
+## PRIMARY THREAD (11 posts)
 
 ---
 
 **Post 1 — HOOK**
 
-XRP moves money.
+XRP solves a real problem.
 
-Axiom structures it, backs it, settles it, and deploys it.
+Moving money across borders, fast and cheap.
 
-One is a rail. The other is an operating system.
+But there's a different problem nobody's solved yet:
+
+What happens after the money moves?
 
 Thread 🧵
 
 ---
 
-**Post 2 — THE HONEST COMPARISON**
+**Post 2 — THE CATEGORY DISTINCTION**
 
-XRP's use case is clear: fast, cheap cross-border payments. It does that well.
+A payment rail moves value from A to B.
 
-But payments are one layer of a capital stack.
+A capital architecture governs what backs that value, what settles it, what it earns, and how it's governed.
 
-Moving money and governing what backs it, settles it, and compounds it are three different problems.
+XRP is the first. Axiom is the second.
 
----
-
-**Post 3 — WHAT AXIOM ACTUALLY IS**
-
-Axiom Protocol is a vertically integrated financial operating system built on Arbitrum One.
-
-Banking layer. Settlement rail. Gold reserve. Exchange + peg infrastructure. Capital deployment. Regime intelligence. Solvency and trust.
-
-Seven layers. One stack.
+These are not competing products. They are different categories.
 
 ---
 
-**Post 4 — THE LAYER MODEL**
+**Post 3 — THE PROBLEM WITH "PAYMENTS ONLY"**
 
-Here's what the stack looks like:
+The moment money arrives somewhere, a new set of problems begins:
 
-00 — Banking / Fiat Entry (Increase + BitGo) — LIVE
+— How is it held?
+— What backs it?
+— Where does it settle?
+— How is it deployed?
+— Who can verify it?
+
+A payment rail doesn't answer these. That's what Axiom is built for.
+
+---
+
+**Post 4 — WHAT AXIOM ACTUALLY IS**
+
+Axiom Protocol is a vertically integrated financial operating system on Arbitrum One.
+
+Not a stablecoin. Not a DEX. Not a lending protocol.
+
+A stack:
+
+00 — Banking (FDIC fiat + BitGo crypto) — LIVE
 01 — AXUSD Settlement Rail (ERC-3643) — LIVE
 01.5 — Exchange + Peg (Camelot + EulerSwap) — LIVE
-02 — AXAU Reserve (PAXG-backed gold) — LIVE
+02 — AXAU Reserve Layer (PAXG-backed gold) — LIVE
 03 — Capital Deployment (Lending Fund + SPVs) — FORMATION
 04 — Intelligence (MIRDT + Sentinel) — LIVE
 05 — Trust / Solvency / Disclosure — LIVE
 
 ---
 
-**Post 5 — THE KEY DIFFERENCE**
+**Post 5 — THE RESERVE ANCHOR**
 
-Most settlement systems move value.
+Here's the structural point most people miss:
 
-Axiom governs the architecture around that value.
+AXUSD (settlement) is backed by USDC in the PSM.
 
-The reserve layer (AXAU) is backed by on-chain PAXG.
-The settlement layer (AXUSD) is issued through a Peg Stability Module.
-The banking layer connects to FDIC-insured fiat rails and institutional crypto custody.
+Behind that: AXAU — a reserve unit backed by on-chain PAXG (Paxos Gold).
 
-These are not promises. These are deployed contracts.
+The treasury maintains AXAU coverage positions to provide hard-asset depth behind the protocol's reserve pool.
 
----
-
-**Post 6 — ON THE RWA COMPARISON**
-
-Most "RWA" projects are token wrappers.
-
-Take an asset. Wrap it. List it. Call it infrastructure.
-
-Axiom is different. Banking is live. Settlement is live. Reserve is live. Exchange is live. Intelligence is live.
-
-This is a system, not a product.
+Most stablecoins have no hard-asset layer. This one has a gold vault.
 
 ---
 
-**Post 7 — TRUST IS BUILT IN**
+**Post 6 — VERIFIABLE, NOT ASSERTED**
 
-The trust layer (05) isn't marketing.
+XRP's reserve transparency: trust the issuer.
 
-Live solvency console with three operational modes.
-Proof of Execution log.
-Institutional disclosure document.
-On-chain ERC-3643 identity gating.
+Axiom's reserve transparency: check the contract.
 
-If you can't verify it, it's a narrative. If you can, it's infrastructure.
+Live solvency console. Three operational modes. Coverage ratio pulled from on-chain data.
+
+If you can't verify it independently, it's a narrative. If you can, it's infrastructure.
+
+---
+
+**Post 7 — THE RWA PROBLEM**
+
+"Real World Asset" has become meaningless.
+
+Most projects: take an asset → wrap it → list it → call it infrastructure.
+
+Axiom: FDIC-insured banking layer → ERC-3643 settlement rail → gold-backed reserve → capital deployment programs.
+
+Wrapping assets and building a capital architecture are different things.
 
 ---
 
 **Post 8 — FOR WHOM**
 
-XRP is for anyone moving money quickly and cheaply. That's a real use case.
+XRP is for anyone who needs to move money cheaply across jurisdictions. That's a billion-dollar problem. Legitimately.
 
 Axiom is for:
-— Allocators who want on-chain reserve transparency
-— Capital that needs settlement rails with gold-backed depth
-— Builders who want a financial operating system, not a single-rail protocol
 
-Different problems. Different architectures.
-
----
-
-**Post 9 — WHERE THIS IS GOING**
-
-Phase I is live: banking, settlement, reserve, exchange, intelligence, solvency.
-
-Phase II is in formation: capital deployment programs, credit markets, syndication.
-
-Phase III is the target: a fully integrated digital-physical economy. Land acquisition pipeline. DePIN infrastructure. Community capital programs.
-
-This isn't a token. It's a build.
+— Allocators who need on-chain reserve transparency
+— Capital that wants settlement rails with hard-asset backing
+— Communities building sovereign financial infrastructure
+— Builders who need an operating system, not just one rail
 
 ---
 
-**Post 10 — CTA**
+**Post 9 — THE SOVEREIGNTY FRAME**
+
+A sovereign financial system isn't one protocol.
+
+It's a stack: banking → settlement → reserve → capital → intelligence → trust.
+
+XRP covers one layer of that stack very well.
+
+Axiom is what you build when you need the whole stack.
+
+---
+
+**Post 10 — WHERE IT STANDS**
+
+Phase I — Live:
+Banking, settlement, exchange, gold reserve, intelligence, solvency
+
+Phase II — In formation:
+Capital deployment, credit markets, syndication
+
+Phase III — Target:
+Fully integrated digital-physical economy. Land pipeline. DePIN. Community capital.
+
+This isn't a token launch. It's a multi-year build.
+
+---
+
+**Post 11 — CTA**
 
 Stop auditing narratives. Verify the infrastructure.
 
-System map, capital flow, layer breakdown, and solvency verification:
+The complete seven-layer system map — architecture diagram, capital flow, layer status, solvency verification:
+
 axiomprotocol.io/system-map
 
-Every layer. Every contract. Every status — live on Arbitrum One.
+Every layer. Every contract. Live on Arbitrum One.
 
 ---
 
@@ -141,56 +168,52 @@ Every layer. Every contract. Every status — live on Arbitrum One.
 
 **Post 1 — HOOK**
 
-XRP is a rail.
+XRP moves money.
 
-Axiom is a financial operating system.
+Axiom governs the architecture around money.
 
-Banking. Settlement. Reserve. Capital deployment. Intelligence. Trust.
+Reserve. Settlement. Exchange. Capital deployment. Trust.
 
-One stack. Built and live.
-
----
-
-**Post 2 — THE DIFFERENCE**
-
-Most protocols move value.
-
-Axiom governs the architecture around value.
-
-AXUSD settlement backed by PSM.
-AXAU reserve backed by on-chain PAXG.
-Banking via FDIC-insured fiat rails + institutional crypto custody.
-Capital deployment via Lending Fund and credit markets.
-
-Not a wrapper. An operating system.
+These are not the same category.
 
 ---
 
-**Post 3 — IMPLEMENTATION TRUTH**
+**Post 2 — THE CATEGORY LINE**
 
-Live on Arbitrum One right now:
+A payment rail solves for speed and cost of transfer.
 
-Banking layer (Increase + BitGo)
+A capital architecture solves for what backs the value, how it settles, how it compounds, and how it's verified.
+
+XRP is optimized for the first problem.
+
+Axiom is built for the second.
+
+---
+
+**Post 3 — THE RESERVE POINT**
+
+AXUSD: ERC-3643 settlement token, backed by USDC in the PSM.
+
+Behind that: AXAU — backed by on-chain PAXG (Paxos Gold). Hard-asset depth, live coverage ratio, Chainlink oracle.
+
+Hard-asset backing behind a settlement layer is not common.
+
+AXAU is the reserve anchor of the entire stack.
+
+---
+
+**Post 4 — LIVE ON ARBITRUM ONE**
+
+Right now, deployed:
+
+Banking (Increase + BitGo)
 Settlement rail (AXUSD / ERC-3643)
-Exchange + peg infrastructure (Camelot + EulerSwap)
+Exchange + peg (Camelot + EulerSwap)
 Gold reserve layer (AXAU / PAXG)
 Intelligence (MIRDT + Sentinel)
-Solvency and institutional disclosure
+Solvency console + institutional disclosure
 
-Seven layers. Every status verifiable on-chain.
-
----
-
-**Post 4 — THE RESERVE POINT**
-
-XRP is a currency instrument.
-
-AXUSD is a settlement token backed by USDC in the PSM.
-AXAU is backed by PAXG — on-chain Paxos Gold.
-
-The treasury maintains AXAU coverage positions behind the protocol's broader reserve pool.
-
-Hard-asset depth. Live. Verifiable.
+Seven layers. Every status verifiable.
 
 ---
 
@@ -198,21 +221,31 @@ Hard-asset depth. Live. Verifiable.
 
 Stop auditing narratives. Verify the infrastructure.
 
-Seven-layer system map and full capital flow breakdown:
+Complete system map with architecture diagram, capital flow, layer breakdown:
+
 axiomprotocol.io/system-map
 
 ---
 
 ---
 
-## CAPTION / REPLY LINE (one-liners)
+## CAPTION / REPLY LINES (one-liners)
 
-> XRP moves money. Axiom structures, backs, settles, and deploys it. Different problem. Different architecture.
+**Category distinction:**
+> XRP moves money. Axiom governs what backs it, settles it, and deploys it. Different category entirely.
 
-> Most RWA projects are wrappers. Axiom is infrastructure. Banking, settlement, reserve, capital, intelligence — one stack, live on Arbitrum One.
+**Reserve anchor:**
+> Most stablecoins have no hard-asset backing. AXUSD is anchored by AXAU — backed by on-chain PAXG. That's a gold vault behind the settlement layer.
 
+**Infrastructure framing:**
+> Most RWA projects wrap assets. Axiom builds the capital architecture around them. Banking, settlement, reserve, capital, intelligence — one stack, live on Arbitrum One.
+
+**CTA:**
 > Stop auditing narratives. Verify the infrastructure. axiomprotocol.io/system-map
+
+**Category-kill reply:**
+> A payment rail is one layer of a capital stack. Axiom is the stack.
 
 ---
 
-*Last updated: April 2026. Claims reflect live implementation status on Arbitrum One. Do not add regulatory compliance language without legal review. Do not claim full decentralization — operational support layers are explicitly noted in the system map.*
+*Last updated: April 2026. All claims reflect live implementation on Arbitrum One. Do not add specific regulatory compliance language (GENIUS Act, securities law, etc.) without legal review. Do not claim full decentralization — operational support layers are explicitly documented in the system map. Capital Deployment (Layer 03) is in FORMATION — do not claim it is fully operational.*
