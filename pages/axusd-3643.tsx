@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import { DesignLawLayout, SectionHeading, DetailGrid } from '../components/design-law';
 import { StatusBadge } from '../components/design-law/StatusBadge';
@@ -11,6 +12,11 @@ import {
   CANONICAL_PSM,
   ACTIVE_AXUSD,
 } from '../src/config/activeContracts.generated';
+
+const PaymasterToggle = dynamic(
+  () => import('../components/circle/PaymasterToggle'),
+  { ssr: false }
+);
 
 interface TokenData {
   name: string;
@@ -1577,7 +1583,9 @@ function PsmMintRedeemPanel({
 
       {/* Action button — disabled until PSM is activated as AXUSD agent */}
       {(phase === 'idle') && (
-        <SolidButton
+        <>
+          <PaymasterToggle />
+          <SolidButton
           onClick={op === 'mint' ? handleMint : handleRedeem}
           disabled={!inputWei || !isConnected || !agentRegistered}
           size="sm"
@@ -1585,6 +1593,7 @@ function PsmMintRedeemPanel({
         >
           {op === 'mint' ? 'Approve USDC + Mint AXUSD' : 'Redeem AXUSD for USDC'}
         </SolidButton>
+        </>
       )}
 
       {/* Activation status banner — only shown when PSM is not yet registered as agent */}

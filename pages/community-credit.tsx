@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useAccount } from 'wagmi';
 import { useAppKitProvider } from '@reown/appkit/react';
 import { DesignLawLayout, SectionHeading, SolidButton } from '../components/design-law';
+
+const CircleWalletEntry = dynamic(
+  () => import('../components/circle/CircleWalletEntry'),
+  { ssr: false }
+);
 
 interface CreditLine {
   credit_line_id: string;
@@ -409,8 +415,14 @@ export default function CommunityCreditPage() {
         )}
         <div className="border border-dl-border p-6">
           {!isConnected ? (
-            <div className="border border-dl-border px-4 py-4 bg-dl-bg-alt text-sm text-dl-navy">
-              Connect your wallet using the <span className="font-semibold">Access Platform</span> button in the navigation to view your credit status.
+            <div>
+              <div className="border border-dl-border px-4 py-4 bg-dl-bg-alt text-sm text-dl-navy mb-3">
+                Connect your wallet using the <span className="font-semibold">Access Platform</span> button in the navigation to view your credit status.
+              </div>
+              <CircleWalletEntry
+                context="community-credit"
+                onWalletReady={() => {}}
+              />
             </div>
           ) : (
             <>

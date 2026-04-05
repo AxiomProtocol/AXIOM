@@ -1,9 +1,15 @@
 import { Fragment, useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useAccount } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law/DesignLawLayout';
+
+const CircleWalletEntry = dynamic(
+  () => import('../components/circle/CircleWalletEntry'),
+  { ssr: false }
+);
 
 interface AnalyticsStats {
   totalHubs: number;
@@ -1160,8 +1166,14 @@ export default function WealthPracticePage() {
                                   </button>
                                 </div>
                               ) : (
-                                <div className="mb-3 border border-dl-border p-3 text-xs text-dl-gray">
-                                  Connect your wallet to continue joining this group.
+                                <div className="mb-3">
+                                  <div className="border border-dl-border p-3 text-xs text-dl-gray mb-2">
+                                    Connect your wallet to continue joining this group.
+                                  </div>
+                                  <CircleWalletEntry
+                                    context="wealth-practice"
+                                    onWalletReady={(addr) => setJoinWallet(addr)}
+                                  />
                                 </div>
                               )}
 

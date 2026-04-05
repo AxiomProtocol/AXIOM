@@ -250,6 +250,14 @@ export default function FounderOpsPage() {
   const [expiryTriggering, setExpiryTriggering] = useState(false);
   const [expiryTriggerMsg, setExpiryTriggerMsg] = useState<string | null>(null);
 
+  const [circleScreening, setCircleScreening] = useState<{
+    circleConfigured: boolean;
+    stats: { total: number; approved: number; denied: number; review: number };
+    recent: any[];
+    denied: any[];
+  } | null>(null);
+  const [circleScreeningLoading, setCircleScreeningLoading] = useState(false);
+
   const [psmActivating, setPsmActivating] = useState(false);
   const [psmActivateKey, setPsmActivateKey] = useState('');
   const [psmActivateMsg, setPsmActivateMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -373,11 +381,25 @@ export default function FounderOpsPage() {
     }
   };
 
+  const loadCircleScreening = async (key?: string) => {
+    const k = key ?? complianceAdminKey;
+    if (!k) return;
+    setCircleScreeningLoading(true);
+    try {
+      const res = await fetch('/api/circle/screening-results', { headers: { 'x-admin-key': k } });
+      const json = await res.json();
+      if (json?.success) setCircleScreening(json.data);
+    } catch { } finally {
+      setCircleScreeningLoading(false);
+    }
+  };
+
   const loadComplianceTab = (key?: string) => {
     const k = key ?? complianceAdminKey;
     loadKycQueue(k);
     loadAccredQueue(k);
     loadComplianceLog(k);
+    loadCircleScreening(k);
   };
 
   const loadBankingData = async (key?: string) => {
@@ -2375,6 +2397,97 @@ export default function FounderOpsPage() {
                         </tbody>
                       </table>
                     </div>
+                  )}
+                </div>
+
+                {/* Circle Screening Panel */}
+                <div className="mb-8">
+                  <SectionHeading>Circle Address Screening</SectionHeading>
+                  <p className="font-dl-mono text-xs text-dl-gray mb-4">
+                    Circle Compliance Engine results. Screening runs as a pre-check on all new ERC-3643 credential applications. Fallback mode (APPROVED) when Circle API key is absent.
+                  </p>
+                  {circleScreeningLoading ? (
+                    <p className="font-dl-mono text-sm text-dl-gray py-4">Loading screening data...</p>
+                  ) : !circleScreening ? (
+                    <div className="border border-dl-border p-4 bg-dl-bg-alt">
+                      <p className="font-dl-mono text-xs text-dl-muted">Load compliance tab to view screening results.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 mb-4 border font-dl-mono text-xs ${circleScreening.circleConfigured ? 'border-dl-forest text-dl-forest bg-dl-bg-alt' : 'border-dl-gold text-dl-gold bg-dl-bg-alt'}`}>
+                        {circleScreening.circleConfigured ? '● CIRCLE API ACTIVE' : '○ FALLBACK MODE — CIRCLE_COMPLIANCE_API_KEY not set'}
+                      </div>
+                      <div className="grid grid-cols-4 gap-0 border border-dl-border mb-6">
+                        {[
+                          { label: 'Total Screened', value: circleScreening.stats.total, color: 'text-dl-navy' },
+                          { label: 'Approved', value: circleScreening.stats.approved, color: 'text-dl-forest' },
+                          { label: 'Denied', value: circleScreening.stats.denied, color: 'text-red-600' },
+                          { label: 'Review', value: circleScreening.stats.review, color: 'text-dl-gold' },
+                        ].map((s, i) => (
+                          <div key={s.label} className={`px-4 py-3 text-center ${i < 3 ? 'border-r border-dl-border' : ''}`}>
+                            <p className={`font-dl-mono text-xl font-bold ${s.color}`}>{s.value}</p>
+                            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mt-0.5">{s.label}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {circleScreening.denied.length > 0 && (
+                        <div className="mb-6">
+                          <p className="font-dl-mono text-xs text-red-600 uppercase tracking-wider mb-2">Denied Addresses</p>
+                          <div className="border border-red-200 overflow-x-auto">
+                            <table className="w-full text-xs font-dl-mono">
+                              <thead><tr className="bg-red-50 border-b border-red-200">
+                                <th className="text-left px-3 py-2 text-dl-gray">Wallet</th>
+                                <th className="text-left px-3 py-2 text-dl-gray">Risk Score</th>
+                                <th className="text-left px-3 py-2 text-dl-gray">Categories</th>
+                                <th className="text-left px-3 py-2 text-dl-gray">Screened</th>
+                              </tr></thead>
+                              <tbody>
+                                {circleScreening.denied.map((d: any, i: number) => (
+                                  <tr key={i} className="border-b border-red-100">
+                                    <td className="px-3 py-2 text-red-700 break-all">{d.wallet_address}</td>
+                                    <td className="px-3 py-2 text-red-700">{d.risk_score}</td>
+                                    <td className="px-3 py-2 text-red-700">{(d.risk_categories ?? []).join(', ') || '—'}</td>
+                                    <td className="px-3 py-2 text-dl-gray">{d.screened_at ? new Date(d.screened_at).toISOString().slice(0, 10) : '—'}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                      {circleScreening.recent.length > 0 && (
+                        <div>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Recent Screenings (last 20)</p>
+                          <div className="border border-dl-border overflow-x-auto">
+                            <table className="w-full text-xs font-dl-mono">
+                              <thead><tr className="bg-dl-bg-alt border-b border-dl-border">
+                                <th className="text-left px-3 py-2 text-dl-gray">Wallet</th>
+                                <th className="text-left px-3 py-2 text-dl-gray">Result</th>
+                                <th className="text-left px-3 py-2 text-dl-gray">Score</th>
+                                <th className="text-left px-3 py-2 text-dl-gray">Source</th>
+                                <th className="text-left px-3 py-2 text-dl-gray">Date</th>
+                              </tr></thead>
+                              <tbody>
+                                {circleScreening.recent.map((r: any, i: number) => (
+                                  <tr key={i} className="border-b border-dl-border">
+                                    <td className="px-3 py-2 text-dl-navy break-all">{r.wallet_address}</td>
+                                    <td className={`px-3 py-2 font-bold ${r.result === 'APPROVED' ? 'text-dl-forest' : r.result === 'DENIED' ? 'text-red-600' : 'text-dl-gold'}`}>{r.result}</td>
+                                    <td className="px-3 py-2">{r.risk_score}</td>
+                                    <td className="px-3 py-2 text-dl-gray">DB cache</td>
+                                    <td className="px-3 py-2 text-dl-gray">{r.screened_at ? new Date(r.screened_at).toISOString().slice(0, 10) : '—'}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                      <div className="mt-4 border border-dl-border p-3 bg-dl-bg-alt">
+                        <p className="font-dl-mono text-xs text-dl-gray">
+                          <strong className="text-dl-navy">Webhook registration:</strong> Register <code className="bg-dl-bg px-1">/api/webhooks/circle</code> in the Circle Developer Console once your API key is active. The endpoint supports ECDSA SHA-256 verification, IP allowlisting, and idempotency.
+                        </p>
+                      </div>
+                    </>
                   )}
                 </div>
               </>

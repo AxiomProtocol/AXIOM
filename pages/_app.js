@@ -14,6 +14,11 @@ const AppKitInitializer = dynamic(
   { ssr: false }
 )
 
+const CircleWalletProvider = dynamic(
+  () => import('../components/WalletConnect/CircleWalletProvider').then(m => ({ default: m.CircleWalletProvider })),
+  { ssr: false }
+)
+
 const queryClient = new QueryClient()
 
 const OnboardingContext = createContext({ triggerOnboarding: () => {} })
@@ -51,9 +56,11 @@ export default function App({ Component, pageProps }) {
           <QueryClientProvider client={queryClient}>
             <AppKitInitializer />
             <WalletProvider>
-              <OnboardingContext.Provider value={{ triggerOnboarding: () => {} }}>
-                {mounted ? <Component {...pageProps} /> : null}
-              </OnboardingContext.Provider>
+              <CircleWalletProvider>
+                <OnboardingContext.Provider value={{ triggerOnboarding: () => {} }}>
+                  {mounted ? <Component {...pageProps} /> : null}
+                </OnboardingContext.Provider>
+              </CircleWalletProvider>
             </WalletProvider>
           </QueryClientProvider>
         </WagmiProvider>

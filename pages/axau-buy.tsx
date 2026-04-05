@@ -1,7 +1,13 @@
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAccount, useWalletClient } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
+
+const PaymasterToggle = dynamic(
+  () => import('../components/circle/PaymasterToggle'),
+  { ssr: false }
+);
 import { IdentityBadge } from '../components/design-law/IdentityBadge';
 import type { IdentityStatus } from '../components/design-law/IdentityBadge';
 import { useDirectMint, type DirectMintState } from '../hooks/axau/useDirectMint';
@@ -609,6 +615,8 @@ function RedeemTab({ address, isConnected, state, execute, reset }: RedeemTabPro
           You receive <strong>PAXG</strong> (Paxos Gold token) — not AXUSD. Redemption requires an identity-verified wallet on Arbitrum One. The PAXG amount received may differ from the displayed quote due to price movement at execution. This interface is non-custodial.
         </p>
       </div>
+
+      <PaymasterToggle />
 
       <button
         type="button"

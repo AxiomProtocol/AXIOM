@@ -1,8 +1,14 @@
 import Head from 'next/head';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
+
+const CircleWalletEntry = dynamic(
+  () => import('../components/circle/CircleWalletEntry'),
+  { ssr: false }
+);
 
 const C = {
   navy:     '#1e3a5f',
@@ -582,9 +588,14 @@ export default function AxauAccessPage() {
             </div>
 
             <form onSubmit={handleSubmit} style={{ border: `1px solid ${C.border}`, borderTop: `3px solid ${C.gold}`, background: C.bg, padding: '32px 36px' }}>
-              <p style={{ fontFamily: mono, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 28px', paddingBottom: 14, borderBottom: `1px solid ${C.border}` }}>
+              <p style={{ fontFamily: mono, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 20px', paddingBottom: 14, borderBottom: `1px solid ${C.border}` }}>
                 IDENTITY VERIFICATION APPLICATION
               </p>
+
+              <CircleWalletEntry
+                context="early-access"
+                onWalletReady={(addr) => setForm(f => ({ ...f, walletAddress: addr }))}
+              />
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                 <div>

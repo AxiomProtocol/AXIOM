@@ -61,6 +61,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
+    try {
+      const { complianceService } = await import('../../../../lib/circle/compositeComplianceService');
+      const screening = await complianceService.screen(walletAddress, 'ARB');
+      if (screening.result === 'DENIED') {
+        console.warn(`[erc3643/submit] Circle screening DENIED wallet=${walletAddress} categories=${screening.riskCategories.join(',')}`);
+        return res.status(403).json({
+          error: 'This wallet address has been flagged by our compliance screening and cannot be credentialed at this time.',
+          code: 'COMPLIANCE_DENIED',
+        });
+      }
+    } catch (screenErr: any) {
+      console.error('[erc3643/submit] compliance screening error (non-blocking):', screenErr.message);
+    }
+
     const existing = await db.select()
       .from(t3KycSubmissions)
       .where(
