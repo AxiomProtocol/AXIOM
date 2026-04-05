@@ -35,7 +35,7 @@ export const stellarPaymentTransfers = pgTable('stellar_payment_transfers', {
   axiomWalletAddress: varchar('axiom_wallet_address', { length: 42 }).notNull(),
   stellarPublicKey: varchar('stellar_public_key', { length: 56 }),
 
-  anchorId: varchar('anchor_id', { length: 100 }).notNull().default('circle-stellar'),
+  anchorId: varchar('anchor_id', { length: 100 }).notNull().default('moneygram-stellar'),
   corridorId: varchar('corridor_id', { length: 100 }).notNull(),
   anchorTransferId: varchar('anchor_transfer_id', { length: 200 }),
 
