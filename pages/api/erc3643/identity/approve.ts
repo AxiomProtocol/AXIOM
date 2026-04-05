@@ -35,6 +35,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
+  // FIX 3: Cap re-check — ensure the 100-slot early access cap has not been reached
+  const CAP = 100;
+  const capCheckResult = await db
+    .select({ id: t3KycSubmissions.id })
+    .from(t3KycSubmissions)
+    .where(eq(t3KycSubmissions.status, 'bridged'));
+  const approvedCount = capCheckResult.length;
+  if (approvedCount >= CAP) {
+    return res.status(409).json({
+      error: `Early access cap reached. ${approvedCount}/${CAP} participants already approved. Cannot approve additional participants until the cap is raised.`,
+      approvedCount,
+      cap: CAP,
+    });
+  }
+
   try {
     const result = await ERC3643Service.atomicKycApproval({
       submissionId,

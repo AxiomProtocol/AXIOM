@@ -23,6 +23,7 @@ import {
 } from './AXAUContractService';
 import { db } from '../../server/db';
 import { axauPurchaseRequests } from '../../shared/axauSchema';
+import { adminActionLog } from '../../shared/erc3643Schema';
 import { eq, inArray } from 'drizzle-orm';
 
 // ─── ABIs ─────────────────────────────────────────────────────────────────────
@@ -47,6 +48,60 @@ const GOLD_VAULT_ABI = [
 const CHAINLINK_ABI = [
   'function latestRoundData() view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)',
 ] as const;
+
+const IDENTITY_ABI = [
+  'function isVerified(address account) view returns (bool)',
+] as const;
+
+async function checkRecipientIdentity(
+  walletAddress: string,
+  provider: ethers.JsonRpcProvider,
+): Promise<{ verified: boolean; error?: string }> {
+  try {
+    const token = new ethers.Contract(
+      AXAU_ADDRESSES.AXAUTokenLite3643,
+      IDENTITY_ABI,
+      provider,
+    );
+    const verified: boolean = await token.isVerified(walletAddress);
+    return { verified };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { verified: false, error: `Identity check RPC error: ${msg}` };
+  }
+}
+
+async function writeAutoFulfillLog(params: {
+  requestId: string;
+  targetAddress: string;
+  amount: string;
+  mintTxHash?: string;
+  transferTxHash?: string;
+  status: 'success' | 'failed';
+  errorMessage?: string;
+  path?: string;
+}): Promise<void> {
+  try {
+    await db.insert(adminActionLog).values({
+      actionType: 'autoFulfill',
+      callerAddress: 'system',
+      targetAddress: params.targetAddress.toLowerCase(),
+      amount: params.amount,
+      txHash: params.transferTxHash ?? params.mintTxHash ?? null,
+      role: 'OPS',
+      status: params.status,
+      errorMessage: params.errorMessage ?? null,
+      metadata: {
+        requestId: params.requestId,
+        mintTxHash: params.mintTxHash ?? null,
+        transferTxHash: params.transferTxHash ?? null,
+        path: params.path ?? 'UNKNOWN',
+      },
+    });
+  } catch (logErr: unknown) {
+    console.error('[autoFulfill] Failed to write adminActionLog:', logErr instanceof Error ? logErr.message : logErr);
+  }
+}
 
 // ─── PATH A stale-oracle dedup guard ─────────────────────────────────────────
 // Emit at most one console.warn per minute to prevent log flooding.
@@ -223,6 +278,16 @@ export async function autoFulfillRequest(requestId: string): Promise<AutoFulfill
       // Non-blocking — PATH A proceeds even if oracle read fails
     }
 
+    // FIX 1: Identity pre-check — abort before touching on-chain state
+    const idCheckA = await checkRecipientIdentity(req.walletAddress, provider);
+    if (!idCheckA.verified) {
+      return {
+        success: false,
+        requestId,
+        error: `Recipient wallet ${req.walletAddress} is not identity-verified (ERC-3643). ${idCheckA.error ?? 'KYC must be complete before fulfillment.'}`,
+      };
+    }
+
     await db.update(axauPurchaseRequests)
       .set({ status: 'processing', updatedAt: new Date() })
       .where(eq(axauPurchaseRequests.id, requestId));
@@ -244,6 +309,16 @@ export async function autoFulfillRequest(requestId: string): Promise<AutoFulfill
         })
         .where(eq(axauPurchaseRequests.id, requestId));
 
+      // FIX 8: Log successful auto-fulfillment
+      await writeAutoFulfillLog({
+        requestId,
+        targetAddress: req.walletAddress,
+        amount: axauSent,
+        transferTxHash,
+        status: 'success',
+        path: 'PATH_A',
+      });
+
       return {
         success:       true,
         requestId,
@@ -255,6 +330,15 @@ export async function autoFulfillRequest(requestId: string): Promise<AutoFulfill
       await db.update(axauPurchaseRequests)
         .set({ status: 'failed', notes: `PATH A transfer failed: ${msg}`, updatedAt: new Date() })
         .where(eq(axauPurchaseRequests.id, requestId));
+      // FIX 8: Log failed auto-fulfillment
+      await writeAutoFulfillLog({
+        requestId,
+        targetAddress: req.walletAddress,
+        amount: (Number(axauQuotedWei) / 1e18).toFixed(6),
+        status: 'failed',
+        errorMessage: msg,
+        path: 'PATH_A',
+      });
       return { success: false, requestId, error: msg };
     }
   }
@@ -302,6 +386,16 @@ export async function autoFulfillRequest(requestId: string): Promise<AutoFulfill
     return {
       success: false, requestId,
       error: `Insufficient buffer: have ${have} PAXG and ${(Number(axauBalance) / 1e18).toFixed(6)} AXAU, need ${need} PAXG or ${(Number(axauQuotedWei) / 1e18).toFixed(6)} AXAU`,
+    };
+  }
+
+  // FIX 1: Identity pre-check for PATH B — abort before touching on-chain state
+  const idCheckB = await checkRecipientIdentity(req.walletAddress, provider);
+  if (!idCheckB.verified) {
+    return {
+      success: false,
+      requestId,
+      error: `Recipient wallet ${req.walletAddress} is not identity-verified (ERC-3643). ${idCheckB.error ?? 'KYC must be complete before fulfillment.'}`,
     };
   }
 
@@ -360,6 +454,17 @@ export async function autoFulfillRequest(requestId: string): Promise<AutoFulfill
       })
       .where(eq(axauPurchaseRequests.id, requestId));
 
+    // FIX 8: Log successful auto-fulfillment
+    await writeAutoFulfillLog({
+      requestId,
+      targetAddress: req.walletAddress,
+      amount: (Number(axauMinted) / 1e18).toFixed(6),
+      mintTxHash,
+      transferTxHash,
+      status: 'success',
+      path: 'PATH_B',
+    });
+
     return {
       success:       true,
       requestId,
@@ -372,6 +477,15 @@ export async function autoFulfillRequest(requestId: string): Promise<AutoFulfill
     await db.update(axauPurchaseRequests)
       .set({ status: 'failed', notes: `PATH B mint failed: ${msg}`, updatedAt: new Date() })
       .where(eq(axauPurchaseRequests.id, requestId));
+    // FIX 8: Log failed auto-fulfillment
+    await writeAutoFulfillLog({
+      requestId,
+      targetAddress: req.walletAddress,
+      amount: (Number(axauQuotedWei) / 1e18).toFixed(6),
+      status: 'failed',
+      errorMessage: msg,
+      path: 'PATH_B',
+    });
     return { success: false, requestId, error: msg };
   }
 }

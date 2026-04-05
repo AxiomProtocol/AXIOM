@@ -5,11 +5,11 @@ import { DesignLawLayout, SectionHeading } from '../../components/design-law';
 const LAYER_1 = {
   label: 'Layer 01 — Reserve',
   heading: 'AXAU Reserve',
-  description: 'The gold-backed reserve unit of the Axiom Protocol. Collateralised 1:1 by PAXG. Direct on-chain mint and redeem via identity-gated (ERC-3643) smart contract rails.',
+  description: 'The reserve unit of the Axiom Protocol. Structured around PAXG-backed reserve positions on Arbitrum One. Identity-gated via ERC-3643 automated control layers.',
   href: '/axau',
   status: 'LIVE',
   metrics: [
-    { label: 'Backing', value: 'PAXG 1:1' },
+    { label: 'Reserve', value: 'PAXG-Backed' },
     { label: 'Standard', value: 'ERC-3643' },
     { label: 'Network', value: 'Arbitrum One' },
     { label: 'Access', value: 'Identity Gated' },

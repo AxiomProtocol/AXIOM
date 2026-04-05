@@ -20,6 +20,7 @@ interface SolvencyMetrics {
   schemaVersion: string;
   dataStatus: 'ok' | 'empty' | 'partial';
   asOfUtc: string;
+  snapshotAgeMs?: number | null;
   snapshotId: string;
   checksum: string;
   treasuryTotalUsd: number;

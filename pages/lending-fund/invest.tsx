@@ -869,7 +869,7 @@ export default function InvestPage() {
                           },
                           {
                             q: 'Is my deposit FDIC insured while it is in transit?',
-                            a: 'Funds held in the Axiom Nexus Account at First Internet Bank are FDIC-insured up to $250,000. Once capital is deployed into lending strategies (on-chain), it is governed by the smart contract terms and is not FDIC-covered.'
+                            a: 'Funds held in the Axiom Nexus Account at First Internet Bank are FDIC-insured up to $250,000. Once capital is deployed into lending strategies (on-chain), it is governed by the automated control layer terms and is not FDIC-covered.'
                           },
                           {
                             q: 'Can I deposit via wire instead of ACH?',

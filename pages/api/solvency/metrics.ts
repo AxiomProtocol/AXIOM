@@ -11,6 +11,7 @@ interface SolvencyMetrics {
   schemaVersion: string;
   dataStatus: 'ok' | 'empty' | 'partial';
   asOfUtc: string;
+  snapshotAgeMs: number | null;
   snapshotId: string;
   checksum: string;
   treasuryTotalUsd: number;
@@ -67,16 +68,16 @@ async function fetchProtocolMetrics(): Promise<{
     const [setups, trades, contracts] = await Promise.all([
       pool.query(`SELECT COUNT(*) as count FROM mirdt_setups WHERE status = 'ACTIVE'`),
       pool.query(`SELECT COUNT(*) as count FROM mirdt_paper_trades`),
-      pool.query(`SELECT COUNT(*) as count FROM contracts WHERE verified = true`).catch(() => ({ rows: [{ count: 23 }] })),
+      pool.query(`SELECT COUNT(*) as count FROM contracts WHERE verified = true`).catch(() => ({ rows: [{ count: '0' }] })),
     ]);
     return {
       activeMirdtSetups: parseInt(setups.rows[0]?.count || '0', 10),
       totalPaperTrades: parseInt(trades.rows[0]?.count || '0', 10),
-      verifiedContracts: parseInt(contracts.rows[0]?.count || '23', 10),
+      verifiedContracts: parseInt(contracts.rows[0]?.count || '0', 10),
       sentinelState: 'NORMAL',
     };
   } catch {
-    return { activeMirdtSetups: 0, totalPaperTrades: 0, verifiedContracts: 23, sentinelState: 'UNKNOWN' };
+    return { activeMirdtSetups: 0, totalPaperTrades: 0, verifiedContracts: 0, sentinelState: 'UNKNOWN' };
   }
 }
 
@@ -86,6 +87,7 @@ function buildEmptyResponse(): SolvencyMetrics {
     schemaVersion: 'solvency-v1',
     dataStatus: 'empty',
     asOfUtc: now,
+    snapshotAgeMs: null,
     snapshotId: 'none',
     checksum: '0000000000000000',
     treasuryTotalUsd: 0,
@@ -163,10 +165,13 @@ export default async function handler(
       ...(Array.isArray(p.sources) ? p.sources : []),
     ];
 
+    const snapshotAgeMs = Date.now() - new Date(snapshot.asOfUtc).getTime();
+
     const response: SolvencyMetrics = {
       schemaVersion: 'solvency-v1',
       dataStatus: 'ok',
       asOfUtc: new Date(snapshot.asOfUtc).toISOString(),
+      snapshotAgeMs,
       snapshotId: snapshot.id,
       checksum: snapshot.checksum,
       treasuryTotalUsd,

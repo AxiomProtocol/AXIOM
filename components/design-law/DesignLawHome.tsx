@@ -13,10 +13,10 @@ import {
 } from 'lucide-react';
 
 const PLATFORM_STATS = [
-  { label: 'Network', value: 'Arbitrum One', detail: 'Chain ID 42161 — mainnet live' },
-  { label: 'Deployed Contracts', value: '72+', detail: 'Auditable on-chain, Arbiscan verified' },
-  { label: 'Governance Asset', value: 'AXM', detail: 'Live on mainnet — ERC-20' },
-  { label: 'Identity Standard', value: 'ERC-3643', detail: 'AXUSD + AXAU identity gating' },
+  { label: 'Network', value: 'Arbitrum One', detail: 'Chain ID 42161 — production mainnet' },
+  { label: 'Infrastructure Layers', value: '7 Live', detail: 'Banking → Settlement → Reserve → Capital → Intelligence' },
+  { label: 'Settlement Asset', value: 'AXUSD', detail: 'Identity-gated · ERC-3643 · PSM active' },
+  { label: 'Reserve Asset', value: 'AXAU', detail: 'PAXG-backed · Direct on-chain mint/redeem' },
 ];
 
 const SYSTEM_LAYERS = [
@@ -57,7 +57,7 @@ const SYSTEM_LAYERS = [
     num: '02',
     label: 'Reserve Layer',
     title: 'AXAU Reserve',
-    desc: 'Gold-backed reserve unit, 1:1 collateralised by PAXG. Identity-gated via ERC-3643. Direct mint/redeem on Arbitrum One. Coverage ratio enforced on-chain.',
+    desc: 'Sovereign reserve unit structured around PAXG-backed reserve positions on Arbitrum One. Identity-gated via ERC-3643. Direct on-chain mint/redeem. Coverage ratio enforced by NAVEngine before every mint.',
     href: '/axau',
     status: 'LIVE',
     statusColor: 'text-dl-forest',
@@ -100,11 +100,12 @@ const SYSTEM_LAYERS = [
 ];
 
 const CAPITAL_FLOW = [
-  { id: '01', label: 'USD / Fiat', sub: 'Banking — Increase ACH/Wire', href: '/banking', color: '#1D3D2A' },
-  { id: '02', label: 'AXUSD', sub: 'Settlement Rail — ERC-3643', href: '/axusd-3643', color: '#1B2A4A' },
-  { id: '03', label: 'DEX / PSM', sub: 'Protocol Exchange — Peg Maintenance', href: '/dex', color: '#B8973A' },
-  { id: '04', label: 'AXAU', sub: 'Reserve Layer — PAXG-Backed', href: '/axau', color: '#B8973A' },
-  { id: '05', label: 'Capital', sub: 'Lending Fund / SPV Deployment', href: '/pilot', color: '#1D3D2A' },
+  { id: 'L00', label: 'USD / Fiat', sub: 'Banking — Increase ACH/Wire · FDIC-insured', href: '/banking', color: '#1D3D2A' },
+  { id: 'L01', label: 'AXUSD', sub: 'Settlement Rail — ERC-3643 · PSM Active', href: '/axusd-3643', color: '#1B2A4A' },
+  { id: 'L01.5', label: 'DEX / PSM', sub: 'Protocol Exchange — Peg Maintenance', href: '/dex', color: '#B8973A' },
+  { id: 'L02', label: 'AXAU', sub: 'Reserve Layer — PAXG-Backed Positions', href: '/axau', color: '#B8973A' },
+  { id: 'L03', label: 'Capital', sub: 'Lending Fund / SPV Deployment · Reg D', href: '/pilot', color: '#1D3D2A' },
+  { id: 'L04–05', label: 'Intelligence + Trust', sub: 'MIRDT · Sentinel · Solvency · Disclosure', href: '/solvency', color: '#1B2A4A' },
 ];
 
 const LIVE_STATUS = [
@@ -155,15 +156,15 @@ const ENTRY_PROFILES = [
     bullets: ['Reg D 506(c) qualified offerings only', 'On-chain LP participation with live reporting', 'Secondary transfer with permissioned settlement layer'],
   },
   {
-    label: 'Hold Gold. Self-Custody. On-Chain.',
-    subLabel: 'ERC-3643 credential required — direct on-chain reserve access',
+    label: 'Hold a Sovereign Reserve Unit. On-Chain.',
+    subLabel: 'ERC-3643 identity credential required — direct on-chain reserve access',
     route: 'Identity Credential → AXAU / AXUSD',
-    desc: 'Obtain an ERC-3643 identity credential, then mint AXAU (gold-backed reserve unit) directly against PAXG in one transaction — or acquire AXUSD through the PSM. No intermediary. Your keys, your gold.',
+    desc: 'Obtain an ERC-3643 identity credential, then access AXAU — structured around PAXG-backed reserve positions — via direct on-chain mint in one transaction, or through the Assisted Mint path with AXUSD. Self-custody. No intermediary.',
     href: '/axau-early-access',
     cta: 'Apply for Reserve Access',
     accent: 'border-l-dl-gold',
     accentColor: 'text-dl-gold',
-    bullets: ['ERC-3643 identity credential required — apply once', 'Direct on-chain mint and redeem via GoldVault', 'Coverage ratio enforced on-chain before every mint'],
+    bullets: ['ERC-3643 identity credential required — apply once, valid permanently', 'Direct on-chain mint via GoldVault automated control layer', 'Coverage ratio enforced by NAVEngine before every mint'],
   },
 ];
 
@@ -327,32 +328,37 @@ export function DesignLawHome() {
             <div className="absolute inset-0" style={{ backgroundColor: 'rgba(14, 28, 55, 0.82)' }}>
               <div className="max-w-7xl mx-auto px-6 h-full flex flex-col justify-center">
                 <p className="text-xs uppercase tracking-widest mb-3 font-dl-mono" style={{ color: '#f0d98a', textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
-                  Not a narrative. Verifiable financial infrastructure. Seven layers. Live on Arbitrum One.
+                  Not a narrative. Not a token. Independently verifiable financial infrastructure — seven layers — live on Arbitrum One.
                 </p>
                 <h1 className="font-dl-serif text-3xl md:text-5xl leading-tight mb-4" style={{ color: '#ffffff', maxWidth: '760px', textShadow: '0 2px 12px rgba(0,0,0,0.7)' }}>
                   Sovereign Financial Infrastructure.<br className="hidden md:block" />
-                  <span style={{ color: '#f0d98a' }}>Banking. Settlement. Reserve. Capital.</span>
+                  <span style={{ color: '#f0d98a' }}>Banking. Settlement. Reserve. Capital. Live.</span>
                 </h1>
                 <p className="text-sm leading-relaxed mb-3" style={{ color: '#e5e7eb', maxWidth: '620px', textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
-                  Not a token project. A vertically integrated financial operating system — FDIC-insured banking, identity-gated settlement rail, gold-backed reserve issuance, and Reg D capital deployment — all on Arbitrum One. Every layer is independently verifiable. No narrative required.
+                  A vertically integrated financial operating system — FDIC-insured banking, identity-gated settlement rail, PAXG-backed reserve issuance, and Reg D capital deployment — built on Arbitrum One. Every layer is independently verifiable. No trust required.
                 </p>
                 <p className="text-xs font-dl-mono mb-8" style={{ color: '#cbd5e1', textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
-                  L00: Banking · L01: AXUSD Settlement Rail · L01.5: Protocol Exchange · L02: AXAU Reserve · L03: Capital Deployment · L04: Regime Intelligence · L05: Trust + Solvency
+                  L00: Banking · L01: AXUSD Rail · L01.5: DEX + PSM · L02: AXAU Reserve · L03: Capital · L04: Regime Intelligence · L05: Solvency + Trust
                 </p>
                 <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                   <Link href="/infrastructure">
                     <span className="inline-block border-2 border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider">
-                      Verify the Infrastructure
+                      Verify the Infrastructure →
                     </span>
                   </Link>
-                  <Link href="/axau">
+                  <Link href="/axau-early-access">
                     <span className="inline-block border border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}>
                       Access the Reserve
                     </span>
                   </Link>
-                  <Link href="/disclosure">
+                  <Link href="/solvency">
                     <span className="inline-block border border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}>
-                      Read Disclosure
+                      Live Solvency Console
+                    </span>
+                  </Link>
+                  <Link href="/disclosure">
+                    <span className="inline-block border border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                      Disclosure
                     </span>
                   </Link>
                 </div>
@@ -388,12 +394,12 @@ export function DesignLawHome() {
               </p>
             </div>
             <div className="border border-dl-border">
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-0">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-0">
                 {CAPITAL_FLOW.map((node, i) => (
                   <Link
                     key={node.id}
                     href={node.href}
-                    className={`block no-underline group ${i < CAPITAL_FLOW.length - 1 ? 'border-b md:border-b-0 md:border-r border-dl-border' : ''}`}
+                    className={`block no-underline group ${i < CAPITAL_FLOW.length - 1 ? 'border-b lg:border-b-0 lg:border-r border-dl-border' : ''}`}
                   >
                     <div className="px-4 py-5 bg-dl-bg group-hover:bg-dl-bg-alt h-full flex flex-col justify-between">
                       <div>
@@ -402,7 +408,7 @@ export function DesignLawHome() {
                         <p className="text-xs text-dl-gray leading-relaxed">{node.sub}</p>
                       </div>
                       {i < CAPITAL_FLOW.length - 1 && (
-                        <div className="hidden md:flex items-center justify-end mt-3">
+                        <div className="hidden lg:flex items-center justify-end mt-3">
                           <span className="font-dl-mono text-xs text-dl-gray">→</span>
                         </div>
                       )}
@@ -703,24 +709,28 @@ export function DesignLawHome() {
           {/* FINAL CTA */}
           <div className="mb-14 border border-dl-border border-t-4 border-t-dl-navy">
             <div className="p-10 bg-dl-bg-alt text-center">
-              <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest mb-4">The Axiom Protocol</p>
-              <h2 className="font-dl-serif text-2xl md:text-4xl text-dl-navy mb-4" style={{ maxWidth: '560px', margin: '0 auto 16px' }}>
-                Stop auditing narratives.<br />Verify the infrastructure.
+              <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-widest mb-4">The Axiom Protocol — Seven Layers. Live on Arbitrum One.</p>
+              <h2 className="font-dl-serif text-2xl md:text-4xl text-dl-navy mb-4" style={{ maxWidth: '600px', margin: '0 auto 16px' }}>
+                The infrastructure is verifiable.<br />The solvency console is public.<br /><span className="text-dl-gold">Your move.</span>
               </h2>
-              <p className="text-sm text-dl-gray leading-relaxed mb-8" style={{ maxWidth: '480px', margin: '0 auto 32px' }}>
-                The solvency console, proof-of-execution logs, and on-chain contracts are publicly accessible. Every claim made on this platform has a corresponding on-chain record.
+              <p className="text-sm text-dl-gray leading-relaxed mb-8" style={{ maxWidth: '520px', margin: '0 auto 32px' }}>
+                Every claim made on this platform has a corresponding on-chain record. The solvency console, proof-of-execution logs, and institutional disclosure are publicly accessible without login, without email, without narrative.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap mb-4">
                 <Link href="/solvency" className="inline-flex items-center gap-2 border-2 border-dl-navy bg-dl-navy text-white px-6 py-3 text-xs font-bold hover:bg-transparent hover:text-dl-navy font-dl-mono uppercase tracking-wider">
-                  Solvency Console <ArrowRight className="w-3 h-3" />
+                  Live Solvency Console <ArrowRight className="w-3 h-3" />
                 </Link>
-                <Link href="/axau" className="inline-flex items-center gap-2 border border-dl-gold text-dl-gold px-6 py-3 text-xs font-bold hover:bg-dl-gold hover:text-white font-dl-mono uppercase tracking-wider">
-                  Access the Reserve <ArrowRight className="w-3 h-3" />
+                <Link href="/axau-early-access" className="inline-flex items-center gap-2 border border-dl-gold text-dl-gold px-6 py-3 text-xs font-bold hover:bg-dl-gold hover:text-white font-dl-mono uppercase tracking-wider">
+                  Apply for Reserve Access <ArrowRight className="w-3 h-3" />
                 </Link>
                 <Link href="/infrastructure" className="inline-flex items-center gap-2 border border-dl-border text-dl-navy px-6 py-3 text-xs font-bold hover:bg-dl-bg-alt font-dl-mono uppercase tracking-wider">
-                  Explore Live System <ArrowRight className="w-3 h-3" />
+                  Verify the Infrastructure <ArrowRight className="w-3 h-3" />
+                </Link>
+                <Link href="/disclosure" className="inline-flex items-center gap-2 border border-dl-border text-dl-navy px-6 py-3 text-xs font-bold hover:bg-dl-bg-alt font-dl-mono uppercase tracking-wider">
+                  Read Disclosure <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
+              <p className="text-xs text-dl-gray font-dl-mono">L00 Banking · L01 Settlement · L01.5 Exchange · L02 Reserve · L03 Capital · L04 Intelligence · L05 Trust</p>
             </div>
           </div>
 

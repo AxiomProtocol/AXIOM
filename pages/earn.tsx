@@ -10,7 +10,7 @@ interface YieldOpportunity {
   asset: string;
   rate: string;
   tvl: string;
-  type: 'lending' | 'staking' | 'liquidity' | 'savings';
+  type: 'lending' | 'lockup' | 'liquidity' | 'savings';
   risk: 'low' | 'medium' | 'high';
   link: string;
   description: string;
@@ -33,15 +33,15 @@ const YIELD_OPPORTUNITIES: YieldOpportunity[] = [
   },
   {
     id: 'axm-staking',
-    name: 'AXM Staking',
+    name: 'AXM Participation Lockup',
     protocol: 'Axiom Protocol',
     asset: 'AXM',
     rate: 'Variable',
     tvl: '$0',
-    type: 'staking',
+    type: 'lockup',
     risk: 'low',
     link: '/staking',
-    description: 'Stake AXM tokens to earn protocol rewards and governance power.'
+    description: 'Lock AXM tokens to earn protocol rewards and governance participation rights.'
   },
   {
     id: 'seed-locking',
@@ -50,10 +50,10 @@ const YIELD_OPPORTUNITIES: YieldOpportunity[] = [
     asset: 'AXM',
     rate: 'Variable',
     tvl: '$0',
-    type: 'staking',
+    type: 'lockup',
     risk: 'medium',
     link: '/seed',
-    description: 'Lock AXM in SEED for voting power and enhanced yield from protocol revenue.'
+    description: 'Lock AXM in SEED for voting power and enhanced returns from protocol revenue.'
   },
   {
     id: 'susu-savings',
@@ -91,7 +91,7 @@ export default function EarnPage() {
   const types = [
     { id: 'all', label: 'All', icon: '🎯' },
     { id: 'lending', label: 'Lending', icon: '💰' },
-    { id: 'staking', label: 'Staking', icon: '🔒' },
+    { id: 'lockup', label: 'Participation Lockup', icon: '🔒' },
     { id: 'savings', label: 'Savings', icon: '🏦' },
     { id: 'liquidity', label: 'Liquidity', icon: '💧' }
   ];
@@ -108,7 +108,7 @@ export default function EarnPage() {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'lending': return '💰';
-      case 'staking': return '🔒';
+      case 'lockup': return '🔒';
       case 'savings': return '🏦';
       case 'liquidity': return '💧';
       default: return '📊';
@@ -119,13 +119,13 @@ export default function EarnPage() {
     <DesignLawLayout>
       <Head>
         <title>Earn Yield | Axiom Protocol</title>
-        <meta name="description" content="Earn yield on your AXUSD and AXM tokens through lending, staking, and savings programs." />
+        <meta name="description" content="Earn yield on your AXUSD and AXM tokens through lending, participation lockup, and savings programs on Axiom Protocol." />
       </Head>
 
       <div className="mb-8">
         <h1 className="font-dl-serif text-3xl text-dl-navy">Earn Yield</h1>
         <p className="text-dl-gray mt-1">
-          Put your AXUSD and AXM to work with lending, staking, and savings programs
+          Put your AXUSD and AXM to work with lending, participation lockup, and savings programs
         </p>
       </div>
 
@@ -204,7 +204,7 @@ export default function EarnPage() {
       <div className="mt-12 bg-dl-bg-alt border border-dl-border p-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
-            <h3 className="text-dl-navy font-dl-serif text-xl mb-2">New to DeFi Yield?</h3>
+            <h3 className="text-dl-navy font-dl-serif text-xl mb-2">New to On-Chain Finance?</h3>
             <p className="text-dl-gray">
               Learn how to earn yield safely with our beginner guides and risk management tips.
             </p>

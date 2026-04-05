@@ -167,7 +167,7 @@ export default function TransparencyPage() {
     <DesignLawLayout>
       <Head>
         <title>Transparency Dashboard | Axiom</title>
-        <meta name="description" content="Complete visibility into Axiom's smart contracts, security, and governance." />
+        <meta name="description" content="Complete visibility into Axiom's automated control layers, security, and governance." />
       </Head>
 
       <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Protocol Trust Index</h1>

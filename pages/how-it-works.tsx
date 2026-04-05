@@ -105,7 +105,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Do I need to know how crypto works?',
-    a: 'You need a self-custody wallet on Arbitrum One (MetaMask or a compatible wallet). The platform interface is designed to feel like a financial dashboard — you do not need to understand the underlying smart contract mechanics to participate.',
+    a: 'You need a self-custody wallet on Arbitrum One (MetaMask or a compatible wallet). The platform interface is designed to feel like a financial dashboard — you do not need to understand the underlying on-chain protocol mechanics to participate.',
   },
   {
     q: 'What is the minimum to start?',

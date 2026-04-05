@@ -15,20 +15,20 @@ const LEADERSHIP = [
 const ADVISORY = [
   {
     name: "Blockchain Advisory",
-    focus: "Smart Contract Architecture",
-    description: "Experts in Solidity development, DeFi protocols, and multi-chain deployment strategies.",
+    focus: "On-Chain Control Architecture",
+    description: "Experts in Solidity development, on-chain financial rails, and multi-chain deployment strategies.",
     icon: "⛓️"
   },
   {
     name: "Real Estate Advisory",
-    focus: "Property Tokenization",
+    focus: "Property Asset Onboarding",
     description: "Specialists in real estate law, fractional ownership structures, and regulatory compliance.",
     icon: "🏠"
   },
   {
     name: "Financial Advisory",
-    focus: "DeFi Treasury Design",
-    description: "Professionals in treasury management, yield optimization, and sustainable tokenomics.",
+    focus: "Protocol Treasury Design",
+    description: "Professionals in treasury management, yield optimization, and sustainable protocol economics.",
     icon: "💰"
   },
   {

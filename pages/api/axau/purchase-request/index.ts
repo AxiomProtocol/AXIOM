@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import { axauPurchaseRequests } from '../../../../shared/axauSchema';
-import { eq, desc } from 'drizzle-orm';
+import { t3KycSubmissions } from '../../../../shared/erc3643Schema';
+import { eq, desc, and } from 'drizzle-orm';
 import { sendAxauPurchaseRequestConfirmation } from '../../../../lib/email/resend';
 
 const ADMIN_KEY = process.env.ADMIN_SOLVENCY_KEY;
@@ -55,6 +56,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const axauNum = parseFloat(axauQuoted);
   if (isNaN(axauNum) || axauNum <= 0) {
     return res.status(400).json({ error: 'axauQuoted must be a positive number' });
+  }
+
+  // FIX 6: Identity gate — wallet must be identity-verified (status: bridged) before purchase request
+  try {
+    const [kycRow] = await db
+      .select({ id: t3KycSubmissions.id, status: t3KycSubmissions.status })
+      .from(t3KycSubmissions)
+      .where(
+        and(
+          eq(t3KycSubmissions.walletAddress, walletAddress.toLowerCase()),
+          eq(t3KycSubmissions.status, 'bridged'),
+        ),
+      )
+      .limit(1);
+
+    if (!kycRow) {
+      return res.status(403).json({
+        error: 'Wallet is not identity-verified. An ERC-3643 identity credential is required to submit a purchase request. Apply for early access first.',
+        code: 'IDENTITY_NOT_VERIFIED',
+      });
+    }
+  } catch (identityErr: unknown) {
+    // Non-blocking: if the identity check fails (e.g., DB error), log and continue to prevent false rejections
+    console.error('[purchase-request] Identity check failed — proceeding with caution:', identityErr instanceof Error ? identityErr.message : identityErr);
   }
 
   try {

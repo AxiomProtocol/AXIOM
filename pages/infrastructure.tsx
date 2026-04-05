@@ -160,24 +160,24 @@ export default function InfrastructurePage() {
           {/* Left: text */}
           <div style={{ padding: '52px 48px 48px 0' }}>
             <p style={{ ...monoLabel, color: C.forest, marginBottom: 16, fontSize: 11 }}>
-              Most &ldquo;RWA&rdquo; platforms are marketing decks. This is verifiable infrastructure.
+              Most &ldquo;RWA&rdquo; projects are pitch decks with a token. This is a contract address, a solvency console, and a live banking account. Verify it.
             </p>
             <h1 style={{ ...serif(44), fontWeight: 700, lineHeight: 1.08, marginBottom: 22, maxWidth: 700 }}>
-              Sovereign Financial Infrastructure.<br />
-              <span style={{ color: C.gold }}>Banking. Settlement. Reserve. Capital.</span>
+              Seven-Layer Sovereign Financial Infrastructure.<br />
+              <span style={{ color: C.gold }}>Banking. Settlement. Reserve. Capital. Live.</span>
             </h1>
             <p style={{ ...serif(16), color: C.muted, maxWidth: 600, lineHeight: 1.80, marginBottom: 14 }}>
-              Axiom Protocol is a vertically integrated financial operating system — FDIC-insured banking, identity-gated settlement rail, gold-backed reserve issuance, capital deployment programs, and regime intelligence — built on Arbitrum One with full on-chain transparency.
+              Axiom Protocol is a vertically integrated financial operating system — FDIC-insured banking, identity-gated settlement rail, PAXG-backed reserve issuance, Reg D capital deployment programs, and nine-dimension regime intelligence — built on Arbitrum One with full on-chain transparency. Not a narrative. A verifiable system.
             </p>
             <p style={{ ...mono, fontSize: 12, color: C.muted, marginBottom: 32, fontStyle: 'italic' }}>
-              Seven layers. All independently verifiable. Not a promise — a contract address.
+              Seven layers. All independently verifiable. Not a promise — a contract address on Arbiscan.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link href="/solvency" style={{ display: 'inline-block', background: C.navy, color: '#fff', padding: '12px 28px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>
-                Verify Solvency →
+                Live Solvency Console →
               </Link>
-              <Link href="/axau" style={{ display: 'inline-block', border: `1px solid ${C.gold}`, color: C.gold, padding: '12px 28px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
-                Access the Reserve
+              <Link href="/axau-early-access" style={{ display: 'inline-block', border: `1px solid ${C.gold}`, color: C.gold, padding: '12px 28px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
+                Apply for Reserve Access
               </Link>
               <Link href="/disclosure" style={{ display: 'inline-block', border: `1px solid ${C.border}`, color: C.navy, padding: '12px 28px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
                 Read Disclosure
@@ -226,7 +226,7 @@ export default function InfrastructurePage() {
             Why This Is Infrastructure — Not a Token Project
           </h2>
           <p style={{ ...mono, fontSize: 12, lineHeight: 1.7, maxWidth: 580 }}>
-            Six properties that distinguish Axiom from a wrapped asset or generic DeFi protocol. Each is verifiable without trusting the team.
+            Six properties that distinguish Axiom from a wrapped asset or generic on-chain finance protocol. Each is verifiable without trusting the team.
           </p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 0, border: `1px solid ${C.border}` }}>
@@ -510,23 +510,26 @@ export default function InfrastructurePage() {
       </div>
 
       <div style={{ border: `1px solid ${C.border}`, borderTop: `4px solid ${C.navy}`, padding: '56px 40px', background: C.bgAlt, textAlign: 'center', marginBottom: 24 }}>
-        <p style={{ ...monoLabel, color: C.forest, marginBottom: 16 }}>The Axiom Protocol — Arbitrum One — Chain ID 42161</p>
+        <p style={{ ...monoLabel, color: C.gold, marginBottom: 16 }}>The Axiom Protocol — Seven Layers — Arbitrum One — Chain ID 42161</p>
         <h2 style={{ ...serif(38), fontWeight: 700, lineHeight: 1.12, maxWidth: 560, margin: '0 auto 18px' }}>
-          Stop buying narratives.<br />Enter the infrastructure layer.
+          Stop auditing narratives.<br />Verify the infrastructure.<br /><span style={{ color: C.gold }}>Your move.</span>
         </h2>
-        <p style={{ ...mono, fontSize: 13, lineHeight: 1.85, maxWidth: 500, margin: '0 auto 34px', color: '#4b5563' }}>
-          The contracts are on-chain. The solvency data is public. The proof-of-execution logs are hash-chained.
-          Every claim on this platform has a corresponding on-chain record. Verify before engaging capital.
+        <p style={{ ...mono, fontSize: 13, lineHeight: 1.85, maxWidth: 520, margin: '0 auto 34px', color: '#4b5563' }}>
+          The contracts are on-chain. The solvency data is public. The proof-of-execution logs are hash-chained and publicly readable.
+          Every claim on this platform has a corresponding on-chain record. Verify before engaging capital — no login required.
         </p>
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <Link href="/proof-of-execution" style={{ display: 'inline-block', background: C.navy, color: '#fff', padding: '13px 32px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>
-            Verify the System →
+          <Link href="/solvency" style={{ display: 'inline-block', background: C.navy, color: '#fff', padding: '13px 32px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>
+            Live Solvency Console →
           </Link>
-          <Link href="/axau" style={{ display: 'inline-block', border: `1px solid ${C.gold}`, color: C.gold, padding: '13px 32px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
-            Access the Reserve
+          <Link href="/axau-early-access" style={{ display: 'inline-block', border: `1px solid ${C.gold}`, color: C.gold, padding: '13px 32px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
+            Apply for Reserve Access
           </Link>
-          <Link href="/axau-early-access" style={{ display: 'inline-block', border: `1px solid ${C.border}`, color: C.navy, padding: '13px 32px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
-            Apply for Access
+          <Link href="/proof-of-execution" style={{ display: 'inline-block', border: `1px solid ${C.border}`, color: C.navy, padding: '13px 32px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
+            Proof of Execution
+          </Link>
+          <Link href="/disclosure" style={{ display: 'inline-block', border: `1px solid ${C.border}`, color: C.navy, padding: '13px 32px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
+            Read Disclosure
           </Link>
         </div>
       </div>

@@ -65,11 +65,11 @@ const FAQ_SECTIONS: { title: string; items: FAQEntry[] }[] = [
         ),
       },
       {
-        q: 'How is AXAU collateralised?',
+        q: 'How is AXAU structured around its reserve?',
         a: (
           <>
             <p>
-              AXAU is backed 1:1 by PAXG, which is itself backed by allocated London gold bars held by Paxos Trust Company. The mint/redeem cycle works as follows:
+              AXAU is structured around PAXG-backed reserve positions. PAXG is a regulated digital gold token issued by Paxos Trust Company, itself backed by allocated London Good Delivery gold bars. Coverage ratio is enforced on-chain by the NAVEngine contract before every mint. The mint flow works as follows:
             </p>
             <ol className="list-decimal pl-5 mt-2 space-y-1">
               <li>User submits an AXAU purchase request</li>
@@ -77,7 +77,7 @@ const FAQ_SECTIONS: { title: string; items: FAQEntry[] }[] = [
               <li>PAXG is deposited to the AXAU vault contract</li>
               <li>AXAU is minted to the identity-verified wallet</li>
             </ol>
-            <p className="mt-2">Redemption follows the reverse path. All vault balances and collateral ratios are visible on the{' '}<Link href="/solvency" className="text-dl-navy underline">Solvency Console</Link>.</p>
+            <p className="mt-2">Reserve conversion pathways are governed by protocol rules and system conditions. All vault balances and coverage ratios are visible on the{' '}<Link href="/solvency" className="text-dl-navy underline">Solvency Console</Link>.</p>
           </>
         ),
       },
@@ -140,7 +140,7 @@ const FAQ_SECTIONS: { title: string; items: FAQEntry[] }[] = [
         q: 'Have the automated control layers been audited?',
         a: (
           <p>
-            The automated control layers (smart contracts) deployed on Arbitrum One have not yet been formally audited by a third-party security firm. A third-party audit is on the development roadmap. All contracts are deployed on mainnet and verifiable on Arbiscan.
+            The automated control layers deployed on Arbitrum One have not yet been formally audited by a third-party security firm. A third-party audit is on the development roadmap. All on-chain components are deployed on mainnet and verifiable on Arbiscan.
             In the interim, the protocol relies on on-chain transparency, the Observer Dashboard for independent verification, and the Proof of Execution log for operational accountability. Participants should treat the absence of a completed audit as a material risk factor.
           </p>
         ),

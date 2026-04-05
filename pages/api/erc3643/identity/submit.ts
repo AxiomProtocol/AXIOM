@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
-import { t3KycSubmissions } from '../../../../shared/erc3643Schema';
+import { t3KycSubmissions, t3ComplianceOpsLog } from '../../../../shared/erc3643Schema';
 import { eq, and, count, or, inArray } from 'drizzle-orm';
 import { sendAxauEarlyAccessConfirmation } from '../../../../lib/email/resend';
 import { AXAU_EARLY_ACCESS_CAP } from '../../../../lib/axauEarlyAccess';
@@ -88,6 +88,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const { complianceService } = await import('../../../../lib/circle/compositeComplianceService');
       const screening = await complianceService.screen(walletAddress, 'ARB');
+
+      // FIX 7: Log Circle screening result to t3ComplianceOpsLog
+      await db.insert(t3ComplianceOpsLog).values({
+        wallet: walletAddress.toLowerCase(),
+        action: 'circle_screening',
+        result: screening.result.toLowerCase(),
+        notes: `Circle compliance screening result: ${screening.result}. Risk score: ${screening.riskScore}. Categories: ${screening.riskCategories.join(', ') || 'none'}`,
+        metadata: {
+          riskScore: screening.riskScore,
+          riskCategories: screening.riskCategories,
+          source: screening.source,
+          screenedAt: screening.screenedAt,
+          chain: 'ARB',
+        },
+      }).catch((logErr: unknown) => {
+        console.error('[erc3643/submit] Failed to write compliance ops log:', logErr instanceof Error ? logErr.message : logErr);
+      });
+
       if (screening.result === 'DENIED') {
         console.warn(`[erc3643/submit] Circle screening DENIED wallet=${walletAddress} categories=${screening.riskCategories.join(',')}`);
         return res.status(403).json({
@@ -97,6 +115,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     } catch (screenErr: any) {
       console.error('[erc3643/submit] compliance screening error (non-blocking):', screenErr.message);
+      // FIX 7: Log screening error to t3ComplianceOpsLog
+      await db.insert(t3ComplianceOpsLog).values({
+        wallet: walletAddress.toLowerCase(),
+        action: 'circle_screening',
+        result: 'error',
+        notes: `Circle compliance screening failed (non-blocking): ${screenErr.message}`,
+        metadata: { error: screenErr.message, chain: 'ARB' },
+      }).catch(() => {});
     }
 
     const existing = await db.select()

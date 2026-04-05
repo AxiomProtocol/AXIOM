@@ -95,7 +95,7 @@ function Hero() {
           <span style={{ color: C.gold }}>PAXG-Backed. Identity-Gated. On-Chain.</span>
         </h1>
         <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 600, margin: '0 auto 16px', lineHeight: 1.75 }}>
-          AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — each token backed 1:1 by on-chain PAXG (Paxos Gold), with coverage ratio enforced by automated control layer before every mint. Two access paths: <strong>Direct Mint</strong> (PAXG → AXAU, one transaction, instant) or <strong>Assisted Mint</strong> (AXUSD → AXAU via ops team, ~1 business day). ERC-3643 identity credential required for all interactions.
+          AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — structured around PAXG-backed reserve positions on Arbitrum One, with coverage ratio enforced by the NAVEngine contract before every mint. Two access paths: <strong>Direct Mint</strong> (PAXG → AXAU, one transaction, subject to network confirmation) or <strong>Assisted Mint</strong> (AXUSD → AXAU via ops team, ~1 business day). ERC-3643 identity credential required for all interactions.
         </p>
         {/* Path comparison pills */}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20 }}>
