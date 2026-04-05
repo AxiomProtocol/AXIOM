@@ -208,23 +208,23 @@ const STEPS = [
 const PILLARS = [
   {
     icon: '◈',
-    title: 'Backed 1:1 by PAXG',
-    body: 'Every unit of AXAU is backed by exactly one gram of PAXG — a regulated, redeemable digital gold token. Your gold exposure is fully collateralised at all times.',
+    title: 'Coverage Ratio Enforced On-Chain',
+    body: 'The GoldVault automated control layer verifies reserve coverage before every mint. If the ratio drops below the policy floor, the mint is rejected at the protocol level — no human override.',
   },
   {
     icon: '◎',
-    title: 'True Self-Custody',
-    body: 'AXAU lives in your wallet. No bank, no custodian, no intermediary stands between you and your gold. You hold the keys; you hold the gold.',
+    title: 'Non-Custodial by Architecture',
+    body: 'AXAU is issued directly to your wallet. No intermediary, no custodian, no pooled account. The automated control layer holds PAXG; your key controls the issued AXAU. Self-custody is the default — not an option.',
   },
   {
     icon: '◉',
-    title: 'On-Chain Verifiable',
-    body: 'Every reserve balance and mint event is recorded on Arbitrum One. Anyone can verify backing in real time. Transparency is built into the protocol, not bolted on.',
+    title: 'Publicly Auditable Reserve State',
+    body: 'Every reserve balance, mint event, and redemption is recorded on Arbitrum One. Coverage ratio, vault state, and identity status are readable by anyone with a block explorer — no login required.',
   },
   {
     icon: '◇',
-    title: 'Low-Cost, Fast Settlement',
-    body: 'Arbitrum One delivers near-instant finality at a fraction of Ethereum mainnet costs. Mint or redeem at any time without waiting for bank hours or settlement delays.',
+    title: 'Low-Latency On-Chain Settlement',
+    body: 'Arbitrum One delivers sub-second finality at a fraction of Ethereum mainnet costs. Mint and redeem execute in one transaction with no settlement queue, no bank hours, no intermediary delay.',
   },
 ];
 

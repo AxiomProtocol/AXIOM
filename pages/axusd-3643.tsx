@@ -321,16 +321,35 @@ export default function AXUSD3643Page() {
         <meta name="description" content="AXUSD is the Axiom Protocol's Layer 02 settlement token — an ERC-3643 identity standard stablecoin on Arbitrum One. On-chain identity credential required for transfer, swap, and lending." />
       </Head>
 
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Layer 02 Settlement</span>
-          <span className="font-dl-mono text-xs text-dl-gold border border-dl-gold px-2 py-0.5">ERC-3643 T-REX Identity Standard</span>
-          <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-2 py-0.5">LIVE</span>
+      {/* HERO — cinematic split */}
+      <div className="mb-6 border-t-4 border-dl-gold overflow-hidden" style={{ borderBottom: '1px solid #d1d5db' }}>
+        <div className="grid grid-cols-1 gap-0" style={{ gridTemplateColumns: '1fr 380px' }}>
+          {/* Left: text */}
+          <div className="py-8 pr-8">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Layer 01 Settlement</span>
+              <span className="font-dl-mono text-xs text-dl-gold border border-dl-gold px-2 py-0.5">ERC-3643 T-REX Identity Standard</span>
+              <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-2 py-0.5">LIVE</span>
+            </div>
+            <h1 className="font-dl-serif text-3xl text-dl-navy mb-3">Unified AXUSD — Identity Infrastructure &amp; Settlement Terminal</h1>
+            <p className="text-sm text-dl-gray leading-relaxed max-w-2xl">
+              This terminal manages the ERC-3643 identity credential lifecycle for AXUSD — the Axiom Protocol&apos;s Layer 01 settlement token. All AXUSD transfers require a valid on-chain identity claim. Request credential issuance, check verification status, and interact with the PSM (mint/redeem) through this identity-gated interface. Arbitrum One.
+            </p>
+          </div>
+          {/* Right: cinematic hero image */}
+          <div className="relative overflow-hidden" style={{ borderLeft: '1px solid #d1d5db', minHeight: 280 }}>
+            <img
+              src="/visuals/axusd-hero.png"
+              alt="AXUSD settlement terminal — ERC-3643 identity-gated stablecoin"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+            />
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 14px', background: 'rgba(255,255,255,0.90)', borderTop: '1px solid #b8860b' }}>
+              <p className="font-dl-mono text-xs" style={{ color: '#b8860b', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
+                ERC-3643 · Identity-Gated · Arbitrum One
+              </p>
+            </div>
+          </div>
         </div>
-        <h1 className="font-dl-serif text-2xl text-dl-navy mb-2">Unified AXUSD — Identity Infrastructure &amp; Settlement Terminal</h1>
-        <p className="text-sm text-dl-gray leading-relaxed max-w-2xl">
-          This terminal manages the ERC-3643 identity credential lifecycle for AXUSD — the Axiom Protocol&apos;s Layer 02 settlement token. All AXUSD transfers require a valid on-chain identity claim. Request credential issuance, check verification status, and interact with the PSM (mint/redeem) through this identity-gated interface. Arbitrum One.
-        </p>
       </div>
 
       {/* Settlement layer architecture strip */}
@@ -425,6 +444,17 @@ export default function AXUSD3643Page() {
 function OverviewTab({ data }: { data: DashboardData }) {
   return (
     <>
+      {/* Tab visual: settlement overview */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, border: '1px solid #d1d5db', overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ overflow: 'hidden' }}>
+          <img src="/visuals/axusd-hero.png" alt="AXUSD settlement layer overview" style={{ width: '100%', height: 180, objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+        </div>
+        <div style={{ padding: '20px 22px', background: '#fdf8ee', borderLeft: '1px solid #b8860b', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <p className="font-dl-mono text-xs" style={{ color: '#b8860b', textTransform: 'uppercase', letterSpacing: '0.10em', marginBottom: 6 }}>Layer 01 · Settlement Rail · Live</p>
+          <p className="font-dl-serif text-lg text-dl-navy" style={{ fontWeight: 700, marginBottom: 6 }}>ERC-3643 Identity-Gated Stablecoin</p>
+          <p className="font-dl-mono text-xs text-dl-gray" style={{ lineHeight: 1.65 }}>AXUSD is the protocol&apos;s exclusive unit of account. All transfers require a valid on-chain identity credential. PSM-backed at 1:1 against USDC.</p>
+        </div>
+      </div>
       <SectionHeading>Token Summary</SectionHeading>
       <DetailGrid
         left={[
@@ -768,6 +798,17 @@ function IdentityTab({
 
   return (
     <>
+      {/* Tab visual: identity credential */}
+      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 0, border: '1px solid #d1d5db', overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ overflow: 'hidden' }}>
+          <img src="/visuals/axusd-identity.png" alt="ERC-3643 on-chain identity credential" style={{ width: '100%', height: 190, objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+        </div>
+        <div style={{ padding: '20px 22px', background: '#fafaf8', borderLeft: '1px solid #d1d5db', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <p className="font-dl-mono text-xs" style={{ color: '#2d6a4f', textTransform: 'uppercase', letterSpacing: '0.10em', marginBottom: 6 }}>ERC-3643 · T-REX Standard · Identity Layer</p>
+          <p className="font-dl-serif text-lg text-dl-navy" style={{ fontWeight: 700, marginBottom: 6 }}>On-Chain Identity Credential</p>
+          <p className="font-dl-mono text-xs text-dl-gray" style={{ lineHeight: 1.65 }}>Every AXUSD participant must hold a valid ONCHAINID credential issued by the Axiom Claim Issuer. The identity registry gates all transfers, mint, and redeem operations on-chain — not via a UI check, but enforced at the smart contract level.</p>
+        </div>
+      </div>
       <SectionHeading>Identity Registry</SectionHeading>
       <DetailGrid
         left={[
@@ -947,6 +988,17 @@ function ComplianceTab({
 }) {
   return (
     <>
+      {/* Tab visual: compliance shield */}
+      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 0, border: '1px solid #d1d5db', overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ overflow: 'hidden', background: '#ffffff' }}>
+          <img src="/visuals/icon-trust.png" alt="Compliance modules — institutional shield" style={{ width: '100%', height: 190, objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+        </div>
+        <div style={{ padding: '20px 22px', background: '#fafaf8', borderLeft: '1px solid #d1d5db', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <p className="font-dl-mono text-xs" style={{ color: '#2d6a4f', textTransform: 'uppercase', letterSpacing: '0.10em', marginBottom: 6 }}>Modular Compliance · ERC-3643 · On-Chain</p>
+          <p className="font-dl-serif text-lg text-dl-navy" style={{ fontWeight: 700, marginBottom: 6 }}>Protocol-Level Compliance Engine</p>
+          <p className="font-dl-mono text-xs text-dl-gray" style={{ lineHeight: 1.65 }}>Compliance is enforced on-chain via modular rule contracts — not audited offchain or asserted via policy. Every transfer is evaluated against active modules before execution. Modules active: Country Allow, Max Balance, Transfer Limit, Lending Platform.</p>
+        </div>
+      </div>
       <SectionHeading>Compliance Modules ({data.compliance.moduleCount} Active)</SectionHeading>
       <div className="border border-dl-border mb-8">
         {data.compliance.modules.map(m => (
@@ -1098,6 +1150,17 @@ function OracleTab({
 
   return (
     <>
+      {/* Tab visual: price oracle */}
+      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 0, border: '1px solid #d1d5db', overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ overflow: 'hidden' }}>
+          <img src="/visuals/axusd-oracle.png" alt="ERC-7726 price oracle data streams" style={{ width: '100%', height: 190, objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+        </div>
+        <div style={{ padding: '20px 22px', background: '#fafaf8', borderLeft: '1px solid #d1d5db', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <p className="font-dl-mono text-xs" style={{ color: '#b8860b', textTransform: 'uppercase', letterSpacing: '0.10em', marginBottom: 6 }}>ERC-7726 · AXIOMOracleAdapter · Live</p>
+          <p className="font-dl-serif text-lg text-dl-navy" style={{ fontWeight: 700, marginBottom: 6 }}>On-Chain Price Oracle Infrastructure</p>
+          <p className="font-dl-mono text-xs text-dl-gray" style={{ lineHeight: 1.65 }}>AXUSD pricing is derived from a live ERC-7726 oracle adapter. Fallback sources include PSM backing ratio and CoinGecko USDC proxy. All price sources are ranked by confidence tier and disclosed below.</p>
+        </div>
+      </div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-dl-serif text-lg text-dl-navy">ERC-7726 Oracle Infrastructure</h2>
         <SolidButton size="sm" onClick={onRefresh} disabled={oracleLoading}>
@@ -1627,6 +1690,17 @@ function PsmTab({
 
   return (
     <>
+      {/* Tab visual: PSM peg stability */}
+      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 0, border: '1px solid #d1d5db', overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ overflow: 'hidden' }}>
+          <img src="/visuals/axusd-psm.png" alt="Peg Stability Module — balance and precision" style={{ width: '100%', height: 190, objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+        </div>
+        <div style={{ padding: '20px 22px', background: '#fdf8ee', borderLeft: '1px solid #b8860b', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <p className="font-dl-mono text-xs" style={{ color: '#b8860b', textTransform: 'uppercase', letterSpacing: '0.10em', marginBottom: 6 }}>PSM · Peg Stability Module · Live</p>
+          <p className="font-dl-serif text-lg text-dl-navy" style={{ fontWeight: 700, marginBottom: 6 }}>1:1 USDC ↔ AXUSD Conversion</p>
+          <p className="font-dl-mono text-xs text-dl-gray" style={{ lineHeight: 1.65 }}>The canonical PSM maintains AXUSD's $1.00 peg by allowing frictionless 1:1 mint and redeem against USDC reserves. USDC held in the PSM is the direct backing for all AXUSD in circulation. Identity credential required for both directions.</p>
+        </div>
+      </div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-dl-serif text-lg text-dl-navy">Peg Stability Modules</h2>
         <SolidButton size="sm" onClick={onRefresh} disabled={psmLoading}>
@@ -1759,6 +1833,16 @@ function ContractsTab({ data }: { data: DashboardData }) {
 
   return (
     <>
+      {/* Visual accent — settlement infrastructure */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, marginBottom: 24, padding: '20px 24px', border: '1px solid #e5e0d8', background: '#faf9f7' }}>
+        <img src="/visuals/icon-settlement.png" alt="Settlement infrastructure" style={{ width: 72, height: 72, objectFit: 'contain', flexShrink: 0 }} />
+        <div>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#b8860b', margin: '0 0 6px' }}>L01 · On-Chain Settlement Infrastructure · ERC-3643 Architecture</p>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: '#374151', lineHeight: 1.65, margin: 0 }}>
+            Twelve independent automated control layers govern every AXUSD transfer. No single contract controls issuance — jurisdiction, identity, balance limits, and lending access are enforced in parallel at the protocol level.
+          </p>
+        </div>
+      </div>
       <SectionHeading>Deployed Contracts — Arbitrum One</SectionHeading>
       <p className="text-xs text-dl-gray mb-3 font-dl-mono">
         All contracts verified on Blockscout. Architecture: UUPS proxy + implementation.

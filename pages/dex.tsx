@@ -285,6 +285,16 @@ export default function DexPage() {
         </p>
       </div>
 
+      {/* DEX cinematic hero banner */}
+      <div style={{ position: 'relative', width: '100%', height: 'clamp(180px, 28vw, 320px)', overflow: 'hidden', marginBottom: 24 }}>
+        <img src="/visuals/dex-hero.png" alt="Protocol Exchange settlement layer" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%', display: 'block' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(30,58,95,0.7) 30%, transparent 100%)' }} />
+        <div style={{ position: 'absolute', bottom: 16, left: 24 }}>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c9a84c', margin: '0 0 6px' }}>Layer 01.5 · Protocol Exchange · Arbitrum One</p>
+          <p style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(18px, 3vw, 28px)', fontWeight: 700, color: '#ffffff', margin: 0, lineHeight: 1.1 }}>Settlement Conversion. Peg Maintenance. Liquidity Depth.</p>
+        </div>
+      </div>
+
       {/* Architecture callout */}
       <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6 flex flex-wrap gap-6">
         {[
@@ -356,6 +366,14 @@ export default function DexPage() {
         <main className="flex-1 min-w-0">
           {activeTab === 'swap' && (
             <div className="space-y-6">
+              {/* Swap tab visual accent */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', border: '1px solid #e5e0d8', background: '#faf9f7' }}>
+                <img src="/visuals/icon-exchange.png" alt="Exchange layer" style={{ width: 56, height: 56, objectFit: 'contain', flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#b8860b', margin: '0 0 4px' }}>Layer 01.5 · Settlement Conversion · EulerSwap Routing</p>
+                  <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: '#374151', lineHeight: 1.55, margin: 0 }}>All swaps route through EulerSwap. Quotes reflect live on-chain pool reserves. Slippage is minimal within the AXUSD/USDC peg band.</p>
+                </div>
+              </div>
               <div className="bg-dl-bg-alt border border-dl-border p-3">
                 <p className="font-dl-mono text-xs text-dl-gray">
                   Swap routing: <span className="text-dl-navy">EulerSwap</span>. Quotes reflect on-chain pool reserves.
@@ -367,12 +385,70 @@ export default function DexPage() {
               </div>
             </div>
           )}
-          {activeTab === 'eulerswap-lp' && <EulerSwapLpTab />}
-          {activeTab === 'pools' && <PoolList />}
-          {activeTab === 'liquidity' && <LiquidityManager />}
-          {activeTab === 'rewards' && <UserRewards />}
+          {activeTab === 'eulerswap-lp' && (
+            <div className="space-y-6">
+              {/* EulerSwap LP visual accent */}
+              <div style={{ position: 'relative', width: '100%', height: 'clamp(140px, 18vw, 220px)', overflow: 'hidden' }}>
+                <img src="/visuals/dex-liquidity.png" alt="EulerSwap concentrated liquidity" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(30,58,95,0.72) 35%, transparent 100%)' }} />
+                <div style={{ position: 'absolute', bottom: 14, left: 20 }}>
+                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c9a84c', margin: '0 0 4px' }}>EulerSwap · Concentrated Liquidity · Dual Yield</p>
+                  <p style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 20, fontWeight: 700, color: '#ffffff', margin: 0 }}>Concentrated liquidity. Swap fees + lending APR.</p>
+                </div>
+              </div>
+              <EulerSwapLpTab />
+            </div>
+          )}
+          {activeTab === 'pools' && (
+            <div className="space-y-4">
+              {/* Pools tab visual accent */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', border: '1px solid #e5e0d8', background: '#faf9f7' }}>
+                <img src="/visuals/icon-exchange.png" alt="Liquidity pools" style={{ width: 56, height: 56, objectFit: 'contain', flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#b8860b', margin: '0 0 4px' }}>Camelot V2 · Protocol Liquidity Pools · Arbitrum One</p>
+                  <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: '#374151', lineHeight: 1.55, margin: 0 }}>Active liquidity pools providing depth for the AXM/AXUSD settlement pair. All pool activity is on-chain and independently verifiable.</p>
+                </div>
+              </div>
+              <PoolList />
+            </div>
+          )}
+          {activeTab === 'liquidity' && (
+            <div className="space-y-4">
+              {/* Liquidity tab visual accent */}
+              <div style={{ position: 'relative', width: '100%', height: 'clamp(120px, 16vw, 180px)', overflow: 'hidden' }}>
+                <img src="/visuals/dex-liquidity.png" alt="Liquidity management" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', display: 'block' }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(30,58,95,0.68) 30%, transparent 100%)' }} />
+                <div style={{ position: 'absolute', bottom: 12, left: 20 }}>
+                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c9a84c', margin: '0 0 3px' }}>Liquidity Management · Protocol Positions · On-Chain</p>
+                  <p style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 18, fontWeight: 700, color: '#ffffff', margin: 0 }}>Add or remove liquidity to support the settlement layer.</p>
+                </div>
+              </div>
+              <LiquidityManager />
+            </div>
+          )}
+          {activeTab === 'rewards' && (
+            <div className="space-y-4">
+              {/* Rewards tab visual accent */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', border: '1px solid #e5e0d8', background: '#faf9f7' }}>
+                <img src="/visuals/dex-rewards.png" alt="Protocol rewards" style={{ width: 72, height: 72, objectFit: 'contain', flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#b8860b', margin: '0 0 4px' }}>AXM Rewards · Liquidity Incentives · Protocol-Governed</p>
+                  <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: '#374151', lineHeight: 1.55, margin: 0 }}>Claim accrued AXM rewards from protocol liquidity incentive programs. Reward rate is governance-controlled and subject to change.</p>
+                </div>
+              </div>
+              <UserRewards />
+            </div>
+          )}
           {activeTab === 'earn' && (
             <div className="space-y-6">
+              {/* Earn tab visual accent */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', border: '1px solid #e5e0d8', background: '#faf9f7' }}>
+                <img src="/visuals/dex-rewards.png" alt="Earn yield on AXUSD" style={{ width: 60, height: 60, objectFit: 'contain', flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#b8860b', margin: '0 0 4px' }}>Euler Finance · AXUSD Lending Market · Identity-Gated</p>
+                  <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: '#374151', lineHeight: 1.55, margin: 0 }}>Deposit AXUSD to earn lending interest from collateralized borrowers. Interest accrues continuously — claim at any time. No lock-up required.</p>
+                </div>
+              </div>
               <div className="text-center mb-4">
                 <h2 className="font-dl-serif text-xl text-dl-navy">Earn Yield on AXUSD</h2>
                 <p className="text-dl-gray text-sm mt-1">Deposit AXUSD to earn interest from borrowers via Euler Finance</p>

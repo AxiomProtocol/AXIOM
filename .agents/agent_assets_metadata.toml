@@ -246,6 +246,48 @@ uri = "file://public/visuals/icon-trust.png"
 type = "image"
 title = "trust solvency proof 3D icon"
 
+[[generated]]
+id = "CQmD2ORnohFUHutLl_GO9"
+uri = "file://public/visuals/axusd-hero.png"
+type = "image"
+title = "AXUSD settlement hero cinematic"
+
+[[generated]]
+id = "jHHlC6Pz054PxryHD0AwW"
+uri = "file://public/visuals/axusd-identity.png"
+type = "image"
+title = "ERC-3643 identity credential 3D"
+
+[[generated]]
+id = "cJfoCsBTH5HkH5vKdwOGS"
+uri = "file://public/visuals/axusd-psm.png"
+type = "image"
+title = "PSM peg stability balance scale"
+
+[[generated]]
+id = "mNJTvbDCsNl0lmxYNCzpf"
+uri = "file://public/visuals/axusd-oracle.png"
+type = "image"
+title = "price oracle data streams 3D"
+
+[[generated]]
+id = "oeaRZhJkETZadI5IV85-F"
+uri = "file://public/visuals/dex-hero.png"
+type = "image"
+title = "DEX protocol exchange cinematic hero"
+
+[[generated]]
+id = "mE_9Gh5CYf-uIBoPmxkL9"
+uri = "file://public/visuals/dex-liquidity.png"
+type = "image"
+title = "EulerSwap liquidity depth 3D"
+
+[[generated]]
+id = "kNFRadyksQwGbB4867jRq"
+uri = "file://public/visuals/dex-rewards.png"
+type = "image"
+title = "yield rewards accumulation 3D"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"

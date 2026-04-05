@@ -82,8 +82,8 @@ function Hero() {
       {/* Headline block */}
       <div style={{ padding: '32px 0 40px', textAlign: 'center' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.border}`, background: C.bg }}>Layer 02 Reserve</span>
-          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.gold}40`, background: C.bgGold }}>AXAU — Axiom Gold Reserve Unit</span>
+          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.border}`, background: C.bg }}>Layer 02 Reserve Infrastructure</span>
+          <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.gold}40`, background: C.bgGold }}>AXAU · Arbitrum One · LIVE</span>
         </div>
         <h1 style={{
           fontFamily: '"Cormorant Garamond", Georgia, serif',
@@ -91,12 +91,23 @@ function Hero() {
           fontWeight: 700, color: C.navy, lineHeight: 1.08,
           marginBottom: 14, letterSpacing: '-0.01em',
         }}>
-          Layer 02 Reserve Infrastructure<br />
-          <span style={{ color: C.gold }}>Gold-Backed. Identity-Gated. On-Chain.</span>
+          AXAU — The Protocol&apos;s Gold Reserve Unit<br />
+          <span style={{ color: C.gold }}>PAXG-Backed. Identity-Gated. On-Chain.</span>
         </h1>
-        <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 600, margin: '0 auto 20px', lineHeight: 1.75 }}>
-          AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — each token backed 1:1 by on-chain PAXG (Paxos Gold), governed by a live coverage ratio enforced by automated control layer, and accessible via two paths: direct on-chain mint (PAXG → AXAU, one transaction) or ops-assisted AXUSD fulfillment. ERC-3643 identity credential required for both paths.
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 600, margin: '0 auto 16px', lineHeight: 1.75 }}>
+          AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — each token backed 1:1 by on-chain PAXG (Paxos Gold), with coverage ratio enforced by automated control layer before every mint. Two access paths: <strong>Direct Mint</strong> (PAXG → AXAU, one transaction, instant) or <strong>Assisted Mint</strong> (AXUSD → AXAU via ops team, ~1 business day). ERC-3643 identity credential required for all interactions.
         </p>
+        {/* Path comparison pills */}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20 }}>
+          <div style={{ border: `2px solid ${C.navy}`, padding: '8px 16px', background: C.bg }}>
+            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 3px' }}>Path A — Direct</p>
+            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.navy, fontWeight: 700, margin: 0 }}>PAXG → AXAU · One Transaction · Instant</p>
+          </div>
+          <div style={{ border: `1px solid ${C.gold}40`, padding: '8px 16px', background: C.bgGold }}>
+            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 3px' }}>Path B — Assisted</p>
+            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.navy, fontWeight: 700, margin: 0 }}>AXUSD → AXAU · Ops-Mediated · ~1 Business Day</p>
+          </div>
+        </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href="/axau-buy" style={{
             display: 'inline-block', padding: '12px 28px',
@@ -112,7 +123,7 @@ function Hero() {
             fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
             textTransform: 'uppercase', textDecoration: 'none', background: C.bg,
           }}>
-            APPLY FOR ACCESS
+            APPLY FOR CREDENTIAL ACCESS
           </a>
         </div>
       </div>
