@@ -89,6 +89,7 @@ export type InsertT3ComplianceEvent = typeof t3ComplianceEvents.$inferInsert;
 export const t3KycSubmissions = pgTable("t3_kyc_submissions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  email: varchar("email", { length: 256 }),
   fullName: varchar("full_name", { length: 256 }).notNull(),
   dateOfBirth: varchar("date_of_birth", { length: 10 }).notNull(),
   country: varchar("country", { length: 3 }).notNull().default("US"),

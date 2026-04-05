@@ -90,7 +90,7 @@ function SlotMeter({ slots }: { slots: SlotData }) {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
         <span style={{ fontFamily: mono, fontSize: 10, color: urgent ? '#b45309' : C.gold, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
-          {urgent ? '⚠ FILLING FAST — EARLY ACCESS SLOTS' : 'EARLY ACCESS SLOTS'}
+          {urgent ? 'FILLING FAST — EARLY ACCESS SLOTS' : 'EARLY ACCESS SLOTS'}
         </span>
         <span style={{ fontFamily: mono, fontSize: 14, color: C.navy, fontWeight: 700 }}>
           {slots.approved} <span style={{ color: C.muted, fontWeight: 400, fontSize: 12 }}>of {slots.cap} claimed</span>
@@ -266,7 +266,7 @@ const COMPARE_ROWS = [
   { label: 'Self-custody',              axau: true,  paxg: true,  etf: false, physical: 'P'   },
   { label: 'On-chain verifiable',       axau: true,  paxg: true,  etf: false, physical: false },
   { label: 'Arbitrum native',           axau: true,  paxg: false, etf: false, physical: false },
-  { label: 'DeFi composable',           axau: true,  paxg: 'P',   etf: false, physical: false },
+  { label: 'On-chain composable',        axau: true,  paxg: 'P',   etf: false, physical: false },
   { label: 'Instant settlement',        axau: true,  paxg: true,  etf: 'P',   physical: false },
   { label: 'No counterparty risk',      axau: true,  paxg: true,  etf: false, physical: 'P'   },
   { label: 'Identity-gated (ERC-3643)', axau: true,  paxg: false, etf: false, physical: false },
@@ -291,7 +291,7 @@ const FAQS = [
   },
   {
     q: 'What happens after I submit my application?',
-    a: 'Our ops team reviews your application, typically within 48 hours. If approved, your wallet address is registered on-chain via the COMPLIANCE_ROLE. You will receive a confirmation email with instructions to proceed to the AXAU mint terminal. From there, you deposit PAXG and receive AXAU directly to your wallet.',
+    a: 'Our ops team reviews your application, typically within 48 hours. If approved, your wallet address is activated on-chain as a verified participant. You will receive a confirmation email with instructions to proceed to the AXAU mint terminal. From there, you deposit PAXG and receive AXAU directly to your wallet.',
   },
   {
     q: 'Can I redeem AXAU back to PAXG?',

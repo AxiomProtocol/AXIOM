@@ -95,6 +95,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const [inserted] = await db.insert(t3KycSubmissions).values({
       walletAddress: walletAddress.toLowerCase(),
+      email: (email && typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        ? email.toLowerCase().trim()
+        : null,
       fullName: fullName.trim(),
       dateOfBirth,
       country: (country || 'US').toUpperCase().slice(0, 3),
