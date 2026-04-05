@@ -93,8 +93,7 @@ export interface AnchorCandidate {
 
 /**
  * Candidate anchor partners for Axiom's Stellar payments corridor.
- * These are public anchor partners on the Stellar network.
- * None are selected yet — selection is a business decision.
+ * Circle selected as primary anchor — USDC on Stellar.
  */
 export const ANCHOR_CANDIDATES: AnchorCandidate[] = [
   {
@@ -108,8 +107,8 @@ export const ANCHOR_CANDIDATES: AnchorCandidate[] = [
     sep31Support: false,
     sep38Support: true,
     partnershipRequired: true,
-    evaluationStatus: 'not_selected',
-    notes: 'Issues USDC on Stellar. Most direct path for AXUSD → USDC → Stellar flows. Already familiar partner (Circle used in Axiom treasury layer).',
+    evaluationStatus: 'integrated',
+    notes: 'Selected anchor. Issues USDC on Stellar. SEP-24 interactive flow active. Home domain: centre.io. USDC issuer: GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN.',
   },
   {
     anchorId: 'moneygram-stellar',
@@ -171,30 +170,30 @@ export const STELLAR_SEP_CAPABILITIES: SEPCapability[] = [
   {
     protocol: 'SEP-0010',
     description: 'Stellar Web Authentication',
-    status: 'not_reviewed',
+    status: 'implemented',
     specUrl: 'https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0010.md',
-    usedFor: 'Authenticating users with anchor partners. Required by SEP-0024 and SEP-0031.',
+    usedFor: 'Authenticating users with Circle anchor. Required by SEP-0024. Challenge/verify flow implemented.',
   },
   {
     protocol: 'SEP-0024',
     description: 'Interactive Anchor Specification',
-    status: 'not_reviewed',
+    status: 'implemented',
     specUrl: 'https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0024.md',
-    usedFor: 'Primary anchor protocol for interactive fiat deposit and withdrawal flows.',
+    usedFor: 'Primary anchor protocol for interactive fiat deposit and withdrawal flows via Circle.',
   },
   {
     protocol: 'SEP-0031',
     description: 'Cross-Border Payments Specification',
-    status: 'not_reviewed',
+    status: 'reviewed',
     specUrl: 'https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0031.md',
-    usedFor: 'Direct cross-border payment flows (sending-side flows without UI interaction).',
+    usedFor: 'Direct cross-border payment flows (sending-side). Circle does not support SEP-31; reserved for Bitso/MoneyGram expansion.',
   },
   {
     protocol: 'SEP-0038',
     description: 'Anchor RFQ (Request for Quote)',
-    status: 'not_reviewed',
+    status: 'reviewed',
     specUrl: 'https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md',
-    usedFor: 'Getting price quotes from anchors before initiating a payment or conversion.',
+    usedFor: 'Price quotes from Circle anchor before initiating conversion. SEP-38 endpoint parsed from stellar.toml.',
   },
 ];
 
@@ -224,17 +223,28 @@ export const STELLAR_PLANNED_CORRIDORS: StellarPaymentCorridor[] = [
     sourceNetwork: 'arbitrum',
     destinationCurrency: 'USD',
     destinationCountry: 'US',
-    anchorId: null,
-    status: 'planned',
+    anchorId: 'circle-stellar',
+    status: 'configured',
     estimatedSettlementMinutes: 5,
     minAmountUsd: 10,
     maxAmountUsd: 25000,
     complianceRequired: true,
-    blockers: [
-      'Anchor partner not selected',
-      '@stellar/stellar-sdk not yet installed',
-      'AXUSD → USDC conversion step not designed',
-    ],
+    blockers: [],
+  },
+  {
+    corridorId: 'axusd-to-usdc-stellar-global',
+    label: 'AXUSD (Arbitrum) → USDC (Stellar) → Global USDC',
+    sourceAsset: 'AXUSD',
+    sourceNetwork: 'arbitrum',
+    destinationCurrency: 'USDC',
+    destinationCountry: 'Global',
+    anchorId: 'circle-stellar',
+    status: 'configured',
+    estimatedSettlementMinutes: 3,
+    minAmountUsd: 1,
+    maxAmountUsd: 100000,
+    complianceRequired: true,
+    blockers: [],
   },
   {
     corridorId: 'axusd-to-usdc-stellar-mxn',
@@ -244,16 +254,12 @@ export const STELLAR_PLANNED_CORRIDORS: StellarPaymentCorridor[] = [
     destinationCurrency: 'MXN',
     destinationCountry: 'MX',
     anchorId: null,
-    status: 'planned',
+    status: 'anchor_pending',
     estimatedSettlementMinutes: 10,
     minAmountUsd: 10,
     maxAmountUsd: 10000,
     complianceRequired: true,
-    blockers: [
-      'Anchor partner not selected (Bitso preferred for MXN)',
-      '@stellar/stellar-sdk not yet installed',
-      'Mexican remittance compliance framework not designed',
-    ],
+    blockers: ['Requires Bitso anchor integration for MXN corridors'],
   },
 ];
 

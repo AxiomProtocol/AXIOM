@@ -3,13 +3,12 @@
  *
  * Barrel export for all Stellar integration types, adapter, and services.
  *
- * Status: STUB — not yet live. Stellar SDK not installed.
- * Anchor partner not yet selected.
- *
- * Import from this barrel — do not import directly from sub-files.
+ * Status: CONFIGURED — Circle (USDC on Stellar) is the selected anchor.
+ * @stellar/stellar-sdk is installed. SEP-0010 + SEP-0024 implemented.
+ * Anchor partner: Circle. Feature flag: ENABLE_STELLAR_PAYMENTS_RAIL.
  */
 
 export * from './types';
-export { StellarPaymentAdapter, getStellarPaymentAdapter } from './StellarPaymentAdapter';
+export { StellarPaymentAdapter, getStellarPaymentAdapter, fetchCircleToml } from './StellarPaymentAdapter';
 export { StellarReadinessService } from './StellarReadinessService';
 export type { StellarReadinessReport } from './StellarReadinessService';
