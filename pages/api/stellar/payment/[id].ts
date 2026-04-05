@@ -67,7 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
         return res.status(400).json({ error: 'Invalid wallet address format.' });
       }
-      if (record.senderWalletAddress.toLowerCase() !== wallet.toLowerCase()) {
+      if (record.axiomWalletAddress.toLowerCase() !== wallet.toLowerCase()) {
         return res.status(403).json({ error: 'Wallet address does not match transfer record.' });
       }
     }
