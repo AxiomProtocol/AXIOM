@@ -139,11 +139,11 @@ function SuccessScreen({ submissionId, emailQueued }: { submissionId: string; em
       <div style={{ border: `1px solid ${C.border}`, borderTop: `3px solid ${C.gold}`, padding: '36px 40px' }}>
         <h2 style={{ fontFamily: serif, fontSize: 32, fontWeight: 700, color: C.navy, margin: '0 0 14px' }}>Application Received</h2>
         <p style={{ fontFamily: body, fontSize: 15, color: C.muted, maxWidth: 500, margin: '0 0 32px', lineHeight: 1.75 }}>
-          Your application is queued for ops review. You will receive a confirmation email once your identity has been verified and your wallet is activated. As a founding participant, your benefits are reserved from this moment.
+          Your application is queued for ops review. You will receive a confirmation email once your identity has been verified and your wallet is activated within the system. Founding cohort designation is recorded at the point of verification for the first 100 approved participants.
         </p>
         <div style={{ background: C.goldBg, border: `1px solid ${C.gold}40`, borderLeft: `3px solid ${C.gold}`, padding: '16px 20px', marginBottom: 28 }}>
           <p style={{ fontFamily: mono, fontSize: 10, letterSpacing: '0.14em', color: C.gold, textTransform: 'uppercase', margin: '0 0 8px' }}>WHAT HAPPENS NEXT</p>
-          {['Our ops team reviews your application (typically within 48 hours).', 'Your wallet is registered on-chain as a founding participant.', 'You receive an email with minting instructions and your founding cohort badge.', 'Deposit PAXG at the mint terminal to receive AXAU directly to your wallet.'].map((step, i) => (
+          {['Our ops team reviews your application (typically within 48 hours).', 'Your wallet is activated as a verified participant within the identity system.', 'You receive an email with access instructions and your founding cohort designation.', 'Follow the instructions at the AXAU mint terminal to access AXAU through the participant path applicable to your wallet.'].map((step, i) => (
             <div key={i} style={{ display: 'flex', gap: 12, marginTop: i > 0 ? 8 : 0, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: mono, fontSize: 10, color: C.gold, minWidth: 18, paddingTop: 2 }}>{i + 1}.</span>
               <span style={{ fontFamily: body, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{step}</span>
@@ -202,7 +202,7 @@ function AlreadySubmittedScreen() {
 const STEPS = [
   { n: '01', title: 'Apply', body: 'Submit your wallet address and identity details. No document upload required at this stage.', img: '/axau-early-access/icon-apply.png', alt: 'Apply icon' },
   { n: '02', title: 'Review', body: 'Your application is reviewed by the ops team within 48 hours. You will be notified by email once cleared for on-chain activation.', img: '/axau-early-access/icon-approved.png', alt: 'Review icon' },
-  { n: '03', title: 'Mint', body: 'Go to the AXAU mint terminal, deposit PAXG, and receive AXAU directly to your wallet. No intermediaries.', img: '/axau-early-access/icon-mint.png', alt: 'Mint icon' },
+  { n: '03', title: 'Access', body: 'Follow the instructions at the AXAU mint terminal to access AXAU through the participant path applicable to your verified wallet. Subject to system conditions.', img: '/axau-early-access/icon-mint.png', alt: 'Mint icon' },
 ];
 
 const PILLARS = [
@@ -213,18 +213,18 @@ const PILLARS = [
   },
   {
     icon: '◎',
-    title: 'Non-Custodial by Architecture',
-    body: 'AXAU is issued directly to your wallet. No intermediary, no custodian, no pooled account. The automated control layer holds PAXG; your key controls the issued AXAU. Self-custody is the default — not an option.',
+    title: 'Wallet-Controlled Participation',
+    body: 'AXAU is issued to your verified wallet. Reserve operations are governed by automated control layers and system rules. Your wallet key controls your issued AXAU position within the permissioned reserve system.',
   },
   {
     icon: '◉',
     title: 'Publicly Auditable Reserve State',
-    body: 'Every reserve balance, mint event, and redemption is recorded on Arbitrum One. Coverage ratio, vault state, and identity status are readable by anyone with a block explorer — no login required.',
+    body: 'Reserve balances, mint events, and reserve activity are recorded on Arbitrum One. Coverage ratio, vault state, and identity status are readable by anyone with a block explorer — no login required.',
   },
   {
     icon: '◇',
     title: 'Low-Latency On-Chain Settlement',
-    body: 'Arbitrum One delivers sub-second finality at a fraction of Ethereum mainnet costs. Mint and redeem execute in one transaction with no settlement queue, no bank hours, no intermediary delay.',
+    body: 'Arbitrum One delivers sub-second finality at a fraction of Ethereum mainnet costs. The direct participant path executes in one on-chain transaction with no settlement queue and no bank hours for on-chain operations.',
   },
 ];
 
@@ -232,14 +232,14 @@ const REWARDS = [
   {
     num: '01',
     title: 'Founding Participant Status',
-    body: 'Your wallet is permanently recorded on-chain as one of the first 100 participants in the AXAU Reserve. This credential is issued alongside your identity registration and cannot be replicated.',
-    tag: 'PERMANENT · ON-CHAIN',
+    body: 'Your wallet is recorded as a founding participant within the protocol\'s identity system, timestamped at the point of verification. This designation is part of the founding cohort and is not recreated for later participants.',
+    tag: 'FOUNDING COHORT · TIMESTAMPED',
   },
   {
     num: '02',
-    title: 'Priority Access to Future Instruments',
-    body: 'Founding participants receive early access to new Axiom reserve instruments, lending pools, and syndication offerings before public launch — ahead of the general participant queue.',
-    tag: 'FIRST ACCESS',
+    title: 'Priority Pathway for Future Instruments',
+    body: 'Founding participants hold a priority pathway for future Axiom reserve instruments, lending pools, and syndication offerings, subject to governance decisions and launch timelines.',
+    tag: 'SUBJECT TO GOVERNANCE',
   },
   {
     num: '03',
@@ -262,7 +262,7 @@ const REWARDS = [
 ];
 
 const COMPARE_ROWS = [
-  { label: 'Backed by physical gold',   axau: true,  paxg: true,  etf: true,  physical: true  },
+  { label: 'Gold reserve backing',       axau: true,  paxg: true,  etf: true,  physical: true  },
   { label: 'Self-custody',              axau: true,  paxg: true,  etf: false, physical: 'P'   },
   { label: 'On-chain verifiable',       axau: true,  paxg: true,  etf: false, physical: false },
   { label: 'Arbitrum native',           axau: true,  paxg: false, etf: false, physical: false },
@@ -275,11 +275,11 @@ const COMPARE_ROWS = [
 const FAQS = [
   {
     q: 'What is AXAU?',
-    a: 'AXAU is a gold reserve unit issued on Arbitrum One under the ERC-3643 identity-gated standard. Each AXAU represents a fractional claim on a PAXG-backed reserve. Participants mint AXAU by depositing PAXG at the protocol\'s mint terminal and may redeem AXAU back to PAXG at any time.',
+    a: 'AXAU is an identity-gated reserve unit issued on Arbitrum One under the ERC-3643 standard. Each AXAU is a reserve unit within the AXAU reserve architecture, structured around PAXG-backed reserve positions. Participants access AXAU through two participant paths, each subject to identity verification and system conditions.',
   },
   {
     q: 'What backs AXAU?',
-    a: 'AXAU is backed 1:1 by PAXG, a regulated digital gold token issued by Paxos Trust Company. PAXG is itself redeemable for allocated London Good Delivery gold bars. The backing is fully on-chain and verifiable at any time through the protocol\'s reserve contracts on Arbitrum One.',
+    a: 'AXAU is structured around PAXG-backed reserve positions within the AXAU reserve architecture. PAXG is a regulated digital gold token issued by Paxos Trust Company, itself redeemable for allocated London Good Delivery gold bars. Reserve positions and coverage ratios are verifiable on-chain through the protocol\'s reserve contracts on Arbitrum One.',
   },
   {
     q: 'Who can apply for early access?',
@@ -291,11 +291,11 @@ const FAQS = [
   },
   {
     q: 'What happens after I submit my application?',
-    a: 'Our ops team reviews your application, typically within 48 hours. If approved, your wallet address is activated on-chain as a verified participant. You will receive a confirmation email with instructions to proceed to the AXAU mint terminal. From there, you deposit PAXG and receive AXAU directly to your wallet.',
+    a: 'Our ops team reviews your application, typically within 48 hours. If approved, your wallet address is activated as a verified participant within the identity system. You will receive a confirmation email with instructions to proceed to the AXAU mint terminal and access AXAU through the participant path applicable to your wallet, subject to system conditions.',
   },
   {
-    q: 'Can I redeem AXAU back to PAXG?',
-    a: 'Yes. AXAU is fully redeemable. At any time, identity-verified holders may return AXAU to the protocol\'s mint terminal and receive the equivalent PAXG back to their wallet. The redemption path is non-custodial and settled on-chain.',
+    q: 'How does reserve conversion work?',
+    a: 'Reserve conversion pathways are available to identity-verified participants and are governed by protocol rules and operating conditions. The direct participant path operates through the protocol-defined on-chain flow on Arbitrum One. Participants should review current system conditions and applicable requirements before initiating a reserve conversion. Availability and timelines are subject to system rules and participant status.',
   },
 ];
 
@@ -393,7 +393,7 @@ export default function AxauAccessPage() {
     <DesignLawLayout>
       <Head>
         <title>AXAU Early Access — Axiom Protocol</title>
-        <meta name="description" content="Join the first 100 verified participants to mint AXAU — a gold reserve unit backed 1:1 by PAXG on Arbitrum One. Founding participant benefits included." />
+        <meta name="description" content="Join the first 100 verified participants in AXAU — an identity-gated reserve unit structured around PAXG-backed reserve infrastructure on Arbitrum One. Founding cohort status included." />
       </Head>
 
       {/* ── CINEMATIC HERO ── */}
@@ -410,7 +410,7 @@ export default function AxauAccessPage() {
             Apply for Reserve Access.<br />Enter the Infrastructure Layer.
           </h1>
           <p style={{ fontFamily: body, fontSize: 14, color: '#ffffff', lineHeight: 1.75, margin: '0 0 20px', maxWidth: 420, textShadow: '0 1px 6px rgba(0,0,0,0.95)' }}>
-            AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — backed 1:1 by PAXG on Arbitrum One. Access requires an ERC-3643 identity credential. Founding participants gain direct mint access, priority rights, and on-chain governance participation.
+            AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — structured around PAXG-backed reserve infrastructure on Arbitrum One. Access requires an ERC-3643 identity credential. Founding participants receive founding cohort status, a priority pathway for future reserve launches subject to governance, and governance signaling rights.
           </p>
           <a href="#apply" style={{
             display: 'inline-block', padding: '12px 28px',
@@ -656,7 +656,7 @@ export default function AxauAccessPage() {
               {/* Reward reminder above submit */}
               <div style={{ background: C.goldBg, border: `1px solid ${C.gold}40`, borderLeft: `3px solid ${C.gold}`, padding: '12px 16px', marginBottom: 20 }}>
                 <p style={{ fontFamily: body, fontSize: 12, color: C.navy, margin: 0, lineHeight: 1.6 }}>
-                  <strong>Founding participant benefits</strong> — on-chain status, priority product access, preferred fee recognition, and governance participation — are reserved upon application. These benefits apply to the first 100 verified participants only.
+                  <strong>Founding cohort designations</strong> — including founding status, priority pathway for future reserve launches subject to governance, fee recognition subject to governance, and governance signaling rights — are designated to the first 100 verified participants only.
                 </p>
               </div>
 
