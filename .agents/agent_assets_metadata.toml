@@ -180,6 +180,72 @@ uri = "file://public/images/realestate/property_analysis_hero.png"
 type = "image"
 title = "property analysis hero"
 
+[[generated]]
+id = "1sYvx4KJEnwmQog6oR2rZ"
+uri = "file://public/visuals/sysmap-hero.png"
+type = "image"
+title = "system map layered architecture hero"
+
+[[generated]]
+id = "Y_Q1qNcYir8LUgmxhD_UB"
+uri = "file://public/visuals/gold-reserve.png"
+type = "image"
+title = "gold reserve vault cinematic"
+
+[[generated]]
+id = "HxWfwBX5e_MOyLaGUtYGk"
+uri = "file://public/visuals/infra-hero.png"
+type = "image"
+title = "infrastructure cinematic hero"
+
+[[generated]]
+id = "pS7k_pHyBT1HsY_6kXxQ1"
+uri = "file://public/visuals/capital-deploy.png"
+type = "image"
+title = "capital deployment institutional boardroom"
+
+[[generated]]
+id = "bZpPVFHGZ4XcI3Ku6206n"
+uri = "file://public/visuals/icon-banking.png"
+type = "image"
+title = "banking vault 3D icon"
+
+[[generated]]
+id = "GJ9LG8Q__QOHe3dv_SYXI"
+uri = "file://public/visuals/icon-settlement.png"
+type = "image"
+title = "AXUSD settlement 3D icon"
+
+[[generated]]
+id = "vK2jG7aCqqSMfasDx-k7V"
+uri = "file://public/visuals/icon-exchange.png"
+type = "image"
+title = "exchange DEX 3D icon"
+
+[[generated]]
+id = "ySBQtBdgGb26RjRjWcGYb"
+uri = "file://public/visuals/icon-reserve.png"
+type = "image"
+title = "gold reserve AXAU 3D icon"
+
+[[generated]]
+id = "p2MpCWEKoS7VEPWiMY5-g"
+uri = "file://public/visuals/icon-capital.png"
+type = "image"
+title = "capital deployment 3D icon"
+
+[[generated]]
+id = "q6iItxN-PwWguF1o4Nu_p"
+uri = "file://public/visuals/icon-intelligence.png"
+type = "image"
+title = "intelligence MIRDT 3D icon"
+
+[[generated]]
+id = "SZdKcgjAnhCJHZUjuaUyL"
+uri = "file://public/visuals/icon-trust.png"
+type = "image"
+title = "trust solvency proof 3D icon"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
@@ -263,3 +329,15 @@ id = "4pC5yeKymKZ3Lh9r8RNtM"
 uri = "file://documents/axau-whitepaper.md"
 type = "text"
 title = "AXAU Reserve Instrument — Institutional White Paper v1.0.0"
+
+[[outputs]]
+id = "YgMTEYDInJHmC19ljunJ8"
+uri = "file://attached_assets/stock_images/institutional-investor.jpg"
+type = "image"
+title = "institutional investor in suit at modern glass skyscraper financial district"
+
+[[outputs]]
+id = "k_vP68rGTa_1fX_9sSUSw"
+uri = "file://attached_assets/stock_images/real-estate-land.jpg"
+type = "image"
+title = "aerial view of real estate land development parcels with infrastructure"

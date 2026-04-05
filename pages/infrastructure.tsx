@@ -21,31 +21,37 @@ const DIFFERENTIATORS = [
   {
     label: 'FDIC-Insured Banking Layer',
     badge: 'L00 · LIVE',
+    icon: '/visuals/icon-banking.png',
     desc: 'Fiat capital enters through a real institutional bank account — First Internet Bank via Increase ACH/wire rails. No crypto-only on-ramp. BitGo institutional custody handles the on-chain layer.',
   },
   {
     label: 'Identity-Gated Settlement Rail',
     badge: 'L01 · LIVE',
+    icon: '/visuals/icon-settlement.png',
     desc: 'AXUSD is not a wrapped stablecoin. It is issued through a live PSM, requires an ERC-3643 identity credential, and functions as the exclusive unit of account for capital movement across the entire protocol.',
   },
   {
     label: 'Direct On-Chain Reserve Issuance',
     badge: 'L02 · LIVE',
+    icon: '/visuals/icon-reserve.png',
     desc: 'AXAU is minted directly against PAXG via the GoldVault automated control layer. One transaction. No intermediary. Coverage ratio is enforced on-chain before every mint. Identity credential required.',
   },
   {
     label: 'Proof of Execution — Not Attestation',
     badge: 'L05 · LIVE',
+    icon: '/visuals/icon-trust.png',
     desc: 'Every capital movement, solvency snapshot, and operational action is recorded with a hash-chained audit trail. The chain does not require trust — it requires reading. Anyone can verify independently.',
   },
   {
     label: 'Three-Mode Solvency Console',
     badge: 'L05 · LIVE',
+    icon: '/visuals/icon-trust.png',
     desc: 'Coverage ratio, reserve ratio, and liability-backed reserve are published live from a canonical on-chain snapshot. Derived from verifiable data. Not a dashboard — a verification layer with public access.',
   },
   {
     label: 'Capital Regime Intelligence',
     badge: 'L04 · LIVE',
+    icon: '/visuals/icon-intelligence.png',
     desc: 'MIRDT scores nine dimensions of capital regime readiness to generate a live advisory signal. Sentinel gates authorization decisions. Observer provides institutional read access to treasury and risk data.',
   },
 ];
@@ -144,30 +150,70 @@ export default function InfrastructurePage() {
 
       {/* ── SECTION 1: HERO ───────────────────────────────────────────────────── */}
       <div style={{ borderTop: `4px solid ${C.gold}`, marginBottom: 56 }}>
-        <div style={{ padding: '52px 0 48px', borderBottom: `1px solid ${C.border}` }}>
-          <p style={{ ...monoLabel, color: C.forest, marginBottom: 16, fontSize: 11 }}>
-            Most &ldquo;RWA&rdquo; platforms are marketing decks. This is verifiable infrastructure.
-          </p>
-          <h1 style={{ ...serif(44), fontWeight: 700, lineHeight: 1.08, marginBottom: 22, maxWidth: 700 }}>
-            Sovereign Financial Infrastructure.<br />
-            <span style={{ color: C.gold }}>Banking. Settlement. Reserve. Capital.</span>
-          </h1>
-          <p style={{ ...serif(16), color: C.muted, maxWidth: 600, lineHeight: 1.80, marginBottom: 14 }}>
-            Axiom Protocol is a vertically integrated financial operating system — FDIC-insured banking, identity-gated settlement rail, gold-backed reserve issuance, capital deployment programs, and regime intelligence — built on Arbitrum One with full on-chain transparency.
-          </p>
-          <p style={{ ...mono, fontSize: 12, color: C.muted, marginBottom: 32, fontStyle: 'italic' }}>
-            Seven layers. All independently verifiable. Not a promise — a contract address.
-          </p>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <Link href="/solvency" style={{ display: 'inline-block', background: C.navy, color: '#fff', padding: '12px 28px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>
-              Verify Solvency →
-            </Link>
-            <Link href="/axau" style={{ display: 'inline-block', border: `1px solid ${C.gold}`, color: C.gold, padding: '12px 28px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
-              Access the Reserve
-            </Link>
-            <Link href="/disclosure" style={{ display: 'inline-block', border: `1px solid ${C.border}`, color: C.navy, padding: '12px 28px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
-              Read Disclosure
-            </Link>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0,1fr) minmax(0,420px)',
+          gap: 0,
+          borderBottom: `1px solid ${C.border}`,
+          alignItems: 'stretch',
+        }}>
+          {/* Left: text */}
+          <div style={{ padding: '52px 48px 48px 0' }}>
+            <p style={{ ...monoLabel, color: C.forest, marginBottom: 16, fontSize: 11 }}>
+              Most &ldquo;RWA&rdquo; platforms are marketing decks. This is verifiable infrastructure.
+            </p>
+            <h1 style={{ ...serif(44), fontWeight: 700, lineHeight: 1.08, marginBottom: 22, maxWidth: 700 }}>
+              Sovereign Financial Infrastructure.<br />
+              <span style={{ color: C.gold }}>Banking. Settlement. Reserve. Capital.</span>
+            </h1>
+            <p style={{ ...serif(16), color: C.muted, maxWidth: 600, lineHeight: 1.80, marginBottom: 14 }}>
+              Axiom Protocol is a vertically integrated financial operating system — FDIC-insured banking, identity-gated settlement rail, gold-backed reserve issuance, capital deployment programs, and regime intelligence — built on Arbitrum One with full on-chain transparency.
+            </p>
+            <p style={{ ...mono, fontSize: 12, color: C.muted, marginBottom: 32, fontStyle: 'italic' }}>
+              Seven layers. All independently verifiable. Not a promise — a contract address.
+            </p>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <Link href="/solvency" style={{ display: 'inline-block', background: C.navy, color: '#fff', padding: '12px 28px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>
+                Verify Solvency →
+              </Link>
+              <Link href="/axau" style={{ display: 'inline-block', border: `1px solid ${C.gold}`, color: C.gold, padding: '12px 28px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
+                Access the Reserve
+              </Link>
+              <Link href="/disclosure" style={{ display: 'inline-block', border: `1px solid ${C.border}`, color: C.navy, padding: '12px 28px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
+                Read Disclosure
+              </Link>
+            </div>
+          </div>
+          {/* Right: cinematic hero image */}
+          <div style={{
+            position: 'relative',
+            overflow: 'hidden',
+            borderLeft: `1px solid ${C.border}`,
+            minHeight: 380,
+          }}>
+            <img
+              src="/visuals/infra-hero.png"
+              alt="Axiom Protocol sovereign financial infrastructure"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center',
+                display: 'block',
+              }}
+            />
+            {/* Subtle gold overlay stripe at bottom */}
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              padding: '12px 16px',
+              background: 'rgba(255,255,255,0.88)',
+              borderTop: `1px solid ${C.gold}`,
+            }}>
+              <p style={{ ...monoLabel, color: C.gold, margin: 0 }}>Arbitrum One · Chain ID 42161 · Mainnet Live</p>
+            </div>
           </div>
         </div>
       </div>
@@ -188,20 +234,61 @@ export default function InfrastructurePage() {
             <div
               key={item.label}
               style={{
-                padding: '24px 22px',
+                padding: '28px 22px 24px',
                 borderBottom: i < DIFFERENTIATORS.length - 2 ? `1px solid ${C.border}` : 'none',
                 borderRight: i % 2 === 0 ? `1px solid ${C.border}` : 'none',
                 background: i % 2 === 0 ? C.bg : C.bgAlt,
                 borderLeft: `3px solid ${C.forest}`,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <p style={{ ...serif(14), fontWeight: 700, color: C.navy }}>{item.label}</p>
-                <span style={{ ...monoLabel, color: C.forest, border: `1px solid ${C.forest}`, padding: '2px 7px' }}>{item.badge}</span>
+              {/* 3D Icon + header row */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ flex: 1, paddingRight: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <p style={{ ...serif(14), fontWeight: 700, color: C.navy }}>{item.label}</p>
+                    <span style={{ ...monoLabel, color: C.forest, border: `1px solid ${C.forest}`, padding: '2px 7px', flexShrink: 0, marginLeft: 8 }}>{item.badge}</span>
+                  </div>
+                  <p style={{ ...mono, fontSize: 12, lineHeight: 1.75, color: '#4b5563' }}>{item.desc}</p>
+                </div>
+                <div style={{
+                  width: 72,
+                  height: 72,
+                  flexShrink: 0,
+                  overflow: 'hidden',
+                  border: `1px solid ${C.border}`,
+                  background: C.bg,
+                }}>
+                  <img
+                    src={item.icon}
+                    alt={item.label}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                </div>
               </div>
-              <p style={{ ...mono, fontSize: 12, lineHeight: 1.75, color: '#4b5563' }}>{item.desc}</p>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* ── CINEMATIC DIVIDER: Institutional Stock ───────────────────────────── */}
+      <div style={{ marginBottom: 56, position: 'relative', overflow: 'hidden', border: `1px solid ${C.border}` }}>
+        <img
+          src="/visuals/stock-investor.jpg"
+          alt="Institutional capital infrastructure"
+          style={{ width: '100%', height: 220, objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }}
+        />
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(to right, rgba(255,255,255,0.96) 38%, rgba(255,255,255,0.55) 70%, rgba(255,255,255,0.1) 100%)',
+          display: 'flex', alignItems: 'center', padding: '0 40px',
+        }}>
+          <div>
+            <p style={{ ...monoLabel, color: C.forest, marginBottom: 8 }}>Live on Arbitrum One Mainnet</p>
+            <p style={{ ...serif(26), fontWeight: 700, lineHeight: 1.2, marginBottom: 0 }}>
+              Not a testnet. Not a pilot.<br />
+              <span style={{ color: C.gold }}>Production infrastructure.</span>
+            </p>
+          </div>
         </div>
       </div>
 
@@ -281,17 +368,56 @@ export default function InfrastructurePage() {
             </p>
           </div>
         </div>
+
+        {/* Gold Reserve cinematic accent */}
+        <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+          <div style={{ overflow: 'hidden' }}>
+            <img
+              src="/visuals/gold-reserve.png"
+              alt="AXAU gold reserve vault"
+              style={{ width: '100%', height: 260, objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+            />
+          </div>
+          <div style={{ padding: '32px 28px', background: C.bgGold, borderLeft: `1px solid ${C.gold}`, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <p style={{ ...monoLabel, color: C.gold, marginBottom: 10 }}>Reserve Layer · L02 · LIVE</p>
+            <h3 style={{ ...serif(22), fontWeight: 700, marginBottom: 12 }}>AXAU: The Hard-Asset Anchor</h3>
+            <p style={{ ...mono, fontSize: 11, lineHeight: 1.75, color: '#4b5563', marginBottom: 18 }}>
+              AXAU is minted directly against PAXG (Paxos Gold) via the GoldVault automated control layer. Coverage ratio enforced on-chain before every mint. Chainlink XAU/USD oracle verifies pricing. Not a promise — a live contract.
+            </p>
+            <Link
+              href="/axau"
+              style={{ display: 'inline-block', border: `1px solid ${C.gold}`, color: C.gold, padding: '8px 20px', fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.09em', textTransform: 'uppercase', textDecoration: 'none', alignSelf: 'flex-start' }}
+            >
+              Access the Reserve →
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* ── SECTION 5: WHO IT IS FOR ────────────────────────────────────────── */}
       <div style={{ marginBottom: 56 }}>
-        <div style={{ marginBottom: 24 }}>
-          <p style={monoLabel}>Section 05 — Access Paths</p>
-          <h2 style={{ ...serif(30), fontWeight: 700, marginTop: 6, marginBottom: 8 }}>Who This Is Built For</h2>
-          <p style={{ ...mono, fontSize: 12, lineHeight: 1.7 }}>
-            Four distinct access paths. Each layer of the protocol is designed for a specific participant type and capital position.
-          </p>
+        {/* Land cinematic banner */}
+        <div style={{ marginBottom: 24, position: 'relative', overflow: 'hidden', border: `1px solid ${C.border}` }}>
+          <img
+            src="/visuals/stock-land.jpg"
+            alt="Real estate land acquisition pipeline"
+            style={{ width: '100%', height: 200, objectFit: 'cover', objectPosition: 'center 40%', display: 'block' }}
+          />
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(to right, rgba(255,255,255,0.95) 42%, rgba(255,255,255,0.6) 70%, rgba(255,255,255,0.1) 100%)',
+            display: 'flex', alignItems: 'center', padding: '0 40px',
+          }}>
+            <div>
+              <p style={monoLabel}>Section 05 — Access Paths</p>
+              <h2 style={{ ...serif(28), fontWeight: 700, marginTop: 6, marginBottom: 0 }}>Who This Is Built For</h2>
+            </div>
+          </div>
         </div>
+
+        <p style={{ ...mono, fontSize: 12, lineHeight: 1.7, marginBottom: 20 }}>
+          Four distinct access paths. Each layer of the protocol is designed for a specific participant type and capital position.
+        </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 0, border: `1px solid ${C.border}` }}>
           {WHO_ITS_FOR.map((profile, i) => (
             <div
@@ -352,6 +478,37 @@ export default function InfrastructurePage() {
       </div>
 
       {/* ── SECTION 7: FINAL CTA ────────────────────────────────────────────── */}
+      {/* Capital deploy cinematic image above CTA */}
+      <div style={{ marginBottom: 0, position: 'relative', overflow: 'hidden', border: `1px solid ${C.border}`, borderBottom: 'none' }}>
+        <img
+          src="/visuals/capital-deploy.png"
+          alt="Institutional capital deployment team"
+          style={{ width: '100%', height: 300, objectFit: 'cover', objectPosition: 'center 20%', display: 'block' }}
+        />
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.75) 70%, rgba(255,255,255,1) 100%)',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          padding: '0 40px 24px',
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
+        }}>
+          <div>
+            <p style={{ ...monoLabel, color: C.forest, marginBottom: 4 }}>Institutional Capital Access</p>
+            <p style={{ ...serif(20), fontWeight: 700, lineHeight: 1.2 }}>
+              Reg D 506(c) · Lending Fund · SPV Programs
+            </p>
+          </div>
+          <Link
+            href="/lending-fund"
+            style={{ display: 'inline-block', background: C.navy, color: '#fff', padding: '10px 22px', fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700, flexShrink: 0 }}
+          >
+            View Capital Programs →
+          </Link>
+        </div>
+      </div>
+
       <div style={{ border: `1px solid ${C.border}`, borderTop: `4px solid ${C.navy}`, padding: '56px 40px', background: C.bgAlt, textAlign: 'center', marginBottom: 24 }}>
         <p style={{ ...monoLabel, color: C.forest, marginBottom: 16 }}>The Axiom Protocol — Arbitrum One — Chain ID 42161</p>
         <h2 style={{ ...serif(38), fontWeight: 700, lineHeight: 1.12, maxWidth: 560, margin: '0 auto 18px' }}>
@@ -377,7 +534,7 @@ export default function InfrastructurePage() {
       {/* LEGAL DISCLOSURE */}
       <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
         <p style={{ ...mono, fontSize: 10, lineHeight: 1.9, color: C.muted }}>
-          Axiom Protocol infrastructure is built on Arbitrum One (Chain ID 42161). All on-chain data referenced on this page is independently verifiable via Arbiscan or the relevant contract address. Capital programs (Lending Fund, SPV Capital Program) are offered under SEC Reg D 506(c) and are available to accredited investors only. AXAU and AXUSD require an active ERC-3643 identity credential. This page does not constitute a public offering, financial advice, or investment recommendation. System statuses reflect current operational state — formation-stage components are not yet in production deployment. Contract addresses and coverage formulas are published in the Institutional Disclosure document at /disclosure.
+          Axiom Protocol infrastructure is built on Arbitrum One (Chain ID 42161). All on-chain data referenced on this page is independently verifiable via Arbiscan or the relevant contract address. Capital programs (Lending Fund, SPV Capital Program) are offered under SEC Reg D 506(c) and are available to accredited investors only. AXAU and AXUSD require an active ERC-3643 identity credential. This page does not constitute a public offering, financial advice, or investment recommendation. System statuses reflect current operational state — formation-stage components are not yet in production. Coverage ratios and reserve data are derived from live on-chain snapshots and may lag real-time state by up to one hour.
         </p>
       </div>
     </DesignLawLayout>

@@ -104,6 +104,7 @@ const LAYERS = [
     id: '00',
     title: 'Banking / Fiat Entry',
     status: 'LIVE' as Status,
+    icon: '/visuals/icon-banking.png',
     what: 'The primary dollar on-ramp and off-ramp. FDIC-insured fiat rails via Increase (ACH, wire, account infrastructure). Institutional crypto custody via BitGo CaaS on Arbitrum One.',
     components: ['Increase (FDIC-insured)', 'BitGo CaaS (crypto custody)', 'ACH / Wire rails', 'KYC/AML compliance layer'],
     href: '/banking',
@@ -113,6 +114,7 @@ const LAYERS = [
     id: '01',
     title: 'AXUSD Settlement Rail',
     status: 'LIVE' as Status,
+    icon: '/visuals/icon-settlement.png',
     what: 'ERC-3643 compliant USD-pegged settlement token. Issued through the Peg Stability Module at 1:1 against USDC. Identity-gated via on-chain credential. On-chain reserve ratio monitored continuously.',
     components: ['AXUSD (ERC-3643)', 'Peg Stability Module (PSM)', 'USDC reserve pool', 'Chainlink price oracle'],
     href: '/axusd',
@@ -122,6 +124,7 @@ const LAYERS = [
     id: '01.5',
     title: 'Exchange + Peg Infrastructure',
     status: 'LIVE' as Status,
+    icon: '/visuals/icon-exchange.png',
     what: 'The primary conversion and peg maintenance venue. Camelot V2 provides deep AXUSD/USDC/AXM liquidity. EulerSwap concentrates LP capital for dual swap and lending yield. The PSM-backed conversion path closes peg deviations automatically.',
     components: ['Camelot V2 DEX', 'EulerSwap concentrated pools', 'PSM arbitrage path', 'Market Operations wallet'],
     href: '/dex',
@@ -131,6 +134,7 @@ const LAYERS = [
     id: '02',
     title: 'AXAU Reserve Layer',
     status: 'LIVE' as Status,
+    icon: '/visuals/icon-reserve.png',
     what: 'PAXG-backed gold reserve unit. Issued via direct on-chain mint (ERC-3643 identity required) or ops-assisted AXUSD fulfillment. Governed by a live coverage ratio. Chainlink XAU/USD oracle verifies pricing.',
     components: ['AXAU token (ERC-3643)', 'GoldVault contract', 'PAXG backing (Paxos)', 'Chainlink XAU/USD oracle', 'LandNAVOracle'],
     href: '/axau',
@@ -140,6 +144,7 @@ const LAYERS = [
     id: '03',
     title: 'Capital Deployment',
     status: 'FORMATION' as Status,
+    icon: '/visuals/icon-capital.png',
     what: 'Settled capital is channeled into structured deployment programs. Lending Fund is a private placement fund under SEC Reg D 506(c). On-chain fixed-term credit markets are deployed. Syndication and SPV structures are operational.',
     components: ['Lending Fund (Reg D 506(c))', 'On-chain credit markets', 'SPV structures', 'Syndication programs', 'LP Investor Portal'],
     href: '/lending-fund',
@@ -149,6 +154,7 @@ const LAYERS = [
     id: '04',
     title: 'Intelligence',
     status: 'LIVE' as Status,
+    icon: '/visuals/icon-intelligence.png',
     what: 'Advisory and risk intelligence layer. MIRDT is a nine-dimension capital intelligence terminal. Sentinel is the unified risk authorization layer. Observer is an institutional-grade dashboard. RE Intelligence covers deal-level property analysis.',
     components: ['MIRDT Capital Intelligence', 'Axiom Sentinel', 'Observer Dashboard', 'RE Intelligence', 'Deal Intelligence', 'Property Analysis Tool'],
     href: '/mirdt',
@@ -158,6 +164,7 @@ const LAYERS = [
     id: '05',
     title: 'Trust / Solvency / Compliance',
     status: 'LIVE' as Status,
+    icon: '/visuals/icon-trust.png',
     what: 'The protocol\'s trust and verification infrastructure. Three-mode solvency console. Proof of Execution log. Institutional disclosure document. ERC-3643 identity and compliance layer. Agent governance policy engine.',
     components: ['Solvency Console (3-mode)', 'Proof of Execution', 'Institutional Disclosure', 'ERC-3643 identity gating', 'Agent governance system'],
     href: '/solvency',
@@ -198,26 +205,55 @@ export default function SystemMapPage() {
         <meta name="description" content="The complete Axiom Protocol system map. Banking, settlement, exchange, reserve, capital deployment, intelligence, and trust — seven layers, one connected financial operating system on Arbitrum One." />
       </Head>
 
-      {/* HERO */}
-      <div style={{ borderBottom: `1px solid ${C.border}`, paddingBottom: 40, marginBottom: 48 }}>
-        <Label>Axiom Protocol / System Map</Label>
-        <div style={{ height: 1, background: C.gold, marginTop: 6, marginBottom: 20, maxWidth: 64 }} />
-        <h1 style={{ fontFamily: SERIF, fontSize: 'clamp(36px, 6vw, 60px)', fontWeight: 700, color: C.navy, lineHeight: 1.1, marginBottom: 20, maxWidth: 780 }}>
-          Financial Infrastructure,<br />Layer by Layer.
-        </h1>
-        <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 640, lineHeight: 1.8, marginBottom: 32 }}>
-          Axiom Protocol is a vertically integrated financial operating system on Arbitrum One. Seven layers — from FDIC-insured fiat entry to on-chain gold reserves, settlement rails, exchange infrastructure, capital deployment, regime intelligence, and institutional trust verification — built as a connected system, not a collection of products.
-        </p>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
-          <a href="/axau" style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase' as const, color: C.white, background: C.navy, padding: '10px 20px', textDecoration: 'none', border: `1px solid ${C.navy}` }}>
-            ACCESS THE RESERVE →
-          </a>
-          <a href="/axusd" style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase' as const, color: C.navy, background: 'transparent', padding: '10px 20px', textDecoration: 'none', border: `1px solid ${C.navy}` }}>
-            VIEW SETTLEMENT LAYER
-          </a>
-          <a href="/disclosure" style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase' as const, color: C.muted, background: 'transparent', padding: '10px 20px', textDecoration: 'none', border: `1px solid ${C.border}` }}>
-            READ DISCLOSURE
-          </a>
+      {/* HERO — split layout with cinematic image */}
+      <div style={{ borderBottom: `1px solid ${C.border}`, marginBottom: 48 }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0,1fr) minmax(0,400px)',
+          gap: 0,
+          alignItems: 'stretch',
+        }}>
+          {/* Left: existing hero text */}
+          <div style={{ paddingBottom: 40, paddingRight: 48 }}>
+            <Label>Axiom Protocol / System Map</Label>
+            <div style={{ height: 1, background: C.gold, marginTop: 6, marginBottom: 20, maxWidth: 64 }} />
+            <h1 style={{ fontFamily: SERIF, fontSize: 'clamp(36px, 6vw, 60px)', fontWeight: 700, color: C.navy, lineHeight: 1.1, marginBottom: 20, maxWidth: 780 }}>
+              Financial Infrastructure,<br />Layer by Layer.
+            </h1>
+            <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 640, lineHeight: 1.8, marginBottom: 32 }}>
+              Axiom Protocol is a vertically integrated financial operating system on Arbitrum One. Seven layers — from FDIC-insured fiat entry to on-chain gold reserves, settlement rails, exchange infrastructure, capital deployment, regime intelligence, and institutional trust verification — built as a connected system, not a collection of products.
+            </p>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
+              <a href="/axau" style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase' as const, color: C.white, background: C.navy, padding: '10px 20px', textDecoration: 'none', border: `1px solid ${C.navy}` }}>
+                ACCESS THE RESERVE →
+              </a>
+              <a href="/axusd" style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase' as const, color: C.navy, background: 'transparent', padding: '10px 20px', textDecoration: 'none', border: `1px solid ${C.navy}` }}>
+                VIEW SETTLEMENT LAYER
+              </a>
+              <a href="/disclosure" style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase' as const, color: C.muted, background: 'transparent', padding: '10px 20px', textDecoration: 'none', border: `1px solid ${C.border}` }}>
+                READ DISCLOSURE
+              </a>
+            </div>
+          </div>
+          {/* Right: cinematic system map hero */}
+          <div style={{ position: 'relative', overflow: 'hidden', borderLeft: `1px solid ${C.border}`, minHeight: 360 }}>
+            <img
+              src="/visuals/sysmap-hero.png"
+              alt="Axiom Protocol seven-layer financial system architecture"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+            />
+            <div style={{
+              position: 'absolute',
+              bottom: 0, left: 0, right: 0,
+              padding: '10px 16px',
+              background: 'rgba(255,255,255,0.90)',
+              borderTop: `1px solid ${C.gold}`,
+            }}>
+              <p style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: C.gold, margin: 0 }}>
+                Seven Layers · One System · Arbitrum One
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -293,14 +329,26 @@ export default function SystemMapPage() {
           Most protocols pick one problem. A payment rail. A stablecoin. A lending market. Axiom integrates all of them — reserve backing, settlement issuance, exchange liquidity, capital deployment, intelligence, and solvency verification — into a single operating system where each layer depends on and reinforces the others.
         </p>
 
+        {/* Cinematic gold reserve visual */}
+        <div style={{ marginBottom: 32, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+          <div style={{ overflow: 'hidden' }}>
+            <img
+              src="/visuals/gold-reserve.png"
+              alt="AXAU gold reserve — PAXG-backed on-chain"
+              style={{ width: '100%', height: 260, objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+            />
+          </div>
+          <div style={{ padding: '32px 28px', background: '#fdf6e8', borderLeft: `1px solid ${C.gold}`, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <p style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: C.gold, textTransform: 'uppercase', marginBottom: 8 }}>Reserve-Backed Depth · L02</p>
+            <h3 style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 700, color: C.navy, marginBottom: 12 }}>Hard-Asset Depth Behind Every Settlement</h3>
+            <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.78, marginBottom: 0 }}>
+              AXUSD settlement is anchored by AXAU, which is backed by on-chain PAXG (Paxos Gold). Hard-asset depth sits behind the settlement layer — not as a marketing claim, but as a live coverage ratio verifiable on-chain. Most stablecoins have no hard-asset backing. This one has a gold vault.
+            </p>
+          </div>
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 1, background: C.border, marginBottom: 40 }}>
           {[
-            {
-              n: '01',
-              title: 'Reserve-Backed Depth',
-              body: 'AXUSD settlement is anchored by AXAU, which is backed by on-chain PAXG (Paxos Gold). Hard-asset depth sits behind the settlement layer — not as a marketing claim, but as a live coverage ratio verifiable on-chain. Most stablecoins have no hard-asset backing. This one has a gold vault.',
-              anchor: true,
-            },
             {
               n: '02',
               title: 'Integrated, Not Bolt-On',
@@ -346,6 +394,20 @@ export default function SystemMapPage() {
           gap: 20,
           flexWrap: 'wrap' as const,
         }}>
+          {/* 3D icon */}
+          <div style={{
+            width: 80,
+            height: 80,
+            flexShrink: 0,
+            overflow: 'hidden',
+            border: `1px solid ${C.gold}`,
+          }}>
+            <img
+              src="/visuals/icon-reserve.png"
+              alt="AXAU gold reserve icon"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          </div>
           <div style={{ flexShrink: 0 }}>
             <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.2em', color: C.gold, textTransform: 'uppercase' as const, marginBottom: 4 }}>LAYER 02 · RESERVE ANCHOR</div>
             <div style={{ fontFamily: MONO, fontSize: 22, fontWeight: 700, color: '#7a5c1e', lineHeight: 1 }}>AXAU</div>
@@ -376,9 +438,9 @@ export default function SystemMapPage() {
             <div key={layer.id} style={{
               borderBottom: i < LAYERS.length - 1 ? `1px solid ${C.border}` : 'none',
               display: 'grid',
-              gridTemplateColumns: '72px 1fr',
+              gridTemplateColumns: '96px 1fr',
             }}>
-              {/* Layer ID column */}
+              {/* Layer ID + 3D icon column */}
               <div style={{
                 borderRight: `1px solid ${C.border}`,
                 background: C.bgAlt,
@@ -386,11 +448,26 @@ export default function SystemMapPage() {
                 flexDirection: 'column' as const,
                 alignItems: 'center',
                 justifyContent: 'flex-start',
-                padding: '24px 8px',
-                gap: 4,
+                padding: '20px 8px 16px',
+                gap: 8,
               }}>
-                <span style={{ fontFamily: MONO, fontSize: 8, color: C.muted, letterSpacing: '0.1em' }}>LAYER</span>
-                <span style={{ fontFamily: MONO, fontSize: 18, fontWeight: 700, color: C.navy }}>{layer.id}</span>
+                <span style={{ fontFamily: MONO, fontSize: 7, color: C.muted, letterSpacing: '0.1em' }}>LAYER</span>
+                <span style={{ fontFamily: MONO, fontSize: 16, fontWeight: 700, color: C.navy }}>{layer.id}</span>
+                {/* 3D Layer Icon */}
+                <div style={{
+                  width: 60,
+                  height: 60,
+                  overflow: 'hidden',
+                  border: `1px solid ${C.border}`,
+                  background: C.white,
+                  marginTop: 4,
+                }}>
+                  <img
+                    src={layer.icon}
+                    alt={`${layer.title} icon`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                </div>
               </div>
 
               {/* Content */}
