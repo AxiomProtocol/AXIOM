@@ -397,17 +397,19 @@ export default function AxauAccessPage() {
       </Head>
 
       {/* ── CINEMATIC HERO ── */}
-      <div style={{ position: 'relative', width: '100%', height: 'clamp(280px, 42vw, 500px)', overflow: 'hidden' }}>
-        <Image src="/axau-early-access/hero-vault.png" alt="AXAU gold reserve vault" fill sizes="100vw" style={{ objectFit: 'cover', objectPosition: 'center 40%' }} priority />
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, transparent 25%, ${C.navyDeep}e8 100%)` }} />
+      <div style={{ position: 'relative', width: '100%', height: 'clamp(280px, 42vw, 500px)', overflow: 'hidden', background: C.navyDeep }}>
+        <Image src="/axau-early-access/hero-vault.png" alt="AXAU gold reserve vault" fill sizes="100vw" style={{ objectFit: 'cover', objectPosition: 'center 40%', opacity: 0.82 }} priority />
+        {/* Two-layer overlay: bottom-to-top dark gradient + left panel for text area */}
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(14,28,55,0.45) 0%, rgba(14,28,55,0.75) 50%, rgba(14,28,55,0.97) 100%)` }} />
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to right, rgba(14,28,55,0.85) 0%, rgba(14,28,55,0.60) 55%, transparent 100%)` }} />
         <div style={{ position: 'absolute', bottom: 40, left: 40, right: '38%' }}>
-          <p style={{ fontFamily: mono, fontSize: 10, letterSpacing: '0.2em', color: C.goldPale, textTransform: 'uppercase', margin: '0 0 10px' }}>
+          <p style={{ fontFamily: mono, fontSize: 10, letterSpacing: '0.2em', color: '#f0d98a', textTransform: 'uppercase', margin: '0 0 10px', textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}>
             Layer 02 Reserve Infrastructure · Arbitrum One · ERC-3643 Identity-Gated
           </p>
-          <h1 style={{ fontFamily: serif, fontSize: 'clamp(30px, 4.5vw, 52px)', fontWeight: 700, color: '#ffffff', lineHeight: 1.08, margin: '0 0 14px', textShadow: `0 2px 16px ${C.navyDeep}` }}>
+          <h1 style={{ fontFamily: serif, fontSize: 'clamp(30px, 4.5vw, 52px)', fontWeight: 700, color: '#ffffff', lineHeight: 1.08, margin: '0 0 14px', textShadow: `0 2px 16px rgba(0,0,0,0.95), 0 0 40px rgba(0,0,0,0.6)` }}>
             Apply for Reserve Access.<br />Enter the Infrastructure Layer.
           </h1>
-          <p style={{ fontFamily: body, fontSize: 14, color: '#ffffffcc', lineHeight: 1.75, margin: '0 0 20px', maxWidth: 420 }}>
+          <p style={{ fontFamily: body, fontSize: 14, color: '#ffffff', lineHeight: 1.75, margin: '0 0 20px', maxWidth: 420, textShadow: '0 1px 6px rgba(0,0,0,0.95)' }}>
             AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — backed 1:1 by PAXG on Arbitrum One. Access requires an ERC-3643 identity credential. Founding participants gain direct mint access, priority rights, and on-chain governance participation.
           </p>
           <a href="#apply" style={{
@@ -419,7 +421,7 @@ export default function AxauAccessPage() {
             CLAIM YOUR SPOT →
           </a>
         </div>
-        <div style={{ position: 'absolute', top: 20, right: 24, fontFamily: mono, fontSize: 9, letterSpacing: '0.2em', color: `${C.goldPale}cc`, textTransform: 'uppercase', textAlign: 'right' }}>
+        <div style={{ position: 'absolute', top: 20, right: 24, fontFamily: mono, fontSize: 9, letterSpacing: '0.2em', color: '#f0d98a', textTransform: 'uppercase', textAlign: 'right', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
           <div>ARBITRUM ONE</div>
           <div style={{ marginTop: 3 }}>ERC-3643</div>
         </div>

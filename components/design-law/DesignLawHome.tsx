@@ -326,17 +326,17 @@ export function DesignLawHome() {
             />
             <div className="absolute inset-0" style={{ backgroundColor: 'rgba(14, 28, 55, 0.82)' }}>
               <div className="max-w-7xl mx-auto px-6 h-full flex flex-col justify-center">
-                <p className="text-xs uppercase tracking-widest mb-3 font-dl-mono" style={{ color: '#c9a84c' }}>
+                <p className="text-xs uppercase tracking-widest mb-3 font-dl-mono" style={{ color: '#f0d98a', textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
                   Not a narrative. Verifiable financial infrastructure. Seven layers. Live on Arbitrum One.
                 </p>
-                <h1 className="font-dl-serif text-3xl md:text-5xl leading-tight mb-4" style={{ color: '#ffffff', maxWidth: '760px' }}>
+                <h1 className="font-dl-serif text-3xl md:text-5xl leading-tight mb-4" style={{ color: '#ffffff', maxWidth: '760px', textShadow: '0 2px 12px rgba(0,0,0,0.7)' }}>
                   Sovereign Financial Infrastructure.<br className="hidden md:block" />
-                  <span style={{ color: '#c9a84c' }}>Banking. Settlement. Reserve. Capital.</span>
+                  <span style={{ color: '#f0d98a' }}>Banking. Settlement. Reserve. Capital.</span>
                 </h1>
-                <p className="text-sm leading-relaxed mb-3" style={{ color: '#d1d5db', maxWidth: '620px' }}>
+                <p className="text-sm leading-relaxed mb-3" style={{ color: '#e5e7eb', maxWidth: '620px', textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
                   Not a token project. A vertically integrated financial operating system — FDIC-insured banking, identity-gated settlement rail, gold-backed reserve issuance, and Reg D capital deployment — all on Arbitrum One. Every layer is independently verifiable. No narrative required.
                 </p>
-                <p className="text-xs font-dl-mono mb-8" style={{ color: '#9ca3af' }}>
+                <p className="text-xs font-dl-mono mb-8" style={{ color: '#cbd5e1', textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
                   L00: Banking · L01: AXUSD Settlement Rail · L01.5: Protocol Exchange · L02: AXAU Reserve · L03: Capital Deployment · L04: Regime Intelligence · L05: Trust + Solvency
                 </p>
                 <div className="flex flex-col sm:flex-row flex-wrap gap-3">

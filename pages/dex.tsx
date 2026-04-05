@@ -286,12 +286,12 @@ export default function DexPage() {
       </div>
 
       {/* DEX cinematic hero banner */}
-      <div style={{ position: 'relative', width: '100%', height: 'clamp(180px, 28vw, 320px)', overflow: 'hidden', marginBottom: 24 }}>
-        <img src="/visuals/dex-hero.png" alt="Protocol Exchange settlement layer" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%', display: 'block' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(30,58,95,0.7) 30%, transparent 100%)' }} />
-        <div style={{ position: 'absolute', bottom: 16, left: 24 }}>
-          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c9a84c', margin: '0 0 6px' }}>Layer 01.5 · Protocol Exchange · Arbitrum One</p>
-          <p style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(18px, 3vw, 28px)', fontWeight: 700, color: '#ffffff', margin: 0, lineHeight: 1.1 }}>Settlement Conversion. Peg Maintenance. Liquidity Depth.</p>
+      <div style={{ position: 'relative', width: '100%', height: 'clamp(180px, 28vw, 320px)', overflow: 'hidden', marginBottom: 24, background: '#0e1c37' }}>
+        <img src="/visuals/dex-hero.png" alt="Protocol Exchange settlement layer" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%', display: 'block', opacity: 0.85 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(14,28,55,0.96) 0%, rgba(14,28,55,0.85) 45%, rgba(14,28,55,0.35) 100%)' }} />
+        <div style={{ position: 'absolute', bottom: 16, left: 24, padding: '10px 16px', background: 'rgba(14,28,55,0.55)', backdropFilter: 'blur(2px)' }}>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#e8c96a', margin: '0 0 6px', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>Layer 01.5 · Protocol Exchange · Arbitrum One</p>
+          <p style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(18px, 3vw, 28px)', fontWeight: 700, color: '#ffffff', margin: 0, lineHeight: 1.1, textShadow: '0 2px 8px rgba(0,0,0,0.95)' }}>Settlement Conversion. Peg Maintenance. Liquidity Depth.</p>
         </div>
       </div>
 
@@ -388,12 +388,12 @@ export default function DexPage() {
           {activeTab === 'eulerswap-lp' && (
             <div className="space-y-6">
               {/* EulerSwap LP visual accent */}
-              <div style={{ position: 'relative', width: '100%', height: 'clamp(140px, 18vw, 220px)', overflow: 'hidden' }}>
-                <img src="/visuals/dex-liquidity.png" alt="EulerSwap concentrated liquidity" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(30,58,95,0.72) 35%, transparent 100%)' }} />
-                <div style={{ position: 'absolute', bottom: 14, left: 20 }}>
-                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c9a84c', margin: '0 0 4px' }}>EulerSwap · Concentrated Liquidity · Dual Yield</p>
-                  <p style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 20, fontWeight: 700, color: '#ffffff', margin: 0 }}>Concentrated liquidity. Swap fees + lending APR.</p>
+              <div style={{ position: 'relative', width: '100%', height: 'clamp(140px, 18vw, 220px)', overflow: 'hidden', background: '#0e1c37' }}>
+                <img src="/visuals/dex-liquidity.png" alt="EulerSwap concentrated liquidity" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block', opacity: 0.82 }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(14,28,55,0.96) 0%, rgba(14,28,55,0.80) 45%, rgba(14,28,55,0.30) 100%)' }} />
+                <div style={{ position: 'absolute', bottom: 14, left: 20, padding: '8px 14px', background: 'rgba(14,28,55,0.5)' }}>
+                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#e8c96a', margin: '0 0 4px', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>EulerSwap · Concentrated Liquidity · Dual Yield</p>
+                  <p style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 20, fontWeight: 700, color: '#ffffff', margin: 0, textShadow: '0 2px 8px rgba(0,0,0,0.95)' }}>Concentrated liquidity. Swap fees + lending APR.</p>
                 </div>
               </div>
               <EulerSwapLpTab />
@@ -415,12 +415,12 @@ export default function DexPage() {
           {activeTab === 'liquidity' && (
             <div className="space-y-4">
               {/* Liquidity tab visual accent */}
-              <div style={{ position: 'relative', width: '100%', height: 'clamp(120px, 16vw, 180px)', overflow: 'hidden' }}>
-                <img src="/visuals/dex-liquidity.png" alt="Liquidity management" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', display: 'block' }} />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(30,58,95,0.68) 30%, transparent 100%)' }} />
-                <div style={{ position: 'absolute', bottom: 12, left: 20 }}>
-                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c9a84c', margin: '0 0 3px' }}>Liquidity Management · Protocol Positions · On-Chain</p>
-                  <p style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 18, fontWeight: 700, color: '#ffffff', margin: 0 }}>Add or remove liquidity to support the settlement layer.</p>
+              <div style={{ position: 'relative', width: '100%', height: 'clamp(120px, 16vw, 180px)', overflow: 'hidden', background: '#0e1c37' }}>
+                <img src="/visuals/dex-liquidity.png" alt="Liquidity management" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', display: 'block', opacity: 0.8 }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(14,28,55,0.97) 0%, rgba(14,28,55,0.82) 42%, rgba(14,28,55,0.28) 100%)' }} />
+                <div style={{ position: 'absolute', bottom: 12, left: 20, padding: '8px 14px', background: 'rgba(14,28,55,0.5)' }}>
+                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#e8c96a', margin: '0 0 3px', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>Liquidity Management · Protocol Positions · On-Chain</p>
+                  <p style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 18, fontWeight: 700, color: '#ffffff', margin: 0, textShadow: '0 2px 8px rgba(0,0,0,0.95)' }}>Add or remove liquidity to support the settlement layer.</p>
                 </div>
               </div>
               <LiquidityManager />
