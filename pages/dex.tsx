@@ -113,7 +113,7 @@ function EulerSwapLpTab() {
             <p className="font-dl-mono text-lg text-dl-navy">${stats.totalTvlUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
           <div>
-            <p className="font-dl-mono text-xs text-dl-gray uppercase">EVK Lending APY</p>
+            <p className="font-dl-mono text-xs text-dl-gray uppercase">EVK Lending Rate (Variable)</p>
             <p className="font-dl-mono text-lg text-dl-navy">{(stats.evkLendingApyBps / 100).toFixed(2)}%</p>
           </div>
           <div>

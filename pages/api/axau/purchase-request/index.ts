@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import { axauPurchaseRequests } from '../../../../shared/axauSchema';
 import { t3KycSubmissions } from '../../../../shared/erc3643Schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, count, inArray } from 'drizzle-orm';
 import { sendAxauPurchaseRequestConfirmation } from '../../../../lib/email/resend';
 
 const ADMIN_KEY = process.env.ADMIN_SOLVENCY_KEY;
@@ -58,7 +58,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'axauQuoted must be a positive number' });
   }
 
-  // FIX 6: Identity gate — wallet must be identity-verified (status: bridged) before purchase request
+  // FIX 6 / R-2: Identity gate — wallet must be identity-verified (status: bridged)
+  // R-2 hardening: DB failure returns HTTP 503 instead of proceeding permissively
   try {
     const [kycRow] = await db
       .select({ id: t3KycSubmissions.id, status: t3KycSubmissions.status })
@@ -78,8 +79,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
   } catch (identityErr: unknown) {
-    // Non-blocking: if the identity check fails (e.g., DB error), log and continue to prevent false rejections
-    console.error('[purchase-request] Identity check failed — proceeding with caution:', identityErr instanceof Error ? identityErr.message : identityErr);
+    // R-2: On DB failure, reject the request — do not bypass the identity gate
+    console.error('[purchase-request] Identity check DB error:', identityErr instanceof Error ? identityErr.message : identityErr);
+    return res.status(503).json({
+      error: 'Identity verification service temporarily unavailable. Please try again in a moment.',
+      code: 'IDENTITY_SERVICE_UNAVAILABLE',
+    });
+  }
+
+  // R-6b: Per-wallet pending-order cap — max 5 pending or processing orders per wallet
+  try {
+    const [pendingRow] = await db
+      .select({ total: count() })
+      .from(axauPurchaseRequests)
+      .where(
+        and(
+          eq(axauPurchaseRequests.walletAddress, walletAddress.toLowerCase()),
+          inArray(axauPurchaseRequests.status, ['pending', 'processing']),
+        ),
+      );
+    const pendingCount = Number(pendingRow?.total ?? 0);
+    if (pendingCount >= 5) {
+      return res.status(429).json({
+        error: 'You have 5 or more pending purchase requests. Please wait for existing requests to be processed before submitting new ones.',
+        code: 'PENDING_LIMIT_REACHED',
+        pendingCount,
+      });
+    }
+  } catch (capErr: unknown) {
+    console.error('[purchase-request] Pending cap check failed:', capErr instanceof Error ? capErr.message : capErr);
   }
 
   try {

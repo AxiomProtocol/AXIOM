@@ -287,7 +287,7 @@ const FAQS = [
   },
   {
     q: 'Is AXAU audited?',
-    a: 'The AXAU smart contracts are unaudited at this stage. An external security audit is on the protocol roadmap. This is disclosed transparently. Early participants should weigh this risk carefully and participate within their own risk tolerance.',
+    a: 'The AXAU automated control layers are unaudited at this stage. An external security audit is on the protocol roadmap. This is disclosed transparently. Early participants should weigh this risk carefully and participate within their own risk tolerance.',
   },
   {
     q: 'What happens after I submit my application?',

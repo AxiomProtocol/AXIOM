@@ -2,10 +2,11 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../../server/db';
 import { queryOracle } from '../../../../lib/solvency/ame/oracle';
 import { computeFullMetrics, computeYieldPermission, getWaterfall } from '../../../../lib/solvency/ame';
+import { safeCompare } from '../../../../lib/solvency/ame/utils';
 import type { AmeInputs, AmeMetricsResult } from '../../../../lib/solvency/ame';
 import type { OracleQueryType } from '../../../../lib/solvency/ame/oracle';
 
-function buildInputsFromSnapshot(payload: any): AmeInputs {
+function buildInputsFromSnapshot(payload: any): AmeInputs | null {
   const treasuryTotalUsd = Number(payload.treasuryTotalUsd || 0);
   const treasuryLiquidUsd = Number(payload.treasuryLiquidUsd || 0);
   const reservesTotalUsd = Number(payload.reservesTotalUsd || 0);
@@ -17,6 +18,20 @@ function buildInputsFromSnapshot(payload: any): AmeInputs {
     .filter((item: any) => item.label && item.label.toUpperCase().includes('PSM'))
     .reduce((sum: number, item: any) => sum + Number(item.valueUsd || 0), 0);
 
+  // FIX R-6: Require explicit redemption capacity — do not silently assume 80% of liquid
+  if (psmReserves === 0 && payload.redemptionCapacityUsd === undefined) {
+    return null;
+  }
+  const redemptionCapacityUsd = psmReserves > 0
+    ? psmReserves
+    : Number(payload.redemptionCapacityUsd);
+
+  // FIX R-6: Require explicit volatility signals — do not silently assume 5% peg deviation
+  const hasPegDeviation = payload.pegDeviation !== undefined && payload.pegDeviation !== null;
+  if (!hasPegDeviation) {
+    return null;
+  }
+
   return {
     treasuryLiquidUsd,
     treasuryTotalUsd,
@@ -24,13 +39,13 @@ function buildInputsFromSnapshot(payload: any): AmeInputs {
     lossBufferUsd,
     netExternalExposureUsd: liabilitiesTotalUsd,
     circulatingExposureUsd: liabilitiesTotalUsd,
-    redemptionCapacityUsd: psmReserves > 0 ? psmReserves : treasuryLiquidUsd * 0.8,
+    redemptionCapacityUsd,
     estimatedRedemptionDemandUsd: liabilitiesTotalUsd > 0 ? liabilitiesTotalUsd * 0.15 : 0,
     volatilitySignals: {
-      pegDeviation: Number(payload.pegDeviation ?? 0.05),
-      liquidityDepthDrop: Number(payload.liquidityDepthDrop ?? 0.05),
-      redemptionAcceleration: Number(payload.redemptionAcceleration ?? 0.05),
-      correlationSpike: Number(payload.correlationSpike ?? 0.05),
+      pegDeviation: Number(payload.pegDeviation),
+      liquidityDepthDrop: Number(payload.liquidityDepthDrop ?? 0),
+      redemptionAcceleration: Number(payload.redemptionAcceleration ?? 0),
+      correlationSpike: Number(payload.correlationSpike ?? 0),
     },
     liquiditySignals: {
       depthUsd: 0,
@@ -54,6 +69,13 @@ export default async function handler(
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // FIX R-1: Admin key required — oracle exposes full solvency intelligence
+  const adminKey = process.env.ADMIN_SOLVENCY_KEY;
+  const provided = req.headers['x-admin-key'];
+  if (!adminKey || typeof provided !== 'string' || !safeCompare(provided, adminKey)) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   res.setHeader('Cache-Control', 'no-cache');
@@ -80,7 +102,15 @@ export default async function handler(
         ? JSON.parse(snapshotResult.rows[0].payload_json)
         : snapshotResult.rows[0].payload_json;
 
+      // FIX R-6: buildInputsFromSnapshot returns null if required fields are absent
       const inputs = buildInputsFromSnapshot(payload);
+      if (inputs === null) {
+        return res.status(422).json({
+          schemaVersion: 'oracle-v1',
+          dataStatus: 'inputs_incomplete',
+          error: 'Snapshot is missing required volatility or liquidity inputs (pegDeviation, redemptionCapacityUsd). Ingest a new snapshot with complete inputs before running the oracle.',
+        });
+      }
       metrics = computeFullMetrics(inputs);
       yieldPermission = computeYieldPermission(metrics.stabilityScore, metrics.policyMode);
       waterfall = getWaterfall(metrics.policyMode);
@@ -116,18 +146,21 @@ export default async function handler(
         ? JSON.parse(prevSnapshotResult.rows[0].payload_json)
         : prevSnapshotResult.rows[0].payload_json;
       const prevInputs = buildInputsFromSnapshot(prevPayload);
-      previousMetrics = computeFullMetrics(prevInputs);
+      if (prevInputs !== null) {
+        previousMetrics = computeFullMetrics(prevInputs);
+      }
     }
 
     let stressProjections = null;
     if (includeStress && metrics) {
       const { runAllStressProjections } = await import('../../../../lib/solvency/ame');
-      const inputs = buildInputsFromSnapshot(
-        typeof snapshotResult.rows[0].payload_json === 'string'
-          ? JSON.parse(snapshotResult.rows[0].payload_json)
-          : snapshotResult.rows[0].payload_json
-      );
-      stressProjections = runAllStressProjections(inputs);
+      const rawPayload = typeof snapshotResult.rows[0].payload_json === 'string'
+        ? JSON.parse(snapshotResult.rows[0].payload_json)
+        : snapshotResult.rows[0].payload_json;
+      const stressInputs = buildInputsFromSnapshot(rawPayload);
+      if (stressInputs !== null) {
+        stressProjections = runAllStressProjections(stressInputs);
+      }
     }
 
     const oracleResult = await queryOracle(queryType as OracleQueryType, {

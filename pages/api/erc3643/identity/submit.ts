@@ -8,6 +8,23 @@ import { AXAU_EARLY_ACCESS_CAP } from '../../../../lib/axauEarlyAccess';
 const VALID_DOC_TYPES = ['passport', 'drivers_license', 'national_id', 'residence_permit'];
 const ACTIVE_STATUSES = ['submitted', 'approved', 'activated'] as const;
 
+// R-6: Simple in-memory IP rate limiter — max 3 POST submissions per IP per hour
+// Resets on server restart; sufficient for a 100-slot gated early access program
+const ipRateLimitMap = new Map<string, number[]>();
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function checkIpRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW_MS;
+  const timestamps = (ipRateLimitMap.get(ip) ?? []).filter(t => t > windowStart);
+  if (timestamps.length >= RATE_LIMIT_MAX) {
+    return false; // rate limited
+  }
+  ipRateLimitMap.set(ip, [...timestamps, now]);
+  return true; // allowed
+}
+
 const VALID_COUNTRIES = new Set([
   'US','CA','GB','AU','DE','FR','NL','CH','SG','AE',
   'NG','GH','KE','ZA','JM','TT','BB','BS','BM','BR',
@@ -42,6 +59,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // R-6: IP rate limit — max 3 submissions per IP per hour
+  const clientIp = (
+    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+    req.socket.remoteAddress ||
+    'unknown'
+  );
+  if (!checkIpRateLimit(clientIp)) {
+    return res.status(429).json({
+      error: 'Too many applications from this network. Please wait before trying again.',
+      code: 'RATE_LIMIT_EXCEEDED',
+    });
+  }
 
   const { walletAddress, fullName, dateOfBirth, country, documentType, email } = req.body;
 

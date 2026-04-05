@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
 import crypto from 'crypto';
+import { safeCompare } from '../../../lib/solvency/ame/utils';
 
 export default async function handler(
   req: NextApiRequest,
@@ -13,7 +14,7 @@ export default async function handler(
   const adminKey = process.env.ADMIN_SOLVENCY_KEY;
   const providedKey = req.headers['x-admin-key'] as string;
 
-  if (!adminKey || providedKey !== adminKey) {
+  if (!adminKey || typeof providedKey !== 'string' || !safeCompare(providedKey, adminKey)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

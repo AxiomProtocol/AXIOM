@@ -806,7 +806,7 @@ function IdentityTab({
         <div style={{ padding: '20px 22px', background: '#fafaf8', borderLeft: '1px solid #d1d5db', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <p className="font-dl-mono text-xs" style={{ color: '#2d6a4f', textTransform: 'uppercase', letterSpacing: '0.10em', marginBottom: 6 }}>ERC-3643 · T-REX Standard · Identity Layer</p>
           <p className="font-dl-serif text-lg text-dl-navy" style={{ fontWeight: 700, marginBottom: 6 }}>On-Chain Identity Credential</p>
-          <p className="font-dl-mono text-xs text-dl-gray" style={{ lineHeight: 1.65 }}>Every AXUSD participant must hold a valid ONCHAINID credential issued by the Axiom Claim Issuer. The identity registry gates all transfers, mint, and redeem operations on-chain — not via a UI check, but enforced at the smart contract level.</p>
+          <p className="font-dl-mono text-xs text-dl-gray" style={{ lineHeight: 1.65 }}>Every AXUSD participant must hold a valid ONCHAINID credential issued by the Axiom Claim Issuer. The identity registry gates all transfers, mint, and redeem operations on-chain — not via a UI check, but enforced at the automated control layer.</p>
         </div>
       </div>
       <SectionHeading>Identity Registry</SectionHeading>
@@ -1021,7 +1021,7 @@ function ComplianceTab({
               {m.type === 'CountryAllowModule' && 'Restricts transfers to approved jurisdictions. Currently: US (840).'}
               {m.type === 'MaxBalanceModule' && 'Enforces per-holder maximum balance cap. Limit: 10,000,000 AXUSD.'}
               {m.type === 'TransferLimitModule' && 'Rate-limits transfer volume per time period.'}
-              {m.type === 'LendingPlatformModule' && 'Whitelists lending/DeFi platforms for compliance-exempt transfers.'}
+              {m.type === 'LendingPlatformModule' && 'Whitelists permissioned lending integrations for compliance-exempt transfers.'}
             </p>
           </div>
         ))}
@@ -1828,7 +1828,7 @@ function ContractsTab({ data }: { data: DashboardData }) {
     { label: 'Country Allow Module', address: data.contracts.modules.countryAllow, role: 'Jurisdiction whitelist (US: 840)' },
     { label: 'Max Balance Module', address: data.contracts.modules.maxBalance, role: 'Per-holder cap: 10,000,000 AXUSD' },
     { label: 'Transfer Limit Module', address: data.contracts.modules.transferLimit, role: 'Rate limiting on transfers' },
-    { label: 'Lending Platform Module', address: data.contracts.modules.lendingPlatform, role: 'DeFi platform whitelist for identity-gated lending' },
+    { label: 'Lending Platform Module', address: data.contracts.modules.lendingPlatform, role: 'Permissioned lending integration whitelist for identity-gated lending' },
   ];
 
   return (
@@ -1883,7 +1883,7 @@ function ContractsTab({ data }: { data: DashboardData }) {
           <li>Country Allow — only approved jurisdictions</li>
           <li>Max Balance — per-holder concentration cap</li>
           <li>Transfer Limit — rate limiting per time window</li>
-          <li>Lending Platform — whitelisted DeFi integrations</li>
+          <li>Lending Platform — whitelisted permissioned lending integrations</li>
         </ul>
         <p className="mt-3">
           Identity is managed through ONCHAINID (EIP-734/EIP-735). Each holder requires a deployed
