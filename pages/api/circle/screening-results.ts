@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const circleConfigured = Boolean(process.env.CIRCLE_COMPLIANCE_API_KEY);
 
   try {
-    const { getPool } = await import('../../../lib/server/db');
+    const { getPool } = await import('../../../server/db');
     const pool = getPool();
 
     const [recentResult, deniedResult, statsResult] = await Promise.all([

@@ -27,7 +27,7 @@ function cacheKey(address: string, chain: string): string {
 
 async function readDbCache(address: string, chain: string): Promise<ScreeningResponse | null> {
   try {
-    const { getPool } = await import('../server/db');
+    const { getPool } = await import('../../server/db');
     const pool = getPool();
     const result = await pool.query(
       `SELECT result, risk_score, risk_categories, screened_at
@@ -52,7 +52,7 @@ async function readDbCache(address: string, chain: string): Promise<ScreeningRes
 
 async function writeDbCache(address: string, chain: string, resp: ScreeningResponse): Promise<void> {
   try {
-    const { getPool } = await import('../server/db');
+    const { getPool } = await import('../../server/db');
     const pool = getPool();
     const cachedUntil = new Date(Date.now() + CACHE_TTL_MS);
     await pool.query(
