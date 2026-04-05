@@ -107,6 +107,44 @@ export default function CapitalDashboard() {
   return (
     <DesignLawLayout>
       <div className="max-w-7xl mx-auto px-6 py-8">
+
+        {/* Layer 03 Institutional Framing */}
+        <div className="mb-10 border-t-4 border-t-dl-navy">
+          <div className="border border-dl-border border-t-0">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
+              <div className="p-6 lg:col-span-2 border-b lg:border-b-0 lg:border-r border-dl-border bg-white">
+                <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Layer 03 — Capital Deployment Architecture</p>
+                <h2 className="font-dl-serif text-2xl text-dl-navy mb-2">Capital Deployment Layer</h2>
+                <p className="text-sm text-dl-gray leading-relaxed mb-4 max-w-2xl">
+                  Layer 03 is the Axiom Protocol&apos;s capital deployment architecture — Reg D 506(c) structured SPV programs, bridge loan LP fund, syndication infrastructure, and secondary market access for qualified participants.
+                  All positions are settled in AXUSD. On-chain reporting with independently verifiable audit trails. Formation stage — accepting qualified expressions of interest from accredited participants.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {['Reg D 506(c)', 'AXUSD Settlement', 'Max 70% LTV', 'On-Chain Reporting', 'Accredited Only'].map(tag => (
+                    <span key={tag} className="px-2 py-0.5 text-xs font-dl-mono text-dl-gray border border-dl-border bg-dl-bg">{tag}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="p-6 bg-dl-bg-alt">
+                <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-3">Capital Programs</p>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Lending Fund', sub: 'Bridge loan LP · 70% LTV · Variable yield', href: '/lending-fund' },
+                    { label: 'Capital Program', sub: 'SPV-structured Reg D 506(c)', href: '/pilot' },
+                    { label: 'Syndication', sub: 'Deal-by-deal LP participation', href: '/syndication' },
+                    { label: 'Secondary Network', sub: 'Permissioned secondary transfers', href: '/secondary' },
+                  ].map(item => (
+                    <a key={item.label} href={item.href} className="block border border-dl-border p-3 bg-white hover:bg-dl-bg-alt text-dl-navy no-underline">
+                      <p className="font-dl-mono text-xs text-dl-navy font-bold">{item.label}</p>
+                      <p className="font-dl-mono text-xs text-dl-gray mt-0.5">{item.sub}</p>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="mb-1 flex items-center gap-2">
           <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Layer 03 — Capital Deployment</span>
           <span className="font-dl-mono text-xs text-dl-navy border border-dl-navy px-2 py-0.5">ADMIN ACCESS</span>

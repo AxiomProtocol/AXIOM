@@ -24,7 +24,7 @@ const SYSTEM_LAYERS = [
     num: '00',
     label: 'Fiat Entry',
     title: 'Banking Infrastructure',
-    desc: 'FDIC-insured checking (First Internet Bank, ACH/wire rails). Fiat capital ingress point for the full protocol stack. BitGo institutional crypto custody active.',
+    desc: 'FDIC-insured checking via First Internet Bank. ACH and wire rails through Increase. BitGo institutional custody for the on-chain layer. Capital enters here before touching any automated control layer.',
     href: '/banking',
     status: 'LIVE',
     statusColor: 'text-dl-forest',
@@ -35,7 +35,7 @@ const SYSTEM_LAYERS = [
     num: '01',
     label: 'Settlement Layer',
     title: 'AXUSD Rail',
-    desc: 'Identity-gated ERC-3643 stablecoin. The protocol\'s primary unit of account for settlement, capital movement, and PSM-backed conversion between on-chain and fiat.',
+    desc: 'The mandatory unit of account for the entire protocol. Identity-gated via ERC-3643. Issued only through the live PSM. Not a generic stablecoin — a settlement infrastructure layer with a compliance gate at every entry point.',
     href: '/axusd-3643',
     status: 'LIVE',
     statusColor: 'text-dl-forest',
@@ -46,7 +46,7 @@ const SYSTEM_LAYERS = [
     num: '01.5',
     label: 'Exchange + Peg Layer',
     title: 'Protocol Exchange',
-    desc: 'Camelot V2 DEX with AXM/AXUSD pairs and PSM-backed peg maintenance. Primary conversion and liquidity venue for settlement capital.',
+    desc: 'Camelot V2 with AXM/AXUSD trading pairs. PSM-backed peg maintenance holds AXUSD at $1.00. The settlement conversion layer — not a generic DEX. Identity required for liquidity provision.',
     href: '/dex',
     status: 'LIVE',
     statusColor: 'text-dl-forest',
@@ -57,7 +57,7 @@ const SYSTEM_LAYERS = [
     num: '02',
     label: 'Reserve Layer',
     title: 'AXAU Reserve',
-    desc: 'Sovereign reserve unit structured around PAXG-backed reserve positions on Arbitrum One. Identity-gated via ERC-3643. Direct on-chain mint/redeem. Coverage ratio enforced by NAVEngine before every mint.',
+    desc: 'Structured around PAXG-backed reserve positions. Identity-gated via ERC-3643. Direct on-chain mint in one transaction. Coverage ratio enforced by the NAVEngine contract before every mint — the system cannot over-issue.',
     href: '/axau',
     status: 'LIVE',
     statusColor: 'text-dl-forest',
@@ -68,7 +68,7 @@ const SYSTEM_LAYERS = [
     num: '03',
     label: 'Capital Deployment',
     title: 'Capital + Lending',
-    desc: 'Structured Reg D 506(c) capital program, bridge loan lending fund, and syndication offerings for qualified and accredited participants.',
+    desc: 'Reg D 506(c) SPV-structured real estate programs, bridge loan LP fund, and syndication infrastructure. Settlement in AXUSD. On-chain reporting. Accredited investors — formation stage, accepting qualified expressions of interest.',
     href: '/pilot',
     status: 'FORMATION',
     statusColor: 'text-dl-gold',
@@ -79,7 +79,7 @@ const SYSTEM_LAYERS = [
     num: '04',
     label: 'Intelligence Layer',
     title: 'Regime + Decision',
-    desc: 'Nine-dimension capital regime intelligence (MIRDT), authorization gate (Sentinel), and institutional observer dashboard for treasury and risk.',
+    desc: 'MIRDT scores nine capital regime dimensions to generate a live advisory signal. Sentinel gates authorization decisions. Observer provides independent institutional read access to treasury, governance, and risk data.',
     href: '/mirdt',
     status: 'LIVE',
     statusColor: 'text-dl-forest',
@@ -88,9 +88,9 @@ const SYSTEM_LAYERS = [
   },
   {
     num: '05',
-    label: 'Trust + Compliance',
-    title: 'Solvency + Custody',
-    desc: 'Three-mode institutional solvency console with live on-chain verification, BitGo custody layer, and comprehensive institutional disclosure framework.',
+    label: 'Trust + Verification',
+    title: 'Solvency + Proof',
+    desc: 'Three-mode solvency console: coverage ratio, reserve ratio, and LBR — derived live from a canonical on-chain snapshot. Hash-chained audit trail of every operational action. Institutional disclosure with contract addresses and coverage formulas. All public, no login.',
     href: '/solvency',
     status: 'LIVE',
     statusColor: 'text-dl-forest',
@@ -123,48 +123,64 @@ const LIVE_STATUS = [
 
 const ENTRY_PROFILES = [
   {
-    label: 'No Capital Required — Income-Backed Entry',
-    subLabel: 'Start with $25/month. No savings. No crypto. No collateral.',
+    label: 'No Capital Buffer Required — Income-Backed Entry',
+    subLabel: 'Your income qualifies you. No savings, no crypto, no collateral required to start.',
     route: 'Community Credit → Wealth Practice',
-    desc: 'An income-backed credit line covers your first contribution. Build a verifiable on-chain participation record from day one. The protocol tracks your coordination history — not your savings balance.',
+    desc: 'An income-backed credit line covers your first contribution. The protocol issues a credit position based on income — not savings history. Build a verifiable on-chain participation record from month one, then progress into group economics and structured deal access.',
     href: '/community-credit',
     cta: 'Apply for Entry Credit',
     accent: 'border-l-dl-forest',
     accentColor: 'text-dl-forest',
-    bullets: ['Income-backed credit line — no collateral required', 'On-chain participation record from month one', 'Progress into group economics and real estate access'],
+    bullets: [
+      'Income-backed credit line — no collateral, no savings buffer required',
+      'On-chain participation record from your first contribution',
+      'Structured path from community group into real estate deal access',
+    ],
   },
   {
-    label: 'Capital-Ready — Access Structured Real Estate',
-    subLabel: 'Group economics + 90-day track record unlocks deal access',
+    label: 'Group Economics — 90-Day Track Record Unlocks Deal Access',
+    subLabel: 'Wealth Practice group coordination + verifiable history → structured real estate participation.',
     route: 'Wealth Practice → Syndication',
-    desc: 'Join a community wealth group and build your participation record on-chain. After 90 days, unlock structured real estate deal opportunities. Groups forming in Atlanta, Houston, and Charlotte.',
+    desc: 'Join a Wealth Practice group. Coordinate pooled resources on-chain and build a 90-day participation record. After a verified track record, unlock access to structured real estate deal opportunities through Axiom Syndication. Groups forming now.',
     href: '/wealth-practice',
     cta: 'Browse Open Groups',
     accent: 'border-l-dl-gold',
     accentColor: 'text-dl-gold',
-    bullets: ['On-chain settlement within every group', 'Structured deal access after 90-day record', 'Progressive capital commitment — start at your level'],
+    bullets: [
+      'On-chain settlement within every group — every transaction recorded',
+      'Structured deal access unlocks after a 90-day verified record',
+      'Start at your capital level — progressive commitment model',
+    ],
   },
   {
-    label: 'Accredited Investors — Reg D 506(c) Allocation',
-    subLabel: 'Bridge loan fund · SPV programs · secondary market access',
+    label: 'Qualified Allocators — Reg D 506(c) Structured Access',
+    subLabel: 'Bridge loan fund · SPV programs · Secondary market · Independently verifiable reporting.',
     route: 'Syndication → Lending Fund',
-    desc: 'Access Reg D 506(c) structured offerings, the bridge loan LP fund, and secondary market transfers — with on-chain settlement, live solvency reporting, and independently verifiable audit trails.',
+    desc: 'Access Reg D 506(c) structured offerings, the bridge loan LP fund, and secondary market transfers. On-chain settlement in AXUSD. Live solvency reporting. Independently verifiable audit trails. No narrative — just the chain.',
     href: '/syndication',
     cta: 'View Capital Programs',
     accent: 'border-l-dl-navy',
     accentColor: 'text-dl-navy',
-    bullets: ['Reg D 506(c) qualified offerings only', 'On-chain LP participation with live reporting', 'Secondary transfer with permissioned settlement layer'],
+    bullets: [
+      'Reg D 506(c) qualified offerings — accredited investors only',
+      'On-chain LP participation with live solvency and yield reporting',
+      'Secondary transfer infrastructure with permissioned settlement layer',
+    ],
   },
   {
-    label: 'Hold a Sovereign Reserve Unit. On-Chain.',
-    subLabel: 'ERC-3643 identity credential required — direct on-chain reserve access',
-    route: 'Identity Credential → AXAU / AXUSD',
-    desc: 'Obtain an ERC-3643 identity credential, then access AXAU — structured around PAXG-backed reserve positions — via direct on-chain mint in one transaction, or through the Assisted Mint path with AXUSD. Self-custody. No intermediary.',
+    label: 'Self-Custody Reserve Position — AXAU via ERC-3643',
+    subLabel: 'One identity credential. One transaction. Direct on-chain reserve issuance. No intermediary.',
+    route: 'Identity Credential → AXAU',
+    desc: 'Apply for an ERC-3643 identity credential once. Then access AXAU — structured around PAXG-backed reserve positions — via direct on-chain mint in a single transaction, or through the Assisted Mint path using AXUSD. Self-custody throughout. Coverage ratio enforced on-chain.',
     href: '/axau-early-access',
     cta: 'Apply for Reserve Access',
     accent: 'border-l-dl-gold',
     accentColor: 'text-dl-gold',
-    bullets: ['ERC-3643 identity credential required — apply once, valid permanently', 'Direct on-chain mint via GoldVault automated control layer', 'Coverage ratio enforced by NAVEngine before every mint'],
+    bullets: [
+      'ERC-3643 identity credential required — one-time application, permanently valid',
+      'Direct on-chain mint via GoldVault automated control layer — one transaction',
+      'Coverage ratio enforced by NAVEngine before every mint — cannot over-issue',
+    ],
   },
 ];
 
@@ -185,6 +201,12 @@ const TRUST_ANCHORS = [
     label: 'Institutional Disclosure',
     desc: 'Contract addresses, coverage formulas, operational status by layer, policy mode, and the complete legal framework — available without login, without email, without narrative.',
     href: '/disclosure',
+    status: 'LIVE',
+  },
+  {
+    label: 'Observer Dashboard',
+    desc: 'Treasury balance, reserve composition, governance state, and node performance — live from Arbitrum One. Independent read access for institutional participants. No account. No login.',
+    href: '/observer',
     status: 'LIVE',
   },
 ];
@@ -328,14 +350,14 @@ export function DesignLawHome() {
             <div className="absolute inset-0" style={{ backgroundColor: 'rgba(14, 28, 55, 0.82)' }}>
               <div className="max-w-7xl mx-auto px-6 h-full flex flex-col justify-center">
                 <p className="text-xs uppercase tracking-widest mb-3 font-dl-mono" style={{ color: '#f0d98a', textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
-                  Not a narrative. Not a token. Independently verifiable financial infrastructure — seven layers — live on Arbitrum One.
+                  Not a token launch. Not a yield strategy. Vertically integrated financial infrastructure — seven layers — independently verifiable on Arbitrum One.
                 </p>
                 <h1 className="font-dl-serif text-3xl md:text-5xl leading-tight mb-4" style={{ color: '#ffffff', maxWidth: '760px', textShadow: '0 2px 12px rgba(0,0,0,0.7)' }}>
                   Sovereign Financial Infrastructure.<br className="hidden md:block" />
                   <span style={{ color: '#f0d98a' }}>Banking. Settlement. Reserve. Capital. Live.</span>
                 </h1>
                 <p className="text-sm leading-relaxed mb-3" style={{ color: '#e5e7eb', maxWidth: '620px', textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
-                  A vertically integrated financial operating system — FDIC-insured banking, identity-gated settlement rail, PAXG-backed reserve issuance, and Reg D capital deployment — built on Arbitrum One. Every layer is independently verifiable. No trust required.
+                  A vertically integrated financial operating system — FDIC-insured banking, identity-gated settlement rail, PAXG-backed reserve issuance, and Reg D capital deployment — built on Arbitrum One. Every layer has a contract address. Every solvency claim has an on-chain record. No trust required.
                 </p>
                 <p className="text-xs font-dl-mono mb-8" style={{ color: '#cbd5e1', textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
                   L00: Banking · L01: AXUSD Rail · L01.5: DEX + PSM · L02: AXAU Reserve · L03: Capital · L04: Regime Intelligence · L05: Solvency + Trust
@@ -645,15 +667,20 @@ export function DesignLawHome() {
             <div className="mb-5">
               <SectionHeading>Verification and Trust Infrastructure</SectionHeading>
               <p className="text-sm text-dl-gray mt-1">
-                Three independently verifiable trust anchors. No narrative required — read the chain.
+                Four independently verifiable trust layers. No narrative required — read the chain.
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border mb-6">
+            <div className="mb-5 border border-dl-border border-l-4 border-l-dl-forest p-5 bg-dl-bg-alt">
+              <p className="text-xs text-dl-forest uppercase tracking-wider font-dl-mono mb-1">Verification Principle</p>
+              <p className="font-dl-serif text-lg text-dl-navy">The chain does not require trust — it requires reading.</p>
+              <p className="text-sm text-dl-gray mt-1 max-w-2xl">Four independently verifiable trust layers. All on Arbitrum One. All public. No login, no email, no narrative.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 border border-dl-border mb-6">
               {TRUST_ANCHORS.map((anchor, i) => (
                 <Link
                   key={anchor.label}
                   href={anchor.href}
-                  className={`block p-6 border-t-4 border-t-dl-forest no-underline hover:bg-dl-bg-alt ${i < TRUST_ANCHORS.length - 1 ? 'md:border-r border-b md:border-b-0 border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
+                  className={`block p-6 border-t-4 border-t-dl-forest no-underline hover:bg-dl-bg-alt ${i < TRUST_ANCHORS.length - 1 ? 'border-b lg:border-b-0 lg:border-r border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <p className="font-dl-serif text-base text-dl-navy font-bold">{anchor.label}</p>

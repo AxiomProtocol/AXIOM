@@ -879,7 +879,7 @@ export default function AxauBuyPage() {
             AXAU Reserve — Layer 02 Mint Terminal
           </h1>
           <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, lineHeight: 1.7, margin: '0 0 20px', maxWidth: 580 }}>
-            Two paths to Layer 02 reserve infrastructure. <strong>Direct Mint</strong>: deposit PAXG directly to the GoldVault automated control layer — coverage ratio verified on-chain before issuance, AXAU received in the same transaction, no intermediary involved. <strong>Assisted Mint</strong>: spend AXUSD and the operations team handles PAXG acquisition and vault deposit within 1 business day. <strong>Redeem</strong>: return AXAU and receive PAXG directly from the vault. All paths require an active ERC-3643 identity credential on Arbitrum One.
+            Two paths to the Layer 02 reserve layer. <strong>Direct Mint</strong>: deposit PAXG directly to the GoldVault automated control layer — coverage ratio verified on-chain before issuance, AXAU issued in the same transaction, no intermediary. <strong>Assisted Mint</strong>: spend AXUSD and the operations team acquires PAXG and deposits to the vault within 1 business day. <strong>Redeem</strong>: return AXAU to receive PAXG directly from the vault. All three paths require an ERC-3643 identity credential active on Arbitrum One. The system cannot mint above the coverage ratio floor — enforced on-chain, not by policy.
           </p>
 
           {/* Path quick-select */}

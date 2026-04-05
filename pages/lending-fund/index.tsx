@@ -306,9 +306,8 @@ export default function LendingFundPage() {
             </h1>
             <p className="text-sm text-dl-gray max-w-xl leading-relaxed mb-5">
               Institutional-grade bridge capital for real asset acquisition and development — the Layer 03 capital deployment component of the Axiom financial operating system.
-              Every loan is secured by real property with conservative 70% LTV underwriting,
-              AXUSD on-chain settlement, and a verifiable audit trail on Arbitrum One.
-              Designed to align with SEC Reg D 506(c). Accredited participants only.
+              Every loan is secured by real property, underwritten at a maximum 70% LTV, settled in AXUSD on Arbitrum One, and recorded with an independently verifiable audit trail.
+              Designed to align with SEC Reg D 506(c). Accredited participants only. Target return is variable — not guaranteed.
             </p>
             <div className="flex flex-wrap gap-2 mb-6">
               {[
