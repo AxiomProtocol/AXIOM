@@ -73,6 +73,7 @@ export type ChainStatus =
   | 'configured'   // Integration scaffolding built, not yet live
   | 'planned'      // Architecture decision made, build not started
   | 'researching'  // Source files / SDKs / partner docs being gathered
+  | 'blocked'      // Cannot proceed — missing partner agreement, docs, or credentials
   | 'disabled';    // Explicitly inactive
 
 export type SourceFileStatus =

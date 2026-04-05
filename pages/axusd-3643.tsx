@@ -317,8 +317,8 @@ export default function AXUSD3643Page() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Unified AXUSD — Layer 02 Settlement Token | ERC-3643 T-REX | Axiom Protocol</title>
-        <meta name="description" content="AXUSD is the Axiom Protocol's Layer 02 settlement token — an ERC-3643 identity standard stablecoin on Arbitrum One. On-chain identity credential required for transfer, swap, and lending." />
+        <title>Unified AXUSD — Layer 01 Settlement Rail | ERC-3643 T-REX | Axiom Protocol</title>
+        <meta name="description" content="AXUSD is the Axiom Protocol's Layer 01 settlement rail — an ERC-3643 identity-gated stablecoin on Arbitrum One. The mandatory unit of account for all capital movement across the protocol. Identity credential required." />
       </Head>
 
       {/* HERO — cinematic split */}
@@ -327,13 +327,13 @@ export default function AXUSD3643Page() {
           {/* Left: text */}
           <div className="py-8 pr-8">
             <div className="flex items-center gap-2 mb-2">
-              <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Layer 01 Settlement</span>
+              <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Layer 01 Settlement Rail</span>
               <span className="font-dl-mono text-xs text-dl-gold border border-dl-gold px-2 py-0.5">ERC-3643 T-REX Identity Standard</span>
               <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-2 py-0.5">LIVE</span>
             </div>
-            <h1 className="font-dl-serif text-3xl text-dl-navy mb-3">Unified AXUSD — Identity Infrastructure &amp; Settlement Terminal</h1>
+            <h1 className="font-dl-serif text-3xl text-dl-navy mb-3">Unified AXUSD — Layer 01 Settlement Rail &amp; Identity Terminal</h1>
             <p className="text-sm text-dl-gray leading-relaxed max-w-2xl">
-              This terminal manages the ERC-3643 identity credential lifecycle for AXUSD — the Axiom Protocol&apos;s Layer 01 settlement token. All AXUSD transfers require a valid on-chain identity claim. Request credential issuance, check verification status, and interact with the PSM (mint/redeem) through this identity-gated interface. Arbitrum One.
+              AXUSD is the Axiom Protocol&apos;s Layer 01 settlement rail — not a generic stablecoin. It is identity-gated via ERC-3643, issued only through the live PSM, and functions as the mandatory unit of account for all capital movement across the protocol. This terminal manages credential issuance, compliance verification, PSM access, and on-chain identity claims. Arbitrum One.
             </p>
           </div>
           {/* Right: cinematic hero image */}
@@ -356,9 +356,9 @@ export default function AXUSD3643Page() {
       <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6 flex flex-wrap gap-6">
         {[
           { label: 'Token Standard', value: 'ERC-3643 (T-REX)' },
-          { label: 'Role in Protocol', value: 'Layer 02 Settlement' },
+          { label: 'Role in Protocol', value: 'Layer 01 Settlement Rail' },
           { label: 'Identity Gate', value: 'Required for all transfers' },
-          { label: 'Reserve Anchor', value: 'Layer 01 AXAU' },
+          { label: 'Reserve Anchor', value: 'Layer 02 AXAU' },
           { label: 'Primary Venue', value: 'EulerSwap + Euler EVK' },
         ].map(item => (
           <div key={item.label}>

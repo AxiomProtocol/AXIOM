@@ -11,3 +11,4 @@ export * from './SettlementRailService';
 export * from './InstitutionalBridgeService';
 export * from './SovereignChainService';
 export * from './CrossChainIdentityService';
+export * from './IntegrationReadinessModel';

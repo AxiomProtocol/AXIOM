@@ -99,6 +99,51 @@ const SYSTEM_LAYERS = [
   },
 ];
 
+const DIFFERENTIATORS = [
+  {
+    num: '01',
+    label: 'L00 · LIVE',
+    title: 'FDIC-Insured Banking Entry',
+    desc: 'Fiat capital enters through a real institutional bank account — First Internet Bank via Increase ACH and wire rails. No crypto-only on-ramp. BitGo institutional custody handles the on-chain layer. Capital is traceable at every step.',
+    accentColor: '#2d6a4f',
+  },
+  {
+    num: '02',
+    label: 'L01 · LIVE',
+    title: 'Identity-Gated Settlement Rail',
+    desc: 'AXUSD is not a wrapped stablecoin. It is issued through a live PSM, requires an ERC-3643 on-chain identity credential, and functions as the exclusive unit of account for all capital movement across the protocol.',
+    accentColor: '#1e3a5f',
+  },
+  {
+    num: '03',
+    label: 'L02 · LIVE',
+    title: 'Direct On-Chain Reserve Issuance',
+    desc: 'AXAU is minted directly against PAXG via the GoldVault automated control layer. One transaction. No intermediary. Coverage ratio enforced on-chain before every mint — the system cannot over-issue by design.',
+    accentColor: '#b8860b',
+  },
+  {
+    num: '04',
+    label: 'L03 · FORMATION',
+    title: 'Reg D 506(c) Capital Deployment',
+    desc: 'Capital programs are structured as SEC Reg D 506(c) private placements — bridge loan LP fund and SPV programs. Settlement is in AXUSD. On-chain reporting. Independently verifiable audit trails. Accredited investors only.',
+    accentColor: '#2d6a4f',
+  },
+  {
+    num: '05',
+    label: 'L04 · LIVE',
+    title: 'Nine-Dimension Capital Intelligence',
+    desc: 'MIRDT scores nine capital regime dimensions to generate a live advisory signal. Sentinel gates authorization decisions. Observer provides independent institutional read access to treasury, governance, and risk data.',
+    accentColor: '#1e3a5f',
+  },
+  {
+    num: '06',
+    label: 'L05 · LIVE',
+    title: 'Proof of Execution — Not Attestation',
+    desc: 'Every capital movement, solvency snapshot, and operational action is recorded with a hash-chained audit trail. Published live from a canonical on-chain snapshot. Publicly readable on Arbitrum One. The chain does not require trust — it requires reading.',
+    accentColor: '#2d6a4f',
+  },
+];
+
 const CAPITAL_FLOW = [
   { id: 'L00', label: 'USD / Fiat', sub: 'Banking — Increase ACH/Wire · FDIC-insured', href: '/banking', color: '#1D3D2A' },
   { id: 'L01', label: 'AXUSD', sub: 'Settlement Rail — ERC-3643 · PSM Active', href: '/axusd-3643', color: '#1B2A4A' },
@@ -404,6 +449,36 @@ export function DesignLawHome() {
                   <p className="text-xs text-dl-gray mt-1">{stat.detail}</p>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* WHY INFRASTRUCTURE */}
+          <div className="mb-14">
+            <div className="mb-6">
+              <SectionHeading>Why This Is Infrastructure — Not a Token Project</SectionHeading>
+              <p className="text-sm text-dl-gray mt-1 max-w-2xl">
+                Six verifiable properties that distinguish Axiom from a wrapped asset or generic on-chain finance protocol. Each is independently confirmed without trusting the team.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 border border-dl-border">
+              {DIFFERENTIATORS.map((item, i) => (
+                <div
+                  key={item.num}
+                  className={`px-5 py-5 border-l-4 ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'} ${i < DIFFERENTIATORS.length - 3 ? 'border-b border-dl-border' : ''} ${i % 3 !== 2 ? 'lg:border-r lg:border-dl-border' : ''}`}
+                  style={{ borderLeftColor: item.accentColor }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-dl-mono text-xs text-dl-gray">{item.num}</span>
+                    <span className="font-dl-mono text-xs px-1.5 py-0.5 border" style={{ color: item.accentColor, borderColor: item.accentColor }}>{item.label}</span>
+                  </div>
+                  <h3 className="font-dl-serif text-base text-dl-navy font-bold mb-2">{item.title}</h3>
+                  <p className="text-xs text-dl-gray leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+            <div className="border border-t-0 border-dl-border px-5 py-3 bg-dl-bg-alt flex items-center justify-between">
+              <p className="text-xs text-dl-gray font-dl-mono">Each layer has a contract address on Arbiscan. Verify before engaging capital.</p>
+              <Link href="/infrastructure" className="text-xs text-dl-navy underline font-dl-mono">Full infrastructure overview →</Link>
             </div>
           </div>
 

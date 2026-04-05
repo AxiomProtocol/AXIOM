@@ -864,8 +864,8 @@ export default function AxauBuyPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Buy &amp; Redeem AXAU — Axiom Protocol</title>
-        <meta name="description" content="Mint AXAU directly with PAXG, redeem AXAU for PAXG, or submit an assisted purchase request using AXUSD on Arbitrum One." />
+        <title>AXAU Reserve — Layer 02 Mint Terminal | Axiom Protocol</title>
+        <meta name="description" content="Mint AXAU directly from PAXG in one on-chain transaction, redeem AXAU for PAXG, or submit an assisted mint request using AXUSD. ERC-3643 identity credential required. Coverage ratio enforced on-chain before every mint. Arbitrum One." />
       </Head>
 
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 0 80px' }}>
