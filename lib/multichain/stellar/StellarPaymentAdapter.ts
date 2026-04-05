@@ -32,20 +32,33 @@ import type {
 import {
   STELLAR_PLANNED_CORRIDORS,
   STELLAR_NETWORK_CONFIGS,
+  STELLAR_ANCHOR_REGISTRY,
   ANCHOR_CANDIDATES,
   STELLAR_KNOWN_ASSETS,
   type StellarNetworkId,
 } from './types';
 import { isExpansionEnabled } from '../featureFlags';
 import { db } from '../../../server/db';
-import { stellarPaymentTransfers } from '../../../shared/stellarSchema';
+import { stellarPaymentTransfers, type StellarPaymentTransfer } from '../../../shared/stellarSchema';
 import { eq } from 'drizzle-orm';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CIRCLE_USDC_ISSUER = 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
-const CIRCLE_HOME_DOMAIN = 'centre.io';
-const CIRCLE_STELLAR_TOML_URL = `https://${CIRCLE_HOME_DOMAIN}/.well-known/stellar.toml`;
+
+/** Returns the anchor registry entry for the currently active anchor. */
+function getActiveAnchorEntry() {
+  const key = (process.env.STELLAR_ACTIVE_ANCHOR ?? 'moneygram').toLowerCase().trim();
+  return STELLAR_ANCHOR_REGISTRY[key] ?? STELLAR_ANCHOR_REGISTRY['moneygram'];
+}
+
+function getActiveAnchorId(): string {
+  return getActiveAnchorEntry().anchorId;
+}
+
+function getActiveAnchorHomeDomain(): string {
+  return getActiveAnchorEntry().homeDomain;
+}
 
 // ─── Stellar TOML cache ───────────────────────────────────────────────────────
 
@@ -59,15 +72,22 @@ interface ParsedStellarToml {
 }
 
 let _tomlCache: { data: ParsedStellarToml; fetchedAt: number } | null = null;
+let _tomlCachedDomain: string | null = null;
 const TOML_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 async function fetchCircleToml(): Promise<ParsedStellarToml> {
-  if (_tomlCache && Date.now() - _tomlCache.fetchedAt < TOML_CACHE_TTL_MS) {
+  const homeDomain = getActiveAnchorHomeDomain();
+  if (
+    _tomlCache &&
+    _tomlCachedDomain === homeDomain &&
+    Date.now() - _tomlCache.fetchedAt < TOML_CACHE_TTL_MS
+  ) {
     return _tomlCache.data;
   }
 
+  const tomlUrl = `https://${homeDomain}/.well-known/stellar.toml`;
   try {
-    const res = await fetch(CIRCLE_STELLAR_TOML_URL, {
+    const res = await fetch(tomlUrl, {
       headers: { 'Accept': 'text/plain' },
       signal: AbortSignal.timeout(8000),
     });
@@ -93,9 +113,10 @@ async function fetchCircleToml(): Promise<ParsedStellarToml> {
     parsed.NETWORK_PASSPHRASE = parseField('NETWORK_PASSPHRASE');
 
     _tomlCache = { data: parsed, fetchedAt: Date.now() };
+    _tomlCachedDomain = homeDomain;
     return parsed;
   } catch (err) {
-    console.warn('[StellarAdapter] stellar.toml fetch error:', err);
+    console.warn(`[StellarAdapter] stellar.toml fetch error (${homeDomain}):`, err);
     return {};
   }
 }
@@ -228,8 +249,8 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
       estimatedSettlementMinutes: c.estimatedSettlementMinutes,
       minAmountUsd: c.minAmountUsd,
       maxAmountUsd: c.maxAmountUsd,
-      feeEstimatePercent: c.anchorId === 'circle-stellar' ? 0.1 : null,
-      notes: c.blockers.length > 0 ? `Blockers: ${c.blockers.join('; ')}` : 'Circle USDC on Stellar. Interactive SEP-24 withdrawal.',
+      feeEstimatePercent: c.anchorId === 'moneygram-stellar' ? 0.1 : null,
+      notes: c.blockers.length > 0 ? `Blockers: ${c.blockers.join('; ')}` : 'USDC on Stellar via active SEP-24 anchor. Interactive withdrawal flow.',
     }));
   }
 
@@ -255,31 +276,40 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
   async getAnchorStatus(anchorId: string): Promise<StellarAnchorStatus> {
     const candidate = ANCHOR_CANDIDATES.find(a => a.anchorId === anchorId);
 
-    if (anchorId === 'circle-stellar') {
+    // Determine if this anchor ID belongs to any registered anchor
+    const registryEntry = Object.values(STELLAR_ANCHOR_REGISTRY).find(e => e.anchorId === anchorId);
+    const isRegisteredAnchor = !!registryEntry || anchorId === getActiveAnchorId();
+
+    if (isRegisteredAnchor) {
       try {
-        const toml = await fetchCircleToml();
-        const hasSep24 = !!toml.TRANSFER_SERVER_SEP0024;
-        const hasWebAuth = !!toml.WEB_AUTH_ENDPOINT;
+        // If the requested anchor is the active one, use the cached toml fetch.
+        // Otherwise fall back to the candidate's known data.
+        const isActiveAnchor = anchorId === getActiveAnchorId();
+        const toml = isActiveAnchor ? await fetchCircleToml() : {};
+        const hasSep24 = !!(toml as ParsedStellarToml).TRANSFER_SERVER_SEP0024 || !!registryEntry?.transferServerSep24;
+        const hasWebAuth = !!(toml as ParsedStellarToml).WEB_AUTH_ENDPOINT || !!registryEntry?.webAuthEndpoint;
         const isReachable = hasSep24 || hasWebAuth;
 
-        // Fetch SEP-24 info if we have the endpoint
+        const resolvedSep24 = (toml as ParsedStellarToml).TRANSFER_SERVER_SEP0024 ?? registryEntry?.transferServerSep24;
+
+        // Fetch SEP-24 /info if we have the endpoint
         let supportedAssets: StellarAsset[] = [];
-        if (toml.TRANSFER_SERVER_SEP0024) {
+        if (resolvedSep24) {
           try {
-            const infoRes = await fetch(`${toml.TRANSFER_SERVER_SEP0024}/info`, {
+            const infoRes = await fetch(`${resolvedSep24}/info`, {
               signal: AbortSignal.timeout(8000),
             });
             if (infoRes.ok) {
               const infoData = await infoRes.json() as { withdraw?: Record<string, unknown>; deposit?: Record<string, unknown> };
               const assetCodes = Object.keys(infoData.withdraw ?? infoData.deposit ?? {});
+              const usdcIssuer = registryEntry?.usdcIssuer ?? CIRCLE_USDC_ISSUER;
               supportedAssets = assetCodes.map(code => ({
                 code,
-                issuer: code === 'USDC' ? CIRCLE_USDC_ISSUER : null,
+                issuer: code === 'USDC' ? usdcIssuer : null,
                 isNative: false,
               }));
             }
           } catch {
-            // Info fetch failed, use known assets
             supportedAssets = STELLAR_KNOWN_ASSETS
               .filter(a => !a.isNative)
               .map(a => ({ code: a.code, issuer: a.issuer, isNative: a.isNative }));
@@ -287,15 +317,17 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
         }
 
         if (supportedAssets.length === 0) {
-          supportedAssets = [{ code: 'USDC', issuer: CIRCLE_USDC_ISSUER, isNative: false }];
+          supportedAssets = [{ code: 'USDC', issuer: registryEntry?.usdcIssuer ?? CIRCLE_USDC_ISSUER, isNative: false }];
         }
+
+        const anchorName = candidate?.anchorName ?? registryEntry?.anchorName ?? anchorId;
 
         return {
           anchorId,
-          anchorName: candidate?.anchorName ?? 'Circle (USDC on Stellar)',
+          anchorName,
           isReachable,
-          sep24Supported: true,
-          sep31Supported: false,
+          sep24Supported: hasSep24,
+          sep31Supported: candidate?.sep31Support ?? false,
           supportedAssets,
           corridors: [
             { from: 'USDC', to: 'USD', currency: 'USD' },
@@ -308,7 +340,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
       }
     }
 
-    // Fallback for unknown anchor
+    // Fallback for unrecognized anchor
     return {
       anchorId,
       anchorName: candidate?.anchorName ?? anchorId,
@@ -364,15 +396,16 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
     }
 
     try {
-      // 1. Fetch Circle's stellar.toml to get SEP endpoints
+      // 1. Fetch active anchor's stellar.toml to get SEP endpoints
       const toml = await fetchCircleToml();
+      const anchorEntry = getActiveAnchorEntry();
 
       if (!toml.TRANSFER_SERVER_SEP0024) {
         return {
           success: false,
           transferId: null,
           stellarTransactionHash: null,
-          error: 'Circle anchor SEP-24 endpoint not found in stellar.toml. Toml may be unreachable.',
+          error: `Active anchor (${anchorEntry.homeDomain}) SEP-24 endpoint not found in stellar.toml. Toml may be unreachable.`,
           state: null,
         };
       }
@@ -382,7 +415,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
           success: false,
           transferId: null,
           stellarTransactionHash: null,
-          error: 'Circle anchor WEB_AUTH_ENDPOINT not found in stellar.toml.',
+          error: `Active anchor (${anchorEntry.homeDomain}) WEB_AUTH_ENDPOINT not found in stellar.toml.`,
           state: null,
         };
       }
@@ -457,7 +490,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
       const [record] = await db.insert(stellarPaymentTransfers).values({
         axiomWalletAddress: options.senderWalletAddress,
         stellarPublicKey,
-        anchorId: 'circle-stellar',
+        anchorId: getActiveAnchorId(),
         corridorId: options.corridorId,
         anchorTransferId: sep24Data.id,
         sourceAmountAxusd: options.sourceAxusdAmount,
@@ -526,7 +559,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
         record.status !== 'error' &&
         record.status !== 'refunded'
       ) {
-        const toml = await fetchCircleToml().catch(() => ({}));
+        const toml = await fetchCircleToml().catch((): ParsedStellarToml => ({}));
 
         if (toml.TRANSFER_SERVER_SEP0024) {
           try {
@@ -549,7 +582,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
               const tx = pollData.transaction;
               if (tx) {
                 // Map anchor status to our internal status
-                const statusMap: Record<string, typeof record.status> = {
+                const statusMap: Record<string, StellarPaymentTransfer['status']> = {
                   'pending_user_transfer_start': 'pending_user_transfer_start',
                   'pending_external': 'pending_external',
                   'pending_anchor': 'pending_anchor',

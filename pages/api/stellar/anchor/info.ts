@@ -8,7 +8,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getStellarPaymentAdapter, fetchCircleToml } from '../../../../lib/multichain/stellar/StellarPaymentAdapter';
-import { ANCHOR_CANDIDATES, STELLAR_SEP_CAPABILITIES } from '../../../../lib/multichain/stellar/types';
+import { ANCHOR_CANDIDATES, STELLAR_SEP_CAPABILITIES, STELLAR_ANCHOR_REGISTRY } from '../../../../lib/multichain/stellar/types';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -17,12 +17,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   res.setHeader('Cache-Control', 'no-store');
 
-  // Only Circle is integrated — reject unknown anchor IDs explicitly
-  const anchorId = req.query.anchorId ?? 'circle-stellar';
-  if (anchorId !== 'circle-stellar') {
+  const activeKey = (process.env.STELLAR_ACTIVE_ANCHOR ?? 'moneygram').toLowerCase().trim();
+  const activeEntry = STELLAR_ANCHOR_REGISTRY[activeKey] ?? STELLAR_ANCHOR_REGISTRY['moneygram'];
+  const defaultAnchorId = activeEntry.anchorId;
+
+  const rawAnchorId = req.query.anchorId;
+  const anchorId = (typeof rawAnchorId === 'string' ? rawAnchorId : null) ?? defaultAnchorId;
+
+  // Validate: only registered anchors are supported
+  const registeredIds = Object.values(STELLAR_ANCHOR_REGISTRY).map(e => e.anchorId);
+  if (!registeredIds.includes(anchorId)) {
     return res.status(400).json({
-      error: `Anchor '${anchorId}' is not configured. Only 'circle-stellar' is currently integrated.`,
-      supportedAnchors: ['circle-stellar'],
+      error: `Anchor '${anchorId}' is not in the registry. Use one of: ${registeredIds.join(', ')}.`,
+      supportedAnchors: registeredIds,
+      activeAnchor: defaultAnchorId,
     });
   }
 
@@ -33,13 +41,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     fetchCircleToml(),
   ]);
 
-  const circleCandidate = ANCHOR_CANDIDATES.find(a => a.anchorId === 'circle-stellar');
+  const anchorCandidate = ANCHOR_CANDIDATES.find(a => a.anchorId === anchorId);
+  const registryEntry = Object.values(STELLAR_ANCHOR_REGISTRY).find(e => e.anchorId === anchorId);
 
   // Fetch SEP-24 /info if we have the transfer server URL
   let sep24Info: unknown = null;
-  if (toml.status === 'fulfilled' && toml.value.TRANSFER_SERVER_SEP0024) {
+  const sep24Url = (toml.status === 'fulfilled' ? toml.value.TRANSFER_SERVER_SEP0024 : null)
+    ?? registryEntry?.transferServerSep24;
+  if (sep24Url) {
     try {
-      const infoRes = await fetch(`${toml.value.TRANSFER_SERVER_SEP0024}/info`, {
+      const infoRes = await fetch(`${sep24Url}/info`, {
         signal: AbortSignal.timeout(8000),
       });
       if (infoRes.ok) {
@@ -54,17 +65,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     schemaVersion: 'stellar-anchor-info-v1',
     asOf: new Date().toISOString(),
     anchorId,
-    selectedAnchor: circleCandidate ?? null,
+    activeAnchorKey: activeKey,
+    selectedAnchor: anchorCandidate ?? null,
+    registryEntry: registryEntry ?? null,
     liveStatus: anchorStatus.status === 'fulfilled' ? anchorStatus.value : null,
     tomlEndpoints: toml.status === 'fulfilled' ? {
-      TRANSFER_SERVER_SEP0024: toml.value.TRANSFER_SERVER_SEP0024 ?? null,
-      WEB_AUTH_ENDPOINT: toml.value.WEB_AUTH_ENDPOINT ?? null,
+      TRANSFER_SERVER_SEP0024: toml.value.TRANSFER_SERVER_SEP0024 ?? registryEntry?.transferServerSep24 ?? null,
+      WEB_AUTH_ENDPOINT: toml.value.WEB_AUTH_ENDPOINT ?? registryEntry?.webAuthEndpoint ?? null,
       SIGNING_KEY: toml.value.SIGNING_KEY ?? null,
       VERSION: toml.value.VERSION ?? null,
-    } : null,
+    } : {
+      TRANSFER_SERVER_SEP0024: registryEntry?.transferServerSep24 ?? null,
+      WEB_AUTH_ENDPOINT: registryEntry?.webAuthEndpoint ?? null,
+      SIGNING_KEY: null,
+      VERSION: null,
+    },
     sep24Info,
     sepCapabilities: STELLAR_SEP_CAPABILITIES,
-    usdcIssuer: 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN',
-    homeDomain: 'centre.io',
+    usdcIssuer: registryEntry?.usdcIssuer ?? 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN',
+    homeDomain: registryEntry?.homeDomain ?? activeEntry.homeDomain,
   });
 }

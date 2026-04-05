@@ -93,64 +93,79 @@ export interface AnchorCandidate {
 
 /**
  * Candidate anchor partners for Axiom's Stellar payments corridor.
- * Circle selected as primary anchor — USDC on Stellar.
+ * MoneyGram selected as primary anchor — validated SEP-24, USDC→USD, mainnet, 95ms latency.
+ * Centre.io (Circle USDC issuer) does NOT offer SEP-24 interactive withdrawal.
  */
 export const ANCHOR_CANDIDATES: AnchorCandidate[] = [
   {
-    anchorId: 'circle-stellar',
-    anchorName: 'Circle (USDC on Stellar)',
-    website: 'https://www.circle.com/en/usdc-multichain/stellar',
-    corridors: ['USD on/off ramp', 'USDC issuance/redemption'],
+    anchorId: 'moneygram-stellar',
+    anchorName: 'MoneyGram (Stellar Access)',
+    website: 'https://stellar.moneygram.com',
+    corridors: ['USDC → USD payout (US)', 'USDC → Global fiat remittance'],
     primaryCurrencies: ['USD', 'USDC'],
-    primaryRegions: ['Global'],
+    primaryRegions: ['US', 'Global'],
     sep24Support: true,
     sep31Support: false,
     sep38Support: true,
     partnershipRequired: true,
     evaluationStatus: 'integrated',
-    notes: 'Selected anchor. Issues USDC on Stellar. SEP-24 interactive flow active. Home domain: centre.io. USDC issuer: GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN.',
+    notes: 'Active anchor. SEP-24 + SEP-10 validated live. Home domain: stellar.moneygram.com. TRANSFER_SERVER_SEP0024: https://stellar.moneygram.com/stellaradapterservice/sep24. USDC issuer GA5ZSEJ... matches Circle mainnet exactly. 95ms avg latency. Driven by STELLAR_ACTIVE_ANCHOR=moneygram.',
   },
   {
-    anchorId: 'moneygram-stellar',
-    anchorName: 'MoneyGram (Stellar Anchor)',
-    website: 'https://www.moneygram.com',
-    corridors: ['Cash-out via MoneyGram agent network', 'Remittance LATAM/Africa'],
-    primaryCurrencies: ['USD', 'Local fiat'],
-    primaryRegions: ['LATAM', 'Africa', 'Southeast Asia'],
+    anchorId: 'testanchor-sdf',
+    anchorName: 'SDF Test Anchor',
+    website: 'https://testanchor.stellar.org',
+    corridors: ['USDC (testnet) → Test USD'],
+    primaryCurrencies: ['USDC', 'SRT'],
+    primaryRegions: ['Global (testnet only)'],
     sep24Support: true,
     sep31Support: false,
-    sep38Support: true,
-    partnershipRequired: true,
-    evaluationStatus: 'not_selected',
-    notes: 'Largest remittance network on Stellar. Best for cash-out in emerging markets. High partnership requirements.',
+    sep38Support: false,
+    partnershipRequired: false,
+    evaluationStatus: 'evaluating',
+    notes: 'Official SDF test anchor. Testnet network only — not for production payments. Use STELLAR_ACTIVE_ANCHOR=testanchor with networkId=testnet for integration testing.',
   },
   {
-    anchorId: 'bitso-stellar',
-    anchorName: 'Bitso',
-    website: 'https://bitso.com',
-    corridors: ['USD → MXN', 'USD → BRL', 'LATAM remittance'],
-    primaryCurrencies: ['USD', 'MXN', 'BRL'],
-    primaryRegions: ['Mexico', 'Brazil', 'Argentina'],
+    anchorId: 'anclap-stellar',
+    anchorName: 'Anclap (LATAM)',
+    website: 'https://anclap.com',
+    corridors: ['USDC → ARS (Argentine Peso)', 'USDC → PEN (Peruvian Sol)'],
+    primaryCurrencies: ['ARS', 'PEN'],
+    primaryRegions: ['Argentina', 'Peru'],
     sep24Support: true,
-    sep31Support: true,
+    sep31Support: false,
+    sep38Support: false,
+    partnershipRequired: true,
+    evaluationStatus: 'evaluating',
+    notes: 'Validated SEP-24 anchor for LATAM corridor. 178ms latency. Reserve for future ARS/PEN expansion.',
+  },
+  {
+    anchorId: 'mykobo-stellar',
+    anchorName: 'MyKobo (Europe)',
+    website: 'https://mykobo.co',
+    corridors: ['EURC → EUR'],
+    primaryCurrencies: ['EURC', 'EUR'],
+    primaryRegions: ['Europe'],
+    sep24Support: true,
+    sep31Support: false,
+    sep38Support: false,
+    partnershipRequired: true,
+    evaluationStatus: 'evaluating',
+    notes: 'Validated SEP-24 anchor for European corridor. EURC only. Reserve for future EUR expansion.',
+  },
+  {
+    anchorId: 'circle-issuer',
+    anchorName: 'Circle (USDC Issuer Only)',
+    website: 'https://www.circle.com/en/usdc-multichain/stellar',
+    corridors: ['USDC issuance — no SEP-24 withdrawal'],
+    primaryCurrencies: ['USDC'],
+    primaryRegions: ['Global'],
+    sep24Support: false,
+    sep31Support: false,
     sep38Support: false,
     partnershipRequired: true,
     evaluationStatus: 'not_selected',
-    notes: 'Strong LATAM corridor specialist. Best for Mexico/Brazil remittance use cases.',
-  },
-  {
-    anchorId: 'tempo-stellar',
-    anchorName: 'Tempo',
-    website: 'https://www.tempo.eu.com',
-    corridors: ['EUR ↔ XLM/USDC', 'European remittance'],
-    primaryCurrencies: ['EUR', 'USD'],
-    primaryRegions: ['Europe', 'West Africa'],
-    sep24Support: true,
-    sep31Support: true,
-    sep38Support: false,
-    partnershipRequired: true,
-    evaluationStatus: 'not_selected',
-    notes: 'European Stellar anchor with regulated status in EU. Strong for EUR corridors.',
+    notes: 'Circle/Centre (centre.io) is the USDC issuer on Stellar — not a SEP-24 interactive anchor. No TRANSFER_SERVER_SEP0024 or WEB_AUTH_ENDPOINT in centre.io stellar.toml. USDC issuer address GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN remains the canonical issuer used across all anchors.',
   },
 ];
 
@@ -172,30 +187,95 @@ export const STELLAR_SEP_CAPABILITIES: SEPCapability[] = [
     description: 'Stellar Web Authentication',
     status: 'implemented',
     specUrl: 'https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0010.md',
-    usedFor: 'Authenticating users with Circle anchor. Required by SEP-0024. Challenge/verify flow implemented.',
+    usedFor: 'Authenticating users with the active anchor. Required by SEP-0024. Ephemeral keypair challenge/sign/verify flow implemented server-side.',
   },
   {
     protocol: 'SEP-0024',
     description: 'Interactive Anchor Specification',
     status: 'implemented',
     specUrl: 'https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0024.md',
-    usedFor: 'Primary anchor protocol for interactive fiat deposit and withdrawal flows via Circle.',
+    usedFor: 'Primary anchor protocol for interactive fiat deposit and withdrawal flows. Active anchor driven by STELLAR_ACTIVE_ANCHOR env var (default: MoneyGram).',
   },
   {
     protocol: 'SEP-0031',
     description: 'Cross-Border Payments Specification',
     status: 'reviewed',
     specUrl: 'https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0031.md',
-    usedFor: 'Direct cross-border payment flows (sending-side). Circle does not support SEP-31; reserved for Bitso/MoneyGram expansion.',
+    usedFor: 'Direct cross-border payment flows (sending-side). Reserved for future expansion with anchors that support SEP-31.',
   },
   {
     protocol: 'SEP-0038',
     description: 'Anchor RFQ (Request for Quote)',
     status: 'reviewed',
     specUrl: 'https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md',
-    usedFor: 'Price quotes from Circle anchor before initiating conversion. SEP-38 endpoint parsed from stellar.toml.',
+    usedFor: 'Price quotes from anchor before initiating conversion. SEP-38 endpoint resolved live from stellar.toml.',
   },
 ];
+
+// ─── Anchor Registry ──────────────────────────────────────────────────────────
+
+/**
+ * Registry of validated SEP-24 anchors for env-driven selection.
+ * Set STELLAR_ACTIVE_ANCHOR=<key> to select an anchor at runtime.
+ * Default: 'moneygram' (production-ready, USDC→USD, mainnet, 95ms).
+ */
+export interface StellarAnchorRegistryEntry {
+  homeDomain: string;
+  anchorId: string;
+  anchorName: string;
+  usdcIssuer: string | null;
+  network: StellarNetworkId;
+  transferServerSep24: string;
+  webAuthEndpoint: string;
+}
+
+export const STELLAR_ANCHOR_REGISTRY: Record<string, StellarAnchorRegistryEntry> = {
+  moneygram: {
+    homeDomain: 'stellar.moneygram.com',
+    anchorId: 'moneygram-stellar',
+    anchorName: 'MoneyGram (Stellar Access)',
+    usdcIssuer: 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN',
+    network: 'mainnet',
+    transferServerSep24: 'https://stellar.moneygram.com/stellaradapterservice/sep24',
+    webAuthEndpoint: 'https://stellar.moneygram.com/stellaradapterservice/auth',
+  },
+  testanchor: {
+    homeDomain: 'testanchor.stellar.org',
+    anchorId: 'testanchor-sdf',
+    anchorName: 'SDF Test Anchor',
+    usdcIssuer: 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5',
+    network: 'testnet',
+    transferServerSep24: 'https://testanchor.stellar.org/sep24',
+    webAuthEndpoint: 'https://testanchor.stellar.org/auth',
+  },
+  anclap: {
+    homeDomain: 'anclap.com',
+    anchorId: 'anclap-stellar',
+    anchorName: 'Anclap (LATAM)',
+    usdcIssuer: null,
+    network: 'mainnet',
+    transferServerSep24: 'https://api.anclap.com/transfer24',
+    webAuthEndpoint: 'https://api.anclap.com/auth',
+  },
+  mykobo: {
+    homeDomain: 'mykobo.co',
+    anchorId: 'mykobo-stellar',
+    anchorName: 'MyKobo (Europe)',
+    usdcIssuer: null,
+    network: 'mainnet',
+    transferServerSep24: 'https://stellar.mykobo.co/sep24',
+    webAuthEndpoint: 'https://stellar.mykobo.co/auth',
+  },
+  ultrastellar: {
+    homeDomain: 'ultrastellar.com',
+    anchorId: 'ultrastellar',
+    anchorName: 'Ultra Stellar',
+    usdcIssuer: null,
+    network: 'mainnet',
+    transferServerSep24: 'https://ultracapital.xyz/sep24',
+    webAuthEndpoint: 'https://ultracapital.xyz/auth',
+  },
+};
 
 // ─── Corridor models ──────────────────────────────────────────────────────────
 
@@ -223,7 +303,7 @@ export const STELLAR_PLANNED_CORRIDORS: StellarPaymentCorridor[] = [
     sourceNetwork: 'arbitrum',
     destinationCurrency: 'USD',
     destinationCountry: 'US',
-    anchorId: 'circle-stellar',
+    anchorId: 'moneygram-stellar',
     status: 'configured',
     estimatedSettlementMinutes: 5,
     minAmountUsd: 10,
@@ -238,7 +318,7 @@ export const STELLAR_PLANNED_CORRIDORS: StellarPaymentCorridor[] = [
     sourceNetwork: 'arbitrum',
     destinationCurrency: 'USDC',
     destinationCountry: 'Global',
-    anchorId: 'circle-stellar',
+    anchorId: 'moneygram-stellar',
     status: 'configured',
     estimatedSettlementMinutes: 3,
     minAmountUsd: 1,
@@ -247,19 +327,19 @@ export const STELLAR_PLANNED_CORRIDORS: StellarPaymentCorridor[] = [
     blockers: [],
   },
   {
-    corridorId: 'axusd-to-usdc-stellar-mxn',
-    label: 'AXUSD (Arbitrum) → USDC (Stellar) → MXN Remittance',
+    corridorId: 'axusd-to-usdc-stellar-ars',
+    label: 'AXUSD (Arbitrum) → USDC (Stellar) → ARS Remittance',
     sourceAsset: 'AXUSD',
     sourceNetwork: 'arbitrum',
-    destinationCurrency: 'MXN',
-    destinationCountry: 'MX',
-    anchorId: null,
+    destinationCurrency: 'ARS',
+    destinationCountry: 'AR',
+    anchorId: 'anclap-stellar',
     status: 'anchor_pending',
-    estimatedSettlementMinutes: 10,
+    estimatedSettlementMinutes: 15,
     minAmountUsd: 10,
     maxAmountUsd: 10000,
     complianceRequired: true,
-    blockers: ['Requires Bitso anchor integration for MXN corridors'],
+    blockers: ['Requires Anclap partnership activation for ARS corridor'],
   },
 ];
 

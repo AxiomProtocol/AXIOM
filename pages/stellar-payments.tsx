@@ -270,10 +270,10 @@ export default function StellarPaymentsPage({ railEnabled }: { railEnabled: bool
         )}
       </section>
 
-      {/* ── Circle Anchor ──────────────────────────────────────────────────── */}
+      {/* ── Active Anchor ──────────────────────────────────────────────────── */}
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1.25rem', color: '#1e3a5f', marginBottom: '1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.5rem' }}>
-          Circle Anchor — USDC on Stellar
+          {anchor?.anchorName ?? 'MoneyGram (Stellar Access)'} — USDC on Stellar
         </h2>
         <div style={{ background: '#f8f9fb', border: '1px solid #dde3ed', padding: '1.5rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
@@ -285,7 +285,7 @@ export default function StellarPaymentsPage({ railEnabled }: { railEnabled: bool
             </div>
             <div>
               <p style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: '#888', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>HOME DOMAIN</p>
-              <p style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#1e3a5f' }}>centre.io</p>
+              <p style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#1e3a5f' }}>stellar.moneygram.com</p>
             </div>
             <div>
               <p style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: '#888', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>SEP-24 TRANSFER SERVER</p>
@@ -344,7 +344,7 @@ export default function StellarPaymentsPage({ railEnabled }: { railEnabled: bool
                       <span style={{ display: 'block', fontSize: '0.68rem', color: '#888', fontWeight: 400, marginTop: 2 }}>{c.destinationCountry}</span>
                     </td>
                     <td style={{ padding: '0.65rem 0.9rem', color: '#444' }}>
-                      {c.anchorId === 'circle-stellar' ? 'Circle' : c.anchorId}
+                      {c.anchorId === 'moneygram-stellar' ? 'MoneyGram' : c.anchorId === 'anclap-stellar' ? 'Anclap' : c.anchorId}
                     </td>
                     <td style={{ padding: '0.65rem 0.9rem', color: '#444' }}>
                       {c.estimatedSettlementMinutes != null ? `~${c.estimatedSettlementMinutes}min` : '—'}

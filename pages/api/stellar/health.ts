@@ -6,8 +6,8 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getStellarPaymentAdapter } from '../../../lib/multichain/stellar/StellarPaymentAdapter';
-import { fetchCircleToml } from '../../../lib/multichain/stellar/StellarPaymentAdapter';
+import { getStellarPaymentAdapter, fetchCircleToml } from '../../../lib/multichain/stellar/StellarPaymentAdapter';
+import { STELLAR_ANCHOR_REGISTRY } from '../../../lib/multichain/stellar/types';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -16,11 +16,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   res.setHeader('Cache-Control', 'no-store');
 
+  const activeKey = (process.env.STELLAR_ACTIVE_ANCHOR ?? 'moneygram').toLowerCase().trim();
+  const activeEntry = STELLAR_ANCHOR_REGISTRY[activeKey] ?? STELLAR_ANCHOR_REGISTRY['moneygram'];
+  const activeAnchorId = activeEntry.anchorId;
+
   const adapter = getStellarPaymentAdapter('mainnet');
 
   const [networkHealth, anchorStatus] = await Promise.allSettled([
     adapter.getNetworkHealth(),
-    adapter.getAnchorStatus('circle-stellar'),
+    adapter.getAnchorStatus(activeAnchorId),
   ]);
 
   let tomlEndpoints: Record<string, string | undefined> = {};
@@ -47,8 +51,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       asOf: new Date().toISOString(),
     },
     anchor: anchorStatus.status === 'fulfilled' ? anchorStatus.value : {
-      anchorId: 'circle-stellar',
-      anchorName: 'Circle (USDC on Stellar)',
+      anchorId: activeAnchorId,
+      anchorName: activeEntry.anchorName,
       isReachable: false,
       sep24Supported: true,
       sep31Supported: false,
@@ -58,6 +62,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     },
     tomlEndpoints,
     sdkVersion: '@stellar/stellar-sdk',
-    selectedAnchor: 'circle-stellar',
+    selectedAnchor: activeAnchorId,
+    activeAnchorKey: activeKey,
+    activeAnchorHomeDomain: activeEntry.homeDomain,
   });
 }
