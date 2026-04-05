@@ -92,7 +92,7 @@ export const t3KycSubmissions = pgTable("t3_kyc_submissions", {
   email: varchar("email", { length: 256 }),
   fullName: varchar("full_name", { length: 256 }).notNull(),
   dateOfBirth: varchar("date_of_birth", { length: 10 }).notNull(),
-  country: varchar("country", { length: 3 }).notNull().default("US"),
+  country: varchar("country", { length: 5 }).notNull().default("US"),
   documentType: varchar("document_type", { length: 32 }).notNull(),
   status: varchar("status", { length: 20 }).notNull().default("submitted"),
   reviewNote: text("review_note"),

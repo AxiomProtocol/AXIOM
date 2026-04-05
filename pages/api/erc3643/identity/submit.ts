@@ -117,11 +117,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(409).json({ error: 'This wallet has already submitted an early access application' });
     }
 
-    const emailValid = email && typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const normalizedEmail =
+      email && typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+        ? email.toLowerCase().trim()
+        : null;
 
     const [inserted] = await db.insert(t3KycSubmissions).values({
       walletAddress: walletAddress.toLowerCase(),
-      email: emailValid ? email.toLowerCase().trim() : null,
+      email: normalizedEmail,
       fullName: fullName.trim(),
       dateOfBirth,
       country: countryUpper,
@@ -130,10 +133,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }).returning();
 
     let emailQueued = false;
-    if (emailValid) {
+    if (normalizedEmail) {
       try {
         await sendAxauEarlyAccessConfirmation({
-          to: email,
+          to: normalizedEmail,
           fullName: fullName.trim(),
           walletAddress: walletAddress.toLowerCase(),
           submissionId: inserted.id,
