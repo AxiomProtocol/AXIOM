@@ -1,5 +1,44 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { pool } from '../../../server/db';
+import { isChainEnabled } from '../../../lib/multichain/featureFlags';
+
+/**
+ * Chain display metadata for bridge UI.
+ *
+ * IMPORTANT: Only chains with an explicit feature flag enabled OR a live
+ * DB route are surfaced in supportedChains. This prevents planned expansion
+ * chains from appearing as live bridge destinations.
+ *
+ * Axiom live chains today: Arbitrum One (42161), Ethereum (1), Base (8453),
+ * Optimism (10). Polygon (137) is gated behind ENABLE_POLYGON_IDENTITY_BRIDGE.
+ */
+const ALL_CHAIN_INFO: Record<number, { name: string; logo: string; color: string; slug: string }> = {
+  42161: { name: 'Arbitrum One', logo: '/chains/arbitrum.svg', color: '#28A0F0', slug: 'arbitrum' },
+  1:     { name: 'Ethereum',     logo: '/chains/ethereum.svg', color: '#627EEA', slug: 'ethereum' },
+  8453:  { name: 'Base',         logo: '/chains/base.svg',     color: '#0052FF', slug: 'base'     },
+  10:    { name: 'Optimism',     logo: '/chains/optimism.svg', color: '#FF0420', slug: 'optimism' },
+  137:   { name: 'Polygon',      logo: '/chains/polygon.svg',  color: '#8247E5', slug: 'polygon'  },
+};
+
+function buildSupportedChains(activeRoutes: any[]): Record<number, Omit<(typeof ALL_CHAIN_INFO)[number], 'slug'>> {
+  const chainIdsInRoutes = new Set<number>();
+  for (const r of activeRoutes) {
+    if (r.source_chain_id) chainIdsInRoutes.add(Number(r.source_chain_id));
+    if (r.dest_chain_id) chainIdsInRoutes.add(Number(r.dest_chain_id));
+  }
+
+  const result: Record<number, Omit<(typeof ALL_CHAIN_INFO)[number], 'slug'>> = {};
+  for (const [chainIdStr, meta] of Object.entries(ALL_CHAIN_INFO)) {
+    const chainId = Number(chainIdStr);
+    const inActiveRoute = chainIdsInRoutes.has(chainId);
+    const flagEnabled = meta.slug === 'arbitrum' || meta.slug === 'ethereum' || isChainEnabled(meta.slug);
+    if (inActiveRoute || flagEnabled) {
+      const { slug: _slug, ...display } = meta;
+      result[chainId] = display;
+    }
+  }
+  return result;
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -52,20 +91,14 @@ export default async function handler(
         transactions = txResult.rows;
       }
 
-      const chainInfo = {
-        42161: { name: 'Arbitrum One', logo: '/chains/arbitrum.svg', color: '#28A0F0' },
-        1: { name: 'Ethereum', logo: '/chains/ethereum.svg', color: '#627EEA' },
-        8453: { name: 'Base', logo: '/chains/base.svg', color: '#0052FF' },
-        10: { name: 'Optimism', logo: '/chains/optimism.svg', color: '#FF0420' },
-        137: { name: 'Polygon', logo: '/chains/polygon.svg', color: '#8247E5' }
-      };
+      const supportedChains = buildSupportedChains(routes);
 
       res.status(200).json({
         success: true,
         data: {
           routes: routesWithDetails,
           userTransactions: transactions,
-          supportedChains: chainInfo,
+          supportedChains,
           bridgeProviders: [
             { name: 'LayerZero', description: 'Omnichain interoperability protocol', website: 'https://layerzero.network' },
             { name: 'Axelar', description: 'Cross-chain communication network', website: 'https://axelar.network' },

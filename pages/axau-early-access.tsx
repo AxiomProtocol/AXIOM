@@ -409,8 +409,8 @@ export default function AxauAccessPage() {
           <h1 style={{ fontFamily: serif, fontSize: 'clamp(30px, 4.5vw, 52px)', fontWeight: 700, color: '#ffffff', lineHeight: 1.08, margin: '0 0 14px', textShadow: `0 2px 16px rgba(0,0,0,0.95), 0 0 40px rgba(0,0,0,0.6)` }}>
             Apply for Reserve Access.<br />Enter the Infrastructure Layer.
           </h1>
-          <p style={{ fontFamily: body, fontSize: 14, color: '#ffffff', lineHeight: 1.75, margin: '0 0 20px', maxWidth: 420, textShadow: '0 1px 6px rgba(0,0,0,0.95)' }}>
-            AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — structured around PAXG-backed reserve infrastructure on Arbitrum One. Access requires an ERC-3643 identity credential. Founding participants receive founding cohort status, a priority pathway for future reserve launches subject to governance, and governance signaling rights.
+          <p style={{ fontFamily: body, fontSize: 14, color: '#ffffff', lineHeight: 1.75, margin: '0 0 20px', maxWidth: 440, textShadow: '0 1px 6px rgba(0,0,0,0.95)' }}>
+            AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — structured around PAXG-backed reserve positions on Arbitrum One, with coverage ratio enforced on-chain by the NAVEngine contract before every mint. Access requires an ERC-3643 on-chain identity credential — no anonymous positions, no custodial holding. Founding participants receive priority access, founding cohort status recorded at verification, and governance signaling rights. The first 100 verified participants form the founding cohort.
           </p>
           <a href="#apply" style={{
             display: 'inline-block', padding: '12px 28px',

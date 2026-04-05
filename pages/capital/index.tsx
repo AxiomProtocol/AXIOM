@@ -114,10 +114,9 @@ export default function CapitalDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
               <div className="p-6 lg:col-span-2 border-b lg:border-b-0 lg:border-r border-dl-border bg-white">
                 <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Layer 03 — Capital Deployment Architecture</p>
-                <h2 className="font-dl-serif text-2xl text-dl-navy mb-2">Capital Deployment Layer</h2>
+                <h2 className="font-dl-serif text-2xl text-dl-navy mb-2">Capital Deployment — Layer 03</h2>
                 <p className="text-sm text-dl-gray leading-relaxed mb-4 max-w-2xl">
-                  Layer 03 is the Axiom Protocol&apos;s capital deployment architecture — Reg D 506(c) structured SPV programs, bridge loan LP fund, syndication infrastructure, and secondary market access for qualified participants.
-                  All positions are settled in AXUSD. On-chain reporting with independently verifiable audit trails. Formation stage — accepting qualified expressions of interest from accredited participants.
+                  Layer 03 is the Axiom Protocol&apos;s capital deployment architecture — Reg D 506(c) structured SPV programs, bridge loan LP fund, syndication infrastructure, and permissioned secondary market access. All positions are denominated and settled in AXUSD. Every capital movement is recorded with a hash-chained audit trail on Arbitrum One — independently verifiable by any participant without trusting the team. Formation stage — accepting qualified expressions of interest from accredited participants only.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {['Reg D 506(c)', 'AXUSD Settlement', 'Max 70% LTV', 'On-Chain Reporting', 'Accredited Only'].map(tag => (

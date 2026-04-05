@@ -13,10 +13,10 @@ import {
 } from 'lucide-react';
 
 const PLATFORM_STATS = [
-  { label: 'Network', value: 'Arbitrum One', detail: 'Chain ID 42161 — production mainnet' },
-  { label: 'Infrastructure Layers', value: '7 Live', detail: 'Banking → Settlement → Reserve → Capital → Intelligence' },
-  { label: 'Settlement Asset', value: 'AXUSD', detail: 'Identity-gated · ERC-3643 · PSM active' },
-  { label: 'Reserve Asset', value: 'AXAU', detail: 'PAXG-backed · Direct on-chain mint/redeem' },
+  { label: 'Network', value: 'Arbitrum One', detail: 'Chain ID 42161 — production mainnet · All contracts live' },
+  { label: 'Infrastructure Layers', value: '7 Layers', detail: 'L00 Banking · L01 Settlement · L01.5 DEX · L02 Reserve · L03–05 Capital / Intelligence / Trust' },
+  { label: 'Settlement Rail', value: 'AXUSD', detail: 'ERC-3643 · PSM active · Identity-gated · Exclusive unit of account' },
+  { label: 'Reserve Layer', value: 'AXAU', detail: 'PAXG-backed positions · On-chain mint/redeem · Coverage enforced' },
 ];
 
 const SYSTEM_LAYERS = [
@@ -395,17 +395,18 @@ export function DesignLawHome() {
             <div className="absolute inset-0" style={{ backgroundColor: 'rgba(14, 28, 55, 0.82)' }}>
               <div className="max-w-7xl mx-auto px-6 h-full flex flex-col justify-center">
                 <p className="text-xs uppercase tracking-widest mb-3 font-dl-mono" style={{ color: '#f0d98a', textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
-                  Not a token launch. Not a yield strategy. Vertically integrated financial infrastructure — seven layers — independently verifiable on Arbitrum One.
+                  Banking. Settlement. Reserve. Capital. Intelligence. Trust. — Seven layers. Every layer has a contract address. Every solvency claim has an on-chain record.
                 </p>
-                <h1 className="font-dl-serif text-3xl md:text-5xl leading-tight mb-4" style={{ color: '#ffffff', maxWidth: '760px', textShadow: '0 2px 12px rgba(0,0,0,0.7)' }}>
-                  Sovereign Financial Infrastructure.<br className="hidden md:block" />
-                  <span style={{ color: '#f0d98a' }}>Banking. Settlement. Reserve. Capital. Live.</span>
+                <h1 className="font-dl-serif text-3xl md:text-5xl leading-tight mb-4" style={{ color: '#ffffff', maxWidth: '820px', textShadow: '0 2px 12px rgba(0,0,0,0.7)' }}>
+                  The Financial Operating System<br className="hidden md:block" />
+                  for the On-Chain Economy.<br className="hidden md:block" />
+                  <span style={{ color: '#f0d98a' }}>Verifiable. Institutional. Live.</span>
                 </h1>
-                <p className="text-sm leading-relaxed mb-3" style={{ color: '#e5e7eb', maxWidth: '620px', textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
-                  A vertically integrated financial operating system — FDIC-insured banking, identity-gated settlement rail, PAXG-backed reserve issuance, and Reg D capital deployment — built on Arbitrum One. Every layer has a contract address. Every solvency claim has an on-chain record. No trust required.
+                <p className="text-sm leading-relaxed mb-3" style={{ color: '#e5e7eb', maxWidth: '640px', textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
+                  FDIC-insured banking enters capital. Identity-gated AXUSD settles it. The DEX maintains the peg. AXAU holds reserve positions structured around PAXG. Reg D capital programs deploy it. Intelligence scores it. Solvency proves it. One operating system — not a collection of tokens.
                 </p>
                 <p className="text-xs font-dl-mono mb-8" style={{ color: '#cbd5e1', textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
-                  L00: Banking · L01: AXUSD Rail · L01.5: DEX + PSM · L02: AXAU Reserve · L03: Capital · L04: Regime Intelligence · L05: Solvency + Trust
+                  L00 Banking · L01 AXUSD Rail · L01.5 DEX + PSM · L02 AXAU Reserve · L03 Capital · L04 Intelligence · L05 Trust · Arbitrum One
                 </p>
                 <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                   <Link href="/infrastructure">
@@ -415,7 +416,7 @@ export function DesignLawHome() {
                   </Link>
                   <Link href="/axau-early-access">
                     <span className="inline-block border border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}>
-                      Access the Reserve
+                      Apply for Reserve Access
                     </span>
                   </Link>
                   <Link href="/solvency">
@@ -425,7 +426,7 @@ export function DesignLawHome() {
                   </Link>
                   <Link href="/disclosure">
                     <span className="inline-block border border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                      Disclosure
+                      Institutional Disclosure
                     </span>
                   </Link>
                 </div>
@@ -452,12 +453,29 @@ export function DesignLawHome() {
             </div>
           </div>
 
+          {/* WHAT AXIOM IS NOT — CLARITY STRIP */}
+          <div className="mb-10 border border-dl-border border-l-4 border-l-dl-navy bg-dl-bg-alt">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0">
+              {[
+                { label: 'Not a Token Launch', detail: 'AXM is a governance token, not an investment product. No presale. No fundraise built on token appreciation.' },
+                { label: 'Not a Yield Protocol', detail: 'No guaranteed returns. No APY claims. Capital programs disclose risk as Reg D private placements.' },
+                { label: 'Not a Narrative', detail: 'Every system claim has a contract address. Every solvency figure has an on-chain source. Verify it yourself.' },
+                { label: 'Not Custodial', detail: 'Self-custody throughout. AXUSD, AXAU, and AXM remain in your wallet. The protocol never holds your keys.' },
+              ].map((item, i) => (
+                <div key={item.label} className={`px-5 py-4 ${i < 3 ? 'border-b sm:border-b-0 sm:border-r border-dl-border' : ''}`}>
+                  <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-1">{item.label}</p>
+                  <p className="text-xs text-dl-gray leading-relaxed">{item.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* WHY INFRASTRUCTURE */}
           <div className="mb-14">
             <div className="mb-6">
-              <SectionHeading>Why This Is Infrastructure — Not a Token Project</SectionHeading>
+              <SectionHeading>Six Verifiable Properties That Make This Infrastructure</SectionHeading>
               <p className="text-sm text-dl-gray mt-1 max-w-2xl">
-                Six verifiable properties that distinguish Axiom from a wrapped asset or generic on-chain finance protocol. Each is independently confirmed without trusting the team.
+                Each property is independently confirmed on Arbitrum One without trusting the team. No narrative required.
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 border border-dl-border">
@@ -808,31 +826,69 @@ export function DesignLawHome() {
             </div>
           </div>
 
+          {/* PROTOCOL COMMITMENTS */}
+          <div className="mb-14 border border-dl-border border-t-4 border-t-dl-forest">
+            <div className="px-5 py-4 border-b border-dl-border bg-dl-bg-alt">
+              <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest">Protocol Commitments — No Exceptions</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+              {[
+                {
+                  heading: 'No Trust Required',
+                  body: 'Every contract address is on Arbiscan. Every solvency figure comes from a canonical on-chain snapshot. Every operational action has a hash-chained audit trail. Read the chain, not the team.',
+                  accent: 'border-l-dl-forest',
+                },
+                {
+                  heading: 'Self-Custody by Default',
+                  body: 'AXUSD, AXAU, and AXM remain in your wallet throughout. The protocol moves value through automated control layers — not through custodial accounts. Your keys. Your assets.',
+                  accent: 'border-l-dl-navy',
+                },
+                {
+                  heading: 'Institutional Disclosure Standard',
+                  body: 'Contract addresses, coverage formulas, operational status, policy mode, and the full legal framework are published without login, without email, without a narrative framing the data.',
+                  accent: 'border-l-dl-gold',
+                },
+              ].map((c, i) => (
+                <div key={c.heading} className={`p-6 border-l-4 ${c.accent} ${i < 2 ? 'border-b md:border-b-0 md:border-r border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                  <h3 className="font-dl-serif text-base text-dl-navy font-bold mb-2">{c.heading}</h3>
+                  <p className="text-sm text-dl-gray leading-relaxed">{c.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* FINAL CTA */}
           <div className="mb-14 border border-dl-border border-t-4 border-t-dl-navy">
             <div className="p-10 bg-dl-bg-alt text-center">
-              <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-widest mb-4">The Axiom Protocol — Seven Layers. Live on Arbitrum One.</p>
-              <h2 className="font-dl-serif text-2xl md:text-4xl text-dl-navy mb-4" style={{ maxWidth: '600px', margin: '0 auto 16px' }}>
-                The infrastructure is verifiable.<br />The solvency console is public.<br /><span className="text-dl-gold">Your move.</span>
+              <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-widest mb-4">Axiom Protocol · Seven Layers · Arbitrum One · Mainnet Live</p>
+              <h2 className="font-dl-serif text-2xl md:text-4xl text-dl-navy mb-4" style={{ maxWidth: '680px', margin: '0 auto 16px' }}>
+                The solvency console is public.<br />
+                The contract addresses are on Arbiscan.<br />
+                <span className="text-dl-gold">Verify it. Then decide.</span>
               </h2>
-              <p className="text-sm text-dl-gray leading-relaxed mb-8" style={{ maxWidth: '520px', margin: '0 auto 32px' }}>
-                Every claim made on this platform has a corresponding on-chain record. The solvency console, proof-of-execution logs, and institutional disclosure are publicly accessible without login, without email, without narrative.
+              <p className="text-sm text-dl-gray leading-relaxed mb-8" style={{ maxWidth: '560px', margin: '0 auto 32px' }}>
+                No account. No email. No narrative required. The solvency console, proof-of-execution logs, institutional disclosure, and Observer dashboard are publicly accessible right now. Read the chain. Then choose your path.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap mb-4">
-                <Link href="/solvency" className="inline-flex items-center gap-2 border-2 border-dl-navy bg-dl-navy text-white px-6 py-3 text-xs font-bold hover:bg-transparent hover:text-dl-navy font-dl-mono uppercase tracking-wider">
-                  Live Solvency Console <ArrowRight className="w-3 h-3" />
-                </Link>
-                <Link href="/axau-early-access" className="inline-flex items-center gap-2 border border-dl-gold text-dl-gold px-6 py-3 text-xs font-bold hover:bg-dl-gold hover:text-white font-dl-mono uppercase tracking-wider">
-                  Apply for Reserve Access <ArrowRight className="w-3 h-3" />
-                </Link>
-                <Link href="/infrastructure" className="inline-flex items-center gap-2 border border-dl-border text-dl-navy px-6 py-3 text-xs font-bold hover:bg-dl-bg-alt font-dl-mono uppercase tracking-wider">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap mb-6">
+                <Link href="/infrastructure" className="inline-flex items-center gap-2 border-2 border-dl-navy bg-dl-navy text-white px-6 py-3 text-xs font-bold hover:bg-transparent hover:text-dl-navy font-dl-mono uppercase tracking-wider">
                   Verify the Infrastructure <ArrowRight className="w-3 h-3" />
                 </Link>
+                <Link href="/solvency" className="inline-flex items-center gap-2 border border-dl-gold text-dl-gold px-6 py-3 text-xs font-bold hover:bg-dl-gold hover:text-white font-dl-mono uppercase tracking-wider">
+                  Live Solvency Console <ArrowRight className="w-3 h-3" />
+                </Link>
+                <Link href="/axau-early-access" className="inline-flex items-center gap-2 border border-dl-navy text-dl-navy px-6 py-3 text-xs font-bold hover:bg-dl-navy hover:text-white font-dl-mono uppercase tracking-wider">
+                  Apply for Reserve Access <ArrowRight className="w-3 h-3" />
+                </Link>
                 <Link href="/disclosure" className="inline-flex items-center gap-2 border border-dl-border text-dl-navy px-6 py-3 text-xs font-bold hover:bg-dl-bg-alt font-dl-mono uppercase tracking-wider">
-                  Read Disclosure <ArrowRight className="w-3 h-3" />
+                  Institutional Disclosure <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
-              <p className="text-xs text-dl-gray font-dl-mono">L00 Banking · L01 Settlement · L01.5 Exchange · L02 Reserve · L03 Capital · L04 Intelligence · L05 Trust</p>
+              <div className="flex items-center justify-center gap-4 flex-wrap">
+                <Link href="/observer" className="text-xs text-dl-navy underline font-dl-mono">Observer Dashboard →</Link>
+                <Link href="/proof-of-execution" className="text-xs text-dl-navy underline font-dl-mono">Proof of Execution →</Link>
+                <Link href="/contact" className="text-xs text-dl-navy underline font-dl-mono">Contact the Team →</Link>
+              </div>
+              <p className="text-xs text-dl-gray font-dl-mono mt-5">L00 Banking · L01 Settlement · L01.5 Exchange · L02 Reserve · L03 Capital · L04 Intelligence · L05 Trust</p>
             </div>
           </div>
 

@@ -331,9 +331,12 @@ export default function AXUSD3643Page() {
               <span className="font-dl-mono text-xs text-dl-gold border border-dl-gold px-2 py-0.5">ERC-3643 T-REX Identity Standard</span>
               <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-2 py-0.5">LIVE</span>
             </div>
-            <h1 className="font-dl-serif text-3xl text-dl-navy mb-3">Unified AXUSD — Layer 01 Settlement Rail &amp; Identity Terminal</h1>
-            <p className="text-sm text-dl-gray leading-relaxed max-w-2xl">
-              AXUSD is the Axiom Protocol&apos;s Layer 01 settlement rail — not a generic stablecoin. It is identity-gated via ERC-3643, issued only through the live PSM, and functions as the mandatory unit of account for all capital movement across the protocol. This terminal manages credential issuance, compliance verification, PSM access, and on-chain identity claims. Arbitrum One.
+            <h1 className="font-dl-serif text-3xl text-dl-navy mb-3">Unified AXUSD — Layer 01 Settlement Rail<br /><span className="text-dl-gold" style={{ fontSize: '70%' }}>The Mandatory Unit of Account for All Capital in the Protocol</span></h1>
+            <p className="text-sm text-dl-gray leading-relaxed max-w-2xl mb-3">
+              AXUSD is not a generic stablecoin. It is the Axiom Protocol&apos;s Layer 01 settlement rail — identity-gated via ERC-3643, issued exclusively through the live PSM, and the mandatory unit of account for every capital movement across the protocol. No credential, no access. No anonymous positions. Fiat enters through L00 banking and converts to AXUSD here. AXUSD moves to the DEX (L01.5) for peg maintenance or to the AXAU reserve (L02) for reserve exposure. This terminal manages credential issuance, compliance verification, PSM access, and on-chain identity claims. Arbitrum One.
+            </p>
+            <p className="font-dl-mono text-xs text-dl-gray" style={{ letterSpacing: '0.05em' }}>
+              Not a yield instrument. Not a generic stablecoin. Infrastructure-grade settlement rail with on-chain identity enforcement.
             </p>
           </div>
           {/* Right: cinematic hero image */}

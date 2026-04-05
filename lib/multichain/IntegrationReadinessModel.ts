@@ -7,7 +7,25 @@
  *
  * Update these records as artifacts are gathered.
  * Set `gathered = true` and populate `location` when a file is received.
+ *
+ * ─── DB Integration ────────────────────────────────────────────────────────────
+ * The expansion_rail_integrations table provides DB-backed overrides for:
+ *   - docsAttached
+ *   - sdkReviewed
+ *   - sourceFilesAttached
+ *
+ * When a DB row exists for a chain, those values override the hardcoded
+ * 'missing' defaults. Use getAllReadinessWithDbOverride() for the live view.
+ * Use getAllReadiness() for the static view (no DB call required).
+ *
+ * To update a chain's readiness state without a code commit, use:
+ *   PATCH /api/infrastructure/readiness/:chainSlug  (admin-key required)
+ *   or update the expansion_rail_integrations table directly.
  */
+
+import { db } from '../../server/db';
+import { expansionRailIntegrations } from '../../shared/expansionSchema';
+import { eq } from 'drizzle-orm';
 
 export type ArtifactStatus = 'missing' | 'gathered' | 'reviewed' | 'integrated';
 export type ArtifactType =
@@ -29,15 +47,10 @@ export interface RequiredArtifact {
   name: string;
   type: ArtifactType;
   status: ArtifactStatus;
-  /** Official URL or source where this artifact can be obtained */
   sourceUrl: string | null;
-  /** Where the file lives in the repo once gathered */
   repoLocation: string | null;
-  /** Why this artifact is required */
   rationale: string;
-  /** True if implementation is blocked until this is gathered */
   blocksImplementation: boolean;
-  /** True if this requires a human business relationship to obtain */
   requiresPartnerRelationship: boolean;
 }
 
@@ -46,13 +59,13 @@ export interface ChainReadiness {
   displayName: string;
   status: string;
   implementationReady: boolean;
-  /** True when all blocking artifacts are gathered */
   canProceed: boolean;
   artifacts: RequiredArtifact[];
   blockingCount: number;
   gatheredCount: number;
   totalCount: number;
   nextActionItems: string[];
+  dbOverrideActive?: boolean;
 }
 
 // ─── Polygon Artifacts ───────────────────────────────────────────────────────
@@ -342,55 +355,30 @@ export const INTEGRATION_ARTIFACTS: Record<string, RequiredArtifact[]> = {
   cosmos: COSMOS_ARTIFACTS,
 };
 
+// ─── DB state type ─────────────────────────────────────────────────────────────
+
+interface DbRailState {
+  docsAttached: boolean;
+  sdkReviewed: boolean;
+  sourceFilesAttached: boolean;
+  notes: string | null;
+}
+
 // ─── Service ─────────────────────────────────────────────────────────────────
 
 export class IntegrationReadinessModel {
   /**
-   * Returns the readiness report for a specific chain.
+   * Returns the static readiness report for a specific chain.
+   * Does not read from DB — uses hardcoded artifact statuses only.
    */
   static getChainReadiness(chainSlug: string): ChainReadiness | null {
     const artifacts = INTEGRATION_ARTIFACTS[chainSlug];
     if (!artifacts) return null;
-
-    const displayNames: Record<string, string> = {
-      polygon: 'Polygon',
-      avalanche: 'Avalanche C-Chain',
-      stellar: 'Stellar',
-      canton: 'Canton Network',
-      cosmos: 'Cosmos / Axiom Hub',
-    };
-
-    const blocking = artifacts.filter(a => a.blocksImplementation && a.status === 'missing');
-    const gathered = artifacts.filter(a => a.status !== 'missing');
-
-    const canProceed = blocking.length === 0;
-
-    const nextActionItems = blocking.slice(0, 3).map(a => {
-      if (a.requiresPartnerRelationship) {
-        return `[PARTNERSHIP] Obtain: ${a.name}`;
-      }
-      if (a.type === 'architecture_decision') {
-        return `[DECISION] Make: ${a.name}`;
-      }
-      return `[COLLECT] Gather: ${a.name}${a.sourceUrl ? ` from ${a.sourceUrl}` : ''}`;
-    });
-
-    return {
-      chainSlug,
-      displayName: displayNames[chainSlug] || chainSlug,
-      status: 'researching',
-      implementationReady: false,
-      canProceed,
-      artifacts,
-      blockingCount: blocking.length,
-      gatheredCount: gathered.length,
-      totalCount: artifacts.length,
-      nextActionItems,
-    };
+    return this._buildReadiness(chainSlug, artifacts, false);
   }
 
   /**
-   * Returns readiness for all expansion chains.
+   * Returns readiness for all expansion chains (static only — no DB calls).
    */
   static getAllReadiness(): ChainReadiness[] {
     return Object.keys(INTEGRATION_ARTIFACTS)
@@ -399,8 +387,61 @@ export class IntegrationReadinessModel {
   }
 
   /**
+   * Returns readiness for all chains, with DB state applied as overrides.
+   * When expansion_rail_integrations has a row for a chain, its docsAttached,
+   * sdkReviewed, and sourceFilesAttached values override the hardcoded defaults.
+   *
+   * Use this in the readiness API for the live view.
+   * Falls back to static values if DB is unavailable.
+   */
+  static async getAllReadinessWithDbOverride(): Promise<ChainReadiness[]> {
+    let dbRows: Record<string, DbRailState> = {};
+
+    try {
+      const rows = await db.select().from(expansionRailIntegrations);
+      for (const row of rows) {
+        dbRows[row.chainSlug] = {
+          docsAttached: row.docsAttached,
+          sdkReviewed: row.sdkReviewed,
+          sourceFilesAttached: row.sourceFilesAttached,
+          notes: row.notes ?? null,
+        };
+      }
+    } catch {
+      // DB unavailable — return static values
+    }
+
+    return Object.keys(INTEGRATION_ARTIFACTS).map(chainSlug => {
+      const artifacts = INTEGRATION_ARTIFACTS[chainSlug];
+      const dbState = dbRows[chainSlug];
+
+      if (!dbState) {
+        return this._buildReadiness(chainSlug, artifacts, false);
+      }
+
+      const updatedArtifacts = artifacts.map(artifact => {
+        let overrideStatus: ArtifactStatus = artifact.status;
+
+        if (artifact.type === 'api_reference' && dbState.docsAttached) {
+          overrideStatus = 'gathered';
+        }
+        if (artifact.type === 'sdk_package' && dbState.sdkReviewed) {
+          overrideStatus = 'reviewed';
+        }
+        if (artifact.type === 'sdk_source' && dbState.sourceFilesAttached) {
+          overrideStatus = 'gathered';
+        }
+
+        return { ...artifact, status: overrideStatus };
+      });
+
+      return this._buildReadiness(chainSlug, updatedArtifacts, true);
+    });
+  }
+
+  /**
    * Returns a summary of which artifacts are missing across all chains.
-   * Designed for admin tooling and founder ops dashboard.
+   * Static only — no DB calls.
    */
   static getMissingArtifactSummary(): {
     chainSlug: string;
@@ -417,12 +458,55 @@ export class IntegrationReadinessModel {
 
       return {
         chainSlug: r.chainSlug,
-        displayName: r.displayName,
+        displayName: this._getDisplayName(r.chainSlug),
         missingCount: r.totalCount - r.gatheredCount,
         blockingCount: r.blockingCount,
         partnershipRequired,
         topBlocker,
       };
     });
+  }
+
+  // ─── Private helpers ────────────────────────────────────────────────────────
+
+  private static _buildReadiness(
+    chainSlug: string,
+    artifacts: RequiredArtifact[],
+    dbOverrideActive: boolean
+  ): ChainReadiness {
+    const blocking = artifacts.filter(a => a.blocksImplementation && a.status === 'missing');
+    const gathered = artifacts.filter(a => a.status !== 'missing');
+    const canProceed = blocking.length === 0;
+
+    const nextActionItems = blocking.slice(0, 3).map(a => {
+      if (a.requiresPartnerRelationship) return `[PARTNERSHIP] Obtain: ${a.name}`;
+      if (a.type === 'architecture_decision') return `[DECISION] Make: ${a.name}`;
+      return `[COLLECT] Gather: ${a.name}${a.sourceUrl ? ` from ${a.sourceUrl}` : ''}`;
+    });
+
+    return {
+      chainSlug,
+      displayName: this._getDisplayName(chainSlug),
+      status: 'researching',
+      implementationReady: false,
+      canProceed,
+      artifacts,
+      blockingCount: blocking.length,
+      gatheredCount: gathered.length,
+      totalCount: artifacts.length,
+      nextActionItems,
+      dbOverrideActive,
+    };
+  }
+
+  private static _getDisplayName(chainSlug: string): string {
+    const names: Record<string, string> = {
+      polygon: 'Polygon',
+      avalanche: 'Avalanche C-Chain',
+      stellar: 'Stellar',
+      canton: 'Canton Network',
+      cosmos: 'Cosmos / Axiom Hub',
+    };
+    return names[chainSlug] ?? chainSlug;
   }
 }

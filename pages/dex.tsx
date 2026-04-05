@@ -15,10 +15,10 @@ const TradingViewChart = dynamic(() => import('../components/dex/TradingViewChar
 });
 
 const DEX_HEADER = {
-  kicker: 'Layer 01.5 — Exchange + Peg Layer',
+  kicker: 'Layer 01.5 — Settlement Conversion + Peg Maintenance Layer',
   headline: 'Protocol Exchange',
-  subheadline: 'Settlement Conversion and Peg Maintenance Layer',
-  desc: 'The Axiom Protocol Exchange is not a generic DEX. It is the Layer 01.5 settlement conversion and peg maintenance layer — Camelot V2 infrastructure with AXM/AXUSD trading pairs, PSM-backed peg stabilization, and EulerSwap LP vaults for capital efficiency. All liquidity activity is governed by the protocol\'s identity framework.',
+  subheadline: 'Not a Generic DEX — the Settlement Infrastructure Between L01 and L02',
+  desc: 'The Protocol Exchange is the Layer 01.5 settlement conversion and peg maintenance system. Camelot V2 powers AXM/AXUSD trading pairs. The PSM maintains AXUSD at $1.00 by absorbing arbitrage directly against the USDC reserve. EulerSwap LP vaults add capital efficiency for credentialed participants. All liquidity activity is identity-gated via ERC-3643 — no anonymous LP positions. This layer sits between the AXUSD settlement rail (L01) and the AXAU reserve (L02), ensuring peg integrity without reliance on a single mechanism.',
 };
 
 type Tab = 'swap' | 'pools' | 'liquidity' | 'eulerswap-lp' | 'rewards' | 'earn';

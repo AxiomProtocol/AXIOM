@@ -305,9 +305,7 @@ export default function LendingFundPage() {
               <span className="text-dl-gold" style={{ fontSize: '60%' }}>Layer 03 Capital Deployment</span>
             </h1>
             <p className="text-sm text-dl-gray max-w-xl leading-relaxed mb-5">
-              Institutional-grade bridge capital for real asset acquisition and development — the Layer 03 capital deployment component of the Axiom financial operating system.
-              Every loan is secured by real property, underwritten at a maximum 70% LTV, settled in AXUSD on Arbitrum One, and recorded with an independently verifiable audit trail.
-              Designed to align with SEC Reg D 506(c). Accredited participants only. Target return is variable — not guaranteed.
+              The Axiom Lending Fund is Layer 03 of the financial operating system — purpose-built bridge capital for real asset acquisition. Every loan is secured by real property, underwritten at a maximum 70% LTV, denominated and settled in AXUSD on Arbitrum One, and recorded with a hash-chained on-chain audit trail independently verifiable by any participant. No narrative. Verify the loan ledger, the solvency console, and the proof-of-execution log yourself. Designed to align with SEC Reg D 506(c). Accredited participants only. Target return is variable — not guaranteed.
             </p>
             <div className="flex flex-wrap gap-2 mb-6">
               {[

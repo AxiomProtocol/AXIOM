@@ -91,11 +91,14 @@ function Hero() {
           fontWeight: 700, color: C.navy, lineHeight: 1.08,
           marginBottom: 14, letterSpacing: '-0.01em',
         }}>
-          AXAU — The Protocol&apos;s Gold Reserve Unit<br />
-          <span style={{ color: C.gold }}>PAXG-Backed. Identity-Gated. On-Chain.</span>
+          AXAU — Layer 02 Reserve Unit<br />
+          <span style={{ color: C.gold }}>Structured Around PAXG. Coverage-Enforced. On-Chain.</span>
         </h1>
-        <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 600, margin: '0 auto 16px', lineHeight: 1.75 }}>
-          AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — structured around PAXG-backed reserve positions on Arbitrum One, with coverage ratio enforced by the NAVEngine contract before every mint. Two access paths: <strong>Direct Mint</strong> (PAXG → AXAU, one transaction, subject to network confirmation) or <strong>Assisted Mint</strong> (AXUSD → AXAU via ops team, ~1 business day). ERC-3643 identity credential required for all interactions.
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, maxWidth: 640, margin: '0 auto 10px', lineHeight: 1.80 }}>
+          AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — the settlement destination for capital that has moved through the AXUSD rail and elected reserve exposure. Reserve positions are structured around PAXG on Arbitrum One. Coverage ratio is enforced on-chain by the NAVEngine contract before every mint — the system cannot over-issue by design. ERC-3643 identity credential required.
+        </p>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.muted, maxWidth: 600, margin: '0 auto 14px', lineHeight: 1.70, letterSpacing: '0.02em' }}>
+          Not a gold ETF. Not a wrapped token. A reserve unit with on-chain coverage enforcement and two independently verifiable access paths.
         </p>
         {/* Path comparison pills */}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20 }}>

@@ -875,11 +875,14 @@ export default function AxauBuyPage() {
             <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.border}`, background: C.bgAlt }}>Layer 02 Reserve · AXAU</span>
             <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.gold}40`, background: C.goldBg }}>Arbitrum One</span>
           </div>
-          <h1 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(28px, 5vw, 46px)', fontWeight: 700, color: C.navy, lineHeight: 1.08, margin: '0 0 14px' }}>
-            AXAU Reserve — Layer 02 Mint Terminal
+          <h1 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(28px, 5vw, 46px)', fontWeight: 700, color: C.navy, lineHeight: 1.08, margin: '0 0 10px' }}>
+            AXAU Reserve<br /><span style={{ color: C.gold, fontSize: '62%' }}>Layer 02 Issuance + Redemption Terminal — Coverage-Enforced On-Chain</span>
           </h1>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.08em', color: C.muted, margin: '0 0 14px' }}>
+            Not a gold ETF. Not a wrapped token. Reserve positions structured around PAXG — coverage ratio enforced before every mint by the NAVEngine automated control layer on Arbitrum One. Three access paths, all identity-gated.
+          </p>
           <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, lineHeight: 1.7, margin: '0 0 20px', maxWidth: 580 }}>
-            Two paths to the Layer 02 reserve layer. <strong>Direct Mint</strong>: deposit PAXG directly to the GoldVault automated control layer — coverage ratio verified on-chain before issuance, AXAU issued in the same transaction, no intermediary. <strong>Assisted Mint</strong>: spend AXUSD and the operations team acquires PAXG and deposits to the vault within 1 business day. <strong>Redeem</strong>: return AXAU to receive PAXG directly from the vault. All three paths require an ERC-3643 identity credential active on Arbitrum One. The system cannot mint above the coverage ratio floor — enforced on-chain, not by policy.
+            <strong>Direct Mint</strong>: deposit PAXG directly to the GoldVault automated control layer — coverage ratio verified on-chain before issuance, AXAU issued in the same transaction, no intermediary. <strong>Assisted Mint</strong>: spend AXUSD and the operations team acquires PAXG and deposits to the vault within 1 business day. <strong>Redeem</strong>: return AXAU to receive PAXG directly from the vault. All three paths require an ERC-3643 identity credential active on Arbitrum One. The system cannot over-issue — enforced on-chain, not by policy.
           </p>
 
           {/* Path quick-select */}
