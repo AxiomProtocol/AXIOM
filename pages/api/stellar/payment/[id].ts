@@ -17,42 +17,57 @@ import { db } from '../../../../server/db';
 import { stellarPaymentTransfers } from '../../../../shared/stellarSchema';
 import { eq } from 'drizzle-orm';
 
+// Strict UUID v4 pattern
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { id } = req.query;
-  if (typeof id !== 'string' || !id.match(/^[0-9a-f-]{36}$/)) {
-    return res.status(400).json({ error: 'Invalid transfer ID format. Must be a UUID.' });
+  const { id, wallet } = req.query;
+  if (typeof id !== 'string' || !UUID_RE.test(id)) {
+    return res.status(400).json({ error: 'Invalid transfer ID format. Must be a UUID v4.' });
   }
 
   res.setHeader('Cache-Control', 'no-store');
 
-  const adapter = getStellarPaymentAdapter('mainnet');
-  const state = await adapter.getTransferState(id);
-
-  if (!state) {
-    return res.status(404).json({ error: `Transfer ${id} not found` });
-  }
-
-  // Also return the interactive URL from DB (for pending transfers)
-  let interactiveUrl: string | null = null;
   try {
+    const adapter = getStellarPaymentAdapter('mainnet');
+
+    // Load DB record first for ownership check and interactive URL
     const records = await db
-      .select({ interactiveUrl: stellarPaymentTransfers.sep24InteractiveUrl })
+      .select()
       .from(stellarPaymentTransfers)
       .where(eq(stellarPaymentTransfers.id, id))
       .limit(1);
-    interactiveUrl = records[0]?.interactiveUrl ?? null;
-  } catch {
-    // ignore
-  }
 
-  return res.status(200).json({
-    transferId: id,
-    state,
-    interactiveUrl,
-    asOf: new Date().toISOString(),
-  });
+    const record = records[0] ?? null;
+
+    if (!record) {
+      return res.status(404).json({ error: `Transfer ${id} not found` });
+    }
+
+    // Ownership guard: if caller provides a wallet address, it must match the initiating address
+    if (wallet !== undefined) {
+      if (typeof wallet !== 'string' || !/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+        return res.status(400).json({ error: 'Invalid wallet address format.' });
+      }
+      if (record.senderWalletAddress.toLowerCase() !== wallet.toLowerCase()) {
+        return res.status(403).json({ error: 'Wallet address does not match transfer record.' });
+      }
+    }
+
+    const state = await adapter.getTransferState(id);
+
+    return res.status(200).json({
+      transferId: id,
+      state: state ?? null,
+      interactiveUrl: record.sep24InteractiveUrl ?? null,
+      asOf: new Date().toISOString(),
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Internal error fetching transfer state';
+    return res.status(500).json({ error: message, asOf: new Date().toISOString() });
+  }
 }

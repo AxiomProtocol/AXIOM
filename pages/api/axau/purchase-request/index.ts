@@ -4,13 +4,14 @@ import { axauPurchaseRequests } from '../../../../shared/axauSchema';
 import { t3KycSubmissions } from '../../../../shared/erc3643Schema';
 import { eq, desc, and, count, inArray } from 'drizzle-orm';
 import { sendAxauPurchaseRequestConfirmation } from '../../../../lib/email/resend';
+import { safeCompare } from '../../../../lib/solvency/ame/utils';
 
 const ADMIN_KEY = process.env.ADMIN_SOLVENCY_KEY;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     const adminKey = req.headers['x-admin-key'];
-    const isAdmin  = ADMIN_KEY && adminKey === ADMIN_KEY;
+    const isAdmin  = ADMIN_KEY && typeof adminKey === 'string' && safeCompare(adminKey, ADMIN_KEY);
 
     // Admin: return all orders
     if (isAdmin) {

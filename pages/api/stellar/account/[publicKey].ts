@@ -28,28 +28,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   res.setHeader('Cache-Control', 'no-store');
 
-  const adapter = getStellarPaymentAdapter('mainnet');
-  const accountInfo = await adapter.getAccountInfo(publicKey);
+  try {
+    const adapter = getStellarPaymentAdapter('mainnet');
+    const accountInfo = await adapter.getAccountInfo(publicKey);
 
-  const usdcBalance = accountInfo.balances.find(
-    b => b.asset.code === 'USDC' && b.asset.issuer === CIRCLE_USDC_ISSUER
-  );
+    const usdcBalance = accountInfo.balances.find(
+      b => b.asset.code === 'USDC' && b.asset.issuer === CIRCLE_USDC_ISSUER
+    );
 
-  const hasTrustline = !!usdcBalance;
+    const hasTrustline = !!usdcBalance;
 
-  return res.status(200).json({
-    publicKey,
-    exists: accountInfo.exists,
-    hasTrustline,
-    usdcBalance: usdcBalance?.balance ?? '0',
-    xlmBalance: accountInfo.balances.find(b => b.asset.isNative)?.balance ?? '0',
-    allBalances: accountInfo.balances,
-    sequenceNumber: accountInfo.sequenceNumber,
-    asOf: new Date().toISOString(),
-    note: hasTrustline
-      ? 'Account has USDC trustline. Ready to receive USDC from Circle anchor.'
-      : accountInfo.exists
-        ? 'Account exists but does not have a USDC trustline. Trustline must be established before receiving USDC.'
-        : 'Account not found on Stellar network. Account must be funded (minimum 1 XLM) before use.',
-  });
+    return res.status(200).json({
+      publicKey,
+      exists: accountInfo.exists,
+      hasTrustline,
+      usdcBalance: usdcBalance?.balance ?? '0',
+      xlmBalance: accountInfo.balances.find(b => b.asset.isNative)?.balance ?? '0',
+      allBalances: accountInfo.balances,
+      sequenceNumber: accountInfo.sequenceNumber,
+      asOf: new Date().toISOString(),
+      note: hasTrustline
+        ? 'Account has USDC trustline. Ready to receive USDC from Circle anchor.'
+        : accountInfo.exists
+          ? 'Account exists but does not have a USDC trustline. Trustline must be established before receiving USDC.'
+          : 'Account not found on Stellar network. Account must be funded (minimum 1 XLM) before use.',
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to fetch account info';
+    return res.status(500).json({ error: message, publicKey, asOf: new Date().toISOString() });
+  }
 }

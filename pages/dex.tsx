@@ -159,12 +159,12 @@ function EulerSwapLpTab() {
               <p className="font-dl-mono text-base text-dl-navy">{selectedPoolData.feeBps.toFixed(3)} bps</p>
             </div>
             <div>
-              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Swap Fee APY</p>
-              <p className="font-dl-mono text-base text-dl-navy">{(selectedPoolData.swapFeeApyBps / 100).toFixed(2)}% <span className="text-dl-gray text-xs">(variable)</span></p>
+              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Swap Fee Yield (Variable)</p>
+              <p className="font-dl-mono text-base text-dl-navy">{(selectedPoolData.swapFeeApyBps / 100).toFixed(2)}%</p>
             </div>
             <div>
-              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Lending Yield APY</p>
-              <p className="font-dl-mono text-base text-dl-navy">{(selectedPoolData.lendingApyBps / 100).toFixed(2)}% <span className="text-dl-gray text-xs">(variable)</span></p>
+              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Lending Yield (Variable)</p>
+              <p className="font-dl-mono text-base text-dl-navy">{(selectedPoolData.lendingApyBps / 100).toFixed(2)}%</p>
             </div>
           </div>
 
@@ -189,7 +189,7 @@ function EulerSwapLpTab() {
           <div className="p-4 bg-dl-bg-alt border-b border-dl-border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Blended APY (Swap Fees + Lending Yield)</p>
+                <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Blended Yield Rate (Swap Fees + Lending — Variable)</p>
                 <p className="font-dl-serif text-2xl text-dl-navy">{selectedPoolData.blendedApyPct}% <span className="text-sm text-dl-gray font-dl-mono">{selectedPoolData.blendedApyLabel}</span></p>
                 <p className="text-dl-gray text-xs mt-1">= {(selectedPoolData.swapFeeApyBps / 100).toFixed(2)}% swap fees + {(selectedPoolData.lendingApyBps / 100).toFixed(2)}% lending — both are variable and not guaranteed.</p>
               </div>

@@ -17,8 +17,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   res.setHeader('Cache-Control', 'no-store');
 
+  // Only Circle is integrated — reject unknown anchor IDs explicitly
+  const anchorId = req.query.anchorId ?? 'circle-stellar';
+  if (anchorId !== 'circle-stellar') {
+    return res.status(400).json({
+      error: `Anchor '${anchorId}' is not configured. Only 'circle-stellar' is currently integrated.`,
+      supportedAnchors: ['circle-stellar'],
+    });
+  }
+
   const adapter = getStellarPaymentAdapter('mainnet');
-  const anchorId = (req.query.anchorId as string) ?? 'circle-stellar';
 
   const [anchorStatus, toml] = await Promise.allSettled([
     adapter.getAnchorStatus(anchorId),

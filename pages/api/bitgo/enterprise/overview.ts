@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { bitGoRequest, isBitGoConfigured, BITGO_ENTERPRISE_ID, bitgoCoin, isTestnet, BITGO_API_URL } from '../../../../lib/bitgo/client';
 import { rateLimitDefault } from '../../../../lib/rateLimit';
+import { safeCompare } from '../../../../lib/solvency/ame/utils';
 
 const ADMIN_KEY = process.env.ADMIN_SOLVENCY_KEY;
 
@@ -10,8 +11,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   if (!rateLimitDefault(req, res)) return;
 
-  const adminKey = req.headers['x-admin-key'] ?? req.query.adminKey;
-  if (!adminKey || adminKey !== ADMIN_KEY) {
+  const provided = req.headers['x-admin-key'] ?? req.query.adminKey;
+  if (!ADMIN_KEY || typeof provided !== 'string' || !safeCompare(provided, ADMIN_KEY)) {
     return res.status(401).json({ error: 'Admin key required.' });
   }
 

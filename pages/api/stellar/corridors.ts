@@ -16,15 +16,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   res.setHeader('Cache-Control', 'no-store');
 
-  const adapter = getStellarPaymentAdapter('mainnet');
-  const corridors = await adapter.getAllCorridors();
+  try {
+    const adapter = getStellarPaymentAdapter('mainnet');
+    const corridors = await adapter.getAllCorridors();
 
-  return res.status(200).json({
-    schemaVersion: 'stellar-corridors-v1',
-    asOf: new Date().toISOString(),
-    totalCorridors: corridors.length,
-    availableCorridors: corridors.filter(c => c.status === 'available').length,
-    corridors,
-    raw: STELLAR_PLANNED_CORRIDORS,
-  });
+    return res.status(200).json({
+      schemaVersion: 'stellar-corridors-v1',
+      asOf: new Date().toISOString(),
+      totalCorridors: corridors.length,
+      availableCorridors: corridors.filter(c => c.status === 'available').length,
+      corridors,
+      raw: STELLAR_PLANNED_CORRIDORS,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to fetch corridors';
+    return res.status(500).json({ error: message, corridors: [], asOf: new Date().toISOString() });
+  }
 }

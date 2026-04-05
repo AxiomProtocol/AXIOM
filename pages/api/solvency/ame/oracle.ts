@@ -32,6 +32,15 @@ function buildInputsFromSnapshot(payload: any): AmeInputs | null {
     return null;
   }
 
+  // Require explicit redemption demand — fail closed instead of defaulting to hardcoded 15%
+  if (payload.estimatedRedemptionDemandUsd === undefined || payload.estimatedRedemptionDemandUsd === null) {
+    return null;
+  }
+  const estimatedRedemptionDemandUsd = Number(payload.estimatedRedemptionDemandUsd);
+  if (!Number.isFinite(estimatedRedemptionDemandUsd) || estimatedRedemptionDemandUsd < 0) {
+    return null;
+  }
+
   return {
     treasuryLiquidUsd,
     treasuryTotalUsd,
@@ -40,7 +49,7 @@ function buildInputsFromSnapshot(payload: any): AmeInputs | null {
     netExternalExposureUsd: liabilitiesTotalUsd,
     circulatingExposureUsd: liabilitiesTotalUsd,
     redemptionCapacityUsd,
-    estimatedRedemptionDemandUsd: liabilitiesTotalUsd > 0 ? liabilitiesTotalUsd * 0.15 : 0,
+    estimatedRedemptionDemandUsd,
     volatilitySignals: {
       pegDeviation: Number(payload.pegDeviation),
       liquidityDepthDrop: Number(payload.liquidityDepthDrop ?? 0),
