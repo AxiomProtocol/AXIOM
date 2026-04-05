@@ -119,7 +119,7 @@ function LiveDot({ ok }: { ok: boolean }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function StellarPaymentsPage() {
+export default function StellarPaymentsPage({ railEnabled }: { railEnabled: boolean }) {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [corridors, setCorridors] = useState<CorridorsResponse | null>(null);
   const [healthLoading, setHealthLoading] = useState(true);
@@ -438,7 +438,9 @@ export default function StellarPaymentsPage() {
           to complete destination details (bank account, recipient information). Transfer is tracked internally.
         </p>
 
-        {transferResult?.success && transferResult.interactiveUrl ? (
+        {railEnabled ? (
+          <>
+            {transferResult?.success && transferResult.interactiveUrl ? (
           <div style={{ background: '#f0faf0', border: '1px solid #2d7a2d', padding: '1.5rem', marginBottom: '1.5rem' }}>
             <p style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', color: '#1a5c1a', fontWeight: 700, marginBottom: '0.75rem' }}>
               Payment session created. Complete at Circle.
@@ -622,11 +624,29 @@ export default function StellarPaymentsPage() {
               {submitting ? 'INITIATING...' : 'INITIATE PAYMENT →'}
             </button>
             <p style={{ fontSize: '0.75rem', color: '#888', lineHeight: 1.5 }}>
-              You will be redirected to Circle's hosted UI to complete the withdrawal.
+              You will be redirected to Circle&#39;s hosted UI to complete the withdrawal.
               This action does not move funds — Circle initiates the transfer after you complete their flow.
             </p>
           </div>
         </form>
+          </>
+        ) : (
+          <div style={{ background: '#f8f9fb', border: '1px solid #b8860b', padding: '1.5rem' }}>
+            <p style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#b8860b', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
+              STATUS: CONFIGURED — NOT YET ACTIVATED
+            </p>
+            <p style={{ fontFamily: 'Georgia, serif', fontSize: '0.95rem', color: '#1e3a5f', marginBottom: '0.75rem' }}>
+              The Stellar payments rail is fully configured and integrated with Circle USDC on Stellar.
+              Payment initiation is not available until the rail is activated by the operations team.
+            </p>
+            <p style={{ fontSize: '0.8rem', color: '#666', lineHeight: 1.6 }}>
+              Network health and corridor data above reflect the live Stellar Horizon network.
+              Transfer initiation requires activation of the{' '}
+              <code style={{ fontFamily: 'monospace', background: '#eef0f4', padding: '1px 4px' }}>ENABLE_STELLAR_PAYMENTS_RAIL</code>{' '}
+              flag by the operations team.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* ── Architecture note ──────────────────────────────────────────────── */}
@@ -667,4 +687,12 @@ export default function StellarPaymentsPage() {
       </section>
     </DesignLawLayout>
   );
+}
+
+export async function getServerSideProps() {
+  return {
+    props: {
+      railEnabled: process.env.ENABLE_STELLAR_PAYMENTS_RAIL === 'true',
+    },
+  };
 }

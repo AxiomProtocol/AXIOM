@@ -19,13 +19,16 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { IntegrationReadinessModel } from '../../../lib/multichain/IntegrationReadinessModel';
 import { MultiChainRegistryService } from '../../../lib/multichain/MultiChainRegistryService';
 import { getAllExpansionFlags } from '../../../lib/multichain/featureFlags';
+import { safeCompare } from '../../../lib/solvency/ame/utils';
 
 function isAdminAuthorized(req: NextApiRequest): boolean {
   const adminKey = process.env.ADMIN_SOLVENCY_KEY;
   if (!adminKey) return false;
-  const headerKey = req.headers['x-admin-key'] as string | undefined;
-  const queryKey = req.query.key as string | undefined;
-  return headerKey === adminKey || queryKey === adminKey;
+  const headerKey = req.headers['x-admin-key'];
+  const queryKey = req.query.key;
+  if (typeof headerKey === 'string' && safeCompare(headerKey, adminKey)) return true;
+  if (typeof queryKey === 'string' && safeCompare(queryKey, adminKey)) return true;
+  return false;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

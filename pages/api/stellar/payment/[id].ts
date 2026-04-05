@@ -16,9 +16,17 @@ import { getStellarPaymentAdapter } from '../../../../lib/multichain/stellar/Ste
 import { db } from '../../../../server/db';
 import { stellarPaymentTransfers } from '../../../../shared/stellarSchema';
 import { eq } from 'drizzle-orm';
+import { safeCompare } from '../../../../lib/solvency/ame/utils';
 
 // Strict UUID v4 pattern
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isAdmin(req: NextApiRequest): boolean {
+  const adminKey = process.env.ADMIN_SOLVENCY_KEY;
+  if (!adminKey) return false;
+  const headerKey = req.headers['x-admin-key'];
+  return typeof headerKey === 'string' && safeCompare(headerKey, adminKey);
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -35,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const adapter = getStellarPaymentAdapter('mainnet');
 
-    // Load DB record first for ownership check and interactive URL
+    // Load DB record first — needed for ownership check and interactive URL
     const records = await db
       .select()
       .from(stellarPaymentTransfers)
@@ -48,9 +56,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ error: `Transfer ${id} not found` });
     }
 
-    // Ownership guard: if caller provides a wallet address, it must match the initiating address
-    if (wallet !== undefined) {
-      if (typeof wallet !== 'string' || !/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+    // Authorization: admin key OR verified wallet ownership — one is required.
+    // Without one of these, the endpoint returns 403 regardless of UUID knowledge.
+    if (!isAdmin(req)) {
+      if (typeof wallet !== 'string') {
+        return res.status(403).json({
+          error: 'Access denied. Provide wallet address matching transfer initiator, or admin key.',
+        });
+      }
+      if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
         return res.status(400).json({ error: 'Invalid wallet address format.' });
       }
       if (record.senderWalletAddress.toLowerCase() !== wallet.toLowerCase()) {
