@@ -8,14 +8,30 @@ import { AXAU_EARLY_ACCESS_CAP } from '../../../../lib/axauEarlyAccess';
 const VALID_DOC_TYPES = ['passport', 'drivers_license', 'national_id', 'residence_permit'];
 const ACTIVE_STATUSES = ['submitted', 'approved', 'activated'] as const;
 
+const VALID_COUNTRIES = new Set([
+  'US','CA','GB','AU','DE','FR','NL','CH','SG','AE',
+  'NG','GH','KE','ZA','JM','TT','BB','BS','BM','BR',
+  'MX','JP','KR','IN','OTHER',
+]);
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
+    const adminKey = req.headers['x-admin-key'];
+    if (!adminKey || adminKey !== process.env.ADMIN_SOLVENCY_KEY) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     const wallet = req.query.wallet as string;
     if (!wallet || !/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
       return res.status(400).json({ error: 'Valid wallet address required' });
     }
     try {
-      const submissions = await db.select()
+      const submissions = await db.select({
+        id: t3KycSubmissions.id,
+        walletAddress: t3KycSubmissions.walletAddress,
+        status: t3KycSubmissions.status,
+        country: t3KycSubmissions.country,
+        createdAt: t3KycSubmissions.createdAt,
+      })
         .from(t3KycSubmissions)
         .where(eq(t3KycSubmissions.walletAddress, wallet.toLowerCase()))
         .orderBy(t3KycSubmissions.createdAt);
@@ -42,7 +58,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: `Document type required. Valid: ${VALID_DOC_TYPES.join(', ')}` });
   }
 
+  const countryUpper = (country || 'US').toUpperCase().slice(0, 5);
+  if (!VALID_COUNTRIES.has(countryUpper)) {
+    return res.status(400).json({ error: 'Invalid country code. Please select a supported jurisdiction.' });
+  }
+
   const dob = new Date(dateOfBirth);
+  if (isNaN(dob.getTime())) {
+    return res.status(400).json({ error: 'Invalid date of birth.' });
+  }
   const age = (Date.now() - dob.getTime()) / (365.25 * 24 * 3600 * 1000);
   if (age < 18) {
     return res.status(400).json({ error: 'Must be at least 18 years old' });
@@ -93,20 +117,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(409).json({ error: 'This wallet has already submitted an early access application' });
     }
 
+    const emailValid = email && typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
     const [inserted] = await db.insert(t3KycSubmissions).values({
       walletAddress: walletAddress.toLowerCase(),
-      email: (email && typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-        ? email.toLowerCase().trim()
-        : null,
+      email: emailValid ? email.toLowerCase().trim() : null,
       fullName: fullName.trim(),
       dateOfBirth,
-      country: (country || 'US').toUpperCase().slice(0, 3),
+      country: countryUpper,
       documentType,
       status: 'submitted',
     }).returning();
 
     let emailQueued = false;
-    const emailValid = email && typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     if (emailValid) {
       try {
         await sendAxauEarlyAccessConfirmation({

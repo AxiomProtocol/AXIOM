@@ -1456,6 +1456,7 @@ export async function register() {
       await exec(`CREATE TABLE IF NOT EXISTS t3_kyc_submissions (
         id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
         wallet_address VARCHAR(42) NOT NULL,
+        email VARCHAR(256),
         full_name VARCHAR(256) NOT NULL,
         date_of_birth VARCHAR(10) NOT NULL,
         country VARCHAR(3) NOT NULL DEFAULT 'US',
@@ -1471,6 +1472,7 @@ export async function register() {
       )`, 't3_kyc_submissions');
       await exec(`CREATE INDEX IF NOT EXISTS idx_t3_kyc_wallet ON t3_kyc_submissions(wallet_address)`, 'idx t3_kyc_wallet');
       await exec(`CREATE INDEX IF NOT EXISTS idx_t3_kyc_status ON t3_kyc_submissions(status)`, 'idx t3_kyc_status');
+      await exec(`ALTER TABLE t3_kyc_submissions ADD COLUMN IF NOT EXISTS email VARCHAR(256)`, 't3_kyc_submissions add email');
 
       // Add expires_at and refresh_required_by to t3_claims if missing
       await exec(`ALTER TABLE t3_claims ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ`, 't3_claims add expires_at');
