@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createHash, createVerify } from 'crypto';
+import { createVerify, createPublicKey } from 'crypto';
 
 export const config = {
   api: {
@@ -14,8 +14,9 @@ const CIRCLE_IP_ALLOWLIST = new Set([
   '54.87.106.46',
 ]);
 
-const publicKeyCache = new Map<string, { key: string; expiresAt: number }>();
-const KEY_CACHE_TTL_MS = 5 * 60 * 1000;
+// Cache public keys by keyId — they are static per keyId per Circle docs
+const publicKeyCache = new Map<string, { pem: string; expiresAt: number }>();
+const KEY_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 const processedNotifications = new Map<string, number>();
 const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
@@ -29,23 +30,35 @@ function getRawBody(req: NextApiRequest): Promise<Buffer> {
   });
 }
 
-function spkiBase64ToPem(base64: string): string {
-  const b64 = base64.replace(/\s+/g, '');
-  const lines = b64.match(/.{1,64}/g) ?? [];
-  return `-----BEGIN PUBLIC KEY-----\n${lines.join('\n')}\n-----END PUBLIC KEY-----`;
-}
-
-async function fetchAndCachePublicKey(keyId: string): Promise<string> {
+// Fetch public key from Circle API by keyId, with in-memory cache
+async function getPublicKeyPem(keyId: string): Promise<string> {
   const cached = publicKeyCache.get(keyId);
-  if (cached && cached.expiresAt > Date.now()) return cached.key;
+  if (cached && cached.expiresAt > Date.now()) return cached.pem;
 
-  const publicKeyB64 = process.env.CIRCLE_WEBHOOK_PUBLIC_KEY ?? '';
-  if (!publicKeyB64) {
-    throw new Error('CIRCLE_WEBHOOK_PUBLIC_KEY not configured');
+  const apiKey = process.env.CIRCLE_API_KEY ?? process.env.CIRCLE_COMPLIANCE_API_KEY ?? '';
+  if (!apiKey) throw new Error('No Circle API key configured (CIRCLE_API_KEY or CIRCLE_COMPLIANCE_API_KEY)');
+
+  const res = await fetch(`https://api.circle.com/v2/notifications/publicKey/${keyId}`, {
+    headers: {
+      accept: 'application/json',
+      authorization: `Bearer ${apiKey}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Circle publicKey fetch failed: ${res.status} ${res.statusText}`);
   }
 
-  const pem = spkiBase64ToPem(publicKeyB64);
-  publicKeyCache.set(keyId, { key: pem, expiresAt: Date.now() + KEY_CACHE_TTL_MS });
+  const json = await res.json();
+  const base64Key: string = json?.data?.publicKey;
+  if (!base64Key) throw new Error('No publicKey in Circle response');
+
+  // Convert DER/SPKI base64 → Node crypto KeyObject → PEM
+  const derBytes = Buffer.from(base64Key, 'base64');
+  const keyObject = createPublicKey({ key: derBytes, format: 'der', type: 'spki' });
+  const pem = keyObject.export({ type: 'spki', format: 'pem' }) as string;
+
+  publicKeyCache.set(keyId, { pem, expiresAt: Date.now() + KEY_CACHE_TTL_MS });
   return pem;
 }
 
@@ -54,7 +67,7 @@ function verifySignature(pem: string, signature: string, body: Buffer): boolean 
     const verify = createVerify('sha256');
     verify.update(body);
     const sigBuffer = Buffer.from(signature, 'base64');
-    return verify.verify({ key: pem, format: 'pem' }, sigBuffer);
+    return verify.verify({ key: pem, format: 'pem', dsaEncoding: 'der' }, sigBuffer);
   } catch {
     return false;
   }
@@ -69,8 +82,10 @@ function pruneIdempotencyStore(): void {
 
 async function processCircleEvent(type: string, data: unknown): Promise<void> {
   console.log(`[webhook/circle] processing event type=${type}`);
-
   switch (type) {
+    case 'webhooks.test':
+      console.log('[webhook/circle] test notification received — subscription active');
+      break;
     case 'wallet.created':
     case 'user.created':
     case 'transaction.confirmed':
@@ -82,10 +97,16 @@ async function processCircleEvent(type: string, data: unknown): Promise<void> {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Circle registration sends a HEAD request to verify the endpoint is reachable
+  if (req.method === 'HEAD') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // IP allowlist — only enforced in production
   const clientIp =
     (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ??
     (req.socket as any)?.remoteAddress ??
@@ -102,11 +123,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const signature = req.headers['x-circle-signature'] as string | undefined;
 
   if (!keyId || !signature) {
+    console.warn('[webhook/circle] missing signature headers');
     return res.status(400).json({ error: 'Missing signature headers' });
   }
 
   try {
-    const pem = await fetchAndCachePublicKey(keyId);
+    const pem = await getPublicKeyPem(keyId);
     const valid = verifySignature(pem, signature, rawBody);
     if (!valid) {
       console.warn('[webhook/circle] invalid signature');
@@ -135,11 +157,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   processedNotifications.set(notificationId, Date.now());
 
+  // Respond immediately — Circle enforces a 5-second timeout
   res.status(200).json({ received: true });
 
   try {
     await logWebhookEvent(payload);
-    await processCircleEvent(payload?.notificationType ?? payload?.type ?? '', payload?.data);
+    await processCircleEvent(payload?.notificationType ?? payload?.type ?? '', payload?.notification ?? payload?.data);
   } catch (err: any) {
     console.error('[webhook/circle] async processing error:', err.message);
   }
@@ -161,5 +184,6 @@ async function logWebhookEvent(payload: any): Promise<void> {
       ]
     );
   } catch {
+    // DB logging is non-critical — do not surface errors to caller
   }
 }
