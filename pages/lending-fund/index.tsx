@@ -301,13 +301,14 @@ export default function LendingFundPage() {
             </div>
             <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">SEC Reg D 506(c) | Accredited Participants Only</p>
             <h1 className="font-dl-serif text-3xl md:text-5xl text-dl-navy leading-tight mb-4">
-              Axiom<br />Lending Fund
+              Axiom Lending Fund<br />
+              <span className="text-dl-gold" style={{ fontSize: '60%' }}>Layer 03 Capital Deployment</span>
             </h1>
             <p className="text-sm text-dl-gray max-w-xl leading-relaxed mb-5">
-              Institutional-grade bridge capital for real asset acquisition and development.
+              Institutional-grade bridge capital for real asset acquisition and development — the Layer 03 capital deployment component of the Axiom financial operating system.
               Every loan is secured by real property with conservative 70% LTV underwriting,
-              on-chain settlement via AXUSD, and a complete audit trail on Arbitrum One.
-              Designed to align with SEC Reg D 506(c) — accredited participants only.
+              AXUSD on-chain settlement, and a verifiable audit trail on Arbitrum One.
+              Designed to align with SEC Reg D 506(c). Accredited participants only.
             </p>
             <div className="flex flex-wrap gap-2 mb-6">
               {[

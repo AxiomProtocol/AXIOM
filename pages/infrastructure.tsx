@@ -2,147 +2,170 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout } from '../components/design-law';
 
-// ─── Palette ─────────────────────────────────────────────────────────────────
 const C = {
-  navy:   '#1B2A4A',
-  forest: '#1D3D2A',
-  gold:   '#B8973A',
-  muted:  'rgba(27,42,74,0.50)',
-  border: 'rgba(27,42,74,0.18)',
-  surface: '#F8F6F0',
+  navy:   '#1e3a5f',
+  forest: '#2d6a4f',
+  gold:   '#b8860b',
+  muted:  '#6b7280',
+  border: '#d1d5db',
   bg:     '#ffffff',
-  bgAlt:  '#F8F6F0',
+  bgAlt:  '#fafaf8',
+  bgGold: '#fdf8ee',
 };
 
-const mono: React.CSSProperties = { fontFamily: 'monospace', fontSize: 11, color: C.muted, letterSpacing: '0.04em' };
-const monoLabel: React.CSSProperties = { ...mono, textTransform: 'uppercase' as const, letterSpacing: '0.08em', fontSize: 10 };
-const serif = (size = 16, color = C.navy): React.CSSProperties => ({ fontFamily: 'Georgia, serif', fontSize: size, color, fontWeight: 400 });
+const mono: React.CSSProperties = { fontFamily: '"Courier New", monospace', fontSize: 11, color: C.muted, letterSpacing: '0.04em' };
+const monoLabel: React.CSSProperties = { ...mono, textTransform: 'uppercase' as const, letterSpacing: '0.10em', fontSize: 10 };
+const serif = (size = 16, color = C.navy): React.CSSProperties => ({ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: size, color, fontWeight: 400 });
 
 const DIFFERENTIATORS = [
   {
-    label: 'Direct Reserve Issuance',
-    desc: 'AXAU is minted directly on-chain via the GoldVault contract — no intermediary, no wrapped token. PAXG is deposited, coverage is validated, AXAU is issued in a single transaction.',
-    status: 'LIVE',
+    label: 'FDIC-Insured Banking Layer',
+    badge: 'L00 · LIVE',
+    desc: 'Fiat capital enters through a real institutional bank account — First Internet Bank via Increase ACH/wire rails. No crypto-only on-ramp. BitGo institutional custody handles the on-chain layer.',
   },
   {
-    label: 'Settlement Layer',
-    desc: 'AXUSD is not a wrapper. It is the protocol\'s identity-gated settlement unit — backed by a live PSM, governed by a coverage ratio, and required for capital movement across the stack.',
-    status: 'LIVE',
+    label: 'Identity-Gated Settlement Rail',
+    badge: 'L01 · LIVE',
+    desc: 'AXUSD is not a wrapped stablecoin. It is issued through a live PSM, requires an ERC-3643 identity credential, and functions as the exclusive unit of account for capital movement across the entire protocol.',
   },
   {
-    label: 'Banking Infrastructure',
-    desc: 'Fiat capital enters through an FDIC-insured institutional account at First Internet Bank via Increase ACH/wire rails. BitGo institutional custody handles the crypto layer.',
-    status: 'LIVE',
+    label: 'Direct On-Chain Reserve Issuance',
+    badge: 'L02 · LIVE',
+    desc: 'AXAU is minted directly against PAXG via the GoldVault automated control layer. One transaction. No intermediary. Coverage ratio is enforced on-chain before every mint. Identity credential required.',
   },
   {
-    label: 'Proof of Execution',
-    desc: 'Every operational action is recorded with a hash-chained audit trail. Solvency snapshots, capital movements, and governance decisions are publicly verifiable — not attested, verified.',
-    status: 'LIVE',
+    label: 'Proof of Execution — Not Attestation',
+    badge: 'L05 · LIVE',
+    desc: 'Every capital movement, solvency snapshot, and operational action is recorded with a hash-chained audit trail. The chain does not require trust — it requires reading. Anyone can verify independently.',
   },
   {
-    label: 'Solvency Visibility',
-    desc: 'The solvency console publishes coverage ratio, reserve ratio, and liability-backed reserve in real time. Derived from a canonical on-chain snapshot. Not a dashboard — a verification layer.',
-    status: 'LIVE',
+    label: 'Three-Mode Solvency Console',
+    badge: 'L05 · LIVE',
+    desc: 'Coverage ratio, reserve ratio, and liability-backed reserve are published live from a canonical on-chain snapshot. Derived from verifiable data. Not a dashboard — a verification layer with public access.',
   },
   {
-    label: 'Regime Intelligence',
-    desc: 'MIRDT scores nine capital dimensions to produce a live advisory signal for capital deployment readiness. Sentinel gates authorization decisions. Observer provides institutional-grade read access.',
-    status: 'LIVE',
+    label: 'Capital Regime Intelligence',
+    badge: 'L04 · LIVE',
+    desc: 'MIRDT scores nine dimensions of capital regime readiness to generate a live advisory signal. Sentinel gates authorization decisions. Observer provides institutional read access to treasury and risk data.',
   },
 ];
 
 const LIVE_NOW = [
-  { layer: '00', name: 'Banking Infrastructure', detail: 'Increase ACH/wire · FDIC-insured · BitGo custody', href: '/banking' },
-  { layer: '01', name: 'AXUSD Settlement Rail', detail: 'ERC-3643 stablecoin · PSM active · Identity-gated', href: '/axusd-3643' },
-  { layer: '01.5', name: 'Protocol Exchange', detail: 'Camelot V2 DEX · AXM/AXUSD pairs · PSM conversion', href: '/dex' },
-  { layer: '02', name: 'AXAU Reserve', detail: 'PAXG-backed · Direct mint/redeem · Coverage enforced', href: '/axau' },
-  { layer: '04', name: 'Regime Intelligence', detail: 'MIRDT nine-dimension scoring · Sentinel gate · Observer', href: '/mirdt' },
-  { layer: '05', name: 'Solvency Console', detail: 'Three-mode live verification · On-chain snapshot · Public', href: '/solvency' },
+  { layer: '00', name: 'Banking Infrastructure', detail: 'Increase ACH/wire · FDIC-insured (First Internet Bank) · BitGo institutional custody active', href: '/banking', status: 'LIVE' },
+  { layer: '01', name: 'AXUSD Settlement Rail', detail: 'ERC-3643 stablecoin · PSM active · Identity-gated · Peg maintained via Camelot V2', href: '/axusd-3643', status: 'LIVE' },
+  { layer: '01.5', name: 'Protocol Exchange (DEX)', detail: 'Camelot V2 · AXM/AXUSD trading pairs · PSM-backed peg maintenance', href: '/dex', status: 'LIVE' },
+  { layer: '02', name: 'AXAU Reserve', detail: 'PAXG-backed · Direct on-chain mint/redeem · GoldVault contract · Coverage ratio enforced', href: '/axau', status: 'LIVE' },
+  { layer: '03', name: 'Capital Program (Reg D)', detail: 'SPV-structured · 506(c) · Accredited investors · Formation stage', href: '/pilot', status: 'FORMATION' },
+  { layer: '03', name: 'Lending Fund (Reg D)', detail: 'Bridge loan mandate · LP fund · 506(c) · Accepting expressions of interest', href: '/lending-fund', status: 'FORMATION' },
+  { layer: '04', name: 'Regime Intelligence (MIRDT)', detail: 'Nine-dimension capital regime scoring · Sentinel authorization gate · Observer read access', href: '/mirdt', status: 'LIVE' },
+  { layer: '05', name: 'Solvency Console', detail: 'Three-mode live verification · CR / RR / LBR · Canonical on-chain snapshot · Publicly accessible', href: '/solvency', status: 'LIVE' },
+  { layer: '05', name: 'Proof of Execution', detail: 'Hash-chained audit trail · All operational actions · Independently verifiable', href: '/proof-of-execution', status: 'LIVE' },
+  { layer: '05', name: 'Institutional Disclosure', detail: 'Contract addresses · Coverage formulas · Policy mode · Legal framework', href: '/disclosure', status: 'LIVE' },
 ];
 
-const SYSTEM_FLOW = [
-  { step: 'USD', label: 'Fiat Entry', sub: 'ACH / Wire via Increase', color: C.forest },
-  { step: 'AXUSD', label: 'Settlement', sub: 'ERC-3643 · PSM-backed', color: C.navy },
-  { step: 'DEX / PSM', label: 'Exchange', sub: 'Peg maintenance · Liquidity', color: C.gold },
-  { step: 'AXAU', label: 'Reserve', sub: 'PAXG-backed · Identity-gated', color: C.gold },
-  { step: 'Capital', label: 'Deployment', sub: 'Lending Fund · SPVs', color: C.forest },
+const CAPITAL_FLOW = [
+  { step: 'USD', label: 'Fiat Entry', sub: 'Banking Layer — ACH / Wire via Increase · FDIC-insured', color: C.forest, layer: 'L00' },
+  { step: 'AXUSD', label: 'Settlement Rail', sub: 'Identity-gated ERC-3643 · PSM-backed peg · Unit of account', color: C.navy, layer: 'L01' },
+  { step: 'DEX / PSM', label: 'Exchange + Peg', sub: 'Camelot V2 · Peg maintenance · AXM liquidity', color: C.gold, layer: 'L01.5' },
+  { step: 'AXAU', label: 'Reserve Layer', sub: 'PAXG-backed gold unit · Direct on-chain · Coverage enforced', color: C.gold, layer: 'L02' },
+  { step: 'Capital', label: 'Deployment', sub: 'Lending Fund · Capital Program SPVs · Reg D 506(c)', color: C.forest, layer: 'L03' },
 ];
 
 const WHO_ITS_FOR = [
   {
-    segment: 'Starting Participants',
-    desc: 'No initial capital required. Enter through the community credit line, build a participation record, and progress into group economics and deal access.',
+    segment: 'No Capital — Income-Backed Entry',
     path: 'Community Credit → Wealth Practice → Syndication',
+    desc: 'An income-backed credit line covers your first contribution. No crypto, no savings buffer required. Build a verifiable participation record and progress into group economics and structured deal access.',
     href: '/community-credit',
     cta: 'Apply for Entry Credit',
+    borderColor: C.forest,
   },
   {
-    segment: 'Capital Allocators',
-    desc: 'Access Reg D 506(c) structured offerings, the bridge loan LP fund, and secondary market transfers with on-chain reporting and institutional disclosure.',
-    path: 'Syndication → Lending Fund → Secondary',
+    segment: 'Capital Allocators and Accredited Investors',
+    path: 'Syndication → Lending Fund → Secondary Market',
+    desc: 'Access Reg D 506(c) structured offerings, the bridge loan LP fund, and secondary market transfers — with on-chain reporting, institutional-grade solvency disclosure, and independently verifiable data.',
     href: '/syndication',
     cta: 'View Capital Programs',
+    borderColor: C.navy,
   },
   {
-    segment: 'Reserve Participants',
-    desc: 'Obtain an ERC-3643 identity credential. Mint AXAU (gold-backed) or AXUSD (settlement unit). Participate in on-chain governance. Direct on-chain access.',
+    segment: 'Reserve and Settlement Participants',
     path: 'Identity Credential → AXAU / AXUSD Access',
+    desc: 'Obtain an ERC-3643 identity credential. Mint AXAU (gold-backed reserve unit) directly on-chain, or acquire AXUSD through the PSM. Governance participation rights are included with credential.',
     href: '/axau-early-access',
     cta: 'Apply for Reserve Access',
+    borderColor: C.gold,
   },
   {
-    segment: 'Operators and Builders',
-    desc: 'Access deal intelligence, underwriting tools, cost estimation, regime scoring, and the full operations dashboard for active deal sourcing and deployment.',
-    path: 'Deal Intelligence → MIRDT → Sentinel',
+    segment: 'Operators, Builders, and Deal Sourcers',
+    path: 'Deal Intelligence → MIRDT Regime Score → Sentinel',
+    desc: 'Access deal intelligence, underwriting tools, craftsman cost estimation, regime scoring, and the full operations dashboard. Purpose-built for active deal sourcing, due diligence, and capital deployment.',
     href: '/deal-intelligence',
     cta: 'Access Intelligence Layer',
+    borderColor: C.muted,
   },
 ];
 
 const PROOF_LINKS = [
-  { label: 'Proof of Execution', sub: 'Hash-chained audit trail of all operational actions', href: '/proof-of-execution' },
-  { label: 'Solvency Console', sub: 'Coverage ratio, reserve ratio, and LBR — live from chain', href: '/solvency' },
-  { label: 'Institutional Disclosure', sub: 'Contracts, policy mode, coverage formulas, and legal framework', href: '/disclosure' },
-  { label: 'Observer Dashboard', sub: 'Treasury, governance, and risk — independent read access', href: '/observer' },
+  { label: 'Proof of Execution', sub: 'Hash-chained audit trail of all operational actions. Publicly verifiable. No account required.', href: '/proof-of-execution', badge: 'LIVE' },
+  { label: 'Solvency Console', sub: 'Coverage ratio, reserve ratio, and LBR — live from a canonical on-chain snapshot.', href: '/solvency', badge: 'LIVE' },
+  { label: 'Institutional Disclosure', sub: 'Contract addresses, policy mode, coverage formulas, and complete legal framework.', href: '/disclosure', badge: 'LIVE' },
+  { label: 'Observer Dashboard', sub: 'Treasury, governance, and risk data — independent read access. No login.', href: '/observer', badge: 'LIVE' },
 ];
+
+function StatusBadge({ status }: { status: string }) {
+  const isLive = status === 'LIVE';
+  return (
+    <span style={{
+      fontFamily: '"Courier New", monospace', fontSize: 9,
+      padding: '2px 8px',
+      border: `1px solid ${isLive ? C.forest : C.gold}`,
+      color: isLive ? C.forest : C.gold,
+      letterSpacing: '0.10em', textTransform: 'uppercase' as const,
+      display: 'inline-block',
+    }}>
+      {status}
+    </span>
+  );
+}
 
 export default function InfrastructurePage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Axiom Protocol | Live Financial Infrastructure — Verify the System</title>
-        <meta name="description" content="Axiom Protocol is a vertically integrated financial operating system: banking, settlement, reserve, capital deployment, and intelligence — all on Arbitrum One. Verify the infrastructure, not the narrative." />
+        <title>Axiom Protocol | Verify the Infrastructure — Banking, Settlement, Reserve, Capital</title>
+        <meta name="description" content="Axiom Protocol is a vertically integrated financial operating system: FDIC-insured banking, identity-gated settlement, gold-backed reserve issuance, and capital deployment — all on Arbitrum One. Not a narrative. Verify it." />
       </Head>
 
-      {/* PAGE HEADER */}
-      <div style={{ marginBottom: 8 }}>
-        <p style={monoLabel}>Axiom Protocol / Infrastructure Overview</p>
+      {/* PAGE BREADCRUMB */}
+      <div style={{ marginBottom: 10 }}>
+        <p style={monoLabel}>Axiom Protocol / Infrastructure / System Overview</p>
       </div>
 
-      {/* ── SECTION 1: HERO ─────────────────────────────────────────────────── */}
-      <div style={{ borderTop: `4px solid ${C.gold}`, marginBottom: 48 }}>
-        <div style={{ padding: '56px 0 48px', borderBottom: `1px solid ${C.border}` }}>
-          <p style={{ ...monoLabel, color: C.forest, marginBottom: 16 }}>
-            Most &quot;RWA&quot; projects are token wrappers. This is infrastructure.
+      {/* ── SECTION 1: HERO ───────────────────────────────────────────────────── */}
+      <div style={{ borderTop: `4px solid ${C.gold}`, marginBottom: 56 }}>
+        <div style={{ padding: '52px 0 48px', borderBottom: `1px solid ${C.border}` }}>
+          <p style={{ ...monoLabel, color: C.forest, marginBottom: 16, fontSize: 11 }}>
+            Most &ldquo;RWA&rdquo; platforms are marketing decks. This is verifiable infrastructure.
           </p>
-          <h1 style={{ ...serif(42), fontWeight: 700, lineHeight: 1.1, marginBottom: 20, maxWidth: 640 }}>
-            Reserve. Settlement. Capital Deployment.<br />
-            <span style={{ color: C.gold }}>One Connected System.</span>
+          <h1 style={{ ...serif(44), fontWeight: 700, lineHeight: 1.08, marginBottom: 22, maxWidth: 700 }}>
+            Sovereign Financial Infrastructure.<br />
+            <span style={{ color: C.gold }}>Banking. Settlement. Reserve. Capital.</span>
           </h1>
-          <p style={{ ...serif(16), color: C.muted, maxWidth: 580, lineHeight: 1.75, marginBottom: 32 }}>
-            Axiom Protocol is a vertically integrated financial operating system — banking layer, settlement rail, reserve issuance, capital deployment, and regime intelligence — built on Arbitrum One with full on-chain transparency.
+          <p style={{ ...serif(16), color: C.muted, maxWidth: 600, lineHeight: 1.80, marginBottom: 14 }}>
+            Axiom Protocol is a vertically integrated financial operating system — FDIC-insured banking, identity-gated settlement rail, gold-backed reserve issuance, capital deployment programs, and regime intelligence — built on Arbitrum One with full on-chain transparency.
           </p>
-          <p style={{ ...monoLabel, color: C.muted, marginBottom: 28 }}>
-            Not a narrative. Verify it.
+          <p style={{ ...mono, fontSize: 12, color: C.muted, marginBottom: 32, fontStyle: 'italic' }}>
+            Seven layers. All independently verifiable. Not a promise — a contract address.
           </p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <Link href="/solvency" style={{ display: 'inline-block', background: C.navy, color: '#fff', padding: '12px 28px', fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>
-              View Live Infrastructure →
+            <Link href="/solvency" style={{ display: 'inline-block', background: C.navy, color: '#fff', padding: '12px 28px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>
+              Verify Solvency →
             </Link>
-            <Link href="/axau" style={{ display: 'inline-block', border: `1px solid ${C.gold}`, color: C.gold, padding: '12px 28px', fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none' }}>
+            <Link href="/axau" style={{ display: 'inline-block', border: `1px solid ${C.gold}`, color: C.gold, padding: '12px 28px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
               Access the Reserve
             </Link>
-            <Link href="/disclosure" style={{ display: 'inline-block', border: `1px solid ${C.border}`, color: C.navy, padding: '12px 28px', fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none' }}>
+            <Link href="/disclosure" style={{ display: 'inline-block', border: `1px solid ${C.border}`, color: C.navy, padding: '12px 28px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
               Read Disclosure
             </Link>
           </div>
@@ -152,29 +175,31 @@ export default function InfrastructurePage() {
       {/* ── SECTION 2: WHAT MAKES THIS DIFFERENT ───────────────────────────── */}
       <div style={{ marginBottom: 56 }}>
         <div style={{ marginBottom: 24 }}>
-          <p style={monoLabel}>Section 02 — The Infrastructure Moat</p>
-          <h2 style={{ ...serif(28), fontWeight: 600, marginTop: 6, marginBottom: 8 }}>What Makes This Different</h2>
-          <p style={{ ...mono, fontSize: 12, lineHeight: 1.7, maxWidth: 560 }}>
-            Six infrastructure properties that distinguish Axiom from a token project or a generic DeFi wrapper. Each is verifiable independently.
+          <p style={monoLabel}>Section 02 — Infrastructure Differentiators</p>
+          <h2 style={{ ...serif(30), fontWeight: 700, marginTop: 6, marginBottom: 8 }}>
+            Why This Is Infrastructure — Not a Token Project
+          </h2>
+          <p style={{ ...mono, fontSize: 12, lineHeight: 1.7, maxWidth: 580 }}>
+            Six properties that distinguish Axiom from a wrapped asset or generic DeFi protocol. Each is verifiable without trusting the team.
           </p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 0, border: `1px solid ${C.border}` }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 0, border: `1px solid ${C.border}` }}>
           {DIFFERENTIATORS.map((item, i) => (
             <div
               key={item.label}
               style={{
                 padding: '24px 22px',
-                borderBottom: `1px solid ${C.border}`,
+                borderBottom: i < DIFFERENTIATORS.length - 2 ? `1px solid ${C.border}` : 'none',
                 borderRight: i % 2 === 0 ? `1px solid ${C.border}` : 'none',
                 background: i % 2 === 0 ? C.bg : C.bgAlt,
                 borderLeft: `3px solid ${C.forest}`,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <p style={{ ...serif(14), fontWeight: 600, color: C.navy }}>{item.label}</p>
-                <span style={{ fontFamily: 'monospace', fontSize: 9, padding: '2px 7px', border: `1px solid ${C.forest}`, color: C.forest, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{item.status}</span>
+                <p style={{ ...serif(14), fontWeight: 700, color: C.navy }}>{item.label}</p>
+                <span style={{ ...monoLabel, color: C.forest, border: `1px solid ${C.forest}`, padding: '2px 7px' }}>{item.badge}</span>
               </div>
-              <p style={{ ...mono, fontSize: 12, lineHeight: 1.7, color: 'rgba(27,42,74,0.70)' }}>{item.desc}</p>
+              <p style={{ ...mono, fontSize: 12, lineHeight: 1.75, color: '#4b5563' }}>{item.desc}</p>
             </div>
           ))}
         </div>
@@ -184,15 +209,15 @@ export default function InfrastructurePage() {
       <div style={{ marginBottom: 56 }}>
         <div style={{ marginBottom: 24 }}>
           <p style={monoLabel}>Section 03 — Current Operational State</p>
-          <h2 style={{ ...serif(28), fontWeight: 600, marginTop: 6, marginBottom: 8 }}>Live Now</h2>
+          <h2 style={{ ...serif(30), fontWeight: 700, marginTop: 6, marginBottom: 8 }}>Live Now on Arbitrum One</h2>
           <p style={{ ...mono, fontSize: 12, lineHeight: 1.7 }}>
-            These components are active on Arbitrum One mainnet. Not demos. Not testnets.
+            These components are active on mainnet. Not demos. Not testnets. All independently verifiable on Arbiscan.
           </p>
         </div>
         <div style={{ border: `1px solid ${C.border}` }}>
           {LIVE_NOW.map((item, i) => (
             <Link
-              key={item.layer}
+              key={`${item.layer}-${item.name}`}
               href={item.href}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -202,21 +227,21 @@ export default function InfrastructurePage() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <span style={{ ...monoLabel, color: C.muted, minWidth: 32 }}>{item.layer}</span>
+                <span style={{ ...monoLabel, color: C.muted, minWidth: 36 }}>{item.layer}</span>
                 <div>
-                  <p style={{ ...serif(14), color: C.navy, fontWeight: 600, marginBottom: 2 }}>{item.name}</p>
-                  <p style={{ ...mono, fontSize: 11 }}>{item.detail}</p>
+                  <p style={{ ...serif(14), color: C.navy, fontWeight: 700, marginBottom: 3 }}>{item.name}</p>
+                  <p style={{ ...mono, fontSize: 11, lineHeight: 1.5 }}>{item.detail}</p>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontFamily: 'monospace', fontSize: 9, padding: '2px 8px', border: `1px solid ${C.forest}`, color: C.forest, letterSpacing: '0.1em', textTransform: 'uppercase' }}>LIVE</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, marginLeft: 16 }}>
+                <StatusBadge status={item.status} />
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
               </div>
             </Link>
           ))}
         </div>
-        <div style={{ borderTop: 'none', border: `1px solid ${C.border}`, padding: '10px 20px', background: C.bgAlt, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <p style={{ ...monoLabel, color: C.muted }}>Formation: Capital Program · Wealth Practice Groups · Land Pipeline</p>
+        <div style={{ border: `1px solid ${C.border}`, borderTop: 'none', padding: '10px 20px', background: C.bgAlt, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ ...monoLabel, color: C.muted }}>Formation: Wealth Practice Groups · Land Pipeline · Community Credit expansion</p>
           <Link href="/solvency" style={{ ...monoLabel, color: C.navy, textDecoration: 'underline' }}>Live solvency →</Link>
         </div>
       </div>
@@ -225,28 +250,34 @@ export default function InfrastructurePage() {
       <div style={{ marginBottom: 56 }}>
         <div style={{ marginBottom: 24 }}>
           <p style={monoLabel}>Section 04 — Capital Architecture</p>
-          <h2 style={{ ...serif(28), fontWeight: 600, marginTop: 6, marginBottom: 8 }}>How the System Flows</h2>
-          <p style={{ ...mono, fontSize: 12, lineHeight: 1.7, maxWidth: 520 }}>
-            Capital enters at the banking layer and flows through the settlement rail to the reserve or capital deployment layer. Each step is on-chain and independently verifiable.
+          <h2 style={{ ...serif(30), fontWeight: 700, marginTop: 6, marginBottom: 8 }}>How Capital Moves Through the System</h2>
+          <p style={{ ...mono, fontSize: 12, lineHeight: 1.7, maxWidth: 560 }}>
+            Fiat enters at the banking layer, converts to the settlement unit, and routes to the reserve or capital deployment layer. Every step is on-chain and independently verifiable.
           </p>
         </div>
         <div style={{ border: `1px solid ${C.border}`, overflow: 'hidden' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)' }}>
-            {SYSTEM_FLOW.map((node, i) => (
-              <div key={node.step} style={{ borderRight: i < SYSTEM_FLOW.length - 1 ? `1px solid ${C.border}` : 'none' }}>
+            {CAPITAL_FLOW.map((node, i) => (
+              <div key={node.step} style={{ borderRight: i < CAPITAL_FLOW.length - 1 ? `1px solid ${C.border}` : 'none' }}>
                 <div style={{ padding: '24px 18px', background: i % 2 === 0 ? C.bg : C.bgAlt }}>
-                  <p style={{ ...monoLabel, color: C.muted, marginBottom: 8 }}>{String(i + 1).padStart(2, '0')}</p>
-                  <p style={{ ...serif(20), fontWeight: 700, color: node.color, marginBottom: 4 }}>{node.step}</p>
-                  <p style={{ ...serif(13), fontWeight: 600, color: C.navy, marginBottom: 4 }}>{node.label}</p>
-                  <p style={{ ...mono, fontSize: 10, lineHeight: 1.5 }}>{node.sub}</p>
+                  <p style={{ ...monoLabel, color: C.muted, marginBottom: 6 }}>{node.layer}</p>
+                  <p style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 22, fontWeight: 700, color: node.color, marginBottom: 4 }}>{node.step}</p>
+                  <p style={{ ...serif(13), fontWeight: 700, color: C.navy, marginBottom: 5 }}>{node.label}</p>
+                  <p style={{ ...mono, fontSize: 10, lineHeight: 1.6 }}>{node.sub}</p>
                 </div>
                 <div style={{ height: 3, background: node.color }} />
+                {i < CAPITAL_FLOW.length - 1 && (
+                  <div style={{ textAlign: 'center', padding: '6px 0', background: i % 2 === 0 ? C.bg : C.bgAlt }}>
+                    <span style={{ ...mono, color: C.muted }}>→</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
           <div style={{ padding: '12px 20px', background: C.bgAlt, borderTop: `1px solid ${C.border}` }}>
-            <p style={{ ...mono, fontSize: 11, color: C.muted }}>
-              Direct on-chain path: PAXG → AXAU via GoldVault. Assisted path: USD → Banking → AXUSD → Ops-mediated AXAU fulfillment. Both paths require ERC-3643 identity credential.
+            <p style={{ ...mono, fontSize: 11, color: C.muted, lineHeight: 1.7 }}>
+              Direct path: PAXG → AXAU via GoldVault automated control layer (one transaction, identity required).
+              Assisted path: USD → Banking → AXUSD (PSM) → Ops-mediated AXAU fulfillment. Both paths require ERC-3643 credential.
             </p>
           </div>
         </div>
@@ -256,27 +287,29 @@ export default function InfrastructurePage() {
       <div style={{ marginBottom: 56 }}>
         <div style={{ marginBottom: 24 }}>
           <p style={monoLabel}>Section 05 — Access Paths</p>
-          <h2 style={{ ...serif(28), fontWeight: 600, marginTop: 6, marginBottom: 8 }}>Who This Is Built For</h2>
-          <p style={{ ...mono, fontSize: 12, lineHeight: 1.7 }}>Four entry paths. Each layer of the protocol is accessible — at the level that matches your position.</p>
+          <h2 style={{ ...serif(30), fontWeight: 700, marginTop: 6, marginBottom: 8 }}>Who This Is Built For</h2>
+          <p style={{ ...mono, fontSize: 12, lineHeight: 1.7 }}>
+            Four distinct access paths. Each layer of the protocol is designed for a specific participant type and capital position.
+          </p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 0, border: `1px solid ${C.border}` }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 0, border: `1px solid ${C.border}` }}>
           {WHO_ITS_FOR.map((profile, i) => (
             <div
               key={profile.segment}
               style={{
-                padding: '24px 20px',
+                padding: '26px 22px',
                 borderRight: i % 2 === 0 ? `1px solid ${C.border}` : 'none',
                 borderBottom: i < 2 ? `1px solid ${C.border}` : 'none',
                 background: i % 2 === 0 ? C.bg : C.bgAlt,
-                borderLeft: `3px solid ${C.navy}`,
+                borderLeft: `3px solid ${profile.borderColor}`,
               }}
             >
               <p style={{ ...monoLabel, color: C.gold, marginBottom: 10 }}>{profile.path}</p>
-              <p style={{ ...serif(16), fontWeight: 700, color: C.navy, marginBottom: 8 }}>{profile.segment}</p>
-              <p style={{ ...mono, fontSize: 12, lineHeight: 1.7, marginBottom: 16 }}>{profile.desc}</p>
+              <p style={{ ...serif(17), fontWeight: 700, color: C.navy, marginBottom: 10 }}>{profile.segment}</p>
+              <p style={{ ...mono, fontSize: 12, lineHeight: 1.75, marginBottom: 18, color: '#4b5563' }}>{profile.desc}</p>
               <Link
                 href={profile.href}
-                style={{ display: 'inline-block', border: `1px solid ${C.navy}`, color: C.navy, padding: '8px 18px', fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}
+                style={{ display: 'inline-block', border: `1px solid ${C.navy}`, color: C.navy, padding: '8px 18px', fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.09em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}
               >
                 {profile.cta} →
               </Link>
@@ -289,9 +322,9 @@ export default function InfrastructurePage() {
       <div style={{ marginBottom: 56 }}>
         <div style={{ marginBottom: 24 }}>
           <p style={monoLabel}>Section 06 — Verification Layer</p>
-          <h2 style={{ ...serif(28), fontWeight: 600, marginTop: 6, marginBottom: 8 }}>Verify. Don&apos;t Trust.</h2>
-          <p style={{ ...mono, fontSize: 12, lineHeight: 1.7, maxWidth: 520 }}>
-            Four independent access points for verification. Each is live. No account required. No email required.
+          <h2 style={{ ...serif(30), fontWeight: 700, marginTop: 6, marginBottom: 8 }}>Verify. Don&apos;t Trust.</h2>
+          <p style={{ ...mono, fontSize: 12, lineHeight: 1.7, maxWidth: 560 }}>
+            Four independent access points for verification. All live. No account required. No email required. No narrative required — just read the chain.
           </p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 0, border: `1px solid ${C.border}` }}>
@@ -301,14 +334,17 @@ export default function InfrastructurePage() {
               href={link.href}
               style={{
                 display: 'block', textDecoration: 'none',
-                padding: '22px 20px',
+                padding: '24px 22px',
                 borderRight: i < PROOF_LINKS.length - 1 ? `1px solid ${C.border}` : 'none',
                 background: i % 2 === 0 ? C.bg : C.bgAlt,
                 borderTop: `3px solid ${C.forest}`,
               }}
             >
-              <p style={{ ...serif(14), fontWeight: 700, color: C.navy, marginBottom: 6 }}>{link.label}</p>
-              <p style={{ ...mono, fontSize: 11, lineHeight: 1.6, marginBottom: 14 }}>{link.sub}</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <p style={{ ...serif(14), fontWeight: 700, color: C.navy }}>{link.label}</p>
+                <span style={{ ...monoLabel, color: C.forest, border: `1px solid ${C.forest}`, padding: '2px 6px' }}>{link.badge}</span>
+              </div>
+              <p style={{ ...mono, fontSize: 11, lineHeight: 1.7, marginBottom: 16, color: '#4b5563' }}>{link.sub}</p>
               <p style={{ ...monoLabel, color: C.navy }}>Verify →</p>
             </Link>
           ))}
@@ -316,31 +352,32 @@ export default function InfrastructurePage() {
       </div>
 
       {/* ── SECTION 7: FINAL CTA ────────────────────────────────────────────── */}
-      <div style={{ border: `1px solid ${C.border}`, borderTop: `4px solid ${C.navy}`, padding: '52px 40px', background: C.bgAlt, textAlign: 'center', marginBottom: 20 }}>
-        <p style={{ ...monoLabel, color: C.forest, marginBottom: 16 }}>The Axiom Protocol — Arbitrum One</p>
-        <h2 style={{ ...serif(36), fontWeight: 700, lineHeight: 1.15, marginBottom: 16, maxWidth: 520, margin: '0 auto 16px' }}>
+      <div style={{ border: `1px solid ${C.border}`, borderTop: `4px solid ${C.navy}`, padding: '56px 40px', background: C.bgAlt, textAlign: 'center', marginBottom: 24 }}>
+        <p style={{ ...monoLabel, color: C.forest, marginBottom: 16 }}>The Axiom Protocol — Arbitrum One — Chain ID 42161</p>
+        <h2 style={{ ...serif(38), fontWeight: 700, lineHeight: 1.12, maxWidth: 560, margin: '0 auto 18px' }}>
           Stop buying narratives.<br />Enter the infrastructure layer.
         </h2>
-        <p style={{ ...mono, fontSize: 13, lineHeight: 1.8, maxWidth: 480, margin: '0 auto 32px' }}>
-          The contracts are on-chain. The solvency data is public. The proof-of-execution logs are hash-chained. Every claim on this platform has a corresponding on-chain record.
+        <p style={{ ...mono, fontSize: 13, lineHeight: 1.85, maxWidth: 500, margin: '0 auto 34px', color: '#4b5563' }}>
+          The contracts are on-chain. The solvency data is public. The proof-of-execution logs are hash-chained.
+          Every claim on this platform has a corresponding on-chain record. Verify before engaging capital.
         </p>
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <Link href="/proof-of-execution" style={{ display: 'inline-block', background: C.navy, color: '#fff', padding: '13px 32px', fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>
+          <Link href="/proof-of-execution" style={{ display: 'inline-block', background: C.navy, color: '#fff', padding: '13px 32px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>
             Verify the System →
           </Link>
-          <Link href="/axau" style={{ display: 'inline-block', border: `1px solid ${C.gold}`, color: C.gold, padding: '13px 32px', fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none' }}>
+          <Link href="/axau" style={{ display: 'inline-block', border: `1px solid ${C.gold}`, color: C.gold, padding: '13px 32px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
             Access the Reserve
           </Link>
-          <Link href="/axau-early-access" style={{ display: 'inline-block', border: `1px solid ${C.border}`, color: C.navy, padding: '13px 32px', fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none' }}>
+          <Link href="/axau-early-access" style={{ display: 'inline-block', border: `1px solid ${C.border}`, color: C.navy, padding: '13px 32px', fontFamily: '"Courier New", monospace', fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase', textDecoration: 'none' }}>
             Apply for Access
           </Link>
         </div>
       </div>
 
-      {/* DISCLOSURE */}
+      {/* LEGAL DISCLOSURE */}
       <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
-        <p style={{ ...mono, fontSize: 10, lineHeight: 1.8, color: C.muted }}>
-          Axiom Protocol infrastructure is built on Arbitrum One. All on-chain data referenced on this page is independently verifiable via Arbiscan or the relevant on-chain contract. Capital programs (Lending Fund, SPV Capital Program) are offered under SEC Reg D 506(c) and are available to accredited investors only. AXAU and AXUSD require an active ERC-3643 identity credential. This page does not constitute a public offering or financial advice. System statuses reflect current operational state as of the date rendered — formation-stage components are not yet in production deployment. Contract addresses and coverage formulas are published in the Institutional Disclosure.
+        <p style={{ ...mono, fontSize: 10, lineHeight: 1.9, color: C.muted }}>
+          Axiom Protocol infrastructure is built on Arbitrum One (Chain ID 42161). All on-chain data referenced on this page is independently verifiable via Arbiscan or the relevant contract address. Capital programs (Lending Fund, SPV Capital Program) are offered under SEC Reg D 506(c) and are available to accredited investors only. AXAU and AXUSD require an active ERC-3643 identity credential. This page does not constitute a public offering, financial advice, or investment recommendation. System statuses reflect current operational state — formation-stage components are not yet in production deployment. Contract addresses and coverage formulas are published in the Institutional Disclosure document at /disclosure.
         </p>
       </div>
     </DesignLawLayout>

@@ -396,13 +396,13 @@ export default function AxauAccessPage() {
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, transparent 25%, ${C.navyDeep}e8 100%)` }} />
         <div style={{ position: 'absolute', bottom: 40, left: 40, right: '38%' }}>
           <p style={{ fontFamily: mono, fontSize: 10, letterSpacing: '0.2em', color: C.goldPale, textTransform: 'uppercase', margin: '0 0 10px' }}>
-            AXAU RESERVE · ARBITRUM ONE · ERC-3643
+            Layer 02 Reserve Infrastructure · Arbitrum One · ERC-3643 Identity-Gated
           </p>
-          <h1 style={{ fontFamily: serif, fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 700, color: '#ffffff', lineHeight: 1.0, margin: '0 0 14px', textShadow: `0 2px 16px ${C.navyDeep}` }}>
-            Own Gold.<br />On-Chain.
+          <h1 style={{ fontFamily: serif, fontSize: 'clamp(30px, 4.5vw, 52px)', fontWeight: 700, color: '#ffffff', lineHeight: 1.08, margin: '0 0 14px', textShadow: `0 2px 16px ${C.navyDeep}` }}>
+            Apply for Reserve Access.<br />Enter the Infrastructure Layer.
           </h1>
-          <p style={{ fontFamily: body, fontSize: 14, color: '#ffffffcc', lineHeight: 1.7, margin: '0 0 20px', maxWidth: 400 }}>
-            AXAU is a gold reserve unit backed 1:1 by PAXG. The first 100 verified participants gain minting access, founding participant status, and priority rights to future Axiom products.
+          <p style={{ fontFamily: body, fontSize: 14, color: '#ffffffcc', lineHeight: 1.75, margin: '0 0 20px', maxWidth: 420 }}>
+            AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — backed 1:1 by PAXG on Arbitrum One. Access requires an ERC-3643 identity credential. Founding participants gain direct mint access, priority rights, and on-chain governance participation.
           </p>
           <a href="#apply" style={{
             display: 'inline-block', padding: '12px 28px',

@@ -3,6 +3,8 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "../shared/schema";
 import * as contractSchema from '../shared/contractSchema';
 import * as axauSchema from '../shared/axauSchema';
+import * as treasurySchema from '../shared/treasurySchema';
+import * as allocationPolicySchema from '../shared/allocationPolicySchema';
 import {
   index,
   pgTable,
@@ -23,6 +25,8 @@ const dbSchema = {
   ...schema,
   ...contractSchema,
   ...axauSchema,
+  ...treasurySchema,
+  ...allocationPolicySchema,
 };
 
 function getPool(): Pool {

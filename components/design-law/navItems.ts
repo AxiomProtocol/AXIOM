@@ -7,10 +7,10 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: '/about-us', label: 'About' },
   { href: '/disclosure', label: 'Disclosure' },
+  { href: '/infrastructure', label: 'Infrastructure' },
   {
-    label: 'Infrastructure',
+    label: 'Stack',
     children: [
-      { href: '/infrastructure', label: 'System Overview' },
       { href: '/system-map', label: 'System Map' },
       { href: '/axau', label: 'AXAU Reserve' },
       { href: '/axusd-3643', label: 'AXUSD Settlement Rail' },
@@ -50,7 +50,7 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
-    label: 'Protocol',
+    label: 'Operations',
     children: [
       { href: '/proof-of-execution', label: 'Proof of Execution' },
       { href: '/solvency', label: 'Solvency' },

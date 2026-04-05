@@ -122,48 +122,48 @@ const LIVE_STATUS = [
 
 const ENTRY_PROFILES = [
   {
-    label: 'Build Capital Without Capital',
-    subLabel: 'Income-backed entry — no savings buffer required',
+    label: 'Enter With Income, Not Savings',
+    subLabel: 'No initial capital required — income-backed entry credit',
     route: 'Community Credit → Wealth Practice',
-    desc: 'An income-backed credit line covers your first contribution. No crypto collateral required. Start building a participation record from day one with as little as $25/month.',
+    desc: 'An income-backed credit line covers your first contribution. No crypto, no collateral, no savings buffer required. Start building a verifiable participation record from day one — as little as $25/month.',
     href: '/community-credit',
     cta: 'Apply for Entry Credit',
     accent: 'border-l-dl-forest',
     accentColor: 'text-dl-forest',
-    bullets: ['No crypto or collateral required', 'Income-backed credit line', 'Guided onboarding and group placement'],
+    bullets: ['No crypto or collateral required', 'Income-backed credit line covers first contribution', 'Guided onboarding and group placement from day one'],
   },
   {
-    label: 'Deploy Personal Capital',
-    subLabel: 'Savings-ready — join a group or a structured deal',
+    label: 'Deploy Capital Into Structured Deals',
+    subLabel: 'Savings-ready — group economics and real estate access',
     route: 'Wealth Practice → Syndication',
-    desc: 'Join a community savings group and build your participation record. Access structured real estate deal opportunities after 90 days. Groups forming in Atlanta, Houston, and Charlotte.',
+    desc: 'Join a community wealth group and build your participation record. Unlock access to structured real estate deal opportunities after 90 days. Groups forming in Atlanta, Houston, and Charlotte.',
     href: '/wealth-practice',
     cta: 'Browse Open Groups',
     accent: 'border-l-dl-gold',
     accentColor: 'text-dl-gold',
-    bullets: ['Community group structure with on-chain settlement', 'Deal access after participation record established', 'Progressive capital commitment — start with your level'],
+    bullets: ['On-chain settlement within every group', 'Structured deal access after 90-day participation record', 'Progressive commitment — start at your level'],
   },
   {
-    label: 'Institutional Capital Access',
-    subLabel: 'Accredited investor — structured real estate exposure',
+    label: 'Allocate to Regulated Capital Programs',
+    subLabel: 'Accredited investor — Reg D 506(c) structured exposure',
     route: 'Syndication → Lending Fund',
-    desc: 'Access structured Reg D 506(c) offerings, the bridge loan LP fund, and secondary market transfers with on-chain reporting and institutional-grade disclosure.',
+    desc: 'Access Reg D 506(c) structured offerings, the bridge loan LP fund, and secondary market transfers — with on-chain reporting, institutional-grade disclosure, and independently verifiable solvency data.',
     href: '/syndication',
-    cta: 'View Syndication Offerings',
+    cta: 'View Capital Programs',
     accent: 'border-l-dl-navy',
     accentColor: 'text-dl-navy',
-    bullets: ['Reg D 506(c) qualified offerings', 'On-chain LP fund participation', 'Secondary market transfers available'],
+    bullets: ['Reg D 506(c) qualified offerings only', 'On-chain LP fund participation with live reporting', 'Secondary market transfers with permissioned settlement'],
   },
   {
-    label: 'Access the Reserve System',
-    subLabel: 'AXAU, AXUSD, or protocol governance access',
+    label: 'Access Reserve Infrastructure Directly',
+    subLabel: 'ERC-3643 credential required — direct on-chain access',
     route: 'Identity Credential → Reserve Access',
-    desc: 'Obtain an ERC-3643 identity credential, mint AXAU (gold-backed reserve unit) or AXUSD, and participate in on-chain protocol governance with full transparency.',
+    desc: 'Obtain an ERC-3643 identity credential, then mint AXAU (gold-backed reserve unit) directly on-chain or acquire AXUSD through the PSM. No intermediary. Governance participation rights included.',
     href: '/axau-early-access',
     cta: 'Apply for Reserve Access',
     accent: 'border-l-dl-gold',
     accentColor: 'text-dl-gold',
-    bullets: ['Identity verification required (ERC-3643)', 'Direct on-chain mint and redeem', 'Governance participation rights'],
+    bullets: ['ERC-3643 identity verification required', 'Direct on-chain mint and redeem via GoldVault', 'Full governance participation rights'],
   },
 ];
 
@@ -327,30 +327,31 @@ export function DesignLawHome() {
             <div className="absolute inset-0" style={{ backgroundColor: 'rgba(14, 28, 55, 0.82)' }}>
               <div className="max-w-7xl mx-auto px-6 h-full flex flex-col justify-center">
                 <p className="text-xs uppercase tracking-widest mb-3 font-dl-mono" style={{ color: '#c9a84c' }}>
-                  Axiom Protocol · Arbitrum One · Vertically Integrated
+                  Axiom Protocol · Arbitrum One · Layer 00–05 · Live
                 </p>
-                <h1 className="font-dl-serif text-3xl md:text-5xl leading-tight mb-4" style={{ color: '#ffffff', maxWidth: '720px' }}>
-                  A Financial Operating System<br className="hidden md:block" /> for Real-World Assets.
+                <h1 className="font-dl-serif text-3xl md:text-5xl leading-tight mb-4" style={{ color: '#ffffff', maxWidth: '760px' }}>
+                  Sovereign Financial Infrastructure.<br className="hidden md:block" />
+                  <span style={{ color: '#c9a84c' }}>Banking. Settlement. Reserve. Capital.</span>
                 </h1>
-                <p className="text-sm leading-relaxed mb-3" style={{ color: '#d1d5db', maxWidth: '600px' }}>
-                  Banking. Settlement. Reserve. Capital deployment. Intelligence. One connected protocol — with full on-chain transparency and institutional-grade disclosure.
+                <p className="text-sm leading-relaxed mb-3" style={{ color: '#d1d5db', maxWidth: '620px' }}>
+                  Not a token. Not a wrapper. A vertically integrated financial operating system — FDIC-insured banking, identity-gated settlement, gold-backed reserve issuance, and capital deployment — all on Arbitrum One with full on-chain transparency.
                 </p>
                 <p className="text-xs font-dl-mono mb-8" style={{ color: '#9ca3af' }}>
-                  Layer 00: Banking · Layer 01: AXUSD Settlement · Layer 02: AXAU Reserve · Layer 03: Capital · Layer 04: Intelligence
+                  L00: Banking · L01: AXUSD Settlement · L01.5: Exchange · L02: AXAU Reserve · L03: Capital · L04: Intelligence · L05: Trust
                 </p>
                 <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                   <Link href="/infrastructure">
-                    <span className="inline-block border-2 border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-serif">
-                      View Live System
+                    <span className="inline-block border-2 border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider">
+                      Verify the Infrastructure
                     </span>
                   </Link>
                   <Link href="/axau">
-                    <span className="inline-block border border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-serif" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}>
+                    <span className="inline-block border border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}>
                       Access the Reserve
                     </span>
                   </Link>
                   <Link href="/disclosure">
-                    <span className="inline-block border border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-serif" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}>
+                    <span className="inline-block border border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}>
                       Read Disclosure
                     </span>
                   </Link>

@@ -14,6 +14,13 @@ const TradingViewChart = dynamic(() => import('../components/dex/TradingViewChar
   ),
 });
 
+const DEX_HEADER = {
+  kicker: 'Layer 01.5 — Exchange + Peg Layer',
+  headline: 'Protocol Exchange',
+  subheadline: 'Settlement Conversion and Peg Maintenance Layer',
+  desc: 'The Axiom Protocol Exchange is not a generic DEX. It is the Layer 01.5 settlement conversion and peg maintenance layer — Camelot V2 infrastructure with AXM/AXUSD trading pairs, PSM-backed peg stabilization, and EulerSwap LP vaults for capital efficiency. All liquidity activity is governed by the protocol\'s identity framework.',
+};
+
 type Tab = 'swap' | 'pools' | 'liquidity' | 'eulerswap-lp' | 'rewards' | 'earn';
 
 interface EulerSwapPool {
@@ -272,9 +279,9 @@ export default function DexPage() {
           <span className="font-dl-mono text-xs text-dl-gold border border-dl-gold px-2 py-0.5">Camelot V2 + EulerSwap</span>
           <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-2 py-0.5">LIVE</span>
         </div>
-        <h1 className="font-dl-serif text-3xl text-dl-navy mb-2">Protocol Exchange Infrastructure</h1>
+        <h1 className="font-dl-serif text-3xl text-dl-navy mb-2">Protocol Exchange — Settlement Conversion Layer</h1>
         <p className="text-dl-gray text-sm max-w-2xl leading-relaxed">
-          The Axiom Exchange is Layer 01.5 of the financial operating system — the primary conversion and peg maintenance venue between AXUSD, USDC, and AXM. EulerSwap pools concentrate LP capital for dual yield. The PSM-backed conversion path supports AXUSD peg stability. All reserve conversions and settlement flows route through this layer.
+          The Axiom Protocol Exchange is not a generic DEX. It is Layer 01.5 of the financial operating system — the mandatory settlement conversion and peg maintenance layer for AXUSD. Camelot V2 infrastructure provides AXM/AXUSD liquidity; EulerSwap LP pools concentrate capital for dual swap-and-lending yield; and the PSM-backed conversion path enforces AXUSD peg integrity. All capital flows between layers route through this venue.
         </p>
       </div>
 

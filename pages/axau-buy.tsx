@@ -868,10 +868,10 @@ export default function AxauBuyPage() {
             <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '3px 8px', border: `1px solid ${C.gold}40`, background: C.goldBg }}>Arbitrum One</span>
           </div>
           <h1 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(28px, 5vw, 46px)', fontWeight: 700, color: C.navy, lineHeight: 1.08, margin: '0 0 14px' }}>
-            AXAU Mint &amp; Redeem Terminal
+            AXAU Reserve — Mint &amp; Redeem Terminal
           </h1>
-          <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, lineHeight: 1.7, margin: '0 0 20px', maxWidth: 560 }}>
-            Two paths to AXAU. <strong>Direct Mint</strong>: deposit PAXG to the GoldVault and receive AXAU in a single on-chain transaction. <strong>Assisted Mint</strong>: spend AXUSD and the operations team handles PAXG acquisition and vault deposit — typically 1 business day. Both paths require an active identity credential.
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted, lineHeight: 1.7, margin: '0 0 20px', maxWidth: 580 }}>
+            Two paths to Layer 02 reserve access. <strong>Direct Mint</strong>: deposit PAXG to the GoldVault automated control layer and receive AXAU in a single on-chain transaction — no intermediary. <strong>Assisted Mint</strong>: spend AXUSD and the operations team handles PAXG acquisition and vault deposit, typically within 1 business day. Both paths require an active ERC-3643 identity credential on Arbitrum One.
           </p>
 
           {/* Path quick-select */}

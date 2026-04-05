@@ -100,17 +100,14 @@ function Hero() {
           fontWeight: 700, color: C.navy, lineHeight: 1.08,
           marginBottom: 14, letterSpacing: '-0.01em',
         }}>
-          Unified AXUSD<br />
-          <span style={{ color: C.gold }}>Settlement Layer Stablecoin</span>
+          AXUSD Settlement Infrastructure<br />
+          <span style={{ color: C.gold }}>The Protocol&apos;s Layer 01 Capital Rail</span>
         </h1>
         <p style={{
           fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted,
-          maxWidth: 600, margin: '0 auto 24px', lineHeight: 1.75,
+          maxWidth: 620, margin: '0 auto 24px', lineHeight: 1.75,
         }}>
-          AXUSD is Axiom Protocol&apos;s Layer 01 settlement token — a USD-pegged instrument issued through
-          the Peg Stability Module (PSM) and governed by an ERC-3643 identity framework. It connects
-          to the Layer 02 reserve layer (AXAU/PAXG) and the Layer 01.5 exchange for peg maintenance,
-          functioning as the primary unit of account across the protocol.
+          AXUSD is not a generic stablecoin. It is the Axiom Protocol&apos;s identity-gated settlement infrastructure — issued exclusively through the Peg Stability Module (PSM), governed by an ERC-3643 identity framework, and functioning as the mandatory unit of account for all capital movement across the protocol stack. Connection to Layer 02 (AXAU/PAXG reserve) and Layer 01.5 (Protocol Exchange) ensures peg integrity without reliance on a single mechanism.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href="/axusd-3643" style={{

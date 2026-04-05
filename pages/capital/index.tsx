@@ -107,9 +107,13 @@ export default function CapitalDashboard() {
   return (
     <DesignLawLayout>
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <h1 className="font-dl-serif text-2xl text-dl-navy mb-1">Capital Accounting</h1>
+        <div className="mb-1 flex items-center gap-2">
+          <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Layer 03 — Capital Deployment</span>
+          <span className="font-dl-mono text-xs text-dl-navy border border-dl-navy px-2 py-0.5">ADMIN ACCESS</span>
+        </div>
+        <h1 className="font-dl-serif text-2xl text-dl-navy mb-1">Capital Accounting + Performance Intelligence</h1>
         <p className="text-sm text-dl-muted mb-6">
-          Performance intelligence derived from ledger, positions, and mark-to-market valuations.
+          Internal capital accounting dashboard for the Layer 03 capital deployment layer. Performance metrics derived from ledger, open positions, and mark-to-market valuations.
           All figures are diagnostic and do not constitute financial advice or projections.
         </p>
 
