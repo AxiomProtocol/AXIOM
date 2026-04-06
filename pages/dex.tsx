@@ -3,7 +3,12 @@ import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { SwapInterface, PoolList, LiquidityManager, DexStats, UserRewards } from '../components/dex';
 import EulerVaultCard from '../components/EulerVaultCard';
-import { DesignLawLayout, SectionHeading, NexusBankingPanel } from '../components/design-law';
+import { DesignLawLayout, SectionHeading } from '../components/design-law';
+
+const NexusBankingPanel = dynamic(
+  () => import('../components/design-law/NexusBankingPanel').then(m => m.NexusBankingPanel),
+  { ssr: false }
+);
 
 const TradingViewChart = dynamic(() => import('../components/dex/TradingViewChart'), {
   ssr: false,

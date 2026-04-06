@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, FormEvent, ChangeEvent } from 'react'
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   DesignLawLayout,
   PageShell,
@@ -13,10 +14,15 @@ import {
   DLInput,
   SolidButton,
   StatusBadge,
-  NexusBankingPanel,
 } from '../../../components/design-law';
+
 import type { Column } from '../../../components/design-law';
 import { useWallet } from '../../../components/WalletConnect/WalletContext';
+
+const NexusBankingPanel = dynamic(
+  () => import('../../../components/design-law/NexusBankingPanel').then(m => m.NexusBankingPanel),
+  { ssr: false }
+);
 
 const RE_DISCLOSURE = 'All deal metrics are computed from user-supplied assumptions and are probabilistic estimates only. DSCR, cap rate, cash-on-cash, and other outputs depend on assumptions that may not reflect actual market conditions. Risk flags indicate areas requiring further review and do not constitute investment advice or a recommendation to acquire any property.';
 

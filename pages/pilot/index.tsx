@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { DesignLawLayout, SectionHeading, NexusBankingPanel } from '../../components/design-law';
+import dynamic from 'next/dynamic';
+import { DesignLawLayout, SectionHeading } from '../../components/design-law';
 import PilotNav from '../../components/pilot/PilotNav';
+
+const NexusBankingPanel = dynamic(
+  () => import('../../components/design-law/NexusBankingPanel').then(m => m.NexusBankingPanel),
+  { ssr: false }
+);
 
 interface SpvData {
   id: string;

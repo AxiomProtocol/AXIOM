@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
-import { NexusBankingPanel } from '../../../components/design-law';
 import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useWallet } from '../../../lib/web3/useWallet';
+
+const NexusBankingPanel = dynamic(
+  () => import('../../../components/design-law/NexusBankingPanel').then(m => m.NexusBankingPanel),
+  { ssr: false }
+);
 
 const OPERATOR_WALLETS = [
   '0xb0cefc7e3f1c7de3b98e8c39384e9e084c9eb75c',

@@ -1,11 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import {
   DesignLawLayout,
   PageShell,
   SectionHeading,
-  NexusBankingPanel,
 } from '../../components/design-law';
+
+const NexusBankingPanel = dynamic(
+  () => import('../../components/design-law/NexusBankingPanel').then(m => m.NexusBankingPanel),
+  { ssr: false }
+);
 
 interface NodeStatus {
   success: boolean;
