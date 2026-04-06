@@ -53,6 +53,11 @@ export const stellarPaymentTransfers = pgTable('stellar_payment_transfers', {
   sep24InteractiveUrl: text('sep24_interactive_url'),
   sep10JwtIssued: boolean('sep10_jwt_issued').notNull().default(false),
 
+  sepProtocol: varchar('sep_protocol', { length: 10 }).notNull().default('sep24'),
+  sep38QuoteId: varchar('sep38_quote_id', { length: 200 }),
+  sep31StellarAccountId: varchar('sep31_stellar_account_id', { length: 56 }),
+  sep31StellarMemo: varchar('sep31_stellar_memo', { length: 200 }),
+
   anchorRawResponse: jsonb('anchor_raw_response'),
 
   initiatedAt: timestamp('initiated_at').notNull().default(sql`now()`),

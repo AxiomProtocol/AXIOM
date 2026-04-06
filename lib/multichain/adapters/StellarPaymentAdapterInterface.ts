@@ -14,6 +14,12 @@
  *   Stellar = external payments and remittance rail
  *   AXUSD   = internal settlement layer (Arbitrum) — NOT replaced by Stellar
  *   This adapter bridges FROM AXUSD to the Stellar payments rail.
+ *
+ * SEP protocols implemented:
+ *   SEP-0010: Stellar Web Authentication
+ *   SEP-0024: Interactive Anchor Specification
+ *   SEP-0031: Cross-Border Payments (direct, non-interactive)
+ *   SEP-0038: Anchor RFQ (Request for Quote)
  */
 
 // ─── Shared value types ───────────────────────────────────────────────────────
@@ -96,6 +102,142 @@ export interface StellarNetworkHealth {
   asOf: string;
 }
 
+// ─── SEP-38 types (Anchor RFQ) ────────────────────────────────────────────────
+
+export interface Sep38AssetEntry {
+  asset: string;
+  countryCodes?: string[];
+  sellDeliveryMethods?: { name: string; description: string }[];
+  buyDeliveryMethods?: { name: string; description: string }[];
+}
+
+export interface Sep38InfoResponse {
+  assets: Sep38AssetEntry[];
+  anchorQuoteServer: string;
+  anchorId: string;
+}
+
+export interface Sep38BuyAssetQuote {
+  asset: string;
+  price: string;
+  decimals: number;
+}
+
+export interface Sep38PricesResponse {
+  buyAssets: Sep38BuyAssetQuote[];
+  sellAsset: string;
+  sellAmount: string;
+  anchorId: string;
+}
+
+export interface Sep38Fee {
+  total: string;
+  asset: string;
+  details?: { name: string; description?: string; amount: string }[];
+}
+
+export interface Sep38QuoteResponse {
+  id: string;
+  expiresAt: string;
+  totalPrice: string;
+  price: string;
+  sellAsset: string;
+  sellAmount: string;
+  buyAsset: string;
+  buyAmount: string;
+  fee: Sep38Fee;
+  anchorId: string;
+}
+
+// ─── SEP-38 options types ─────────────────────────────────────────────────────
+
+export interface Sep38PricesOptions {
+  sellAsset: string;
+  sellAmount: string;
+  countryCode?: string;
+  buyDeliveryMethod?: string;
+  sellDeliveryMethod?: string;
+}
+
+export interface Sep38QuoteOptions {
+  sellAsset: string;
+  buyAsset: string;
+  sellAmount?: string;
+  buyAmount?: string;
+  expireAfter?: string;
+  countryCode?: string;
+  buyDeliveryMethod?: string;
+  sellDeliveryMethod?: string;
+  stellarPublicKey: string;
+  stellarSecretKey: string;
+}
+
+// ─── SEP-31 types (Cross-Border Payments) ────────────────────────────────────
+
+export interface Sep31FieldSpec {
+  description: string;
+  optional?: boolean;
+  choices?: string[];
+}
+
+export interface Sep31AssetSpec {
+  enabled: boolean;
+  feeFixed?: number;
+  feePercent?: number;
+  minAmount?: number;
+  maxAmount?: number;
+  fields?: { transaction?: Record<string, Sep31FieldSpec> };
+}
+
+export interface Sep31InfoResponse {
+  receive: Record<string, Sep31AssetSpec>;
+  directPaymentServer: string;
+  anchorId: string;
+}
+
+export interface Sep31InitiateOptions {
+  assetCode: string;
+  assetIssuer: string;
+  amount: string;
+  transactionFields: Record<string, string>;
+  quoteId?: string;
+  corridorId: string;
+  senderWalletAddress: string;
+  stellarPublicKey: string;
+  stellarSecretKey: string;
+}
+
+export interface Sep31InitiateResponse {
+  sep31TransactionId: string;
+  stellarAccountId: string;
+  stellarMemoType: string;
+  stellarMemo: string;
+  requiresManualStellarPayment: boolean;
+  dbTransferId: string;
+}
+
+export interface Sep31StatusResponse {
+  id: string;
+  status: string;
+  statusEta?: number | null;
+  amountIn?: string;
+  amountInAsset?: string;
+  amountOut?: string;
+  amountOutAsset?: string;
+  amountFee?: string;
+  amountFeeAsset?: string;
+  stellarAccountId?: string;
+  stellarMemo?: string;
+  stellarMemoType?: string;
+  startedAt: string;
+  completedAt?: string | null;
+  stellarTransactionId?: string | null;
+  message?: string | null;
+  requiredInfoMessage?: string | null;
+  requiredInfoUpdates?: Record<string, Sep31FieldSpec> | null;
+  dbTransferId: string | null;
+}
+
 // ─── Options types ────────────────────────────────────────────────────────────
 
 export interface InitiatePaymentOptions {
@@ -172,4 +314,54 @@ export interface StellarPaymentAdapterInterface {
    * Indicates which assets can be sent, received, or used as intermediary.
    */
   getSupportedAssets(): Promise<StellarAsset[]>;
+
+  // ─── SEP-38: Anchor RFQ ──────────────────────────────────────────────────
+
+  /**
+   * Returns all assets the active anchor supports for quoting.
+   * Resolves ANCHOR_QUOTE_SERVER from stellar.toml (ANCHOR_QUOTE_SERVER field)
+   * or from the registry sep38BaseUrl. No auth required.
+   */
+  getSep38Info(): Promise<Sep38InfoResponse>;
+
+  /**
+   * Returns indicative exchange rates for all buy assets against a given sell asset.
+   * Public endpoint — no SEP-10 auth required.
+   */
+  getSep38Prices(options: Sep38PricesOptions): Promise<Sep38PricesResponse>;
+
+  /**
+   * Requests a firm, time-bound quote from the anchor.
+   * Requires SEP-10 authentication (caller provides keypair).
+   * Quote ID can be used in SEP-31 initiation.
+   */
+  requestSep38Quote(options: Sep38QuoteOptions): Promise<Sep38QuoteResponse>;
+
+  // ─── SEP-31: Cross-Border Payments ──────────────────────────────────────
+
+  /**
+   * Returns the anchor's supported receiving assets and required transaction
+   * fields for SEP-31. Resolves DIRECT_PAYMENT_SERVER from stellar.toml
+   * (DIRECT_PAYMENT_SERVER field) or from the registry sep31BaseUrl.
+   * No auth required.
+   */
+  getSep31Info(): Promise<Sep31InfoResponse>;
+
+  /**
+   * Initiates a direct (non-interactive) cross-border payment via SEP-31.
+   * Authenticates via SEP-10, then POSTs to the anchor's /transactions endpoint.
+   * If STELLAR_SENDER_SECRET_KEY is set, also submits the Stellar payment automatically.
+   * Otherwise returns requiresManualStellarPayment: true with account + memo details.
+   */
+  initiateSep31Payment(options: Sep31InitiateOptions): Promise<Sep31InitiateResponse>;
+
+  /**
+   * Polls the anchor for the current status of a SEP-31 transaction.
+   * Requires SEP-10 authentication (caller provides keypair).
+   */
+  getSep31TransactionStatus(
+    sep31TransactionId: string,
+    stellarPublicKey: string,
+    stellarSecretKey: string
+  ): Promise<Sep31StatusResponse>;
 }

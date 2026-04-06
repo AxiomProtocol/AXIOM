@@ -115,15 +115,15 @@ export const ANCHOR_CANDIDATES: AnchorCandidate[] = [
     anchorId: 'testanchor-sdf',
     anchorName: 'SDF Test Anchor',
     website: 'https://testanchor.stellar.org',
-    corridors: ['USDC (testnet) → Test USD'],
-    primaryCurrencies: ['USDC', 'SRT'],
+    corridors: ['USDC (testnet) → Test USD', 'USDC (testnet) → CAD (testnet)'],
+    primaryCurrencies: ['USDC', 'SRT', 'USD', 'CAD'],
     primaryRegions: ['Global (testnet only)'],
     sep24Support: true,
-    sep31Support: false,
-    sep38Support: false,
+    sep31Support: true,
+    sep38Support: true,
     partnershipRequired: false,
     evaluationStatus: 'evaluating',
-    notes: 'Official SDF test anchor. Testnet network only — not for production payments. Use STELLAR_ACTIVE_ANCHOR=testanchor with networkId=testnet for integration testing.',
+    notes: 'Official SDF test anchor. Testnet network only — not for production payments. Full SEP-24/31/38 support confirmed. ANCHOR_QUOTE_SERVER: https://testanchor.stellar.org/sep38. DIRECT_PAYMENT_SERVER: https://testanchor.stellar.org/sep31. Use STELLAR_ACTIVE_ANCHOR=testanchor with networkId=testnet for integration testing.',
   },
   {
     anchorId: 'anclap-stellar',
@@ -199,18 +199,127 @@ export const STELLAR_SEP_CAPABILITIES: SEPCapability[] = [
   {
     protocol: 'SEP-0031',
     description: 'Cross-Border Payments Specification',
-    status: 'reviewed',
+    status: 'implemented',
     specUrl: 'https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0031.md',
-    usedFor: 'Direct cross-border payment flows (sending-side). Reserved for future expansion with anchors that support SEP-31.',
+    usedFor: 'Direct (non-interactive) cross-border payment API. Anchor resolved from DIRECT_PAYMENT_SERVER in stellar.toml or registry. Supports initiate, poll, and status endpoints.',
   },
   {
     protocol: 'SEP-0038',
     description: 'Anchor RFQ (Request for Quote)',
-    status: 'reviewed',
+    status: 'implemented',
     specUrl: 'https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md',
-    usedFor: 'Price quotes from anchor before initiating conversion. SEP-38 endpoint resolved live from stellar.toml.',
+    usedFor: 'Indicative prices (public) and firm quotes (SEP-10 authenticated) from anchor. Anchor resolved from ANCHOR_QUOTE_SERVER in stellar.toml or registry.',
   },
 ];
+
+// ─── SEP-38 types (Anchor RFQ) ────────────────────────────────────────────────
+
+export interface Sep38Asset {
+  asset: string;
+  countryCodes?: string[];
+  sellDeliveryMethods?: { name: string; description: string }[];
+  buyDeliveryMethods?: { name: string; description: string }[];
+}
+
+export interface Sep38InfoResult {
+  assets: Sep38Asset[];
+  anchorQuoteServer: string;
+  anchorId: string;
+}
+
+export interface Sep38BuyAssetQuote {
+  asset: string;
+  price: string;
+  decimals: number;
+}
+
+export interface Sep38PricesResult {
+  buyAssets: Sep38BuyAssetQuote[];
+  sellAsset: string;
+  sellAmount: string;
+  anchorId: string;
+}
+
+export interface Sep38FeeDetail {
+  name: string;
+  description?: string;
+  amount: string;
+}
+
+export interface Sep38Fee {
+  total: string;
+  asset: string;
+  details?: Sep38FeeDetail[];
+}
+
+export interface Sep38FirmQuote {
+  id: string;
+  expiresAt: string;
+  totalPrice: string;
+  price: string;
+  sellAsset: string;
+  sellAmount: string;
+  buyAsset: string;
+  buyAmount: string;
+  fee: Sep38Fee;
+  anchorId: string;
+}
+
+// ─── SEP-31 types (Cross-Border Payments) ────────────────────────────────────
+
+export interface Sep31FieldInfo {
+  description: string;
+  optional?: boolean;
+  choices?: string[];
+}
+
+export interface Sep31AssetInfo {
+  enabled: boolean;
+  feeFixed?: number;
+  feePercent?: number;
+  minAmount?: number;
+  maxAmount?: number;
+  senderSep12Fields?: { types?: Record<string, { description: string; fields?: Record<string, Sep31FieldInfo> }> };
+  receiverSep12Fields?: { types?: Record<string, { description: string; fields?: Record<string, Sep31FieldInfo> }> };
+  fields?: { transaction?: Record<string, Sep31FieldInfo> };
+}
+
+export interface Sep31Info {
+  receive: Record<string, Sep31AssetInfo>;
+  directPaymentServer: string;
+  anchorId: string;
+}
+
+export interface Sep31InitiateResult {
+  sep31TransactionId: string;
+  stellarAccountId: string;
+  stellarMemoType: string;
+  stellarMemo: string;
+  requiresManualStellarPayment: boolean;
+  dbTransferId: string;
+}
+
+export interface Sep31TransactionStatus {
+  id: string;
+  status: string;
+  statusEta?: number | null;
+  amountIn?: string;
+  amountInAsset?: string;
+  amountOut?: string;
+  amountOutAsset?: string;
+  amountFee?: string;
+  amountFeeAsset?: string;
+  stellarAccountId?: string;
+  stellarMemo?: string;
+  stellarMemoType?: string;
+  startedAt: string;
+  completedAt?: string | null;
+  stellarTransactionId?: string | null;
+  message?: string | null;
+  requiredInfoMessage?: string | null;
+  requiredInfoUpdates?: Record<string, Sep31FieldInfo> | null;
+  dbTransferId: string | null;
+}
 
 // ─── Anchor Registry ──────────────────────────────────────────────────────────
 
@@ -218,6 +327,11 @@ export const STELLAR_SEP_CAPABILITIES: SEPCapability[] = [
  * Registry of validated SEP-24 anchors for env-driven selection.
  * Set STELLAR_ACTIVE_ANCHOR=<key> to select an anchor at runtime.
  * Default: 'moneygram' (production-ready, USDC→USD, mainnet, 95ms).
+ *
+ * sep38BaseUrl / sep31BaseUrl: Populated only when an anchor explicitly
+ * declares ANCHOR_QUOTE_SERVER / DIRECT_PAYMENT_SERVER in their stellar.toml.
+ * These are also parsed live from the toml at runtime. Do NOT derive these
+ * from the SEP-24 URL pattern — anchors like MoneyGram serve HTML at those paths.
  */
 export interface StellarAnchorRegistryEntry {
   homeDomain: string;
@@ -227,6 +341,8 @@ export interface StellarAnchorRegistryEntry {
   network: StellarNetworkId;
   transferServerSep24: string;
   webAuthEndpoint: string;
+  sep38BaseUrl?: string;
+  sep31BaseUrl?: string;
 }
 
 export const STELLAR_ANCHOR_REGISTRY: Record<string, StellarAnchorRegistryEntry> = {
@@ -238,6 +354,9 @@ export const STELLAR_ANCHOR_REGISTRY: Record<string, StellarAnchorRegistryEntry>
     network: 'mainnet',
     transferServerSep24: 'https://stellar.moneygram.com/stellaradapterservice/sep24',
     webAuthEndpoint: 'https://stellar.moneygram.com/stellaradapterservice/auth',
+    // MoneyGram requires a formal partnership for SEP-31/38 — not publicly available
+    sep38BaseUrl: undefined,
+    sep31BaseUrl: undefined,
   },
   testanchor: {
     homeDomain: 'testanchor.stellar.org',
@@ -247,6 +366,8 @@ export const STELLAR_ANCHOR_REGISTRY: Record<string, StellarAnchorRegistryEntry>
     network: 'testnet',
     transferServerSep24: 'https://testanchor.stellar.org/sep24',
     webAuthEndpoint: 'https://testanchor.stellar.org/auth',
+    sep38BaseUrl: 'https://testanchor.stellar.org/sep38',
+    sep31BaseUrl: 'https://testanchor.stellar.org/sep31',
   },
   anclap: {
     homeDomain: 'anclap.com',
