@@ -83,7 +83,18 @@ const nextConfig = {
 
   experimental: {
     instrumentationHook: true,
-    serverComponentsExternalPackages: ['pg', 'hardhat', '@nomiclabs/hardhat-ethers', '@nomicfoundation/hardhat-toolbox'],
+    serverComponentsExternalPackages: [
+      'pg',
+      'hardhat',
+      '@nomiclabs/hardhat-ethers',
+      '@nomicfoundation/hardhat-toolbox',
+      // Stellar SDK uses native Node.js modules (eventsource, cross-fetch, etc.)
+      // that fail when bundled by Next.js webpack. Keep as external runtime deps.
+      '@stellar/stellar-sdk',
+      '@stellar/stellar-base',
+      '@stellar/js-xdr',
+      'eventsource',
+    ],
   },
 
   webpack: (config, { isServer }) => {

@@ -7,7 +7,8 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getStellarPaymentAdapter, fetchCircleToml } from '../../../../lib/multichain/stellar/StellarPaymentAdapter';
+import { getStellarPaymentAdapter } from '../../../../lib/multichain/stellar/StellarPaymentAdapter';
+import { fetchAnchorToml } from '../../../../lib/multichain/stellar/anchorUtils';
 import { ANCHOR_CANDIDATES, STELLAR_SEP_CAPABILITIES, STELLAR_ANCHOR_REGISTRY } from '../../../../lib/multichain/stellar/types';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -38,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const [anchorStatus, toml] = await Promise.allSettled([
     adapter.getAnchorStatus(anchorId),
-    fetchCircleToml(),
+    fetchAnchorToml(),
   ]);
 
   const anchorCandidate = ANCHOR_CANDIDATES.find(a => a.anchorId === anchorId);

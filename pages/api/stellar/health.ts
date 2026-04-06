@@ -6,7 +6,9 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getStellarPaymentAdapter, fetchCircleToml, getActiveAnchorEntry } from '../../../lib/multichain/stellar/StellarPaymentAdapter';
+// Import from lightweight anchorUtils — no @stellar/stellar-sdk or DB dependency at module load
+import { getActiveAnchorEntry, fetchAnchorToml } from '../../../lib/multichain/stellar/anchorUtils';
+import { getStellarPaymentAdapter } from '../../../lib/multichain/stellar/StellarPaymentAdapter';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -15,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   res.setHeader('Cache-Control', 'no-store');
 
-  // Use the safe helper — automatically falls back to moneygram if testanchor is set on mainnet
+  // Use the lightweight helper — no SDK at import time, guard auto-falls-back to moneygram on mainnet
   const activeEntry = getActiveAnchorEntry('mainnet');
   const activeAnchorId = activeEntry.anchorId;
   const activeKey = activeEntry.anchorId.replace('-stellar', '').replace('-sdf', '');
@@ -29,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let tomlEndpoints: Record<string, string | undefined> = {};
   try {
-    const toml = await fetchCircleToml();
+    const toml = await fetchAnchorToml('mainnet');
     tomlEndpoints = {
       TRANSFER_SERVER_SEP0024: toml.TRANSFER_SERVER_SEP0024,
       WEB_AUTH_ENDPOINT: toml.WEB_AUTH_ENDPOINT,

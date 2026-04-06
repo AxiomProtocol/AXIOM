@@ -49,6 +49,13 @@ import {
   STELLAR_KNOWN_ASSETS,
   type StellarNetworkId,
 } from './types';
+import {
+  getActiveAnchorEntry,
+  getActiveAnchorId,
+  getActiveAnchorHomeDomain,
+  fetchAnchorToml,
+  type ParsedStellarToml,
+} from './anchorUtils';
 import { isExpansionEnabled } from '../featureFlags';
 import { db } from '../../../server/db';
 import { stellarPaymentTransfers, type StellarPaymentTransfer } from '../../../shared/stellarSchema';
@@ -57,93 +64,6 @@ import { eq } from 'drizzle-orm';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CIRCLE_USDC_ISSUER = 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
-
-/** Returns the anchor registry entry for the currently active anchor.
- *  Safety guard: if the selected anchor is testnet-only but callerNetwork is mainnet,
- *  falls back to moneygram to prevent production traffic hitting a testnet anchor.
- */
-function getActiveAnchorEntry(callerNetwork: StellarNetworkId = 'mainnet') {
-  const key = (process.env.STELLAR_ACTIVE_ANCHOR ?? 'moneygram').toLowerCase().trim();
-  const entry = STELLAR_ANCHOR_REGISTRY[key] ?? STELLAR_ANCHOR_REGISTRY['moneygram'];
-  // Never route mainnet traffic to a testnet-only anchor
-  if (callerNetwork === 'mainnet' && entry.network === 'testnet') {
-    return STELLAR_ANCHOR_REGISTRY['moneygram'];
-  }
-  return entry;
-}
-
-function getActiveAnchorId(): string {
-  return getActiveAnchorEntry().anchorId;
-}
-
-function getActiveAnchorHomeDomain(): string {
-  return getActiveAnchorEntry().homeDomain;
-}
-
-// ─── Stellar TOML cache ───────────────────────────────────────────────────────
-
-interface ParsedStellarToml {
-  TRANSFER_SERVER_SEP0024?: string;
-  WEB_AUTH_ENDPOINT?: string;
-  SIGNING_KEY?: string;
-  VERSION?: string;
-  NETWORK_PASSPHRASE?: string;
-  ANCHOR_QUOTE_SERVER?: string;
-  DIRECT_PAYMENT_SERVER?: string;
-  raw?: string;
-}
-
-let _tomlCache: { data: ParsedStellarToml; fetchedAt: number } | null = null;
-let _tomlCachedDomain: string | null = null;
-const TOML_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
-async function fetchCircleToml(): Promise<ParsedStellarToml> {
-  const homeDomain = getActiveAnchorHomeDomain();
-  if (
-    _tomlCache &&
-    _tomlCachedDomain === homeDomain &&
-    Date.now() - _tomlCache.fetchedAt < TOML_CACHE_TTL_MS
-  ) {
-    return _tomlCache.data;
-  }
-
-  const tomlUrl = `https://${homeDomain}/.well-known/stellar.toml`;
-  try {
-    const res = await fetch(tomlUrl, {
-      headers: { 'Accept': 'text/plain' },
-      signal: AbortSignal.timeout(8000),
-    });
-
-    if (!res.ok) {
-      console.warn(`[StellarAdapter] stellar.toml fetch failed: ${res.status}`);
-      return {};
-    }
-
-    const text = await res.text();
-    const parsed: ParsedStellarToml = { raw: text };
-
-    // Parse key = "value" and key = 'value' patterns from TOML
-    const parseField = (key: string): string | undefined => {
-      const match = text.match(new RegExp(`^${key}\\s*=\\s*["']([^"']+)["']`, 'm'));
-      return match ? match[1] : undefined;
-    };
-
-    parsed.TRANSFER_SERVER_SEP0024 = parseField('TRANSFER_SERVER_SEP0024');
-    parsed.WEB_AUTH_ENDPOINT = parseField('WEB_AUTH_ENDPOINT');
-    parsed.SIGNING_KEY = parseField('SIGNING_KEY');
-    parsed.VERSION = parseField('VERSION');
-    parsed.NETWORK_PASSPHRASE = parseField('NETWORK_PASSPHRASE');
-    parsed.ANCHOR_QUOTE_SERVER = parseField('ANCHOR_QUOTE_SERVER');
-    parsed.DIRECT_PAYMENT_SERVER = parseField('DIRECT_PAYMENT_SERVER');
-
-    _tomlCache = { data: parsed, fetchedAt: Date.now() };
-    _tomlCachedDomain = homeDomain;
-    return parsed;
-  } catch (err) {
-    console.warn(`[StellarAdapter] stellar.toml fetch error (${homeDomain}):`, err);
-    return {};
-  }
-}
 
 // ─── SEP-10 Authentication ────────────────────────────────────────────────────
 
@@ -309,7 +229,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
         // If the requested anchor is the active one, use the cached toml fetch.
         // Otherwise fall back to the candidate's known data.
         const isActiveAnchor = anchorId === getActiveAnchorId();
-        const toml = isActiveAnchor ? await fetchCircleToml() : {};
+        const toml = isActiveAnchor ? await fetchAnchorToml() : {};
         const hasSep24 = !!(toml as ParsedStellarToml).TRANSFER_SERVER_SEP0024 || !!registryEntry?.transferServerSep24;
         const hasWebAuth = !!(toml as ParsedStellarToml).WEB_AUTH_ENDPOINT || !!registryEntry?.webAuthEndpoint;
         const isReachable = hasSep24 || hasWebAuth;
@@ -421,7 +341,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
 
     try {
       // 1. Fetch active anchor's stellar.toml to get SEP endpoints
-      const toml = await fetchCircleToml();
+      const toml = await fetchAnchorToml();
       const anchorEntry = getActiveAnchorEntry();
 
       if (!toml.TRANSFER_SERVER_SEP0024) {
@@ -583,7 +503,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
         record.status !== 'error' &&
         record.status !== 'refunded'
       ) {
-        const toml = await fetchCircleToml().catch((): ParsedStellarToml => ({}));
+        const toml = await fetchAnchorToml().catch((): ParsedStellarToml => ({}));
 
         if (toml.TRANSFER_SERVER_SEP0024) {
           try {
@@ -734,7 +654,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
   // ─── SEP-38: Anchor RFQ ────────────────────────────────────────────────────
 
   async getSep38Info(): Promise<Sep38InfoResponse> {
-    const toml = await fetchCircleToml();
+    const toml = await fetchAnchorToml();
     const baseUrl = this.resolveSep38BaseUrl(toml);
     const anchorId = getActiveAnchorId();
 
@@ -769,7 +689,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
   }
 
   async getSep38Prices(options: Sep38PricesOptions): Promise<Sep38PricesResponse> {
-    const toml = await fetchCircleToml();
+    const toml = await fetchAnchorToml();
     const baseUrl = this.resolveSep38BaseUrl(toml);
     const anchorId = getActiveAnchorId();
 
@@ -810,7 +730,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
   }
 
   async requestSep38Quote(options: Sep38QuoteOptions): Promise<Sep38QuoteResponse> {
-    const toml = await fetchCircleToml();
+    const toml = await fetchAnchorToml();
     const baseUrl = this.resolveSep38BaseUrl(toml);
     const anchorId = getActiveAnchorId();
 
@@ -892,7 +812,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
   // ─── SEP-31: Cross-Border Payments ─────────────────────────────────────────
 
   async getSep31Info(): Promise<Sep31InfoResponse> {
-    const toml = await fetchCircleToml();
+    const toml = await fetchAnchorToml();
     const baseUrl = this.resolveSep31BaseUrl(toml);
     const anchorId = getActiveAnchorId();
 
@@ -945,7 +865,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
   }
 
   async initiateSep31Payment(options: Sep31InitiateOptions): Promise<Sep31InitiateResponse> {
-    const toml = await fetchCircleToml();
+    const toml = await fetchAnchorToml();
     const baseUrl = this.resolveSep31BaseUrl(toml);
 
     if (!baseUrl) {
@@ -1085,7 +1005,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
     stellarPublicKey: string,
     stellarSecretKey: string
   ): Promise<Sep31StatusResponse> {
-    const toml = await fetchCircleToml();
+    const toml = await fetchAnchorToml();
     const baseUrl = this.resolveSep31BaseUrl(toml);
 
     if (!baseUrl) {
@@ -1220,5 +1140,5 @@ export function getStellarPaymentAdapter(networkId: StellarNetworkId = 'mainnet'
   return _instance;
 }
 
-// Export the toml fetcher and anchor helper so API routes can use them directly
-export { fetchCircleToml, getActiveAnchorEntry };
+// Re-export lightweight utilities so existing API routes that import from this module continue to work
+export { fetchAnchorToml, getActiveAnchorEntry };

@@ -9,6 +9,7 @@
  */
 
 export * from './types';
-export { StellarPaymentAdapter, getStellarPaymentAdapter, fetchCircleToml } from './StellarPaymentAdapter';
+export { StellarPaymentAdapter, getStellarPaymentAdapter, fetchAnchorToml } from './StellarPaymentAdapter';
+export { getActiveAnchorEntry, getActiveAnchorId, getActiveAnchorHomeDomain } from './anchorUtils';
 export { StellarReadinessService } from './StellarReadinessService';
 export type { StellarReadinessReport } from './StellarReadinessService';
