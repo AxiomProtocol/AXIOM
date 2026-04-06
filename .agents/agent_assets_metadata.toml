@@ -288,6 +288,24 @@ uri = "file://public/visuals/dex-rewards.png"
 type = "image"
 title = "yield rewards accumulation 3D"
 
+[[generated]]
+id = "i_NPVDGlLlQ56UhUx0U_x"
+uri = "file://public/logos/axiom-logo-option-a.png"
+type = "image"
+title = "axiom logo geometric A navy"
+
+[[generated]]
+id = "mC2jVJeATB1AJPIIAd9AW"
+uri = "file://public/logos/axiom-logo-option-b.png"
+type = "image"
+title = "axiom logo hexagon gold network"
+
+[[generated]]
+id = "aeWl_V8Bu9YbFv47Q5TL_"
+uri = "file://public/logos/axiom-logo-option-c.png"
+type = "image"
+title = "axiom logo seal converging triangles navy"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
