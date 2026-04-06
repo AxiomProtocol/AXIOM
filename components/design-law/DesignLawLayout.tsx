@@ -26,8 +26,24 @@ export function DesignLawLayout({ children }: DesignLawLayoutProps) {
     <div className="design-law-root min-h-screen bg-dl-bg">
       <nav className="border-b border-dl-border bg-dl-bg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="font-dl-serif text-lg text-dl-navy font-bold">
-            AXIOM
+          <Link href="/" className="flex items-center" aria-label="Axiom Protocol home">
+            <div style={{ width: 42, height: 42, overflow: 'hidden', position: 'relative', flexShrink: 0, backgroundColor: '#050d1a' }}>
+              <img
+                src="/axiom-logo.png"
+                alt="Axiom Protocol"
+                style={{
+                  position: 'absolute',
+                  height: '260%',
+                  width: 'auto',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -44%)',
+                }}
+              />
+            </div>
+            <span className="ml-2 font-dl-serif text-base text-dl-navy font-bold tracking-wide hidden sm:inline">
+              AXIOM
+            </span>
           </Link>
           <div className="hidden lg:flex items-center gap-6 text-sm text-dl-navy">
             {NAV_ITEMS.map((item) =>
