@@ -32,16 +32,7 @@ ORG_SUPPORT_EMAIL = "support@axiomprotocol.app"
 ORG_OFFICIAL_EMAIL = "info@axiomprotocol.app"
 ORG_TWITTER = "@AxiomProtocol"
 
-# Anchor partner integration (read-only reference — not Axiom's own anchor)
-# Active anchor: MoneyGram (stellar.moneygram.com)
-# Protocol: SEP-0024 (interactive), SEP-0038 (RFQ), SEP-0031 (direct payments)
-
-[[CURRENCIES]]
-code = "USDC"
-issuer = "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
-status = "live"
-is_asset_anchored = true
-anchor_asset_type = "fiat"
-anchor_asset = "USD"
-desc = "USD Coin (USDC) issued by Circle on Stellar. Used as the settlement asset for MoneyGram Ramps on/off-ramp flows."
-display_decimals = 2
+# Axiom routes through MoneyGram Ramps (stellar.moneygram.com) for USDC settlement.
+# Anchor partner: MoneyGram — SEP-0024, SEP-0031, SEP-0038
+# CURRENCIES section omitted — Axiom is a wallet application, not an anchor.
+# Anchors declare their own issued assets; wallets do not.
