@@ -8,7 +8,7 @@ import pRetry from "p-retry";
  *
  * USAGE:
  * ```typescript
- * import { batchProcess } from "./replit_integrations/batch";
+ * import { batchProcess } from "./axiom_integrations/batch";
  * import { GoogleGenAI } from "@google/genai";
  *
  * const ai = new GoogleGenAI({

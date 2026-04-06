@@ -44,11 +44,20 @@ typechain-types/
 coverage/
 coverage.json
 
-# Replit specific
+# Replit workspace system files — not renamed, hidden from repo
 .replit
 replit.nix
 .upm/
 .config/
+
+# Legacy replit-named project files (renamed to axiom-* equivalents)
+replit.md
+replit-reset.sh
+telegram-bot-replit.nix
+server/replit_integrations/
+
+# Backup node_modules
+node_modules_backup/
 
 # Test outputs
 *.lcov
