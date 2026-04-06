@@ -1,25 +1,18 @@
 import '../styles/globals.css'
 import { useEffect, createContext, useContext, useState } from 'react'
 import { useRouter } from 'next/router'
-import { WagmiProvider } from 'wagmi'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import { UserProvider } from '@auth0/nextjs-auth0/client'
-import { wagmiAdapter, projectId, networks } from '../lib/web3/wagmiConfig'
-import { WalletProvider } from '../components/WalletConnect/WalletContext'
 import ErrorBoundary from '../components/ErrorBoundary'
 
-const AppKitInitializer = dynamic(
-  () => import('../components/WalletConnect/AppKitInitializer'),
-  { ssr: false }
+// ClientWalletProviders bundles ALL wagmi / Reown AppKit / WalletConnect imports.
+// Loaded with ssr:false so those packages never enter the serverless function
+// bundle — they were causing FUNCTION_INVOCATION_FAILED via an ESM named-export
+// incompatibility in @reown/appkit-wallet -> @walletconnect/logger.
+const ClientWalletProviders = dynamic(
+  () => import('../components/WalletConnect/ClientWalletProviders'),
+  { ssr: false, loading: () => null }
 )
-
-const CircleWalletProvider = dynamic(
-  () => import('../components/WalletConnect/CircleWalletProvider').then(m => ({ default: m.CircleWalletProvider })),
-  { ssr: false }
-)
-
-const queryClient = new QueryClient()
 
 const OnboardingContext = createContext({ triggerOnboarding: () => {} })
 export const useOnboarding = () => useContext(OnboardingContext)
@@ -52,18 +45,11 @@ export default function App({ Component, pageProps }) {
   return (
     <UserProvider>
       <ErrorBoundary>
-        <WagmiProvider config={wagmiAdapter.wagmiConfig}>
-          <QueryClientProvider client={queryClient}>
-            <AppKitInitializer />
-            <WalletProvider>
-              <CircleWalletProvider>
-                <OnboardingContext.Provider value={{ triggerOnboarding: () => {} }}>
-                  {mounted ? <Component {...pageProps} /> : null}
-                </OnboardingContext.Provider>
-              </CircleWalletProvider>
-            </WalletProvider>
-          </QueryClientProvider>
-        </WagmiProvider>
+        <ClientWalletProviders>
+          <OnboardingContext.Provider value={{ triggerOnboarding: () => {} }}>
+            {mounted ? <Component {...pageProps} /> : null}
+          </OnboardingContext.Provider>
+        </ClientWalletProviders>
       </ErrorBoundary>
     </UserProvider>
   )
