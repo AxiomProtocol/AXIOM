@@ -6,8 +6,7 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getStellarPaymentAdapter, fetchCircleToml } from '../../../lib/multichain/stellar/StellarPaymentAdapter';
-import { STELLAR_ANCHOR_REGISTRY } from '../../../lib/multichain/stellar/types';
+import { getStellarPaymentAdapter, fetchCircleToml, getActiveAnchorEntry } from '../../../lib/multichain/stellar/StellarPaymentAdapter';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -16,9 +15,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   res.setHeader('Cache-Control', 'no-store');
 
-  const activeKey = (process.env.STELLAR_ACTIVE_ANCHOR ?? 'moneygram').toLowerCase().trim();
-  const activeEntry = STELLAR_ANCHOR_REGISTRY[activeKey] ?? STELLAR_ANCHOR_REGISTRY['moneygram'];
+  // Use the safe helper — automatically falls back to moneygram if testanchor is set on mainnet
+  const activeEntry = getActiveAnchorEntry('mainnet');
   const activeAnchorId = activeEntry.anchorId;
+  const activeKey = activeEntry.anchorId.replace('-stellar', '').replace('-sdf', '');
 
   const adapter = getStellarPaymentAdapter('mainnet');
 

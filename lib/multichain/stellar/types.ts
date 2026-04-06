@@ -154,18 +154,18 @@ export const ANCHOR_CANDIDATES: AnchorCandidate[] = [
     notes: 'Validated SEP-24 anchor for European corridor. EURC only. Reserve for future EUR expansion.',
   },
   {
-    anchorId: 'circle-issuer',
-    anchorName: 'Circle (USDC Issuer Only)',
+    anchorId: 'circle-stellar',
+    anchorName: 'Circle (USDC on Stellar)',
     website: 'https://www.circle.com/en/usdc-multichain/stellar',
-    corridors: ['USDC issuance — no SEP-24 withdrawal'],
+    corridors: ['USDC direct transfer on Stellar (Circle-issued)', 'AXUSD → USDC (Circle, Stellar mainnet)'],
     primaryCurrencies: ['USDC'],
     primaryRegions: ['Global'],
     sep24Support: false,
     sep31Support: false,
     sep38Support: false,
-    partnershipRequired: true,
-    evaluationStatus: 'not_selected',
-    notes: 'Circle/Centre (centre.io) is the USDC issuer on Stellar — not a SEP-24 interactive anchor. No TRANSFER_SERVER_SEP0024 or WEB_AUTH_ENDPOINT in centre.io stellar.toml. USDC issuer address GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN remains the canonical issuer used across all anchors.',
+    partnershipRequired: false,
+    evaluationStatus: 'integrated',
+    notes: 'Circle is the canonical USDC issuer on Stellar (GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN). Integrated as the underlying settlement asset for all USDC-denominated corridors. All active SEP-24 anchors (MoneyGram, Anclap, MyKobo) settle against Circle-issued USDC. Direct USDC transfer corridor does not require a SEP-24 anchor.',
   },
 ];
 
@@ -396,6 +396,17 @@ export const STELLAR_ANCHOR_REGISTRY: Record<string, StellarAnchorRegistryEntry>
     transferServerSep24: 'https://ultracapital.xyz/sep24',
     webAuthEndpoint: 'https://ultracapital.xyz/auth',
   },
+  circle: {
+    homeDomain: 'www.circle.com',
+    anchorId: 'circle-stellar',
+    anchorName: 'Circle (USDC on Stellar)',
+    usdcIssuer: 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN',
+    network: 'mainnet',
+    // Circle is the USDC issuer — not a SEP-24/31 interactive anchor.
+    // Direct USDC transfers use native Stellar payment operations, not SEP-24.
+    transferServerSep24: '',
+    webAuthEndpoint: '',
+  },
 };
 
 // ─── Corridor models ──────────────────────────────────────────────────────────
@@ -445,6 +456,21 @@ export const STELLAR_PLANNED_CORRIDORS: StellarPaymentCorridor[] = [
     minAmountUsd: 1,
     maxAmountUsd: 100000,
     complianceRequired: true,
+    blockers: [],
+  },
+  {
+    corridorId: 'axusd-to-usdc-stellar-circle',
+    label: 'AXUSD (Arbitrum) → USDC (Stellar, Circle-issued)',
+    sourceAsset: 'AXUSD',
+    sourceNetwork: 'arbitrum',
+    destinationCurrency: 'USDC',
+    destinationCountry: 'Global',
+    anchorId: 'circle-stellar',
+    status: 'configured',
+    estimatedSettlementMinutes: 1,
+    minAmountUsd: 1,
+    maxAmountUsd: 1000000,
+    complianceRequired: false,
     blockers: [],
   },
   {

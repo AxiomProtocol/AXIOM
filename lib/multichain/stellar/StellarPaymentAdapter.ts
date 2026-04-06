@@ -58,10 +58,18 @@ import { eq } from 'drizzle-orm';
 
 const CIRCLE_USDC_ISSUER = 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
 
-/** Returns the anchor registry entry for the currently active anchor. */
-function getActiveAnchorEntry() {
+/** Returns the anchor registry entry for the currently active anchor.
+ *  Safety guard: if the selected anchor is testnet-only but callerNetwork is mainnet,
+ *  falls back to moneygram to prevent production traffic hitting a testnet anchor.
+ */
+function getActiveAnchorEntry(callerNetwork: StellarNetworkId = 'mainnet') {
   const key = (process.env.STELLAR_ACTIVE_ANCHOR ?? 'moneygram').toLowerCase().trim();
-  return STELLAR_ANCHOR_REGISTRY[key] ?? STELLAR_ANCHOR_REGISTRY['moneygram'];
+  const entry = STELLAR_ANCHOR_REGISTRY[key] ?? STELLAR_ANCHOR_REGISTRY['moneygram'];
+  // Never route mainnet traffic to a testnet-only anchor
+  if (callerNetwork === 'mainnet' && entry.network === 'testnet') {
+    return STELLAR_ANCHOR_REGISTRY['moneygram'];
+  }
+  return entry;
 }
 
 function getActiveAnchorId(): string {
@@ -1212,5 +1220,5 @@ export function getStellarPaymentAdapter(networkId: StellarNetworkId = 'mainnet'
   return _instance;
 }
 
-// Export the toml fetcher so API routes can use it directly
-export { fetchCircleToml };
+// Export the toml fetcher and anchor helper so API routes can use them directly
+export { fetchCircleToml, getActiveAnchorEntry };
