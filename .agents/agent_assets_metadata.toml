@@ -306,6 +306,30 @@ uri = "file://public/logos/axiom-logo-option-c.png"
 type = "image"
 title = "axiom logo seal converging triangles navy"
 
+[[generated]]
+id = "q3U0uBT0HHB5ukhkotjeM"
+uri = "file://public/logos/axiom-premium-a.png"
+type = "image"
+title = "axiom premium A navy gold embossed"
+
+[[generated]]
+id = "LC0AVruLGl55clX43Adrm"
+uri = "file://public/logos/axiom-premium-cartouche.png"
+type = "image"
+title = "axiom premium cartouche chevron gold"
+
+[[generated]]
+id = "JdfyyUKISZknNyMunvFDv"
+uri = "file://public/logos/axiom-premium-compass.png"
+type = "image"
+title = "axiom premium compass rose navy gold"
+
+[[generated]]
+id = "3DOliAB49FGEbjJz3PokH"
+uri = "file://public/logos/axiom-premium-gateway.png"
+type = "image"
+title = "axiom premium gateway pillars arch gold"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
