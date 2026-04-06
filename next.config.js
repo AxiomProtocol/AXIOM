@@ -17,6 +17,15 @@ const nextConfig = {
     ];
   },
 
+  async rewrites() {
+    return [
+      {
+        source: '/.well-known/stellar.toml',
+        destination: '/api/stellar-toml',
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
@@ -26,6 +35,13 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+      {
+        source: '/.well-known/stellar.toml',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Content-Type', value: 'text/plain; charset=utf-8' },
         ],
       },
     ];

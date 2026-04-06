@@ -1,0 +1,31 @@
+# Axiom Protocol — Stellar Wallet Manifest
+# Served at /.well-known/stellar.toml
+# Access-Control-Allow-Origin: * required by SEP-compliant anchors.
+#
+# This file identifies Axiom Protocol as a non-custodial wallet application
+# on the Stellar payments rail. Axiom is NOT an anchor — it routes through
+# registered anchor partners (active: MoneyGram via MoneyGram Ramps).
+#
+# For MoneyGram Ramps allowlisting: developer.moneygram.com
+# Update ORG_URL to your production deployment domain before submitting.
+
+VERSION = "0.1.0"
+
+NETWORK_PASSPHRASE = "Public Global Stellar Network ; September 2015"
+
+# Axiom does not hold funds on-chain — no ACCOUNTS listed.
+ACCOUNTS = []
+
+[DOCUMENTATION]
+ORG_NAME = "Axiom Protocol"
+ORG_DBA = "Axiom Protocol"
+ORG_URL = "https://axiomprotocol.xyz"
+ORG_DESCRIPTION = "Governance-first sovereign digital-physical economy infrastructure. Non-custodial wallet and cross-border payments rail powered by Stellar and USDC."
+ORG_LOGO = "https://axiomprotocol.xyz/axiom-logo.png"
+ORG_SUPPORT_EMAIL = "support@axiomprotocol.xyz"
+ORG_OFFICIAL_EMAIL = "hello@axiomprotocol.xyz"
+ORG_TWITTER = "@AxiomProtocol"
+
+# Anchor partner integration (read-only reference — not Axiom's own anchor)
+# Active anchor: MoneyGram (stellar.moneygram.com)
+# Protocol: SEP-0024 (interactive), SEP-0038 (RFQ), SEP-0031 (direct payments)
