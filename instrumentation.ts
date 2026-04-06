@@ -71,6 +71,13 @@ export async function register() {
       // ── Enums: Other ──
       await exec(enumSafe('treasury_transaction_type', ['deposit','withdrawal','commitment','release','disbursement','fee','adjustment']), 'enum treasury_transaction_type');
 
+      // ── Enums: Expansion / Cross-Chain ──
+      await exec(enumSafe('expansion_rail_type', ['identity','payments','institutional','sovereign','execution','bridge','reserve']), 'enum expansion_rail_type');
+      await exec(enumSafe('expansion_status', ['planned','researching','configured','connected','live','disabled']), 'enum expansion_status');
+      await exec(enumSafe('expansion_corridor_type', ['payment','bridge','redemption','reserve_transfer','payout','identity_sync']), 'enum expansion_corridor_type');
+      await exec(enumSafe('expansion_operator_model', ['automated','assisted','manual','external_partner']), 'enum expansion_operator_model');
+      await exec(enumSafe('expansion_bridge_mode', ['attestation','mirrored_credential','allowlist_sync','future']), 'enum expansion_bridge_mode');
+
       // ═══════════════════════════════════════════
       //  CORE APPLICATION TABLES
       // ═══════════════════════════════════════════
@@ -6558,6 +6565,162 @@ END $seed$`, 'seed dp_listings');
       await exec(`CREATE INDEX IF NOT EXISTS bridge_conversion_requests_participant_idx ON bridge_conversion_requests(participant_id)`, 'index bridge_conversion_requests_participant_idx');
       await exec(`CREATE INDEX IF NOT EXISTS bridge_conversion_requests_wallet_idx ON bridge_conversion_requests(wallet_address)`, 'index bridge_conversion_requests_wallet_idx');
       await exec(`CREATE INDEX IF NOT EXISTS bridge_conversion_requests_status_idx ON bridge_conversion_requests(status)`, 'index bridge_conversion_requests_status_idx');
+
+      // ═══════════════════════════════════════════
+      //  STELLAR PAYMENTS RAIL
+      // ═══════════════════════════════════════════
+
+      await exec(`CREATE TABLE IF NOT EXISTS stellar_payment_transfers (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        axiom_wallet_address VARCHAR(42) NOT NULL,
+        stellar_public_key VARCHAR(56),
+        anchor_id VARCHAR(100) NOT NULL DEFAULT 'circle-stellar',
+        corridor_id VARCHAR(100) NOT NULL,
+        anchor_transfer_id VARCHAR(200),
+        source_amount_axusd VARCHAR(40) NOT NULL,
+        destination_currency VARCHAR(10) NOT NULL,
+        destination_amount VARCHAR(40),
+        destination_account VARCHAR(200),
+        fee_estimate VARCHAR(40),
+        stellar_transaction_hash VARCHAR(200),
+        status VARCHAR(50) NOT NULL DEFAULT 'pending_user_transfer_start',
+        error_message TEXT,
+        sep24_interactive_url TEXT,
+        sep10_jwt_issued BOOLEAN NOT NULL DEFAULT FALSE,
+        anchor_raw_response JSONB,
+        initiated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        completed_at TIMESTAMP,
+        last_polled_at TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        sep_protocol VARCHAR(10) NOT NULL DEFAULT 'sep24',
+        sep38_quote_id VARCHAR(200),
+        sep31_stellar_account_id VARCHAR(56),
+        sep31_stellar_memo VARCHAR(200)
+      )`, 'table stellar_payment_transfers');
+      await exec(`CREATE INDEX IF NOT EXISTS stellar_transfers_wallet_idx ON stellar_payment_transfers(axiom_wallet_address)`, 'index stellar_transfers_wallet_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS stellar_transfers_status_idx ON stellar_payment_transfers(status)`, 'index stellar_transfers_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS stellar_transfers_anchor_idx ON stellar_payment_transfers(anchor_id)`, 'index stellar_transfers_anchor_idx');
+
+      // ═══════════════════════════════════════════
+      //  AXAU PURCHASE REQUESTS
+      // ═══════════════════════════════════════════
+
+      await exec(`CREATE TABLE IF NOT EXISTS axau_purchase_requests (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        wallet_address VARCHAR(42) NOT NULL,
+        email VARCHAR(256),
+        axusd_amount NUMERIC NOT NULL,
+        axau_quoted NUMERIC NOT NULL,
+        xau_usd_price NUMERIC,
+        status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        fulfillment_tx_hash VARCHAR(66),
+        fulfilled_by VARCHAR(42),
+        fulfilled_at TIMESTAMP,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table axau_purchase_requests');
+      await exec(`CREATE INDEX IF NOT EXISTS axau_purchase_wallet_idx ON axau_purchase_requests(wallet_address)`, 'index axau_purchase_wallet_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS axau_purchase_status_idx ON axau_purchase_requests(status)`, 'index axau_purchase_status_idx');
+
+      // ═══════════════════════════════════════════
+      //  EXPANSION / CROSS-CHAIN INFRASTRUCTURE
+      // ═══════════════════════════════════════════
+
+      await exec(`CREATE TABLE IF NOT EXISTS expansion_rail_integrations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        rail_name VARCHAR(100) NOT NULL,
+        rail_type expansion_rail_type NOT NULL,
+        chain_slug VARCHAR(50) NOT NULL,
+        provider_name VARCHAR(100),
+        status expansion_status NOT NULL DEFAULT 'researching',
+        production_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+        sandbox_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+        docs_attached BOOLEAN NOT NULL DEFAULT FALSE,
+        sdk_reviewed BOOLEAN NOT NULL DEFAULT FALSE,
+        source_files_attached BOOLEAN NOT NULL DEFAULT FALSE,
+        implementation_blocked BOOLEAN NOT NULL DEFAULT TRUE,
+        blocking_reason TEXT,
+        last_reviewed_at TIMESTAMP,
+        notes TEXT,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table expansion_rail_integrations');
+
+      await exec(`CREATE TABLE IF NOT EXISTS expansion_settlement_corridors (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        source_network VARCHAR(50) NOT NULL,
+        destination_network VARCHAR(50) NOT NULL,
+        source_asset VARCHAR(20) NOT NULL,
+        destination_asset VARCHAR(20) NOT NULL,
+        corridor_type expansion_corridor_type NOT NULL,
+        status expansion_status NOT NULL DEFAULT 'planned',
+        route_strategy TEXT,
+        operator_model expansion_operator_model NOT NULL DEFAULT 'manual',
+        compliance_required BOOLEAN NOT NULL DEFAULT TRUE,
+        estimated_settlement_minutes VARCHAR(50),
+        min_amount_usd VARCHAR(30),
+        max_amount_usd VARCHAR(30),
+        notes TEXT,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table expansion_settlement_corridors');
+
+      await exec(`CREATE TABLE IF NOT EXISTS expansion_sovereign_readiness (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        target_chain_family VARCHAR(100) NOT NULL,
+        target_role VARCHAR(200) NOT NULL,
+        readiness_status expansion_status NOT NULL DEFAULT 'researching',
+        architecture_decision_made BOOLEAN NOT NULL DEFAULT FALSE,
+        validator_economics_designed BOOLEAN NOT NULL DEFAULT FALSE,
+        ibc_module_selected BOOLEAN NOT NULL DEFAULT FALSE,
+        docs_status VARCHAR(50) DEFAULT 'missing',
+        sdk_status VARCHAR(50) DEFAULT 'not_reviewed',
+        source_file_status VARCHAR(50) DEFAULT 'missing',
+        dependencies_json JSONB,
+        notes TEXT,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table expansion_sovereign_readiness');
+
+      await exec(`CREATE TABLE IF NOT EXISTS expansion_identity_bridges (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        source_identity_system VARCHAR(100) NOT NULL,
+        destination_identity_system VARCHAR(100) NOT NULL,
+        source_chain VARCHAR(50) NOT NULL,
+        destination_chain VARCHAR(50) NOT NULL,
+        bridge_mode expansion_bridge_mode NOT NULL DEFAULT 'future',
+        status expansion_status NOT NULL DEFAULT 'planned',
+        verification_model TEXT,
+        credential_standard VARCHAR(100),
+        compliance_required BOOLEAN NOT NULL DEFAULT TRUE,
+        docs_attached BOOLEAN NOT NULL DEFAULT FALSE,
+        sdk_reviewed BOOLEAN NOT NULL DEFAULT FALSE,
+        notes TEXT,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table expansion_identity_bridges');
+
+      await exec(`CREATE TABLE IF NOT EXISTS expansion_institutional_connectors (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        connector_name VARCHAR(100) NOT NULL,
+        network_or_platform VARCHAR(100) NOT NULL,
+        institution_type VARCHAR(100),
+        role VARCHAR(200),
+        status expansion_status NOT NULL DEFAULT 'researching',
+        compliance_scope TEXT,
+        partner_docs_received BOOLEAN NOT NULL DEFAULT FALSE,
+        sdk_reviewed BOOLEAN NOT NULL DEFAULT FALSE,
+        agreement_status VARCHAR(50) DEFAULT 'none',
+        notes TEXT,
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table expansion_institutional_connectors');
 
       console.log('[instrumentation] Database setup complete');
 
