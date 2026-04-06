@@ -1,9 +1,16 @@
 import React, { useState, useEffect, ReactNode } from 'react';
 import Link from 'next/link';
-import { ConnectWalletButton } from './ConnectWalletButton';
+import dynamic from 'next/dynamic';
 import { AuthButton } from './AuthButton';
 import { NAV_ITEMS } from './navItems';
 import { NavDropdown } from './NavDropdown';
+
+// ConnectWalletButton uses wagmi + Reown AppKit (browser-only).
+// Dynamic import with ssr:false prevents the serverless crash on all SSR pages.
+const ConnectWalletButton = dynamic(
+  () => import('./ConnectWalletButton').then(m => m.ConnectWalletButton),
+  { ssr: false, loading: () => <div style={{ width: 120, height: 32 }} /> }
+);
 
 interface DesignLawLayoutProps {
   children: ReactNode;
