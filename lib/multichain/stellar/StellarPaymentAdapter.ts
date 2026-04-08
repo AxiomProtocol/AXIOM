@@ -189,7 +189,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
       destinationCurrency: c.destinationCurrency,
       destinationCountry: c.destinationCountry,
       anchorId: c.anchorId ?? 'not_selected',
-      status: c.status === 'configured' ? 'available' : c.status === 'anchor_pending' ? 'pending_anchor' : 'unavailable',
+      status: (c.status === 'live' || c.status === 'configured') ? 'available' : c.status === 'anchor_pending' ? 'pending_anchor' : 'unavailable',
       estimatedSettlementMinutes: c.estimatedSettlementMinutes,
       minAmountUsd: c.minAmountUsd,
       maxAmountUsd: c.maxAmountUsd,
