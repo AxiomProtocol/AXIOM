@@ -1,7 +1,8 @@
 /**
  * Axiom Protocol — Stellar Payment Transfers Schema
  *
- * Tracks every payment initiated through the Circle / Stellar rail.
+ * Tracks every payment initiated through Axiom Rail (SEP-10/24/31/38),
+ * settled via Increase FDIC-insured ACH and domestic wire.
  * One row per transfer attempt. Status is updated via anchor polling.
  */
 
@@ -35,7 +36,7 @@ export const stellarPaymentTransfers = pgTable('stellar_payment_transfers', {
   axiomWalletAddress: varchar('axiom_wallet_address', { length: 42 }).notNull(),
   stellarPublicKey: varchar('stellar_public_key', { length: 56 }),
 
-  anchorId: varchar('anchor_id', { length: 100 }).notNull().default('moneygram-stellar'),
+  anchorId: varchar('anchor_id', { length: 100 }).notNull().default('axiom-rail'),
   corridorId: varchar('corridor_id', { length: 100 }).notNull(),
   anchorTransferId: varchar('anchor_transfer_id', { length: 200 }),
 

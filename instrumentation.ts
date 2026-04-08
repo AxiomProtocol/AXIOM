@@ -6574,7 +6574,7 @@ END $seed$`, 'seed dp_listings');
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         axiom_wallet_address VARCHAR(42) NOT NULL,
         stellar_public_key VARCHAR(56),
-        anchor_id VARCHAR(100) NOT NULL DEFAULT 'circle-stellar',
+        anchor_id VARCHAR(100) NOT NULL DEFAULT 'axiom-rail',
         corridor_id VARCHAR(100) NOT NULL,
         anchor_transfer_id VARCHAR(200),
         source_amount_axusd VARCHAR(40) NOT NULL,
