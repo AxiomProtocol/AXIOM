@@ -1,8 +1,8 @@
 /**
  * POST /api/axiom-rail/sep24/withdraw
  *
- * SEP-24 interactive withdrawal — user sends USDC on Stellar to Axiom Rail
- * and receives USD in their bank account via ACH or wire.
+ * SEP-24 interactive withdrawal — user sends USDC/AXUSD/AXAU on Stellar
+ * to Axiom Rail and receives USD in their bank account via ACH or wire.
  *
  * Returns a URL to the interactive web flow where the user provides
  * their bank account details, plus the Stellar account to send USDC to.
@@ -13,15 +13,19 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import {
   verifyRailJwt,
-  AXIOM_RAIL_SIGNING_KEY,
+  AXIOM_RAIL_DEPOSIT_ACCOUNT,
 } from '../../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
 import { v4 as uuidv4 } from 'uuid';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+const SUPPORTED_ASSETS = ['USDC', 'AXUSD', 'AXAU'];
 
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const authHeader = req.headers['authorization'] ?? '';
   const token = authHeader.replace(/^Bearer\s+/i, '');
@@ -30,8 +34,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { asset_code, amount } = req.body as { asset_code?: string; amount?: string };
 
-  if (!asset_code || asset_code !== 'USDC') {
-    return res.status(400).json({ error: 'Only USDC is supported' });
+  if (!asset_code || !SUPPORTED_ASSETS.includes(asset_code.toUpperCase())) {
+    return res.status(400).json({
+      error: `asset_code must be one of: ${SUPPORTED_ASSETS.join(', ')}`,
+    });
   }
 
   const txId = `axr-wdr-${uuidv4()}`;
@@ -43,15 +49,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   interactiveUrl.searchParams.set('id', txId);
   interactiveUrl.searchParams.set('account', account);
+  interactiveUrl.searchParams.set('asset', asset_code.toUpperCase());
   if (amount) interactiveUrl.searchParams.set('amount', amount);
+  interactiveUrl.searchParams.set('anchor_account', AXIOM_RAIL_DEPOSIT_ACCOUNT);
+  interactiveUrl.searchParams.set('memo', memo);
   interactiveUrl.searchParams.set('token', token);
 
   return res.status(200).json({
     type: 'interactive_customer_info_needed',
     url: interactiveUrl.toString(),
     id: txId,
-    // The account and memo the user should send USDC to
-    withdraw_anchor_account: AXIOM_RAIL_SIGNING_KEY,
+    withdraw_anchor_account: AXIOM_RAIL_DEPOSIT_ACCOUNT,
     memo,
     memo_type: 'text',
   });

@@ -30,6 +30,22 @@ DIRECT_PAYMENT_SERVER = "https://axiomprotocol.app/api/axiom-rail/sep31"
 # Axiom's anchor signing account
 ACCOUNTS = ["GBLOO5JUZQDP6JMIX26X5AC26QUNYFYMNT2CLAMGAWDU4HA4VG2IAVIY"]
 
+[[CURRENCIES]]
+code = "USDC"
+issuer = "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+display_decimals = 2
+name = "USD Coin"
+desc = "Circle-issued USDC on Stellar. Primary settlement asset for Axiom Rail deposits and withdrawals."
+is_asset_anchored = true
+anchor_asset_type = "fiat"
+anchor_asset = "USD"
+redemption_instructions = "Redeem via Axiom Rail SEP-24 withdrawal at axiomprotocol.app"
+regulated = false
+
+# Note: AXUSD and AXAU are ERC-3643 assets on Arbitrum One, not native Stellar assets.
+# They are supported as source assets via the Axiom Rail cross-chain conversion layer.
+# Stellar wallets interact with USDC; AXUSD/AXAU conversion happens on the Arbitrum side.
+
 [DOCUMENTATION]
 ORG_NAME = "Axiom Protocol"
 ORG_DBA = "Axiom Protocol"

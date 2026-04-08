@@ -25,6 +25,9 @@ export const AXIOM_RAIL_NETWORK = 'Public Global Stellar Network ; September 201
 export const AXUSD_CONTRACT_ADDRESS = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
 export const AXAU_CONTRACT_ADDRESS  = '0xbcCA4D937d427829914498423aE6E04C846dB0Bb';
 
+// Separate deposit-receiving account (should differ from signing key in production)
+export const AXIOM_RAIL_DEPOSIT_ACCOUNT = process.env.AXIOM_RAIL_DEPOSIT_ACCOUNT ?? AXIOM_RAIL_SIGNING_KEY;
+
 export const AXIOM_RAIL_BASE_URL = 'https://axiomprotocol.app/api/axiom-rail';
 export const AXIOM_RAIL_SEP24_URL = `${AXIOM_RAIL_BASE_URL}/sep24`;
 export const AXIOM_RAIL_SEP31_URL = `${AXIOM_RAIL_BASE_URL}/sep31`;
@@ -226,20 +229,43 @@ export async function verifySep10Challenge(
     const serverKeypair = Keypair.fromSecret(signingSecret);
     const tx = new Transaction(signedXdr, Networks.PUBLIC);
 
-    // Extract client account from first manage_data operation source
+    // ── 1. Validate challenge structure ──────────────────────────────────────────
     const firstOp = tx.operations[0];
     if (!firstOp || firstOp.type !== 'manageData') {
-      return { account: '', valid: false, error: 'Invalid challenge structure' };
+      return { account: '', valid: false, error: 'Invalid challenge structure: first op must be manageData' };
     }
 
     const clientAccount = (firstOp as { source?: string }).source ?? '';
+    if (!clientAccount) {
+      return { account: '', valid: false, error: 'Challenge missing client account in first op source' };
+    }
 
-    // Verify server signature present
-    const serverSig = tx.signatures.find(sig =>
-      serverKeypair.verify(tx.hash(), sig.signature())
-    );
+    // ── 2. Verify web_auth_domain second operation ────────────────────────────────
+    const secondOp = tx.operations[1] as { type: string; name?: string; value?: Buffer } | undefined;
+    if (!secondOp || secondOp.type !== 'manageData' || secondOp.name !== 'web_auth_domain') {
+      return { account: clientAccount, valid: false, error: 'Challenge missing web_auth_domain operation' };
+    }
+    const domainValue = secondOp.value?.toString('utf8') ?? '';
+    if (domainValue !== AXIOM_RAIL_HOME_DOMAIN) {
+      return { account: clientAccount, valid: false, error: `web_auth_domain mismatch: expected ${AXIOM_RAIL_HOME_DOMAIN}, got ${domainValue}` };
+    }
+
+    // ── 3. Verify server signature ────────────────────────────────────────────────
+    const serverSig = tx.signatures.find(sig => {
+      try { return serverKeypair.verify(tx.hash(), sig.signature()); } catch { return false; }
+    });
     if (!serverSig) {
-      return { account: clientAccount, valid: false, error: 'Server signature missing' };
+      return { account: clientAccount, valid: false, error: 'Server signature missing or invalid' };
+    }
+
+    // ── 4. Verify client signature ────────────────────────────────────────────────
+    // SEP-10 requires the client to sign the challenge before submitting.
+    const clientKeypair = Keypair.fromPublicKey(clientAccount);
+    const clientSig = tx.signatures.find(sig => {
+      try { return clientKeypair.verify(tx.hash(), sig.signature()); } catch { return false; }
+    });
+    if (!clientSig) {
+      return { account: clientAccount, valid: false, error: 'Client signature missing — wallet must sign the challenge before submitting' };
     }
 
     return { account: clientAccount, valid: true };

@@ -2,7 +2,7 @@
  * POST /api/axiom-rail/sep24/deposit
  *
  * SEP-24 interactive deposit — user sends USD to Axiom Rail via ACH/Wire
- * and receives USDC on their Stellar wallet.
+ * and receives USDC/AXUSD/AXAU on their Stellar or Arbitrum wallet.
  *
  * Returns a URL to the interactive web flow where the user provides
  * their payment details and initiates the bank transfer.
@@ -14,11 +14,15 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyRailJwt } from '../../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
 import { v4 as uuidv4 } from 'uuid';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+const SUPPORTED_ASSETS = ['USDC', 'AXUSD', 'AXAU'];
 
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const authHeader = req.headers['authorization'] ?? '';
   const token = authHeader.replace(/^Bearer\s+/i, '');
@@ -39,8 +43,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     memo_type?: string;
   };
 
-  if (!asset_code || asset_code !== 'USDC') {
-    return res.status(400).json({ error: 'Only USDC is supported' });
+  if (!asset_code || !SUPPORTED_ASSETS.includes(asset_code.toUpperCase())) {
+    return res.status(400).json({
+      error: `asset_code must be one of: ${SUPPORTED_ASSETS.join(', ')}`,
+    });
   }
 
   const destAccount = stellarAccount ?? account;
@@ -54,6 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   interactiveUrl.searchParams.set('id', txId);
   interactiveUrl.searchParams.set('account', destAccount);
+  interactiveUrl.searchParams.set('asset', asset_code.toUpperCase());
   if (amount) interactiveUrl.searchParams.set('amount', amount);
   if (memo) interactiveUrl.searchParams.set('memo', memo);
   if (memo_type) interactiveUrl.searchParams.set('memo_type', memo_type);
