@@ -21,6 +21,10 @@ export const AXIOM_RAIL_SIGNING_KEY = 'GBLOO5JUZQDP6JMIX26X5AC26QUNYFYMNT2CLAMGA
 export const AXIOM_RAIL_USDC_ISSUER = 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
 export const AXIOM_RAIL_NETWORK = 'Public Global Stellar Network ; September 2015';
 
+// Axiom Protocol asset contract addresses (Arbitrum One)
+export const AXUSD_CONTRACT_ADDRESS = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
+export const AXAU_CONTRACT_ADDRESS  = '0xbcCA4D937d427829914498423aE6E04C846dB0Bb';
+
 export const AXIOM_RAIL_BASE_URL = 'https://axiomprotocol.app/api/axiom-rail';
 export const AXIOM_RAIL_SEP24_URL = `${AXIOM_RAIL_BASE_URL}/sep24`;
 export const AXIOM_RAIL_SEP31_URL = `${AXIOM_RAIL_BASE_URL}/sep31`;
@@ -46,10 +50,14 @@ export function getAxiomRailSep24Info(): AxiomRailSep24Info {
 
   return {
     deposit: {
-      USDC: assetConfig,
+      USDC:  assetConfig,
+      AXUSD: assetConfig,
+      AXAU:  assetConfig,
     },
     withdraw: {
-      USDC: assetConfig,
+      USDC:  assetConfig,
+      AXUSD: assetConfig,
+      AXAU:  assetConfig,
     },
     fee_supported: true,
     id_supported: false,
@@ -60,18 +68,30 @@ export function getAxiomRailSep24Info(): AxiomRailSep24Info {
 // ─── SEP-38 Assets & Quotes ────────────────────────────────────────────────────
 
 export function getAxiomRailSep38Assets(): AxiomRailSep38Asset[] {
+  const rtpDeliveryMethods = [
+    { name: 'RTP', description: 'Real-Time Payments (5-minute settlement)' },
+    { name: 'ACH', description: 'ACH bank transfer (1-3 business days)' },
+    { name: 'Wire', description: 'Domestic wire transfer (same day)' },
+  ];
+
   return [
     {
       asset: `stellar:USDC:${AXIOM_RAIL_USDC_ISSUER}`,
       country_codes: ['US'],
-      sell_delivery_methods: [
-        { name: 'ACH', description: 'ACH bank transfer (1-3 business days)' },
-        { name: 'Wire', description: 'Domestic wire transfer (same day)' },
-      ],
-      buy_delivery_methods: [
-        { name: 'ACH', description: 'ACH bank transfer (1-3 business days)' },
-        { name: 'Wire', description: 'Domestic wire transfer (same day)' },
-      ],
+      sell_delivery_methods: rtpDeliveryMethods,
+      buy_delivery_methods: rtpDeliveryMethods,
+    },
+    {
+      asset: `arbitrum:AXUSD:${AXUSD_CONTRACT_ADDRESS}`,
+      country_codes: ['US'],
+      sell_delivery_methods: rtpDeliveryMethods,
+      buy_delivery_methods: rtpDeliveryMethods,
+    },
+    {
+      asset: `arbitrum:AXAU:${AXAU_CONTRACT_ADDRESS}`,
+      country_codes: ['US'],
+      sell_delivery_methods: rtpDeliveryMethods,
+      buy_delivery_methods: rtpDeliveryMethods,
     },
     {
       asset: 'iso4217:USD',

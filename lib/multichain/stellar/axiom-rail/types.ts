@@ -9,7 +9,7 @@
  *   User bank account  → Increase ACH/Wire → Axiom Rail SEP-24 → User Stellar wallet (USDC)
  */
 
-export type AxiomRailAssetCode = 'USDC' | 'AXUSD';
+export type AxiomRailAssetCode = 'USDC' | 'AXUSD' | 'AXAU';
 export type AxiomRailFiatCode = 'USD';
 export type AxiomRailOperationType = 'deposit' | 'withdrawal';
 
