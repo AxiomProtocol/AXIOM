@@ -17,7 +17,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/axusd-3643', label: 'AXUSD Settlement Rail' },
       { href: '/dex', label: 'Protocol Exchange' },
       { href: '/banking', label: 'Banking Infrastructure' },
-      { href: '/stellar-payments', label: 'Stellar Payments Rail' },
+      { href: '/axiom-payment-rails', label: 'Axiom Payment Rails' },
       { href: '/depin/denet', label: 'DePIN Network' },
     ],
   },
