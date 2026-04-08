@@ -32,6 +32,8 @@ interface AnchorStatus {
 
 interface CorridorStatus {
   corridorId: string;
+  label: string;
+  sourceAsset: string;
   sourceNetwork: string;
   destinationCurrency: string;
   destinationCountry: string;
@@ -131,7 +133,7 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
     sourceAxusdAmount: '',
     destinationCurrency: 'USD',
     destinationAccount: '',
-    corridorId: 'axusd-to-usdc-stellar-usd',
+    corridorId: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [transferResult, setTransferResult] = useState<TransferResult | null>(null);
@@ -146,7 +148,11 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
 
     fetch('/api/stellar/corridors')
       .then(r => r.json())
-      .then(d => setCorridors(d))
+      .then(d => {
+        setCorridors(d);
+        const first = (d?.corridors ?? []).find((c: { status: string; corridorId: string; destinationCurrency: string }) => c.status === 'available');
+        if (first) setForm(f => f.corridorId === '' ? { ...f, corridorId: first.corridorId, destinationCurrency: first.destinationCurrency } : f);
+      })
       .catch(() => null)
       .finally(() => setCorridorLoading(false));
   }, []);
@@ -340,11 +346,11 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
                 {(corridors?.corridors ?? []).map((c, i) => (
                   <tr key={c.corridorId} style={{ background: i % 2 === 0 ? '#fff' : '#f8f9fb', borderBottom: '1px solid #eee' }}>
                     <td style={{ padding: '0.65rem 0.9rem', color: '#1e3a5f', fontWeight: 600 }}>
-                      AXUSD → {c.destinationCurrency}
+                      {c.label ?? `${c.sourceAsset} → ${c.destinationCurrency}`}
                       <span style={{ display: 'block', fontSize: '0.68rem', color: '#888', fontWeight: 400, marginTop: 2 }}>{c.destinationCountry}</span>
                     </td>
                     <td style={{ padding: '0.65rem 0.9rem', color: '#444' }}>
-                      {c.anchorId === 'moneygram-stellar' ? 'MoneyGram' : c.anchorId === 'anclap-stellar' ? 'Anclap' : c.anchorId}
+                      {c.anchorId === 'axiom-rail' ? 'Axiom Rail' : c.anchorId === 'circle-stellar' ? 'Circle' : c.anchorId}
                     </td>
                     <td style={{ padding: '0.65rem 0.9rem', color: '#444' }}>
                       {c.estimatedSettlementMinutes != null ? `~${c.estimatedSettlementMinutes}min` : '—'}
@@ -542,8 +548,8 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
               value={form.corridorId}
               onChange={e => {
                 const cid = e.target.value;
-                const destCurrency = cid.includes('global') ? 'USDC' : cid.includes('mxn') ? 'MXN' : 'USD';
-                setForm(f => ({ ...f, corridorId: cid, destinationCurrency: destCurrency }));
+                const selected = (corridors?.corridors ?? []).find(c => c.corridorId === cid);
+                setForm(f => ({ ...f, corridorId: cid, destinationCurrency: selected?.destinationCurrency ?? 'USD' }));
               }}
               style={{
                 width: '100%',
@@ -556,8 +562,14 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
                 boxSizing: 'border-box',
               }}
             >
-              <option value="axusd-to-usdc-stellar-usd">AXUSD → USDC → USD Payout (Circle)</option>
-              <option value="axusd-to-usdc-stellar-global">AXUSD → USDC → Global USDC (Circle)</option>
+              {(corridors?.corridors ?? [])
+                .filter(c => c.status === 'available')
+                .map(c => (
+                  <option key={c.corridorId} value={c.corridorId}>
+                    {c.label ?? `${c.sourceAsset} → ${c.destinationCurrency}`}
+                  </option>
+                ))
+              }
             </select>
           </div>
 

@@ -185,6 +185,8 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
   async getAllCorridors(): Promise<PaymentCorridorStatus[]> {
     return STELLAR_PLANNED_CORRIDORS.map(c => ({
       corridorId: c.corridorId,
+      label: c.label,
+      sourceAsset: c.sourceAsset,
       sourceNetwork: c.sourceNetwork,
       destinationCurrency: c.destinationCurrency,
       destinationCountry: c.destinationCountry,
@@ -194,7 +196,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
       minAmountUsd: c.minAmountUsd,
       maxAmountUsd: c.maxAmountUsd,
       feeEstimatePercent: c.anchorId === 'axiom-rail' ? 0.1 : null,
-      notes: c.blockers.length > 0 ? `Blockers: ${c.blockers.join('; ')}` : 'USDC on Stellar via active SEP-24 anchor. Interactive withdrawal flow.',
+      notes: c.blockers.length > 0 ? `Blockers: ${c.blockers.join('; ')}` : 'Axiom Rail — settled via Increase ACH/Wire.',
     }));
   }
 
