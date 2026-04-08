@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   res.setHeader('Cache-Control', 'no-store');
 
-  // Use the lightweight helper — no SDK at import time, guard auto-falls-back to moneygram on mainnet
+  // Use the lightweight helper — no SDK at import time, guard auto-falls-back to axiom-rail on mainnet
   const activeEntry = getActiveAnchorEntry('mainnet');
   const activeAnchorId = activeEntry.anchorId;
   const activeKey = activeEntry.anchorId.replace('-stellar', '').replace('-sdf', '');

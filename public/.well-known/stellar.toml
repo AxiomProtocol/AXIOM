@@ -1,38 +1,41 @@
-# Axiom Protocol — Stellar Wallet Manifest
+# Axiom Protocol — Stellar Anchor Manifest
 # Served at /.well-known/stellar.toml
-# Access-Control-Allow-Origin: * required by SEP-compliant anchors.
+# Access-Control-Allow-Origin: * required by all SEP-compliant wallets and anchors.
 #
-# This file identifies Axiom Protocol as a non-custodial wallet application
-# on the Stellar payments rail. Axiom is NOT an anchor — it routes through
-# registered anchor partners (active: MoneyGram via MoneyGram Ramps).
-#
-# For MoneyGram Ramps allowlisting: developer.moneygram.com
-# Update ORG_URL to your production deployment domain before submitting.
+# Axiom Rail is Axiom Protocol's own Stellar SEP-10/24/31/38 anchor.
+# Settled via Increase (FDIC-insured ACH and domestic wire).
+# No third-party anchor partnership required.
 
 VERSION = "2.0.0"
 
 NETWORK_PASSPHRASE = "Public Global Stellar Network ; September 2015"
 
-# SEP-10 Web Authentication — required by MoneyGram Ramps and all SEP-compliant anchors.
-# The signing keypair is domain-scoped: the private key signs SEP-10 challenges,
-# the public key is listed here so anchors can verify domain ownership.
+# SEP-10 Web Authentication
+# The signing keypair is domain-scoped. The private key signs SEP-10 challenges;
+# the public key listed here lets wallets verify domain ownership.
 SIGNING_KEY = "GBLOO5JUZQDP6JMIX26X5AC26QUNYFYMNT2CLAMGAWDU4HA4VG2IAVIY"
-WEB_AUTH_ENDPOINT = "https://axiomprotocol.app/api/stellar/auth"
 
-# Axiom's domain signing key for SEP-10 authentication challenges.
+# Axiom Rail — SEP-10 auth endpoint
+WEB_AUTH_ENDPOINT = "https://axiomprotocol.app/api/axiom-rail/auth"
+
+# Axiom Rail — SEP-24 interactive deposit/withdrawal
+TRANSFER_SERVER_SEP0024 = "https://axiomprotocol.app/api/axiom-rail/sep24"
+
+# Axiom Rail — SEP-38 quote server
+ANCHOR_QUOTE_SERVER = "https://axiomprotocol.app/api/axiom-rail/sep38"
+
+# Axiom Rail — SEP-31 direct payment server
+DIRECT_PAYMENT_SERVER = "https://axiomprotocol.app/api/axiom-rail/sep31"
+
+# Axiom's anchor signing account
 ACCOUNTS = ["GBLOO5JUZQDP6JMIX26X5AC26QUNYFYMNT2CLAMGAWDU4HA4VG2IAVIY"]
 
 [DOCUMENTATION]
 ORG_NAME = "Axiom Protocol"
 ORG_DBA = "Axiom Protocol"
 ORG_URL = "https://axiomprotocol.app"
-ORG_DESCRIPTION = "Governance-first sovereign digital-physical economy infrastructure. Non-custodial wallet and cross-border payments rail powered by Stellar and USDC."
+ORG_DESCRIPTION = "Governance-first sovereign digital-physical economy infrastructure. On-chain capital rails, real-world asset acquisition, and cross-border payments powered by Stellar USDC and Axiom Rail."
 ORG_LOGO = "https://axiomprotocol.app/logos/axiom-logo.png"
 ORG_SUPPORT_EMAIL = "support@axiomprotocol.app"
 ORG_OFFICIAL_EMAIL = "info@axiomprotocol.app"
 ORG_TWITTER = "@AxiomProtocol"
-
-# Axiom routes through MoneyGram Ramps (stellar.moneygram.com) for USDC settlement.
-# Anchor partner: MoneyGram — SEP-0024, SEP-0031, SEP-0038
-# CURRENCIES section omitted — Axiom is a wallet application, not an anchor.
-# Anchors declare their own issued assets; wallets do not.

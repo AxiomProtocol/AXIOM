@@ -1,0 +1,67 @@
+/**
+ * POST /api/axiom-rail/sep24/deposit
+ *
+ * SEP-24 interactive deposit — user sends USD to Axiom Rail via ACH/Wire
+ * and receives USDC on their Stellar wallet.
+ *
+ * Returns a URL to the interactive web flow where the user provides
+ * their payment details and initiates the bank transfer.
+ *
+ * Requires SEP-10 JWT in Authorization header.
+ */
+
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { verifyRailJwt } from '../../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
+import { v4 as uuidv4 } from 'uuid';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+  const authHeader = req.headers['authorization'] ?? '';
+  const token = authHeader.replace(/^Bearer\s+/i, '');
+  const { account, valid } = verifyRailJwt(token);
+  if (!valid) return res.status(403).json({ error: 'Invalid or expired SEP-10 token' });
+
+  const {
+    asset_code,
+    account: stellarAccount,
+    amount,
+    memo,
+    memo_type,
+  } = req.body as {
+    asset_code?: string;
+    account?: string;
+    amount?: string;
+    memo?: string;
+    memo_type?: string;
+  };
+
+  if (!asset_code || asset_code !== 'USDC') {
+    return res.status(400).json({ error: 'Only USDC is supported' });
+  }
+
+  const destAccount = stellarAccount ?? account;
+  if (!destAccount) return res.status(400).json({ error: 'account required' });
+
+  const txId = `axr-dep-${uuidv4()}`;
+
+  const interactiveUrl = new URL(
+    `/axiom-rail/deposit`,
+    `https://${process.env.NEXT_PUBLIC_APP_URL ?? 'axiomprotocol.app'}`
+  );
+  interactiveUrl.searchParams.set('id', txId);
+  interactiveUrl.searchParams.set('account', destAccount);
+  if (amount) interactiveUrl.searchParams.set('amount', amount);
+  if (memo) interactiveUrl.searchParams.set('memo', memo);
+  if (memo_type) interactiveUrl.searchParams.set('memo_type', memo_type);
+  interactiveUrl.searchParams.set('token', token);
+
+  return res.status(200).json({
+    type: 'interactive_customer_info_needed',
+    url: interactiveUrl.toString(),
+    id: txId,
+  });
+}

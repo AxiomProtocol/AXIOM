@@ -18,8 +18,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   res.setHeader('Cache-Control', 'no-store');
 
-  const activeKey = (process.env.STELLAR_ACTIVE_ANCHOR ?? 'moneygram').toLowerCase().trim();
-  const activeEntry = STELLAR_ANCHOR_REGISTRY[activeKey] ?? STELLAR_ANCHOR_REGISTRY['moneygram'];
+  const activeKey = (process.env.STELLAR_ACTIVE_ANCHOR ?? 'axiom-rail').toLowerCase().trim();
+  const activeEntry = STELLAR_ANCHOR_REGISTRY[activeKey] ?? STELLAR_ANCHOR_REGISTRY['axiom-rail'];
   const defaultAnchorId = activeEntry.anchorId;
 
   const rawAnchorId = req.query.anchorId;

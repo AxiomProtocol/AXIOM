@@ -24,23 +24,23 @@ import {
 /**
  * Returns the anchor registry entry for the currently active anchor.
  * Safety guard: if STELLAR_ACTIVE_ANCHOR points to a testnet-only anchor
- * but callerNetwork is 'mainnet', falls back to moneygram automatically.
+ * but callerNetwork is 'mainnet', falls back to axiom-rail automatically.
  * This guards against production traffic hitting the SDF test anchor.
  */
 export function getActiveAnchorEntry(
   callerNetwork: StellarNetworkId = 'mainnet'
 ): StellarAnchorRegistryEntry {
-  const key = (process.env.STELLAR_ACTIVE_ANCHOR ?? 'moneygram').toLowerCase().trim();
-  const entry = STELLAR_ANCHOR_REGISTRY[key] ?? STELLAR_ANCHOR_REGISTRY['moneygram'];
+  const key = (process.env.STELLAR_ACTIVE_ANCHOR ?? 'axiom-rail').toLowerCase().trim();
+  const entry = STELLAR_ANCHOR_REGISTRY[key] ?? STELLAR_ANCHOR_REGISTRY['axiom-rail'];
 
   if (callerNetwork === 'mainnet' && entry.network === 'testnet') {
     if (process.env.NODE_ENV !== 'test') {
       console.warn(
         `[StellarAnchorUtils] STELLAR_ACTIVE_ANCHOR="${key}" resolves to a testnet anchor. ` +
-        `Falling back to moneygram for mainnet. Update the secret to "moneygram" to suppress this warning.`
+        `Falling back to axiom-rail for mainnet. Update the secret to "axiom-rail" to suppress this warning.`
       );
     }
-    return STELLAR_ANCHOR_REGISTRY['moneygram'];
+    return STELLAR_ANCHOR_REGISTRY['axiom-rail'];
   }
 
   return entry;

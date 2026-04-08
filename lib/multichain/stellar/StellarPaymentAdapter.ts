@@ -2,7 +2,7 @@
  * Axiom Protocol — Stellar Payment Adapter
  *
  * Real implementation of StellarPaymentAdapterInterface using @stellar/stellar-sdk.
- * Active anchor driven by STELLAR_ACTIVE_ANCHOR env var (default: moneygram).
+ * Active anchor driven by STELLAR_ACTIVE_ANCHOR env var (default: axiom-rail).
  *
  * Architecture:
  *   AXUSD (Arbitrum) → user swaps to USDC → active SEP-24/31 anchor on Stellar
@@ -193,7 +193,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
       estimatedSettlementMinutes: c.estimatedSettlementMinutes,
       minAmountUsd: c.minAmountUsd,
       maxAmountUsd: c.maxAmountUsd,
-      feeEstimatePercent: c.anchorId === 'moneygram-stellar' ? 0.1 : null,
+      feeEstimatePercent: c.anchorId === 'axiom-rail' ? 0.1 : null,
       notes: c.blockers.length > 0 ? `Blockers: ${c.blockers.join('; ')}` : 'USDC on Stellar via active SEP-24 anchor. Interactive withdrawal flow.',
     }));
   }
