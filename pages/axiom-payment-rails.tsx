@@ -2,7 +2,7 @@
  * /axiom-payment-rails
  *
  * Axiom Payment Rails — USDC, AXUSD, AXAU
- * Shows live network health, Circle anchor status, corridors, and payment initiation.
+ * Shows live network health, Axiom Rail anchor status, corridors, and payment initiation.
  */
 
 import { useEffect, useState } from 'react';
@@ -54,6 +54,9 @@ interface HealthResponse {
     WEB_AUTH_ENDPOINT?: string;
     SIGNING_KEY?: string;
   };
+  activeAnchorHomeDomain?: string;
+  selectedAnchor?: string;
+  activeAnchorKey?: string;
 }
 
 interface CorridorsResponse {
@@ -182,6 +185,8 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
   const nav = health?.network;
   const anchor = health?.anchor;
   const toml = health?.tomlEndpoints;
+  const anchorName = anchor?.anchorName ?? 'Axiom Rail';
+  const homeDomain = health?.activeAnchorHomeDomain ?? 'axiomprotocol.app';
 
   return (
     <DesignLawLayout>
@@ -194,16 +199,16 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
           Axiom Payment Rails
         </h1>
         <p style={{ color: '#444', maxWidth: 640, lineHeight: 1.7, marginBottom: '1rem' }}>
-          AXUSD-denominated payments routed through Circle's USDC anchor on the Stellar network.
-          Converts AXUSD to USDC and delivers via Circle's SEP-24 interactive withdrawal protocol.
-          Settlement on Stellar typically completes in under 5 seconds.
+          AXUSD and AXAU-denominated payments settled via Axiom Rail — Axiom Protocol's own
+          Stellar SEP-10/24/31/38 anchor. Funds clear through Increase FDIC-insured ACH and
+          domestic wire rails. No third-party anchor partnerships required.
         </p>
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
           <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#555' }}>
-            Anchor: <strong style={{ color: '#1e3a5f' }}>Circle (USDC on Stellar)</strong>
+            Anchor: <strong style={{ color: '#1e3a5f' }}>{anchorName}</strong>
           </div>
           <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#555' }}>
-            Protocol: <strong style={{ color: '#1e3a5f' }}>SEP-0010 + SEP-0024</strong>
+            Protocol: <strong style={{ color: '#1e3a5f' }}>SEP-0010 + SEP-0024 + SEP-0031 + SEP-0038</strong>
           </div>
           <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#555' }}>
             Network: <strong style={{ color: '#1e3a5f' }}>Stellar Mainnet</strong>
@@ -242,7 +247,7 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
                 mono: true,
               },
               {
-                label: 'Circle Anchor',
+                label: anchorName,
                 value: anchor?.isReachable ? 'REACHABLE' : 'UNREACHABLE',
                 ok: anchor?.isReachable ?? false,
                 mono: true,
@@ -279,7 +284,7 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
       {/* ── Active Anchor ──────────────────────────────────────────────────── */}
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1.25rem', color: '#1e3a5f', marginBottom: '1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.5rem' }}>
-          {anchor?.anchorName ?? 'MoneyGram (Stellar Access)'} — USDC on Stellar
+          {anchorName} — Stellar Settlement Layer
         </h2>
         <div style={{ background: '#f8f9fb', border: '1px solid #dde3ed', padding: '1.5rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
@@ -291,7 +296,7 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
             </div>
             <div>
               <p style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: '#888', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>HOME DOMAIN</p>
-              <p style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#1e3a5f' }}>stellar.moneygram.com</p>
+              <p style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#1e3a5f' }}>{homeDomain}</p>
             </div>
             <div>
               <p style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: '#888', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>SEP-24 TRANSFER SERVER</p>
@@ -394,21 +399,21 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
               label: 'Interactive Anchor',
               status: 'IMPLEMENTED',
               ok: true,
-              desc: "Circle's interactive withdrawal UI. User completes bank/account details via Circle's hosted flow.",
+              desc: 'Axiom Rail interactive withdrawal flow. User submits bank/account details via hosted Axiom Rail UI; settlement via Increase ACH or domestic wire.',
             },
             {
               protocol: 'SEP-0031',
               label: 'Cross-Border Payments',
-              status: 'REVIEWED',
-              ok: false,
-              desc: 'Not supported by Circle. Reserved for Bitso/MoneyGram expansion (MXN/BRL corridors).',
+              status: 'IMPLEMENTED',
+              ok: true,
+              desc: 'Direct non-interactive payment API. Axiom Rail accepts USDC on Stellar and settles USD via Increase wire rails. Supports AXUSD and AXAU source assets.',
             },
             {
               protocol: 'SEP-0038',
               label: 'Anchor RFQ',
-              status: 'REVIEWED',
-              ok: false,
-              desc: 'Price quote protocol. Circle anchor endpoint parsed from stellar.toml. Not yet wired in flow.',
+              status: 'IMPLEMENTED',
+              ok: true,
+              desc: 'Real-time price quotes for USDC → USD via Axiom Rail. Firm quotes available. Endpoint live at axiomprotocol.app/api/axiom-rail/sep38.',
             },
           ].map(p => (
             <div key={p.protocol} style={{ background: '#fff', padding: '1.25rem' }}>
@@ -440,8 +445,9 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
           Initiate Payment
         </h2>
         <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-          Generates a Circle SEP-24 interactive withdrawal URL. You will be redirected to Circle's hosted UI
-          to complete destination details (bank account, recipient information). Transfer is tracked internally.
+          Generates an Axiom Rail SEP-24 interactive withdrawal URL. You will be redirected to complete
+          destination details (bank account, recipient information). Settlement is processed via Increase
+          ACH or domestic wire. Transfer is tracked internally.
         </p>
 
         {railEnabled ? (
@@ -449,7 +455,7 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
             {transferResult?.success && transferResult.interactiveUrl ? (
           <div style={{ background: '#f0faf0', border: '1px solid #2d7a2d', padding: '1.5rem', marginBottom: '1.5rem' }}>
             <p style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', color: '#1a5c1a', fontWeight: 700, marginBottom: '0.75rem' }}>
-              Payment session created. Complete at Circle.
+              Payment session created. Complete via Axiom Rail.
             </p>
             <p style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#555', marginBottom: '0.5rem' }}>
               Transfer ID: {transferResult.transferId}
@@ -473,10 +479,10 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
                 letterSpacing: '0.04em',
               }}
             >
-              OPEN CIRCLE WITHDRAWAL FLOW →
+              OPEN AXIOM RAIL WITHDRAWAL FLOW →
             </a>
             <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#666' }}>
-              After completing the Circle flow, check transfer status at{' '}
+              After completing the Axiom Rail flow, check transfer status at{' '}
               <code style={{ fontFamily: 'monospace', background: '#e8f0e8', padding: '1px 4px' }}>
                 /api/stellar/payment/{transferResult.transferId}
               </code>
@@ -636,8 +642,8 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
               {submitting ? 'INITIATING...' : 'INITIATE PAYMENT →'}
             </button>
             <p style={{ fontSize: '0.75rem', color: '#888', lineHeight: 1.5 }}>
-              You will be redirected to Circle&#39;s hosted UI to complete the withdrawal.
-              This action does not move funds — Circle initiates the transfer after you complete their flow.
+              You will be redirected to the Axiom Rail hosted UI to complete the withdrawal.
+              This action does not move funds — settlement via Increase ACH/Wire occurs after you complete the flow.
             </p>
           </div>
         </form>
@@ -648,7 +654,7 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
               STATUS: CONFIGURED — NOT YET ACTIVATED
             </p>
             <p style={{ fontFamily: 'Georgia, serif', fontSize: '0.95rem', color: '#1e3a5f', marginBottom: '0.75rem' }}>
-              The Stellar payments rail is fully configured and integrated with Circle USDC on Stellar.
+              Axiom Rail is fully configured and ready for activation. AXUSD and AXAU payments settle via Increase ACH and domestic wire.
               Payment initiation is not available until the rail is activated by the operations team.
             </p>
             <p style={{ fontSize: '0.8rem', color: '#666', lineHeight: 1.6 }}>
@@ -669,10 +675,10 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1px', background: '#ddd' }}>
           {[
             { step: '01', label: 'AXUSD on Arbitrum', desc: 'User holds AXUSD in their Arbitrum wallet. Swaps to USDC via the protocol DEX or PSM.' },
-            { step: '02', label: 'SEP-10 Auth', desc: "Axiom generates a Stellar keypair for this session. Signs Circle's authentication challenge server-side." },
-            { step: '03', label: 'SEP-24 Initiation', desc: "Axiom posts to Circle's interactive withdrawal endpoint. Circle returns a hosted URL and transfer ID." },
-            { step: '04', label: 'User Completes Flow', desc: "User is redirected to Circle's hosted UI to provide destination bank, account, and compliance details." },
-            { step: '05', label: 'Stellar Settlement', desc: 'Circle receives USDC on Stellar, settles to destination account. Axiom polls transfer status via SEP-24.' },
+            { step: '02', label: 'SEP-10 Auth', desc: 'Axiom generates a Stellar keypair for this session. Signs the Axiom Rail SEP-10 challenge server-side.' },
+            { step: '03', label: 'SEP-24 Initiation', desc: 'Axiom posts to the Axiom Rail interactive withdrawal endpoint. Returns a hosted URL and transfer ID.' },
+            { step: '04', label: 'User Completes Flow', desc: 'User is redirected to the Axiom Rail hosted UI to provide destination bank, account, and compliance details.' },
+            { step: '05', label: 'Increase Settlement', desc: 'Axiom Rail settles to destination account via Increase ACH or domestic wire. Transfer status polled via SEP-24.' },
             { step: '06', label: 'Transfer Confirmed', desc: 'Stellar transaction hash recorded. Axiom DB updated. Transfer marked completed.' },
           ].map(s => (
             <div key={s.step} style={{ background: '#fff', padding: '1.25rem' }}>
@@ -688,9 +694,9 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
       <section style={{ background: '#f8f9fb', border: '1px solid #dde3ed', padding: '1.25rem', marginBottom: '2rem' }}>
         <p style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: '#888', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>DISCLOSURE</p>
         <p style={{ fontSize: '0.78rem', color: '#666', lineHeight: 1.6 }}>
-          Axiom Payment Rails is a configured integration. Circle SEP-24 flow requires Circle anchor activation for live fund movement.
-          Payments are denominated in AXUSD and converted to USDC at the point of transfer.
-          Settlement times are estimates based on Stellar network performance and Circle anchor processing.
+          Axiom Rail is a configured integration. Live fund movement requires operations team activation of the payments rail flag.
+          Payments are denominated in AXUSD or AXAU and converted to USDC at the point of transfer.
+          Settlement times are estimates based on Stellar network performance and Increase ACH/wire processing windows.
           This is not a custodial service. Axiom does not hold user funds in transit.
           Review the{' '}
           <a href="/disclosure" style={{ color: '#1e3a5f' }}>Disclosure</a> and{' '}
