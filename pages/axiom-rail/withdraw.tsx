@@ -309,7 +309,7 @@ export default function AxiomRailWithdraw() {
                   {idType === 'ssn' ? 'Last 4 Digits of SSN' : 'Passport Number'}
                 </label>
                 <input
-                  type={idType === 'ssn' ? 'text' : 'text'}
+                  type="text"
                   required
                   value={idNumber}
                   onChange={e => {

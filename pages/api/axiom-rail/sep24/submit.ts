@@ -67,7 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'routingNumber, accountNumber, and accountName are required' });
   }
 
-  // BSA identity validation — all fields required
+  // BSA identity validation — presence check
   const missingIdentity: string[] = [];
   if (!bsaLegalName) missingIdentity.push('bsaLegalName');
   if (!bsaDob) missingIdentity.push('bsaDob');
@@ -76,6 +76,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!bsaIdNumber) missingIdentity.push('bsaIdNumber');
   if (missingIdentity.length > 0) {
     return res.status(400).json({ error: `Missing identity fields: ${missingIdentity.join(', ')}` });
+  }
+
+  // BSA identity validation — format/semantic checks
+  const allowedIdTypes = ['ssn', 'passport'];
+  if (!allowedIdTypes.includes(bsaIdType!)) {
+    return res.status(400).json({ error: `bsaIdType must be one of: ${allowedIdTypes.join(', ')}` });
+  }
+  const dobRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dobRegex.test(bsaDob!)) {
+    return res.status(400).json({ error: 'bsaDob must be in YYYY-MM-DD format' });
+  }
+  if (bsaIdType === 'ssn') {
+    if (!/^\d{4}$/.test(bsaIdNumber!)) {
+      return res.status(400).json({ error: 'bsaIdNumber must be exactly 4 digits for SSN' });
+    }
+  } else {
+    if (!/^[A-Z0-9]{3,20}$/i.test(bsaIdNumber!)) {
+      return res.status(400).json({ error: 'bsaIdNumber must be 3–20 alphanumeric characters for passport' });
+    }
   }
 
   const parsedAmount = parseFloat(amount ?? '0');

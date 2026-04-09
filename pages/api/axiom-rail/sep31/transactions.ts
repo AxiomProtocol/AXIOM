@@ -81,7 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: `Missing required fields: ${missingFields.join(', ')}` });
   }
 
-  // ── BSA sender identity validation ─────────────────────────────────────────
+  // ── BSA sender identity validation — presence check ───────────────────────
   const senderFields = fields?.sender ?? {};
   const missingSender: string[] = [];
   if (!senderFields.sender_legal_name) missingSender.push('fields.sender.sender_legal_name');
@@ -91,6 +91,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!senderFields.sender_id_number) missingSender.push('fields.sender.sender_id_number');
   if (missingSender.length > 0) {
     return res.status(400).json({ error: `Missing required sender identity fields (BSA): ${missingSender.join(', ')}` });
+  }
+
+  // ── BSA sender identity validation — format/semantic checks ───────────────
+  const allowedIdTypes = ['ssn', 'passport'];
+  if (!allowedIdTypes.includes(senderFields.sender_id_type!)) {
+    return res.status(400).json({ error: `fields.sender.sender_id_type must be one of: ${allowedIdTypes.join(', ')}` });
+  }
+  const dobRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dobRegex.test(senderFields.sender_dob!)) {
+    return res.status(400).json({ error: 'fields.sender.sender_dob must be in YYYY-MM-DD format' });
+  }
+  if (senderFields.sender_id_type === 'ssn') {
+    if (!/^\d{4}$/.test(senderFields.sender_id_number!)) {
+      return res.status(400).json({ error: 'fields.sender.sender_id_number must be exactly 4 digits for SSN' });
+    }
+  } else {
+    if (!/^[A-Z0-9]{3,20}$/i.test(senderFields.sender_id_number!)) {
+      return res.status(400).json({ error: 'fields.sender.sender_id_number must be 3–20 alphanumeric characters for passport' });
+    }
   }
 
   // ── Fee calculation ────────────────────────────────────────────────────────
