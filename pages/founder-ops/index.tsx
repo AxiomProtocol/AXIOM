@@ -3072,11 +3072,13 @@ export default function FounderOpsPage() {
                     <p className="font-dl-mono text-[9px] uppercase tracking-wider mb-2 font-bold text-dl-navy">
                       Monitor Run — {railMonitorResult.scannedAt ? new Date(railMonitorResult.scannedAt).toLocaleString() : 'just now'}
                     </p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                       {[
-                        { label: 'Withdraws Settled', value: railMonitorResult.withdrawsProcessed ?? 0, color: 'text-dl-forest' },
-                        { label: 'Deposits Matched', value: railMonitorResult.depositsMatched ?? 0, color: 'text-blue-700' },
-                        { label: 'Errors', value: railMonitorResult.errors?.length ?? 0, color: railMonitorResult.errors?.length > 0 ? 'text-dl-error' : 'text-dl-gray' },
+                        { label: 'Stellar Detected', value: railMonitorResult.phase1DetectedWithdraws ?? 0, color: 'text-dl-navy' },
+                        { label: 'Payouts Initiated', value: railMonitorResult.phase2InitiatedPayouts ?? 0, color: 'text-dl-forest' },
+                        { label: 'Increase Settled', value: railMonitorResult.phase3ConfirmedWithdraws ?? 0, color: 'text-dl-forest' },
+                        { label: 'Deposits Matched', value: railMonitorResult.phase1DetectedDeposits ?? 0, color: 'text-blue-700' },
+                        { label: 'Errors', value: railMonitorResult.errors?.length ?? 0, color: (railMonitorResult.errors?.length ?? 0) > 0 ? 'text-dl-error' : 'text-dl-gray' },
                       ].map(s => (
                         <div key={s.label}>
                           <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">{s.label}</p>
@@ -3088,8 +3090,8 @@ export default function FounderOpsPage() {
                       <div className="space-y-1">
                         {railMonitorResult.details.map((d: any, i: number) => (
                           <div key={i} className="flex gap-2 items-baseline">
-                            <span className={`font-dl-mono text-[8px] px-1 uppercase border ${d.status === 'ok' ? 'border-dl-forest text-dl-forest' : 'border-dl-error text-dl-error'}`}>
-                              {d.flow} / {d.action}
+                            <span className={`font-dl-mono text-[8px] px-1 uppercase border ${d.status === 'ok' ? 'border-dl-forest text-dl-forest' : d.status === 'skip' ? 'border-dl-gray text-dl-gray' : 'border-dl-error text-dl-error'}`}>
+                              {d.flow} / {d.phase ?? d.action}
                             </span>
                             <span className="font-dl-mono text-[9px] text-dl-navy">{d.transferId?.slice(0, 20)}</span>
                             <span className="font-dl-mono text-[9px] text-dl-gray flex-1">{d.message}</span>

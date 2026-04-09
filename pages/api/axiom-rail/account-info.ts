@@ -2,10 +2,15 @@
  * GET /api/axiom-rail/account-info
  *
  * Returns the live Increase bank account details for Axiom Rail deposits.
- * Requires a valid SEP-10 JWT token (from deposit/withdraw interactive URL).
  *
- * All values come from the Increase API — no hardcoded fallbacks for
- * routing or account numbers.
+ * Auth policy: intentionally public — this is the deposit instruction page that
+ * Stellar wallets open for their users. If a SEP-10 JWT is present (Authorization
+ * Bearer header), it is validated and the request is rejected if invalid. If no
+ * token is provided, the request proceeds (public bank receiving details, equivalent
+ * to publishing routing info on a website).
+ *
+ * All values come from the Increase API — no hardcoded fallbacks for routing
+ * or account numbers. Returns null fields when Increase is unavailable.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
