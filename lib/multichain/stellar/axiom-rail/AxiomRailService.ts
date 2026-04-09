@@ -63,7 +63,7 @@ export function getAxiomRailSep24Info(): AxiomRailSep24Info {
       AXAU:  assetConfig,
     },
     fee_supported: true,
-    id_supported: false,
+    id_supported: true,
     claimable_balances_supported: false,
   };
 }
@@ -161,9 +161,32 @@ export function getAxiomRailSep31Info() {
               optional: false,
             },
             transfer_type: {
-              description: 'Transfer method',
+              description: 'Transfer method (ACH or Wire)',
               optional: true,
               choices: ['ACH', 'Wire'],
+            },
+          },
+          sender: {
+            sender_legal_name: {
+              description: 'Full legal name of the sender as it appears on government-issued ID',
+              optional: false,
+            },
+            sender_dob: {
+              description: 'Sender date of birth (YYYY-MM-DD)',
+              optional: false,
+            },
+            sender_country: {
+              description: 'Sender country of residence',
+              optional: false,
+            },
+            sender_id_type: {
+              description: 'Type of government ID provided',
+              optional: false,
+              choices: ['ssn', 'passport'],
+            },
+            sender_id_number: {
+              description: 'Last 4 digits of SSN (US persons) or full passport number (non-US). Retained for BSA compliance only.',
+              optional: false,
             },
           },
         },

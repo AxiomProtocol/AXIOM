@@ -1,11 +1,12 @@
 /**
  * POST /api/axiom-rail/sep24/submit
  *
- * Records bank details submitted from the SEP-24 interactive UI.
+ * Records bank details and BSA identity submitted from the SEP-24 interactive UI.
  * Called by the withdraw or deposit interactive page after the user
- * provides their banking information.
+ * provides their banking information and identity (BSA compliance).
  *
- * Creates a stellar_payment_transfers record to track the transaction.
+ * Identity data is stored in anchorRawResponse.bsa and never returned
+ * in public-facing API responses.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -36,6 +37,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     accountNumber,
     accountName,
     transferType,
+    // BSA identity fields
+    bsaLegalName,
+    bsaDob,
+    bsaCountry,
+    bsaIdType,
+    bsaIdNumber,
   } = req.body as {
     txId?: string;
     kind?: 'withdraw' | 'deposit';
@@ -46,6 +53,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     accountNumber?: string;
     accountName?: string;
     transferType?: string;
+    bsaLegalName?: string;
+    bsaDob?: string;
+    bsaCountry?: string;
+    bsaIdType?: string;
+    bsaIdNumber?: string;
   };
 
   if (!txId) return res.status(400).json({ error: 'txId required' });
@@ -53,6 +65,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!routingNumber || !accountNumber || !accountName) {
     return res.status(400).json({ error: 'routingNumber, accountNumber, and accountName are required' });
+  }
+
+  // BSA identity validation — all fields required
+  const missingIdentity: string[] = [];
+  if (!bsaLegalName) missingIdentity.push('bsaLegalName');
+  if (!bsaDob) missingIdentity.push('bsaDob');
+  if (!bsaCountry) missingIdentity.push('bsaCountry');
+  if (!bsaIdType) missingIdentity.push('bsaIdType');
+  if (!bsaIdNumber) missingIdentity.push('bsaIdNumber');
+  if (missingIdentity.length > 0) {
+    return res.status(400).json({ error: `Missing identity fields: ${missingIdentity.join(', ')}` });
   }
 
   const parsedAmount = parseFloat(amount ?? '0');
@@ -92,6 +115,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         kind,
         asset: asset ?? 'USDC',
         submittedAt: new Date().toISOString(),
+        // BSA identity record — never returned in public API responses
+        bsa: {
+          legalName: bsaLegalName,
+          dob: bsaDob,
+          country: bsaCountry,
+          idType: bsaIdType,
+          idNumber: bsaIdNumber,
+          collectedAt: new Date().toISOString(),
+        },
       },
     });
 

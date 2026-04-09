@@ -7,6 +7,7 @@
  * Increase ACH or domestic wire to the receiver's bank account.
  *
  * Requires SEP-10 JWT in Authorization header.
+ * Requires sender identity fields (BSA compliance) in fields.sender.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -48,6 +49,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         receiver_name?: string;
         transfer_type?: string;
       };
+      sender?: {
+        sender_legal_name?: string;
+        sender_dob?: string;
+        sender_country?: string;
+        sender_id_type?: string;
+        sender_id_number?: string;
+      };
     };
   };
 
@@ -66,11 +74,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const txFields = fields?.transaction ?? {};
   const missingFields: string[] = [];
-  if (!txFields.receiver_account_number) missingFields.push('receiver_account_number');
-  if (!txFields.receiver_routing_number) missingFields.push('receiver_routing_number');
-  if (!txFields.receiver_name) missingFields.push('receiver_name');
+  if (!txFields.receiver_account_number) missingFields.push('fields.transaction.receiver_account_number');
+  if (!txFields.receiver_routing_number) missingFields.push('fields.transaction.receiver_routing_number');
+  if (!txFields.receiver_name) missingFields.push('fields.transaction.receiver_name');
   if (missingFields.length > 0) {
     return res.status(400).json({ error: `Missing required fields: ${missingFields.join(', ')}` });
+  }
+
+  // ── BSA sender identity validation ─────────────────────────────────────────
+  const senderFields = fields?.sender ?? {};
+  const missingSender: string[] = [];
+  if (!senderFields.sender_legal_name) missingSender.push('fields.sender.sender_legal_name');
+  if (!senderFields.sender_dob) missingSender.push('fields.sender.sender_dob');
+  if (!senderFields.sender_country) missingSender.push('fields.sender.sender_country');
+  if (!senderFields.sender_id_type) missingSender.push('fields.sender.sender_id_type');
+  if (!senderFields.sender_id_number) missingSender.push('fields.sender.sender_id_number');
+  if (missingSender.length > 0) {
+    return res.status(400).json({ error: `Missing required sender identity fields (BSA): ${missingSender.join(', ')}` });
   }
 
   // ── Fee calculation ────────────────────────────────────────────────────────
@@ -106,6 +126,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       sepProtocol: 'sep31',
       sep31StellarAccountId: AXIOM_RAIL_DEPOSIT_ACCOUNT,
       sep31StellarMemo: memo,
+      // BSA identity record — never returned in public API responses
+      anchorRawResponse: {
+        submittedAt: new Date().toISOString(),
+        bsa: {
+          legalName: senderFields.sender_legal_name,
+          dob: senderFields.sender_dob,
+          country: senderFields.sender_country,
+          idType: senderFields.sender_id_type,
+          idNumber: senderFields.sender_id_number,
+          collectedAt: new Date().toISOString(),
+        },
+      },
     });
   } catch (err) {
     console.error('[AxiomRail SEP-31] DB insert error:', err);

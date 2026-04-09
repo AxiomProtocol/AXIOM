@@ -5,13 +5,18 @@
  * User sends USD to Axiom Rail via ACH or wire, then receives
  * USDC/AXUSD/AXAU on their Stellar or Arbitrum wallet.
  * Axiom Rail settles via Increase on FDIC-insured rails.
+ *
+ * Two-step flow:
+ *  Step 1 (bank)     — Source bank account details
+ *  Step 2 (identity) — BSA identity collection (DOB, country, ID)
  */
 
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 
-type Step = 'form' | 'submitting' | 'done' | 'error';
+type Step = 'bank' | 'identity' | 'submitting' | 'done' | 'error';
+type IdType = 'ssn' | 'passport';
 
 interface AccountInfo {
   bankName: string;
@@ -31,12 +36,20 @@ export default function AxiomRailDeposit() {
   const [amount, setAmount] = useState('');
   const [token, setToken] = useState('');
 
+  // Step 1 — Source bank details
   const [routingNumber, setRoutingNumber] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountName, setAccountName] = useState('');
   const [transferType, setTransferType] = useState<'ACH' | 'Wire'>('ACH');
 
-  const [step, setStep] = useState<Step>('form');
+  // Step 2 — Identity (BSA)
+  const [legalName, setLegalName] = useState('');
+  const [dob, setDob] = useState('');
+  const [country, setCountry] = useState('');
+  const [idType, setIdType] = useState<IdType>('ssn');
+  const [idNumber, setIdNumber] = useState('');
+
+  const [step, setStep] = useState<Step>('bank');
   const [errorMsg, setErrorMsg] = useState('');
 
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
@@ -76,9 +89,17 @@ export default function AxiomRailDeposit() {
     fetchAccountInfo();
   }, [router.isReady, router.query]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  // Advance from bank details to identity step
+  function handleBankNext(e: React.FormEvent) {
     e.preventDefault();
     if (!routingNumber || !accountNumber || !accountName) return;
+    if (!legalName) setLegalName(accountName);
+    setStep('identity');
+  }
+
+  async function handleIdentitySubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!legalName || !dob || !country || !idNumber) return;
 
     setStep('submitting');
 
@@ -99,6 +120,11 @@ export default function AxiomRailDeposit() {
           accountNumber,
           accountName,
           transferType,
+          bsaLegalName: legalName,
+          bsaDob: dob,
+          bsaCountry: country,
+          bsaIdType: idType,
+          bsaIdNumber: idNumber,
         }),
       });
 
@@ -143,9 +169,29 @@ export default function AxiomRailDeposit() {
               Amount: <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>${parseFloat(amount).toFixed(2)} USD</span>
             </p>
           )}
+          {/* Step indicator */}
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem' }}>
+            {(['bank', 'identity'] as const).map((s, i) => (
+              <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: '50%',
+                  background: step === s ? '#1e3a5f' : '#d1d5db',
+                  border: '2px solid #1e3a5f',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 10, color: '#fff', fontFamily: 'monospace', fontWeight: 700,
+                }}>
+                  {i + 1}
+                </div>
+                <span style={{ fontSize: 11, fontFamily: 'monospace', color: step === s ? '#1e3a5f' : '#9ca3af', textTransform: 'uppercase' }}>
+                  {s === 'bank' ? 'Bank Details' : 'Identity'}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {step === 'form' && (
+        {/* ── STEP 1: Bank Details ───────────────────────────────────────────── */}
+        {step === 'bank' && (
           <>
             {/* Receiving instructions */}
             <div style={{ background: '#f0f4f8', border: '1px solid #1e3a5f', padding: '1rem', marginBottom: '1.5rem' }}>
@@ -185,11 +231,9 @@ export default function AxiomRailDeposit() {
               Provide the bank account you are sending from. This lets us match your incoming transfer and confirm your identity.
             </p>
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleBankNext}>
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: 12, fontFamily: 'monospace', color: '#1e3a5f', textTransform: 'uppercase', marginBottom: 4 }}>
-                  Account Holder Name
-                </label>
+                <label style={labelStyle}>Account Holder Name</label>
                 <input
                   type="text"
                   required
@@ -201,9 +245,7 @@ export default function AxiomRailDeposit() {
               </div>
 
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: 12, fontFamily: 'monospace', color: '#1e3a5f', textTransform: 'uppercase', marginBottom: 4 }}>
-                  Sending ABA Routing Number
-                </label>
+                <label style={labelStyle}>Sending ABA Routing Number</label>
                 <input
                   type="text"
                   required
@@ -216,9 +258,7 @@ export default function AxiomRailDeposit() {
               </div>
 
               <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: 12, fontFamily: 'monospace', color: '#1e3a5f', textTransform: 'uppercase', marginBottom: 4 }}>
-                  Sending Account Number
-                </label>
+                <label style={labelStyle}>Sending Account Number</label>
                 <input
                   type="text"
                   required
@@ -230,9 +270,7 @@ export default function AxiomRailDeposit() {
               </div>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', fontSize: 12, fontFamily: 'monospace', color: '#1e3a5f', textTransform: 'uppercase', marginBottom: 4 }}>
-                  Transfer Method
-                </label>
+                <label style={labelStyle}>Transfer Method</label>
                 <select
                   value={transferType}
                   onChange={e => setTransferType(e.target.value as 'ACH' | 'Wire')}
@@ -247,23 +285,8 @@ export default function AxiomRailDeposit() {
                 Axiom Rail charges a $0.50 flat fee + 0.1% of the transaction amount. {asset} will be credited after your USD transfer is confirmed and settled.
               </div>
 
-              <button
-                type="submit"
-                style={{
-                  width: '100%',
-                  padding: '0.875rem',
-                  background: '#1e3a5f',
-                  color: '#fff',
-                  fontSize: 14,
-                  fontFamily: 'monospace',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: 1,
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                Confirm Transfer Details
+              <button type="submit" style={primaryBtn}>
+                Continue to Identity Verification
               </button>
             </form>
 
@@ -273,12 +296,127 @@ export default function AxiomRailDeposit() {
           </>
         )}
 
+        {/* ── STEP 2: Identity (BSA) ─────────────────────────────────────────── */}
+        {step === 'identity' && (
+          <>
+            {/* Regulatory notice */}
+            <div style={{ background: '#f0f4f8', border: '1px solid #1e3a5f', padding: '1rem', marginBottom: '1.5rem', fontSize: 13, color: '#374151', lineHeight: 1.6 }}>
+              <p style={{ fontFamily: 'monospace', fontSize: 11, color: '#1e3a5f', textTransform: 'uppercase', margin: '0 0 0.5rem', fontWeight: 700 }}>Regulatory Notice — Bank Secrecy Act</p>
+              Federal law requires money service businesses to collect and retain sender identity records for payment transactions. This information is collected solely for compliance with US Bank Secrecy Act (BSA) requirements and is never sold or shared for marketing purposes.
+            </div>
+
+            <form onSubmit={handleIdentitySubmit}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={labelStyle}>Full Legal Name</label>
+                <input
+                  type="text"
+                  required
+                  value={legalName}
+                  onChange={e => setLegalName(e.target.value)}
+                  placeholder="As it appears on your government-issued ID"
+                  style={inputStyle}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={labelStyle}>Date of Birth</label>
+                <input
+                  type="date"
+                  required
+                  value={dob}
+                  onChange={e => setDob(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={labelStyle}>Country of Residence</label>
+                <input
+                  type="text"
+                  required
+                  value={country}
+                  onChange={e => setCountry(e.target.value)}
+                  placeholder="e.g. United States"
+                  style={inputStyle}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={labelStyle}>ID Type</label>
+                <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: 13, color: '#374151', cursor: 'pointer' }}>
+                    <input
+                      type="radio"
+                      name="idType"
+                      value="ssn"
+                      checked={idType === 'ssn'}
+                      onChange={() => { setIdType('ssn'); setIdNumber(''); }}
+                    />
+                    US Person — SSN (last 4 digits)
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: 13, color: '#374151', cursor: 'pointer' }}>
+                    <input
+                      type="radio"
+                      name="idType"
+                      value="passport"
+                      checked={idType === 'passport'}
+                      onChange={() => { setIdType('passport'); setIdNumber(''); }}
+                    />
+                    Non-US — Passport number
+                  </label>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={labelStyle}>
+                  {idType === 'ssn' ? 'Last 4 Digits of SSN' : 'Passport Number'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={idNumber}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (idType === 'ssn') {
+                      setIdNumber(v.replace(/\D/g, '').slice(0, 4));
+                    } else {
+                      setIdNumber(v.toUpperCase().replace(/[^A-Z0-9]/g, ''));
+                    }
+                  }}
+                  placeholder={idType === 'ssn' ? '4 digits (e.g. 1234)' : 'Passport number'}
+                  maxLength={idType === 'ssn' ? 4 : 20}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setStep('bank')}
+                  style={secondaryBtn}
+                >
+                  Back
+                </button>
+                <button type="submit" style={{ ...primaryBtn, flex: 1 }}>
+                  Confirm Transfer Details
+                </button>
+              </div>
+            </form>
+
+            <p style={{ fontSize: 11, color: '#9ca3af', marginTop: '1rem', lineHeight: 1.5 }}>
+              Transaction ID: <span style={{ fontFamily: 'monospace' }}>{id}</span>
+            </p>
+          </>
+        )}
+
+        {/* ── Submitting ────────────────────────────────────────────────────── */}
         {step === 'submitting' && (
           <div style={{ textAlign: 'center', padding: '3rem 0' }}>
             <p style={{ fontFamily: 'monospace', color: '#1e3a5f' }}>Submitting...</p>
           </div>
         )}
 
+        {/* ── Done ─────────────────────────────────────────────────────────── */}
         {step === 'done' && (
           <div>
             <div style={{ background: '#f0fdf4', border: '1px solid #166534', padding: '1rem', marginBottom: '1.5rem' }}>
@@ -305,6 +443,7 @@ export default function AxiomRailDeposit() {
           </div>
         )}
 
+        {/* ── Error ────────────────────────────────────────────────────────── */}
         {step === 'error' && (
           <div>
             <div style={{ background: '#fef2f2', border: '1px solid #991b1b', padding: '1rem', marginBottom: '1.5rem' }}>
@@ -312,16 +451,8 @@ export default function AxiomRailDeposit() {
               <p style={{ fontSize: 14, color: '#374151', margin: 0 }}>{errorMsg}</p>
             </div>
             <button
-              onClick={() => setStep('form')}
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: '#fff',
-                color: '#1e3a5f',
-                border: '1px solid #1e3a5f',
-                fontFamily: 'monospace',
-                fontSize: 13,
-                cursor: 'pointer',
-              }}
+              onClick={() => setStep('bank')}
+              style={secondaryBtn}
             >
               Try Again
             </button>
@@ -342,4 +473,37 @@ const inputStyle: React.CSSProperties = {
   background: '#fff',
   outline: 'none',
   boxSizing: 'border-box',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: 12,
+  fontFamily: 'monospace',
+  color: '#1e3a5f',
+  textTransform: 'uppercase',
+  marginBottom: 4,
+};
+
+const primaryBtn: React.CSSProperties = {
+  width: '100%',
+  padding: '0.875rem',
+  background: '#1e3a5f',
+  color: '#fff',
+  fontSize: 14,
+  fontFamily: 'monospace',
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: 1,
+  border: 'none',
+  cursor: 'pointer',
+};
+
+const secondaryBtn: React.CSSProperties = {
+  padding: '0.75rem 1.5rem',
+  background: '#fff',
+  color: '#1e3a5f',
+  border: '1px solid #1e3a5f',
+  fontFamily: 'monospace',
+  fontSize: 13,
+  cursor: 'pointer',
 };
