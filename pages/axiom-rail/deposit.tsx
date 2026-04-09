@@ -118,12 +118,12 @@ export default function AxiomRailDeposit() {
 
   const shortAccount = account ? `${account.slice(0, 6)}...${account.slice(-6)}` : '';
 
-  const bankName = accountInfo?.bankName ?? 'Thread Bank (via Increase)';
+  const bankName = accountInfo?.bankName ?? 'Increase (FDIC-insured)';
   const beneficiary = accountInfo?.beneficiary ?? 'Axiom Protocol LLC';
-  const receivingRouting = accountInfo?.routingNumber ?? '—';
+  const receivingRouting = accountInfoLoading ? 'Loading...' : (accountInfo?.routingNumber ?? '— contact support —');
   const receivingAccount = accountInfoLoading
     ? 'Loading...'
-    : accountInfo?.accountNumber ?? '— contact support —';
+    : (accountInfo?.accountNumber ?? '— contact support —');
 
   return (
     <>

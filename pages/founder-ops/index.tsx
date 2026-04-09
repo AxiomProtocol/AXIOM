@@ -3124,7 +3124,7 @@ export default function FounderOpsPage() {
                     <table className="w-full text-left min-w-[1000px]">
                       <thead>
                         <tr className="bg-dl-bg-alt border-b border-dl-border">
-                          {['ID', 'Flow', 'Protocol', 'Asset → USD', 'Amount', 'Status', 'Stellar Account', 'Initiated', 'Details'].map(h => (
+                          {['ID', 'Flow', 'Protocol', 'Asset → USD', 'Amount', 'Memo', 'Status', 'Stellar Account', 'Initiated', 'Details'].map(h => (
                             <th key={h} className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider px-3 py-3">{h}</th>
                           ))}
                         </tr>
@@ -3172,6 +3172,9 @@ export default function FounderOpsPage() {
                               </td>
                               <td className="px-3 py-2 font-dl-mono text-[9px] text-dl-navy font-bold">
                                 ${parseFloat(row.sourceAmountAxusd ?? '0').toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                              </td>
+                              <td className="px-3 py-2 font-dl-mono text-[9px] text-dl-gray" title={row.sep31StellarMemo ?? ''}>
+                                {row.sep31StellarMemo ?? '—'}
                               </td>
                               <td className="px-3 py-2">
                                 <span className={`font-dl-mono text-[8px] border px-1.5 py-0.5 uppercase tracking-wider ${sc}`}>

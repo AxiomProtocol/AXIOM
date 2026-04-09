@@ -3,18 +3,32 @@
  *
  * Axiom Rail settlement monitor — admin-only.
  *
- * Withdraw flow (USDC → USD):
- *   1. Fetches recent Stellar payments to AXIOM_RAIL_DEPOSIT_ACCOUNT
- *   2. Matches against pending stellar_payment_transfers records (by memo)
- *   3. Triggers Increase ACH/wire payout to user's registered bank
- *   4. Updates transfer status to completed
+ * Four-phase settlement lifecycle for WITHDRAW flow (USDC → USD):
+ *   Phase 1 — Stellar detection:
+ *     pending_user_transfer_start → pending_external
+ *     Scans Stellar Horizon for USDC payments to AXIOM_RAIL_DEPOSIT_ACCOUNT.
+ *     Matches by stored sep31StellarMemo (exact uppercase text memo).
+ *     Records stellarTransactionHash.
  *
- * Deposit flow (USD → USDC):
- *   1. Fetches recent Increase inbound transactions
- *   2. Matches against pending stellar_payment_transfers records (by description/memo)
- *   3. Marks matched records as pending_anchor (requires manual Stellar USDC delivery for now)
+ *   Phase 2 — Increase ACH/Wire initiation:
+ *     pending_external → pending_anchor
+ *     Parses bank details from destinationAccount.
+ *     Initiates Increase ACH or wire payout with idempotency key.
+ *     Stores increaseTransferId + transferType in anchorRawResponse.
  *
- * Returns a summary of processed transfers.
+ *   Phase 3 — Increase settlement confirmation:
+ *     pending_anchor → completed | error
+ *     Fetches Increase transfer status.
+ *     ACH settled = "settled"; Wire final = "submitted" (no reversal notice).
+ *
+ * Two-phase settlement lifecycle for DEPOSIT flow (USD → USDC):
+ *   Phase 1 — Increase inbound detection:
+ *     pending_user_transfer_start → pending_anchor
+ *     Matches Increase inbound transactions by description containing short ref.
+ *
+ *   Phase 2 — Stellar USDC delivery (manual for now):
+ *     pending_anchor → completed
+ *     Requires ops team to deliver USDC on Stellar; set via manual status update.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -28,17 +42,21 @@ function checkAdminKey(req: NextApiRequest): boolean {
   return req.headers['x-admin-key'] === process.env.ADMIN_SOLVENCY_KEY;
 }
 
+interface DetailEntry {
+  transferId: string;
+  flow: 'withdraw' | 'deposit';
+  phase: string;
+  status: 'ok' | 'skip' | 'error';
+  message: string;
+}
+
 interface MonitorResult {
-  withdrawsProcessed: number;
-  depositsMatched: number;
+  phase1DetectedWithdraws: number;
+  phase2InitiatedPayouts: number;
+  phase3ConfirmedWithdraws: number;
+  phase1DetectedDeposits: number;
   errors: string[];
-  details: Array<{
-    transferId: string;
-    flow: 'withdraw' | 'deposit';
-    action: string;
-    status: 'ok' | 'error';
-    message: string;
-  }>;
+  details: DetailEntry[];
 }
 
 function parseBankDetails(destinationAccount: string): {
@@ -53,9 +71,7 @@ function parseBankDetails(destinationAccount: string): {
     const accountMatch = destinationAccount.match(/Account:\s*(\d+)/);
     const routingMatch = destinationAccount.match(/Routing:\s*(\d+)/);
     const isWire = destinationAccount.toLowerCase().includes('wire');
-
     if (!accountMatch || !routingMatch) return null;
-
     return {
       name,
       accountNumber: accountMatch[1],
@@ -68,52 +84,39 @@ function parseBankDetails(destinationAccount: string): {
 }
 
 async function fetchStellarPayments(depositAccount: string): Promise<Array<{
-  id: string;
   transactionHash: string;
-  from: string;
-  to: string;
   amount: string;
-  assetCode: string;
-  assetIssuer: string;
   memo: string | null;
-  createdAt: string;
 }>> {
   const USDC_ISSUER = 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
-
   try {
-    const txRes = await fetch(
-      `https://horizon.stellar.org/accounts/${depositAccount}/transactions?limit=50&order=desc`,
-      { headers: { Accept: 'application/json' } },
-    );
-    if (!txRes.ok) return [];
-    const txData = await txRes.json();
-    const transactions: Array<{
-      id: string;
-      hash: string;
-      memo?: string;
-      memo_type?: string;
-      created_at: string;
-    }> = txData?._embedded?.records ?? [];
+    const [txRes, payRes] = await Promise.all([
+      fetch(`https://horizon.stellar.org/accounts/${depositAccount}/transactions?limit=100&order=desc`, {
+        headers: { Accept: 'application/json' },
+      }),
+      fetch(`https://horizon.stellar.org/accounts/${depositAccount}/payments?limit=200&order=desc`, {
+        headers: { Accept: 'application/json' },
+      }),
+    ]);
+    if (!txRes.ok || !payRes.ok) return [];
+    const [txData, payData] = await Promise.all([txRes.json(), payRes.json()]);
 
-    const payRes = await fetch(
-      `https://horizon.stellar.org/accounts/${depositAccount}/payments?limit=100&order=desc`,
-      { headers: { Accept: 'application/json' } },
-    );
-    if (!payRes.ok) return [];
-    const payData = await payRes.json();
+    const transactions: Array<{ hash: string; memo?: string; memo_type?: string }> =
+      txData?._embedded?.records ?? [];
     const payments: Array<{
-      id: string;
       type: string;
       transaction_hash: string;
-      from: string;
       to: string;
       amount: string;
       asset_code?: string;
       asset_issuer?: string;
-      created_at: string;
     }> = payData?._embedded?.records ?? [];
 
-    const txMap = new Map(transactions.map(t => [t.hash, t]));
+    const txMemoMap = new Map(
+      transactions
+        .filter(t => t.memo_type === 'text' && t.memo)
+        .map(t => [t.hash, (t.memo ?? '').toUpperCase().trim()]),
+    );
 
     return payments
       .filter(p =>
@@ -121,21 +124,11 @@ async function fetchStellarPayments(depositAccount: string): Promise<Array<{
         p.asset_code === 'USDC' &&
         p.asset_issuer === USDC_ISSUER,
       )
-      .map(p => {
-        const tx = txMap.get(p.transaction_hash);
-        const memo = tx?.memo_type === 'text' ? (tx.memo ?? null) : null;
-        return {
-          id: p.id,
-          transactionHash: p.transaction_hash,
-          from: p.from,
-          to: p.to,
-          amount: p.amount,
-          assetCode: p.asset_code ?? 'USDC',
-          assetIssuer: p.asset_issuer ?? USDC_ISSUER,
-          memo,
-          createdAt: p.created_at,
-        };
-      });
+      .map(p => ({
+        transactionHash: p.transaction_hash,
+        amount: p.amount,
+        memo: txMemoMap.get(p.transaction_hash) ?? null,
+      }));
   } catch (err) {
     console.error('[monitor] Horizon fetch error:', err);
     return [];
@@ -147,164 +140,85 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!checkAdminKey(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   const result: MonitorResult = {
-    withdrawsProcessed: 0,
-    depositsMatched: 0,
+    phase1DetectedWithdraws: 0,
+    phase2InitiatedPayouts: 0,
+    phase3ConfirmedWithdraws: 0,
+    phase1DetectedDeposits: 0,
     errors: [],
     details: [],
   };
 
-  // ─── Step 1: Process WITHDRAW transfers (USDC → USD via Increase) ───────────
+  // ─── WITHDRAW PHASE 1: Stellar detection ───────────────────────────────────
+  // Match incoming Stellar USDC payments against pending_user_transfer_start withdraws.
+  // Uses exact sep31StellarMemo match (stored at submit time).
   try {
-    const pendingWithdraws = await db
+    const phase1Withdraws = await db
       .select()
       .from(stellarPaymentTransfers)
-      .where(
-        inArray(stellarPaymentTransfers.status, [
-          'pending_user_transfer_start',
-          'pending_external',
-          'pending_stellar',
-        ]),
-      );
+      .where(eq(stellarPaymentTransfers.status, 'pending_user_transfer_start'));
 
-    const withdrawPending = pendingWithdraws.filter(
+    const withdrawPhase1 = phase1Withdraws.filter(
       t => t.corridorId === 'usdc-to-usd-axiom-rail-rtp',
     );
 
-    if (withdrawPending.length > 0) {
+    if (withdrawPhase1.length > 0) {
       const stellarPayments = await fetchStellarPayments(AXIOM_RAIL_DEPOSIT_ACCOUNT);
 
-      for (const transfer of withdrawPending) {
-        try {
-          const expectedMemo = transfer.id
-            .replace(/^axr-(wdr|dep)-/, '')
-            .replace(/-/g, '')
-            .slice(0, 28)
-            .toUpperCase();
-
-          const matchedPayment = stellarPayments.find(p => {
-            const memo = p.memo?.toUpperCase().trim() ?? '';
-            return memo === expectedMemo || memo.includes(expectedMemo.slice(0, 16));
+      for (const transfer of withdrawPhase1) {
+        const expectedMemo = transfer.sep31StellarMemo?.toUpperCase().trim() ?? null;
+        if (!expectedMemo) {
+          result.details.push({
+            transferId: transfer.id,
+            flow: 'withdraw',
+            phase: '1-stellar-detect',
+            status: 'skip',
+            message: 'No sep31StellarMemo stored — cannot match Stellar payment',
           });
+          continue;
+        }
 
-          if (!matchedPayment) {
-            result.details.push({
-              transferId: transfer.id,
-              flow: 'withdraw',
-              action: 'scan',
-              status: 'ok',
-              message: `No Stellar payment found yet (memo: ${expectedMemo})`,
-            });
-            continue;
-          }
+        const matched = stellarPayments.find(p => p.memo === expectedMemo);
+        if (!matched) {
+          result.details.push({
+            transferId: transfer.id,
+            flow: 'withdraw',
+            phase: '1-stellar-detect',
+            status: 'skip',
+            message: `No Stellar USDC payment found for memo: ${expectedMemo}`,
+          });
+          continue;
+        }
 
-          if (transfer.stellarTransactionHash === matchedPayment.transactionHash) {
-            result.details.push({
-              transferId: transfer.id,
-              flow: 'withdraw',
-              action: 'skip',
-              status: 'ok',
-              message: 'Already matched — Stellar tx hash recorded',
-            });
-            continue;
-          }
-
-          const bankDetails = parseBankDetails(transfer.destinationAccount ?? '');
-          if (!bankDetails) {
-            await db
-              .update(stellarPaymentTransfers)
-              .set({
-                stellarTransactionHash: matchedPayment.transactionHash,
-                status: 'error',
-                errorMessage: 'Cannot parse bank details from destinationAccount',
-                updatedAt: new Date(),
-              })
-              .where(eq(stellarPaymentTransfers.id, transfer.id));
-
-            result.errors.push(`Transfer ${transfer.id}: cannot parse bank details`);
-            result.details.push({
-              transferId: transfer.id,
-              flow: 'withdraw',
-              action: 'error',
-              status: 'error',
-              message: 'Cannot parse bank details',
-            });
-            continue;
-          }
-
-          const destinationAmountUsd = parseFloat(transfer.destinationAmount ?? '0');
-          if (destinationAmountUsd < 1) {
-            result.errors.push(`Transfer ${transfer.id}: destination amount too small (${destinationAmountUsd})`);
-            result.details.push({
-              transferId: transfer.id,
-              flow: 'withdraw',
-              action: 'error',
-              status: 'error',
-              message: `Amount too small: $${destinationAmountUsd}`,
-            });
-            continue;
-          }
-
-          const amountCents = Math.round(destinationAmountUsd * 100);
-          const accountId = getAccountId();
-
-          let increaseTransfer;
-          if (bankDetails.transferType === 'Wire') {
-            increaseTransfer = await IncreaseService.initiateWireTransfer(
-              {
-                account_id: accountId,
-                account_number: bankDetails.accountNumber,
-                routing_number: bankDetails.routingNumber,
-                amount: amountCents,
-                message_to_recipient: `Axiom Rail Settlement — ${transfer.id.slice(0, 16).toUpperCase()}`,
-                beneficiary_name: bankDetails.name,
-              },
-              `axiom-rail-${transfer.id}`,
-            );
-          } else {
-            increaseTransfer = await IncreaseService.initiateAchTransfer(
-              {
-                account_id: accountId,
-                account_number: bankDetails.accountNumber,
-                routing_number: bankDetails.routingNumber,
-                amount: amountCents,
-                statement_descriptor: `AXIOM RAIL ${transfer.id.slice(0, 12).toUpperCase()}`,
-                company_name: 'Axiom Protocol LLC',
-              },
-              `axiom-rail-${transfer.id}`,
-            );
-          }
-
+        try {
           await db
             .update(stellarPaymentTransfers)
             .set({
-              stellarTransactionHash: matchedPayment.transactionHash,
-              status: 'completed',
-              completedAt: new Date(),
+              status: 'pending_external',
+              stellarTransactionHash: matched.transactionHash,
               updatedAt: new Date(),
               anchorRawResponse: {
                 ...(transfer.anchorRawResponse as object ?? {}),
-                increaseTransferId: increaseTransfer.id,
-                increaseStatus: increaseTransfer.status,
-                settledAt: new Date().toISOString(),
+                stellarDetectedAt: new Date().toISOString(),
+                stellarUsdcAmount: matched.amount,
               },
             })
             .where(eq(stellarPaymentTransfers.id, transfer.id));
 
-          result.withdrawsProcessed++;
+          result.phase1DetectedWithdraws++;
           result.details.push({
             transferId: transfer.id,
             flow: 'withdraw',
-            action: 'settled',
+            phase: '1-stellar-detect',
             status: 'ok',
-            message: `${bankDetails.transferType} initiated — Increase ID: ${increaseTransfer.id}`,
+            message: `Stellar USDC detected (memo: ${expectedMemo}, tx: ${matched.transactionHash.slice(0, 16)}…) → pending_external`,
           });
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : String(err);
-          result.errors.push(`Transfer ${transfer.id}: ${msg}`);
+          result.errors.push(`Phase1 update ${transfer.id}: ${msg}`);
           result.details.push({
             transferId: transfer.id,
             flow: 'withdraw',
-            action: 'error',
+            phase: '1-stellar-detect',
             status: 'error',
             message: msg,
           });
@@ -312,47 +226,88 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    result.errors.push(`Withdraw scan failed: ${msg}`);
+    result.errors.push(`Phase1 scan: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  // ─── Step 2: Match DEPOSIT transfers (USD → USDC) via Increase inbound ──────
+  // ─── WITHDRAW PHASE 2: Initiate Increase payout ────────────────────────────
+  // For pending_external withdraws: parse bank details and initiate ACH/wire.
+  // Idempotency key prevents duplicate payouts. Sets status to pending_anchor.
   try {
-    const pendingDeposits = await db
+    const phase2Withdraws = await db
       .select()
       .from(stellarPaymentTransfers)
-      .where(
-        inArray(stellarPaymentTransfers.status, [
-          'pending_user_transfer_start',
-          'pending_external',
-        ]),
-      );
+      .where(eq(stellarPaymentTransfers.status, 'pending_external'));
 
-    const depositPending = pendingDeposits.filter(
-      t => t.corridorId === 'usd-to-usdc-axiom-rail-ach',
-    );
+    const accountId = getAccountId();
 
-    if (depositPending.length > 0) {
-      const accountId = getAccountId();
-      const increaseTxRes = await IncreaseService.listTransactions(accountId, 50);
-      const incomingTxs = increaseTxRes.data.filter(tx => tx.amount > 0);
+    for (const transfer of phase2Withdraws.filter(t => t.corridorId === 'usdc-to-usd-axiom-rail-rtp')) {
+      const raw = transfer.anchorRawResponse as Record<string, unknown> ?? {};
+      if (raw.increaseTransferId) {
+        result.details.push({
+          transferId: transfer.id,
+          flow: 'withdraw',
+          phase: '2-increase-payout',
+          status: 'skip',
+          message: `Payout already initiated (Increase ID: ${raw.increaseTransferId})`,
+        });
+        continue;
+      }
 
-      for (const transfer of depositPending) {
-        const shortId = transfer.id.replace(/^axr-(wdr|dep)-/, '').replace(/-/g, '').slice(0, 16).toUpperCase();
+      const bankDetails = parseBankDetails(transfer.destinationAccount ?? '');
+      if (!bankDetails) {
+        result.errors.push(`Phase2 ${transfer.id}: cannot parse bank details`);
+        result.details.push({
+          transferId: transfer.id,
+          flow: 'withdraw',
+          phase: '2-increase-payout',
+          status: 'error',
+          message: 'Cannot parse routing/account from destinationAccount field',
+        });
+        continue;
+      }
 
-        const matchedTx = incomingTxs.find(tx =>
-          tx.description?.toUpperCase().includes(shortId),
-        );
+      const destinationAmountUsd = parseFloat(transfer.destinationAmount ?? '0');
+      if (destinationAmountUsd < 1) {
+        result.errors.push(`Phase2 ${transfer.id}: amount too small ($${destinationAmountUsd})`);
+        result.details.push({
+          transferId: transfer.id,
+          flow: 'withdraw',
+          phase: '2-increase-payout',
+          status: 'error',
+          message: `Amount too small: $${destinationAmountUsd}`,
+        });
+        continue;
+      }
 
-        if (!matchedTx) {
-          result.details.push({
-            transferId: transfer.id,
-            flow: 'deposit',
-            action: 'scan',
-            status: 'ok',
-            message: `No matching Increase inbound transaction found yet (ref: ${shortId})`,
-          });
-          continue;
+      const amountCents = Math.round(destinationAmountUsd * 100);
+      const idempotencyKey = `axiom-rail-${transfer.id}`;
+
+      try {
+        let increaseTransfer;
+        if (bankDetails.transferType === 'Wire') {
+          increaseTransfer = await IncreaseService.initiateWireTransfer(
+            {
+              account_id: accountId,
+              account_number: bankDetails.accountNumber,
+              routing_number: bankDetails.routingNumber,
+              amount: amountCents,
+              message_to_recipient: `Axiom Rail ${transfer.sep31StellarMemo ?? transfer.id.slice(0, 16).toUpperCase()}`,
+              beneficiary_name: bankDetails.name,
+            },
+            idempotencyKey,
+          );
+        } else {
+          increaseTransfer = await IncreaseService.initiateAchTransfer(
+            {
+              account_id: accountId,
+              account_number: bankDetails.accountNumber,
+              routing_number: bankDetails.routingNumber,
+              amount: amountCents,
+              statement_descriptor: `AXIOM RAIL ${(transfer.sep31StellarMemo ?? transfer.id).slice(0, 20)}`,
+              company_name: 'Axiom Protocol LLC',
+            },
+            idempotencyKey,
+          );
         }
 
         await db
@@ -361,28 +316,225 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             status: 'pending_anchor',
             updatedAt: new Date(),
             anchorRawResponse: {
-              ...(transfer.anchorRawResponse as object ?? {}),
-              increaseInboundTxId: matchedTx.id,
-              increaseInboundAmount: matchedTx.amount,
-              matchedAt: new Date().toISOString(),
-              note: 'USD received — pending Stellar USDC delivery',
+              ...raw,
+              increaseTransferId: increaseTransfer.id,
+              increaseTransferType: bankDetails.transferType,
+              increaseStatus: increaseTransfer.status,
+              payoutInitiatedAt: new Date().toISOString(),
             },
           })
           .where(eq(stellarPaymentTransfers.id, transfer.id));
 
-        result.depositsMatched++;
+        result.phase2InitiatedPayouts++;
         result.details.push({
           transferId: transfer.id,
-          flow: 'deposit',
-          action: 'matched',
+          flow: 'withdraw',
+          phase: '2-increase-payout',
           status: 'ok',
-          message: `USD received via Increase (ID: ${matchedTx.id}, $${(matchedTx.amount / 100).toFixed(2)}) — pending Stellar delivery`,
+          message: `${bankDetails.transferType} initiated (Increase ID: ${increaseTransfer.id}) → pending_anchor`,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        result.errors.push(`Phase2 payout ${transfer.id}: ${msg}`);
+        result.details.push({
+          transferId: transfer.id,
+          flow: 'withdraw',
+          phase: '2-increase-payout',
+          status: 'error',
+          message: msg,
         });
       }
     }
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    result.errors.push(`Deposit scan failed: ${msg}`);
+    result.errors.push(`Phase2 scan: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  // ─── WITHDRAW PHASE 3: Confirm Increase settlement ─────────────────────────
+  // For pending_anchor withdraws with increaseTransferId: check Increase status.
+  // ACH settled = "settled"; Wire final = "submitted" (no reversal notice yet).
+  try {
+    const phase3Withdraws = await db
+      .select()
+      .from(stellarPaymentTransfers)
+      .where(eq(stellarPaymentTransfers.status, 'pending_anchor'));
+
+    for (const transfer of phase3Withdraws.filter(t => t.corridorId === 'usdc-to-usd-axiom-rail-rtp')) {
+      const raw = transfer.anchorRawResponse as Record<string, unknown> ?? {};
+      const increaseTransferId = raw.increaseTransferId as string | undefined;
+      const transferType = raw.increaseTransferType as 'ACH' | 'Wire' | undefined;
+
+      if (!increaseTransferId) {
+        result.details.push({
+          transferId: transfer.id,
+          flow: 'withdraw',
+          phase: '3-increase-confirm',
+          status: 'skip',
+          message: 'No increaseTransferId in anchorRawResponse — awaiting Phase 2',
+        });
+        continue;
+      }
+
+      try {
+        let increaseStatus: string;
+        if (transferType === 'Wire') {
+          const wire = await IncreaseService.getWireTransfer(increaseTransferId);
+          increaseStatus = wire.status;
+        } else {
+          const ach = await IncreaseService.getAchTransfer(increaseTransferId);
+          increaseStatus = ach.status;
+        }
+
+        const isSettled = transferType === 'Wire'
+          ? increaseStatus === 'submitted'
+          : increaseStatus === 'settled';
+        const isError = ['returned', 'reversed', 'declined'].includes(increaseStatus);
+
+        if (isSettled) {
+          await db
+            .update(stellarPaymentTransfers)
+            .set({
+              status: 'completed',
+              completedAt: new Date(),
+              updatedAt: new Date(),
+              anchorRawResponse: {
+                ...raw,
+                increaseStatus,
+                settledAt: new Date().toISOString(),
+              },
+            })
+            .where(eq(stellarPaymentTransfers.id, transfer.id));
+
+          result.phase3ConfirmedWithdraws++;
+          result.details.push({
+            transferId: transfer.id,
+            flow: 'withdraw',
+            phase: '3-increase-confirm',
+            status: 'ok',
+            message: `Increase ${transferType} settled (status: ${increaseStatus}) → completed`,
+          });
+        } else if (isError) {
+          await db
+            .update(stellarPaymentTransfers)
+            .set({
+              status: 'error',
+              errorMessage: `Increase ${transferType} ${increaseStatus}`,
+              updatedAt: new Date(),
+              anchorRawResponse: { ...raw, increaseStatus },
+            })
+            .where(eq(stellarPaymentTransfers.id, transfer.id));
+
+          result.errors.push(`Transfer ${transfer.id}: Increase ${transferType} ${increaseStatus}`);
+          result.details.push({
+            transferId: transfer.id,
+            flow: 'withdraw',
+            phase: '3-increase-confirm',
+            status: 'error',
+            message: `Increase ${transferType} ${increaseStatus} → error`,
+          });
+        } else {
+          result.details.push({
+            transferId: transfer.id,
+            flow: 'withdraw',
+            phase: '3-increase-confirm',
+            status: 'skip',
+            message: `Increase ${transferType} still in-flight (status: ${increaseStatus})`,
+          });
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        result.errors.push(`Phase3 confirm ${transfer.id}: ${msg}`);
+        result.details.push({
+          transferId: transfer.id,
+          flow: 'withdraw',
+          phase: '3-increase-confirm',
+          status: 'error',
+          message: msg,
+        });
+      }
+    }
+  } catch (err: unknown) {
+    result.errors.push(`Phase3 scan: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  // ─── DEPOSIT PHASE 1: Detect Increase inbound (USD → USDC) ────────────────
+  // Matches Increase inbound transactions by reference in description.
+  // Sets status to pending_anchor; Stellar USDC delivery is handled manually.
+  try {
+    const depositPhase1 = await db
+      .select()
+      .from(stellarPaymentTransfers)
+      .where(eq(stellarPaymentTransfers.status, 'pending_user_transfer_start'));
+
+    const depositsPending = depositPhase1.filter(
+      t => t.corridorId === 'usd-to-usdc-axiom-rail-ach',
+    );
+
+    if (depositsPending.length > 0) {
+      const accountId = getAccountId();
+      const incomingTxRes = await IncreaseService.listTransactions(accountId, 50);
+      const credits = incomingTxRes.data.filter(tx => tx.amount > 0);
+
+      for (const transfer of depositsPending) {
+        const shortRef = transfer.id
+          .replace(/^axr-(wdr|dep)-/, '')
+          .replace(/-/g, '')
+          .slice(0, 16)
+          .toUpperCase();
+
+        const matched = credits.find(tx =>
+          (tx.description ?? '').toUpperCase().includes(shortRef),
+        );
+
+        if (!matched) {
+          result.details.push({
+            transferId: transfer.id,
+            flow: 'deposit',
+            phase: '1-increase-detect',
+            status: 'skip',
+            message: `No Increase inbound transaction found (ref: ${shortRef})`,
+          });
+          continue;
+        }
+
+        try {
+          await db
+            .update(stellarPaymentTransfers)
+            .set({
+              status: 'pending_anchor',
+              updatedAt: new Date(),
+              anchorRawResponse: {
+                ...(transfer.anchorRawResponse as object ?? {}),
+                increaseInboundTxId: matched.id,
+                increaseInboundAmount: matched.amount,
+                usdReceivedAt: new Date().toISOString(),
+                note: 'USD received via Increase — pending manual Stellar USDC delivery',
+              },
+            })
+            .where(eq(stellarPaymentTransfers.id, transfer.id));
+
+          result.phase1DetectedDeposits++;
+          result.details.push({
+            transferId: transfer.id,
+            flow: 'deposit',
+            phase: '1-increase-detect',
+            status: 'ok',
+            message: `USD received via Increase (ID: ${matched.id}, $${(matched.amount / 100).toFixed(2)}) → pending_anchor`,
+          });
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          result.errors.push(`Deposit Phase1 ${transfer.id}: ${msg}`);
+          result.details.push({
+            transferId: transfer.id,
+            flow: 'deposit',
+            phase: '1-increase-detect',
+            status: 'error',
+            message: msg,
+          });
+        }
+      }
+    }
+  } catch (err: unknown) {
+    result.errors.push(`Deposit Phase1 scan: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   return res.status(200).json({

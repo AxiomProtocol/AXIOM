@@ -1,9 +1,11 @@
 /**
  * GET /api/axiom-rail/account-info
  *
- * Returns the Increase bank account details for Axiom Rail deposits.
+ * Returns the live Increase bank account details for Axiom Rail deposits.
  * Requires a valid SEP-10 JWT token (from deposit/withdraw interactive URL).
- * Returns routing number, account number, beneficiary, and bank name.
+ *
+ * All values come from the Increase API — no hardcoded fallbacks for
+ * routing or account numbers.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -26,35 +28,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!valid) return res.status(403).json({ error: 'Invalid or expired SEP-10 token' });
   }
 
-  try {
-    const accountId = getAccountId();
-    if (!accountId) {
-      return res.status(200).json({
-        bankName: 'Thread Bank (via Increase)',
-        beneficiary: 'Axiom Protocol LLC',
-        routingNumber: '125109248',
-        accountNumber: null,
-        accountName: null,
-        status: 'no_account_configured',
-      });
-    }
+  const accountId = getAccountId();
+  if (!accountId) {
+    return res.status(200).json({
+      bankName: null,
+      beneficiary: 'Axiom Protocol LLC',
+      routingNumber: null,
+      accountNumber: null,
+      accountName: null,
+      status: 'no_account_configured',
+    });
+  }
 
+  try {
     const result = await IncreaseService.listAccountNumbers(accountId);
     const active = result.data.find(an => an.status === 'active') ?? result.data[0] ?? null;
 
     if (!active) {
       return res.status(200).json({
-        bankName: 'Thread Bank (via Increase)',
+        bankName: null,
         beneficiary: 'Axiom Protocol LLC',
-        routingNumber: '125109248',
+        routingNumber: null,
         accountNumber: null,
         accountName: null,
         status: 'no_account_number',
       });
     }
 
+    const account = await IncreaseService.getAccount(accountId).catch(() => null);
+
     return res.status(200).json({
-      bankName: 'Thread Bank (via Increase)',
+      bankName: account?.bank ?? null,
       beneficiary: 'Axiom Protocol LLC',
       routingNumber: active.routing_number,
       accountNumber: active.account_number,
@@ -63,14 +67,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   } catch (err: unknown) {
     console.error('[account-info] Increase error:', err);
-    return res.status(200).json({
-      bankName: 'Thread Bank (via Increase)',
-      beneficiary: 'Axiom Protocol LLC',
-      routingNumber: '125109248',
-      accountNumber: null,
-      accountName: null,
-      status: 'error',
+    return res.status(500).json({
       error: err instanceof Error ? err.message : String(err),
+      status: 'error',
     });
   }
 }

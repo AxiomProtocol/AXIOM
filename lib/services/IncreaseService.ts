@@ -220,11 +220,19 @@ export const IncreaseService = {
     );
   },
 
+  async getAchTransfer(transferId: string): Promise<IncreaseTransfer> {
+    return increaseRequest<IncreaseTransfer>('GET', `/ach_transfers/${transferId}`);
+  },
+
   async listWireTransfers(accountId: string, limit = 20): Promise<{ data: IncreaseTransfer[] }> {
     return increaseRequest<{ data: IncreaseTransfer[] }>(
       'GET',
       `/wire_transfers?account_id=${accountId}&limit=${limit}`,
     );
+  },
+
+  async getWireTransfer(transferId: string): Promise<IncreaseTransfer> {
+    return increaseRequest<IncreaseTransfer>('GET', `/wire_transfers/${transferId}`);
   },
 
   // Creates a dedicated virtual account number (sub-account) for a participant.
