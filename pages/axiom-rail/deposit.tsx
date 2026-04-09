@@ -13,11 +13,14 @@ import { useRouter } from 'next/router';
 
 type Step = 'form' | 'submitting' | 'done' | 'error';
 
-// Increase-powered receiving account details (displayed to user)
-const AXIOM_RAIL_BANK_NAME = 'Thread Bank (via Increase)';
-const AXIOM_RAIL_BANK_ROUTING = '125109248';
-const AXIOM_RAIL_BANK_ACCOUNT = '— contact support for account number —';
-const AXIOM_RAIL_BANK_BENEFICIARY = 'Axiom Protocol LLC';
+interface AccountInfo {
+  bankName: string;
+  beneficiary: string;
+  routingNumber: string;
+  accountNumber: string | null;
+  accountName: string | null;
+  status: string;
+}
 
 export default function AxiomRailDeposit() {
   const router = useRouter();
@@ -36,6 +39,9 @@ export default function AxiomRailDeposit() {
   const [step, setStep] = useState<Step>('form');
   const [errorMsg, setErrorMsg] = useState('');
 
+  const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
+  const [accountInfoLoading, setAccountInfoLoading] = useState(true);
+
   useEffect(() => {
     if (!router.isReady) return;
     const q = router.query;
@@ -44,6 +50,30 @@ export default function AxiomRailDeposit() {
     setAsset((q.asset as string) ?? 'USDC');
     setAmount((q.amount as string) ?? '');
     setToken((q.token as string) ?? '');
+  }, [router.isReady, router.query]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const t = (router.query.token as string) ?? '';
+
+    async function fetchAccountInfo() {
+      setAccountInfoLoading(true);
+      try {
+        const res = await fetch('/api/axiom-rail/account-info', {
+          headers: t ? { Authorization: `Bearer ${t}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAccountInfo(data);
+        }
+      } catch {
+        // silently fall back to contact-support message
+      } finally {
+        setAccountInfoLoading(false);
+      }
+    }
+
+    fetchAccountInfo();
   }, [router.isReady, router.query]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -88,6 +118,13 @@ export default function AxiomRailDeposit() {
 
   const shortAccount = account ? `${account.slice(0, 6)}...${account.slice(-6)}` : '';
 
+  const bankName = accountInfo?.bankName ?? 'Thread Bank (via Increase)';
+  const beneficiary = accountInfo?.beneficiary ?? 'Axiom Protocol LLC';
+  const receivingRouting = accountInfo?.routingNumber ?? '—';
+  const receivingAccount = accountInfoLoading
+    ? 'Loading...'
+    : accountInfo?.accountNumber ?? '— contact support —';
+
   return (
     <>
       <Head>
@@ -118,10 +155,10 @@ export default function AxiomRailDeposit() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <tbody>
                   {[
-                    ['Bank', AXIOM_RAIL_BANK_NAME],
-                    ['Beneficiary', AXIOM_RAIL_BANK_BENEFICIARY],
-                    ['Routing (ABA)', AXIOM_RAIL_BANK_ROUTING],
-                    ['Account', AXIOM_RAIL_BANK_ACCOUNT],
+                    ['Bank', bankName],
+                    ['Beneficiary', beneficiary],
+                    ['Routing (ABA)', receivingRouting],
+                    ['Account', receivingAccount],
                     ['Reference / Memo', id || 'Transaction ID (shown after submit)'],
                   ].map(([label, value]) => (
                     <tr key={label} style={{ borderTop: '1px solid #d1d5db' }}>

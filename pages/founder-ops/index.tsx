@@ -112,7 +112,8 @@ type TabId =
   | 'governance'
   | 'compliance'
   | 'banking'
-  | 'axauQueue';
+  | 'axauQueue'
+  | 'axiomRail';
 
 const FRAMEWORK_PRINCIPLE = `This is not a personal budget. This is a disciplined capital deployment system designed to build a machine-verifiable operating record across Axiom's live rails. The objective is not to maximize short-term return. The objective is to systematically produce proof that Axiom's infrastructure is active, capitalized, measurable, and compounding across on-chain liquidity, real asset intelligence, and community coordination.`;
 
@@ -268,6 +269,15 @@ export default function FounderOpsPage() {
   const [bankingError, setBankingError] = useState<string | null>(null);
   const [bankingTxData, setBankingTxData] = useState<{ transactions: any[]; pending: any[] } | null>(null);
   const [bankingAdminKey, setBankingAdminKey] = useState('');
+
+  // Axiom Rail settlements tab state
+  const [railSettlements, setRailSettlements] = useState<any[]>([]);
+  const [railSummary, setRailSummary] = useState<any | null>(null);
+  const [railLoading, setRailLoading] = useState(false);
+  const [railError, setRailError] = useState<string | null>(null);
+  const [railAdminKey, setRailAdminKey] = useState('');
+  const [railMonitorRunning, setRailMonitorRunning] = useState(false);
+  const [railMonitorResult, setRailMonitorResult] = useState<any | null>(null);
 
   // AXAU Queue tab state
   const [axauQueue, setAxauQueue] = useState<any[]>([]);
@@ -455,6 +465,52 @@ export default function FounderOpsPage() {
         .then(j => { if (j?.data) setAxauBuffer(j.data); })
         .catch(() => {})
         .finally(() => setAxauBufferLoading(false));
+    }
+  };
+
+  const loadAxiomRailSettlements = async (key?: string) => {
+    const k = key ?? railAdminKey;
+    if (!k) {
+      setRailError('Enter admin key and click Refresh.');
+      return;
+    }
+    setRailLoading(true);
+    setRailError(null);
+    try {
+      const res = await fetch('/api/axiom-rail/settlements', {
+        headers: { 'x-admin-key': k },
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setRailError(json.error ?? 'Failed to load settlements');
+      } else {
+        setRailSettlements(json.data ?? []);
+        setRailSummary(json.summary ?? null);
+      }
+    } catch (e) {
+      setRailError(String(e));
+    } finally {
+      setRailLoading(false);
+    }
+  };
+
+  const runAxiomRailMonitor = async () => {
+    const k = railAdminKey;
+    if (!k) { setRailError('Enter admin key first.'); return; }
+    setRailMonitorRunning(true);
+    setRailMonitorResult(null);
+    try {
+      const res = await fetch('/api/axiom-rail/monitor', {
+        method: 'POST',
+        headers: { 'x-admin-key': k },
+      });
+      const json = await res.json();
+      setRailMonitorResult(json);
+      if (json.success) await loadAxiomRailSettlements(k);
+    } catch (e) {
+      setRailMonitorResult({ success: false, error: String(e) });
+    } finally {
+      setRailMonitorRunning(false);
     }
   };
 
@@ -796,6 +852,7 @@ export default function FounderOpsPage() {
     { id: 'compliance', label: `Compliance${kycQueue.length > 0 || accredQueue.length > 0 ? ` (${kycQueue.length + accredQueue.length})` : ''}` },
     { id: 'banking', label: 'Banking' },
     { id: 'axauQueue', label: `AXAU Queue${axauQueue.filter(r => r.status === 'pending').length > 0 ? ` (${axauQueue.filter(r => r.status === 'pending').length})` : ''}` },
+    { id: 'axiomRail', label: `Axiom Rail${railSummary ? ` (${(railSummary.byStatus.pending_user_transfer_start ?? 0) + (railSummary.byStatus.pending_external ?? 0) + (railSummary.byStatus.pending_anchor ?? 0)} pending)` : ''}` },
   ];
 
   const primaryPool = pools.find(p => p.reserve0Label && p.reserve1Label) || pools[0] || null;
@@ -839,6 +896,7 @@ export default function FounderOpsPage() {
                     if (tab.id === 'governance') { loadGovernanceStatus(); loadAdminActions(outcomeAdminKey || undefined); }
                     if (tab.id === 'banking') { loadBankingData(); }
                     if (tab.id === 'axauQueue') { loadAxauQueue(); }
+                    if (tab.id === 'axiomRail') { loadAxiomRailSettlements(); }
                   }}
                   className={`px-4 py-2 text-sm border-b-2 -mb-px ${
                     activeTab === tab.id
@@ -2927,6 +2985,237 @@ export default function FounderOpsPage() {
                       ['Reserve Instrument', 'AXAU (ERC-20, Arbitrum One)'],
                       ['Backing Asset', 'PAXG (PAX Gold)'],
                       ['Vault Contract', 'AXGoldVault'],
+                    ].map(([lbl, val]) => (
+                      <div key={lbl}>
+                        <p className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider">{lbl}</p>
+                        <p className="font-dl-mono text-xs text-dl-navy mt-1">{val}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── TAB: AXIOM RAIL SETTLEMENTS ─────────────────────────── */}
+            {activeTab === 'axiomRail' && (
+              <>
+                <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+                  <div>
+                    <h2 className="font-dl-serif text-xl text-dl-navy mb-1">Axiom Rail — Settlement Console</h2>
+                    <p className="font-dl-mono text-xs text-dl-gray">Stellar SEP-24/31 · Increase ACH/Wire · Monitor &amp; Settle</p>
+                  </div>
+                  <div className="flex gap-2 items-center flex-wrap">
+                    <a href="/axiom-payment-rails" target="_blank" rel="noopener noreferrer"
+                      className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy">
+                      Rail Status ↗
+                    </a>
+                    <a href="/axiom-rail/deposit" target="_blank" rel="noopener noreferrer"
+                      className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy">
+                      Deposit UI ↗
+                    </a>
+                  </div>
+                </div>
+
+                {/* Summary stats */}
+                {railSummary && (
+                  <div className="grid grid-cols-3 md:grid-cols-6 gap-0 border border-dl-border mb-4 bg-dl-bg-alt">
+                    {[
+                      { label: 'Total', value: railSummary.total, color: 'text-dl-navy' },
+                      { label: 'Pending Start', value: railSummary.byStatus.pending_user_transfer_start ?? 0, color: 'text-yellow-700' },
+                      { label: 'Pending Anchor', value: railSummary.byStatus.pending_anchor ?? 0, color: 'text-blue-700' },
+                      { label: 'Completed', value: railSummary.byStatus.completed ?? 0, color: 'text-dl-forest' },
+                      { label: 'Error', value: railSummary.byStatus.error ?? 0, color: 'text-dl-error' },
+                      { label: 'Withdraws / Deposits', value: `${railSummary.byFlow.withdraw} / ${railSummary.byFlow.deposit}`, color: 'text-dl-navy' },
+                    ].map((s, i) => (
+                      <div key={i} className="p-3 border-r border-dl-border last:border-r-0">
+                        <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-1">{s.label}</p>
+                        <p className={`font-dl-mono text-sm font-bold ${s.color}`}>{s.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Controls */}
+                <div className="flex gap-3 items-center mb-5 flex-wrap">
+                  <input
+                    type="password"
+                    placeholder="Admin key"
+                    value={railAdminKey}
+                    onChange={e => setRailAdminKey(e.target.value)}
+                    className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-surface w-56 outline-none"
+                  />
+                  <button
+                    onClick={() => loadAxiomRailSettlements(railAdminKey)}
+                    disabled={railLoading}
+                    className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 uppercase tracking-wider hover:bg-dl-navy hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    {railLoading ? 'Loading…' : 'Refresh'}
+                  </button>
+                  <button
+                    onClick={runAxiomRailMonitor}
+                    disabled={railMonitorRunning || !railAdminKey}
+                    className="font-dl-mono text-xs border border-dl-forest text-dl-forest px-4 py-2 uppercase tracking-wider hover:bg-green-50 disabled:opacity-50"
+                  >
+                    {railMonitorRunning ? 'Running Monitor…' : 'Run Settlement Monitor'}
+                  </button>
+                </div>
+
+                {railError && (
+                  <div className="border border-dl-error p-4 mb-4">
+                    <p className="font-dl-mono text-xs text-dl-error">{railError}</p>
+                  </div>
+                )}
+
+                {/* Monitor result */}
+                {railMonitorResult && (
+                  <div className={`border p-4 mb-5 ${railMonitorResult.success ? 'border-dl-forest bg-green-50' : 'border-dl-error bg-red-50'}`}>
+                    <p className="font-dl-mono text-[9px] uppercase tracking-wider mb-2 font-bold text-dl-navy">
+                      Monitor Run — {railMonitorResult.scannedAt ? new Date(railMonitorResult.scannedAt).toLocaleString() : 'just now'}
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+                      {[
+                        { label: 'Withdraws Settled', value: railMonitorResult.withdrawsProcessed ?? 0, color: 'text-dl-forest' },
+                        { label: 'Deposits Matched', value: railMonitorResult.depositsMatched ?? 0, color: 'text-blue-700' },
+                        { label: 'Errors', value: railMonitorResult.errors?.length ?? 0, color: railMonitorResult.errors?.length > 0 ? 'text-dl-error' : 'text-dl-gray' },
+                      ].map(s => (
+                        <div key={s.label}>
+                          <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">{s.label}</p>
+                          <p className={`font-dl-mono text-base font-bold ${s.color}`}>{s.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {railMonitorResult.details && railMonitorResult.details.length > 0 && (
+                      <div className="space-y-1">
+                        {railMonitorResult.details.map((d: any, i: number) => (
+                          <div key={i} className="flex gap-2 items-baseline">
+                            <span className={`font-dl-mono text-[8px] px-1 uppercase border ${d.status === 'ok' ? 'border-dl-forest text-dl-forest' : 'border-dl-error text-dl-error'}`}>
+                              {d.flow} / {d.action}
+                            </span>
+                            <span className="font-dl-mono text-[9px] text-dl-navy">{d.transferId?.slice(0, 20)}</span>
+                            <span className="font-dl-mono text-[9px] text-dl-gray flex-1">{d.message}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {railMonitorResult.errors?.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-inherit">
+                        {railMonitorResult.errors.map((e: string, i: number) => (
+                          <p key={i} className="font-dl-mono text-[9px] text-dl-error">{e}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Transfer table */}
+                {railLoading && !railSettlements.length && (
+                  <p className="font-dl-mono text-xs text-dl-gray">Loading settlements…</p>
+                )}
+
+                {!railLoading && railSettlements.length === 0 && !railError && (
+                  <div className="border border-dl-border p-8 text-center">
+                    <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">No settlement records found</p>
+                    <p className="font-dl-serif text-sm text-dl-gray mt-2">Enter admin key and click Refresh to load data.</p>
+                  </div>
+                )}
+
+                {railSettlements.length > 0 && (
+                  <div className="overflow-x-auto border border-dl-border">
+                    <table className="w-full text-left min-w-[1000px]">
+                      <thead>
+                        <tr className="bg-dl-bg-alt border-b border-dl-border">
+                          {['ID', 'Flow', 'Protocol', 'Asset → USD', 'Amount', 'Status', 'Stellar Account', 'Initiated', 'Details'].map(h => (
+                            <th key={h} className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider px-3 py-3">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {railSettlements.map((row: any) => {
+                          const shortId = row.id?.slice(0, 10)?.toUpperCase();
+                          const isWithdraw = row.corridorId === 'usdc-to-usd-axiom-rail-rtp';
+                          const stellarKey = row.stellarPublicKey ?? row.sep31StellarAccountId ?? null;
+                          const shortStellar = stellarKey ? `${stellarKey.slice(0, 6)}…${stellarKey.slice(-4)}` : '—';
+
+                          const statusColors: Record<string, string> = {
+                            pending_user_transfer_start: 'border-yellow-400 text-yellow-700 bg-yellow-50',
+                            pending_external:  'border-yellow-400 text-yellow-700 bg-yellow-50',
+                            pending_anchor:    'border-blue-400 text-blue-700 bg-blue-50',
+                            pending_stellar:   'border-blue-400 text-blue-700 bg-blue-50',
+                            completed:         'border-dl-forest text-dl-forest bg-green-50',
+                            error:             'border-dl-error text-dl-error bg-red-50',
+                            refunded:          'border-dl-gold text-dl-gold bg-yellow-50',
+                          };
+                          const sc = statusColors[row.status] ?? 'border-dl-border text-dl-gray';
+                          const statusLabel: Record<string, string> = {
+                            pending_user_transfer_start: 'Awaiting Transfer',
+                            pending_external: 'Pending External',
+                            pending_anchor: 'USD Received',
+                            pending_stellar: 'Settling',
+                            completed: 'Completed',
+                            error: 'Error',
+                          };
+
+                          const raw = row.anchorRawResponse as any ?? {};
+                          const increaseId = raw.increaseTransferId ?? raw.increaseInboundTxId ?? null;
+
+                          return (
+                            <tr key={row.id} className="border-b border-dl-border hover:bg-dl-bg-alt">
+                              <td className="px-3 py-2 font-dl-mono text-[9px] text-dl-navy" title={row.id}>#{shortId}</td>
+                              <td className="px-3 py-2">
+                                <span className={`font-dl-mono text-[8px] border px-1 py-0.5 uppercase tracking-wider ${isWithdraw ? 'border-dl-navy text-dl-navy' : 'border-dl-forest text-dl-forest'}`}>
+                                  {isWithdraw ? 'Withdraw' : 'Deposit'}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2 font-dl-mono text-[9px] text-dl-gray uppercase">{row.sepProtocol ?? '—'}</td>
+                              <td className="px-3 py-2 font-dl-mono text-[9px] text-dl-gray">
+                                {(row.anchorRawResponse as any)?.asset ?? row.destinationCurrency ?? '—'}
+                              </td>
+                              <td className="px-3 py-2 font-dl-mono text-[9px] text-dl-navy font-bold">
+                                ${parseFloat(row.sourceAmountAxusd ?? '0').toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                              </td>
+                              <td className="px-3 py-2">
+                                <span className={`font-dl-mono text-[8px] border px-1.5 py-0.5 uppercase tracking-wider ${sc}`}>
+                                  {statusLabel[row.status] ?? row.status}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2 font-dl-mono text-[9px] text-dl-gray" title={stellarKey ?? ''}>
+                                {stellarKey ? (
+                                  <a href={`https://stellar.expert/explorer/public/account/${stellarKey}`} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline">
+                                    {shortStellar}
+                                  </a>
+                                ) : '—'}
+                              </td>
+                              <td className="px-3 py-2 font-dl-mono text-[9px] text-dl-gray">
+                                {row.initiatedAt ? new Date(row.initiatedAt).toLocaleDateString() : '—'}
+                              </td>
+                              <td className="px-3 py-2 font-dl-mono text-[9px] text-dl-gray">
+                                {row.stellarTransactionHash ? (
+                                  <a href={`https://stellar.expert/explorer/public/tx/${row.stellarTransactionHash}`} target="_blank" rel="noopener noreferrer" className="text-dl-navy underline">Stellar Tx ↗</a>
+                                ) : null}
+                                {increaseId && (
+                                  <span className="ml-1 text-dl-gray">Inc: {increaseId.slice(0, 8)}</span>
+                                )}
+                                {row.errorMessage && (
+                                  <span className="text-dl-error" title={row.errorMessage}>Err</span>
+                                )}
+                                {!row.stellarTransactionHash && !increaseId && !row.errorMessage && '—'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Info footer */}
+                <div className="border-t border-dl-border pt-5 mt-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      ['Anchor ID', 'axiom-rail'],
+                      ['Signing Key', 'GBLOO5…YIIY'],
+                      ['Deposit Account', 'GA4GMI…VITM7P'],
+                      ['Settlement Bank', 'Thread Bank via Increase'],
                     ].map(([lbl, val]) => (
                       <div key={lbl}>
                         <p className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider">{lbl}</p>
