@@ -17,8 +17,11 @@ import { stellarPaymentTransfers } from '../../../shared/stellarSchema';
 import { desc } from 'drizzle-orm';
 import { requireAdminAuth } from '../../../lib/multichain/stellar/axiom-rail/adminAuth';
 import { stripBsaFromRecords } from '../../../lib/multichain/stellar/axiom-rail/stripBsa';
+import { setRailCors, handlePreflight } from '../../../lib/multichain/stellar/axiom-rail/corsUtils';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  setRailCors(req, res);
+  if (handlePreflight(req, res)) return;
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
   if (!requireAdminAuth(req, res)) return;
 

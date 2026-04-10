@@ -21,14 +21,14 @@ import {
   verifyRailJwt,
   AXIOM_RAIL_DEPOSIT_ACCOUNT,
 } from '../../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
-import { setOpenCors, handlePreflight } from '../../../../lib/multichain/stellar/axiom-rail/corsUtils';
+import { setRailCors, handlePreflight } from '../../../../lib/multichain/stellar/axiom-rail/corsUtils';
 import { checkRateLimit } from '../../../../lib/multichain/stellar/axiom-rail/rateLimiter';
 import { v4 as uuidv4 } from 'uuid';
 
 const SUPPORTED_ASSETS = ['USDC', 'AXUSD', 'AXAU'];
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  setOpenCors(res);
+  setRailCors(req, res);
   if (handlePreflight(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 

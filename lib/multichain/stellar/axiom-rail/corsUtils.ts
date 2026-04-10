@@ -1,31 +1,27 @@
 /**
  * Axiom Rail — CORS Utility
  *
- * Provides two CORS modes:
- *  - setOpenCors()  — wildcard, for public discovery/info endpoints
- *  - setRailCors()  — origin allowlist, for authenticated transactional endpoints
- *
- * The auth endpoint (SEP-10) is served with open CORS because any Stellar
- * wallet app from any origin must be able to authenticate. Authenticated
- * transactional endpoints (submit, transactions) use the allowlist so only
- * trusted origins can read their responses.
+ * setOpenCors()  — wildcard, for public read-only info/discovery endpoints only
+ * setRailCors()  — scoped allowlist for all authenticated and admin endpoints:
+ *                  axiomprotocol.app (production) + localhost:5000 (development)
+ *                  + *.replit.dev (Replit dev preview)
+ * handlePreflight() — handles OPTIONS pre-flight and returns true if handled
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const ALLOWED_ORIGINS: string[] = [
-  'https://axiomprotocol.app',
+const PROD_ORIGIN = 'https://axiomprotocol.app';
+
+const RAIL_ALLOWED_ORIGINS: string[] = [
+  PROD_ORIGIN,
   'https://www.axiomprotocol.app',
-  'https://lobstr.co',
-  'https://stellarx.com',
-  'https://stellarterm.com',
-  'https://freighter.app',
+  'http://localhost:5000',
+  'http://localhost:3000',
 ];
 
-function isAllowedOrigin(origin: string): boolean {
-  if (ALLOWED_ORIGINS.includes(origin)) return true;
+function isRailAllowed(origin: string): boolean {
+  if (RAIL_ALLOWED_ORIGINS.includes(origin)) return true;
   if (origin.endsWith('.replit.dev') || origin.endsWith('.repl.co')) return true;
-  if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return true;
   return false;
 }
 
@@ -40,13 +36,12 @@ export function setRailCors(req: NextApiRequest, res: NextApiResponse): void {
   if (!origin) {
     return;
   }
-  if (isAllowedOrigin(origin)) {
+  if (isRailAllowed(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Vary', 'Origin');
   } else {
-    res.setHeader('Access-Control-Allow-Origin', 'https://axiomprotocol.app');
-    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Origin', PROD_ORIGIN);
   }
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 }
@@ -56,5 +51,28 @@ export function handlePreflight(req: NextApiRequest, res: NextApiResponse): bool
     res.status(200).end();
     return true;
   }
+  return false;
+}
+
+/**
+ * Origins allowed to postMessage a SEP-10 JWT to the interactive deposit/
+ * withdraw pages. Broader than the API CORS allowlist because any Stellar
+ * wallet may open our interactive page in an iframe or popup and deliver
+ * the token.
+ */
+export const POSTMESSAGE_ALLOWED_ORIGINS: string[] = [
+  PROD_ORIGIN,
+  'https://www.axiomprotocol.app',
+  'https://lobstr.co',
+  'https://stellarx.com',
+  'https://stellarterm.com',
+  'https://freighter.app',
+  'http://localhost:5000',
+  'http://localhost:3000',
+];
+
+export function isPostMessageOriginAllowed(origin: string): boolean {
+  if (POSTMESSAGE_ALLOWED_ORIGINS.includes(origin)) return true;
+  if (origin.endsWith('.replit.dev') || origin.endsWith('.repl.co')) return true;
   return false;
 }

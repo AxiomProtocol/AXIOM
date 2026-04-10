@@ -38,6 +38,7 @@ import { eq, inArray } from 'drizzle-orm';
 import { IncreaseService, getAccountId } from '../../../lib/services/IncreaseService';
 import { AXIOM_RAIL_DEPOSIT_ACCOUNT } from '../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
 import { requireAdminAuth } from '../../../lib/multichain/stellar/axiom-rail/adminAuth';
+import { setRailCors, handlePreflight } from '../../../lib/multichain/stellar/axiom-rail/corsUtils';
 
 interface DetailEntry {
   transferId: string;
@@ -133,6 +134,8 @@ async function fetchStellarPayments(depositAccount: string): Promise<Array<{
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  setRailCors(req, res);
+  if (handlePreflight(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!requireAdminAuth(req, res)) return;
 

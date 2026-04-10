@@ -11,13 +11,13 @@
  *  Step 2 (identity) — BSA identity collection (DOB, country, ID)
  *
  * Token delivery:
- *  Primary   — window.postMessage from the wallet (SEP-24 standard pattern)
- *  Fallback  — ?token= URL query parameter (backward compatibility)
+ *  Token delivery — window.postMessage from the wallet with origin validation
  */
 
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import { isPostMessageOriginAllowed } from '../../lib/multichain/stellar/axiom-rail/corsUtils';
 
 type Step = 'bank' | 'identity' | 'submitting' | 'done' | 'error';
 type IdType = 'ssn' | 'passport';
@@ -63,9 +63,13 @@ export default function AxiomRailDeposit() {
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
   const [accountInfoLoading, setAccountInfoLoading] = useState(true);
 
-  // ── Token delivery: postMessage (primary) + URL param (fallback) ─────────
+  // ── Token delivery: postMessage with origin validation ──────────────────
+  // The SEP-10 JWT is delivered exclusively via window.postMessage from the
+  // wallet app. The origin is validated against the allowed wallet allowlist
+  // before the token is accepted. The token is never read from the URL.
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
+      if (!isPostMessageOriginAllowed(event.origin)) return;
       const data = event.data as WalletMessage | undefined;
       if (!data) return;
       const received = data?.transaction?.token ?? data?.token ?? '';
@@ -86,23 +90,16 @@ export default function AxiomRailDeposit() {
     setAccount((q.account as string) ?? '');
     setAsset((q.asset as string) ?? 'USDC');
     setAmount((q.amount as string) ?? '');
-
-    // URL param fallback — only use if postMessage hasn't arrived yet
-    const urlToken = (q.token as string) ?? '';
-    if (urlToken && !tokenRef.current) {
-      tokenRef.current = urlToken;
-      setToken(urlToken);
-    }
+    // token is NOT read from URL — must be delivered via postMessage
   }, [router.isReady, router.query]);
 
   useEffect(() => {
     if (!router.isReady) return;
-    const urlToken = (router.query.token as string) ?? '';
-    const activeToken = tokenRef.current || urlToken;
 
     async function fetchAccountInfo() {
       setAccountInfoLoading(true);
       try {
+        const activeToken = tokenRef.current;
         const res = await fetch('/api/axiom-rail/account-info', {
           headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {},
         });
@@ -118,7 +115,7 @@ export default function AxiomRailDeposit() {
     }
 
     fetchAccountInfo();
-  }, [router.isReady, router.query]);
+  }, [router.isReady]);
 
   function handleBankNext(e: React.FormEvent) {
     e.preventDefault();
@@ -133,7 +130,7 @@ export default function AxiomRailDeposit() {
 
     setStep('submitting');
 
-    const activeToken = tokenRef.current || token;
+    const activeToken = tokenRef.current;
 
     try {
       const res = await fetch('/api/axiom-rail/sep24/submit', {
