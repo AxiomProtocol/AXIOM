@@ -16,7 +16,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createHash, timingSafeEqual } from 'crypto';
-import { eq } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { setRailCors, handlePreflight } from '../../../../lib/multichain/stellar/axiom-rail/corsUtils';
 import { checkRateLimit } from '../../../../lib/multichain/stellar/axiom-rail/rateLimiter';
 import { stripBsaFromRecord } from '../../../../lib/multichain/stellar/axiom-rail/stripBsa';
@@ -72,16 +72,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const propertiesWithPayments = await Promise.all(
       matchingProps.map(async (prop) => {
-        const payments = await db
+        const propPayments = await db
           .select()
           .from(stellarPaymentTransfers)
-          .where(eq(stellarPaymentTransfers.corridorId, 'usd-to-usd-rent-axiom-rail'));
-
-        // Filter to payments for this property by checking anchorRawResponse.propertySlug
-        const propPayments = payments.filter(p => {
-          const raw = p.anchorRawResponse as Record<string, unknown> | null;
-          return raw?.propertySlug === prop.slug;
-        });
+          .where(
+            and(
+              eq(stellarPaymentTransfers.corridorId, 'usd-to-usd-rent-axiom-rail'),
+              sql`${stellarPaymentTransfers.anchorRawResponse}->>'propertySlug' = ${prop.slug}`
+            )
+          );
 
         const safePayments = propPayments.map(payment => {
           const stripped = stripBsaFromRecord(payment);
