@@ -8,21 +8,28 @@
  * their payment details and initiates the bank transfer.
  *
  * Requires SEP-10 JWT in Authorization header.
+ *
+ * Security:
+ *  - Open CORS required: any Stellar wallet app must be able to initiate.
+ *  - The SEP-10 JWT is NOT included in the interactive URL — the wallet
+ *    must deliver it to the interactive page via window.postMessage.
+ *  - Rate limited: 20 initiations per IP per minute.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyRailJwt } from '../../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
+import { setOpenCors, handlePreflight } from '../../../../lib/multichain/stellar/axiom-rail/corsUtils';
+import { checkRateLimit } from '../../../../lib/multichain/stellar/axiom-rail/rateLimiter';
 import { v4 as uuidv4 } from 'uuid';
 
 const SUPPORTED_ASSETS = ['USDC', 'AXUSD', 'AXAU'];
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  setOpenCors(res);
+  if (handlePreflight(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  if (!checkRateLimit(req, res, 'sep24/deposit', { max: 20, windowMs: 60_000 })) return;
 
   const authHeader = req.headers['authorization'] ?? '';
   const token = authHeader.replace(/^Bearer\s+/i, '');
@@ -64,7 +71,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (amount) interactiveUrl.searchParams.set('amount', amount);
   if (memo) interactiveUrl.searchParams.set('memo', memo);
   if (memo_type) interactiveUrl.searchParams.set('memo_type', memo_type);
-  interactiveUrl.searchParams.set('token', token);
 
   return res.status(200).json({
     type: 'interactive_customer_info_needed',

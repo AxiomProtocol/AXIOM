@@ -8,14 +8,23 @@
  * Two-step flow:
  *  Step 1 (bank)     — Bank account details
  *  Step 2 (identity) — BSA identity collection (DOB, country, ID)
+ *
+ * Token delivery:
+ *  Primary   — window.postMessage from the wallet (SEP-24 standard pattern)
+ *  Fallback  — ?token= URL query parameter (backward compatibility)
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 
 type Step = 'bank' | 'identity' | 'submitting' | 'done' | 'error';
 type IdType = 'ssn' | 'passport';
+
+interface WalletMessage {
+  transaction?: { token?: string };
+  token?: string;
+}
 
 export default function AxiomRailWithdraw() {
   const router = useRouter();
@@ -27,14 +36,13 @@ export default function AxiomRailWithdraw() {
   const [anchorAccount, setAnchorAccount] = useState('');
   const [memo, setMemo] = useState('');
   const [token, setToken] = useState('');
+  const tokenRef = useRef('');
 
-  // Step 1 — Bank details
   const [routingNumber, setRoutingNumber] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountName, setAccountName] = useState('');
   const [transferType, setTransferType] = useState<'ACH' | 'Wire'>('ACH');
 
-  // Step 2 — Identity (BSA)
   const [legalName, setLegalName] = useState('');
   const [dob, setDob] = useState('');
   const [country, setCountry] = useState('');
@@ -43,6 +51,22 @@ export default function AxiomRailWithdraw() {
 
   const [step, setStep] = useState<Step>('bank');
   const [errorMsg, setErrorMsg] = useState('');
+
+  // ── Token delivery: postMessage (primary) + URL param (fallback) ─────────
+  useEffect(() => {
+    function handleMessage(event: MessageEvent) {
+      const data = event.data as WalletMessage | undefined;
+      if (!data) return;
+      const received = data?.transaction?.token ?? data?.token ?? '';
+      if (received && !tokenRef.current) {
+        tokenRef.current = received;
+        setToken(received);
+      }
+    }
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -53,10 +77,15 @@ export default function AxiomRailWithdraw() {
     setAmount((q.amount as string) ?? '');
     setAnchorAccount((q.anchor_account as string) ?? '');
     setMemo((q.memo as string) ?? '');
-    setToken((q.token as string) ?? '');
+
+    // URL param fallback — only use if postMessage hasn't arrived yet
+    const urlToken = (q.token as string) ?? '';
+    if (urlToken && !tokenRef.current) {
+      tokenRef.current = urlToken;
+      setToken(urlToken);
+    }
   }, [router.isReady, router.query]);
 
-  // Pre-fill legal name from bank account name when advancing to identity step
   function handleBankNext(e: React.FormEvent) {
     e.preventDefault();
     if (!routingNumber || !accountNumber || !accountName) return;
@@ -70,12 +99,14 @@ export default function AxiomRailWithdraw() {
 
     setStep('submitting');
 
+    const activeToken = tokenRef.current || token;
+
     try {
       const res = await fetch('/api/axiom-rail/sep24/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${activeToken}`,
         },
         body: JSON.stringify({
           txId: id,
@@ -116,6 +147,7 @@ export default function AxiomRailWithdraw() {
       <Head>
         <title>Axiom Rail — Withdrawal</title>
         <meta name="robots" content="noindex" />
+        <meta name="referrer" content="strict-origin" />
       </Head>
 
       <div style={{ fontFamily: 'Georgia, serif', background: '#fff', minHeight: '100vh', padding: '2rem 1.5rem', maxWidth: 560, margin: '0 auto' }}>

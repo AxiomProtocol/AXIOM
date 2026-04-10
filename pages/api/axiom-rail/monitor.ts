@@ -37,10 +37,7 @@ import { stellarPaymentTransfers } from '../../../shared/stellarSchema';
 import { eq, inArray } from 'drizzle-orm';
 import { IncreaseService, getAccountId } from '../../../lib/services/IncreaseService';
 import { AXIOM_RAIL_DEPOSIT_ACCOUNT } from '../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
-
-function checkAdminKey(req: NextApiRequest): boolean {
-  return req.headers['x-admin-key'] === process.env.ADMIN_SOLVENCY_KEY;
-}
+import { requireAdminAuth } from '../../../lib/multichain/stellar/axiom-rail/adminAuth';
 
 interface DetailEntry {
   transferId: string;
@@ -137,7 +134,7 @@ async function fetchStellarPayments(depositAccount: string): Promise<Array<{
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!checkAdminKey(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!requireAdminAuth(req, res)) return;
 
   const result: MonitorResult = {
     phase1DetectedWithdraws: 0,

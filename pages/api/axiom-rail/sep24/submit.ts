@@ -7,20 +7,26 @@
  *
  * Identity data is stored in anchorRawResponse.bsa and never returned
  * in public-facing API responses.
+ *
+ * Security:
+ *  - JWT is verified and bound to stellarAccount in the request body.
+ *  - Rate limited: 10 submissions per IP per minute.
+ *  - CORS restricted to our origin only (called by our own interactive pages).
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyRailJwt, AXIOM_RAIL_DEPOSIT_ACCOUNT, AXIOM_RAIL_FEE_FIXED_USD, AXIOM_RAIL_FEE_PERCENT } from '../../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
+import { setRailCors, handlePreflight } from '../../../../lib/multichain/stellar/axiom-rail/corsUtils';
+import { checkRateLimit } from '../../../../lib/multichain/stellar/axiom-rail/rateLimiter';
 import { db } from '../../../../server/db';
 import { stellarPaymentTransfers } from '../../../../shared/stellarSchema';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  setRailCors(req, res);
+  if (handlePreflight(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  if (!checkRateLimit(req, res, 'sep24/submit', { max: 10, windowMs: 60_000 })) return;
 
   const authHeader = req.headers['authorization'] ?? '';
   const token = authHeader.replace(/^Bearer\s+/i, '');
@@ -37,7 +43,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     accountNumber,
     accountName,
     transferType,
-    // BSA identity fields
     bsaLegalName,
     bsaDob,
     bsaCountry,
@@ -67,7 +72,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'routingNumber, accountNumber, and accountName are required' });
   }
 
-  // BSA identity validation — presence check
+  // ── JWT-to-record ownership binding ──────────────────────────────────────
+  // The stellarAccount in the body must match the account from the JWT.
+  // This prevents a valid token holder from forging records on behalf of
+  // a different account.
+  const senderKey = stellarAccount ?? jwtAccount;
+  if (stellarAccount && stellarAccount !== jwtAccount) {
+    console.warn(`[sep24/submit] stellarAccount mismatch: JWT=${jwtAccount} body=${stellarAccount}`);
+    return res.status(403).json({ error: 'stellarAccount does not match authenticated account' });
+  }
+
+  // ── BSA identity validation — presence check ──────────────────────────────
   const missingIdentity: string[] = [];
   if (!bsaLegalName) missingIdentity.push('bsaLegalName');
   if (!bsaDob) missingIdentity.push('bsaDob');
@@ -78,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: `Missing identity fields: ${missingIdentity.join(', ')}` });
   }
 
-  // BSA identity validation — format/semantic checks
+  // ── BSA identity validation — format/semantic checks ─────────────────────
   const allowedIdTypes = ['ssn', 'passport'];
   if (!allowedIdTypes.includes(bsaIdType!)) {
     return res.status(400).json({ error: `bsaIdType must be one of: ${allowedIdTypes.join(', ')}` });
@@ -110,8 +125,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ? 'usdc-to-usd-axiom-rail-rtp'
     : 'usd-to-usdc-axiom-rail-ach';
 
-  const senderKey = stellarAccount ?? jwtAccount;
-
   try {
     await db.insert(stellarPaymentTransfers).values({
       id: txId,
@@ -134,7 +147,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         kind,
         asset: asset ?? 'USDC',
         submittedAt: new Date().toISOString(),
-        // BSA identity record — never returned in public API responses
         bsa: {
           legalName: bsaLegalName,
           dob: bsaDob,

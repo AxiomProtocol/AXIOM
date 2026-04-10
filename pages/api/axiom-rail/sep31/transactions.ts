@@ -8,21 +8,26 @@
  *
  * Requires SEP-10 JWT in Authorization header.
  * Requires sender identity fields (BSA compliance) in fields.sender.
+ *
+ * Security:
+ *  - Rate limited: 10 requests per IP per minute.
+ *  - CORS restricted to known origins (allowlist).
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyRailJwt, AXIOM_RAIL_DEPOSIT_ACCOUNT, AXIOM_RAIL_FEE_FIXED_USD, AXIOM_RAIL_FEE_PERCENT, AXIOM_RAIL_MIN_AMOUNT_USD, AXIOM_RAIL_MAX_AMOUNT_USD } from '../../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
+import { setRailCors, handlePreflight } from '../../../../lib/multichain/stellar/axiom-rail/corsUtils';
+import { checkRateLimit } from '../../../../lib/multichain/stellar/axiom-rail/rateLimiter';
 import { db } from '../../../../server/db';
 import { stellarPaymentTransfers } from '../../../../shared/stellarSchema';
 import { v4 as uuidv4 } from 'uuid';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  setRailCors(req, res);
+  if (handlePreflight(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  if (!checkRateLimit(req, res, 'sep31/transactions', { max: 10, windowMs: 60_000 })) return;
 
   const authHeader = req.headers['authorization'] ?? '';
   const token = authHeader.replace(/^Bearer\s+/i, '');
@@ -145,7 +150,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       sepProtocol: 'sep31',
       sep31StellarAccountId: AXIOM_RAIL_DEPOSIT_ACCOUNT,
       sep31StellarMemo: memo,
-      // BSA identity record — never returned in public API responses
       anchorRawResponse: {
         submittedAt: new Date().toISOString(),
         bsa: {

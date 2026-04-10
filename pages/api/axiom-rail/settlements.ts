@@ -2,7 +2,8 @@
  * GET /api/axiom-rail/settlements
  *
  * Returns all stellar_payment_transfers records for the Founder Ops
- * Axiom Rail settlements tab. Admin-key protected.
+ * Axiom Rail settlements tab. Admin-key protected with rate limiting.
+ * BSA identity data is stripped from all records before returning.
  *
  * Query params:
  *   status  — filter by status (optional)
@@ -13,17 +14,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../server/db';
 import { stellarPaymentTransfers } from '../../../shared/stellarSchema';
-import { eq, desc } from 'drizzle-orm';
-
-function checkAdminKey(req: NextApiRequest): boolean {
-  return req.headers['x-admin-key'] === process.env.ADMIN_SOLVENCY_KEY;
-}
+import { desc } from 'drizzle-orm';
+import { requireAdminAuth } from '../../../lib/multichain/stellar/axiom-rail/adminAuth';
+import { stripBsaFromRecords } from '../../../lib/multichain/stellar/axiom-rail/stripBsa';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-  if (!checkAdminKey(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!requireAdminAuth(req, res)) return;
 
-  const limit = Math.min(parseInt(req.query.limit as string ?? '100', 10), 200);
+  const limit = Math.min(parseInt((req.query.limit as string) ?? '100', 10), 200);
 
   try {
     const rows = await db
@@ -64,7 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       success: true,
       summary,
-      data: filtered,
+      data: stripBsaFromRecords(filtered),
     });
   } catch (err: unknown) {
     console.error('[settlements] DB error:', err);
