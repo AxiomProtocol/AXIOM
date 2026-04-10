@@ -15,6 +15,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyRailJwt } from '../../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
 import { setRailCors, handlePreflight } from '../../../../lib/multichain/stellar/axiom-rail/corsUtils';
 import { checkRateLimit } from '../../../../lib/multichain/stellar/axiom-rail/rateLimiter';
+import { stripBsaFromRecord } from '../../../../lib/multichain/stellar/axiom-rail/stripBsa';
 import { db } from '../../../../server/db';
 import { axiomRailPayrollRuns, axiomRailPayrollRecipients } from '../../../../shared/payrollSchema';
 import { eq, desc } from 'drizzle-orm';
@@ -50,9 +51,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .from(axiomRailPayrollRecipients)
           .where(eq(axiomRailPayrollRecipients.runId, run.id));
 
-        // Return only fields needed by the history UI — BSA identity and
-        // idempotency key are never returned to the frontend
-        return {
+        // Explicitly select only fields needed by the history UI — BSA identity
+        // columns and idempotencyKey are never returned to the frontend.
+        // stripBsaFromRecord is applied defensively per Task #77 contract: it
+        // strips anchorRawResponse.bsa from any record that carries it. Payroll
+        // run rows store BSA data as top-level columns (already excluded above),
+        // so this is a no-op today but protects against schema drift.
+        return stripBsaFromRecord({
           id: run.id,
           stellarAccount: run.stellarAccount,
           orgName: run.orgName,
@@ -71,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             status: r.status,
             createdAt: r.createdAt,
           })),
-        };
+        });
       })
     );
 

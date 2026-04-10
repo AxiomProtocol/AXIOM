@@ -166,16 +166,33 @@ function AuthGate({ onAuthenticated }: { onAuthenticated: (token: string) => voi
   const [waiting, setWaiting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Decode JWT exp claim and check it has not expired
+  function isTokenValid(token: string): boolean {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return false;
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (!payload.exp) return false;
+      return payload.exp * 1000 > Date.now();
+    } catch {
+      return false;
+    }
+  }
+
   // Poll localStorage while waiting — deposit/withdraw pages save the JWT there
-  // when they receive it from the wallet via postMessage
+  // when they receive it from the wallet via postMessage. Token expiry is checked
+  // before acceptance to prevent stale tokens from prior sessions being reused.
   useEffect(() => {
     if (!waiting) return;
     const interval = setInterval(() => {
       const stored = localStorage.getItem(JWT_STORAGE_KEY);
-      if (stored && stored.split('.').length === 3) {
+      if (stored && isTokenValid(stored)) {
         onAuthenticated(stored);
         setWaiting(false);
         clearInterval(interval);
+      } else if (stored && !isTokenValid(stored)) {
+        // Clear expired token so user is prompted to re-authenticate
+        localStorage.removeItem(JWT_STORAGE_KEY);
       }
     }, 1500);
     return () => clearInterval(interval);
@@ -189,10 +206,11 @@ function AuthGate({ onAuthenticated }: { onAuthenticated: (token: string) => voi
 
   function checkNow() {
     const stored = localStorage.getItem(JWT_STORAGE_KEY);
-    if (stored && stored.split('.').length === 3) {
+    if (stored && isTokenValid(stored)) {
       onAuthenticated(stored);
     } else {
-      setError('No session found yet. Complete authentication in the Axiom Rail tab first, then return here.');
+      if (stored) localStorage.removeItem(JWT_STORAGE_KEY); // clear expired token
+      setError('No valid session found. Complete authentication in the Axiom Rail tab first, then return here.');
     }
   }
 
@@ -280,8 +298,21 @@ export default function DaoPayrollRunPage() {
   useEffect(() => {
     const stored = localStorage.getItem(JWT_STORAGE_KEY);
     if (stored) {
-      setJwt(stored);
-      setAuthorizedAccount(decodeJwtSub(stored));
+      // Verify JWT expiry before accepting a stored token from a prior session
+      const valid = (() => {
+        try {
+          const parts = stored.split('.');
+          if (parts.length !== 3) return false;
+          const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+          return payload.exp ? payload.exp * 1000 > Date.now() : false;
+        } catch { return false; }
+      })();
+      if (valid) {
+        setJwt(stored);
+        setAuthorizedAccount(decodeJwtSub(stored));
+      } else {
+        localStorage.removeItem(JWT_STORAGE_KEY);
+      }
     }
     setAuthChecked(true);
   }, []);
