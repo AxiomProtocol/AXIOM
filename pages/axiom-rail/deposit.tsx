@@ -80,6 +80,8 @@ export default function AxiomRailDeposit() {
       if (received && !tokenRef.current) {
         tokenRef.current = received;
         setToken(received);
+        // Persist to localStorage so payroll and other pages can reuse this session
+        try { localStorage.setItem('axiom_rail_jwt', received); } catch { /* ignore */ }
       }
     }
 

@@ -50,8 +50,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .from(axiomRailPayrollRecipients)
           .where(eq(axiomRailPayrollRecipients.runId, run.id));
 
+        // Return only fields needed by the history UI — BSA identity and
+        // idempotency key are never returned to the frontend
         return {
-          ...run,
+          id: run.id,
+          stellarAccount: run.stellarAccount,
+          orgName: run.orgName,
+          runLabel: run.runLabel,
+          runDate: run.runDate,
+          recipientCount: run.recipientCount,
+          totalAmountUsd: run.totalAmountUsd,
+          status: run.status,
+          createdAt: run.createdAt,
           recipients: recipients.map(r => ({
             id: r.id,
             name: r.recipientName,

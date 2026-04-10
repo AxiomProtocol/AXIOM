@@ -4,20 +4,19 @@
  * DAO Contributor Payroll — run interface.
  *
  * Auth gate (step 0): checks for SEP-10 JWT in localStorage on mount.
- * If absent, shows authenticate instructions + postMessage listener so a
- * popup auth window can deliver the token without a page reload.
- * If present, decodes the sub claim to display the authorized account.
+ * If absent, directs user to /axiom-rail/deposit (new tab) where their Stellar
+ * wallet authenticates via SEP-10. deposit.tsx saves the JWT to localStorage
+ * on receipt; this page polls localStorage every 1.5s and advances when found.
  *
  * Multi-step form (steps 1–4): run metadata → BSA operator identity
  * → recipient list with inline fee preview → review & submit → result.
  *
  * Security:
  *  - JWT checked before form entry (not only at submit)
- *  - postMessage listener validates event.origin against the host origin only
  *  - All records bound to JWT subject (senderAccount) on the server
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { DesignLawLayout } from '../../components/design-law';
 
@@ -156,38 +155,24 @@ const inputStyle: React.CSSProperties = {
 const selectStyle: React.CSSProperties = { ...inputStyle, cursor: 'pointer' };
 
 // ─── Auth Gate ────────────────────────────────────────────────────────────────
+// Auth flow explanation:
+//  1. User clicks "Authenticate via Axiom Rail" — opens /axiom-rail/deposit in a new tab
+//  2. In that tab, their Stellar wallet sends the JWT via postMessage; deposit.tsx
+//     receives it, stores it in localStorage('axiom_rail_jwt'), and shows the deposit form
+//  3. This page polls localStorage every 1.5s; once the JWT appears it proceeds automatically
+//  4. User can also click "I've authenticated" to trigger an immediate check
 
 function AuthGate({ onAuthenticated }: { onAuthenticated: (token: string) => void }) {
   const [waiting, setWaiting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const popupRef = useRef<Window | null>(null);
 
-  useEffect(() => {
-    function handleMessage(event: MessageEvent) {
-      // Validate origin — only accept messages from the same host
-      if (event.origin !== window.location.origin) return;
-
-      const { type, token } = event.data ?? {};
-      if (type === 'AXIOM_RAIL_JWT' && typeof token === 'string' && token.split('.').length === 3) {
-        localStorage.setItem(JWT_STORAGE_KEY, token);
-        onAuthenticated(token);
-        if (popupRef.current && !popupRef.current.closed) {
-          popupRef.current.close();
-        }
-        setWaiting(false);
-      }
-    }
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [onAuthenticated]);
-
-  // Also poll localStorage in case user authenticated in a different tab
+  // Poll localStorage while waiting — deposit/withdraw pages save the JWT there
+  // when they receive it from the wallet via postMessage
   useEffect(() => {
     if (!waiting) return;
     const interval = setInterval(() => {
       const stored = localStorage.getItem(JWT_STORAGE_KEY);
-      if (stored) {
+      if (stored && stored.split('.').length === 3) {
         onAuthenticated(stored);
         setWaiting(false);
         clearInterval(interval);
@@ -196,24 +181,18 @@ function AuthGate({ onAuthenticated }: { onAuthenticated: (token: string) => voi
     return () => clearInterval(interval);
   }, [waiting, onAuthenticated]);
 
-  function openAuthPopup() {
+  function openAuthTab() {
     setError(null);
     setWaiting(true);
-    const url = '/axiom-rail/deposit';
-    const popup = window.open(url, 'axiom_rail_auth', 'width=520,height=700,menubar=no,toolbar=no,status=no');
-    if (!popup) {
-      setError('Popup blocked. Please allow popups for this site, or open Axiom Rail Deposit in a new tab, authenticate, then return here.');
-    } else {
-      popupRef.current = popup;
-    }
+    window.open('/axiom-rail/deposit', '_blank', 'noopener');
   }
 
   function checkNow() {
     const stored = localStorage.getItem(JWT_STORAGE_KEY);
-    if (stored) {
+    if (stored && stored.split('.').length === 3) {
       onAuthenticated(stored);
     } else {
-      setError('No session token found yet. Complete authentication in the Axiom Rail popup first.');
+      setError('No session found yet. Complete authentication in the Axiom Rail tab first, then return here.');
     }
   }
 
@@ -226,14 +205,14 @@ function AuthGate({ onAuthenticated }: { onAuthenticated: (token: string) => voi
         <p style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', color: '#1e3a5f', fontWeight: 700, marginBottom: '0.5rem' }}>
           SEP-10 Session Required
         </p>
-        <p style={{ fontSize: '0.82rem', color: '#555', lineHeight: 1.7, marginBottom: '1rem' }}>
+        <p style={{ fontSize: '0.82rem', color: '#555', lineHeight: 1.7, marginBottom: '0.75rem' }}>
           Payroll runs are bound to your Stellar public key via a SEP-10 session token.
-          Authenticate once per session — your token is stored locally and used to authorize
-          all payroll runs submitted from this browser.
+          Authenticate once through Axiom Rail — your token is stored in this browser
+          and reused for all payroll runs in this session.
         </p>
         <p style={{ fontSize: '0.8rem', color: '#555', lineHeight: 1.6 }}>
-          Click below to open the Axiom Rail authentication flow. Once complete, this page
-          will advance automatically.
+          Click below to open the Axiom Rail deposit page in a new tab. Connect your Stellar
+          wallet there. Once authenticated, return to this tab — it will advance automatically.
         </p>
       </div>
 
@@ -246,13 +225,13 @@ function AuthGate({ onAuthenticated }: { onAuthenticated: (token: string) => voi
       {waiting && (
         <div style={{ background: '#fffbea', border: '1px solid #b8860b', padding: '0.9rem', marginBottom: '1rem' }}>
           <p style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: '#7a5a00' }}>
-            Waiting for authentication... Complete the flow in the popup window, then this page will advance.
+            Waiting for authentication... After your wallet authenticates in the new tab, this page will advance automatically.
           </p>
         </div>
       )}
 
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <button onClick={openAuthPopup} style={{
+        <button onClick={openAuthTab} style={{
           background: '#1e3a5f', color: '#fff', fontFamily: 'monospace', fontSize: '0.85rem',
           fontWeight: 700, padding: '0.65rem 1.75rem', border: 'none', cursor: 'pointer', letterSpacing: '0.04em',
         }}>
@@ -274,9 +253,6 @@ function AuthGate({ onAuthenticated }: { onAuthenticated: (token: string) => voi
         <button onClick={checkNow} style={{ background: 'none', border: 'none', color: '#1e3a5f', fontFamily: 'monospace', fontSize: '0.7rem', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
           Check session
         </button>
-        {' '}or visit{' '}
-        <Link href="/axiom-rail/deposit" style={{ color: '#1e3a5f' }}>Axiom Rail Deposit</Link>{' '}
-        to authenticate manually.
       </p>
     </div>
   );
