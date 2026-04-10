@@ -47,6 +47,10 @@ export function requireAdminAuth(req: NextApiRequest, res: NextApiResponse): boo
   const entry = failureMap.get(ip);
 
   if (entry && entry.count >= MAX_FAILURES) {
+    // Hard lockout by design: the correct key does NOT bypass the block during the window.
+    // This prevents brute-force attacks from succeeding on attempt 6+ even if the attacker
+    // eventually guesses the key. Ops runbook: wait for the 15-minute window to expire or
+    // deploy from a new egress IP. The window resets automatically after WINDOW_MS.
     const retryAfterSec = Math.ceil((entry.resetAt - now) / 1000);
     console.error(`[adminAuth] IP ${ip} blocked (${entry.count} failures). Retry in ${retryAfterSec}s.`);
     res.setHeader('Retry-After', String(retryAfterSec));
