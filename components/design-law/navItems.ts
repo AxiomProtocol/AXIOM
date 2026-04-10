@@ -18,6 +18,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/dex', label: 'Protocol Exchange' },
       { href: '/banking', label: 'Banking Infrastructure' },
       { href: '/axiom-payment-rails', label: 'Axiom Payment Rails' },
+      { href: '/dao-payroll', label: 'DAO Payroll' },
       { href: '/depin/denet', label: 'DePIN Network' },
     ],
   },
