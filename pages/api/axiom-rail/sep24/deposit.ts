@@ -10,7 +10,7 @@
  * Requires SEP-10 JWT in Authorization header.
  *
  * Security:
- *  - Open CORS required: any Stellar wallet app must be able to initiate.
+ *  - CORS: scoped allowlist (axiomprotocol.app + localhost:5000). Wallets call this
  *  - The SEP-10 JWT is NOT included in the interactive URL — the wallet
  *    must deliver it to the interactive page via window.postMessage.
  *  - Rate limited: 20 initiations per IP per minute.

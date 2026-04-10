@@ -59,6 +59,10 @@ export default function AxiomRailWithdraw() {
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (!isPostMessageOriginAllowed(event.origin)) return;
+      // Defense-in-depth: only accept messages from the parent frame or opener
+      // (wallets open the interactive page as an iframe child or popup).
+      const trustedSource = event.source === window.parent || event.source === window.opener;
+      if (!trustedSource) return;
       const data = event.data as WalletMessage | undefined;
       if (!data) return;
       const received = data?.transaction?.token ?? data?.token ?? '';
