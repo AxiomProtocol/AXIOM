@@ -9,18 +9,17 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyRailJwt } from '../../../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
+import { setRailCors, handlePreflight } from '../../../../../lib/multichain/stellar/axiom-rail/corsUtils';
 import { db } from '../../../../../server/db';
 import { stellarPaymentTransfers } from '../../../../../shared/stellarSchema';
 import { eq } from 'drizzle-orm';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-  res.setHeader('Cache-Control', 'no-store');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  setRailCors(req, res);
+  if (handlePreflight(req, res)) return;
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  res.setHeader('Cache-Control', 'no-store');
 
   const authHeader = req.headers['authorization'] ?? '';
   const token = authHeader.replace(/^Bearer\s+/i, '');

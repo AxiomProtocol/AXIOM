@@ -43,6 +43,7 @@ export default function AxiomRailDeposit() {
   const [account, setAccount] = useState('');
   const [asset, setAsset] = useState('USDC');
   const [amount, setAmount] = useState('');
+  const [token, setToken] = useState('');
   const tokenRef = useRef('');
 
   const [routingNumber, setRoutingNumber] = useState('');
@@ -74,6 +75,7 @@ export default function AxiomRailDeposit() {
       const received = data?.transaction?.token ?? data?.token ?? '';
       if (received && !tokenRef.current) {
         tokenRef.current = received;
+        setToken(received);
       }
     }
 
@@ -91,6 +93,8 @@ export default function AxiomRailDeposit() {
     // token is NOT read from URL — must be delivered via postMessage
   }, [router.isReady, router.query]);
 
+  // Re-runs whenever the token arrives (token state updated by postMessage handler)
+  // so the account-info fetch always sends the correct Authorization header.
   useEffect(() => {
     if (!router.isReady) return;
 
@@ -113,7 +117,8 @@ export default function AxiomRailDeposit() {
     }
 
     fetchAccountInfo();
-  }, [router.isReady]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady, token]);
 
   function handleBankNext(e: React.FormEvent) {
     e.preventDefault();

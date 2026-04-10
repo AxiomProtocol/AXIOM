@@ -9,15 +9,15 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyRailJwt } from '../../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
+import { setRailCors, handlePreflight } from '../../../../lib/multichain/stellar/axiom-rail/corsUtils';
 import type { AxiomRailTransaction } from '../../../../lib/multichain/stellar/axiom-rail/types';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  setRailCors(req, res);
+  if (handlePreflight(req, res)) return;
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 
   const authHeader = req.headers['authorization'] ?? '';
   const token = authHeader.replace(/^Bearer\s+/i, '');
