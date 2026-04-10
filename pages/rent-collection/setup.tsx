@@ -104,6 +104,10 @@ export default function RentCollectionSetupPage() {
         setError(data.error ?? 'Setup failed');
         return;
       }
+      // Pre-load token into sessionStorage so "GO TO DASHBOARD" auto-authenticates
+      if (typeof window !== 'undefined' && data.managementToken) {
+        sessionStorage.setItem('axiom_rail_rent_mgmt_token', data.managementToken);
+      }
       setResult(data as SetupResult);
     } catch {
       setError('Network error. Please try again.');

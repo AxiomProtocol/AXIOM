@@ -55,10 +55,19 @@ export default function RentCollectionLandingPage() {
   const router = useRouter();
   const [slug, setSlug] = useState('');
 
+  function extractSlug(raw: string): string {
+    const s = raw.trim();
+    // If user pasted a full URL or path, extract the final path segment
+    const match = s.match(/\/pay\/([^/?#]+)/);
+    if (match) return match[1];
+    // Strip any leading slash or whitespace just in case
+    return s.replace(/^\/+/, '');
+  }
+
   function handlePayRedirect(e: React.FormEvent) {
     e.preventDefault();
-    const trimmed = slug.trim();
-    if (trimmed) router.push(`/rent-collection/pay/${trimmed}`);
+    const parsed = extractSlug(slug);
+    if (parsed) router.push(`/rent-collection/pay/${encodeURIComponent(parsed)}`);
   }
 
   return (
@@ -213,7 +222,7 @@ export default function RentCollectionLandingPage() {
               type="text"
               value={slug}
               onChange={e => setSlug(e.target.value)}
-              placeholder="e.g. 123-main-st-austin-a1b2c3"
+              placeholder="Paste the full payment link or just the property ID"
               style={inputStyle}
               required
             />

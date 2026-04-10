@@ -7,14 +7,21 @@ export default function PayRentIndex() {
   const [slug, setSlug] = useState('');
   const [error, setError] = useState('');
 
+  function extractSlug(raw: string): string {
+    const s = raw.trim();
+    const match = s.match(/\/pay\/([^/?#]+)/);
+    if (match) return match[1];
+    return s.replace(/^\/+/, '');
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmed = slug.trim();
-    if (!trimmed) {
+    const parsed = extractSlug(slug);
+    if (!parsed) {
       setError('Please enter your property payment code.');
       return;
     }
-    router.push(`/rent-collection/pay/${encodeURIComponent(trimmed)}`);
+    router.push(`/rent-collection/pay/${encodeURIComponent(parsed)}`);
   }
 
   return (
@@ -40,7 +47,7 @@ export default function PayRentIndex() {
             type="text"
             value={slug}
             onChange={e => { setSlug(e.target.value); setError(''); }}
-            placeholder="e.g. 123-main-st-a1b2c3"
+            placeholder="Paste the full payment link or just the property ID"
             style={{
               width: '100%',
               border: '1px solid #d1d5db',
