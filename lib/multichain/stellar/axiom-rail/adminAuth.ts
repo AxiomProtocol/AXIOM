@@ -5,7 +5,7 @@
  * secret key check plus an in-process IP-based failure rate limiter.
  *
  * After 5 failed attempts from the same IP within a 15-minute window,
- * further requests are rejected with 429 until the window expires.
+ * further requests are rejected with 403 until the window expires.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -48,9 +48,9 @@ export function requireAdminAuth(req: NextApiRequest, res: NextApiResponse): boo
 
   if (entry && entry.count >= MAX_FAILURES) {
     const retryAfterSec = Math.ceil((entry.resetAt - now) / 1000);
-    console.error(`[adminAuth] IP ${ip} rate-limited (${entry.count} failures). Retry in ${retryAfterSec}s.`);
+    console.error(`[adminAuth] IP ${ip} blocked (${entry.count} failures). Retry in ${retryAfterSec}s.`);
     res.setHeader('Retry-After', String(retryAfterSec));
-    res.status(429).json({ error: 'Too many failed authentication attempts. Try again later.' });
+    res.status(403).json({ error: 'Unauthorized' });
     return false;
   }
 
