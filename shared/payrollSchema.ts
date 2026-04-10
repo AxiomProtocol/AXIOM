@@ -4,8 +4,11 @@
  * Two tables supporting the DAO Contributor Payroll product built on
  * Axiom Rail (SEP-31 / Increase ACH+Wire settled).
  *
- * axiom_rail_payroll_runs  — one row per payroll run (batch of recipients)
+ * axiom_rail_payroll_runs       — one row per payroll run (batch of recipients)
  * axiom_rail_payroll_recipients — one row per recipient in a run
+ *
+ * Tables are created via executeSql (not db:push) so this schema file is the
+ * canonical Drizzle type source but the physical tables are pre-created.
  */
 
 import {
@@ -18,6 +21,7 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+import { stellarPaymentTransfers } from './stellarSchema';
 
 export const axiomRailPayrollRuns = pgTable('axiom_rail_payroll_runs', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -40,7 +44,7 @@ export const axiomRailPayrollRuns = pgTable('axiom_rail_payroll_runs', {
 export const axiomRailPayrollRecipients = pgTable('axiom_rail_payroll_recipients', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   runId: uuid('run_id').notNull().references(() => axiomRailPayrollRuns.id, { onDelete: 'cascade' }),
-  transferId: uuid('transfer_id'),
+  transferId: uuid('transfer_id').notNull().references(() => stellarPaymentTransfers.id),
   recipientName: varchar('recipient_name', { length: 200 }).notNull(),
   routingNumber: varchar('routing_number', { length: 9 }).notNull(),
   accountNumber: varchar('account_number', { length: 30 }).notNull(),

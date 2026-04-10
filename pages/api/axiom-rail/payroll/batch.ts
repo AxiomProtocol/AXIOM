@@ -8,21 +8,33 @@
  * record per contributor. Transfer records in stellar_payment_transfers are created
  * in the same DB transaction so each recipient gets a 28-char Stellar memo.
  *
- * Idempotency: keyed on SHA-256(orgName + runLabel + runDate + stellarAccount).
+ * Identity binding: ALL records are bound to the verified JWT subject (senderAccount).
+ * No body field can override this — the stellar account in the request body is ignored.
+ *
+ * Idempotency: keyed on SHA-256(orgName + runLabel + runDate + senderAccount from JWT).
  * Duplicate requests within the same calendar day for the same run return the
  * original run ID with status 409.
  *
  * Security:
  *  - SEP-10 JWT required (Authorization: Bearer <token>)
+ *  - All created records are bound to JWT subject — no body override
  *  - Rate limited: 5 batch initiations per IP per hour
  *  - CORS restricted to known origins (allowlist)
  *  - BSA operator identity validated (same rules as SEP-31)
+ *  - transferType validated to ACH or Wire only
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import { verifyRailJwt, AXIOM_RAIL_DEPOSIT_ACCOUNT, AXIOM_RAIL_FEE_FIXED_USD, AXIOM_RAIL_FEE_PERCENT, AXIOM_RAIL_MIN_AMOUNT_USD, AXIOM_RAIL_MAX_AMOUNT_USD } from '../../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
+import {
+  verifyRailJwt,
+  AXIOM_RAIL_DEPOSIT_ACCOUNT,
+  AXIOM_RAIL_FEE_FIXED_USD,
+  AXIOM_RAIL_FEE_PERCENT,
+  AXIOM_RAIL_MIN_AMOUNT_USD,
+  AXIOM_RAIL_MAX_AMOUNT_USD,
+} from '../../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
 import { setRailCors, handlePreflight } from '../../../../lib/multichain/stellar/axiom-rail/corsUtils';
 import { checkRateLimit } from '../../../../lib/multichain/stellar/axiom-rail/rateLimiter';
 import { db } from '../../../../server/db';
@@ -30,19 +42,21 @@ import { axiomRailPayrollRuns, axiomRailPayrollRecipients } from '../../../../sh
 import { stellarPaymentTransfers } from '../../../../shared/stellarSchema';
 import { eq } from 'drizzle-orm';
 
+const ALLOWED_TRANSFER_TYPES = ['ACH', 'Wire'] as const;
+type TransferType = typeof ALLOWED_TRANSFER_TYPES[number];
+
 interface Recipient {
   name: string;
   routingNumber: string;
   accountNumber: string;
   amountUsd: number;
-  transferType?: 'ACH' | 'Wire';
+  transferType?: string;
 }
 
 interface BatchPayrollBody {
   orgName?: string;
   runLabel?: string;
   runDate?: string;
-  stellarAccount?: string;
   bsa?: {
     legalName?: string;
     dob?: string;
@@ -60,6 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!checkRateLimit(req, res, 'payroll/batch', { max: 5, windowMs: 3_600_000 })) return;
 
+  // ── JWT auth — senderAccount is the sole identity source for all records ──
   const authHeader = req.headers['authorization'] ?? '';
   const token = authHeader.replace(/^Bearer\s+/i, '');
   const { account: senderAccount, valid } = verifyRailJwt(token);
@@ -69,7 +84,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     orgName,
     runLabel,
     runDate,
-    stellarAccount,
     bsa,
     recipients,
   } = req.body as BatchPayrollBody;
@@ -80,8 +94,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!runDate || !/^\d{4}-\d{2}-\d{2}$/.test(runDate)) {
     return res.status(400).json({ error: 'runDate must be in YYYY-MM-DD format' });
   }
-
-  const resolvedStellarAccount = stellarAccount ?? senderAccount;
 
   // ── BSA operator identity validation ──────────────────────────────────────
   if (!bsa) return res.status(400).json({ error: 'bsa operator identity is required' });
@@ -135,14 +147,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (amt > AXIOM_RAIL_MAX_AMOUNT_USD) {
       recipientErrors.push(`recipients[${i}].amountUsd maximum is $${AXIOM_RAIL_MAX_AMOUNT_USD.toLocaleString()}`);
     }
+    // Validate transferType against strict allowlist
+    if (r.transferType !== undefined && !ALLOWED_TRANSFER_TYPES.includes(r.transferType as TransferType)) {
+      recipientErrors.push(`recipients[${i}].transferType must be one of: ${ALLOWED_TRANSFER_TYPES.join(', ')}`);
+    }
   }
   if (recipientErrors.length > 0) {
     return res.status(400).json({ error: 'Recipient validation failed', details: recipientErrors });
   }
 
-  // ── Idempotency key ────────────────────────────────────────────────────────
+  // ── Idempotency key — keyed on JWT subject (senderAccount), not body ──────
   const idempotencyKey = createHash('sha256')
-    .update(`${orgName.trim()}|${runLabel.trim()}|${runDate}|${resolvedStellarAccount}`)
+    .update(`${orgName.trim()}|${runLabel.trim()}|${runDate}|${senderAccount}`)
     .digest('hex');
 
   // Check for duplicate
@@ -177,11 +193,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // ── Compute totals ─────────────────────────────────────────────────────────
   const totalAmountUsd = recipients.reduce((sum, r) => sum + Number(r.amountUsd), 0);
 
-  // ── Atomic DB transaction — create run + recipients + transfer records ─────
+  // ── Build atomic records ───────────────────────────────────────────────────
   const runId = uuidv4();
   const recipientRows: typeof axiomRailPayrollRecipients.$inferInsert[] = [];
   const transferRows: typeof stellarPaymentTransfers.$inferInsert[] = [];
-  const recipientMemos: { index: number; name: string; memo: string; transferId: string; amountUsd: number; fee: number; amountOut: number }[] = [];
+  const recipientMemos: {
+    index: number;
+    name: string;
+    memo: string;
+    transferId: string;
+    amountUsd: number;
+    fee: number;
+    amountOut: number;
+  }[] = [];
 
   for (let i = 0; i < recipients.length; i++) {
     const r = recipients[i];
@@ -190,7 +214,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const amountOut = Math.max(0, amt - fee);
     const txId = uuidv4();
     const memo = txId.replace(/-/g, '').slice(0, 28).toUpperCase();
-    const transferType = r.transferType ?? 'ACH';
+    // Use validated transferType only — default to ACH
+    const transferType: TransferType =
+      ALLOWED_TRANSFER_TYPES.includes(r.transferType as TransferType)
+        ? (r.transferType as TransferType)
+        : 'ACH';
 
     const destinationAccount = [
       r.name,
@@ -199,12 +227,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       transferType,
     ].join(' | ');
 
+    // All records bound to senderAccount (JWT subject) — no body override
     transferRows.push({
       id: txId,
-      axiomWalletAddress: resolvedStellarAccount.length === 56
-        ? '0x0000000000000000000000000000000000000000'
-        : resolvedStellarAccount,
-      stellarPublicKey: resolvedStellarAccount.startsWith('G') ? resolvedStellarAccount : null,
+      axiomWalletAddress:
+        senderAccount.length === 56
+          ? '0x0000000000000000000000000000000000000000'
+          : senderAccount,
+      stellarPublicKey: senderAccount.startsWith('G') ? senderAccount : null,
       anchorId: 'axiom-rail',
       corridorId: 'usdc-to-usd-axiom-rail-rtp',
       sourceAmountAxusd: amt.toFixed(2),
@@ -243,14 +273,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status: 'pending',
     });
 
-    recipientMemos.push({ index: i, name: r.name.trim(), memo, transferId: txId, amountUsd: amt, fee, amountOut });
+    recipientMemos.push({
+      index: i,
+      name: r.name.trim(),
+      memo,
+      transferId: txId,
+      amountUsd: amt,
+      fee,
+      amountOut,
+    });
   }
 
+  // ── Atomic DB transaction ─────────────────────────────────────────────────
   try {
     await db.transaction(async (tx) => {
       await tx.insert(axiomRailPayrollRuns).values({
         id: runId,
-        stellarAccount: resolvedStellarAccount,
+        stellarAccount: senderAccount, // always JWT subject — no body override
         orgName: orgName.trim(),
         runLabel: runLabel.trim(),
         runDate,
@@ -278,6 +317,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     orgName: orgName.trim(),
     runLabel: runLabel.trim(),
     runDate,
+    stellarAccount: senderAccount,
     stellarDepositAccount: AXIOM_RAIL_DEPOSIT_ACCOUNT,
     status: 'pending',
     recipientCount: recipients.length,
