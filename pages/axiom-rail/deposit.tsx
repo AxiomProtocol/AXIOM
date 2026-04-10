@@ -43,7 +43,6 @@ export default function AxiomRailDeposit() {
   const [account, setAccount] = useState('');
   const [asset, setAsset] = useState('USDC');
   const [amount, setAmount] = useState('');
-  const [token, setToken] = useState('');
   const tokenRef = useRef('');
 
   const [routingNumber, setRoutingNumber] = useState('');
@@ -75,7 +74,6 @@ export default function AxiomRailDeposit() {
       const received = data?.transaction?.token ?? data?.token ?? '';
       if (received && !tokenRef.current) {
         tokenRef.current = received;
-        setToken(received);
       }
     }
 

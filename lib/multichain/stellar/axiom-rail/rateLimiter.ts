@@ -23,6 +23,13 @@ const store = new Map<`${EndpointKey}:${ClientIp}`, RateLimitEntry>();
 const DEFAULT_MAX = 10;
 const DEFAULT_WINDOW_MS = 60 * 1000;
 
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of store) {
+    if (entry.resetAt < now) store.delete(key);
+  }
+}, 5 * 60 * 1000).unref();
+
 function getClientIp(req: NextApiRequest): string {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string') return forwarded.split(',')[0].trim();

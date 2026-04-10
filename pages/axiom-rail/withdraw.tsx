@@ -35,7 +35,6 @@ export default function AxiomRailWithdraw() {
   const [amount, setAmount] = useState('');
   const [anchorAccount, setAnchorAccount] = useState('');
   const [memo, setMemo] = useState('');
-  const [token, setToken] = useState('');
   const tokenRef = useRef('');
 
   const [routingNumber, setRoutingNumber] = useState('');
@@ -64,7 +63,6 @@ export default function AxiomRailWithdraw() {
       const received = data?.transaction?.token ?? data?.token ?? '';
       if (received && !tokenRef.current) {
         tokenRef.current = received;
-        setToken(received);
       }
     }
 

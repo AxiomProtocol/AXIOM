@@ -12,6 +12,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 const PROD_ORIGIN = 'https://axiomprotocol.app';
 
+// Intentionally includes dev-only origins (localhost, *.replit.dev).
+// These are matched separately in isRailAllowed() below and never reach production
+// traffic because Replit dev URLs are ephemeral and localhost is only reachable
+// inside the container. In production, only PROD_ORIGIN and www. variant match.
 const RAIL_ALLOWED_ORIGINS: string[] = [
   PROD_ORIGIN,
   'https://www.axiomprotocol.app',
