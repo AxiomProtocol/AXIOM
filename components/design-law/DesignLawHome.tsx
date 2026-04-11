@@ -385,29 +385,20 @@ export function DesignLawHome() {
 
         {/* HERO */}
         <div className="border-t-4 border-dl-gold">
-          <div className="relative w-full" style={{ height: '460px' }}>
+          <div className="relative w-full" style={{ height: '420px' }}>
             <img
               src="/images/homepage-hero.png"
               alt="On-chain financial infrastructure for real-world assets on Arbitrum One"
               className="w-full h-full object-cover"
               style={{ display: 'block' }}
             />
-            <div className="absolute inset-0" style={{ backgroundColor: 'rgba(14, 28, 55, 0.82)' }}>
+            <div className="absolute inset-0" style={{ backgroundColor: 'rgba(14, 28, 55, 0.78)' }}>
               <div className="max-w-7xl mx-auto px-6 h-full flex flex-col justify-center">
-                <p className="text-xs uppercase tracking-widest mb-3 font-dl-mono" style={{ color: '#f0d98a', textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
-                  Banking. Settlement. Reserve. Capital. Intelligence. Trust. — Seven layers. Every layer has a contract address. Every solvency claim has an on-chain record.
-                </p>
-                <h1 className="font-dl-serif text-3xl md:text-5xl leading-tight mb-4" style={{ color: '#ffffff', maxWidth: '820px', textShadow: '0 2px 12px rgba(0,0,0,0.7)' }}>
+                <h1 className="font-dl-serif text-3xl md:text-5xl leading-tight mb-6" style={{ color: '#ffffff', maxWidth: '760px', textShadow: '0 2px 12px rgba(0,0,0,0.7)' }}>
                   The Financial Operating System<br className="hidden md:block" />
                   for the On-Chain Economy.<br className="hidden md:block" />
                   <span style={{ color: '#f0d98a' }}>Verifiable. Institutional. Live.</span>
                 </h1>
-                <p className="text-sm leading-relaxed mb-3" style={{ color: '#e5e7eb', maxWidth: '640px', textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
-                  FDIC-insured banking enters capital. Identity-gated AXUSD settles it. The DEX maintains the peg. AXAU holds reserve positions structured around PAXG. Reg D capital programs deploy it. Intelligence scores it. Solvency proves it. One operating system — not a collection of tokens.
-                </p>
-                <p className="text-xs font-dl-mono mb-8" style={{ color: '#cbd5e1', textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
-                  L00 Banking · L01 AXUSD Rail · L01.5 DEX + PSM · L02 AXAU Reserve · L03 Capital · L04 Intelligence · L05 Trust · Arbitrum One
-                </p>
                 <div className="flex flex-col sm:flex-row flex-wrap gap-3">
                   <Link href="/infrastructure">
                     <span className="inline-block border-2 border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider">
@@ -419,11 +410,6 @@ export function DesignLawHome() {
                       Apply for Reserve Access
                     </span>
                   </Link>
-                  <Link href="/solvency">
-                    <span className="inline-block border border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}>
-                      Live Solvency Console
-                    </span>
-                  </Link>
                   <Link href="/disclosure">
                     <span className="inline-block border border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                       Institutional Disclosure
@@ -432,6 +418,21 @@ export function DesignLawHome() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* INTRO STRIP — content moved from hero */}
+        <div className="border-b border-dl-border" style={{ backgroundColor: '#f8f7f4' }}>
+          <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row md:items-center gap-6">
+            <p className="text-sm leading-relaxed text-dl-navy flex-1" style={{ maxWidth: '680px' }}>
+              FDIC-insured banking enters capital. Identity-gated AXUSD settles it. The DEX maintains the peg. AXAU holds reserve positions structured around PAXG. Reg D capital programs deploy it. Intelligence scores it. Solvency proves it. One operating system — not a collection of tokens.
+            </p>
+            <p className="font-dl-mono text-xs text-dl-gray whitespace-nowrap md:text-right leading-relaxed">
+              L00 Banking · L01 AXUSD Rail<br />
+              L01.5 DEX + PSM · L02 AXAU Reserve<br />
+              L03 Capital · L04 Intelligence · L05 Trust<br />
+              <span className="text-dl-navy font-bold">Arbitrum One</span>
+            </p>
           </div>
         </div>
 
