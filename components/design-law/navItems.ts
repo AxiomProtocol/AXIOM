@@ -46,6 +46,16 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    label: 'Products',
+    children: [
+      { href: '/my-card', label: 'Nexus Card' },
+      { href: '/banking/my-account', label: 'My Nexus Account' },
+      { href: '/wealth-practice', label: 'Wealth Practice' },
+      { href: '/lending-fund', label: 'Lending Fund' },
+      { href: '/syndication', label: 'Syndication' },
+    ],
+  },
+  {
     label: 'Community',
     children: [
       { href: '/wealth-practice', label: 'Wealth Practice' },

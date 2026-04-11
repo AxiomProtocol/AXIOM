@@ -482,6 +482,70 @@ export default function MyAccountPage() {
                 </div>
               </div>
 
+              {/* Nexus Card Status Widget */}
+              <div className="border border-dl-border">
+                <div className="px-5 py-3 border-b border-dl-border bg-dl-bg flex items-center justify-between">
+                  <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider">Axiom Nexus Card</p>
+                  <a href="/my-card" className="text-xs font-dl-mono text-dl-navy border border-dl-border px-3 py-1 hover:bg-dl-navy hover:text-white">
+                    Manage Card →
+                  </a>
+                </div>
+                <div className="px-5 py-5 flex flex-col md:flex-row md:items-center gap-5">
+                  <div
+                    className="w-full max-w-xs shrink-0 p-4 relative"
+                    style={{
+                      background: data.participant.cardStatus === 'issued'
+                        ? 'linear-gradient(135deg, #1B2A4A 0%, #1D3D2A 100%)'
+                        : data.participant.cardStatus === 'frozen'
+                        ? 'linear-gradient(135deg, #2d3748 0%, #4a5568 100%)'
+                        : 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)',
+                      borderRadius: '10px',
+                      minHeight: '120px',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                    }}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <p className="text-white text-xs font-dl-mono opacity-70 uppercase tracking-widest">Axiom Nexus</p>
+                      <p className="text-white text-xs font-dl-mono opacity-70">FIB · FDIC</p>
+                    </div>
+                    <p className="text-white font-dl-mono text-base tracking-widest mb-2">
+                      {data.participant.cardStatus === 'issued' && data.participant.cardLast4
+                        ? `···· ···· ···· ${data.participant.cardLast4}`
+                        : data.participant.cardStatus === 'not_requested'
+                        ? '···· ···· ···· ····'
+                        : '···· ···· ···· ····'}
+                    </p>
+                    <p className="text-white text-xs font-dl-mono font-bold">{data.participant.fullName.toUpperCase()}</p>
+                  </div>
+
+                  <div className="flex-1">
+                    <div className="mb-3">
+                      <p className="text-xs text-dl-gray font-dl-mono uppercase mb-1">Card Status</p>
+                      <p className={`font-dl-mono text-sm font-bold ${
+                        data.participant.cardStatus === 'issued' ? 'text-dl-forest' :
+                        data.participant.cardStatus === 'frozen' ? 'text-dl-navy' :
+                        data.participant.cardStatus === 'program_required' ? 'text-dl-gold' :
+                        'text-dl-gray'
+                      }`}>
+                        {data.participant.cardStatus === 'issued' ? 'Active' :
+                         data.participant.cardStatus === 'frozen' ? 'Frozen' :
+                         data.participant.cardStatus === 'program_required' ? 'Request Queued' :
+                         'Not Requested'}
+                      </p>
+                      {data.participant.cardLast4 && (
+                        <p className="text-dl-gray text-xs mt-0.5 font-dl-mono">Ending in {data.participant.cardLast4}</p>
+                      )}
+                    </div>
+                    <a
+                      href="/my-card"
+                      className="inline-block border border-dl-navy bg-dl-navy text-white px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-navy"
+                    >
+                      {data.participant.cardStatus === 'not_requested' ? 'Request Your Card' : 'Manage Card'}
+                    </a>
+                  </div>
+                </div>
+              </div>
+
               <div className="border border-dl-border">
                 <div className="px-5 py-3 border-b border-dl-border bg-dl-bg">
                   <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider">Product Activity Summary</p>

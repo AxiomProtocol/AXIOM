@@ -6,6 +6,7 @@ import {
   integer,
   text,
   timestamp,
+  boolean,
   index,
 } from 'drizzle-orm/pg-core';
 
@@ -25,6 +26,8 @@ export const increaseParticipants = pgTable(
     cardStatus: varchar('card_status', { length: 30 }).notNull().default('not_requested'),
     cardId: varchar('card_id', { length: 100 }),
     cardLast4: varchar('card_last4', { length: 4 }),
+    physicalCardRequested: boolean('physical_card_requested').notNull().default(false),
+    physicalCardRequestedAt: timestamp('physical_card_requested_at'),
     // Per-participant Increase entity and account IDs.
     // Each participant receives their own KYC entity (increaseEntityId) and
     // dedicated deposit account (increaseAccountId) provisioned at onboarding.
