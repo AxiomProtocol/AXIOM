@@ -164,6 +164,30 @@ export const bridgeConversionRequests = pgTable(
   }),
 );
 
+export const inboundAchEvents = pgTable(
+  'inbound_ach_events',
+  {
+    id: serial('id').primaryKey(),
+    participantId: integer('participant_id').notNull(),
+    participantRef: varchar('participant_ref', { length: 20 }).notNull(),
+    increaseTxId: varchar('increase_tx_id', { length: 100 }),
+    amountCents: integer('amount_cents').notNull(),
+    senderName: varchar('sender_name', { length: 200 }),
+    senderRoutingNumber: varchar('sender_routing_number', { length: 20 }),
+    accountNumberId: varchar('account_number_id', { length: 100 }),
+    status: varchar('status', { length: 30 }).notNull().default('received'),
+    receivedAt: timestamp('received_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    participantIdx: index('inbound_ach_events_participant_idx').on(t.participantId),
+    participantRefIdx: index('inbound_ach_events_participant_ref_idx').on(t.participantRef),
+  }),
+);
+
+export type InboundAchEvent = typeof inboundAchEvents.$inferSelect;
+export type NewInboundAchEvent = typeof inboundAchEvents.$inferInsert;
+
 export type IncreaseParticipant = typeof increaseParticipants.$inferSelect;
 export type NewIncreaseParticipant = typeof increaseParticipants.$inferInsert;
 export type IncreaseLpDeposit = typeof increaseLpDeposits.$inferSelect;

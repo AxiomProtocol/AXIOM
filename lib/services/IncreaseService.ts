@@ -283,6 +283,24 @@ export const IncreaseService = {
     return increaseRequest<IncreaseCardDetails>('GET', `/cards/${cardId}/details`);
   },
 
+  async getInboundAchTransfer(transferId: string): Promise<{
+    id: string;
+    account_id: string;
+    account_number_id: string;
+    amount: number;
+    currency: string;
+    status: string;
+    company_name: string | null;
+    company_entry_description: string | null;
+    company_descriptive_date: string | null;
+    originator_company_id: string | null;
+    originator_routing_number: string | null;
+    transfer_return: unknown | null;
+    created_at: string;
+  }> {
+    return increaseRequest('GET', `/inbound_ach_transfers/${transferId}`);
+  },
+
   formatAmount(cents: number, currency = 'USD'): string {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',

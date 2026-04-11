@@ -6,8 +6,10 @@ import {
   increaseLpDeposits,
   increaseDistributions,
   increaseProductEscrows,
+  inboundAchEvents,
 } from '../../../shared/increaseParticipantSchema';
 import { IncreaseService } from '../../../lib/services/IncreaseService';
+import { sendInboundAchNotification } from '../../../lib/email/resend';
 import { eq, and } from 'drizzle-orm';
 
 // In-memory idempotency set for recently processed event IDs.
@@ -35,11 +37,11 @@ function markProcessed(eventId: string) {
  *   { id, type: "event", category: "transaction.created", associated_object_id, associated_object_type, created_at }
  *
  * Events handled:
- *   transaction.created          → fetch transaction, reconcile LP deposit or insurance escrow
- *   ach_transfer.settled         → mark distribution settled
- *   ach_transfer.returned        → mark distribution returned
- *   wire_transfer.misdirected    → structured alert log (critical)
- *   inbound_ach_transfer.created → log inbound ACH for manual review
+ *   transaction.created                          → fetch transaction, reconcile LP deposit or insurance escrow
+ *   ach_transfer.settled                         → mark distribution settled
+ *   ach_transfer.returned                        → mark distribution returned
+ *   wire_transfer.misdirected                    → structured alert log (critical)
+ *   account_number.inbound_ach_transfer.created  → log inbound ACH, send notification email
  *
  * Always returns 200 after signature validation — errors are logged, not retried.
  * Returning non-200 causes Increase to retry for 7 days.
@@ -413,14 +415,123 @@ async function handleIncreaseEvent(
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Inbound ACH received: log for manual review
-    // Future: auto-match by memo when deposit intent exists
+    // account_number.inbound_ach_transfer.created
+    // Emitted when an inbound ACH transfer is received on one of our account numbers.
+    // associated_object_id = inbound_ach_transfer_id
+    // Fetch the full transfer from the API, look up the participant by account_number_id,
+    // log the event, and send a notification email.
     // ─────────────────────────────────────────────────────────────────────────
-    case 'inbound_ach_transfer.created': {
-      console.info('[webhook/increase] inbound_ach_transfer.created: received inbound ACH', {
+    case 'account_number.inbound_ach_transfer.created': {
+      console.info('[webhook/increase] account_number.inbound_ach_transfer.created: received', {
         id: objectId,
-        rawPayload: JSON.stringify(payload).slice(0, 500),
       });
+
+      if (!objectId) break;
+
+      // Fetch the canonical inbound ACH transfer record from Increase
+      let transfer: Awaited<ReturnType<typeof IncreaseService.getInboundAchTransfer>>;
+      try {
+        transfer = await IncreaseService.getInboundAchTransfer(objectId);
+      } catch (err) {
+        console.error('[webhook/increase] account_number.inbound_ach_transfer.created: failed to fetch transfer', objectId, err);
+        break;
+      }
+
+      const amountCents = Math.abs(Number(transfer.amount ?? 0));
+      const senderName = transfer.company_name ?? null;
+      const senderRoutingNumber = transfer.originator_routing_number ?? null;
+      const accountNumberId = transfer.account_number_id ?? null;
+
+      if (!amountCents) {
+        console.warn('[webhook/increase] account_number.inbound_ach_transfer.created: zero-amount transfer, skipping', { objectId });
+        break;
+      }
+
+      // Look up participant by virtual account number ID
+      let participant: (typeof increaseParticipants.$inferSelect) | null = null;
+
+      if (accountNumberId) {
+        const rows = await db
+          .select()
+          .from(increaseParticipants)
+          .where(eq(increaseParticipants.virtualAccountNumberId, accountNumberId))
+          .limit(1);
+        participant = rows[0] ?? null;
+      }
+
+      if (!participant) {
+        console.info('[webhook/increase] account_number.inbound_ach_transfer.created: no participant matched', {
+          accountNumberId,
+          objectId,
+        });
+        break;
+      }
+
+      // Idempotency: skip if this transfer ID is already logged
+      const existing = await db
+        .select({ id: inboundAchEvents.id })
+        .from(inboundAchEvents)
+        .where(eq(inboundAchEvents.increaseTxId, objectId))
+        .limit(1);
+
+      if (existing.length > 0) {
+        console.info('[webhook/increase] account_number.inbound_ach_transfer.created: already logged, skipping', objectId);
+        break;
+      }
+
+      // Insert event record
+      await db.insert(inboundAchEvents).values({
+        participantId: participant.id,
+        participantRef: participant.participantRef,
+        increaseTxId: objectId,
+        amountCents,
+        senderName,
+        senderRoutingNumber,
+        accountNumberId,
+        status: 'received',
+        receivedAt: new Date(),
+      });
+
+      console.info('[webhook/increase] account_number.inbound_ach_transfer.created: event logged', {
+        participantRef: participant.participantRef,
+        amountCents,
+        senderName,
+        objectId,
+      });
+
+      // Fetch current account balance for the notification (best-effort, non-fatal)
+      let newBalanceCents: number | null = null;
+      if (participant.increaseAccountId) {
+        try {
+          const bal = await IncreaseService.getAccountBalance(participant.increaseAccountId);
+          newBalanceCents = bal.available_balance;
+        } catch {
+          // Non-fatal — balance unavailable
+        }
+      }
+
+      // Send notification email via Resend
+      try {
+        await sendInboundAchNotification({
+          to: participant.email,
+          fullName: participant.fullName,
+          participantRef: participant.participantRef,
+          amountCents,
+          senderName,
+          newBalanceCents,
+          receivedAt: new Date(),
+        });
+        console.info('[webhook/increase] account_number.inbound_ach_transfer.created: notification email sent', {
+          participantRef: participant.participantRef,
+          to: participant.email,
+        });
+      } catch (emailErr) {
+        console.error('[webhook/increase] account_number.inbound_ach_transfer.created: failed to send notification email', {
+          participantRef: participant.participantRef,
+          error: emailErr,
+        });
+      }
+
       break;
     }
 

@@ -5,10 +5,11 @@ import {
   increaseProductEscrows,
   increaseLpDeposits,
   increaseDistributions,
+  inboundAchEvents,
 } from '../../../../shared/increaseParticipantSchema';
 import { IncreaseService } from '../../../../lib/services/IncreaseService';
 import { getSiweWallet } from '../../../../lib/server/banking/siweHelper';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 
 function isAdmin(req: NextApiRequest): boolean {
   const key = req.headers['x-admin-key'];
@@ -51,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const participant = participants[0];
 
-    const [insuranceHolds, lpDeposits, distributions] = await Promise.all([
+    const [insuranceHolds, lpDeposits, distributions, inboundAch] = await Promise.all([
       db.select().from(increaseProductEscrows).where(
         and(
           eq(increaseProductEscrows.participantId, participant.id),
@@ -61,6 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ),
       db.select().from(increaseLpDeposits).where(eq(increaseLpDeposits.participantId, participant.id)),
       db.select().from(increaseDistributions).where(eq(increaseDistributions.participantId, participant.id)),
+      db.select().from(inboundAchEvents).where(eq(inboundAchEvents.participantId, participant.id)).orderBy(desc(inboundAchEvents.receivedAt)).limit(50),
     ]);
 
     const isSandbox = (process.env.INCREASE_ENVIRONMENT ?? 'sandbox') === 'sandbox';
@@ -93,6 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       insuranceHolds,
       lpDeposits,
       distributions,
+      inboundAch,
       depositInstructions: {
         routingNumber: hasVirtualAccount ? participant.virtualRoutingNumber : '071006486',
         accountNumber: hasVirtualAccount ? participant.virtualAccountNumber : null,

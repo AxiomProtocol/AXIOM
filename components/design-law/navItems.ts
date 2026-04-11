@@ -50,6 +50,7 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { href: '/my-card', label: 'Nexus Card' },
       { href: '/banking/my-account', label: 'My Nexus Account' },
+      { href: '/direct-deposit', label: 'Direct Deposit' },
       { href: '/wealth-practice', label: 'Wealth Practice' },
       { href: '/lending-fund', label: 'Lending Fund' },
       { href: '/syndication', label: 'Syndication' },

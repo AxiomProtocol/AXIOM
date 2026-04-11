@@ -64,12 +64,24 @@ interface Distribution {
   createdAt: string;
 }
 
+interface InboundAchEvent {
+  id: number;
+  participantRef: string;
+  increaseTxId?: string;
+  amountCents: number;
+  senderName?: string;
+  status: string;
+  receivedAt: string;
+  createdAt: string;
+}
+
 interface AccountData {
   participant: Participant;
   depositInstructions: DepositInstructions;
   insuranceHolds: InsuranceHold[];
   lpDeposits: LpDeposit[];
   distributions: Distribution[];
+  inboundAch: InboundAchEvent[];
 }
 
 const fmt = (cents: number) =>
@@ -482,6 +494,35 @@ export default function MyAccountPage() {
                 </div>
               </div>
 
+              {/* Get Paid Early — Direct Deposit CTA */}
+              <div className="border border-dl-forest">
+                <div className="px-5 py-3 border-b border-dl-forest bg-dl-forest flex items-center justify-between">
+                  <p className="font-dl-mono text-xs text-white uppercase tracking-wider">Get Paid Early</p>
+                  <span className="text-xs font-dl-mono px-2 py-0.5 border border-white text-white">NEW</span>
+                </div>
+                <div className="px-5 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <p className="text-dl-navy text-sm font-semibold mb-1">Direct Deposit to Your Axiom Nexus Account</p>
+                    <p className="text-dl-gray text-sm leading-relaxed max-w-md">
+                      Route your paycheck directly to your Axiom Nexus Account and receive funds 1–2 business days
+                      before your official pay date. Same early-deposit infrastructure as leading neobanks.
+                    </p>
+                    <div className="flex items-center gap-4 mt-3 text-xs font-dl-mono text-dl-gray">
+                      <span>✓ Routing: {data.depositInstructions.hasVirtualAccount ? data.depositInstructions.routingNumber : '071006486'}</span>
+                      {data.depositInstructions.hasVirtualAccount && data.depositInstructions.accountNumber && (
+                        <span>✓ Account: ····{data.depositInstructions.accountNumber.slice(-4)}</span>
+                      )}
+                    </div>
+                  </div>
+                  <a
+                    href="/direct-deposit"
+                    className="border border-dl-forest bg-dl-forest text-white px-5 py-2.5 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-forest shrink-0 text-center"
+                  >
+                    Set Up Direct Deposit →
+                  </a>
+                </div>
+              </div>
+
               {/* Nexus Card Status Widget */}
               <div className="border border-dl-border">
                 <div className="px-5 py-3 border-b border-dl-border bg-dl-bg flex items-center justify-between">
@@ -842,6 +883,44 @@ export default function MyAccountPage() {
                         </div>
                         <span className={`text-xs font-dl-mono border px-2 py-0.5 uppercase ${statusColor[dep.status] ?? 'text-dl-gray border-dl-border'}`}>
                           {dep.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Inbound ACH / Direct Deposits */}
+              <div className="border border-dl-border">
+                <div className="px-5 py-3 border-b border-dl-border bg-dl-bg flex items-center justify-between">
+                  <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider">Direct Deposits (Inbound ACH)</p>
+                  <a href="/direct-deposit" className="text-xs font-dl-mono text-dl-navy border border-dl-border px-3 py-1 hover:bg-dl-navy hover:text-white">
+                    Set Up Direct Deposit →
+                  </a>
+                </div>
+                {(!data.inboundAch || data.inboundAch.length === 0) ? (
+                  <div className="px-5 py-8 text-center">
+                    <p className="text-dl-gray text-sm mb-1">No direct deposits received yet.</p>
+                    <p className="text-dl-gray text-xs">Set up direct deposit with your employer to start receiving pay early.</p>
+                    <a href="/direct-deposit" className="inline-block mt-4 border border-dl-forest bg-dl-forest text-white px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-forest">
+                      Get Paid Early
+                    </a>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-dl-border">
+                    {data.inboundAch.map(ach => (
+                      <div key={ach.id} className="px-5 py-4 flex items-start justify-between">
+                        <div>
+                          <p className="text-dl-forest font-bold text-sm font-dl-mono">+{fmt(ach.amountCents)}</p>
+                          <p className="text-dl-gray text-xs mt-0.5">
+                            Direct Deposit{ach.senderName ? ` from ${ach.senderName}` : ''}
+                          </p>
+                          <p className="text-dl-gray text-xs mt-0.5">
+                            {new Date(ach.receivedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </p>
+                        </div>
+                        <span className="text-xs font-dl-mono border px-2 py-0.5 uppercase text-dl-forest border-dl-forest">
+                          RECEIVED
                         </span>
                       </div>
                     ))}

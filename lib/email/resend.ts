@@ -274,6 +274,121 @@ export async function sendAxauEarlyAccessConfirmation(params: {
   });
 }
 
+export async function sendInboundAchNotification(params: {
+  to: string;
+  fullName: string;
+  participantRef: string;
+  amountCents: number;
+  senderName: string | null;
+  newBalanceCents?: number | null;
+  receivedAt: Date;
+}) {
+  const { client, fromEmail } = await getResendClient();
+  const { to, fullName, participantRef, amountCents, senderName, newBalanceCents, receivedAt } = params;
+
+  const fmtUSD = (cents: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
+
+  const formattedAmount = fmtUSD(amountCents);
+  const formattedBalance = newBalanceCents != null ? fmtUSD(newBalanceCents) : null;
+  const formattedDate = new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  }).format(receivedAt);
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:Georgia,serif;background:#f5f5f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f0;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #d1d5db;">
+        <tr>
+          <td style="background:#1D3D2A;padding:32px 36px;">
+            <p style="color:#b8860b;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 8px 0;">AXIOM NEXUS BANKING</p>
+            <h1 style="color:#ffffff;font-family:Georgia,serif;font-size:26px;font-weight:700;margin:0;line-height:1.2;">Direct Deposit Received</h1>
+            <p style="color:#a7c4a0;font-family:'Courier New',monospace;font-size:11px;margin:8px 0 0 0;letter-spacing:0.1em;">GET PAID EARLY — FUNDS AVAILABLE</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px;">
+            <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 20px 0;">Dear ${fullName},</p>
+            <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 24px 0;">
+              Great news — your direct deposit has arrived in your Axiom Nexus Account. Funds are available now,
+              typically 1–2 business days before the official settlement date.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f9f0;border:2px solid #1D3D2A;margin:0 0 24px 0;">
+              <tr><td style="padding:24px 28px;">
+                <p style="font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.12em;color:#1D3D2A;text-transform:uppercase;margin:0 0 16px 0;font-weight:700;">Deposit Summary</p>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:6px 0;border-bottom:1px solid #d1fae5;">Amount Received</td>
+                    <td style="font-family:'Courier New',monospace;font-size:20px;color:#1D3D2A;font-weight:700;text-align:right;padding:6px 0;border-bottom:1px solid #d1fae5;">${formattedAmount}</td>
+                  </tr>
+                  ${senderName ? `<tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:6px 0;border-bottom:1px solid #d1fae5;">From</td>
+                    <td style="font-family:'Courier New',monospace;font-size:13px;color:#1B2A4A;font-weight:600;text-align:right;padding:6px 0;border-bottom:1px solid #d1fae5;">${senderName}</td>
+                  </tr>` : ''}
+                  ${formattedBalance ? `<tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:6px 0;border-bottom:1px solid #d1fae5;">New Balance</td>
+                    <td style="font-family:'Courier New',monospace;font-size:13px;color:#1B2A4A;font-weight:700;text-align:right;padding:6px 0;border-bottom:1px solid #d1fae5;">${formattedBalance}</td>
+                  </tr>` : ''}
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:6px 0;border-bottom:1px solid #d1fae5;">Received At</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1B2A4A;text-align:right;padding:6px 0;border-bottom:1px solid #d1fae5;">${formattedDate}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:6px 0;">Account Ref</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1B2A4A;font-weight:600;text-align:right;padding:6px 0;">${participantRef}</td>
+                  </tr>
+                </table>
+              </td></tr>
+            </table>
+            <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
+              Your funds are held at First Internet Bank under the Axiom Nexus program, FDIC-insured up to $250,000.
+              View your complete account history and balance at <a href="https://axiomprotocol.app/banking/my-account" style="color:#1D3D2A;font-weight:600;">axiomprotocol.app/banking/my-account</a>.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+              <tr>
+                <td align="center">
+                  <a href="https://axiomprotocol.app/banking/my-account" style="display:inline-block;background:#1D3D2A;color:#ffffff;text-decoration:none;padding:14px 36px;font-family:'Courier New',monospace;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;font-weight:700;">
+                    View My Account →
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="color:#9ca3af;font-size:13px;line-height:1.5;margin:0;">
+              To update or share your direct deposit details with an employer, visit
+              <a href="https://axiomprotocol.app/direct-deposit" style="color:#6b7280;">axiomprotocol.app/direct-deposit</a>.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:20px 36px;">
+            <p style="font-family:'Courier New',monospace;font-size:10px;color:#9ca3af;letter-spacing:0.1em;margin:0;">
+              AXIOM NEXUS BANKING — FIRST INTERNET BANK — FDIC INSURED — axiomprotocol.app
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  return client.emails.send({
+    from: fromEmail,
+    to: [to],
+    subject: `Direct Deposit Received — ${formattedAmount} in your Axiom Nexus Account`,
+    html,
+  });
+}
+
 export async function sendAxauPurchaseRequestConfirmation(params: {
   to: string;
   walletAddress: string;

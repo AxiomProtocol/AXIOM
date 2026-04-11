@@ -6566,6 +6566,24 @@ END $seed$`, 'seed dp_listings');
       await exec(`CREATE INDEX IF NOT EXISTS bridge_conversion_requests_wallet_idx ON bridge_conversion_requests(wallet_address)`, 'index bridge_conversion_requests_wallet_idx');
       await exec(`CREATE INDEX IF NOT EXISTS bridge_conversion_requests_status_idx ON bridge_conversion_requests(status)`, 'index bridge_conversion_requests_status_idx');
 
+      // Inbound ACH events — direct deposit receipts via account_number.inbound_ach_transfer.created webhook
+      await exec(`CREATE TABLE IF NOT EXISTS inbound_ach_events (
+        id SERIAL PRIMARY KEY,
+        participant_id INTEGER NOT NULL,
+        participant_ref VARCHAR(20) NOT NULL,
+        increase_tx_id VARCHAR(100),
+        amount_cents INTEGER NOT NULL,
+        sender_name VARCHAR(200),
+        sender_routing_number VARCHAR(20),
+        account_number_id VARCHAR(100),
+        status VARCHAR(30) NOT NULL DEFAULT 'received',
+        received_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table inbound_ach_events');
+      await exec(`CREATE INDEX IF NOT EXISTS inbound_ach_events_participant_idx ON inbound_ach_events(participant_id)`, 'index inbound_ach_events_participant_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS inbound_ach_events_participant_ref_idx ON inbound_ach_events(participant_ref)`, 'index inbound_ach_events_participant_ref_idx');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS inbound_ach_events_tx_id_idx ON inbound_ach_events(increase_tx_id) WHERE increase_tx_id IS NOT NULL`, 'index inbound_ach_events_tx_id_idx');
+
       // ═══════════════════════════════════════════
       //  STELLAR PAYMENTS RAIL
       // ═══════════════════════════════════════════
