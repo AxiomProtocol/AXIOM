@@ -6765,6 +6765,212 @@ END $seed$`, 'seed dp_listings');
       await exec(`CREATE INDEX IF NOT EXISTS crypto_credit_lines_wallet_idx ON crypto_credit_lines (participant_wallet)`, 'index crypto_credit_lines_wallet_idx');
       await exec(`CREATE INDEX IF NOT EXISTS crypto_credit_lines_status_idx ON crypto_credit_lines (status)`, 'index crypto_credit_lines_status_idx');
 
+      // ── increase_participants: physical card columns (added manually, now tracked) ──
+      await exec(`ALTER TABLE increase_participants ADD COLUMN IF NOT EXISTS physical_card_requested BOOLEAN NOT NULL DEFAULT FALSE`, 'col increase_participants.physical_card_requested');
+      await exec(`ALTER TABLE increase_participants ADD COLUMN IF NOT EXISTS physical_card_requested_at TIMESTAMP`, 'col increase_participants.physical_card_requested_at');
+
+      // ═══════════════════════════════════════════
+      //  AXIOM RAIL — DAO PAYROLL
+      // ═══════════════════════════════════════════
+
+      await exec(`CREATE TABLE IF NOT EXISTS axiom_rail_payroll_runs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        stellar_account VARCHAR(56) NOT NULL,
+        org_name VARCHAR(200) NOT NULL,
+        run_label VARCHAR(200) NOT NULL,
+        run_date DATE NOT NULL,
+        bsa_legal_name VARCHAR(200) NOT NULL,
+        bsa_dob DATE NOT NULL,
+        bsa_country VARCHAR(100) NOT NULL,
+        bsa_id_type VARCHAR(20) NOT NULL,
+        bsa_id_number VARCHAR(50) NOT NULL,
+        idempotency_key VARCHAR(200) NOT NULL,
+        recipient_count INTEGER NOT NULL DEFAULT 0,
+        total_amount_usd NUMERIC NOT NULL DEFAULT 0,
+        status VARCHAR(50) NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table axiom_rail_payroll_runs');
+
+      await exec(`CREATE TABLE IF NOT EXISTS axiom_rail_payroll_recipients (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        run_id UUID NOT NULL,
+        transfer_id UUID,
+        recipient_name VARCHAR(200) NOT NULL,
+        routing_number VARCHAR(9) NOT NULL,
+        account_number VARCHAR(30) NOT NULL,
+        amount_usd NUMERIC NOT NULL,
+        transfer_type VARCHAR(10) NOT NULL DEFAULT 'ACH',
+        memo VARCHAR(28),
+        status VARCHAR(50) NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table axiom_rail_payroll_recipients');
+      await exec(`CREATE INDEX IF NOT EXISTS axiom_rail_payroll_recipients_run_idx ON axiom_rail_payroll_recipients(run_id)`, 'index axiom_rail_payroll_recipients_run_idx');
+
+      // ═══════════════════════════════════════════
+      //  AXIOM RAIL — RENT COLLECTION
+      // ═══════════════════════════════════════════
+
+      await exec(`CREATE TABLE IF NOT EXISTS axiom_rail_rent_properties (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        slug VARCHAR(100) NOT NULL,
+        landlord_name VARCHAR(200) NOT NULL,
+        property_address TEXT NOT NULL,
+        receiving_bank_routing VARCHAR(9) NOT NULL,
+        receiving_bank_account VARCHAR(30) NOT NULL,
+        receiving_bank_name VARCHAR(200) NOT NULL,
+        default_rent_amount NUMERIC,
+        management_token_hash VARCHAR(256) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table axiom_rail_rent_properties');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS axiom_rail_rent_properties_slug_idx ON axiom_rail_rent_properties(slug)`, 'index axiom_rail_rent_properties_slug_idx');
+
+      // ═══════════════════════════════════════════
+      //  ALLOCATION / TREASURY ACCOUNTS
+      // ═══════════════════════════════════════════
+
+      await exec(`CREATE TABLE IF NOT EXISTS allocation_policies (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        bucket_name VARCHAR(50) NOT NULL,
+        target_pct NUMERIC NOT NULL,
+        min_pct NUMERIC,
+        max_pct NUMERIC,
+        asset_symbol VARCHAR(20) DEFAULT 'USD',
+        notes TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        effective_at TIMESTAMP DEFAULT NOW(),
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )`, 'table allocation_policies');
+
+      await exec(`CREATE TABLE IF NOT EXISTS allocation_actuals (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        policy_id VARCHAR(100),
+        bucket_name VARCHAR(50) NOT NULL,
+        actual_amount NUMERIC,
+        actual_pct NUMERIC,
+        usd_value NUMERIC,
+        computed_at TIMESTAMP DEFAULT NOW(),
+        variance_pct NUMERIC,
+        created_at TIMESTAMP DEFAULT NOW()
+      )`, 'table allocation_actuals');
+
+      await exec(`CREATE TABLE IF NOT EXISTS treasury_accounts (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        provider VARCHAR(50) NOT NULL,
+        account_type VARCHAR(50) NOT NULL,
+        display_name VARCHAR(255) NOT NULL,
+        legal_entity_name VARCHAR(255),
+        external_account_id VARCHAR(300),
+        chain_id INTEGER,
+        asset_symbol VARCHAR(20) NOT NULL,
+        custody_model VARCHAR(50) NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'configured',
+        metadata JSONB,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )`, 'table treasury_accounts');
+
+      await exec(`CREATE TABLE IF NOT EXISTS treasury_allocations (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        allocation_bucket VARCHAR(50) NOT NULL,
+        asset_symbol VARCHAR(20) NOT NULL,
+        amount NUMERIC NOT NULL,
+        usd_value NUMERIC,
+        source_account_id VARCHAR(100),
+        destination_account_id VARCHAR(100),
+        status VARCHAR(30) NOT NULL DEFAULT 'recorded',
+        notes TEXT,
+        effective_at TIMESTAMP DEFAULT NOW(),
+        metadata JSONB,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )`, 'table treasury_allocations');
+
+      await exec(`CREATE TABLE IF NOT EXISTS reserve_positions (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        asset_symbol VARCHAR(20) NOT NULL,
+        position_type VARCHAR(50) NOT NULL,
+        treasury_account_id VARCHAR(100),
+        quantity NUMERIC NOT NULL,
+        mark_price NUMERIC,
+        usd_value NUMERIC,
+        valuation_source VARCHAR(50),
+        valuation_confidence VARCHAR(20),
+        snapshot_at TIMESTAMP DEFAULT NOW(),
+        metadata JSONB,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )`, 'table reserve_positions');
+
+      await exec(`CREATE TABLE IF NOT EXISTS custody_wallet_registry (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        provider VARCHAR(50) NOT NULL,
+        wallet_name VARCHAR(255),
+        wallet_address VARCHAR(100),
+        chain VARCHAR(50),
+        asset_scope VARCHAR(255),
+        purpose VARCHAR(255),
+        legal_entity_name VARCHAR(255),
+        status VARCHAR(30) NOT NULL DEFAULT 'configured',
+        metadata JSONB,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )`, 'table custody_wallet_registry');
+
+      await exec(`CREATE TABLE IF NOT EXISTS disclosure_snapshots (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        snapshot_type VARCHAR(50) NOT NULL DEFAULT 'treasury',
+        total_usd NUMERIC,
+        total_fiat_usd NUMERIC,
+        total_usdc_usd NUMERIC,
+        total_paxg_usd NUMERIC,
+        total_axusd_supply_usd NUMERIC,
+        reserve_ratio NUMERIC,
+        composition_json JSONB,
+        source_breakdown_json JSONB,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )`, 'table disclosure_snapshots');
+
+      // ═══════════════════════════════════════════
+      //  CIRCLE COMPLIANCE SCREENING
+      // ═══════════════════════════════════════════
+
+      await exec(`CREATE TABLE IF NOT EXISTS circle_screening_results (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) NOT NULL,
+        chain VARCHAR(20) NOT NULL DEFAULT 'ARB',
+        result VARCHAR(20) NOT NULL,
+        risk_score INTEGER NOT NULL DEFAULT 0,
+        risk_categories JSONB NOT NULL DEFAULT '[]',
+        screened_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        cached_until TIMESTAMPTZ
+      )`, 'table circle_screening_results');
+      await exec(`CREATE INDEX IF NOT EXISTS circle_screening_wallet_idx ON circle_screening_results(wallet_address)`, 'index circle_screening_wallet_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS circle_webhook_events (
+        id SERIAL PRIMARY KEY,
+        notification_id VARCHAR(128) NOT NULL,
+        notification_type VARCHAR(64) NOT NULL,
+        client_id VARCHAR(128),
+        raw_payload JSONB NOT NULL,
+        processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`, 'table circle_webhook_events');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS circle_webhook_notification_id_idx ON circle_webhook_events(notification_id)`, 'index circle_webhook_notification_id_idx');
+
+      // ═══════════════════════════════════════════
+      //  COMMUNITY CREDIT NONCES
+      // ═══════════════════════════════════════════
+
+      await exec(`CREATE TABLE IF NOT EXISTS community_credit_nonces (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) NOT NULL,
+        nonce VARCHAR(64) NOT NULL,
+        expires_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`, 'table community_credit_nonces');
+      await exec(`CREATE INDEX IF NOT EXISTS community_credit_nonces_wallet_idx ON community_credit_nonces(wallet_address)`, 'index community_credit_nonces_wallet_idx');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
