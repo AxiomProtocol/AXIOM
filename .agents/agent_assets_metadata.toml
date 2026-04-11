@@ -330,6 +330,42 @@ uri = "file://public/logos/axiom-premium-gateway.png"
 type = "image"
 title = "axiom premium gateway pillars arch gold"
 
+[[generated]]
+id = "CBXthBlTVMsA_tNB8xrRn"
+uri = "file://public/images/products/card-hero.png"
+type = "image"
+title = "luxury-card-hero"
+
+[[generated]]
+id = "ivdSu3jKmf9N42WepeJ93"
+uri = "file://public/images/products/direct-deposit-hero.png"
+type = "image"
+title = "direct-deposit-lifestyle"
+
+[[generated]]
+id = "qq9AZIHadOjdxYn8w1S3i"
+uri = "file://public/images/products/credit-hero.png"
+type = "image"
+title = "crypto-credit-vault"
+
+[[generated]]
+id = "Ka63cFa2Vl1K-BW8wEhGO"
+uri = "file://public/images/products/card-closeup.png"
+type = "image"
+title = "card-closeup-leather"
+
+[[generated]]
+id = "vVLpjkwyxOTe4EOukQiSv"
+uri = "file://public/images/products/deposit-setup.png"
+type = "image"
+title = "paycheck-arrival-setup"
+
+[[generated]]
+id = "I7baxED1id_q5pwJESqLc"
+uri = "file://public/images/products/collateral-visual.png"
+type = "image"
+title = "crypto-collateral-scale"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"

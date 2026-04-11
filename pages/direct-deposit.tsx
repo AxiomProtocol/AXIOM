@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { useAccount, useWalletClient } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
 
@@ -179,33 +180,174 @@ export default function DirectDepositPage() {
 
   return (
     <DesignLawLayout>
-      <div className="mb-5">
-        <div className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Axiom Nexus Banking / Get Paid Early</div>
-        <h1 className="font-dl-serif text-3xl text-dl-navy font-bold mb-2">Direct Deposit</h1>
-        <p className="text-dl-gray text-sm max-w-2xl leading-relaxed">
-          Your Axiom Nexus Account supports direct deposit through your employer or payroll provider.
-          Funds typically arrive 1–2 business days before your official pay date — the same early-access infrastructure used by leading neobanks.
-        </p>
+
+      {/* ── HERO ── */}
+      <div className="bg-dl-navy -mx-6 -mt-8 mb-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2">
+            <div className="px-10 py-16 lg:py-24 flex flex-col justify-center">
+              <p className="font-dl-mono text-xs uppercase tracking-widest mb-4" style={{ color: '#b8860b' }}>
+                Axiom Nexus · Banking Feature
+              </p>
+              <h1 className="font-dl-serif text-4xl lg:text-5xl font-bold text-white leading-tight mb-5">
+                Get Paid<br />Up to 2 Days Early.
+              </h1>
+              <p className="text-base leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.75)', maxWidth: '440px' }}>
+                Your Axiom Nexus Account comes with a dedicated routing and account number.
+                When your employer sends your paycheck via ACH, we credit your account the moment the file arrives —
+                not when traditional banks post it.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <a href="#deposit-setup" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold border border-white text-white hover:bg-white hover:text-dl-navy transition-none">
+                  View My Deposit Details
+                </a>
+                <a href="/banking/my-account" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  My Nexus Account →
+                </a>
+              </div>
+            </div>
+            <div className="relative hidden lg:block" style={{ minHeight: '420px' }}>
+              <Image
+                src="/images/products/direct-deposit-hero.png"
+                alt="Get paid early with Axiom Nexus direct deposit"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                style={{ objectFit: 'cover', objectPosition: 'center' }}
+                priority
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Info banner */}
-      <div className="border border-dl-border mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
-          <div className="px-5 py-3 border-r border-dl-border">
-            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Institution</p>
-            <p className="font-dl-mono text-xs text-dl-forest font-semibold">First Internet Bank</p>
-            <p className="font-dl-mono text-xs text-dl-gray mt-0.5">FDIC-insured · ACH rails via Increase</p>
+      {/* ── TRUST BAR ── */}
+      <div className="border border-dl-border mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3">
+          <div className="px-6 py-5 border-b md:border-b-0 md:border-r border-dl-border">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Banking Partner</p>
+            <p className="font-dl-serif text-lg text-dl-forest font-bold mb-1">First Internet Bank</p>
+            <p className="text-dl-gray text-xs leading-relaxed">FDIC-insured institution. Your deposits are protected up to $250,000 per depositor category.</p>
           </div>
-          <div className="px-5 py-3 border-r border-dl-border">
-            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Timing</p>
-            <p className="font-dl-mono text-xs text-dl-navy">1–2 Business Days Early</p>
-            <p className="font-dl-mono text-xs text-dl-gray mt-0.5">Credited when ACH file is received</p>
+          <div className="px-6 py-5 border-b md:border-b-0 md:border-r border-dl-border">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">How Early</p>
+            <p className="font-dl-serif text-lg text-dl-navy font-bold mb-1">1–2 Business Days</p>
+            <p className="text-dl-gray text-xs leading-relaxed">Funds posted as soon as the ACH file arrives — before the official settlement date your employer sends.</p>
           </div>
-          <div className="px-5 py-3">
-            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Notification</p>
-            <p className="font-dl-mono text-xs text-dl-navy">Email on Receipt</p>
-            <p className="font-dl-mono text-xs text-dl-gray mt-0.5">Amount, sender, and new balance</p>
+          <div className="px-6 py-5">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Notification</p>
+            <p className="font-dl-serif text-lg text-dl-navy font-bold mb-1">Email on Receipt</p>
+            <p className="text-dl-gray text-xs leading-relaxed">Instant email with the deposit amount, sender name, and your updated balance — every single time.</p>
           </div>
+        </div>
+      </div>
+
+      {/* ── WHY YOU GET PAID EARLY ── */}
+      <div className="mb-12">
+        <div className="mb-8">
+          <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">The Mechanism</p>
+          <h2 className="font-dl-serif text-3xl text-dl-navy font-bold">Why Axiom Nexus<br />Pays You First.</h2>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 border border-dl-border">
+          <div className="relative hidden lg:block" style={{ minHeight: '360px' }}>
+            <Image
+              src="/images/products/deposit-setup.png"
+              alt="Setting up direct deposit at your desk"
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              style={{ objectFit: 'cover', objectPosition: 'center top' }}
+            />
+          </div>
+          <div className="px-8 py-10 bg-dl-bg">
+            <div className="space-y-6">
+              <div className="flex gap-4">
+                <div className="shrink-0 w-8 h-8 bg-dl-navy flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-dl-navy font-semibold text-sm mb-1">Traditional Banks Hold Your Money</p>
+                  <p className="text-dl-gray text-xs leading-relaxed">Most banks wait for the full ACH settlement window — typically 1–2 business days — before posting your paycheck, even though the funds are already committed in the ACH file.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="shrink-0 w-8 h-8 bg-dl-forest flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-dl-navy font-semibold text-sm mb-1">Axiom Nexus Credits on File Receipt</p>
+                  <p className="text-dl-gray text-xs leading-relaxed">As soon as the ACH file containing your paycheck arrives at our banking partner, we post the funds to your account — up to 2 business days before your employer&#39;s stated pay date.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="shrink-0 w-8 h-8 flex items-center justify-center border border-dl-gold">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b8860b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-dl-navy font-semibold text-sm mb-1">The Same Infrastructure as Chime and Current</p>
+                  <p className="text-dl-gray text-xs leading-relaxed">This is not a new technology — it&#39;s the same early direct deposit mechanism that built Chime into a $25B company. Now available to the Axiom community through Increase and First Internet Bank.</p>
+                </div>
+              </div>
+              <div className="border-t border-dl-border pt-5">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Traditional</p>
+                    <p className="font-dl-serif text-base text-dl-navy font-bold">Settlement Date</p>
+                  </div>
+                  <div className="flex items-center justify-center text-dl-gold text-lg font-bold">vs.</div>
+                  <div className="text-center">
+                    <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Axiom Nexus</p>
+                    <p className="font-dl-serif text-base text-dl-forest font-bold">File Receipt</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── HOW TO SET UP ── */}
+      <div className="mb-12">
+        <div className="mb-8">
+          <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Setup Process</p>
+          <h2 className="font-dl-serif text-3xl text-dl-navy font-bold">Three Steps.<br />Five Minutes.</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 border border-dl-border">
+          {[
+            {
+              step: '01',
+              title: 'Copy Your Details',
+              desc: 'Sign in below to see your dedicated routing and account number. These are unique to you — not shared with any other participant.',
+            },
+            {
+              step: '02',
+              title: 'Update Your Payroll',
+              desc: 'Log in to your employer&#39;s payroll portal (ADP, Gusto, Paychex, Rippling, or HR paper form) and enter your Axiom Nexus routing and account number as your direct deposit destination.',
+            },
+            {
+              step: '03',
+              title: 'Get Paid Early',
+              desc: 'After 1–2 pay cycles, your paycheck will arrive at Axiom Nexus up to 2 business days early. You&#39;ll receive an email confirmation every time.',
+            },
+          ].map((s, i) => (
+            <div key={s.step} className={`px-6 py-7 ${i < 2 ? 'border-b md:border-b-0 md:border-r border-dl-border' : ''}`}>
+              <p className="font-dl-mono text-3xl font-bold mb-4" style={{ color: '#b8860b' }}>{s.step}</p>
+              <p className="font-dl-serif text-lg text-dl-navy font-bold mb-3">{s.title}</p>
+              <p className="text-dl-gray text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: s.desc }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── DEPOSIT SETUP SECTION ── */}
+      <div id="deposit-setup">
+        <div className="mb-6">
+          <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Your Account</p>
+          <h2 className="font-dl-serif text-2xl text-dl-navy font-bold">Your Direct Deposit Details</h2>
         </div>
       </div>
 

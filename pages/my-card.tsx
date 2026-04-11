@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import { useAccount, useWalletClient } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
 
@@ -299,32 +300,163 @@ export default function MyCardPage() {
 
   return (
     <DesignLawLayout>
-      <div className="mb-5">
-        <div className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Axiom Nexus / Consumer Banking</div>
-        <h1 className="font-dl-serif text-3xl text-dl-navy font-bold mb-2">Axiom Nexus Card</h1>
-        <p className="text-dl-gray text-sm max-w-2xl leading-relaxed">
-          Your virtual debit card linked to your Axiom Nexus account — spendable anywhere Visa/Mastercard debit is accepted,
-          with secure in-browser detail reveal and card management.
-        </p>
+
+      {/* ── HERO ── */}
+      <div className="bg-dl-navy -mx-6 -mt-8 mb-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2">
+            <div className="px-10 py-16 lg:py-24 flex flex-col justify-center">
+              <p className="font-dl-mono text-xs uppercase tracking-widest mb-4" style={{ color: '#b8860b' }}>
+                Axiom Nexus · Consumer Banking
+              </p>
+              <h1 className="font-dl-serif text-4xl lg:text-5xl font-bold text-white leading-tight mb-5">
+                The Card Built<br />for the Community.
+              </h1>
+              <p className="text-base leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.75)', maxWidth: '420px' }}>
+                Your Axiom Nexus Card is a virtual debit card issued through First Internet Bank — FDIC-insured,
+                accepted at any Visa or Mastercard merchant worldwide, with your full card details securely revealed in-browser on demand.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <a href="#card-dashboard" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold border border-white text-white hover:bg-white hover:text-dl-navy transition-none">
+                  Manage My Card
+                </a>
+                <a href="/banking/my-account" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  My Nexus Account →
+                </a>
+              </div>
+            </div>
+            <div className="relative hidden lg:block" style={{ minHeight: '420px' }}>
+              <Image
+                src="/images/products/card-hero.png"
+                alt="Axiom Nexus Card — luxury debit card"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                style={{ objectFit: 'cover', objectPosition: 'center' }}
+                priority
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="border border-dl-border mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
-          <div className="px-5 py-3 border-r border-dl-border">
-            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Network</p>
-            <p className="font-dl-mono text-xs text-dl-forest font-semibold">Visa / Mastercard Debit</p>
-            <p className="font-dl-mono text-xs text-dl-gray mt-0.5">Accepted worldwide</p>
+      {/* ── TRUST BAR ── */}
+      <div className="border border-dl-border mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3">
+          <div className="px-6 py-5 border-b md:border-b-0 md:border-r border-dl-border">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Network</p>
+            <p className="font-dl-serif text-lg text-dl-forest font-bold mb-1">Visa · Mastercard Debit</p>
+            <p className="text-dl-gray text-xs leading-relaxed">Accepted at 100+ million merchant locations worldwide — online, in-store, and internationally.</p>
           </div>
-          <div className="px-5 py-3 border-r border-dl-border">
-            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Issuer</p>
-            <p className="font-dl-mono text-xs text-dl-navy">First Internet Bank · Member FDIC</p>
-            <p className="font-dl-mono text-xs text-dl-gray mt-0.5">FDIC-insured up to $250,000</p>
+          <div className="px-6 py-5 border-b md:border-b-0 md:border-r border-dl-border">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Issuing Bank</p>
+            <p className="font-dl-serif text-lg text-dl-navy font-bold mb-1">First Internet Bank</p>
+            <p className="text-dl-gray text-xs leading-relaxed">FDIC-insured Member. Your card balance is protected up to $250,000 per depositor category.</p>
           </div>
-          <div className="px-5 py-3">
-            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Card Type</p>
-            <p className="font-dl-mono text-xs text-dl-navy">Virtual · Physical available</p>
-            <p className="font-dl-mono text-xs text-dl-gray mt-0.5">Powered by Axiom Nexus banking rails</p>
+          <div className="px-6 py-5">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Card Format</p>
+            <p className="font-dl-serif text-lg text-dl-navy font-bold mb-1">Virtual + Physical</p>
+            <p className="text-dl-gray text-xs leading-relaxed">Available instantly as a virtual card for online use. Physical card ships to your address within 7–10 business days.</p>
           </div>
+        </div>
+      </div>
+
+      {/* ── FEATURES ── */}
+      <div className="mb-12">
+        <div className="mb-8">
+          <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Card Benefits</p>
+          <h2 className="font-dl-serif text-3xl text-dl-navy font-bold">Everything You Need,<br />Nothing You Don&#39;t.</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
+          {[
+            {
+              title: 'Spend Your Balance Anywhere',
+              desc: 'Whether you&#39;re shopping online, paying at a point-of-sale terminal, or withdrawing cash from an ATM — your Nexus Card works wherever Visa and Mastercard debit is accepted. No crypto conversion needed, no friction.',
+              icon: (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-dl-forest">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+              ),
+            },
+            {
+              title: 'Reveal Full Card Details In-Browser',
+              desc: 'Your full card number, expiry date, and CVV are available on demand — revealed securely in-browser for 30 seconds, then automatically hidden. No calls to customer service, no delays. Use it immediately for any online purchase.',
+              icon: (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-dl-forest">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              ),
+            },
+            {
+              title: 'Instant Freeze and Unfreeze',
+              desc: 'Traveling? Lost your phone? A single button click freezes your card instantly — no merchants can process a charge. Unfreeze just as fast when you&#39;re ready. Full control, real-time, from any device.',
+              icon: (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-dl-navy">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              ),
+            },
+            {
+              title: 'FDIC-Insured Up to $250,000',
+              desc: 'Your card balance is not held in a crypto wallet — it sits in an FDIC-insured checking account at First Internet Bank. Even if the bank fails, your balance is protected by the federal government up to $250,000.',
+              icon: (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-dl-gold">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              ),
+            },
+          ].map((f, i) => (
+            <div key={f.title} className={`px-7 py-7 flex gap-5 ${i < 2 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'md:border-r border-dl-border' : ''}`}>
+              <div className="shrink-0 mt-0.5">{f.icon}</div>
+              <div>
+                <p className="font-dl-serif text-lg text-dl-navy font-bold mb-2" dangerouslySetInnerHTML={{ __html: f.title }} />
+                <p className="text-dl-gray text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: f.desc }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── PRODUCT CLOSEUP IMAGE ── */}
+      <div className="border border-dl-border mb-12 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+          <div className="relative" style={{ minHeight: '320px' }}>
+            <Image
+              src="/images/products/card-closeup.png"
+              alt="Axiom Nexus Card closeup on leather wallet"
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              style={{ objectFit: 'cover', objectPosition: 'center' }}
+            />
+          </div>
+          <div className="px-8 py-10 flex flex-col justify-center bg-dl-bg">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-3">Security Architecture</p>
+            <h3 className="font-dl-serif text-2xl text-dl-navy font-bold mb-4 leading-tight">
+              Physical Durability.<br />Digital-First Access.
+            </h3>
+            <div className="space-y-4">
+              {[
+                { label: 'Virtual Card', desc: 'Available immediately upon issuance. Shop online at any merchant that accepts Visa or Mastercard.' },
+                { label: 'Physical Card', desc: 'Request a physical card from the dashboard below — ships in 7–10 business days with the same card number and CVV as your virtual card.' },
+                { label: 'ATM Access', desc: 'Use your physical card to withdraw cash at any ATM in the Visa network. Fee reimbursement policy applies per the Nexus cardholder agreement.' },
+              ].map(item => (
+                <div key={item.label} className="flex gap-3">
+                  <div className="shrink-0 w-1.5 h-1.5 bg-dl-forest mt-2" />
+                  <div>
+                    <p className="text-dl-navy font-semibold text-sm mb-0.5">{item.label}</p>
+                    <p className="text-dl-gray text-xs leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── CARD DASHBOARD ── */}
+      <div id="card-dashboard">
+        <div className="mb-6">
+          <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Your Account</p>
+          <h2 className="font-dl-serif text-2xl text-dl-navy font-bold">Manage Your Nexus Card</h2>
         </div>
       </div>
 
