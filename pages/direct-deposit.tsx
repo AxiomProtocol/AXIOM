@@ -183,39 +183,37 @@ export default function DirectDepositPage() {
 
       {/* ── HERO ── */}
       <div className="bg-dl-navy -mx-6 -mt-8 mb-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2">
-            <div className="px-10 py-16 lg:py-24 flex flex-col justify-center">
-              <p className="font-dl-mono text-xs uppercase tracking-widest mb-4" style={{ color: '#b8860b' }}>
-                Axiom Nexus · Banking Feature
-              </p>
-              <h1 className="font-dl-serif text-4xl lg:text-5xl font-bold text-white leading-tight mb-5">
-                Get Paid<br />Up to 2 Days Early.
-              </h1>
-              <p className="text-base leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.75)', maxWidth: '440px' }}>
-                Your Axiom Nexus Account comes with a dedicated routing and account number.
-                When your employer sends your paycheck via ACH, we credit your account the moment the file arrives —
-                not when traditional banks post it.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <a href="#deposit-setup" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold border border-white text-white hover:bg-white hover:text-dl-navy transition-none">
-                  View My Deposit Details
-                </a>
-                <a href="/banking/my-account" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                  My Nexus Account →
-                </a>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+          <div className="px-10 py-16 lg:py-24 flex flex-col justify-center">
+            <p className="font-dl-mono text-xs uppercase tracking-widest mb-4" style={{ color: '#b8860b' }}>
+              Axiom Nexus · Banking Feature
+            </p>
+            <h1 className="font-dl-serif text-4xl lg:text-5xl font-bold text-white leading-tight mb-5">
+              Get Paid<br />Up to 2 Days Early.
+            </h1>
+            <p className="text-base leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.78)', maxWidth: '480px' }}>
+              Your Axiom Nexus Account comes with a dedicated routing and account number.
+              When your employer sends your paycheck via ACH, we credit your account the moment the file arrives —
+              not when traditional banks post it.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <a href="#deposit-setup" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold border border-white text-white hover:bg-white hover:text-dl-navy transition-none">
+                View My Deposit Details
+              </a>
+              <a href="/banking/my-account" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                My Nexus Account →
+              </a>
             </div>
-            <div className="relative hidden lg:block" style={{ minHeight: '420px' }}>
-              <Image
-                src="/images/products/direct-deposit-hero.png"
-                alt="Get paid early with Axiom Nexus direct deposit"
-                fill
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                style={{ objectFit: 'cover', objectPosition: 'center' }}
-                priority
-              />
-            </div>
+          </div>
+          <div className="relative" style={{ minHeight: '320px' }}>
+            <Image
+              src="/images/products/direct-deposit-hero.png"
+              alt="Get paid early with Axiom Nexus direct deposit"
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              style={{ objectFit: 'cover', objectPosition: 'center' }}
+              priority
+            />
           </div>
         </div>
       </div>

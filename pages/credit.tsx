@@ -393,39 +393,37 @@ export default function CreditPage() {
 
       {/* ── HERO ── */}
       <div className="bg-dl-navy -mx-6 -mt-8 mb-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2">
-            <div className="px-10 py-16 lg:py-24 flex flex-col justify-center">
-              <p className="font-dl-mono text-xs uppercase tracking-widest mb-4" style={{ color: '#b8860b' }}>
-                Axiom Nexus · Credit Products
-              </p>
-              <h1 className="font-dl-serif text-4xl lg:text-5xl font-bold text-white leading-tight mb-5">
-                Your Crypto.<br />Your Credit Line.
-              </h1>
-              <p className="text-base leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.75)', maxWidth: '440px' }}>
-                Deposit Bitcoin, Ethereum, or AXUSD as collateral and access USD liquidity immediately —
-                no credit check, no income verification, no taxable event.
-                The institutional-grade secured lending product, now available to the Axiom community.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <a href="#credit-dashboard" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold border border-white text-white hover:bg-white hover:text-dl-navy transition-none">
-                  Open a Credit Line
-                </a>
-                <a href="/banking/my-account" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                  My Nexus Account →
-                </a>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+          <div className="px-10 py-16 lg:py-24 flex flex-col justify-center">
+            <p className="font-dl-mono text-xs uppercase tracking-widest mb-4" style={{ color: '#b8860b' }}>
+              Axiom Nexus · Credit Products
+            </p>
+            <h1 className="font-dl-serif text-4xl lg:text-5xl font-bold text-white leading-tight mb-5">
+              Your Crypto.<br />Your Credit Line.
+            </h1>
+            <p className="text-base leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.78)', maxWidth: '480px' }}>
+              Deposit Bitcoin, Ethereum, or AXUSD as collateral and access USD liquidity immediately —
+              no credit check, no income verification, no taxable event.
+              The institutional-grade secured lending product, now available to the Axiom community.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <a href="#credit-dashboard" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold border border-white text-white hover:bg-white hover:text-dl-navy transition-none">
+                Open a Credit Line
+              </a>
+              <a href="/banking/my-account" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                My Nexus Account →
+              </a>
             </div>
-            <div className="relative hidden lg:block" style={{ minHeight: '420px' }}>
-              <Image
-                src="/images/products/credit-hero.png"
-                alt="Crypto-backed credit line — Bitcoin and Ethereum as collateral"
-                fill
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                style={{ objectFit: 'cover', objectPosition: 'center' }}
-                priority
-              />
-            </div>
+          </div>
+          <div className="relative" style={{ minHeight: '320px' }}>
+            <Image
+              src="/images/products/credit-hero.png"
+              alt="Crypto-backed credit line — Bitcoin and Ethereum as collateral"
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              style={{ objectFit: 'cover', objectPosition: 'center' }}
+              priority
+            />
           </div>
         </div>
       </div>
