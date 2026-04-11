@@ -311,11 +311,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 </head>
 <body>
   <div class="no-print">
-    <button id="btn-print">Print / Save as PDF</button>
-    <button id="btn-close">Close</button>
-    <p class="note">
-      Use your browser's Print dialog (Ctrl+P or Cmd+P) and choose "Save as PDF" to download.
+    <p class="note" style="font-size:15px;color:#1B2A4A;font-weight:bold;margin-bottom:8px;">
+      Press <kbd style="background:#f3f4f6;border:1px solid #d1d5db;padding:2px 7px;font-family:monospace;border-radius:3px;">Ctrl+P</kbd>
+      &nbsp;(Windows) &nbsp;/&nbsp;
+      <kbd style="background:#f3f4f6;border:1px solid #d1d5db;padding:2px 7px;font-family:monospace;border-radius:3px;">⌘+P</kbd>
+      &nbsp;(Mac) &nbsp;— then choose <strong>Save as PDF</strong>.
     </p>
+    <p class="note" style="color:#6b7280;">This file has been downloaded to your device. Open it in any browser and use the keyboard shortcut above.</p>
   </div>
 
   <div class="page">
@@ -461,19 +463,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     </div>
   </div>
 
-  <script>
-    window.addEventListener('load', function() {
-      document.getElementById('btn-print').addEventListener('click', function() { window.print(); });
-      document.getElementById('btn-close').addEventListener('click', function() { window.close(); });
-      setTimeout(function() { window.print(); }, 800);
-    });
-  </script>
 </body>
 </html>`;
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Content-Disposition', `inline; filename="direct-deposit-${p.participantRef}.html"`);
-    res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; media-src 'none'; connect-src 'none'; font-src 'none'");
+    res.setHeader('Content-Disposition', `attachment; filename="direct-deposit-${p.participantRef}.html"`);
     return res.status(200).send(html);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

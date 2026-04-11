@@ -120,7 +120,7 @@ export default function DirectDepositPage() {
 
   const openForm = () => {
     const params = address ? `?wallet=${address}` : '';
-    window.open(`/api/banking/participant/direct-deposit/form${params}`, '_blank');
+    window.location.href = `/api/banking/participant/direct-deposit/form${params}`;
   };
 
   const PAYROLL_GUIDES = [
@@ -589,15 +589,15 @@ export default function DirectDepositPage() {
               <div>
                 <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-1">Pre-Filled Authorization Form</p>
                 <p className="text-dl-gray text-sm leading-relaxed max-w-lg">
-                  Download a ready-to-sign direct deposit authorization form pre-filled with your name, routing number,
-                  and account number. Print and submit to your HR department or upload to your payroll portal.
+                  Downloads a pre-filled authorization form with your name, routing number, and account number.
+                  Open the downloaded file in any browser and press <strong>Ctrl+P</strong> (Windows) or <strong>⌘+P</strong> (Mac), then choose <strong>Save as PDF</strong> to print or submit to HR.
                 </p>
               </div>
               <button
                 onClick={openForm}
                 className="border border-dl-navy bg-dl-navy text-white px-6 py-3 text-xs font-bold font-dl-mono uppercase tracking-wider hover:bg-dl-bg hover:text-dl-navy shrink-0"
               >
-                Download Direct Deposit Form →
+                Download Form →
               </button>
             </div>
           </div>
