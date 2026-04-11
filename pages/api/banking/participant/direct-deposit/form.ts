@@ -311,8 +311,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 </head>
 <body>
   <div class="no-print">
-    <button onclick="window.print()">Print / Save as PDF</button>
-    <button onclick="window.close()">Close</button>
+    <button id="btn-print">Print / Save as PDF</button>
+    <button id="btn-close">Close</button>
     <p class="note">
       Use your browser's Print dialog (Ctrl+P or Cmd+P) and choose "Save as PDF" to download.
     </p>
@@ -460,11 +460,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       </div>
     </div>
   </div>
+
+  <script>
+    document.getElementById('btn-print').addEventListener('click', function() { window.print(); });
+    document.getElementById('btn-close').addEventListener('click', function() { window.close(); });
+  </script>
 </body>
 </html>`;
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Content-Disposition', `inline; filename="direct-deposit-${p.participantRef}.html"`);
+    res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; media-src 'none'; connect-src 'none'; font-src 'none'");
     return res.status(200).send(html);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
