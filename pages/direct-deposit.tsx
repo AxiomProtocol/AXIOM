@@ -33,7 +33,8 @@ export default function DirectDepositPage() {
     setNotFound(false);
     setNeedsSignIn(false);
     try {
-      const res = await fetch('/api/banking/participant/direct-deposit');
+      const params = address ? `?wallet=${address}` : '';
+      const res = await fetch(`/api/banking/participant/direct-deposit${params}`);
       if (res.status === 401) { setNeedsSignIn(true); setLoading(false); return; }
       if (res.status === 404) { setNotFound(true); setLoading(false); return; }
       if (!res.ok) {
@@ -49,7 +50,7 @@ export default function DirectDepositPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [address]);
 
   const handleSignIn = async () => {
     if (!address || typeof window === 'undefined') return;
