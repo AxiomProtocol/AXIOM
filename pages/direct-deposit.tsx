@@ -119,7 +119,8 @@ export default function DirectDepositPage() {
   };
 
   const openForm = () => {
-    window.open('/api/banking/participant/direct-deposit/form', '_blank');
+    const params = address ? `?wallet=${address}` : '';
+    window.open(`/api/banking/participant/direct-deposit/form${params}`, '_blank');
   };
 
   const PAYROLL_GUIDES = [
