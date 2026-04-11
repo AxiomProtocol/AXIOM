@@ -6740,6 +6740,31 @@ END $seed$`, 'seed dp_listings');
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )`, 'table expansion_institutional_connectors');
 
+      // ── Crypto-Backed Credit Lines ──
+      await exec(enumSafe('crypto_collateral_asset', ['BTC', 'ETH', 'AXUSD']), 'enum crypto_collateral_asset');
+      await exec(enumSafe('crypto_credit_status', ['pending_collateral', 'active', 'warning', 'flagged', 'closed']), 'enum crypto_credit_status');
+      await exec(`CREATE TABLE IF NOT EXISTS crypto_credit_lines (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        participant_wallet VARCHAR(42) NOT NULL,
+        collateral_asset crypto_collateral_asset NOT NULL,
+        collateral_amount_raw VARCHAR(60) NOT NULL,
+        collateral_usd_value_at_open DECIMAL(18, 2),
+        credit_limit_usd DECIMAL(18, 2),
+        drawn_amount_usd DECIMAL(18, 2) NOT NULL DEFAULT 0,
+        interest_rate_pct DECIMAL(6, 4) NOT NULL DEFAULT 8.0,
+        status crypto_credit_status NOT NULL DEFAULT 'pending_collateral',
+        bitgo_wallet_id VARCHAR(200),
+        bitgo_address_id VARCHAR(200),
+        deposit_address VARCHAR(200),
+        opened_at TIMESTAMP DEFAULT NOW(),
+        closed_at TIMESTAMP,
+        last_health_check_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table crypto_credit_lines');
+      await exec(`CREATE INDEX IF NOT EXISTS crypto_credit_lines_wallet_idx ON crypto_credit_lines (participant_wallet)`, 'index crypto_credit_lines_wallet_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS crypto_credit_lines_status_idx ON crypto_credit_lines (status)`, 'index crypto_credit_lines_status_idx');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
