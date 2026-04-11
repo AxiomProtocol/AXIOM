@@ -395,7 +395,7 @@ export default function CreditPage() {
       <div className="bg-dl-navy -mx-6 -mt-8 mb-12">
         <div className="grid grid-cols-1 sm:grid-cols-2">
           <div className="px-8 py-14 sm:py-20 flex flex-col justify-center">
-            <p className="font-dl-mono text-xs uppercase tracking-widest mb-4" style={{ color: '#b8860b' }}>
+            <p className="font-dl-mono text-xs uppercase tracking-widest mb-4" style={{ color: '#d4a72c' }}>
               Axiom Nexus · Credit Products
             </p>
             <h1 className="font-dl-serif text-4xl lg:text-5xl font-bold text-white leading-tight mb-5">
