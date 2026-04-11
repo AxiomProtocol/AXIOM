@@ -462,8 +462,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   </div>
 
   <script>
-    document.getElementById('btn-print').addEventListener('click', function() { window.print(); });
-    document.getElementById('btn-close').addEventListener('click', function() { window.close(); });
+    window.addEventListener('load', function() {
+      document.getElementById('btn-print').addEventListener('click', function() { window.print(); });
+      document.getElementById('btn-close').addEventListener('click', function() { window.close(); });
+      setTimeout(function() { window.print(); }, 800);
+    });
   </script>
 </body>
 </html>`;
