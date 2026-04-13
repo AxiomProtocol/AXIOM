@@ -70,13 +70,14 @@ interface MyGroupMembership {
   group_status: string;
 }
 
-type TabId = 'overview' | 'discover' | 'practice' | 'create';
+type TabId = 'overview' | 'discover' | 'practice' | 'create' | 'lending';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'discover', label: 'Discover' },
   { id: 'practice', label: 'My Practice' },
   { id: 'create', label: 'Create' },
+  { id: 'lending', label: 'Lending' },
 ];
 
 const STATUS_STYLES: Record<string, string> = {
@@ -106,7 +107,7 @@ export default function WealthPracticePage() {
 
   useEffect(() => {
     const t = router.query.tab as string | undefined;
-    const valid: TabId[] = ['overview', 'discover', 'practice', 'create'];
+    const valid: TabId[] = ['overview', 'discover', 'practice', 'create', 'lending'];
     if (t && valid.includes(t as TabId)) setActiveTab(t as TabId);
   }, [router.query.tab]);
 
@@ -186,6 +187,239 @@ export default function WealthPracticePage() {
   const [creatingHub, setCreatingHub] = useState(false);
   const [hubCreateMsg, setHubCreateMsg] = useState('');
   const [hubCreateError, setHubCreateError] = useState('');
+
+  // ── Lending tab state ──────────────────────────────────────────────────────
+  interface LoanRecord {
+    id: string;
+    groupId: number;
+    borrowerMemberId: string;
+    requestedAmountUsd: string;
+    fundedAmountUsd: string;
+    purpose: string;
+    repaymentTerms: string;
+    interestRate: string;
+    status: 'pending' | 'open' | 'funded' | 'repaying' | 'closed' | 'defaulted';
+    stellarTransferId?: string;
+    createdAt: string;
+    fundedAt?: string;
+    closedAt?: string;
+    pledges: Array<{
+      id: string; lenderMemberId: string; pledgeAmountUsd: string; fulfilledAt?: string; createdAt: string;
+    }>;
+    pledgeCount: number;
+  }
+
+  const [lendingGroupId, setLendingGroupId] = useState('');
+  const [loans, setLoans] = useState<LoanRecord[]>([]);
+  const [loansLoading, setLoansLoading] = useState(false);
+  const [loansError, setLoansError] = useState('');
+
+  const [loanStep, setLoanStep] = useState<'terms' | 'bsa' | null>(null);
+  const [loanForm, setLoanForm] = useState({
+    borrowerMemberId: '',
+    requestedAmountUsd: '',
+    purpose: '',
+    repaymentTerms: '',
+    interestRate: '0',
+    routingNumber: '',
+    accountNumber: '',
+    accountName: '',
+  });
+  const [loanBsa, setLoanBsa] = useState({
+    bsaLegalName: '',
+    bsaDob: '',
+    bsaCountry: 'US',
+    bsaIdType: 'ssn' as 'ssn' | 'passport',
+    bsaIdNumber: '',
+  });
+  const [loanSubmitting, setLoanSubmitting] = useState(false);
+  const [loanMsg, setLoanMsg] = useState('');
+  const [loanError, setLoanError] = useState('');
+
+  const [pledgeForm, setPledgeForm] = useState<Record<string, { lenderMemberId: string; pledgeAmountUsd: string }>>({});
+  const [pledgeSubmitting, setPledgeSubmitting] = useState<string | null>(null);
+  const [pledgeMsg, setPledgeMsg] = useState<Record<string, string>>({});
+  const [pledgeError, setPledgeError] = useState<Record<string, string>>({});
+
+  const [repayForm, setRepayForm] = useState<Record<string, { repaymentAmountUsd: string; routingNumber: string; accountNumber: string; accountName: string }>>({});
+  const [repaySubmitting, setRepaySubmitting] = useState<string | null>(null);
+  const [repayMsg, setRepayMsg] = useState<Record<string, string>>({});
+  const [repayError, setRepayError] = useState<Record<string, string>>({});
+
+  const [expandedLoan, setExpandedLoan] = useState<string | null>(null);
+  const [defaultingLoan, setDefaultingLoan] = useState<string | null>(null);
+  const [acceptingPartial, setAcceptingPartial] = useState<string | null>(null);
+  const [acceptPartialMsg, setAcceptPartialMsg] = useState<Record<string, string>>({});
+  const [acceptPartialError, setAcceptPartialError] = useState<Record<string, string>>({});
+
+  const fetchGroupLoans = async (gId: string) => {
+    if (!gId) return;
+    setLoansLoading(true);
+    setLoansError('');
+    try {
+      const r = await fetch(`/api/wealth-practice/loans/group/${gId}`);
+      const data = await r.json();
+      if (data.success) {
+        setLoans(data.loans || []);
+      } else {
+        setLoansError(data.error || 'Failed to load loans');
+      }
+    } catch {
+      setLoansError('Network error loading loans');
+    } finally {
+      setLoansLoading(false);
+    }
+  };
+
+  const handleLoanTermsSubmit = () => {
+    if (!loanForm.borrowerMemberId.trim()) { setLoanError('Borrower ID is required'); return; }
+    const amt = parseFloat(loanForm.requestedAmountUsd);
+    if (isNaN(amt) || amt < 10 || amt > 50000) { setLoanError('Amount must be between $10 and $50,000'); return; }
+    if (!loanForm.purpose.trim()) { setLoanError('Purpose is required'); return; }
+    if (!loanForm.repaymentTerms.trim()) { setLoanError('Repayment terms are required'); return; }
+    if (!/^\d{9}$/.test(loanForm.routingNumber)) { setLoanError('Routing number must be exactly 9 digits'); return; }
+    if (!loanForm.accountNumber.trim()) { setLoanError('Account number is required'); return; }
+    if (!loanForm.accountName.trim()) { setLoanError('Account name is required'); return; }
+    setLoanError('');
+    setLoanStep('bsa');
+  };
+
+  const handleLoanRequest = async () => {
+    if (!lendingGroupId) { setLoanError('Select a group first'); return; }
+    const missing: string[] = [];
+    if (!loanBsa.bsaLegalName) missing.push('Legal Name');
+    if (!loanBsa.bsaDob) missing.push('Date of Birth');
+    if (!loanBsa.bsaCountry) missing.push('Country');
+    if (!loanBsa.bsaIdNumber) missing.push('ID Number');
+    if (missing.length > 0) { setLoanError(`Missing: ${missing.join(', ')}`); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(loanBsa.bsaDob)) { setLoanError('Date of birth must be YYYY-MM-DD'); return; }
+    if (loanBsa.bsaIdType === 'ssn' && !/^\d{4}$/.test(loanBsa.bsaIdNumber)) { setLoanError('SSN must be last 4 digits only'); return; }
+
+    setLoanSubmitting(true);
+    setLoanError('');
+    try {
+      const r = await fetch('/api/wealth-practice/loans/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupId: Number(lendingGroupId), ...loanForm, ...loanBsa }),
+      });
+      const data = await r.json();
+      if (r.ok && data.success) {
+        setLoanMsg(`Loan request submitted — ID: ${data.loanId}`);
+        setLoanStep(null);
+        setLoanForm({ borrowerMemberId: '', requestedAmountUsd: '', purpose: '', repaymentTerms: '', interestRate: '0', routingNumber: '', accountNumber: '', accountName: '' });
+        setLoanBsa({ bsaLegalName: '', bsaDob: '', bsaCountry: 'US', bsaIdType: 'ssn', bsaIdNumber: '' });
+        fetchGroupLoans(lendingGroupId);
+      } else {
+        setLoanError(data.error || 'Failed to submit loan request');
+      }
+    } catch {
+      setLoanError('Network error — please try again');
+    } finally {
+      setLoanSubmitting(false);
+    }
+  };
+
+  const handlePledge = async (loanId: string) => {
+    const form = pledgeForm[loanId];
+    if (!form?.lenderMemberId?.trim()) { setPledgeError(prev => ({ ...prev, [loanId]: 'Lender ID is required' })); return; }
+    const amt = parseFloat(form?.pledgeAmountUsd || '0');
+    if (isNaN(amt) || amt < 1) { setPledgeError(prev => ({ ...prev, [loanId]: 'Pledge amount must be at least $1' })); return; }
+    setPledgeSubmitting(loanId);
+    setPledgeError(prev => ({ ...prev, [loanId]: '' }));
+    try {
+      const r = await fetch(`/api/wealth-practice/loans/${loanId}/pledge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lenderMemberId: form.lenderMemberId.trim(), pledgeAmountUsd: amt }),
+      });
+      const data = await r.json();
+      if (r.ok && data.success) {
+        setPledgeMsg(prev => ({ ...prev, [loanId]: data.message || 'Pledge recorded.' }));
+        setPledgeForm(prev => ({ ...prev, [loanId]: { lenderMemberId: '', pledgeAmountUsd: '' } }));
+        fetchGroupLoans(lendingGroupId);
+      } else {
+        setPledgeError(prev => ({ ...prev, [loanId]: data.error || 'Failed to pledge' }));
+      }
+    } catch {
+      setPledgeError(prev => ({ ...prev, [loanId]: 'Network error' }));
+    } finally {
+      setPledgeSubmitting(null);
+    }
+  };
+
+  const handleRepay = async (loanId: string, borrowerMemberId: string) => {
+    const form = repayForm[loanId];
+    const amt = parseFloat(form?.repaymentAmountUsd || '0');
+    if (isNaN(amt) || amt < 1) { setRepayError(prev => ({ ...prev, [loanId]: 'Amount must be at least $1' })); return; }
+    setRepaySubmitting(loanId);
+    setRepayError(prev => ({ ...prev, [loanId]: '' }));
+    try {
+      const r = await fetch(`/api/wealth-practice/loans/${loanId}/repay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          borrowerMemberId,
+          repaymentAmountUsd: amt,
+          routingNumber: form?.routingNumber || undefined,
+          accountNumber: form?.accountNumber || undefined,
+          accountName: form?.accountName || undefined,
+        }),
+      });
+      const data = await r.json();
+      if (r.ok && data.success) {
+        setRepayMsg(prev => ({ ...prev, [loanId]: data.message || 'Repayment recorded.' }));
+        setRepayForm(prev => ({ ...prev, [loanId]: { repaymentAmountUsd: '', routingNumber: '', accountNumber: '', accountName: '' } }));
+        fetchGroupLoans(lendingGroupId);
+      } else {
+        setRepayError(prev => ({ ...prev, [loanId]: data.error || 'Failed to record repayment' }));
+      }
+    } catch {
+      setRepayError(prev => ({ ...prev, [loanId]: 'Network error' }));
+    } finally {
+      setRepaySubmitting(null);
+    }
+  };
+
+  const handleDefaultLoan = async (loanId: string) => {
+    setDefaultingLoan(loanId);
+    try {
+      const r = await fetch(`/api/wealth-practice/loans/group/${lendingGroupId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'default', loanId }),
+      });
+      const data = await r.json();
+      if (r.ok && data.success) {
+        fetchGroupLoans(lendingGroupId);
+      }
+    } catch { /* non-fatal */ }
+    finally { setDefaultingLoan(null); }
+  };
+
+  const handleAcceptPartial = async (loanId: string) => {
+    setAcceptingPartial(loanId);
+    setAcceptPartialError(prev => ({ ...prev, [loanId]: '' }));
+    try {
+      const r = await fetch(`/api/wealth-practice/loans/group/${lendingGroupId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'accept-partial', loanId }),
+      });
+      const data = await r.json();
+      if (r.ok && data.success) {
+        setAcceptPartialMsg(prev => ({ ...prev, [loanId]: data.message || 'Partial funding accepted.' }));
+        fetchGroupLoans(lendingGroupId);
+      } else {
+        setAcceptPartialError(prev => ({ ...prev, [loanId]: data.error || 'Failed to accept partial funding' }));
+      }
+    } catch {
+      setAcceptPartialError(prev => ({ ...prev, [loanId]: 'Network error' }));
+    } finally {
+      setAcceptingPartial(null);
+    }
+  };
+  // ──────────────────────────────────────────────────────────────────────────
 
   // Sync wagmi connected wallet → practiceAddress + joinWallet automatically
   useEffect(() => {
@@ -1801,6 +2035,499 @@ export default function WealthPracticePage() {
               {creating ? 'Creating...' : 'Create Group'}
             </button>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'lending' && (
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+            <div>
+              <h2 className="font-dl-serif text-xl text-dl-navy font-bold">Peer Lending</h2>
+              <p className="text-dl-gray text-sm mt-1">Members can request and fund loans within their group. Community-governed. No credit scoring.</p>
+            </div>
+            <div className="flex gap-2 items-center">
+              <select
+                value={lendingGroupId}
+                onChange={(e) => {
+                  setLendingGroupId(e.target.value);
+                  setLoans([]);
+                  setLoanMsg('');
+                  setLoanError('');
+                  setLoanStep(null);
+                  if (e.target.value) fetchGroupLoans(e.target.value);
+                }}
+                className="border border-dl-border bg-dl-bg px-3 py-2 text-sm text-dl-navy focus:outline-none min-h-[44px]"
+              >
+                <option value="">— Select a group —</option>
+                {myGroups.map((g) => (
+                  <option key={g.group_id} value={String(g.group_id)}>
+                    {g.display_name || `Group #${g.group_id}`}
+                  </option>
+                ))}
+                {groups.map((g) => (
+                  <option key={g.id} value={String(g.id)}>
+                    {g.display_name || `Group #${g.id}`}
+                  </option>
+                ))}
+              </select>
+              {lendingGroupId && (
+                <button
+                  onClick={() => {
+                    setLoanStep('terms');
+                    setLoanMsg('');
+                    setLoanError('');
+                  }}
+                  className="border border-dl-navy bg-dl-navy text-white px-4 py-2 text-sm font-bold hover:bg-dl-bg hover:text-dl-navy transition-none min-h-[44px] whitespace-nowrap"
+                >
+                  + Request Loan
+                </button>
+              )}
+            </div>
+          </div>
+
+          {!lendingGroupId && (
+            <div className="border border-dl-border p-8 text-center">
+              <p className="text-dl-gray text-sm">Select a group above to view open loan requests and activity.</p>
+              {myGroups.length === 0 && groups.length === 0 && (
+                <p className="text-dl-gray text-xs mt-2">You are not a member of any group yet. Visit the Discover tab to join one.</p>
+              )}
+            </div>
+          )}
+
+          {lendingGroupId && (
+            <>
+              {loanStep === 'terms' && (
+                <div className="border border-dl-navy p-6 mb-6 max-w-2xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-dl-serif text-lg text-dl-navy font-bold">Request a Loan — Step 1: Terms</h3>
+                    <button onClick={() => { setLoanStep(null); setLoanError(''); }} className="text-dl-gray text-xs hover:text-dl-navy">Cancel</button>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="block text-dl-navy text-sm font-bold mb-1">Your Member ID / Wallet Address</label>
+                    <input
+                      type="text"
+                      value={loanForm.borrowerMemberId}
+                      onChange={(e) => setLoanForm({ ...loanForm, borrowerMemberId: e.target.value })}
+                      placeholder="e.g. 0x1234... or member handle"
+                      className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <label className="block text-dl-navy text-sm font-bold mb-1">Loan Amount ($)</label>
+                      <input
+                        type="number"
+                        min={10}
+                        max={50000}
+                        value={loanForm.requestedAmountUsd}
+                        onChange={(e) => setLoanForm({ ...loanForm, requestedAmountUsd: e.target.value })}
+                        placeholder="500"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm font-dl-mono text-dl-navy focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-sm font-bold mb-1">Interest Rate (%)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={0.1}
+                        value={loanForm.interestRate}
+                        onChange={(e) => setLoanForm({ ...loanForm, interestRate: e.target.value })}
+                        placeholder="0"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm font-dl-mono text-dl-navy focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="block text-dl-navy text-sm font-bold mb-1">Purpose</label>
+                    <input
+                      type="text"
+                      value={loanForm.purpose}
+                      onChange={(e) => setLoanForm({ ...loanForm, purpose: e.target.value })}
+                      placeholder="e.g. Home repair, emergency medical, business supplies"
+                      className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-dl-navy text-sm font-bold mb-1">Repayment Terms</label>
+                    <textarea
+                      rows={2}
+                      value={loanForm.repaymentTerms}
+                      onChange={(e) => setLoanForm({ ...loanForm, repaymentTerms: e.target.value })}
+                      placeholder="e.g. Lump sum in 60 days, or 4 monthly installments of $125"
+                      className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  <h4 className="font-dl-serif text-dl-navy font-bold mb-2 text-sm">Disbursement Bank Account</h4>
+                  <p className="text-dl-gray text-xs mb-3">Your bank details are stored encrypted and used only to disburse funded loans via ACH.</p>
+
+                  <div className="mb-3">
+                    <label className="block text-dl-navy text-sm font-bold mb-1">Account Holder Name</label>
+                    <input
+                      type="text"
+                      value={loanForm.accountName}
+                      onChange={(e) => setLoanForm({ ...loanForm, accountName: e.target.value })}
+                      placeholder="Full legal name on account"
+                      className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-dl-navy text-sm font-bold mb-1">Routing Number</label>
+                      <input
+                        type="text"
+                        maxLength={9}
+                        value={loanForm.routingNumber}
+                        onChange={(e) => setLoanForm({ ...loanForm, routingNumber: e.target.value.replace(/\D/g, '') })}
+                        placeholder="9 digits"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm font-dl-mono text-dl-navy focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-sm font-bold mb-1">Account Number</label>
+                      <input
+                        type="text"
+                        value={loanForm.accountNumber}
+                        onChange={(e) => setLoanForm({ ...loanForm, accountNumber: e.target.value })}
+                        placeholder="Checking account"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm font-dl-mono text-dl-navy focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {loanError && <p className="text-sm mb-3" style={{ color: '#991b1b' }}>{loanError}</p>}
+
+                  <button
+                    onClick={handleLoanTermsSubmit}
+                    className="border border-dl-navy bg-dl-navy text-white px-6 py-2 text-sm font-bold hover:bg-dl-bg hover:text-dl-navy transition-none"
+                  >
+                    Next: Verify Identity &rarr;
+                  </button>
+                </div>
+              )}
+
+              {loanStep === 'bsa' && (
+                <div className="border border-dl-gold p-6 mb-6 max-w-2xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-dl-serif text-lg text-dl-navy font-bold">Step 2: Identity Verification (BSA)</h3>
+                    <button onClick={() => { setLoanStep('terms'); setLoanError(''); }} className="text-dl-gray text-xs hover:text-dl-navy">&larr; Back</button>
+                  </div>
+                  <p className="text-dl-gray text-sm mb-4">Required for all loan disbursements under Bank Secrecy Act compliance. Your information is hashed and never stored in plaintext.</p>
+
+                  <div className="mb-3">
+                    <label className="block text-dl-navy text-sm font-bold mb-1">Legal Full Name</label>
+                    <input
+                      type="text"
+                      value={loanBsa.bsaLegalName}
+                      onChange={(e) => setLoanBsa({ ...loanBsa, bsaLegalName: e.target.value })}
+                      className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <label className="block text-dl-navy text-sm font-bold mb-1">Date of Birth (YYYY-MM-DD)</label>
+                      <input
+                        type="text"
+                        value={loanBsa.bsaDob}
+                        onChange={(e) => setLoanBsa({ ...loanBsa, bsaDob: e.target.value })}
+                        placeholder="1990-01-15"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm font-dl-mono text-dl-navy focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-sm font-bold mb-1">Country of Residence</label>
+                      <input
+                        type="text"
+                        value={loanBsa.bsaCountry}
+                        onChange={(e) => setLoanBsa({ ...loanBsa, bsaCountry: e.target.value })}
+                        placeholder="US"
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm font-dl-mono text-dl-navy focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-dl-navy text-sm font-bold mb-1">ID Type</label>
+                      <select
+                        value={loanBsa.bsaIdType}
+                        onChange={(e) => setLoanBsa({ ...loanBsa, bsaIdType: e.target.value as 'ssn' | 'passport' })}
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]"
+                      >
+                        <option value="ssn">SSN (last 4)</option>
+                        <option value="passport">Passport Number</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-dl-navy text-sm font-bold mb-1">
+                        {loanBsa.bsaIdType === 'ssn' ? 'Last 4 of SSN' : 'Passport Number'}
+                      </label>
+                      <input
+                        type="text"
+                        value={loanBsa.bsaIdNumber}
+                        onChange={(e) => setLoanBsa({ ...loanBsa, bsaIdNumber: e.target.value })}
+                        placeholder={loanBsa.bsaIdType === 'ssn' ? '4 digits' : 'Alphanumeric'}
+                        maxLength={loanBsa.bsaIdType === 'ssn' ? 4 : 20}
+                        className="w-full border border-dl-border bg-dl-bg px-4 py-2 text-sm font-dl-mono text-dl-navy focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {loanError && <p className="text-sm mb-3" style={{ color: '#991b1b' }}>{loanError}</p>}
+
+                  <button
+                    onClick={handleLoanRequest}
+                    disabled={loanSubmitting}
+                    className="border border-dl-navy bg-dl-navy text-white px-6 py-2 text-sm font-bold hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-50"
+                  >
+                    {loanSubmitting ? 'Submitting...' : 'Submit Loan Request'}
+                  </button>
+                </div>
+              )}
+
+              {loanMsg && (
+                <div className="border border-dl-forest p-3 mb-4 text-sm text-dl-forest">
+                  {loanMsg}
+                </div>
+              )}
+
+              {loansLoading && <p className="text-dl-gray text-sm">Loading loans...</p>}
+              {loansError && <p className="text-sm mb-4" style={{ color: '#991b1b' }}>{loansError}</p>}
+
+              {!loansLoading && loans.length === 0 && !loansError && (
+                <div className="border border-dl-border p-8 text-center">
+                  <p className="text-dl-gray text-sm">No loan requests yet in this group.</p>
+                  <p className="text-dl-gray text-xs mt-1">Click &ldquo;Request Loan&rdquo; above to submit the first one.</p>
+                </div>
+              )}
+
+              {loans.map((loan) => {
+                const fundedPct = Math.min(100, (parseFloat(loan.fundedAmountUsd) / parseFloat(loan.requestedAmountUsd)) * 100);
+                const statusColors: Record<string, string> = {
+                  open: 'border-dl-gold text-dl-gold',
+                  funded: 'border-dl-forest text-dl-forest',
+                  repaying: 'border-dl-navy text-dl-navy',
+                  closed: 'border-dl-gray text-dl-gray',
+                  defaulted: 'text-red-700 border-red-300',
+                  pending: 'border-dl-gold text-dl-gold',
+                };
+                const statusLabel: Record<string, string> = {
+                  open: 'Open — Seeking Pledges',
+                  funded: 'Funded — Disbursed',
+                  repaying: 'Repaying',
+                  closed: 'Closed — Fully Repaid',
+                  defaulted: 'Defaulted',
+                  pending: 'Pending',
+                };
+                return (
+                  <div key={loan.id} className="border border-dl-border mb-4">
+                    <div
+                      className="px-5 py-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 cursor-pointer"
+                      onClick={() => setExpandedLoan(expandedLoan === loan.id ? null : loan.id)}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className={`text-[10px] font-dl-mono uppercase border px-2 py-0.5 ${statusColors[loan.status] || 'border-dl-border text-dl-gray'}`}>
+                            {statusLabel[loan.status] || loan.status}
+                          </span>
+                          <span className="text-dl-gray text-xs">{new Date(loan.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div className="font-dl-serif text-dl-navy font-bold text-base">{loan.purpose}</div>
+                        <div className="text-dl-gray text-xs mt-0.5">Borrower: <span className="font-dl-mono">{loan.borrowerMemberId}</span></div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-dl-mono text-xl text-dl-navy font-bold">${parseFloat(loan.requestedAmountUsd).toFixed(2)}</div>
+                        <div className="text-dl-gray text-xs">
+                          Funded: ${parseFloat(loan.fundedAmountUsd).toFixed(2)}
+                          {parseFloat(loan.interestRate) > 0 && ` · ${parseFloat(loan.interestRate)}% interest`}
+                        </div>
+                        <div className="text-dl-gray text-xs mt-0.5">{loan.pledgeCount} pledge{loan.pledgeCount !== 1 ? 's' : ''}</div>
+                      </div>
+                    </div>
+
+                    {['pending', 'open'].includes(loan.status) && (
+                      <div className="mx-5 mb-3">
+                        <div className="h-1.5 bg-dl-border rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-dl-forest rounded-full transition-all"
+                            style={{ width: `${fundedPct}%` }}
+                          />
+                        </div>
+                        <div className="text-dl-gray text-xs mt-1">
+                          {fundedPct.toFixed(0)}% funded
+                          {loan.status === 'pending' && ' — accepting pledges'}
+                        </div>
+                      </div>
+                    )}
+
+                    {expandedLoan === loan.id && (
+                      <div className="border-t border-dl-border px-5 pb-5 pt-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <div className="text-dl-gray text-xs font-bold uppercase mb-1">Repayment Terms</div>
+                            <p className="text-dl-navy text-sm">{loan.repaymentTerms}</p>
+                          </div>
+                          {loan.stellarTransferId && (
+                            <div>
+                              <div className="text-dl-gray text-xs font-bold uppercase mb-1">Axiom Rail Transfer</div>
+                              <p className="font-dl-mono text-xs text-dl-navy break-all">{loan.stellarTransferId}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {loan.pledges.length > 0 && (
+                          <div className="mb-4">
+                            <div className="text-dl-gray text-xs font-bold uppercase mb-2">Pledges</div>
+                            <div className="divide-y divide-dl-border border border-dl-border">
+                              {loan.pledges.map((p) => (
+                                <div key={p.id} className="flex items-center justify-between px-4 py-2 text-sm">
+                                  <span className="font-dl-mono text-dl-navy text-xs">{p.lenderMemberId}</span>
+                                  <span className="text-dl-navy font-bold">${parseFloat(p.pledgeAmountUsd).toFixed(2)}</span>
+                                  {p.fulfilledAt && <span className="text-dl-forest text-xs">Fulfilled</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {['pending', 'open'].includes(loan.status) && (
+                          <div className="border border-dl-border p-4 mb-3">
+                            <h4 className="font-dl-serif text-dl-navy font-bold text-sm mb-3">Pledge to Fund</h4>
+                            <div className="grid grid-cols-2 gap-3 mb-3">
+                              <div>
+                                <label className="block text-dl-navy text-xs font-bold mb-1">Your Member ID</label>
+                                <input
+                                  type="text"
+                                  value={pledgeForm[loan.id]?.lenderMemberId || ''}
+                                  onChange={(e) => setPledgeForm(prev => ({ ...prev, [loan.id]: { ...prev[loan.id], lenderMemberId: e.target.value } }))}
+                                  placeholder="Your wallet or member ID"
+                                  className="w-full border border-dl-border bg-dl-bg px-3 py-2 text-xs text-dl-navy focus:outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-dl-navy text-xs font-bold mb-1">Pledge Amount ($)</label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={pledgeForm[loan.id]?.pledgeAmountUsd || ''}
+                                  onChange={(e) => setPledgeForm(prev => ({ ...prev, [loan.id]: { ...prev[loan.id], pledgeAmountUsd: e.target.value } }))}
+                                  placeholder="100"
+                                  className="w-full border border-dl-border bg-dl-bg px-3 py-2 text-xs font-dl-mono text-dl-navy focus:outline-none"
+                                />
+                              </div>
+                            </div>
+                            {pledgeError[loan.id] && <p className="text-xs mb-2" style={{ color: '#991b1b' }}>{pledgeError[loan.id]}</p>}
+                            {pledgeMsg[loan.id] && <p className="text-xs mb-2 text-dl-forest">{pledgeMsg[loan.id]}</p>}
+                            <button
+                              onClick={() => handlePledge(loan.id)}
+                              disabled={pledgeSubmitting === loan.id}
+                              className="border border-dl-forest bg-dl-forest text-white px-4 py-2 text-xs font-bold hover:bg-dl-bg hover:text-dl-forest transition-none disabled:opacity-50"
+                            >
+                              {pledgeSubmitting === loan.id ? 'Pledging...' : 'Submit Pledge'}
+                            </button>
+                          </div>
+                        )}
+
+                        {['pending', 'open'].includes(loan.status) && parseFloat(loan.fundedAmountUsd) >= 1 && (
+                          <div className="border border-dl-gold p-4 mb-3">
+                            <h4 className="font-dl-serif text-dl-navy font-bold text-sm mb-1">Accept Partial Funding</h4>
+                            <p className="text-dl-gray text-xs mb-3">
+                              ${parseFloat(loan.fundedAmountUsd).toFixed(2)} of ${parseFloat(loan.requestedAmountUsd).toFixed(2)} has been pledged.
+                              As the borrower, you can accept the current partial amount and trigger disbursement now, or wait for full funding.
+                            </p>
+                            {acceptPartialError[loan.id] && <p className="text-xs mb-2" style={{ color: '#991b1b' }}>{acceptPartialError[loan.id]}</p>}
+                            {acceptPartialMsg[loan.id] && <p className="text-xs mb-2 text-dl-forest">{acceptPartialMsg[loan.id]}</p>}
+                            <button
+                              onClick={() => handleAcceptPartial(loan.id)}
+                              disabled={acceptingPartial === loan.id}
+                              className="border border-dl-gold text-dl-gold px-4 py-2 text-xs font-bold hover:bg-dl-gold hover:text-white transition-none disabled:opacity-50"
+                            >
+                              {acceptingPartial === loan.id ? 'Processing...' : `Accept $${parseFloat(loan.fundedAmountUsd).toFixed(2)} & Disburse`}
+                            </button>
+                          </div>
+                        )}
+
+                        {(loan.status === 'funded' || loan.status === 'repaying') && (
+                          <div className="border border-dl-border p-4 mb-3">
+                            <h4 className="font-dl-serif text-dl-navy font-bold text-sm mb-3">Submit a Repayment</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                              <div>
+                                <label className="block text-dl-navy text-xs font-bold mb-1">Amount ($)</label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={repayForm[loan.id]?.repaymentAmountUsd || ''}
+                                  onChange={(e) => setRepayForm(prev => ({ ...prev, [loan.id]: { ...prev[loan.id] || {}, repaymentAmountUsd: e.target.value, routingNumber: prev[loan.id]?.routingNumber || '', accountNumber: prev[loan.id]?.accountNumber || '', accountName: prev[loan.id]?.accountName || '' } }))}
+                                  placeholder="250"
+                                  className="w-full border border-dl-border bg-dl-bg px-3 py-2 text-xs font-dl-mono text-dl-navy focus:outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-dl-navy text-xs font-bold mb-1">Routing # (optional)</label>
+                                <input
+                                  type="text"
+                                  maxLength={9}
+                                  value={repayForm[loan.id]?.routingNumber || ''}
+                                  onChange={(e) => setRepayForm(prev => ({ ...prev, [loan.id]: { ...prev[loan.id] || {}, routingNumber: e.target.value.replace(/\D/g, ''), repaymentAmountUsd: prev[loan.id]?.repaymentAmountUsd || '', accountNumber: prev[loan.id]?.accountNumber || '', accountName: prev[loan.id]?.accountName || '' } }))}
+                                  placeholder="9 digits"
+                                  className="w-full border border-dl-border bg-dl-bg px-3 py-2 text-xs font-dl-mono text-dl-navy focus:outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-dl-navy text-xs font-bold mb-1">Account # (optional)</label>
+                                <input
+                                  type="text"
+                                  value={repayForm[loan.id]?.accountNumber || ''}
+                                  onChange={(e) => setRepayForm(prev => ({ ...prev, [loan.id]: { ...prev[loan.id] || {}, accountNumber: e.target.value, repaymentAmountUsd: prev[loan.id]?.repaymentAmountUsd || '', routingNumber: prev[loan.id]?.routingNumber || '', accountName: prev[loan.id]?.accountName || '' } }))}
+                                  placeholder="Checking"
+                                  className="w-full border border-dl-border bg-dl-bg px-3 py-2 text-xs font-dl-mono text-dl-navy focus:outline-none"
+                                />
+                              </div>
+                            </div>
+                            {repayError[loan.id] && <p className="text-xs mb-2" style={{ color: '#991b1b' }}>{repayError[loan.id]}</p>}
+                            {repayMsg[loan.id] && <p className="text-xs mb-2 text-dl-forest">{repayMsg[loan.id]}</p>}
+                            <button
+                              onClick={() => handleRepay(loan.id, loan.borrowerMemberId)}
+                              disabled={repaySubmitting === loan.id}
+                              className="border border-dl-navy bg-dl-navy text-white px-4 py-2 text-xs font-bold hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-50"
+                            >
+                              {repaySubmitting === loan.id ? 'Submitting...' : 'Record Repayment'}
+                            </button>
+                          </div>
+                        )}
+
+                        {!['closed', 'defaulted'].includes(loan.status) && (
+                          <div className="flex justify-end">
+                            <button
+                              onClick={() => handleDefaultLoan(loan.id)}
+                              disabled={defaultingLoan === loan.id}
+                              className="text-xs text-dl-gray border border-dl-border px-3 py-1.5 hover:border-red-300 hover:text-red-700 transition-none disabled:opacity-50"
+                            >
+                              {defaultingLoan === loan.id ? 'Marking...' : 'Mark as Defaulted (Admin)'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              <div className="mt-6 border border-dl-border p-4">
+                <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
+                  <span className="text-dl-navy font-semibold">Peer Lending Model:</span> Loans within Wealth Practice groups are community-governed. There is no automated enforcement or credit scoring. Group trust and social accountability govern repayment. Axiom Protocol facilitates disbursement and repayment tracking through Axiom Rail (ACH) but does not guarantee loan recovery. Members lend at their own discretion.
+                </p>
+              </div>
+            </>
+          )}
         </div>
       )}
     </DesignLawLayout>

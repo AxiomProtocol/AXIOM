@@ -6959,6 +6959,46 @@ END $seed$`, 'seed dp_listings');
       await exec(`CREATE UNIQUE INDEX IF NOT EXISTS circle_webhook_notification_id_idx ON circle_webhook_events(notification_id)`, 'index circle_webhook_notification_id_idx');
 
       // ═══════════════════════════════════════════
+      //  WEALTH PRACTICE PEER LENDING
+      // ═══════════════════════════════════════════
+
+      await exec(`DO $$ BEGIN CREATE TYPE wealth_practice_loan_status AS ENUM ('pending','open','funded','repaying','closed','defaulted'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`, 'enum wealth_practice_loan_status');
+
+      await exec(`CREATE TABLE IF NOT EXISTS wealth_practice_loans (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        group_id INTEGER NOT NULL,
+        borrower_member_id VARCHAR(100) NOT NULL,
+        requested_amount_usd NUMERIC(18,2) NOT NULL,
+        funded_amount_usd NUMERIC(18,2) DEFAULT 0,
+        purpose TEXT NOT NULL,
+        repayment_terms TEXT NOT NULL,
+        interest_rate NUMERIC(6,4) NOT NULL DEFAULT 0,
+        status wealth_practice_loan_status NOT NULL DEFAULT 'pending',
+        bsa_hash VARCHAR(64),
+        borrower_routing_number TEXT,
+        borrower_account_number TEXT,
+        borrower_account_name TEXT,
+        stellar_transfer_id UUID,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        funded_at TIMESTAMPTZ,
+        closed_at TIMESTAMPTZ
+      )`, 'table wealth_practice_loans');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_wpl_group_id ON wealth_practice_loans(group_id)`, 'index wealth_practice_loans.group_id');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_wpl_borrower ON wealth_practice_loans(borrower_member_id)`, 'index wealth_practice_loans.borrower_member_id');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_wpl_status ON wealth_practice_loans(status)`, 'index wealth_practice_loans.status');
+
+      await exec(`CREATE TABLE IF NOT EXISTS wealth_practice_loan_pledges (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        loan_id UUID NOT NULL REFERENCES wealth_practice_loans(id) ON DELETE CASCADE,
+        lender_member_id VARCHAR(100) NOT NULL,
+        pledge_amount_usd NUMERIC(18,2) NOT NULL,
+        fulfilled_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'table wealth_practice_loan_pledges');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_wplp_loan_id ON wealth_practice_loan_pledges(loan_id)`, 'index wealth_practice_loan_pledges.loan_id');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_wplp_lender ON wealth_practice_loan_pledges(lender_member_id)`, 'index wealth_practice_loan_pledges.lender_member_id');
+
+      // ═══════════════════════════════════════════
       //  COMMUNITY CREDIT NONCES
       // ═══════════════════════════════════════════
 
