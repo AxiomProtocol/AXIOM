@@ -143,6 +143,14 @@ export const IncreaseService = {
     return increaseRequest<{ data: IncreaseAccount[] }>('GET', '/accounts');
   },
 
+  async createAccount(params: {
+    name: string;
+    program_id: string;
+    entity_id?: string;
+  }): Promise<IncreaseAccount> {
+    return increaseRequest<IncreaseAccount>('POST', '/accounts', params);
+  },
+
   async getAccountBalance(accountId: string): Promise<{ available_balance: number; current_balance: number; currency: string }> {
     return increaseRequest('GET', `/accounts/${accountId}/balance`);
   },

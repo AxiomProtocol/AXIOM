@@ -113,7 +113,8 @@ type TabId =
   | 'compliance'
   | 'banking'
   | 'axauQueue'
-  | 'axiomRail';
+  | 'axiomRail'
+  | 'daoAccounts';
 
 const FRAMEWORK_PRINCIPLE = `This is not a personal budget. This is a disciplined capital deployment system designed to build a machine-verifiable operating record across Axiom's live rails. The objective is not to maximize short-term return. The objective is to systematically produce proof that Axiom's infrastructure is active, capitalized, measurable, and compounding across on-chain liquidity, real asset intelligence, and community coordination.`;
 
@@ -269,6 +270,14 @@ export default function FounderOpsPage() {
   const [bankingError, setBankingError] = useState<string | null>(null);
   const [bankingTxData, setBankingTxData] = useState<{ transactions: any[]; pending: any[] } | null>(null);
   const [bankingAdminKey, setBankingAdminKey] = useState('');
+
+  // DAO Accounts tab state
+  const [daoAccounts, setDaoAccounts] = useState<any[]>([]);
+  const [daoAccountsLoading, setDaoAccountsLoading] = useState(false);
+  const [daoAccountsError, setDaoAccountsError] = useState<string | null>(null);
+  const [daoAdminKey, setDaoAdminKey] = useState('');
+  const [daoProvisioningId, setDaoProvisioningId] = useState<string | null>(null);
+  const [daoProvisionMsg, setDaoProvisionMsg] = useState<{ id: string; type: 'success' | 'error'; text: string } | null>(null);
 
   // Axiom Rail settlements tab state
   const [railSettlements, setRailSettlements] = useState<any[]>([]);
@@ -465,6 +474,52 @@ export default function FounderOpsPage() {
         .then(j => { if (j?.data) setAxauBuffer(j.data); })
         .catch(() => {})
         .finally(() => setAxauBufferLoading(false));
+    }
+  };
+
+  const loadDaoAccounts = async (key?: string) => {
+    const k = key ?? daoAdminKey;
+    if (!k) { setDaoAccountsError('Enter admin key and click Refresh.'); return; }
+    setDaoAccountsLoading(true);
+    setDaoAccountsError(null);
+    try {
+      const res = await fetch('/api/banking/dao-account/list', { headers: { 'x-admin-key': k } });
+      const json = await res.json();
+      if (!res.ok) setDaoAccountsError(json.error ?? 'Failed to load DAO accounts');
+      else setDaoAccounts(json.data ?? []);
+    } catch (e) {
+      setDaoAccountsError(String(e));
+    } finally {
+      setDaoAccountsLoading(false);
+    }
+  };
+
+  const handleDaoProvision = async (applicationId: string) => {
+    const k = daoAdminKey;
+    if (!k) { setDaoProvisionMsg({ id: applicationId, type: 'error', text: 'Admin key required' }); return; }
+    setDaoProvisioningId(applicationId);
+    setDaoProvisionMsg(null);
+    try {
+      const res = await fetch('/api/banking/dao-account/provision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': k },
+        body: JSON.stringify({ applicationId }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setDaoProvisionMsg({ id: applicationId, type: 'error', text: json.error ?? 'Provision failed' });
+      } else {
+        setDaoProvisionMsg({
+          id: applicationId,
+          type: 'success',
+          text: `Provisioned — Account ID: ${json.data.increaseAccountId} · Token: ${json.data.accountToken}`,
+        });
+        await loadDaoAccounts(k);
+      }
+    } catch (e) {
+      setDaoProvisionMsg({ id: applicationId, type: 'error', text: String(e) });
+    } finally {
+      setDaoProvisioningId(null);
     }
   };
 
@@ -853,6 +908,7 @@ export default function FounderOpsPage() {
     { id: 'banking', label: 'Banking' },
     { id: 'axauQueue', label: `AXAU Queue${axauQueue.filter(r => r.status === 'pending').length > 0 ? ` (${axauQueue.filter(r => r.status === 'pending').length})` : ''}` },
     { id: 'axiomRail', label: `Axiom Rail${railSummary ? ` (${(railSummary.byStatus.pending_user_transfer_start ?? 0) + (railSummary.byStatus.pending_external ?? 0) + (railSummary.byStatus.pending_anchor ?? 0)} pending)` : ''}` },
+    { id: 'daoAccounts', label: `DAO Accounts${daoAccounts.filter(a => a.status === 'pending_review').length > 0 ? ` (${daoAccounts.filter(a => a.status === 'pending_review').length} pending)` : ''}` },
   ];
 
   const primaryPool = pools.find(p => p.reserve0Label && p.reserve1Label) || pools[0] || null;
@@ -897,6 +953,7 @@ export default function FounderOpsPage() {
                     if (tab.id === 'banking') { loadBankingData(); }
                     if (tab.id === 'axauQueue') { loadAxauQueue(); }
                     if (tab.id === 'axiomRail') { loadAxiomRailSettlements(); }
+                    if (tab.id === 'daoAccounts') { loadDaoAccounts(); }
                   }}
                   className={`px-4 py-2 text-sm border-b-2 -mb-px ${
                     activeTab === tab.id
@@ -3221,6 +3278,158 @@ export default function FounderOpsPage() {
                       ['Signing Key', 'GBLOO5…YIIY'],
                       ['Deposit Account', 'GA4GMI…VITM7P'],
                       ['Settlement Bank', 'Thread Bank via Increase'],
+                    ].map(([lbl, val]) => (
+                      <div key={lbl}>
+                        <p className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider">{lbl}</p>
+                        <p className="font-dl-mono text-xs text-dl-navy mt-1">{val}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── TAB: DAO ACCOUNTS ──────────────────────────────────── */}
+            {activeTab === 'daoAccounts' && (
+              <>
+                <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+                  <div>
+                    <h2 className="font-dl-serif text-xl text-dl-navy mb-1">DAO Operating Accounts</h2>
+                    <p className="font-dl-mono text-xs text-dl-gray">Review applications · Provision via Increase · Manage active accounts</p>
+                  </div>
+                  <a href="/banking/dao-account" target="_blank" rel="noopener noreferrer"
+                    className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy">
+                    Application Page ↗
+                  </a>
+                </div>
+
+                <div className="flex gap-3 items-center mb-5 flex-wrap">
+                  <input
+                    type="password"
+                    placeholder="Admin key"
+                    value={daoAdminKey}
+                    onChange={e => setDaoAdminKey(e.target.value)}
+                    className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-surface w-56 outline-none"
+                  />
+                  <button
+                    onClick={() => loadDaoAccounts(daoAdminKey)}
+                    disabled={daoAccountsLoading}
+                    className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 uppercase tracking-wider hover:bg-dl-navy hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    {daoAccountsLoading ? 'Loading…' : 'Refresh'}
+                  </button>
+                </div>
+
+                {daoAccountsError && (
+                  <div className="border border-dl-error p-4 mb-4">
+                    <p className="font-dl-mono text-xs text-dl-error">{daoAccountsError}</p>
+                  </div>
+                )}
+
+                {daoAccountsLoading && !daoAccounts.length && (
+                  <p className="font-dl-mono text-xs text-dl-gray">Loading applications…</p>
+                )}
+
+                {!daoAccountsLoading && daoAccounts.length === 0 && !daoAccountsError && (
+                  <div className="border border-dl-border p-8 text-center">
+                    <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">No applications found</p>
+                    <p className="font-dl-serif text-sm text-dl-gray mt-2">Enter admin key and click Refresh to load data.</p>
+                  </div>
+                )}
+
+                {daoAccounts.length > 0 && (
+                  <>
+                    <div className="grid grid-cols-4 gap-0 border border-dl-border mb-4 bg-dl-bg-alt">
+                      {[
+                        { label: 'Total', value: daoAccounts.length, color: 'text-dl-navy' },
+                        { label: 'Pending Review', value: daoAccounts.filter((a: any) => a.status === 'pending_review').length, color: 'text-yellow-700' },
+                        { label: 'Active', value: daoAccounts.filter((a: any) => a.status === 'active').length, color: 'text-dl-forest' },
+                        { label: 'Rejected', value: daoAccounts.filter((a: any) => a.status === 'rejected').length, color: 'text-dl-error' },
+                      ].map((s, i) => (
+                        <div key={i} className="p-3 border-r border-dl-border last:border-r-0">
+                          <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-1">{s.label}</p>
+                          <p className={`font-dl-mono text-sm font-bold ${s.color}`}>{s.value}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="overflow-x-auto border border-dl-border">
+                      <table className="w-full text-left min-w-[900px]">
+                        <thead>
+                          <tr className="bg-dl-bg-alt border-b border-dl-border">
+                            {['ID', 'Entity Name', 'EIN', 'Address', 'Status', 'Increase Account', 'Applied', 'Actions'].map(h => (
+                              <th key={h} className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider px-4 py-3">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {daoAccounts.map((app: any) => {
+                            const shortId = app.id?.slice(0, 8)?.toUpperCase();
+                            const statusColors: Record<string, string> = {
+                              pending_review: 'border-yellow-400 text-yellow-700 bg-yellow-50',
+                              approved:       'border-blue-400 text-blue-700 bg-blue-50',
+                              active:         'border-dl-forest text-dl-forest bg-green-50',
+                              rejected:       'border-dl-error text-dl-error bg-red-50',
+                            };
+                            const sc = statusColors[app.status] ?? 'border-dl-border text-dl-gray';
+                            const isBusy = daoProvisioningId === app.id;
+
+                            return (
+                              <tr key={app.id} className="border-b border-dl-border hover:bg-dl-bg-alt">
+                                <td className="px-4 py-3 font-dl-mono text-xs text-dl-navy">#{shortId}</td>
+                                <td className="px-4 py-3 font-dl-mono text-xs text-dl-navy font-bold">{app.entityName}</td>
+                                <td className="px-4 py-3 font-dl-mono text-xs text-dl-gray">{app.entityEin ? `${app.entityEin.slice(0, 2)}-${app.entityEin.slice(2)}` : '—'}</td>
+                                <td className="px-4 py-3 font-dl-mono text-xs text-dl-gray" title={app.entityAddress}>{app.entityAddress ? app.entityAddress.slice(0, 30) + (app.entityAddress.length > 30 ? '…' : '') : '—'}</td>
+                                <td className="px-4 py-3">
+                                  <span className={`font-dl-mono text-[9px] border px-2 py-0.5 uppercase tracking-wider ${sc}`}>
+                                    {app.status.replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 font-dl-mono text-[10px] text-dl-gray">
+                                  {app.increaseAccountId ? (
+                                    <span title={app.increaseAccountId}>{app.increaseAccountId.slice(0, 12)}…</span>
+                                  ) : '—'}
+                                </td>
+                                <td className="px-4 py-3 font-dl-mono text-xs text-dl-gray">
+                                  {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}
+                                </td>
+                                <td className="px-4 py-3">
+                                  {app.status === 'active' ? (
+                                    <span className="font-dl-mono text-[9px] text-dl-forest">Provisioned</span>
+                                  ) : app.status === 'rejected' ? (
+                                    <span className="font-dl-mono text-[9px] text-dl-error">Rejected</span>
+                                  ) : (
+                                    <div className="flex flex-col gap-1">
+                                      <button
+                                        onClick={() => handleDaoProvision(app.id)}
+                                        disabled={isBusy || app.status === 'active'}
+                                        className="font-dl-mono text-[9px] border border-dl-forest text-dl-forest px-2 py-1 uppercase tracking-wider hover:bg-green-50 disabled:opacity-50"
+                                      >
+                                        {isBusy ? 'Provisioning…' : 'Provision Account'}
+                                      </button>
+                                      {daoProvisionMsg?.id === app.id && (
+                                        <p className={`font-dl-mono text-[9px] break-all ${daoProvisionMsg.type === 'success' ? 'text-dl-forest' : 'text-dl-error'}`}>
+                                          {daoProvisionMsg.text}
+                                        </p>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+
+                <div className="border-t border-dl-border pt-5 mt-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {[
+                      ['Banking Layer', 'Increase / First Internet Bank'],
+                      ['FDIC Coverage', 'Up to $250,000 per depositor'],
+                      ['Application Page', '/banking/dao-account'],
                     ].map(([lbl, val]) => (
                       <div key={lbl}>
                         <p className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider">{lbl}</p>
