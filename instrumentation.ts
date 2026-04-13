@@ -7011,6 +7011,42 @@ END $seed$`, 'seed dp_listings');
       )`, 'table community_credit_nonces');
       await exec(`CREATE INDEX IF NOT EXISTS community_credit_nonces_wallet_idx ON community_credit_nonces(wallet_address)`, 'index community_credit_nonces_wallet_idx');
 
+      // ═══════════════════════════════════════════
+      //  AXIOM RAIL ESCROW SERVICE
+      // ═══════════════════════════════════════════
+
+      // Primary enum names matching shared/escrowSchema.ts pgEnum declarations
+      await exec(enumSafe('escrow_purpose', ['security_deposit','earnest_money','milestone']), 'enum escrow_purpose');
+      await exec(enumSafe('escrow_release_condition', ['bilateral_approval','deadline']), 'enum escrow_release_condition');
+      await exec(enumSafe('escrow_status', ['pending_funding','funded','releasing','released','disputed','cancelled']), 'enum escrow_status');
+
+      await exec(`CREATE TABLE IF NOT EXISTS axiom_rail_escrows (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        initiator_name VARCHAR(200) NOT NULL,
+        counterparty_name VARCHAR(200) NOT NULL,
+        counterparty_email VARCHAR(300) NOT NULL,
+        amount_usd NUMERIC(18,2) NOT NULL,
+        purpose escrow_purpose NOT NULL,
+        release_condition escrow_release_condition NOT NULL,
+        deadline TIMESTAMPTZ,
+        beneficiary_routing VARCHAR(9) NOT NULL,
+        beneficiary_account VARCHAR(100) NOT NULL,
+        beneficiary_bank_name VARCHAR(200) NOT NULL,
+        initiator_token_hash VARCHAR(64) NOT NULL,
+        counterparty_token_hash VARCHAR(64) NOT NULL,
+        bsa_hash VARCHAR(64) NOT NULL,
+        status escrow_status NOT NULL DEFAULT 'pending_funding',
+        initiator_approved BOOLEAN NOT NULL DEFAULT FALSE,
+        counterparty_approved BOOLEAN NOT NULL DEFAULT FALSE,
+        released_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`, 'table axiom_rail_escrows');
+      await exec(`CREATE INDEX IF NOT EXISTS escrows_status_idx ON axiom_rail_escrows(status)`, 'index escrows_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS escrows_release_cond_idx ON axiom_rail_escrows(release_condition)`, 'index escrows_release_cond_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS escrows_deadline_idx ON axiom_rail_escrows(deadline) WHERE deadline IS NOT NULL`, 'index escrows_deadline_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS escrows_counterparty_email_idx ON axiom_rail_escrows(counterparty_email)`, 'index escrows_counterparty_email_idx');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();

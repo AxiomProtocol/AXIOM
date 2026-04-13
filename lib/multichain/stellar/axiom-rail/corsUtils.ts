@@ -41,7 +41,7 @@ export function setRailCors(req: NextApiRequest, res: NextApiResponse): void {
   res.setHeader('Access-Control-Allow-Origin', allowed);
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-admin-key,x-mgmt-token');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-admin-key,x-mgmt-token,x-party-token');
 }
 
 export function handlePreflight(req: NextApiRequest, res: NextApiResponse): boolean {

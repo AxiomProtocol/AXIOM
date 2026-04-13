@@ -478,3 +478,83 @@ export async function sendAxauPurchaseRequestConfirmation(params: {
     html,
   });
 }
+
+export async function sendEscrowCounterpartyInvitation(
+  to: string,
+  opts: {
+    counterpartyName: string;
+    initiatorName: string;
+    amountUsd: string;
+    purpose: string;
+    escrowUrl: string;
+    counterpartyToken: string;
+  }
+) {
+  let client: Resend;
+  let fromEmail: string;
+  try {
+    const creds = await getResendClient();
+    client = creds.client;
+    fromEmail = creds.fromEmail;
+  } catch (err) {
+    console.warn('[Escrow] Resend not configured — logging counterparty token delivery only:', opts.escrowUrl);
+    return;
+  }
+
+  const purposeLabel: Record<string, string> = {
+    security_deposit: 'Security Deposit',
+    earnest_money: 'Earnest Money',
+    milestone: 'Milestone Payment',
+  };
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f7fa;font-family:monospace,Courier,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fa;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid #dde4ee;max-width:600px;width:100%;">
+        <tr><td style="background:#1e3a5f;padding:28px 32px;">
+          <span style="color:#fff;font-family:monospace;font-size:13px;letter-spacing:0.12em;text-transform:uppercase;">AXIOM RAIL / ESCROW</span>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          <h1 style="color:#1e3a5f;font-family:Georgia,serif;font-size:22px;margin:0 0 16px;">You have been invited to an escrow agreement</h1>
+          <p style="color:#333;font-size:14px;line-height:1.6;margin:0 0 20px;">
+            <strong>${opts.initiatorName}</strong> has opened a <strong>${purposeLabel[opts.purpose] ?? opts.purpose}</strong>
+            escrow for <strong>$${Number(opts.amountUsd).toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
+            and has named you as the counterparty.
+          </p>
+          <p style="color:#333;font-size:14px;line-height:1.6;margin:0 0 24px;">
+            To view the escrow status, confirm funding, or approve the release, visit the link below
+            and enter your unique access token. <strong>Save this token — it will not be shown again.</strong>
+          </p>
+          <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+            <tr><td style="background:#1e3a5f;padding:12px 28px;">
+              <a href="${opts.escrowUrl}" style="color:#fff;font-family:monospace;font-size:13px;text-decoration:none;letter-spacing:0.06em;">VIEW ESCROW →</a>
+            </td></tr>
+          </table>
+          <div style="background:#f8f9fb;border:1px solid #dde4ee;padding:16px 20px;margin:0 0 20px;">
+            <div style="font-size:11px;color:#7a8fa8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Your Counterparty Access Token</div>
+            <div style="font-family:monospace;font-size:12px;color:#1e3a5f;word-break:break-all;">${opts.counterpartyToken}</div>
+          </div>
+          <p style="color:#7a8fa8;font-size:12px;line-height:1.6;margin:0;">
+            This token grants you the ability to approve or dispute the escrow release.
+            Keep it confidential. If you did not expect this email, you may disregard it.
+          </p>
+        </td></tr>
+        <tr><td style="background:#f4f7fa;border-top:1px solid #dde4ee;padding:20px 32px;">
+          <span style="color:#7a8fa8;font-size:11px;font-family:monospace;">Axiom Rail — Escrow Service</span>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  return client.emails.send({
+    from: fromEmail,
+    to: [to],
+    subject: `Escrow Invitation: ${opts.initiatorName} has opened a ${purposeLabel[opts.purpose] ?? opts.purpose} escrow with you`,
+    html,
+  });
+}

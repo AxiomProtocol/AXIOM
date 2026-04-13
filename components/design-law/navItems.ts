@@ -20,6 +20,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/axiom-payment-rails', label: 'Axiom Payment Rails' },
       { href: '/dao-payroll', label: 'DAO Payroll' },
       { href: '/rent-collection', label: 'Rent Collection' },
+      { href: '/escrow/new', label: 'Escrow' },
       { href: '/depin/denet', label: 'DePIN Network' },
     ],
   },
