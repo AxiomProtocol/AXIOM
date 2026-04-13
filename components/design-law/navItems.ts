@@ -53,6 +53,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/banking/dao-account', label: 'DAO Operating Account' },
       { href: '/direct-deposit', label: 'Direct Deposit' },
       { href: '/credit', label: 'Credit Line' },
+      { href: '/savings', label: 'Savings' },
       { href: '/wealth-practice', label: 'Wealth Practice' },
       { href: '/lending-fund', label: 'Lending Fund' },
       { href: '/syndication', label: 'Syndication' },

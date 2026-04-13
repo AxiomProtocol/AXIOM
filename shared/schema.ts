@@ -9657,3 +9657,23 @@ export const mirdtSignalLog = pgTable("mirdt_signal_log", {
 
 export type MirdtSignalLog = typeof mirdtSignalLog.$inferSelect;
 export type InsertMirdtSignalLog = typeof mirdtSignalLog.$inferInsert;
+
+export const savingsPositions = pgTable("savings_positions", {
+  id: serial("id").primaryKey(),
+  walletAddress: varchar("wallet_address", { length: 42 }).notNull(),
+  depositAmountAxusd: decimal("deposit_amount_axusd", { precision: 36, scale: 18 }).notNull().default('0'),
+  currentBalanceAxusd: decimal("current_balance_axusd", { precision: 36, scale: 18 }).notNull().default('0'),
+  yieldEarnedAxusd: decimal("yield_earned_axusd", { precision: 36, scale: 18 }).notNull().default('0'),
+  vaultShares: decimal("vault_shares", { precision: 36, scale: 18 }).notNull().default('0'),
+  txHash: varchar("tx_hash", { length: 66 }),
+  operation: varchar("operation", { length: 20 }).notNull().default('deposit'),
+  status: varchar("status", { length: 20 }).notNull().default('pending'),
+  lastUpdatedAt: timestamp("last_updated_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  walletIdx: index("savings_positions_wallet_idx").on(table.walletAddress),
+  createdAtIdx: index("savings_positions_created_at_idx").on(table.createdAt),
+}));
+
+export type SavingsPosition = typeof savingsPositions.$inferSelect;
+export type InsertSavingsPosition = typeof savingsPositions.$inferInsert;
