@@ -461,3 +461,9 @@ id = "k_vP68rGTa_1fX_9sSUSw"
 uri = "file://attached_assets/stock_images/real-estate-land.jpg"
 type = "image"
 title = "aerial view of real estate land development parcels with infrastructure"
+
+[[outputs]]
+id = "krqW51eZ807mPf0W4CPUU"
+uri = "file://documents/Axiom_Protocol_Product_Suite_Whitepaper_v1.0.md"
+type = "text"
+title = "Axiom Protocol — Product Suite White Paper v1.0"
