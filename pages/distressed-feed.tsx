@@ -1256,20 +1256,32 @@ function MlsTab() {
     setPromoteError(null);
     try {
       const addressStr = [listing.address, listing.city, listing.state, listing.zip].filter(Boolean).join(', ');
-      const res = await fetch('/api/real-estate/deals/create', {
+
+      const resolveRes = await fetch('/api/real-estate/resolve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          addressRaw: addressStr,
-          strategy: 'brrrr',
-          listPrice: listing.listPrice,
-          source: 'mls_repliers',
-          mlsNumber: listing.mlsNumber,
-        }),
+        body: JSON.stringify({ address: addressStr }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create deal');
-      window.location.href = `/deal-intelligence/deal/${data.dealId || data.id}`;
+      const resolveData = await resolveRes.json();
+      if (!resolveRes.ok || !resolveData.data?.propertyId) {
+        throw new Error('Failed to resolve property address');
+      }
+      const propertyId = resolveData.data.propertyId;
+
+      const createRes = await fetch('/api/real-estate/deals/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propertyId, strategy: 'brrrr' }),
+      });
+      const createData = await createRes.json();
+      if (!createRes.ok || !createData.data?.id) {
+        throw new Error(createData.error || 'Failed to create deal');
+      }
+      const dealId = createData.data.id;
+
+      await fetch(`/api/real-estate/deals/${dealId}/mls-enrich`, { method: 'POST' }).catch(() => {});
+
+      window.location.href = `/deal-intelligence/deal/${dealId}`;
     } catch (err: any) {
       setPromoteError(err.message);
       setPromoting(null);

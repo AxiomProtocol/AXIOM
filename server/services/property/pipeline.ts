@@ -8,7 +8,7 @@ import { getEstimate, getSalesComps, isRepliersConfigured } from '../../../lib/r
 
 export const TIER_CONFIG: Record<string, { label: string; priceCents: number; maxPerMonth: number; dataSources: string[] }> = {
   free: { label: 'Free Report', priceCents: 0, maxPerMonth: 3, dataSources: ['census', 'fhfa', 'osm'] },
-  base: { label: 'Base Report', priceCents: 499, maxPerMonth: 50, dataSources: ['census', 'fhfa', 'osm', 'rentcast-property', 'repliers-avm'] },
+  base: { label: 'Base Report', priceCents: 499, maxPerMonth: 50, dataSources: ['census', 'fhfa', 'osm', 'rentcast-property', 'repliers-avm', 'repliers-comps'] },
   premium: { label: 'Premium Report', priceCents: 1499, maxPerMonth: 100, dataSources: ['census', 'fhfa', 'osm', 'rentcast-property', 'rentcast', 'walkscore', 'repliers-avm', 'repliers-comps'] },
 };
 

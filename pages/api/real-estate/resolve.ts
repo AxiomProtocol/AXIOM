@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db, pool } from '../../../server/db';
-import { reProperties } from '../../../shared/realEstateSchema';
+import { reProperties, reDeals } from '../../../shared/realEstateSchema';
 import { eq, sql } from 'drizzle-orm';
 import { parseAddress, computeConfidence } from '../../../server/services/real-estate/address';
 import { successResponse, errorResponse, buildMeta, safePropertyColumns } from '../../../server/services/real-estate/helpers';
@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { address } = req.body;
+    const { address, dealId } = req.body;
     if (!address || typeof address !== 'string' || address.trim().length < 5) {
       return errorResponse(res, 400, 'INVALID_ADDRESS', 'A valid address string is required (min 5 chars)');
     }
@@ -152,6 +152,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (enrichment?.enriched) sources.push('rentcast');
     if (mlsData) sources.push('repliers_mls');
     const confidence = computeConfidence(parsed, false, enrichment?.enriched || false);
+
+    if (dealId && typeof dealId === 'string' && mlsData) {
+      try {
+        const [existingDeal] = await db.select().from(reDeals).where(eq(reDeals.id, dealId)).limit(1);
+        if (existingDeal) {
+          const existingDealMeta = (existingDeal.meta || {}) as Record<string, unknown>;
+          await db.update(reDeals)
+            .set({
+              meta: {
+                ...existingDealMeta,
+                mlsEnrichment: {
+                  ...mlsData,
+                  enrichedAt: new Date().toISOString(),
+                },
+              },
+              updatedAt: new Date(),
+            })
+            .where(eq(reDeals.id, dealId));
+        }
+      } catch (dealErr: any) {
+        console.warn('Deal MLS persistence failed (non-blocking):', dealErr.message);
+      }
+    }
+
     return successResponse(res, {
       propertyId: newProp.id,
       addressNormalized: newProp.addressNormalized,
