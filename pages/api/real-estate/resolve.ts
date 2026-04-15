@@ -5,6 +5,7 @@ import { eq, sql } from 'drizzle-orm';
 import { parseAddress, computeConfidence } from '../../../server/services/real-estate/address';
 import { successResponse, errorResponse, buildMeta, safePropertyColumns } from '../../../server/services/real-estate/helpers';
 import { enrichProperty } from '../../../server/services/real-estate/rentcast';
+import { searchListings, isRepliersConfigured } from '../../../lib/re/repliers';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -115,8 +116,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    let mlsData: {
+      listPrice?: number;
+      daysOnMarket?: number;
+      listingStatus?: string;
+      mlsNumber?: string;
+      isTestMode?: boolean;
+    } | null = null;
+
+    if (isRepliersConfigured() && (parsed.city || parsed.zip)) {
+      try {
+        const mlsResult = await searchListings({
+          city: parsed.city || undefined,
+          state: parsed.state || undefined,
+          zip: parsed.zip || undefined,
+          status: 'A',
+          resultsPerPage: 5,
+        });
+        if (mlsResult.data?.listings?.length) {
+          const match = mlsResult.data.listings[0];
+          mlsData = {
+            listPrice: match.listPrice,
+            daysOnMarket: match.daysOnMarket ?? undefined,
+            listingStatus: match.status,
+            mlsNumber: match.mlsNumber,
+            isTestMode: mlsResult.isTestMode,
+          };
+        }
+      } catch (mlsErr: any) {
+        console.warn('Repliers MLS lookup failed (non-blocking):', mlsErr.message);
+      }
+    }
+
     const sources = ['user_input'];
     if (enrichment?.enriched) sources.push('rentcast');
+    if (mlsData) sources.push('repliers_mls');
     const confidence = computeConfidence(parsed, false, enrichment?.enriched || false);
     return successResponse(res, {
       propertyId: newProp.id,
@@ -125,6 +159,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       matched: false,
       created: true,
       enrichment,
+      mlsData,
     }, buildMeta(sources, confidence));
 
   } catch (err: any) {

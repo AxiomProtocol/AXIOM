@@ -35,6 +35,12 @@ export default function ReportDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [polling, setPolling] = useState(false);
+  const [repliersData, setRepliersData] = useState<{
+    avm: { price: number | null; priceMin: number | null; priceMax: number | null; confidence: number | null } | null;
+    comps: Array<{ mlsNumber: string | null; address: string; city: string; state: string; zip: string; listPrice: number | null; soldPrice: number | null; beds: number | null; baths: number | null; sqft: number | null; pricePerSqft: number | null; daysOnMarket: number | null; soldDate: string | null; status: string | null }>;
+    isTestMode: boolean;
+    configured: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -79,6 +85,23 @@ export default function ReportDetail() {
 
     load();
   }, [id, session_id]);
+
+  useEffect(() => {
+    if (!report?.addressRaw) return;
+    fetch('/api/property/repliers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        address: report.addressRaw,
+        beds: report.bedrooms,
+        baths: report.bathrooms,
+        sqft: report.sqft,
+      }),
+    })
+      .then(r => r.json())
+      .then(d => setRepliersData(d))
+      .catch(() => {});
+  }, [report?.addressRaw]);
 
   if (loading || polling) {
     return (
@@ -271,6 +294,103 @@ export default function ReportDetail() {
           </Section>
         )}
 
+        {repliersData?.configured && repliersData.avm && repliersData.avm.price && (
+          <Section title={
+            <span className="flex items-center gap-3">
+              Instant Valuation (MLS AVM)
+              {repliersData.isTestMode && (
+                <span className="border border-[#8b6914] px-2 py-0.5 font-dl-mono text-xs text-[#8b6914] uppercase">Test Data</span>
+              )}
+            </span>
+          }>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="border border-dl-border p-4">
+                <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-1">AVM Estimate</p>
+                <p className="font-dl-mono text-dl-navy font-bold text-xl">{formatCurrency(repliersData.avm.price)}</p>
+                {(repliersData.avm.priceMin || repliersData.avm.priceMax) && (
+                  <p className="text-xs text-dl-gray font-dl-mono mt-1">
+                    {formatCurrency(repliersData.avm.priceMin)} &mdash; {formatCurrency(repliersData.avm.priceMax)}
+                  </p>
+                )}
+              </div>
+              {repliersData.avm.confidence && (
+                <div className="border border-dl-border p-4">
+                  <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-1">Model Confidence</p>
+                  <p className="font-dl-mono text-dl-navy font-bold text-xl">{(repliersData.avm.confidence * 100).toFixed(0)}%</p>
+                  <p className="text-xs text-dl-gray font-dl-mono mt-1">Repliers AVM model</p>
+                </div>
+              )}
+              <div className="border border-dl-border p-4">
+                <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-1">Source</p>
+                <p className="font-dl-mono text-sm text-dl-navy">MLS via Repliers</p>
+                <p className="text-xs text-dl-gray font-dl-mono mt-1">Realtime MLS valuation</p>
+              </div>
+            </div>
+            {repliersData.isTestMode && (
+              <p className="font-dl-mono text-xs text-[#8b6914] border border-[#8b6914] px-3 py-2">
+                Test Data — Limited MLS coverage. Production AVM requires REPLIERS_API_KEY.
+              </p>
+            )}
+          </Section>
+        )}
+
+        {repliersData?.configured && repliersData.comps && repliersData.comps.length > 0 && (
+          <Section title={
+            <span className="flex items-center gap-3">
+              Sales Comparables (MLS)
+              {repliersData.isTestMode && (
+                <span className="border border-[#8b6914] px-2 py-0.5 font-dl-mono text-xs text-[#8b6914] uppercase">Test Data</span>
+              )}
+            </span>
+          }>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-dl-border">
+                    <th className="text-left py-2 font-dl-mono text-dl-gray pr-4">Address</th>
+                    <th className="text-right py-2 font-dl-mono text-dl-gray pr-4">Beds</th>
+                    <th className="text-right py-2 font-dl-mono text-dl-gray pr-4">Baths</th>
+                    <th className="text-right py-2 font-dl-mono text-dl-gray pr-4">Sqft</th>
+                    <th className="text-right py-2 font-dl-mono text-dl-gray pr-4">List Price</th>
+                    <th className="text-right py-2 font-dl-mono text-dl-gray pr-4">Sold Price</th>
+                    <th className="text-right py-2 font-dl-mono text-dl-gray pr-4">$/sqft</th>
+                    <th className="text-right py-2 font-dl-mono text-dl-gray">DOM</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {repliersData.comps.map((comp, i) => (
+                    <tr key={i} className="border-b border-dl-border">
+                      <td className="py-2 font-dl-mono text-dl-navy pr-4">{comp.address || '--'} {comp.city}</td>
+                      <td className="py-2 text-right font-dl-mono text-dl-gray pr-4">{comp.beds ?? '--'}</td>
+                      <td className="py-2 text-right font-dl-mono text-dl-gray pr-4">{comp.baths ?? '--'}</td>
+                      <td className="py-2 text-right font-dl-mono text-dl-gray pr-4">{comp.sqft?.toLocaleString() ?? '--'}</td>
+                      <td className="py-2 text-right font-dl-mono text-dl-gray pr-4">{comp.listPrice ? formatCurrency(comp.listPrice) : '--'}</td>
+                      <td className="py-2 text-right font-dl-mono text-dl-navy pr-4">{comp.soldPrice ? formatCurrency(comp.soldPrice) : '--'}</td>
+                      <td className="py-2 text-right font-dl-mono text-dl-gray pr-4">{comp.pricePerSqft ? `$${comp.pricePerSqft}` : '--'}</td>
+                      <td className="py-2 text-right font-dl-mono text-dl-gray">{comp.daysOnMarket ?? '--'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="md:hidden grid grid-cols-1 gap-3">
+              {repliersData.comps.map((comp, i) => (
+                <div key={i} className="border border-dl-border p-3">
+                  <p className="font-dl-mono text-xs text-dl-navy font-bold">{comp.address} {comp.city}, {comp.state}</p>
+                  <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+                    <span className="text-dl-gray">List: {comp.listPrice ? formatCurrency(comp.listPrice) : '--'}</span>
+                    <span className="text-dl-gray">Sold: {comp.soldPrice ? formatCurrency(comp.soldPrice) : '--'}</span>
+                    <span className="text-dl-gray">Beds: {comp.beds ?? '--'}</span>
+                    <span className="text-dl-gray">Baths: {comp.baths ?? '--'}</span>
+                    <span className="text-dl-gray">Sqft: {comp.sqft?.toLocaleString() ?? '--'}</span>
+                    <span className="text-dl-gray">DOM: {comp.daysOnMarket ?? '--'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
         {dataSources.length > 0 && (
           <Section title="Data Sources">
             <ul className="text-xs text-dl-gray space-y-1">
@@ -312,7 +432,7 @@ function MetricCard({ label, primary, range, sub, large }: { label: string; prim
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="mb-8">
       <h2 className="font-dl-serif text-lg text-dl-navy border-b border-dl-border pb-2 mb-4">{title}</h2>

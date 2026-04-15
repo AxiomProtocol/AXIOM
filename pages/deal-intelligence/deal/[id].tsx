@@ -90,6 +90,13 @@ export default function DealWorkspacePage() {
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [nexusParticipant, setNexusParticipant] = useState<Record<string, any> | null>(null);
   const [nexusLoading, setNexusLoading] = useState(false);
+  const [mlsEnrichment, setMlsEnrichment] = useState<{
+    listPrice?: number;
+    daysOnMarket?: number;
+    listingStatus?: string;
+    mlsNumber?: string;
+    isTestMode?: boolean;
+  } | null>(null);
 
   const loadSummary = useCallback(async () => {
     if (!id) return;
@@ -158,6 +165,23 @@ export default function DealWorkspacePage() {
   }, [id]);
 
   useEffect(() => { loadSummary(); }, [loadSummary]);
+
+  useEffect(() => {
+    const addr = summary?.property?.addressRaw || summary?.deal?.addressRaw;
+    if (!addr) return;
+    fetch('/api/real-estate/resolve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address: addr }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (d.data?.mlsData) {
+          setMlsEnrichment(d.data.mlsData);
+        }
+      })
+      .catch(() => {});
+  }, [summary?.property?.addressRaw, summary?.deal?.addressRaw]);
 
   const handleCreateScenario = useCallback(async () => {
     if (!id) return;
@@ -505,6 +529,29 @@ export default function DealWorkspacePage() {
             );
           })}
         </div>
+
+        {mlsEnrichment && (
+          <div className="border border-dl-border p-3 mb-4 flex flex-wrap gap-4 items-center">
+            <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide">MLS via Repliers</span>
+            {mlsEnrichment.listPrice && (
+              <span className="font-dl-mono text-sm text-dl-navy">
+                List: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(mlsEnrichment.listPrice)}
+              </span>
+            )}
+            {mlsEnrichment.daysOnMarket !== undefined && (
+              <span className="font-dl-mono text-xs text-dl-gray">{mlsEnrichment.daysOnMarket}d on market</span>
+            )}
+            {mlsEnrichment.listingStatus && (
+              <span className="font-dl-mono text-xs text-dl-gray">Status: {mlsEnrichment.listingStatus}</span>
+            )}
+            {mlsEnrichment.mlsNumber && (
+              <span className="font-dl-mono text-xs text-dl-gray">MLS#: {mlsEnrichment.mlsNumber}</span>
+            )}
+            {mlsEnrichment.isTestMode && (
+              <span className="border border-[#8b6914] px-2 py-0.5 font-dl-mono text-xs text-[#8b6914] uppercase">Test Data</span>
+            )}
+          </div>
+        )}
 
         {error && (
           <div className="border border-red-300 bg-red-50 p-3 mb-4">

@@ -3,7 +3,7 @@ import { DesignLawLayout } from '../components/design-law/DesignLawLayout';
 import Head from 'next/head';
 import Image from 'next/image';
 
-type Tab = 'feed' | 'submit' | 'buybox';
+type Tab = 'feed' | 'mls' | 'submit' | 'buybox';
 
 interface AttomMeta {
   filingType?: string;
@@ -71,6 +71,7 @@ const SOURCE_LABELS: Record<string, string> = {
   manual: 'Manual',
   attom: 'ATTOM',
   courthouse: 'Courthouse',
+  mls_repliers: 'MLS via Repliers',
 };
 
 interface SourceStatusInfo {
@@ -1182,11 +1183,354 @@ function BuyBoxTab() {
   );
 }
 
+interface MlsListing {
+  mlsNumber: string | null;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  propertyType: string;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  sqft: number | null;
+  yearBuilt: number | null;
+  listPrice: number;
+  daysOnMarket: number | null;
+  status: string;
+  lastStatus: string;
+  lastStatusLabel: string;
+  listDate: string | null;
+  images: string[];
+  description: string | null;
+  addressKey: string | null;
+  sourceUrl: string | null;
+}
+
+function MlsTab() {
+  const [listings, setListings] = useState<MlsListing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isTestMode, setIsTestMode] = useState(false);
+  const [configured, setConfigured] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [promoting, setPromoting] = useState<string | null>(null);
+  const [promoteError, setPromoteError] = useState<string | null>(null);
+
+  const [filterCity, setFilterCity] = useState('');
+  const [filterState, setFilterState] = useState('');
+  const [filterMinPrice, setFilterMinPrice] = useState('');
+  const [filterMaxPrice, setFilterMaxPrice] = useState('');
+  const [filterMinBeds, setFilterMinBeds] = useState('');
+
+  const fetchMls = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(page) });
+      if (filterCity) params.set('city', filterCity);
+      if (filterState) params.set('state', filterState);
+      if (filterMinPrice) params.set('min_price', filterMinPrice);
+      if (filterMaxPrice) params.set('max_price', filterMaxPrice);
+      if (filterMinBeds) params.set('min_beds', filterMinBeds);
+      const res = await fetch(`/api/distressed-feed/mls?${params.toString()}`);
+      const data = await res.json();
+      setListings(data.listings || []);
+      setIsTestMode(!!data.isTestMode);
+      setConfigured(!!data.configured);
+      setTotalPages(data.pagination?.totalPages || 1);
+      setTotal(data.pagination?.total || 0);
+    } catch {
+      setListings([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, filterCity, filterState, filterMinPrice, filterMaxPrice, filterMinBeds]);
+
+  useEffect(() => { fetchMls(); }, [fetchMls]);
+
+  async function promoteMlsToDeal(listing: MlsListing) {
+    const key = listing.mlsNumber || listing.address;
+    setPromoting(key);
+    setPromoteError(null);
+    try {
+      const addressStr = [listing.address, listing.city, listing.state, listing.zip].filter(Boolean).join(', ');
+      const res = await fetch('/api/real-estate/deals/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          addressRaw: addressStr,
+          strategy: 'brrrr',
+          listPrice: listing.listPrice,
+          source: 'mls_repliers',
+          mlsNumber: listing.mlsNumber,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create deal');
+      window.location.href = `/deal-intelligence/deal/${data.dealId || data.id}`;
+    } catch (err: any) {
+      setPromoteError(err.message);
+      setPromoting(null);
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <h3 className="font-serif text-lg text-[#2c3e50]">ACTIVE MLS — PRICE REDUCED &amp; RECENTLY EXPIRED</h3>
+        {isTestMode && (
+          <span className="border border-[#8b6914] px-2 py-0.5 font-mono text-xs text-[#8b6914] uppercase tracking-wide">
+            Test Data
+          </span>
+        )}
+      </div>
+
+      <p className="font-mono text-sm text-[#5a6c7d] mb-4">
+        Live MLS listings filtered for price reductions (lastStatus: Pc) and recently expired listings
+        (lastStatus: Exp) with 60+ days on market. Data via Repliers Realtime MLS API.
+        {isTestMode && ' Running on test key — market coverage is limited.'}
+      </p>
+
+      {!configured && (
+        <div className="border border-[#8b6914] bg-[#fff8e1] p-4 mb-4">
+          <div className="font-mono text-sm text-[#8b6914]">
+            Repliers API key not configured. Set REPLIERS_API_KEY or REPLIERS_API_TEST_KEY to enable live MLS data.
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+        <input
+          type="text"
+          placeholder="City"
+          value={filterCity}
+          onChange={e => { setFilterCity(e.target.value); setPage(1); }}
+          className="border border-[#2c3e50] px-3 py-2 font-mono text-sm focus:outline-none focus:border-[#8b6914] min-h-[44px]"
+        />
+        <select
+          value={filterState}
+          onChange={e => { setFilterState(e.target.value); setPage(1); }}
+          className="border border-[#2c3e50] px-3 py-2 font-mono text-sm focus:outline-none focus:border-[#8b6914] min-h-[44px]"
+        >
+          <option value="">All States</option>
+          {STATES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <input
+          type="number"
+          placeholder="Min Price"
+          value={filterMinPrice}
+          onChange={e => { setFilterMinPrice(e.target.value); setPage(1); }}
+          className="border border-[#2c3e50] px-3 py-2 font-mono text-sm focus:outline-none focus:border-[#8b6914] min-h-[44px]"
+        />
+        <input
+          type="number"
+          placeholder="Max Price"
+          value={filterMaxPrice}
+          onChange={e => { setFilterMaxPrice(e.target.value); setPage(1); }}
+          className="border border-[#2c3e50] px-3 py-2 font-mono text-sm focus:outline-none focus:border-[#8b6914] min-h-[44px]"
+        />
+        <input
+          type="number"
+          placeholder="Min Beds"
+          value={filterMinBeds}
+          onChange={e => { setFilterMinBeds(e.target.value); setPage(1); }}
+          className="border border-[#2c3e50] px-3 py-2 font-mono text-sm focus:outline-none focus:border-[#8b6914] min-h-[44px]"
+        />
+      </div>
+
+      {promoteError && (
+        <div className="border border-[#8b1a1a] bg-[#fdf0f0] p-3 mb-4 font-mono text-sm text-[#8b1a1a]">
+          {promoteError}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="font-mono text-sm text-[#5a6c7d] py-8 text-center">Loading MLS listings...</div>
+      ) : listings.length === 0 ? (
+        <div className="border border-[#2c3e50] p-6 text-center">
+          <div className="font-mono text-sm text-[#5a6c7d]">No MLS listings found for these filters.</div>
+          <div className="font-mono text-xs text-[#5a6c7d] mt-2">
+            {isTestMode ? 'Test key has limited market coverage. Try removing city/state filters.' : 'Try adjusting your filters.'}
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="font-mono text-xs text-[#5a6c7d] mb-3">{total} listing{total !== 1 ? 's' : ''} found</div>
+          <div className="space-y-0">
+            {listings.map((listing) => {
+              const key = listing.mlsNumber || listing.address;
+              return (
+                <div key={key} className="border border-[#2c3e50] border-b-0 last:border-b">
+                  <div
+                    className="p-3 sm:p-4 cursor-pointer hover:bg-[#f5f0e8] min-h-[44px]"
+                    onClick={() => setExpanded(expanded === key ? null : key)}
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {listing.images && listing.images.length > 0 && (
+                          <img
+                            src={listing.images[0]}
+                            alt={listing.address}
+                            className="w-16 h-12 object-cover border border-[#2c3e50] flex-shrink-0"
+                          />
+                        )}
+                        <div className="min-w-0">
+                          <div className="font-serif text-[#2c3e50] truncate">{listing.address}</div>
+                          <div className="font-mono text-sm text-[#5a6c7d]">
+                            {listing.city}, {listing.state} {listing.zip}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
+                        <div className="text-left sm:text-right">
+                          <div className="font-mono text-lg text-[#2c3e50]">{formatCurrency(listing.listPrice)}</div>
+                          {listing.daysOnMarket && listing.daysOnMarket > 0 && (
+                            <div className="font-mono text-xs text-[#5a6c7d]">{listing.daysOnMarket}d on market</div>
+                          )}
+                        </div>
+                        <div className="border border-[#8b6914] px-2 py-1 min-h-[28px] flex items-center">
+                          <span className="font-mono text-xs uppercase text-[#8b6914]">{listing.lastStatusLabel || listing.lastStatus}</span>
+                        </div>
+                        <div className="border border-[#5a6c7d] px-2 py-1 min-h-[28px] flex items-center">
+                          <span className="font-mono text-xs text-[#5a6c7d] uppercase">MLS via Repliers</span>
+                        </div>
+                        {isTestMode && (
+                          <div className="border border-[#8b6914] px-2 py-0.5 min-h-[28px] flex items-center">
+                            <span className="font-mono text-xs text-[#8b6914] uppercase">Test Data</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {expanded === key && (
+                    <div className="border-t border-[#2c3e50] p-3 sm:p-4 bg-[#faf8f4]">
+                      {listing.images && listing.images.length > 0 && (
+                        <div className="mb-4">
+                          <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory -mx-3 px-3 sm:mx-0 sm:px-0 touch-pan-x">
+                            {listing.images.map((img, idx) => (
+                              <img
+                                key={idx}
+                                src={img}
+                                alt={`${listing.address} - Photo ${idx + 1}`}
+                                className="w-[280px] sm:w-64 h-[200px] sm:h-44 object-cover border border-[#2c3e50] flex-shrink-0 snap-center"
+                              />
+                            ))}
+                          </div>
+                          <div className="font-mono text-xs text-[#5a6c7d] mt-1">{listing.images.length} photos — swipe to browse</div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Property Type</div>
+                          <div className="font-mono text-sm">{listing.propertyType || '--'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Bedrooms</div>
+                          <div className="font-mono text-sm">{listing.bedrooms ?? '--'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Bathrooms</div>
+                          <div className="font-mono text-sm">{listing.bathrooms ?? '--'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Sq Ft</div>
+                          <div className="font-mono text-sm">{listing.sqft?.toLocaleString() || '--'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Year Built</div>
+                          <div className="font-mono text-sm">{listing.yearBuilt || '--'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">List Price</div>
+                          <div className="font-mono text-sm">{formatCurrency(listing.listPrice)}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Days on Market</div>
+                          <div className="font-mono text-sm">{listing.daysOnMarket ?? '--'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">MLS #</div>
+                          <div className="font-mono text-sm">{listing.mlsNumber || '--'}</div>
+                        </div>
+                      </div>
+
+                      {listing.description && (
+                        <div className="mb-4">
+                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Description</div>
+                          <div className="font-mono text-sm text-[#2c3e50]">{listing.description}</div>
+                        </div>
+                      )}
+
+                      {isTestMode && (
+                        <div className="border border-[#8b6914] bg-[#fff8e1] p-2 mb-4">
+                          <div className="font-mono text-xs text-[#8b6914]">
+                            Test Data — Limited market coverage. Add REPLIERS_API_KEY for full MLS access.
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2 flex-wrap">
+                        <button
+                          onClick={() => promoteMlsToDeal(listing)}
+                          disabled={!!promoting}
+                          className="border border-[#2c3e50] px-4 py-2 font-mono text-xs text-[#2c3e50] hover:bg-[#2c3e50] hover:text-white disabled:opacity-50 min-h-[44px]"
+                        >
+                          {promoting === (listing.mlsNumber || listing.address) ? 'Creating Deal...' : 'Promote to Deal'}
+                        </button>
+                        {listing.sourceUrl && (
+                          <a
+                            href={listing.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="border border-[#5a6c7d] px-4 py-2 font-mono text-xs text-[#5a6c7d] hover:bg-[#5a6c7d] hover:text-white min-h-[44px] flex items-center"
+                          >
+                            View MLS Listing
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-4">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="border border-[#2c3e50] px-3 py-2 font-mono text-sm disabled:opacity-40 hover:bg-[#2c3e50] hover:text-white min-h-[44px]"
+              >
+                Prev
+              </button>
+              <span className="border border-[#2c3e50] px-4 py-2 font-mono text-sm min-h-[44px] flex items-center">
+                {page} / {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="border border-[#2c3e50] px-3 py-2 font-mono text-sm disabled:opacity-40 hover:bg-[#2c3e50] hover:text-white min-h-[44px]"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function DistressedFeedPage() {
   const [activeTab, setActiveTab] = useState<Tab>('feed');
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'feed', label: 'Property Feed' },
+    { id: 'mls', label: 'Active MLS' },
     { id: 'submit', label: 'Submit Deal' },
     { id: 'buybox', label: 'My Buy Box' },
   ];
@@ -1266,6 +1610,7 @@ export default function DistressedFeedPage() {
         </div>
 
         {activeTab === 'feed' && <FeedTab />}
+        {activeTab === 'mls' && <MlsTab />}
         {activeTab === 'submit' && <SubmitTab />}
         {activeTab === 'buybox' && <BuyBoxTab />}
       </div>
