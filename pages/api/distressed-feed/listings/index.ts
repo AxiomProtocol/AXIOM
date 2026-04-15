@@ -5,7 +5,8 @@ import { eq, and, gte, lte, sql, desc, asc } from 'drizzle-orm';
 import { searchListings, isRepliersConfigured } from '../../../../lib/re/repliers';
 
 async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
-  const { city, state, zip, min_price, max_price, min_bedrooms, page = '1' } = req.query;
+  const { city, state, zip, min_price, max_price, min_bedrooms, min_beds, page = '1' } = req.query;
+  const effectiveMinBeds = min_beds || min_bedrooms;
   const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
 
   if (!isRepliersConfigured()) {
@@ -26,7 +27,7 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
     daysOnMarketMin: 60,
     minPrice: min_price ? parseInt(String(min_price), 10) : undefined,
     maxPrice: max_price ? parseInt(String(max_price), 10) : undefined,
-    minBeds: min_bedrooms ? parseInt(String(min_bedrooms), 10) : undefined,
+    minBeds: effectiveMinBeds ? parseInt(String(effectiveMinBeds), 10) : undefined,
     resultsPerPage: 20,
     pageNum,
   });

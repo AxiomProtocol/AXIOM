@@ -139,6 +139,7 @@ export async function searchListings(params: {
     if (params.minPrice) body.minPrice = params.minPrice;
     if (params.maxPrice) body.maxPrice = params.maxPrice;
     if (params.minBeds) body.minBeds = params.minBeds;
+    if (params.maxBeds) body.maxBeds = params.maxBeds;
     if (params.daysOnMarketMin) body.daysOnMarket = { min: params.daysOnMarketMin };
     if (params.addressKey) body.addressKey = params.addressKey;
     if (params.pageNum) body.pageNum = params.pageNum;

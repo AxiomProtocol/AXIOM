@@ -7,6 +7,61 @@ import { successResponse, errorResponse, buildMeta, safePropertyColumns } from '
 import { enrichProperty } from '../../../server/services/real-estate/rentcast';
 import { searchListings, isRepliersConfigured } from '../../../lib/re/repliers';
 
+type MlsSnapshot = {
+  listPrice?: number;
+  daysOnMarket?: number;
+  listingStatus?: string;
+  mlsNumber?: string;
+  isTestMode?: boolean;
+};
+
+async function doRepliersLookup(parsed: ReturnType<typeof parseAddress>): Promise<MlsSnapshot | null> {
+  if (!isRepliersConfigured()) return null;
+  if (!parsed.city && !parsed.zip) return null;
+  try {
+    const mlsResult = await searchListings({
+      city: parsed.city || undefined,
+      state: parsed.state || undefined,
+      zip: parsed.zip || undefined,
+      status: 'A',
+      resultsPerPage: 5,
+    });
+    if (mlsResult.data?.listings?.length) {
+      const match = mlsResult.data.listings[0];
+      return {
+        listPrice: match.listPrice,
+        daysOnMarket: match.daysOnMarket ?? undefined,
+        listingStatus: match.status,
+        mlsNumber: match.mlsNumber,
+        isTestMode: mlsResult.isTestMode,
+      };
+    }
+  } catch (mlsErr: any) {
+    console.warn('Repliers MLS lookup failed (non-blocking):', mlsErr.message);
+  }
+  return null;
+}
+
+async function persistMlsToDeal(dealId: string, mlsData: MlsSnapshot): Promise<void> {
+  try {
+    const [existingDeal] = await db.select().from(reDeals).where(eq(reDeals.id, dealId)).limit(1);
+    if (existingDeal) {
+      const existingDealMeta = (existingDeal.meta || {}) as Record<string, unknown>;
+      await db.update(reDeals)
+        .set({
+          meta: {
+            ...existingDealMeta,
+            mlsEnrichment: { ...mlsData, enrichedAt: new Date().toISOString() },
+          },
+          updatedAt: new Date(),
+        })
+        .where(eq(reDeals.id, dealId));
+    }
+  } catch (dealErr: any) {
+    console.warn('Deal MLS persistence failed (non-blocking):', dealErr.message);
+  }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return errorResponse(res, 405, 'METHOD_NOT_ALLOWED', 'Only POST is accepted');
@@ -33,14 +88,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (existing.length > 0) {
       const prop = existing[0];
-      const hasSaleOrTax = true;
-      const confidence = computeConfidence(parsed, true, hasSaleOrTax);
+      const confidence = computeConfidence(parsed, true, true);
+
+      const mlsData = await doRepliersLookup(parsed);
+      if (dealId && typeof dealId === 'string' && mlsData) {
+        await persistMlsToDeal(dealId, mlsData);
+      }
+
+      const sources = ['internal_db', 'user_input'];
+      if (mlsData) sources.push('repliers_mls');
       return successResponse(res, {
         propertyId: prop.id,
         addressNormalized: prop.addressNormalized,
         parsed,
         matched: true,
-      }, buildMeta(['internal_db', 'user_input'], confidence));
+        mlsData: mlsData || undefined,
+      }, buildMeta(sources, confidence));
     }
 
     try {
@@ -66,6 +129,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (validMatches.length > 0) {
         const confidence = computeConfidence(parsed, true, false);
+
+        const mlsData = await doRepliersLookup(parsed);
+        if (dealId && typeof dealId === 'string' && mlsData) {
+          await persistMlsToDeal(dealId, mlsData);
+        }
+
+        const sources = ['internal_db', 'user_input'];
+        if (mlsData) sources.push('repliers_mls');
         return successResponse(res, {
           propertyId: validMatches[0].id,
           addressNormalized: validMatches[0].addressNormalized,
@@ -74,7 +145,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           fuzzy: true,
           similarityScore: validMatches[0].similarity,
           alternatives: validMatches.slice(1).map(a => ({ id: a.id, addressNormalized: a.addressNormalized, similarity: a.similarity })),
-        }, buildMeta(['internal_db', 'user_input'], confidence));
+          mlsData: mlsData || undefined,
+        }, buildMeta(sources, confidence));
       }
     } catch (trigramErr: any) {
       console.warn('Trigram search unavailable (pg_trgm may not be installed):', trigramErr.message);
@@ -116,65 +188,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    let mlsData: {
-      listPrice?: number;
-      daysOnMarket?: number;
-      listingStatus?: string;
-      mlsNumber?: string;
-      isTestMode?: boolean;
-    } | null = null;
-
-    if (isRepliersConfigured() && (parsed.city || parsed.zip)) {
-      try {
-        const mlsResult = await searchListings({
-          city: parsed.city || undefined,
-          state: parsed.state || undefined,
-          zip: parsed.zip || undefined,
-          status: 'A',
-          resultsPerPage: 5,
-        });
-        if (mlsResult.data?.listings?.length) {
-          const match = mlsResult.data.listings[0];
-          mlsData = {
-            listPrice: match.listPrice,
-            daysOnMarket: match.daysOnMarket ?? undefined,
-            listingStatus: match.status,
-            mlsNumber: match.mlsNumber,
-            isTestMode: mlsResult.isTestMode,
-          };
-        }
-      } catch (mlsErr: any) {
-        console.warn('Repliers MLS lookup failed (non-blocking):', mlsErr.message);
-      }
+    const mlsData = await doRepliersLookup(parsed);
+    if (dealId && typeof dealId === 'string' && mlsData) {
+      await persistMlsToDeal(dealId, mlsData);
     }
 
     const sources = ['user_input'];
     if (enrichment?.enriched) sources.push('rentcast');
     if (mlsData) sources.push('repliers_mls');
     const confidence = computeConfidence(parsed, false, enrichment?.enriched || false);
-
-    if (dealId && typeof dealId === 'string' && mlsData) {
-      try {
-        const [existingDeal] = await db.select().from(reDeals).where(eq(reDeals.id, dealId)).limit(1);
-        if (existingDeal) {
-          const existingDealMeta = (existingDeal.meta || {}) as Record<string, unknown>;
-          await db.update(reDeals)
-            .set({
-              meta: {
-                ...existingDealMeta,
-                mlsEnrichment: {
-                  ...mlsData,
-                  enrichedAt: new Date().toISOString(),
-                },
-              },
-              updatedAt: new Date(),
-            })
-            .where(eq(reDeals.id, dealId));
-        }
-      } catch (dealErr: any) {
-        console.warn('Deal MLS persistence failed (non-blocking):', dealErr.message);
-      }
-    }
 
     return successResponse(res, {
       propertyId: newProp.id,
@@ -183,7 +205,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       matched: false,
       created: true,
       enrichment,
-      mlsData,
+      mlsData: mlsData || undefined,
     }, buildMeta(sources, confidence));
 
   } catch (err: any) {
