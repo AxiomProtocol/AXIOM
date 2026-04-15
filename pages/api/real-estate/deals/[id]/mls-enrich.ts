@@ -44,6 +44,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const city = property.city || undefined;
     const state = property.state || undefined;
     const zip = property.zip || undefined;
+    const streetNumber = property.streetNumber || undefined;
+    const streetName = property.streetName || undefined;
 
     if (!city && !zip) {
       return successResponse(res, {
@@ -57,6 +59,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       city,
       state,
       zip,
+      streetNumber,
+      streetName,
       status: 'A',
       resultsPerPage: 5,
     });

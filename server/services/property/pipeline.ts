@@ -5,6 +5,7 @@ import { geocodeAddress } from './geocoder';
 import { fetchCensusData, fetchHpiData, fetchRentCastPropertyData, fetchRentCastData, fetchWalkScore } from './dataProviders';
 import { runEstimation, type EstimationResult } from './estimationEngine';
 import { getEstimate, getSalesComps, isRepliersConfigured } from '../../../lib/re/repliers';
+import { parseAddress } from '../../services/real-estate/address';
 
 export const TIER_CONFIG: Record<string, { label: string; priceCents: number; maxPerMonth: number; dataSources: string[] }> = {
   free: { label: 'Free Report', priceCents: 0, maxPerMonth: 3, dataSources: ['census', 'fhfa', 'osm'] },
@@ -53,17 +54,22 @@ export async function generateReport(reportId: string): Promise<EstimationResult
     let repliersComps: Array<Record<string, unknown>> | null = null;
     let repliersIsTestMode = false;
 
+    const parsedAddr = parseAddress(report.addressRaw || '');
+
     if (cfg.dataSources.includes('repliers-avm') && isRepliersConfigured()) {
       try {
         const avmResult = await getEstimate({
           city: geo.city || undefined,
           state: geo.state || undefined,
           zip: geo.zip || undefined,
+          streetNumber: parsedAddr.streetNumber || undefined,
+          streetName: parsedAddr.streetName || undefined,
+          streetSuffix: parsedAddr.streetSuffix || undefined,
           beds: report.bedrooms || undefined,
           baths: report.bathrooms ? parseFloat(report.bathrooms) : undefined,
           sqft: report.sqft || undefined,
         });
-        if (avmResult.data) {
+        if (avmResult.data && avmResult.data.price) {
           repliersAvm = {
             price: avmResult.data.price ?? null,
             priceMin: avmResult.data.priceMin ?? null,
@@ -73,8 +79,8 @@ export async function generateReport(reportId: string): Promise<EstimationResult
           };
           repliersIsTestMode = avmResult.isTestMode;
         }
-      } catch (avmErr: any) {
-        console.warn('[pipeline] Repliers AVM failed (non-blocking):', avmErr.message);
+      } catch (avmErr: unknown) {
+        console.warn('[pipeline] Repliers AVM failed (non-blocking):', avmErr instanceof Error ? avmErr.message : avmErr);
       }
     }
 
@@ -112,8 +118,8 @@ export async function generateReport(reportId: string): Promise<EstimationResult
           });
           repliersIsTestMode = compsResult.isTestMode;
         }
-      } catch (compsErr: any) {
-        console.warn('[pipeline] Repliers comps failed (non-blocking):', compsErr.message);
+      } catch (compsErr: unknown) {
+        console.warn('[pipeline] Repliers comps failed (non-blocking):', compsErr instanceof Error ? compsErr.message : compsErr);
       }
     }
 
