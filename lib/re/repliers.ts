@@ -111,7 +111,7 @@ export function isRepliersConfigured(): boolean {
 
 function normalizeImageUrls(images?: string[]): string[] {
   if (!images) return [];
-  return images.map((img) => (img.startsWith('/') ? `${REPLIERS_BASE}${img}` : img));
+  return images.map((img) => img.startsWith('http') ? img : `${REPLIERS_BASE}/${img}`);
 }
 
 const EMPTY_LISTINGS: RepliersListingsResponse = { listings: [], count: 0, numPages: 0, page: 1 };
