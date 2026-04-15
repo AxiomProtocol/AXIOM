@@ -1234,7 +1234,7 @@ function MlsTab() {
       if (filterMaxPrice) params.set('max_price', filterMaxPrice);
       if (filterMinBeds) params.set('min_beds', filterMinBeds);
       params.set('source', 'mls_repliers');
-      const res = await fetch(`/api/distressed-feed/listings?${params.toString()}`);
+      const res = await fetch(`/api/distressed-feed/listings?${params.toString()}`, { cache: 'no-store' });
       const data = await res.json();
       setListings(data.listings || []);
       setIsTestMode(!!data.isTestMode);

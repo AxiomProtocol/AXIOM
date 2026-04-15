@@ -64,13 +64,14 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
       lastStatus: l.lastStatus || '',
       lastStatusLabel: lastStatusLabel[l.lastStatus || ''] || l.lastStatus || '',
       listDate: l.listDate || null,
-      images: l.images || [],
+      images: (l.images || []).map((img) => img.startsWith('/') ? `https://api.repliers.io${img}` : img),
       description: l.details?.description || null,
       addressKey: l.addressKey || null,
       sourceUrl: l.mlsNumber ? `https://repliers.com/listing/${l.mlsNumber}` : null,
     };
   });
 
+  res.setHeader('Cache-Control', 'no-store');
   return res.json({
     listings,
     isTestMode: result.isTestMode,

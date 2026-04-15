@@ -109,6 +109,11 @@ export function isRepliersConfigured(): boolean {
   return getApiKey() !== null;
 }
 
+function normalizeImageUrls(images?: string[]): string[] {
+  if (!images) return [];
+  return images.map((img) => (img.startsWith('/') ? `${REPLIERS_BASE}${img}` : img));
+}
+
 const EMPTY_LISTINGS: RepliersListingsResponse = { listings: [], count: 0, numPages: 0, page: 1 };
 const EMPTY_ESTIMATE: RepliersEstimateResponse = {};
 
@@ -169,6 +174,9 @@ export async function searchListings(params: {
     }
 
     const data = await res.json() as RepliersListingsResponse;
+    if (data.listings) {
+      data.listings = data.listings.map((l) => ({ ...l, images: normalizeImageUrls(l.images) }));
+    }
     return { data, isTestMode: keyInfo.isTestMode };
   } catch (err) {
     console.warn('[Repliers] searchListings error:', err instanceof Error ? err.message : err);
