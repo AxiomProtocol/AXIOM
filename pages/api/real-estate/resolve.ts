@@ -23,6 +23,9 @@ async function doRepliersLookup(parsed: ReturnType<typeof parseAddress>): Promis
       city: parsed.city || undefined,
       state: parsed.state || undefined,
       zip: parsed.zip || undefined,
+      streetNumber: parsed.streetNumber || undefined,
+      streetName: parsed.streetName || undefined,
+      streetSuffix: parsed.streetSuffix || undefined,
       status: 'A',
       resultsPerPage: 5,
     });

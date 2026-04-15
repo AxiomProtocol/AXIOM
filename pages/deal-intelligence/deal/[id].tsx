@@ -16,6 +16,19 @@ import VerifiedOutcomesPanel from '../../../components/deal-intelligence/Verifie
 import CostIntelligencePanel from '../../../components/deal-intelligence/CostIntelligencePanel';
 import DealAssistantPanel from '../../../components/deal-intelligence/DealAssistantPanel';
 
+interface DealMeta {
+  mlsEnrichment?: {
+    listPrice?: number | null;
+    daysOnMarket?: number | null;
+    listingStatus?: string | null;
+    mlsNumber?: string | null;
+    isTestMode?: boolean;
+    enrichedAt?: string;
+    noListingFound?: boolean;
+  };
+  [key: string]: unknown;
+}
+
 const STRATEGY_OPTIONS = [
   { key: 'brrrr', label: 'BRRRR', icon: '/images/realestate/icon_brrrr.png' },
   { key: 'flip', label: 'Flip', icon: '/images/realestate/icon_flip.png' },
@@ -168,7 +181,8 @@ export default function DealWorkspacePage() {
 
   useEffect(() => {
     if (!id || !summary) return;
-    const existingMls = (summary.deal?.meta as any)?.mlsEnrichment;
+    const dealMeta = summary.deal?.meta as DealMeta | undefined;
+    const existingMls = dealMeta?.mlsEnrichment;
     if (existingMls) {
       setMlsEnrichment(existingMls);
       return;

@@ -1279,7 +1279,11 @@ function MlsTab() {
       }
       const dealId = createData.data.id;
 
-      await fetch(`/api/real-estate/deals/${dealId}/mls-enrich`, { method: 'POST' }).catch(() => {});
+      await fetch('/api/real-estate/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: addressStr, dealId }),
+      }).catch(() => {});
 
       window.location.href = `/deal-intelligence/deal/${dealId}`;
     } catch (err: unknown) {

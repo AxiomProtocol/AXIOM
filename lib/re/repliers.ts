@@ -116,6 +116,9 @@ export async function searchListings(params: {
   city?: string;
   state?: string;
   zip?: string;
+  streetNumber?: string;
+  streetName?: string;
+  streetSuffix?: string;
   status?: string;
   lastStatus?: string | string[];
   minPrice?: number;
@@ -132,9 +135,14 @@ export async function searchListings(params: {
 
   try {
     const body: Record<string, unknown> = {};
-    if (params.city) body.city = params.city;
-    if (params.state) body.state = params.state;
-    if (params.zip) body.zip = params.zip;
+    const addressParts: Record<string, string> = {};
+    if (params.city) addressParts.city = params.city;
+    if (params.state) addressParts.state = params.state;
+    if (params.zip) addressParts.zip = params.zip;
+    if (params.streetNumber) addressParts.streetNumber = params.streetNumber;
+    if (params.streetName) addressParts.streetName = params.streetName;
+    if (params.streetSuffix) addressParts.streetSuffix = params.streetSuffix;
+    if (Object.keys(addressParts).length > 0) body.address = addressParts;
     if (params.status) body.status = params.status;
     if (params.lastStatus) {
       body.lastStatus = Array.isArray(params.lastStatus) ? params.lastStatus : [params.lastStatus];
