@@ -95,8 +95,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       configured: true,
     }, buildMeta(['repliers_mls'], mlsResult.isTestMode ? 0.6 : 0.9));
 
-  } catch (err: any) {
-    console.error('MLS enrich error:', err.message);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('MLS enrich error:', msg);
     return errorResponse(res, 500, 'INTERNAL_ERROR', 'Failed to enrich deal with MLS data');
   }
 }

@@ -175,16 +175,17 @@ export async function generateReport(reportId: string): Promise<EstimationResult
       rehabItems: result.rehab.items,
       compsUsed: result.rent.methodology.includes('RentCast') ? (rentcast?.comparables || []) : [],
       dataSources: updatedDataSources,
-      fullReport: enrichedFullReport as any,
+      fullReport: enrichedFullReport as Record<string, unknown>,
       expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
     }).where(eq(propertyReports.id, reportId));
 
     return result;
-  } catch (err: any) {
-    if (err.message !== 'Geocoding failed') {
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : 'Report generation failed';
+    if (errMsg !== 'Geocoding failed') {
       await db.update(propertyReports).set({
         status: 'failed',
-        errorMessage: err.message || 'Report generation failed',
+        errorMessage: errMsg,
         updatedAt: new Date(),
       }).where(eq(propertyReports.id, reportId));
     }

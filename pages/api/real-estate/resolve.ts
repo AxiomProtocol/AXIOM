@@ -182,9 +182,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (process.env.RENTCAST_API_KEY) {
       try {
         enrichment = await enrichProperty(newProp.id);
-      } catch (err: any) {
-        console.error('Auto-enrich failed (non-blocking):', err.message);
-        enrichment = { enriched: false, error: err.message };
+      } catch (err: unknown) {
+        const enrichErrMsg = err instanceof Error ? err.message : String(err);
+        console.error('Auto-enrich failed (non-blocking):', enrichErrMsg);
+        enrichment = { enriched: false, error: enrichErrMsg };
       }
     }
 
@@ -208,10 +209,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       mlsData: mlsData || undefined,
     }, buildMeta(sources, confidence));
 
-  } catch (err: any) {
-    console.error('Address resolve error:', err.message, err.cause?.message, err.stack);
-    const causeMsg = err.cause?.message || '';
-    const errMsg = err.message || '';
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    const causeMsg = err instanceof Error && 'cause' in err && err.cause instanceof Error ? err.cause.message : '';
+    console.error('Address resolve error:', errMsg, causeMsg);
     const isDbError = [errMsg, causeMsg].some(m =>
       m.includes('relation') || m.includes('connect') || m.includes('ECONNREFUSED') ||
       m.includes('does not exist') || m.includes('timeout')

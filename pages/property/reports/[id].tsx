@@ -3,6 +3,31 @@ import { useEffect, useState } from 'react';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
 
+interface RepliersAvmSnapshot {
+  price: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
+  confidence: number | null;
+  isTestMode: boolean;
+}
+
+interface RepliersCompSnapshot {
+  mlsNumber: string | null;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  listPrice: number | null;
+  soldPrice: number | null;
+  beds: number | null;
+  baths: number | null;
+  sqft: number | null;
+  pricePerSqft: number | null;
+  daysOnMarket: number | null;
+  soldDate: string | null;
+  status: string | null;
+}
+
 function formatCurrency(val: number | string | null | undefined): string {
   if (!val) return '$0';
   const num = typeof val === 'string' ? parseFloat(val) : val;
@@ -125,6 +150,15 @@ export default function ReportDetail() {
   const rehabItems = report.rehabItems || rehab.items || [];
   const dataSources = report.dataSources || fullReport.dataSources || [];
   const propertyDetails = fullReport.propertyDetails || {};
+  const repliersAvm: RepliersAvmSnapshot | undefined =
+    fullReport.repliersAvm && typeof fullReport.repliersAvm === 'object'
+      ? (fullReport.repliersAvm as RepliersAvmSnapshot)
+      : undefined;
+  const repliersComps: RepliersCompSnapshot[] | undefined =
+    Array.isArray(fullReport.repliersComps) && fullReport.repliersComps.length > 0
+      ? (fullReport.repliersComps as RepliersCompSnapshot[])
+      : undefined;
+  const repliersIsTestMode: boolean = !!fullReport.repliersIsTestMode;
 
   return (
     <DesignLawLayout>
@@ -272,11 +306,11 @@ export default function ReportDetail() {
           </Section>
         )}
 
-        {fullReport.repliersAvm && (fullReport.repliersAvm as any).price && (
+        {repliersAvm && repliersAvm.price && (
           <Section title={
             <span className="flex items-center gap-3">
               Instant Valuation (MLS AVM)
-              {(fullReport.repliersAvm as any).isTestMode && (
+              {repliersAvm.isTestMode && (
                 <span className="border border-[#8b6914] px-2 py-0.5 font-dl-mono text-xs text-[#8b6914] uppercase">Test Data</span>
               )}
             </span>
@@ -284,17 +318,17 @@ export default function ReportDetail() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="border border-dl-border p-4">
                 <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-1">AVM Estimate</p>
-                <p className="font-dl-mono text-dl-navy font-bold text-xl">{formatCurrency((fullReport.repliersAvm as any).price)}</p>
-                {((fullReport.repliersAvm as any).priceMin || (fullReport.repliersAvm as any).priceMax) && (
+                <p className="font-dl-mono text-dl-navy font-bold text-xl">{formatCurrency(repliersAvm.price)}</p>
+                {(repliersAvm.priceMin || repliersAvm.priceMax) && (
                   <p className="text-xs text-dl-gray font-dl-mono mt-1">
-                    {formatCurrency((fullReport.repliersAvm as any).priceMin)} &mdash; {formatCurrency((fullReport.repliersAvm as any).priceMax)}
+                    {formatCurrency(repliersAvm.priceMin)} &mdash; {formatCurrency(repliersAvm.priceMax)}
                   </p>
                 )}
               </div>
-              {(fullReport.repliersAvm as any).confidence && (
+              {repliersAvm.confidence && (
                 <div className="border border-dl-border p-4">
                   <p className="text-xs text-dl-gray font-dl-mono uppercase tracking-wider mb-1">Model Confidence</p>
-                  <p className="font-dl-mono text-dl-navy font-bold text-xl">{((fullReport.repliersAvm as any).confidence * 100).toFixed(0)}%</p>
+                  <p className="font-dl-mono text-dl-navy font-bold text-xl">{(repliersAvm.confidence * 100).toFixed(0)}%</p>
                   <p className="text-xs text-dl-gray font-dl-mono mt-1">Repliers AVM model</p>
                 </div>
               )}
@@ -304,7 +338,7 @@ export default function ReportDetail() {
                 <p className="text-xs text-dl-gray font-dl-mono mt-1">Realtime MLS valuation</p>
               </div>
             </div>
-            {(fullReport.repliersAvm as any).isTestMode && (
+            {repliersAvm.isTestMode && (
               <p className="font-dl-mono text-xs text-[#8b6914] border border-[#8b6914] px-3 py-2">
                 Test Data — Limited MLS coverage. Production AVM requires REPLIERS_API_KEY.
               </p>
@@ -312,11 +346,11 @@ export default function ReportDetail() {
           </Section>
         )}
 
-        {fullReport.repliersComps && Array.isArray(fullReport.repliersComps) && (fullReport.repliersComps as any[]).length > 0 && (
+        {repliersComps && (
           <Section title={
             <span className="flex items-center gap-3">
               Sales Comparables (MLS)
-              {fullReport.repliersIsTestMode && (
+              {repliersIsTestMode && (
                 <span className="border border-[#8b6914] px-2 py-0.5 font-dl-mono text-xs text-[#8b6914] uppercase">Test Data</span>
               )}
             </span>
@@ -336,12 +370,12 @@ export default function ReportDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(fullReport.repliersComps as any[]).map((comp: any, i: number) => (
+                  {repliersComps.map((comp, i) => (
                     <tr key={i} className="border-b border-dl-border">
                       <td className="py-2 font-dl-mono text-dl-navy pr-4">{comp.address || '--'} {comp.city}</td>
                       <td className="py-2 text-right font-dl-mono text-dl-gray pr-4">{comp.beds ?? '--'}</td>
                       <td className="py-2 text-right font-dl-mono text-dl-gray pr-4">{comp.baths ?? '--'}</td>
-                      <td className="py-2 text-right font-dl-mono text-dl-gray pr-4">{comp.sqft ? Number(comp.sqft).toLocaleString() : '--'}</td>
+                      <td className="py-2 text-right font-dl-mono text-dl-gray pr-4">{comp.sqft ? comp.sqft.toLocaleString() : '--'}</td>
                       <td className="py-2 text-right font-dl-mono text-dl-gray pr-4">{comp.listPrice ? formatCurrency(comp.listPrice) : '--'}</td>
                       <td className="py-2 text-right font-dl-mono text-dl-navy pr-4">{comp.soldPrice ? formatCurrency(comp.soldPrice) : '--'}</td>
                       <td className="py-2 text-right font-dl-mono text-dl-gray pr-4">{comp.pricePerSqft ? `$${comp.pricePerSqft}` : '--'}</td>
@@ -352,7 +386,7 @@ export default function ReportDetail() {
               </table>
             </div>
             <div className="md:hidden grid grid-cols-1 gap-3">
-              {(fullReport.repliersComps as any[]).map((comp: any, i: number) => (
+              {repliersComps.map((comp, i) => (
                 <div key={i} className="border border-dl-border p-3">
                   <p className="font-dl-mono text-xs text-dl-navy font-bold">{comp.address} {comp.city}, {comp.state}</p>
                   <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
@@ -360,7 +394,7 @@ export default function ReportDetail() {
                     <span className="text-dl-gray">Sold: {comp.soldPrice ? formatCurrency(comp.soldPrice) : '--'}</span>
                     <span className="text-dl-gray">Beds: {comp.beds ?? '--'}</span>
                     <span className="text-dl-gray">Baths: {comp.baths ?? '--'}</span>
-                    <span className="text-dl-gray">Sqft: {comp.sqft ? Number(comp.sqft).toLocaleString() : '--'}</span>
+                    <span className="text-dl-gray">Sqft: {comp.sqft ? comp.sqft.toLocaleString() : '--'}</span>
                     <span className="text-dl-gray">DOM: {comp.daysOnMarket ?? '--'}</span>
                   </div>
                 </div>

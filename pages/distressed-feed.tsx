@@ -173,8 +173,8 @@ function FeedTab() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create deal');
       window.location.href = `/deal-intelligence/deal/${data.dealId}`;
-    } catch (err: any) {
-      setPromoteError(err.message);
+    } catch (err: unknown) {
+      setPromoteError(err instanceof Error ? err.message : 'Failed to create deal');
       setPromoting(null);
     }
   }
@@ -1282,8 +1282,8 @@ function MlsTab() {
       await fetch(`/api/real-estate/deals/${dealId}/mls-enrich`, { method: 'POST' }).catch(() => {});
 
       window.location.href = `/deal-intelligence/deal/${dealId}`;
-    } catch (err: any) {
-      setPromoteError(err.message);
+    } catch (err: unknown) {
+      setPromoteError(err instanceof Error ? err.message : 'Failed to create deal');
       setPromoting(null);
     }
   }

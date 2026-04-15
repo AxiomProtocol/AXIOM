@@ -109,6 +109,9 @@ export function isRepliersConfigured(): boolean {
   return getApiKey() !== null;
 }
 
+const EMPTY_LISTINGS: RepliersListingsResponse = { listings: [], count: 0, numPages: 0, page: 1 };
+const EMPTY_ESTIMATE: RepliersEstimateResponse = {};
+
 export async function searchListings(params: {
   city?: string;
   state?: string;
@@ -125,7 +128,7 @@ export async function searchListings(params: {
   resultsPerPage?: number;
 }): Promise<RepliersResult<RepliersListingsResponse>> {
   const keyInfo = getApiKey();
-  if (!keyInfo) return { data: null, isTestMode: true };
+  if (!keyInfo) return { data: EMPTY_LISTINGS, isTestMode: true };
 
   try {
     const body: Record<string, unknown> = {};
@@ -154,14 +157,14 @@ export async function searchListings(params: {
 
     if (!res.ok) {
       console.warn(`[Repliers] searchListings HTTP ${res.status}`);
-      return { data: null, isTestMode: keyInfo.isTestMode };
+      return { data: EMPTY_LISTINGS, isTestMode: keyInfo.isTestMode };
     }
 
     const data = await res.json() as RepliersListingsResponse;
     return { data, isTestMode: keyInfo.isTestMode };
   } catch (err) {
     console.warn('[Repliers] searchListings error:', err instanceof Error ? err.message : err);
-    return { data: null, isTestMode: keyInfo.isTestMode };
+    return { data: EMPTY_LISTINGS, isTestMode: keyInfo.isTestMode };
   }
 }
 
@@ -180,9 +183,11 @@ export async function getSalesComps(params: {
   });
 }
 
-export async function getListingByMlsNumber(mlsNumber: string): Promise<RepliersResult<RepliersListing | null>> {
+const EMPTY_LISTING: RepliersListing = {};
+
+export async function getListingByMlsNumber(mlsNumber: string): Promise<RepliersResult<RepliersListing>> {
   const keyInfo = getApiKey();
-  if (!keyInfo) return { data: null, isTestMode: true };
+  if (!keyInfo) return { data: EMPTY_LISTING, isTestMode: true };
 
   try {
     const res = await fetch(`${REPLIERS_BASE}/listings/${encodeURIComponent(mlsNumber)}`, {
@@ -193,14 +198,14 @@ export async function getListingByMlsNumber(mlsNumber: string): Promise<Repliers
 
     if (!res.ok) {
       console.warn(`[Repliers] getListingByMlsNumber HTTP ${res.status}`);
-      return { data: null, isTestMode: keyInfo.isTestMode };
+      return { data: EMPTY_LISTING, isTestMode: keyInfo.isTestMode };
     }
 
     const data = await res.json() as RepliersListing;
     return { data, isTestMode: keyInfo.isTestMode };
   } catch (err) {
     console.warn('[Repliers] getListingByMlsNumber error:', err instanceof Error ? err.message : err);
-    return { data: null, isTestMode: keyInfo.isTestMode };
+    return { data: EMPTY_LISTING, isTestMode: keyInfo.isTestMode };
   }
 }
 
@@ -217,7 +222,7 @@ export async function getEstimate(params: {
   overallQuality?: string;
 }): Promise<RepliersResult<RepliersEstimateResponse>> {
   const keyInfo = getApiKey();
-  if (!keyInfo) return { data: null, isTestMode: true };
+  if (!keyInfo) return { data: EMPTY_ESTIMATE, isTestMode: true };
 
   try {
     const body: Record<string, unknown> = {
@@ -230,8 +235,8 @@ export async function getEstimate(params: {
         state: params.state,
       },
     };
-    if (params.beds) body.numBedrooms = params.beds;
-    if (params.baths) body.numBathrooms = params.baths;
+    if (params.beds) body.beds = params.beds;
+    if (params.baths) body.baths = params.baths;
     if (params.sqft) body.sqft = params.sqft;
     if (params.overallQuality) body.overallQuality = params.overallQuality;
 
@@ -244,13 +249,13 @@ export async function getEstimate(params: {
 
     if (!res.ok) {
       console.warn(`[Repliers] getEstimate HTTP ${res.status}`);
-      return { data: null, isTestMode: keyInfo.isTestMode };
+      return { data: EMPTY_ESTIMATE, isTestMode: keyInfo.isTestMode };
     }
 
     const data = await res.json() as RepliersEstimateResponse;
     return { data, isTestMode: keyInfo.isTestMode };
   } catch (err) {
     console.warn('[Repliers] getEstimate error:', err instanceof Error ? err.message : err);
-    return { data: null, isTestMode: keyInfo.isTestMode };
+    return { data: EMPTY_ESTIMATE, isTestMode: keyInfo.isTestMode };
   }
 }
