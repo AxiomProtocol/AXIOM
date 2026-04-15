@@ -39,8 +39,8 @@ async function doRepliersLookup(parsed: ReturnType<typeof parseAddress>): Promis
         isTestMode: mlsResult.isTestMode,
       };
     }
-  } catch (mlsErr: any) {
-    console.warn('Repliers MLS lookup failed (non-blocking):', mlsErr.message);
+  } catch (mlsErr: unknown) {
+    console.warn('Repliers MLS lookup failed (non-blocking):', mlsErr instanceof Error ? mlsErr.message : mlsErr);
   }
   return null;
 }
@@ -54,14 +54,21 @@ async function persistMlsToDeal(dealId: string, mlsData: MlsSnapshot): Promise<v
         .set({
           meta: {
             ...existingDealMeta,
-            mlsEnrichment: { ...mlsData, enrichedAt: new Date().toISOString() },
+            mlsEnrichment: {
+              ...mlsData,
+              list_price: mlsData.listPrice,
+              days_on_market: mlsData.daysOnMarket,
+              listing_status: mlsData.listingStatus,
+              mls_number: mlsData.mlsNumber,
+              enrichedAt: new Date().toISOString(),
+            },
           },
           updatedAt: new Date(),
         })
         .where(eq(reDeals.id, dealId));
     }
-  } catch (dealErr: any) {
-    console.warn('Deal MLS persistence failed (non-blocking):', dealErr.message);
+  } catch (dealErr: unknown) {
+    console.warn('Deal MLS persistence failed (non-blocking):', dealErr instanceof Error ? dealErr.message : dealErr);
   }
 }
 
@@ -151,8 +158,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           mlsData: mlsData || undefined,
         }, buildMeta(sources, confidence));
       }
-    } catch (trigramErr: any) {
-      console.warn('Trigram search unavailable (pg_trgm may not be installed):', trigramErr.message);
+    } catch (trigramErr: unknown) {
+      console.warn('Trigram search unavailable (pg_trgm may not be installed):', trigramErr instanceof Error ? trigramErr.message : trigramErr);
     }
 
     const newIdResult = await pool.query(`SELECT gen_random_uuid() as new_id`);
