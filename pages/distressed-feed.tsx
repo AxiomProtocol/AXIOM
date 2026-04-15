@@ -1233,11 +1233,12 @@ function MlsTab() {
       if (filterMinPrice) params.set('min_price', filterMinPrice);
       if (filterMaxPrice) params.set('max_price', filterMaxPrice);
       if (filterMinBeds) params.set('min_beds', filterMinBeds);
-      const res = await fetch(`/api/distressed-feed/mls?${params.toString()}`);
+      params.set('source', 'mls_repliers');
+      const res = await fetch(`/api/distressed-feed/listings?${params.toString()}`);
       const data = await res.json();
       setListings(data.listings || []);
       setIsTestMode(!!data.isTestMode);
-      setConfigured(!!data.configured);
+      setConfigured(data.configured !== false);
       setTotalPages(data.pagination?.totalPages || 1);
       setTotal(data.pagination?.total || 0);
     } catch {

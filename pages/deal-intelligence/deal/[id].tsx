@@ -167,21 +167,21 @@ export default function DealWorkspacePage() {
   useEffect(() => { loadSummary(); }, [loadSummary]);
 
   useEffect(() => {
-    const addr = summary?.property?.addressRaw || summary?.deal?.addressRaw;
-    if (!addr) return;
-    fetch('/api/real-estate/resolve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ address: addr }),
-    })
+    if (!id || !summary) return;
+    const existingMls = (summary.deal?.meta as any)?.mlsEnrichment;
+    if (existingMls) {
+      setMlsEnrichment(existingMls);
+      return;
+    }
+    fetch(`/api/real-estate/deals/${id}/mls-enrich`, { method: 'POST' })
       .then(r => r.json())
       .then(d => {
-        if (d.data?.mlsData) {
-          setMlsEnrichment(d.data.mlsData);
+        if (d.data?.mlsEnrichment && !d.data.mlsEnrichment.noListingFound) {
+          setMlsEnrichment(d.data.mlsEnrichment);
         }
       })
       .catch(() => {});
-  }, [summary?.property?.addressRaw, summary?.deal?.addressRaw]);
+  }, [id, summary]);
 
   const handleCreateScenario = useCallback(async () => {
     if (!id) return;

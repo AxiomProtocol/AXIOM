@@ -2,6 +2,87 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import { dpListings } from '../../../../shared/distressedFeedSchema';
 import { eq, and, gte, lte, sql, desc, asc } from 'drizzle-orm';
+import { searchListings, isRepliersConfigured } from '../../../../lib/re/repliers';
+
+async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
+  const { city, state, zip, min_price, max_price, min_bedrooms, page = '1' } = req.query;
+  const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
+
+  if (!isRepliersConfigured()) {
+    return res.json({
+      listings: [],
+      isTestMode: true,
+      configured: false,
+      source: 'mls_repliers',
+      pagination: { page: pageNum, total: 0, totalPages: 0, limit: 20 },
+    });
+  }
+
+  const result = await searchListings({
+    city: city ? String(city) : undefined,
+    state: state ? String(state) : undefined,
+    zip: zip ? String(zip) : undefined,
+    lastStatus: ['Pc', 'Exp'],
+    daysOnMarketMin: 60,
+    minPrice: min_price ? parseInt(String(min_price), 10) : undefined,
+    maxPrice: max_price ? parseInt(String(max_price), 10) : undefined,
+    minBeds: min_bedrooms ? parseInt(String(min_bedrooms), 10) : undefined,
+    resultsPerPage: 20,
+    pageNum,
+  });
+
+  const raw = result.data?.listings || [];
+  const lastStatusLabel: Record<string, string> = {
+    Pc: 'Price Changed',
+    Exp: 'Expired',
+    Sus: 'Suspended',
+    Ter: 'Terminated',
+  };
+
+  const listings = raw.map((l) => {
+    const addr = l.address || {};
+    const fullAddress = [addr.streetNumber, addr.streetName, addr.streetSuffix].filter(Boolean).join(' ');
+    const sqftRaw = l.details?.sqft;
+    const sqft = sqftRaw ? parseInt(sqftRaw.replace(/[^0-9]/g, ''), 10) || null : null;
+
+    return {
+      mlsNumber: l.mlsNumber || null,
+      source: 'mls_repliers',
+      address: fullAddress || 'Address unavailable',
+      city: addr.city || '',
+      state: addr.state || '',
+      zip: addr.zip || '',
+      propertyType: l.details?.propertyType || 'Residential',
+      bedrooms: l.details?.numBedrooms ?? null,
+      bathrooms: l.details?.numBathrooms ?? null,
+      sqft,
+      yearBuilt: l.details?.yearBuilt ? parseInt(l.details.yearBuilt, 10) : null,
+      listPrice: l.listPrice || 0,
+      daysOnMarket: l.daysOnMarket ?? null,
+      status: l.status || '',
+      lastStatus: l.lastStatus || '',
+      lastStatusLabel: lastStatusLabel[l.lastStatus || ''] || l.lastStatus || '',
+      listDate: l.listDate || null,
+      images: l.images || [],
+      description: l.details?.description || null,
+      addressKey: l.addressKey || null,
+      sourceUrl: l.mlsNumber ? `https://repliers.com/listing/${l.mlsNumber}` : null,
+    };
+  });
+
+  return res.json({
+    listings,
+    isTestMode: result.isTestMode,
+    configured: true,
+    source: 'mls_repliers',
+    pagination: {
+      page: pageNum,
+      total: result.data?.count || listings.length,
+      totalPages: result.data?.numPages || 1,
+      limit: 20,
+    },
+  });
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -9,6 +90,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    const { source } = req.query;
+
+    if (source === 'mls_repliers') {
+      return handleMlsRepliers(req, res);
+    }
+
     const {
       state, city, distress_type, min_price, max_price,
       property_type, min_bedrooms, min_sqft,
