@@ -167,7 +167,7 @@ export default function CdpWalletsPage() {
                   type="text"
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
-                  placeholder="e.g. Treasury Reserve"
+                  placeholder="e.g. Treasury Reserve (auto-formatted)"
                   className="w-full border border-dl-border text-dl-navy text-sm font-dl-mono px-3 py-2 focus:outline-none focus:border-dl-navy"
                 />
               </div>

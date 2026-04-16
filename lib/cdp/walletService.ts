@@ -51,6 +51,19 @@ export async function listEvmAccounts(): Promise<CdpWalletListResult> {
 }
 
 /**
+ * Slugify a wallet name to meet CDP requirements:
+ * alphanumeric + hyphens only, 2–36 chars.
+ */
+function slugifyName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 36)
+    .padEnd(2, '0');
+}
+
+/**
  * Create a new named EVM server wallet account.
  */
 export async function createEvmAccount(name?: string): Promise<CdpCreateAccountResult> {
@@ -60,7 +73,8 @@ export async function createEvmAccount(name?: string): Promise<CdpCreateAccountR
 
   try {
     const cdp = getCdpClient();
-    const account = await cdp.evm.createAccount(name ? { name } : undefined);
+    const safeName = name ? slugifyName(name) : undefined;
+    const account = await cdp.evm.createAccount(safeName ? { name: safeName } : undefined);
 
     return {
       account: {
