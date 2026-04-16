@@ -32,7 +32,7 @@ interface OptionalMetric { label: string; value: string; verifiedFrom: string; }
 interface HeroCta { primaryLabel: string; primaryHref: string; variant: string; verifiedFrom: string; }
 
 interface HomepageTruth {
-  hero: { headline: string; subheadline: string; trustItems: TrustItem[]; cta: HeroCta };
+  hero: { headline: string; subheadline: string; headlineVariant?: 'A'|'B'|'C'; headlineVerifiedFrom?: string; trustItems: TrustItem[]; cta: HeroCta };
   pathCards: PathCard[];
   trustCards: TrustCard[];
   status: StatusRow[];
@@ -132,14 +132,33 @@ interface DesignLawHomeProps {
   initialTruth?: HomepageTruth | null;
 }
 
+function formatAgo(iso: string | null): string {
+  if (!iso) return '';
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return '';
+  const ms = Date.now() - t;
+  if (ms < 0) return 'just now';
+  if (ms < 10_000)           return 'just now';
+  if (ms < 60_000)           return `${Math.floor(ms / 1000)}s ago`;
+  if (ms < 60 * 60_000)      return `${Math.floor(ms / 60_000)}m ago`;
+  if (ms < 24 * 60 * 60_000) return `${Math.floor(ms / (60 * 60_000))}h ago`;
+  return `${Math.floor(ms / (24 * 60 * 60_000))}d ago`;
+}
+
 export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
   const [timestamp, setTimestamp] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [truth, setTruth] = useState<HomepageTruth>(initialTruth ?? FALLBACK_TRUTH);
   const [truthLoaded, setTruthLoaded] = useState(!!initialTruth);
+  // Live-updating "last verified" tick — re-renders every 5s so the
+  // hero feels alive without polling the backend. Purely cosmetic; the
+  // underlying timestamp is never fabricated.
+  const [nowTick, setNowTick] = useState(0);
 
   useEffect(() => {
     setTimestamp(new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'));
+    const id = setInterval(() => setNowTick((n) => n + 1), 5000);
+    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -166,6 +185,9 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
   const verifiedAt = truthLoaded && truth.generatedAt
     ? `${truth.generatedAt.slice(0, 19).replace('T', ' ')} UTC`
     : null;
+  // nowTick forces re-evaluation of this relative-time string every 5s.
+  const verifiedAgo = truth.generatedAt ? formatAgo(truth.generatedAt) : '';
+  void nowTick;
   const shortSnapshot = truth.snapshotId ? truth.snapshotId.slice(0, 8) : null;
 
   const pathHrefByKey = Object.fromEntries(truth.pathCards.map((p) => [p.key, p.href]));
@@ -182,6 +204,23 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
       <Head>
         <title>Axiom Protocol | Verified Financial Infrastructure</title>
         <meta name="description" content={truth.hero.subheadline} />
+        {/* Subtle "breathing" pulse for LIVE indicators — institutional,
+            low opacity, slow. Scoped via [data-dl-pulse]. */}
+        <style>{`
+          @keyframes dlPulse {
+            0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(110,231,165,0.45); }
+            50%     { opacity: 0.65; box-shadow: 0 0 0 4px rgba(110,231,165,0); }
+          }
+          [data-dl-pulse="live"] { animation: dlPulse 2.4s ease-in-out infinite; }
+          @keyframes dlPulseGold {
+            0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(240,217,138,0.45); }
+            50%     { opacity: 0.65; box-shadow: 0 0 0 4px rgba(240,217,138,0); }
+          }
+          [data-dl-pulse="gold"] { animation: dlPulseGold 2.4s ease-in-out infinite; }
+          @media (prefers-reduced-motion: reduce) {
+            [data-dl-pulse] { animation: none; }
+          }
+        `}</style>
       </Head>
       <div className="design-law-root min-h-screen bg-dl-bg pb-16 lg:pb-0">
 
@@ -337,14 +376,24 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
                   >
                     <div className="px-5 py-3 flex items-center justify-between border-b" style={{ borderColor: 'rgba(255,255,255,0.15)' }}>
                       <div className="flex items-center gap-2">
+                        <span
+                          className="inline-block w-2 h-2 rounded-full"
+                          style={{ backgroundColor: '#6ee7a5' }}
+                          data-dl-pulse="live"
+                          aria-hidden
+                        />
                         <Activity className="w-4 h-4" style={{ color: '#f0d98a' }} />
                         <span className="font-dl-mono text-xs uppercase tracking-widest" style={{ color: '#f0d98a' }}>
                           Live System
                         </span>
                       </div>
-                      {verifiedAt && (
-                        <span className="font-dl-mono text-[10px]" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                          {verifiedAt.slice(11, 19)} UTC
+                      {verifiedAgo && (
+                        <span
+                          className="font-dl-mono text-[10px]"
+                          style={{ color: 'rgba(255,255,255,0.75)' }}
+                          title={verifiedAt ?? ''}
+                        >
+                          Verified {verifiedAgo}
                         </span>
                       )}
                     </div>
@@ -358,10 +407,28 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
                           title={`source: ${s.verifiedFrom}`}
                         >
                           <span className="text-sm" style={{ color: '#ffffff' }}>{s.system}</span>
-                          <span
-                            className="font-dl-mono text-[10px] uppercase tracking-wider"
-                            style={{ color: s.status === 'live' ? '#6ee7a5' : s.status === 'formation' ? '#f0d98a' : 'rgba(255,255,255,0.55)' }}
-                          >{s.status}</span>
+                          <span className="flex items-center gap-2">
+                            {s.status === 'live' && (
+                              <span
+                                className="inline-block w-1.5 h-1.5 rounded-full"
+                                style={{ backgroundColor: '#6ee7a5' }}
+                                data-dl-pulse="live"
+                                aria-hidden
+                              />
+                            )}
+                            {s.status === 'formation' && (
+                              <span
+                                className="inline-block w-1.5 h-1.5 rounded-full"
+                                style={{ backgroundColor: '#f0d98a' }}
+                                data-dl-pulse="gold"
+                                aria-hidden
+                              />
+                            )}
+                            <span
+                              className="font-dl-mono text-[10px] uppercase tracking-wider"
+                              style={{ color: s.status === 'live' ? '#6ee7a5' : s.status === 'formation' ? '#f0d98a' : 'rgba(255,255,255,0.55)' }}
+                            >{s.status}</span>
+                          </span>
                         </Link>
                       ))}
                       {truth.status.length === 0 && (

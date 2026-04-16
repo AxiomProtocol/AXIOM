@@ -112,6 +112,8 @@ export interface HomepageTruth {
   hero: {
     headline: string;
     subheadline: string;
+    headlineVariant: 'A' | 'B' | 'C';
+    headlineVerifiedFrom: string;
     trustItems: TrustItem[];
     cta: HeroCta;
   };
@@ -154,6 +156,35 @@ function pickHeroCtaVariant(override?: HeroCtaVariant): { variant: HeroCtaVarian
   const variants = Object.keys(HERO_CTA_VARIANTS) as HeroCtaVariant[];
   const bucket = Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % variants.length;
   return { variant: variants[bucket], verifiedFrom: `rotation:daily-bucket(${bucket})` };
+}
+
+// ── Hero headline A/B variants ──────────────────────────────────────
+// Institutional copy only — each variant still maps to paths the
+// resolver verifies. Controlled by env HOMEPAGE_HERO_VARIANT (A|B|C);
+// default is A. No user-facing fabrication risk since all three are
+// positioning statements, not factual claims.
+export type HeroHeadlineVariant = 'A' | 'B' | 'C';
+const HERO_HEADLINE_VARIANTS: Record<HeroHeadlineVariant, { headline: string; subheadline: string }> = {
+  A: {
+    headline: 'Build Wealth Through Verified Financial Infrastructure',
+    subheadline: 'Live banking rails, digital dollar systems, reserve access, and public proof tools — all connected through one operating framework.',
+  },
+  B: {
+    headline: 'Where Capital Moves With Proof, Not Promises',
+    subheadline: 'Banking rails, settlement, reserve access, and solvency proof — reviewable before capital moves.',
+  },
+  C: {
+    headline: 'Banking. Settlement. Reserve. Proof — One System.',
+    subheadline: 'Axiom connects regulated banking rails, on-chain settlement, reserve access, and public proof into one operating framework.',
+  },
+};
+
+function pickHeroHeadline(): { variant: HeroHeadlineVariant; headline: string; subheadline: string; verifiedFrom: string } {
+  const raw = (process.env.HOMEPAGE_HERO_VARIANT || '').trim().toUpperCase() as HeroHeadlineVariant;
+  if (raw && HERO_HEADLINE_VARIANTS[raw]) {
+    return { variant: raw, ...HERO_HEADLINE_VARIANTS[raw], verifiedFrom: `env:HOMEPAGE_HERO_VARIANT=${raw}` };
+  }
+  return { variant: 'A', ...HERO_HEADLINE_VARIANTS.A, verifiedFrom: 'default:A' };
 }
 
 function pageExists(routePath: string): boolean {
@@ -593,13 +624,18 @@ export class HomepageTruthService {
     const ctaPick = pickHeroCtaVariant(opts.ctaOverride);
     const ctaConfig = HERO_CTA_VARIANTS[ctaPick.variant];
 
+    // Hero headline variant (env-selectable, A by default).
+    const headlinePick = pickHeroHeadline();
+
     return {
       hero: {
         // Headline / subheadline are public-facing institutional copy.
         // Each phrase below maps to a trust item or path that the resolver
         // verified above. If a path is unavailable, soften the wording.
-        headline: 'Build Wealth Through Verified Financial Infrastructure',
-        subheadline: 'Earn on digital dollars, borrow against Bitcoin, access reserve assets, and verify every system publicly.',
+        headline: headlinePick.headline,
+        subheadline: headlinePick.subheadline,
+        headlineVariant: headlinePick.variant,
+        headlineVerifiedFrom: headlinePick.verifiedFrom,
         trustItems,
         cta: {
           primaryLabel: ctaConfig.primaryLabel,
