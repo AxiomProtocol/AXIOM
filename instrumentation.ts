@@ -6641,6 +6641,26 @@ END $seed$`, 'seed dp_listings');
       await exec(`CREATE INDEX IF NOT EXISTS axau_purchase_wallet_idx ON axau_purchase_requests(wallet_address)`, 'index axau_purchase_wallet_idx');
       await exec(`CREATE INDEX IF NOT EXISTS axau_purchase_status_idx ON axau_purchase_requests(status)`, 'index axau_purchase_status_idx');
 
+      // ─── AXAU launch analytics (visit/click/form funnel) ───
+      await exec(`CREATE TABLE IF NOT EXISTS axau_analytics_events (
+        id            BIGSERIAL PRIMARY KEY,
+        event_type    TEXT NOT NULL,
+        visitor_id    TEXT NOT NULL,
+        source        TEXT,
+        utm_campaign  TEXT,
+        utm_medium    TEXT,
+        referrer      TEXT,
+        path          TEXT,
+        meta          JSONB,
+        ip_hash       TEXT,
+        user_agent    TEXT,
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`, 'table axau_analytics_events');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_axau_analytics_created       ON axau_analytics_events (created_at DESC)`, 'index idx_axau_analytics_created');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_axau_analytics_event_created ON axau_analytics_events (event_type, created_at DESC)`, 'index idx_axau_analytics_event_created');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_axau_analytics_visitor       ON axau_analytics_events (visitor_id)`, 'index idx_axau_analytics_visitor');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_axau_analytics_source        ON axau_analytics_events (source)`, 'index idx_axau_analytics_source');
+
       // ═══════════════════════════════════════════
       //  EXPANSION / CROSS-CHAIN INFRASTRUCTURE
       // ═══════════════════════════════════════════

@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useAccount } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
+import { trackAxauEvent } from '../lib/analytics/axauTracker';
 
 const CircleWalletEntry = dynamic(
   () => import('../components/circle/CircleWalletEntry'),
@@ -362,6 +363,7 @@ export default function AxauAccessPage() {
     if (!form.email)      { setStep1Error('Please enter your email.'); return; }
     if (!form.country)    { setStep1Error('Please select your country.'); return; }
     if (!walletChoice)    { setStep1Error('Please choose how you want to use a wallet.'); return; }
+    trackAxauEvent('cta_click', { cta: 'step1_continue', walletChoice, country: form.country });
     setFormStep('step2');
     // Move to step 2 form area smoothly on mobile
     if (typeof window !== 'undefined') {
@@ -383,11 +385,25 @@ export default function AxauAccessPage() {
       .catch(() => {});
   }, []);
 
+  // Fire a single page_view per mount. Source attribution is derived
+  // server-side from referer + utm params on the request.
+  useEffect(() => {
+    trackAxauEvent('page_view', { initialStep: step });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fire a single form_start the first time the user touches any field.
+  const [formStartFired, setFormStartFired] = useState(false);
   function field(key: keyof typeof form) {
     return {
       value: form[key],
-      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-        setForm(f => ({ ...f, [key]: e.target.value })),
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        if (!formStartFired) {
+          setFormStartFired(true);
+          trackAxauEvent('form_start', { firstField: key });
+        }
+        setForm(f => ({ ...f, [key]: e.target.value }));
+      },
     };
   }
 
@@ -406,6 +422,12 @@ export default function AxauAccessPage() {
       }
       setSubmissionId(json.data.id ?? '');
       setEmailQueued(json.data.emailQueued === true);
+      trackAxauEvent('form_complete', {
+        submissionId: json.data.id ?? '',
+        emailQueued:  json.data.emailQueued === true,
+        country:      form.country,
+        walletChoice,
+      });
       setStep('submitted');
     } catch {
       setError('Network error — please check your connection and try again.');
