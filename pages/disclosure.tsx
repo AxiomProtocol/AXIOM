@@ -760,7 +760,7 @@ export default function DisclosurePage() {
             <div className="px-6 py-3 border-b border-dl-border">
               <p className="text-xs text-dl-gray mb-2">Nine Intelligence Dimensions</p>
               <div className="space-y-1">
-                <p className="text-sm text-dl-navy">1. Digital Commodity Intelligence — BTC, ETH, LINK treasury accumulation signals (CoinGecko)</p>
+                <p className="text-sm text-dl-navy">1. Digital Commodity Intelligence — BTC, ETH, LINK treasury accumulation signals (Coinbase Advanced Trade)</p>
                 <p className="text-sm text-dl-navy">2. Protocol Health Intelligence — AXUSD coverage ratio, peg stability, liquidity depth</p>
                 <p className="text-sm text-dl-navy">3. Real Asset Market Intelligence — Real estate market momentum (Alpha Vantage REIT proxies)</p>
                 <p className="text-sm text-dl-navy">4. Construction Cost Intelligence — Capex/unit trends by strategy and market (NCE benchmarks)</p>

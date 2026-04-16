@@ -63,7 +63,7 @@ const DIMENSION_ICONS: Record<string, React.ReactNode> = {
 };
 
 const DIMENSION_DATA_SOURCE: Record<string, string> = {
-  'digital-commodity': 'CoinGecko — BTC / ETH / LINK / AXM (on-chain)',
+  'digital-commodity': 'Coinbase Advanced Trade — BTC / ETH / LINK / AXM (on-chain)',
   'protocol-health': 'Solvency Snapshot + On-Chain — CR / AXUSD Supply / earnAXUSD TVL',
   'real-asset-market': 'Alpha Vantage — VNQ (REIT) + XHB (Homebuilder)',
   'construction-cost': 'Market Cost Signals — Craftsman NCE Benchmarks',

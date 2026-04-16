@@ -1517,19 +1517,30 @@ export default function InvestPage() {
                       <p className="text-sm mb-4 text-dl-gray">
                         You need {formatUSD(amount)} AXUSD to invest, but your balance is ${parseFloat(vaultPosition.axusdBalanceUsd).toLocaleString()}.
                       </p>
-                      <p className="text-sm mb-4 text-dl-gray">
+                      <p className="text-sm mb-3 text-dl-gray">
                         <strong>How to get AXUSD:</strong>
                       </p>
-                      <ul className="text-sm space-y-2 mb-4 text-dl-gray">
-                        <li>1. Swap USDC for AXUSD 1:1 via the <Link href="/axusd" className="text-dl-navy underline">PSM (Peg Stability Module)</Link></li>
-                        <li>2. Mint AXUSD by depositing ETH/BTC collateral in the <Link href="/axusd" className="text-dl-navy underline">Vault Engine</Link></li>
+                      <ul className="text-sm space-y-2 mb-5 text-dl-gray">
+                        <li>1. <strong>Fastest:</strong> Buy USDC with a debit or credit card via Coinbase Pay, then convert 1:1 to AXUSD — all on the{' '}
+                          <Link href="/onramp" className="text-dl-navy underline">Capital Stack Entry</Link> page.
+                        </li>
+                        <li>2. Already have USDC? Swap for AXUSD 1:1 via the <Link href="/axusd" className="text-dl-navy underline">PSM (Peg Stability Module)</Link>.</li>
+                        <li>3. Mint AXUSD by depositing ETH/BTC collateral in the <Link href="/axusd" className="text-dl-navy underline">Vault Engine</Link>.</li>
                       </ul>
-                      <Link
-                        href="/axusd"
-                        className="inline-block px-6 py-3 bg-dl-navy text-white font-medium"
-                      >
-                        Get AXUSD →
-                      </Link>
+                      <div className="flex flex-wrap gap-3">
+                        <Link
+                          href="/onramp"
+                          className="inline-block px-6 py-3 bg-dl-navy text-white font-medium text-sm"
+                        >
+                          Buy USDC via Coinbase Pay
+                        </Link>
+                        <Link
+                          href="/axusd"
+                          className="inline-block px-6 py-3 border border-dl-navy text-dl-navy font-medium text-sm"
+                        >
+                          Get AXUSD (PSM / Vault)
+                        </Link>
+                      </div>
                     </div>
                   ) : (
                     <>
