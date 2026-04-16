@@ -28,8 +28,9 @@ interface AvailabilityItem { label: string; available: boolean; href: string; ve
 interface ProofLink { label: string; href: string; available: boolean; verifiedFrom: string; }
 interface OptionalMetric { label: string; value: string; verifiedFrom: string; }
 
+interface HeroCta { primaryLabel: string; primaryHref: string; variant: string; verifiedFrom: string; }
 interface HomepageTruth {
-  hero: { headline: string; subheadline: string; trustItems: TrustItem[] };
+  hero: { headline: string; subheadline: string; trustItems: TrustItem[]; cta: HeroCta };
   pathCards: PathCard[];
   trustCards: TrustCard[];
   status: StatusRow[];
@@ -51,6 +52,7 @@ const FALLBACK_TRUTH: HomepageTruth = {
       { label: 'Self-custody by default', verifiedFrom: 'fallback' },
       { label: 'Verified access controls', verifiedFrom: 'fallback' },
     ],
+    cta: { primaryLabel: 'Start Here →', primaryHref: '/start', variant: 'start_here', verifiedFrom: 'fallback' },
   },
   pathCards: [],
   trustCards: [],
@@ -109,11 +111,19 @@ function StatusChip({ status }: { status: ClaimStatus }) {
   );
 }
 
-export function DesignLawHome() {
+interface DesignLawHomeProps {
+  // SSR-resolved canonical truth payload. When present, the verified hero
+  // text and all source-backed sections render on first paint with no
+  // hydration flicker. The client still re-fetches /api/homepage/truth on
+  // mount to refresh CTA variant rotation and bytecode liveness state.
+  initialTruth?: HomepageTruth | null;
+}
+
+export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
   const [timestamp, setTimestamp] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [truth, setTruth] = useState<HomepageTruth>(FALLBACK_TRUTH);
-  const [truthLoaded, setTruthLoaded] = useState(false);
+  const [truth, setTruth] = useState<HomepageTruth>(initialTruth ?? FALLBACK_TRUTH);
+  const [truthLoaded, setTruthLoaded] = useState(!!initialTruth);
 
   useEffect(() => {
     setTimestamp(new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'));
@@ -123,13 +133,17 @@ export function DesignLawHome() {
     let cancelled = false;
     (async () => {
       try {
-        const r = await fetch('/api/homepage/truth');
+        // Forward ?cta= override if present in the URL so client and SSR agree.
+        const params = new URLSearchParams(window.location.search);
+        const cta = params.get('cta');
+        const url = cta ? `/api/homepage/truth?cta=${encodeURIComponent(cta)}` : '/api/homepage/truth';
+        const r = await fetch(url);
         const j = await r.json();
         if (!cancelled && j?.success && j?.data) {
           setTruth(j.data as HomepageTruth);
         }
       } catch {
-        // Keep fallback
+        // Keep prior truth (SSR or fallback)
       } finally {
         if (!cancelled) setTruthLoaded(true);
       }
@@ -247,9 +261,13 @@ export function DesignLawHome() {
 
                 {/* CTA hierarchy: 1 primary + 1 secondary + 1 tertiary text link */}
                 <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4 mb-8">
-                  <Link href="/start">
-                    <span className="inline-block bg-dl-gold text-dl-navy px-7 py-3.5 text-sm font-bold hover:opacity-90 font-dl-mono uppercase tracking-wider w-full sm:w-auto text-center">
-                      Start Here →
+                  <Link href={truth.hero.cta.primaryHref}>
+                    <span
+                      className="inline-block bg-dl-gold text-dl-navy px-7 py-3.5 text-sm font-bold hover:opacity-90 font-dl-mono uppercase tracking-wider w-full sm:w-auto text-center"
+                      data-cta-variant={truth.hero.cta.variant}
+                      title={`source: ${truth.hero.cta.verifiedFrom}`}
+                    >
+                      {truth.hero.cta.primaryLabel}
                     </span>
                   </Link>
                   {truth.proofLinks.proof.available && (

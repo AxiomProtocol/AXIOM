@@ -22,6 +22,11 @@ import { join } from 'path';
 import { systemStateService } from './SystemStateService';
 import { getProviderStatus } from '../providers/providerStatus';
 import { CHAIN_REGISTRY } from '../multichain/chainRegistry';
+import {
+  checkMany,
+  HOMEPAGE_LIVENESS_TARGETS,
+  type LivenessResult,
+} from './contractLivenessService';
 
 export type ClaimStatus = 'live' | 'configured' | 'formation' | 'planned' | 'inactive';
 
@@ -75,11 +80,21 @@ export interface AvailabilityItem {
   verifiedFrom: string;
 }
 
+export type HeroCtaVariant = 'start_here' | 'open_account' | 'begin_verification';
+
+export interface HeroCta {
+  primaryLabel: string;
+  primaryHref: string;
+  variant: HeroCtaVariant;
+  verifiedFrom: string;
+}
+
 export interface HomepageTruth {
   hero: {
     headline: string;
     subheadline: string;
     trustItems: TrustItem[];
+    cta: HeroCta;
   };
   pathCards: PathCard[];
   trustCards: TrustCard[];
@@ -94,6 +109,31 @@ export interface HomepageTruth {
   metrics: OptionalMetric[];
   snapshotId: string | null;
   generatedAt: string;
+}
+
+export interface ResolveOptions {
+  ctaOverride?: HeroCtaVariant;
+}
+
+const HERO_CTA_VARIANTS: Record<HeroCtaVariant, { primaryLabel: string; primaryHref: string }> = {
+  start_here:          { primaryLabel: 'Start Here →',          primaryHref: '/start' },
+  open_account:        { primaryLabel: 'Open Account →',        primaryHref: '/start' },
+  begin_verification:  { primaryLabel: 'Begin Verification →',  primaryHref: '/infrastructure' },
+};
+
+function pickHeroCtaVariant(override?: HeroCtaVariant): { variant: HeroCtaVariant; verifiedFrom: string } {
+  if (override && HERO_CTA_VARIANTS[override]) {
+    return { variant: override, verifiedFrom: `override:query:cta=${override}` };
+  }
+  const envChoice = (process.env.HOMEPAGE_HERO_CTA_VARIANT || '').trim() as HeroCtaVariant;
+  if (envChoice && HERO_CTA_VARIANTS[envChoice]) {
+    return { variant: envChoice, verifiedFrom: `env:HOMEPAGE_HERO_CTA_VARIANT=${envChoice}` };
+  }
+  // Deterministic rotation across hours so production gets stable buckets,
+  // and we have lightweight A/B exposure without an analytics dependency.
+  const variants = Object.keys(HERO_CTA_VARIANTS) as HeroCtaVariant[];
+  const bucket = Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % variants.length;
+  return { variant: variants[bucket], verifiedFrom: `rotation:daily-bucket(${bucket})` };
 }
 
 function pageExists(routePath: string): boolean {
@@ -113,7 +153,13 @@ function pageExists(routePath: string): boolean {
 }
 
 export class HomepageTruthService {
-  async resolve(): Promise<HomepageTruth> {
+  async resolve(opts: ResolveOptions = {}): Promise<HomepageTruth> {
+    // ── Source: on-chain bytecode liveness ────────────────────────────
+    // Run in parallel with SystemStateService below. Fails closed: any
+    // RPC error returns { hasCode:false } and the consumer downgrades.
+    const livenessPromise: Promise<Record<string, LivenessResult>> = checkMany(
+      HOMEPAGE_LIVENESS_TARGETS as unknown as Record<string, string>,
+    ).catch(() => ({} as Record<string, LivenessResult>));
     // ── Source: chain registry ────────────────────────────────────────
     const arbitrum = CHAIN_REGISTRY.find((c) => c.id === 'arbitrum-one');
     const arbitrumLive = arbitrum?.status === 'live';
@@ -133,6 +179,13 @@ export class HomepageTruthService {
     const bankingLive = sysState?.banking.status === 'live' || increase.status === 'live';
     const custodyLive = sysState?.custody.status === 'live' || bitgo.status === 'live';
     const snapshotAvailable = !!sysState?.disclosure.snapshotId;
+
+    // Resolve liveness now that we already kicked off the RPC fan-out.
+    const liveness = await livenessPromise;
+    const axusdLive = !!liveness.axusd?.hasCode;
+    const axauLive = !!liveness.axau?.hasCode;
+    const psmLive = !!liveness.psm?.hasCode;
+    const dexLive = axusdLive && psmLive; // DEX is only live if its core contracts are deployed
 
     // ── Trust strip (only items with positive evidence) ───────────────
     const trustItems: TrustItem[] = [];
@@ -243,30 +296,42 @@ export class HomepageTruthService {
     if (pageExists('/axusd-3643')) {
       status.push({
         system: 'AXUSD Settlement Layer',
-        status: 'live',
-        note: 'Identity-gated settlement unit. Live on Arbitrum One.',
+        status: axusdLive ? 'live' : 'configured',
+        note: axusdLive
+          ? `Identity-gated settlement unit. On-chain bytecode verified (${liveness.axusd?.byteLength ?? 0} bytes).`
+          : 'Page available; on-chain contract not currently reachable.',
         href: '/axusd-3643',
-        verifiedFrom: 'chainRegistry + onchain-deployment',
+        verifiedFrom: axusdLive
+          ? `route:/axusd-3643 + ${liveness.axusd?.verifiedFrom ?? 'eth_getCode'}`
+          : 'route:/axusd-3643 (bytecode check failed)',
       });
     }
 
     if (pageExists('/dex')) {
       status.push({
         system: 'Protocol Exchange',
-        status: 'live',
-        note: 'AXM/AXUSD pairs with PSM-backed conversion engine.',
+        status: dexLive ? 'live' : 'configured',
+        note: dexLive
+          ? 'AXM/AXUSD pairs with PSM-backed conversion engine. PSM and AXUSD bytecode verified.'
+          : 'Exchange page available; underlying conversion contracts not reachable.',
         href: '/dex',
-        verifiedFrom: 'route:/dex + onchain-deployment',
+        verifiedFrom: dexLive
+          ? `route:/dex + ${liveness.psm?.verifiedFrom ?? 'eth_getCode'}`
+          : 'route:/dex (bytecode check failed)',
       });
     }
 
     if (pageExists('/axau-early-access')) {
       status.push({
         system: 'AXAU Reserve Access',
-        status: 'live',
-        note: 'Reserve access application open. Identity credential required.',
+        status: axauLive ? 'live' : 'configured',
+        note: axauLive
+          ? `Reserve access application open. AXAU contract bytecode verified (${liveness.axau?.byteLength ?? 0} bytes).`
+          : 'Application page available; reserve contract not currently reachable.',
         href: '/axau-early-access',
-        verifiedFrom: 'route:/axau-early-access',
+        verifiedFrom: axauLive
+          ? `route:/axau-early-access + ${liveness.axau?.verifiedFrom ?? 'eth_getCode'}`
+          : 'route:/axau-early-access (bytecode check failed)',
       });
     }
 
@@ -427,6 +492,10 @@ export class HomepageTruthService {
       });
     }
 
+    // ── Hero CTA variant (lightweight A/B exposure) ──────────────────
+    const ctaPick = pickHeroCtaVariant(opts.ctaOverride);
+    const ctaConfig = HERO_CTA_VARIANTS[ctaPick.variant];
+
     return {
       hero: {
         // Headline / subheadline are public-facing institutional copy.
@@ -435,6 +504,12 @@ export class HomepageTruthService {
         headline: 'Build Wealth Through Verified Financial Infrastructure',
         subheadline: 'Earn on digital dollars, borrow against Bitcoin, access reserve assets, and verify every system publicly.',
         trustItems,
+        cta: {
+          primaryLabel: ctaConfig.primaryLabel,
+          primaryHref: ctaConfig.primaryHref,
+          variant: ctaPick.variant,
+          verifiedFrom: ctaPick.verifiedFrom,
+        },
       },
       pathCards,
       trustCards,
@@ -445,6 +520,46 @@ export class HomepageTruthService {
       snapshotId: sysState?.disclosure.snapshotId ?? null,
       generatedAt: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Debug variant — surfaces every verifiedFrom string in a flat list,
+   * along with raw on-chain bytecode liveness. Intended for ops review,
+   * not public consumption.
+   */
+  async resolveDebug(opts: ResolveOptions = {}): Promise<{
+    truth: HomepageTruth;
+    sources: Array<{ field: string; value: string; verifiedFrom: string }>;
+    liveness: Record<string, LivenessResult>;
+  }> {
+    const truth = await this.resolve(opts);
+    const sources: Array<{ field: string; value: string; verifiedFrom: string }> = [];
+
+    truth.hero.trustItems.forEach((t, i) =>
+      sources.push({ field: `hero.trustItems[${i}]`, value: t.label, verifiedFrom: t.verifiedFrom })
+    );
+    sources.push({ field: 'hero.cta', value: `${truth.hero.cta.variant}:${truth.hero.cta.primaryLabel}`, verifiedFrom: truth.hero.cta.verifiedFrom });
+    truth.pathCards.forEach((p) =>
+      sources.push({ field: `pathCards.${p.key}`, value: p.title, verifiedFrom: p.verifiedFrom })
+    );
+    truth.trustCards.forEach((t, i) =>
+      sources.push({ field: `trustCards[${i}]`, value: t.title, verifiedFrom: t.verifiedFrom })
+    );
+    truth.status.forEach((s) =>
+      sources.push({ field: `status:${s.system}`, value: s.status, verifiedFrom: s.verifiedFrom })
+    );
+    truth.availability.forEach((a, i) =>
+      sources.push({ field: `availability[${i}]`, value: a.label, verifiedFrom: a.verifiedFrom })
+    );
+    Object.entries(truth.proofLinks).forEach(([k, v]) =>
+      sources.push({ field: `proofLinks.${k}`, value: v.href, verifiedFrom: v.verifiedFrom })
+    );
+    truth.metrics.forEach((m) =>
+      sources.push({ field: `metrics:${m.label}`, value: m.value, verifiedFrom: m.verifiedFrom })
+    );
+
+    const liveness = await checkMany(HOMEPAGE_LIVENESS_TARGETS as unknown as Record<string, string>);
+    return { truth, sources, liveness };
   }
 }
 
