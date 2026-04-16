@@ -68,6 +68,13 @@ export interface OptionalMetric {
   verifiedFrom: string;
 }
 
+export interface AvailabilityItem {
+  label: string;
+  available: boolean;
+  href: string;
+  verifiedFrom: string;
+}
+
 export interface HomepageTruth {
   hero: {
     headline: string;
@@ -77,12 +84,15 @@ export interface HomepageTruth {
   pathCards: PathCard[];
   trustCards: TrustCard[];
   status: StatusRow[];
+  availability: AvailabilityItem[];
   proofLinks: {
     verify: ProofLink;
+    proof: ProofLink;
     solvency: ProofLink;
     disclosure: ProofLink;
   };
   metrics: OptionalMetric[];
+  snapshotId: string | null;
   generatedAt: string;
 }
 
@@ -323,12 +333,26 @@ export class HomepageTruthService {
     }
 
     // ── Proof links ───────────────────────────────────────────────────
+    // `verify` → infrastructure overview page
+    // `proof`  → public live proof entry. Prefers /solvency (live snapshot
+    //            backed) and falls back to /proof-of-execution if available.
+    const proofRouteHref = snapshotAvailable && pageExists('/solvency')
+      ? '/solvency'
+      : (pageExists('/proof-of-execution') ? '/proof-of-execution' : '/solvency');
     const proofLinks = {
       verify: {
         label: 'Verify Infrastructure',
         href: '/infrastructure',
         available: pageExists('/infrastructure'),
         verifiedFrom: 'route:/infrastructure',
+      },
+      proof: {
+        label: 'View Live Proof',
+        href: proofRouteHref,
+        available: pageExists(proofRouteHref),
+        verifiedFrom: snapshotAvailable
+          ? 'SystemStateService.disclosure.snapshotId + route:/solvency'
+          : `route:${proofRouteHref}`,
       },
       solvency: {
         label: 'Live Solvency Console',
@@ -344,6 +368,28 @@ export class HomepageTruthService {
       },
     };
 
+    // ── Current availability strip ────────────────────────────────────
+    // Derived directly from `status[]`. Each item is shown only if the
+    // backing status row resolved as `live`. No invented availability.
+    const availabilityFromStatus = (system: string, label: string): AvailabilityItem | null => {
+      const row = status.find((s) => s.system === system);
+      if (!row || row.status !== 'live') return null;
+      return {
+        label,
+        available: true,
+        href: row.href,
+        verifiedFrom: `status:${system} = live`,
+      };
+    };
+    const availability: AvailabilityItem[] = [
+      availabilityFromStatus('AXAU Reserve Access', 'Reserve access open'),
+      availabilityFromStatus('Yield Layer', 'Yield layer available'),
+      availabilityFromStatus('Credit Access', 'Credit access available'),
+      availabilityFromStatus('Solvency Console', 'Solvency console live'),
+      availabilityFromStatus('Institutional Disclosure', 'Disclosure public'),
+      availabilityFromStatus('Banking Infrastructure', 'Banking rails active'),
+    ].filter((x): x is AvailabilityItem => x !== null);
+
     // ── Optional metrics (only if backed by source) ───────────────────
     const metrics: OptionalMetric[] = [];
     metrics.push({
@@ -358,9 +404,20 @@ export class HomepageTruthService {
       verifiedFrom: 'derived:route-count',
     });
     metrics.push({
-      label: 'Capital Pathways',
+      label: 'Access Paths',
       value: String(pathCards.length),
       verifiedFrom: 'derived:pathCards.length',
+    });
+    metrics.push({
+      label: 'Proof Routes',
+      value: String(Object.values({
+        verify: pageExists('/infrastructure'),
+        solvency: pageExists('/solvency'),
+        disclosure: pageExists('/disclosure'),
+        proof: pageExists('/proof-of-execution'),
+        observer: pageExists('/observer'),
+      }).filter(Boolean).length),
+      verifiedFrom: 'derived:proof-routes.count',
     });
     if (snapshotAvailable && sysState?.disclosure.lastSnapshotAt) {
       metrics.push({
@@ -372,20 +429,20 @@ export class HomepageTruthService {
 
     return {
       hero: {
-        // Headline / subheadline are static institutional copy. Each phrase
-        // below is supported by the trust items derived above. If a phrase
-        // loses its backing, soften it here.
-        headline: 'Build Wealth With Verified Financial Infrastructure',
-        subheadline: bankingLive
-          ? 'Institutional banking, digital dollar settlement, reserve access, and public solvency reporting — through one operating system.'
-          : 'Digital dollar settlement, reserve access, and public solvency reporting — through one operating system.',
+        // Headline / subheadline are public-facing institutional copy.
+        // Each phrase below maps to a trust item or path that the resolver
+        // verified above. If a path is unavailable, soften the wording.
+        headline: 'Build Wealth Through Verified Financial Infrastructure',
+        subheadline: 'Earn on digital dollars, borrow against Bitcoin, access reserve assets, and verify every system publicly.',
         trustItems,
       },
       pathCards,
       trustCards,
       status,
+      availability,
       proofLinks,
       metrics,
+      snapshotId: sysState?.disclosure.snapshotId ?? null,
       generatedAt: new Date().toISOString(),
     };
   }
