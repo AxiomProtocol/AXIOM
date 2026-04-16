@@ -17,6 +17,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/axusd-3643', label: 'AXUSD Settlement Rail' },
       { href: '/dex', label: 'Protocol Exchange' },
       { href: '/banking', label: 'Banking Infrastructure' },
+      { href: '/onramp', label: 'On / Off Ramp' },
       { href: '/axiom-payment-rails', label: 'Axiom Payment Rails' },
       { href: '/dao-payroll', label: 'DAO Payroll' },
       { href: '/rent-collection', label: 'Rent Collection' },
@@ -71,6 +72,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Operations',
     children: [
       { href: '/proof-of-execution', label: 'Proof of Execution' },
+      { href: '/cdp-wallets', label: 'CDP Wallets' },
       { href: '/solvency', label: 'Solvency' },
       { href: '/execution-framework', label: 'Execution Framework' },
       { href: '/transparency', label: 'Transparency' },

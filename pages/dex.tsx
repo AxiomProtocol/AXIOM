@@ -259,6 +259,53 @@ function EulerSwapLpTab() {
   );
 }
 
+interface CoinbaseSpotPrice {
+  productId: string;
+  price: number;
+  priceChangePct24h: number;
+}
+
+interface CoinbasePricesResult {
+  prices: Record<string, CoinbaseSpotPrice>;
+  isLive: boolean;
+}
+
+function PriceTicker() {
+  const [data, setData] = useState<CoinbasePricesResult | null>(null);
+
+  useEffect(() => {
+    fetch('/api/market/coinbase-prices?pairs=ETH-USD,BTC-USD,USDC-USD')
+      .then(r => r.json() as Promise<CoinbasePricesResult>)
+      .then(setData)
+      .catch(() => {});
+  }, []);
+
+  if (!data || !data.isLive) return null;
+
+  const pairs = Object.values(data.prices);
+
+  return (
+    <div className="border border-dl-border bg-dl-bg-alt px-4 py-3 mb-6 flex flex-wrap gap-6 items-center">
+      <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">Market</span>
+      {pairs.map(p => {
+        const positive = p.priceChangePct24h >= 0;
+        return (
+          <div key={p.productId} className="flex items-baseline gap-2">
+            <span className="font-dl-mono text-xs text-dl-gray">{p.productId}</span>
+            <span className="font-dl-mono text-sm text-dl-navy font-bold">
+              ${p.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+            <span className={`font-dl-mono text-xs ${positive ? 'text-dl-forest' : 'text-red-600'}`}>
+              {positive ? '+' : ''}{p.priceChangePct24h.toFixed(2)}%
+            </span>
+          </div>
+        );
+      })}
+      <span className="font-dl-mono text-xs text-dl-gray ml-auto">via Coinbase</span>
+    </div>
+  );
+}
+
 export default function DexPage() {
   const [activeTab, setActiveTab] = useState<Tab>('swap');
 
@@ -315,6 +362,8 @@ export default function DexPage() {
           </div>
         ))}
       </div>
+
+      <PriceTicker />
 
       {/* Peg stability mechanism block */}
       <div className="border border-dl-border bg-dl-bg p-5 mb-6">
