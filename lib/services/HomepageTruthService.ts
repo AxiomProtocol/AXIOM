@@ -80,6 +80,25 @@ export interface AvailabilityItem {
   verifiedFrom: string;
 }
 
+/**
+ * MomentumSignal — a single backend-derived social-proof item for the
+ * "Momentum and Visibility" section.
+ *
+ *   label     — short human label
+ *   value     — display value ("6", "Open", "2h ago")
+ *   accent    — optional CSS accent hint ("live" | "neutral" | "stale")
+ *   href      — optional deep-link (e.g. the feed or dashboard the signal
+ *               originates from) so curious visitors can verify
+ *   verifiedFrom — the backend source the signal was derived from
+ */
+export interface MomentumSignal {
+  label: string;
+  value: string;
+  accent: 'live' | 'neutral' | 'stale';
+  href?: string;
+  verifiedFrom: string;
+}
+
 export type HeroCtaVariant = 'start_here' | 'open_account' | 'begin_verification';
 
 export interface HeroCta {
@@ -100,6 +119,7 @@ export interface HomepageTruth {
   trustCards: TrustCard[];
   status: StatusRow[];
   availability: AvailabilityItem[];
+  momentum: MomentumSignal[];
   proofLinks: {
     verify: ProofLink;
     proof: ProofLink;
@@ -492,6 +512,83 @@ export class HomepageTruthService {
       });
     }
 
+    // ── Momentum signals (backend-derived social proof) ──────────────
+    // Every signal below is computed from values already resolved in this
+    // method. No fabricated TVL, users, volume, press, or pipeline claims.
+    const momentum: MomentumSignal[] = [];
+
+    const liveCount = status.filter((s) => s.status === 'live').length;
+    if (liveCount > 0) {
+      momentum.push({
+        label: 'Systems operational',
+        value: String(liveCount),
+        accent: 'live',
+        href: pageExists('/infrastructure') ? '/infrastructure' : '/',
+        verifiedFrom: 'derived:status[live].count',
+      });
+    }
+
+    const dashboardCount = ['/solvency', '/observer', '/disclosure', '/proof-of-execution', '/infrastructure']
+      .filter((r) => pageExists(r)).length;
+    if (dashboardCount > 0) {
+      momentum.push({
+        label: 'Public dashboards',
+        value: String(dashboardCount),
+        accent: 'live',
+        href: '/solvency',
+        verifiedFrom: 'derived:public-dashboards.count',
+      });
+    }
+
+    if (pathCards.length > 0) {
+      momentum.push({
+        label: 'Access paths open',
+        value: String(pathCards.length),
+        accent: 'live',
+        verifiedFrom: 'derived:pathCards.count',
+      });
+    }
+
+    if (axauLive && pageExists('/axau-early-access')) {
+      momentum.push({
+        label: 'Reserve applications',
+        value: 'Open',
+        accent: 'live',
+        href: '/axau-early-access',
+        verifiedFrom: 'liveness:axau + route:/axau-early-access',
+      });
+    }
+
+    if (snapshotAvailable && sysState?.disclosure.lastSnapshotAt) {
+      const ageMs = Date.now() - new Date(sysState.disclosure.lastSnapshotAt).getTime();
+      let value: string;
+      let accent: MomentumSignal['accent'] = 'live';
+      if (ageMs < 0 || Number.isNaN(ageMs)) {
+        value = 'Just updated'; accent = 'live';
+      } else if (ageMs < 60_000)              { value = `${Math.floor(ageMs / 1000)}s ago`; }
+      else if (ageMs < 60 * 60_000)           { value = `${Math.floor(ageMs / 60_000)}m ago`; }
+      else if (ageMs < 24 * 60 * 60_000)      { value = `${Math.floor(ageMs / (60 * 60_000))}h ago`; accent = 'neutral'; }
+      else if (ageMs < 30 * 24 * 60 * 60_000) { value = `${Math.floor(ageMs / (24 * 60 * 60_000))}d ago`; accent = 'neutral'; }
+      else                                    { value = 'Stale'; accent = 'stale'; }
+      momentum.push({
+        label: 'Last snapshot',
+        value,
+        accent,
+        href: '/solvency',
+        verifiedFrom: 'SystemStateService.disclosure.lastSnapshotAt',
+      });
+    }
+
+    if (pageExists('/contact')) {
+      momentum.push({
+        label: 'Institutional inquiry',
+        value: 'Accepting',
+        accent: 'live',
+        href: '/contact',
+        verifiedFrom: 'route:/contact',
+      });
+    }
+
     // ── Hero CTA variant (lightweight A/B exposure) ──────────────────
     const ctaPick = pickHeroCtaVariant(opts.ctaOverride);
     const ctaConfig = HERO_CTA_VARIANTS[ctaPick.variant];
@@ -515,6 +612,7 @@ export class HomepageTruthService {
       trustCards,
       status,
       availability,
+      momentum,
       proofLinks,
       metrics,
       snapshotId: sysState?.disclosure.snapshotId ?? null,
@@ -550,6 +648,9 @@ export class HomepageTruthService {
     );
     truth.availability.forEach((a, i) =>
       sources.push({ field: `availability[${i}]`, value: a.label, verifiedFrom: a.verifiedFrom })
+    );
+    truth.momentum.forEach((m, i) =>
+      sources.push({ field: `momentum[${i}]:${m.label}`, value: m.value, verifiedFrom: m.verifiedFrom })
     );
     Object.entries(truth.proofLinks).forEach(([k, v]) =>
       sources.push({ field: `proofLinks.${k}`, value: v.href, verifiedFrom: v.verifiedFrom })
