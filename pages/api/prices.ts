@@ -1,8 +1,31 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
+import { getSpotPrices } from '../../lib/market/coinbaseMarketService';
 
 const ALPHA_VANTAGE_BASE = 'https://www.alphavantage.co/query';
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
+
+const SYMBOL_TO_COINBASE_PRODUCT: Record<string, string> = {
+  BTC: 'BTC-USD',
+  ETH: 'ETH-USD',
+  SOL: 'SOL-USD',
+  XRP: 'XRP-USD',
+  ADA: 'ADA-USD',
+  DOGE: 'DOGE-USD',
+  AVAX: 'AVAX-USD',
+  DOT: 'DOT-USD',
+  LINK: 'LINK-USD',
+  MATIC: 'MATIC-USD',
+  UNI: 'UNI-USD',
+  SHIB: 'SHIB-USD',
+  LTC: 'LTC-USD',
+  ATOM: 'ATOM-USD',
+  NEAR: 'NEAR-USD',
+  FIL: 'FIL-USD',
+  APT: 'APT-USD',
+  ARB: 'ARB-USD',
+  OP: 'OP-USD',
+};
 
 const SYMBOL_TO_COINGECKO_ID: Record<string, string> = {
   BTC: 'bitcoin',
@@ -60,17 +83,46 @@ function setCache(key: string, price: number): void {
   priceCache.set(key, { price, fetchedAt: Date.now() });
 }
 
-async function fetchCryptoPrice(symbol: string): Promise<number | null> {
-  const id = SYMBOL_TO_COINGECKO_ID[symbol.toUpperCase()];
-  if (!id) return null;
+async function fetchCoinbaseBatch(symbols: string[]): Promise<Record<string, number>> {
+  const productIds = symbols
+    .map(s => SYMBOL_TO_COINBASE_PRODUCT[s.toUpperCase()])
+    .filter((p): p is string => Boolean(p));
+  if (productIds.length === 0) return {};
+  try {
+    const result = await getSpotPrices(productIds);
+    const prices: Record<string, number> = {};
+    for (const sym of symbols) {
+      const productId = SYMBOL_TO_COINBASE_PRODUCT[sym.toUpperCase()];
+      if (productId && result.prices[productId]) {
+        prices[sym.toUpperCase()] = result.prices[productId].price;
+      }
+    }
+    return prices;
+  } catch {
+    return {};
+  }
+}
+
+async function fetchCoingeckoBatch(symbols: string[]): Promise<Record<string, number>> {
+  const ids = symbols
+    .map((s) => SYMBOL_TO_COINGECKO_ID[s.toUpperCase()])
+    .filter(Boolean);
+  if (ids.length === 0) return {};
   try {
     const { data } = await axios.get(`${COINGECKO_BASE}/simple/price`, {
-      params: { ids: id, vs_currencies: 'usd' },
-      timeout: 8000,
+      params: { ids: ids.join(','), vs_currencies: 'usd' },
+      timeout: 10000,
     });
-    return data?.[id]?.usd ?? null;
+    const result: Record<string, number> = {};
+    for (const sym of symbols) {
+      const id = SYMBOL_TO_COINGECKO_ID[sym.toUpperCase()];
+      if (id && data?.[id]?.usd) {
+        result[sym.toUpperCase()] = data[id].usd;
+      }
+    }
+    return result;
   } catch {
-    return null;
+    return {};
   }
 }
 
@@ -95,35 +147,13 @@ async function fetchEquityPrice(symbol: string): Promise<number | null> {
   }
 }
 
-async function fetchBatchCryptoPrices(symbols: string[]): Promise<Record<string, number>> {
-  const ids = symbols
-    .map((s) => SYMBOL_TO_COINGECKO_ID[s.toUpperCase()])
-    .filter(Boolean);
-  if (ids.length === 0) return {};
-  try {
-    const { data } = await axios.get(`${COINGECKO_BASE}/simple/price`, {
-      params: { ids: ids.join(','), vs_currencies: 'usd' },
-      timeout: 10000,
-    });
-    const result: Record<string, number> = {};
-    for (const sym of symbols) {
-      const id = SYMBOL_TO_COINGECKO_ID[sym.toUpperCase()];
-      if (id && data?.[id]?.usd) {
-        result[sym.toUpperCase()] = data[id].usd;
-      }
-    }
-    return result;
-  } catch {
-    return {};
-  }
-}
-
 interface PriceResult {
   symbol: string;
   price: number | null;
   cached: boolean;
   stale: boolean;
   fetchedAt: string | null;
+  source?: 'coinbase' | 'coingecko' | 'alpha-vantage' | 'cache';
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -162,6 +192,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         cached: true,
         stale: false,
         fetchedAt: new Date(cached.fetchedAt).toISOString(),
+        source: 'cache',
       });
     } else if (symbolTypeMap[sym] === 'CRYPTO') {
       cryptoToFetch.push(sym);
@@ -171,22 +202,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (cryptoToFetch.length > 0) {
-    const batchPrices = await fetchBatchCryptoPrices(cryptoToFetch);
+    const coinbasePrices = await fetchCoinbaseBatch(cryptoToFetch);
+    const stillMissing: string[] = [];
     for (const sym of cryptoToFetch) {
-      const cacheKey = `CRYPTO:${sym}`;
-      const price = batchPrices[sym] ?? null;
-      if (price !== null) {
-        setCache(cacheKey, price);
-        results.push({ symbol: sym, price, cached: false, stale: false, fetchedAt: new Date().toISOString() });
-      } else {
-        const stale = getStale(cacheKey);
+      if (coinbasePrices[sym] !== undefined) {
+        const cacheKey = `CRYPTO:${sym}`;
+        setCache(cacheKey, coinbasePrices[sym]);
         results.push({
           symbol: sym,
-          price: stale?.price ?? null,
+          price: coinbasePrices[sym],
           cached: false,
-          stale: !!stale,
-          fetchedAt: stale ? new Date(stale.fetchedAt).toISOString() : null,
+          stale: false,
+          fetchedAt: new Date().toISOString(),
+          source: 'coinbase',
         });
+      } else {
+        stillMissing.push(sym);
+      }
+    }
+
+    if (stillMissing.length > 0) {
+      const coingeckoPrices = await fetchCoingeckoBatch(stillMissing);
+      for (const sym of stillMissing) {
+        const cacheKey = `CRYPTO:${sym}`;
+        const price = coingeckoPrices[sym] ?? null;
+        if (price !== null) {
+          setCache(cacheKey, price);
+          results.push({ symbol: sym, price, cached: false, stale: false, fetchedAt: new Date().toISOString(), source: 'coingecko' });
+        } else {
+          const stale = getStale(cacheKey);
+          results.push({
+            symbol: sym,
+            price: stale?.price ?? null,
+            cached: false,
+            stale: !!stale,
+            fetchedAt: stale ? new Date(stale.fetchedAt).toISOString() : null,
+          });
+        }
       }
     }
   }
@@ -196,7 +248,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const price = await fetchEquityPrice(sym);
     if (price !== null) {
       setCache(cacheKey, price);
-      results.push({ symbol: sym, price, cached: false, stale: false, fetchedAt: new Date().toISOString() });
+      results.push({ symbol: sym, price, cached: false, stale: false, fetchedAt: new Date().toISOString(), source: 'alpha-vantage' });
     } else {
       const stale = getStale(cacheKey);
       results.push({

@@ -232,6 +232,24 @@ export default function AxiomRailDeposit() {
         {/* ── STEP 1: Bank Details ───────────────────────────────────────────── */}
         {step === 'bank' && (
           <>
+            {/* Coinbase Pay alternative */}
+            <div style={{ border: '1px solid #b8860b', background: '#fffbf0', padding: '0.75rem 1rem', marginBottom: '1.25rem' }}>
+              <p style={{ fontFamily: 'monospace', fontSize: 10, color: '#b8860b', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 0.4rem' }}>
+                Prefer card over wire?
+              </p>
+              <p style={{ fontSize: 12, color: '#374151', margin: '0 0 0.5rem', lineHeight: 1.5 }}>
+                Skip the bank form — buy USDC directly with a debit or credit card via Coinbase Pay, then convert to {asset} from your wallet.
+              </p>
+              <a
+                href="/onramp"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontFamily: 'monospace', fontSize: 12, color: '#1e3a5f', textDecoration: 'underline' }}
+              >
+                Capital Stack Entry
+              </a>
+            </div>
+
             {/* Receiving instructions */}
             <div style={{ background: '#f0f4f8', border: '1px solid #1e3a5f', padding: '1rem', marginBottom: '1.5rem' }}>
               <p style={{ fontFamily: 'monospace', fontSize: 11, color: '#6b7280', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>

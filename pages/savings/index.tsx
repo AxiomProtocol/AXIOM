@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { DesignLawLayout, SectionHeading, SolidButton } from '../../components/design-law';
 import { useWallet } from '../../components/WalletConnect/WalletContext';
 import { openAppKit } from '../../lib/web3/appKitModal';
@@ -517,6 +518,18 @@ export default function SavingsPage() {
                       <p className="text-xs text-dl-gray mt-3 leading-relaxed">
                         Depositing requires two on-chain transactions: approve and deposit. Actual execution happens in your wallet.
                       </p>
+                      <div className="mt-4 border border-dl-border bg-dl-bg p-3">
+                        <p className="font-dl-mono text-xs text-dl-gray mb-1 uppercase tracking-widest">Need AXUSD?</p>
+                        <p className="text-xs text-dl-gray leading-relaxed mb-2">
+                          Purchase USDC with a bank card or account via Coinbase, then convert to AXUSD using the peg stabilizer.
+                        </p>
+                        <Link
+                          href="/onramp"
+                          className="font-dl-mono text-xs text-dl-navy underline underline-offset-2"
+                        >
+                          Capital Stack Entry
+                        </Link>
+                      </div>
                     </>
                   ) : (
                     <>
