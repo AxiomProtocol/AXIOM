@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../server/db';
 import { onrampPurchaseIntents } from '../../../shared/onrampSchema';
-import { getProviderWidgetUrl } from '../../../lib/onramp/config';
+import { createOnrampSession, isCdpOnrampConfigured } from '../../../lib/onramp/sessionService';
 import { randomBytes } from 'crypto';
 
 interface IntentBody {
@@ -50,9 +50,28 @@ export default async function handler(
 
   const intentId = randomBytes(16).toString('hex');
 
-  const widgetUrl = flow === 'buy'
-    ? getProviderWidgetUrl('coinbase', { walletAddress, asset, fiatCurrency, fiatAmount, chainId })
-    : buildOfframpUrl(walletAddress, asset, chainId);
+  let widgetUrl: string | null = null;
+
+  if (flow === 'buy') {
+    if (isCdpOnrampConfigured()) {
+      try {
+        const session = await createOnrampSession({
+          walletAddress,
+          asset,
+          chainId,
+          paymentAmount: fiatAmount,
+          paymentCurrency: fiatCurrency,
+        });
+        widgetUrl = session.sessionUrl;
+      } catch (sessionErr: unknown) {
+        const msg = sessionErr instanceof Error ? sessionErr.message : 'Session creation failed';
+        console.error('[onramp/intent] CDP session error:', msg);
+        return res.status(502).json({ error: msg });
+      }
+    }
+  } else {
+    widgetUrl = buildOfframpUrl(walletAddress, asset, chainId);
+  }
 
   try {
     await db.insert(onrampPurchaseIntents).values({

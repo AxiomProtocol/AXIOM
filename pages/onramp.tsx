@@ -9,7 +9,6 @@ import {
   useWaitForTransactionReceipt,
 } from 'wagmi';
 import { parseUnits, formatUnits, maxUint256 } from 'viem';
-import { initOnRamp } from '@coinbase/cbpay-js';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
 
 const ARBITRUM_CHAIN_ID = 42161;
@@ -88,7 +87,6 @@ interface PurchaseIntent {
 }
 
 interface OnrampConfig {
-  appId: string;
   configured: boolean;
 }
 
@@ -256,7 +254,7 @@ export default function OnrampPage() {
     fetch('/api/onramp/config')
       .then(r => r.json() as Promise<OnrampConfig>)
       .then(setOnrampConfig)
-      .catch(() => setOnrampConfig({ appId: '', configured: false }));
+      .catch(() => setOnrampConfig({ configured: false }));
   }, []);
 
   const loadHistory = useCallback(async () => {
@@ -279,7 +277,7 @@ export default function OnrampPage() {
   }, [isConnected, loadHistory]);
 
   async function handleLaunchCoinbase() {
-    if (!address || !onrampConfig?.configured) return;
+    if (!address) return;
     setLaunching(true);
     setError(null);
 
@@ -302,33 +300,31 @@ export default function OnrampPage() {
         throw new Error(errData.error ?? 'Failed to create intent');
       }
 
-      initOnRamp(
-        {
-          appId: onrampConfig.appId,
-          widgetParameters: {
-            addresses: { [address]: ['arbitrum'] },
-            assets: ['USDC'],
-            defaultAsset: 'USDC',
-            defaultPaymentMethod: 'CARD',
-            presetFiatAmount: parseFloat(fiatAmount) || 100,
-            fiatCurrency: 'USD',
-          },
-          onSuccess: () => {
-            setCoinbaseDone(true);
-            loadHistory();
-            setTimeout(() => refetchUsdcBalance(), 3000);
-          },
-          onExit: () => { setLaunching(false); loadHistory(); },
-          onEvent: () => {},
-          experienceLoggedIn: 'popup',
-          experienceLoggedOut: 'popup',
-        },
-        (err, instance) => {
-          if (err) { setError(err.message); setLaunching(false); return; }
-          instance?.open();
-          setLaunching(false);
-        }
+      const { widgetUrl } = await intentRes.json() as { widgetUrl: string | null };
+      if (!widgetUrl) throw new Error('No session URL returned from server');
+
+      const popup = window.open(
+        widgetUrl,
+        'coinbase-onramp',
+        'width=600,height=700,popup=yes,noopener=no'
       );
+
+      setLaunching(false);
+
+      if (!popup) {
+        setError('Popup blocked — please allow popups for this site and try again.');
+        return;
+      }
+
+      const poll = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(poll);
+          setCoinbaseDone(true);
+          loadHistory();
+          setTimeout(() => refetchUsdcBalance(), 3000);
+        }
+      }, 600);
+
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setLaunching(false);

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { isCdpOnrampConfigured } from '../../../lib/onramp/sessionService';
 
 interface OnrampPublicConfig {
-  appId: string;
   configured: boolean;
 }
 
@@ -14,7 +14,6 @@ export default function handler(
     return;
   }
 
-  const appId = process.env.COINBASE_PROJECT_ID ?? '';
-  res.setHeader('Cache-Control', 'public, s-maxage=3600');
-  res.status(200).json({ appId, configured: !!appId });
+  res.setHeader('Cache-Control', 'no-store');
+  res.status(200).json({ configured: isCdpOnrampConfigured() });
 }
