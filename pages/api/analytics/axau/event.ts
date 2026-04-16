@@ -9,7 +9,17 @@ import { Pool } from 'pg';
 // No PII stored. IP+UA are sha256-hashed for visitor de-dup only.
 // ────────────────────────────────────────────────────────────────────
 
-const ALLOWED_EVENTS = new Set(['page_view', 'cta_click', 'form_start', 'form_complete']);
+// AXAU funnel events + general surface events (homepage, etc).
+const ALLOWED_EVENTS = new Set([
+  'page_view',
+  'cta_click',
+  'form_start',
+  'form_complete',
+  'section_view',
+  'scroll_depth',
+  'outbound_click',
+]);
+const ALLOWED_SURFACES = new Set(['axau', 'homepage']);
 
 let _pool: Pool | null = null;
 function pool(): Pool {
@@ -66,6 +76,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ success: false, error: 'invalid_event_type' });
     }
 
+    const surfaceRaw = String(body.surface || 'axau').toLowerCase().trim();
+    const surface = ALLOWED_SURFACES.has(surfaceRaw) ? surfaceRaw : 'axau';
     const visitorId = String(body.visitorId || '').slice(0, 64) || 'anon';
     const path      = String(body.path || '/axau-early-access').slice(0, 200);
     const referrer  = String(body.referrer || req.headers.referer || '').slice(0, 500);
@@ -81,9 +93,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await pool().query(
       `INSERT INTO axau_analytics_events
-        (event_type, visitor_id, source, utm_campaign, utm_medium, referrer, path, meta, ip_hash, user_agent)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10)`,
-      [eventType, visitorId, source, utmCampaign, utmMedium, referrer, path, JSON.stringify(meta), ipHash, ua],
+        (surface, event_type, visitor_id, source, utm_campaign, utm_medium, referrer, path, meta, ip_hash, user_agent)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11)`,
+      [surface, eventType, visitorId, source, utmCampaign, utmMedium, referrer, path, JSON.stringify(meta), ipHash, ua],
     );
 
     return res.status(200).json({ success: true });

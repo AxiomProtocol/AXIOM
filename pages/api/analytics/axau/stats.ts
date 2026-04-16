@@ -43,6 +43,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const days = Math.max(1, Math.min(60, Number(req.query.days) || 14));
+    const surfaceParam = typeof req.query.surface === 'string' ? req.query.surface.toLowerCase() : 'axau';
+    const surface = ['axau', 'homepage'].includes(surfaceParam) ? surfaceParam : 'axau';
     const p = pool();
 
     // Today (UTC) totals
@@ -51,8 +53,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               COUNT(*)                      AS count,
               COUNT(DISTINCT visitor_id)    AS visitors
          FROM axau_analytics_events
-        WHERE created_at >= date_trunc('day', now())
+        WHERE created_at >= date_trunc('day', now()) AND surface = $1
         GROUP BY event_type`,
+      [surface],
     );
     const todayMap: Record<string, { count: number; visitors: number }> = {};
     today.rows.forEach((r) => { todayMap[r.event_type] = { count: Number(r.count), visitors: Number(r.visitors) }; });
@@ -66,7 +69,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const totals = await p.query<{ event_type: string; visitors: string }>(
       `SELECT event_type, COUNT(DISTINCT visitor_id) AS visitors
          FROM axau_analytics_events
+        WHERE surface = $1
         GROUP BY event_type`,
+      [surface],
     );
     const totalMap: Record<string, number> = {};
     totals.rows.forEach((r) => { totalMap[r.event_type] = Number(r.visitors); });
@@ -82,10 +87,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               event_type,
               COUNT(DISTINCT visitor_id)                            AS visitors
          FROM axau_analytics_events
-        WHERE created_at >= now() - ($1 || ' days')::interval
+        WHERE created_at >= now() - ($1 || ' days')::interval AND surface = $2
         GROUP BY 1, 2
         ORDER BY 1 ASC`,
-      [String(days)],
+      [String(days), surface],
     );
     const seriesMap = new Map<string, DayBucket>();
     for (const row of series.rows) {
@@ -147,6 +152,67 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const conversionToday = visitorsToday > 0 ? Number(((completesToday / visitorsToday) * 100).toFixed(2)) : 0;
     const conversionAll   = visitorsAll   > 0 ? Number(((completesAll   / visitorsAll)   * 100).toFixed(2)) : 0;
 
+    // ── Homepage-only aggregations (sections, CTAs, scroll depth, outbound) ──
+    let homepage: {
+      sections:    Array<{ name: string; visitors: number }>;
+      ctas:        Array<{ name: string; clicks: number; href: string | null }>;
+      outbound:    Array<{ href: string; clicks: number }>;
+      scrollDepth: { d25: number; d50: number; d75: number; d100: number };
+    } | null = null;
+
+    if (surface === 'homepage') {
+      const sections = await p.query<{ name: string; visitors: string }>(
+        `SELECT COALESCE(meta->>'section', 'unknown') AS name,
+                COUNT(DISTINCT visitor_id)            AS visitors
+           FROM axau_analytics_events
+          WHERE surface = 'homepage' AND event_type = 'section_view'
+            AND created_at >= now() - ($1 || ' days')::interval
+          GROUP BY 1 ORDER BY 2 DESC LIMIT 25`,
+        [String(days)],
+      );
+      const ctas = await p.query<{ name: string; clicks: string; href: string | null }>(
+        `SELECT COALESCE(meta->>'cta', 'unknown') AS name,
+                COUNT(*)                          AS clicks,
+                MAX(meta->>'href')                AS href
+           FROM axau_analytics_events
+          WHERE surface = 'homepage' AND event_type = 'cta_click'
+            AND created_at >= now() - ($1 || ' days')::interval
+          GROUP BY 1 ORDER BY 2 DESC LIMIT 25`,
+        [String(days)],
+      );
+      const outbound = await p.query<{ href: string; clicks: string }>(
+        `SELECT COALESCE(meta->>'href', 'unknown') AS href,
+                COUNT(*)                           AS clicks
+           FROM axau_analytics_events
+          WHERE surface = 'homepage' AND event_type = 'outbound_click'
+            AND created_at >= now() - ($1 || ' days')::interval
+          GROUP BY 1 ORDER BY 2 DESC LIMIT 25`,
+        [String(days)],
+      );
+      const depths = await p.query<{ depth: string; visitors: string }>(
+        `SELECT meta->>'depth'           AS depth,
+                COUNT(DISTINCT visitor_id) AS visitors
+           FROM axau_analytics_events
+          WHERE surface = 'homepage' AND event_type = 'scroll_depth'
+            AND created_at >= now() - ($1 || ' days')::interval
+          GROUP BY 1`,
+        [String(days)],
+      );
+      const dmap: Record<string, number> = {};
+      depths.rows.forEach((r) => { dmap[r.depth] = Number(r.visitors); });
+      homepage = {
+        sections: sections.rows.map((r) => ({ name: r.name, visitors: Number(r.visitors) })),
+        ctas:     ctas.rows.map((r) => ({ name: r.name, clicks: Number(r.clicks), href: r.href })),
+        outbound: outbound.rows.map((r) => ({ href: r.href, clicks: Number(r.clicks) })),
+        scrollDepth: {
+          d25:  dmap['25']  ?? 0,
+          d50:  dmap['50']  ?? 0,
+          d75:  dmap['75']  ?? 0,
+          d100: dmap['100'] ?? 0,
+        },
+      };
+    }
+
     return res.status(200).json({
       success: true,
       data: {
@@ -179,6 +245,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         sources: sourceRows,
         dailySeries,
         spots: { claimed: spotsClaimed, total: spotsTotal, remaining: spotsTotal - (spotsClaimed ?? 0) },
+        homepage,
+        surface,
         windowDays: days,
         generatedAt: new Date().toISOString(),
       },

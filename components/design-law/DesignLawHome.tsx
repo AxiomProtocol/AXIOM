@@ -5,6 +5,7 @@ import { ConnectWalletButton } from './ConnectWalletButton';
 import { SectionHeading } from './SectionHeading';
 import { NAV_ITEMS } from './navItems';
 import { NavDropdown } from './NavDropdown';
+import HomepageAnalytics from '../analytics/HomepageAnalytics';
 import {
   ArrowRight, ChevronRight, CheckCircle2,
   TrendingUp, Coins, ShieldCheck, Eye,
@@ -287,8 +288,10 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
           )}
         </nav>
 
+        <HomepageAnalytics />
+
         {/* SECTION 1 — HERO ─────────────────────────────────────────── */}
-        <div className="border-t-4 border-dl-gold">
+        <div className="border-t-4 border-dl-gold" data-section="hero">
           <div className="relative w-full" style={{ minHeight: '540px' }}>
             <img
               src="/images/homepage-hero.png"
@@ -461,7 +464,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
 
         {/* SECTION 2 — MICRO BENEFITS STRIP ─────────────────────────── */}
         {microStrip.length > 0 && (
-          <div className="border-b border-dl-border bg-dl-bg">
+          <div className="border-b border-dl-border bg-dl-bg" data-section="micro_benefits">
             <div className="max-w-7xl mx-auto px-6 py-5">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border">
                 {microStrip.map((m, i) => (
@@ -486,7 +489,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
 
         {/* SECTION 3 — MOMENTUM AND VISIBILITY (social proof) ───────── */}
         {truth.momentum.length > 0 && (
-          <div className="border-b border-dl-border bg-dl-bg">
+          <div className="border-b border-dl-border bg-dl-bg" data-section="momentum">
             <div className="max-w-7xl mx-auto px-6 py-12 md:py-14">
               <div className="mb-6">
                 <SectionHeading>{SECTION_TITLES.momentum}</SectionHeading>
@@ -523,7 +526,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
 
         {/* SECTION 4 — CHOOSE YOUR OBJECTIVE ────────────────────────── */}
         {truth.pathCards.length > 0 && (
-          <div className="border-b border-dl-border" style={{ backgroundColor: '#fafaf8' }}>
+          <div className="border-b border-dl-border" style={{ backgroundColor: '#fafaf8' }} data-section="paths">
             <div className="max-w-7xl mx-auto px-6 py-14 md:py-16">
               <div className="mb-7">
                 <SectionHeading>{SECTION_TITLES.objective}</SectionHeading>
@@ -564,7 +567,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
         )}
 
         {/* SECTION 5 — CATEGORY LEADERSHIP ──────────────────────────── */}
-        <div className="border-b border-dl-border bg-dl-navy">
+        <div className="border-b border-dl-border bg-dl-navy" data-section="leadership">
           <div className="max-w-7xl mx-auto px-6 py-14 md:py-16">
             <div className="mb-8">
               <p className="font-dl-mono text-xs uppercase tracking-widest text-dl-gold mb-3">Category</p>
@@ -597,7 +600,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
         <div className="max-w-7xl mx-auto px-6 py-14">
 
           {/* SECTION 6 — WHY CAPITAL MOVES HERE ─────────────────────── */}
-          <div className="mb-16">
+          <div className="mb-16" data-section="why">
             <div className="mb-7">
               <SectionHeading>{SECTION_TITLES.capital}</SectionHeading>
               <p className="text-sm md:text-base text-dl-gray mt-2 max-w-2xl">
@@ -625,7 +628,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
 
           {/* SECTION 7 — CURRENT AVAILABILITY ────────────────────────── */}
           {truth.availability.length > 0 && (
-            <div className="mb-16">
+            <div className="mb-16" data-section="availability">
               <div className="mb-5">
                 <SectionHeading>{SECTION_TITLES.availability}</SectionHeading>
                 <p className="text-sm md:text-base text-dl-gray mt-2 max-w-2xl">
@@ -651,7 +654,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
 
           {/* SECTION 8 — OPERATIONAL STATUS ──────────────────────────── */}
           {truth.status.length > 0 && (
-            <div className="mb-16">
+            <div className="mb-16" data-section="status">
               <div className="mb-5">
                 <SectionHeading>{SECTION_TITLES.operations}</SectionHeading>
                 <p className="text-sm md:text-base text-dl-gray mt-2">
@@ -694,7 +697,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
 
           {/* SECTION 9 — VERIFIED METRICS ───────────────────────────── */}
           {truth.metrics.length > 0 && (
-            <div className="mb-16">
+            <div className="mb-16" data-section="metrics">
               <div className="mb-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
                 <div>
                   <SectionHeading>{SECTION_TITLES.metrics}</SectionHeading>
@@ -727,7 +730,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
           )}
 
           {/* SECTION 10 — PROOF-FIRST CTA BAND ──────────────────────── */}
-          <div className="mb-16 border border-dl-border border-t-4 border-t-dl-navy">
+          <div className="mb-16 border border-dl-border border-t-4 border-t-dl-navy" data-section="cta_band">
             <div className="p-8 md:p-12 bg-dl-bg-alt text-center">
               <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-widest mb-5">
                 Proof Before Capital
@@ -769,7 +772,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
           </div>
 
           {/* SECTION 11 — MISSION STRIP ──────────────────────────────── */}
-          <div className="mb-16 border border-dl-border border-l-4 border-l-dl-gold bg-dl-bg-alt">
+          <div className="mb-16 border border-dl-border border-l-4 border-l-dl-gold bg-dl-bg-alt" data-section="mission">
             <div className="p-6 md:p-10">
               <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-widest mb-3">Mission</p>
               <p className="font-dl-serif text-lg md:text-2xl text-dl-navy leading-snug" style={{ maxWidth: '880px' }}>

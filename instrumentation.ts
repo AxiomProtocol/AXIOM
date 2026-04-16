@@ -6660,6 +6660,10 @@ END $seed$`, 'seed dp_listings');
       await exec(`CREATE INDEX IF NOT EXISTS idx_axau_analytics_event_created ON axau_analytics_events (event_type, created_at DESC)`, 'index idx_axau_analytics_event_created');
       await exec(`CREATE INDEX IF NOT EXISTS idx_axau_analytics_visitor       ON axau_analytics_events (visitor_id)`, 'index idx_axau_analytics_visitor');
       await exec(`CREATE INDEX IF NOT EXISTS idx_axau_analytics_source        ON axau_analytics_events (source)`, 'index idx_axau_analytics_source');
+      // Surface column added later — separates AXAU funnel events from homepage events.
+      await exec(`ALTER TABLE axau_analytics_events ADD COLUMN IF NOT EXISTS surface TEXT NOT NULL DEFAULT 'axau'`, 'column axau_analytics_events.surface');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_axau_analytics_surface_created ON axau_analytics_events (surface, created_at DESC)`, 'index idx_axau_analytics_surface_created');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_axau_analytics_surface_event   ON axau_analytics_events (surface, event_type, created_at DESC)`, 'index idx_axau_analytics_surface_event');
 
       // ═══════════════════════════════════════════
       //  EXPANSION / CROSS-CHAIN INFRASTRUCTURE
