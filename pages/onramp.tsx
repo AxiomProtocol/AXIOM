@@ -109,6 +109,29 @@ function formatDate(ts: string) {
   });
 }
 
+function parseContractError(err: Error): string {
+  const msg = err.message;
+
+  const revertMatch = msg.match(/execution reverted[:\s]*["']?([^"'(]+)["']?/i);
+  if (revertMatch) {
+    const reason = revertMatch[1].trim();
+    if (/transfer amount exceeds balance/i.test(reason))
+      return 'Insufficient USDC balance. Complete Step 1 to acquire USDC first.';
+    if (/insufficient allowance/i.test(reason))
+      return 'Allowance too low. Approve USDC before swapping.';
+    if (/transfer amount exceeds allowance/i.test(reason))
+      return 'Allowance too low. Approve USDC before swapping.';
+    return reason.length < 120 ? reason : reason.slice(0, 120) + '…';
+  }
+  if (/user rejected|user denied|rejected the request/i.test(msg))
+    return 'Transaction cancelled.';
+  if (/insufficient funds/i.test(msg))
+    return 'Insufficient ETH for gas fees on Arbitrum One.';
+  if (/network/i.test(msg) && /switch/i.test(msg))
+    return 'Wrong network — switch to Arbitrum One in your wallet.';
+  return msg.split('(')[0].trim().slice(0, 120) || 'Transaction failed.';
+}
+
 function StepBadge({ n, done, active }: { n: number; done: boolean; active: boolean }) {
   return (
     <div
@@ -224,12 +247,12 @@ export default function OnrampPage() {
 
   useEffect(() => {
     if (approveWriteError)
-      setPsmError(approveWriteError.message.split('\n')[0] ?? 'Approval failed');
+      setPsmError(parseContractError(approveWriteError));
   }, [approveWriteError]);
 
   useEffect(() => {
     if (psmWriteError)
-      setPsmError(psmWriteError.message.split('\n')[0] ?? 'Conversion failed');
+      setPsmError(parseContractError(psmWriteError));
   }, [psmWriteError]);
 
   useEffect(() => {
@@ -333,6 +356,12 @@ export default function OnrampPage() {
 
   function handleApprove() {
     if (!address || convertAmountWei === 0n) return;
+    const amount = parseFloat(usdcToConvert) || 0;
+    const balance = parseFloat(usdcBalance ?? '0');
+    if (amount > balance) {
+      setPsmError(`Insufficient USDC balance. You have ${balance.toFixed(4)} USDC but are trying to convert ${amount.toFixed(4)} USDC.`);
+      return;
+    }
     setPsmError(null);
     approveUsdc({
       address: USDC_ADDRESS,
@@ -344,6 +373,12 @@ export default function OnrampPage() {
 
   function handlePsmSwap() {
     if (!address || convertAmountWei === 0n) return;
+    const amount = parseFloat(usdcToConvert) || 0;
+    const balance = parseFloat(usdcBalance ?? '0');
+    if (amount > balance) {
+      setPsmError(`Insufficient USDC balance. You have ${balance.toFixed(4)} USDC but are trying to convert ${amount.toFixed(4)} USDC.`);
+      return;
+    }
     setPsmError(null);
     psmSwap({
       address: PSM_ADDRESS,
