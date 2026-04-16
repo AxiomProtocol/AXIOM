@@ -7047,6 +7047,32 @@ END $seed$`, 'seed dp_listings');
       await exec(`CREATE INDEX IF NOT EXISTS escrows_deadline_idx ON axiom_rail_escrows(deadline) WHERE deadline IS NOT NULL`, 'index escrows_deadline_idx');
       await exec(`CREATE INDEX IF NOT EXISTS escrows_counterparty_email_idx ON axiom_rail_escrows(counterparty_email)`, 'index escrows_counterparty_email_idx');
 
+      // ═══════════════════════════════════════════
+      //  ONRAMP PURCHASE INTENTS
+      // ═══════════════════════════════════════════
+      await exec(enumSafe('onramp_provider', ['coinbase','ramp','transak']), 'enum onramp_provider');
+      await exec(enumSafe('onramp_status', ['created','pending','completed','failed']), 'enum onramp_status');
+      await exec(`CREATE TABLE IF NOT EXISTS onramp_purchase_intents (
+        id SERIAL PRIMARY KEY,
+        intent_id VARCHAR(64) NOT NULL UNIQUE,
+        user_id VARCHAR(255),
+        wallet_address VARCHAR(42) NOT NULL,
+        provider onramp_provider NOT NULL,
+        chain_id INTEGER NOT NULL,
+        asset VARCHAR(20) NOT NULL,
+        fiat_currency VARCHAR(10) NOT NULL,
+        fiat_amount NUMERIC(18,2) NOT NULL,
+        crypto_amount_estimate NUMERIC(18,8),
+        status onramp_status NOT NULL DEFAULT 'created',
+        provider_reference VARCHAR(255),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`, 'table onramp_purchase_intents');
+      await exec(`CREATE INDEX IF NOT EXISTS onramp_intents_wallet_idx ON onramp_purchase_intents(wallet_address)`, 'index onramp_intents_wallet_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS onramp_intents_status_idx ON onramp_purchase_intents(status)`, 'index onramp_intents_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS onramp_intents_provider_idx ON onramp_purchase_intents(provider)`, 'index onramp_intents_provider_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS onramp_intents_intent_id_idx ON onramp_purchase_intents(intent_id)`, 'index onramp_intents_intent_id_idx');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
