@@ -360,6 +360,21 @@ export default function PropertyAnalysis() {
               ))}
             </div>
 
+            <div className="mt-5 border border-dl-border bg-dl-bg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest mb-1">Prefer to pay with crypto?</p>
+                <p className="text-xs text-dl-gray leading-relaxed">
+                  On-chain USDC report payments are in development. In the meantime, acquire USDC via Coinbase Pay and convert to AXUSD — your purchase history will integrate with the Deal Intelligence suite.
+                </p>
+              </div>
+              <a
+                href="/onramp"
+                className="shrink-0 font-dl-mono text-xs text-dl-navy border border-dl-navy px-4 py-2 hover:bg-dl-navy hover:text-white transition-colors"
+              >
+                Get USDC
+              </a>
+            </div>
+
             <div className="mt-8 border border-dl-border">
               <h2 className="font-dl-serif text-lg text-dl-navy p-5 border-b border-dl-border">Tier Comparison</h2>
               <div className="overflow-x-auto">

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { DesignLawLayout, SectionHeading } from '../../components/design-law';
 import { ProofLink } from '../../components/observer/ObserverLayout';
 import { TreasuryData, RoutingRule, DrawSchedule, TreasuryEvent } from '../../server/services/observer/types';
+import type { CdpBalancesResponse } from '../api/observer/cdp-balances';
 
 const OBSERVER_TABS = [
   { id: 'overview', label: 'Overview', href: '/observer' },
@@ -36,6 +37,8 @@ function ObserverNav({ current }: { current: string }) {
 export default function ObserverTreasury() {
   const [data, setData] = useState<TreasuryData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cdp, setCdp] = useState<CdpBalancesResponse | null>(null);
+  const [cdpLoading, setCdpLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
@@ -45,13 +48,28 @@ export default function ObserverTreasury() {
         if (result.success) {
           setData(result.data);
         }
-      } catch (err) {
-        console.error('Failed to fetch treasury data');
+      } catch {
+        // silently handle
       } finally {
         setLoading(false);
       }
     }
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    async function fetchCdp() {
+      try {
+        const res = await fetch('/api/observer/cdp-balances');
+        const result = await res.json() as CdpBalancesResponse;
+        setCdp(result);
+      } catch {
+        // silently handle
+      } finally {
+        setCdpLoading(false);
+      }
+    }
+    fetchCdp();
   }, []);
 
   return (
@@ -155,6 +173,78 @@ export default function ObserverTreasury() {
                 </table>
               </div>
             )}
+          </div>
+
+          {/* ── CDP Server Wallets ─────────────────────────────────────────── */}
+          <div className="border border-dl-border mt-6">
+            <div className="px-6 py-4 border-b border-dl-border flex items-center justify-between">
+              <div>
+                <SectionHeading>CDP Server Wallets</SectionHeading>
+                <p className="text-xs text-dl-gray mt-0.5">Live ETH and USDC balances on Base mainnet — Coinbase CDP managed accounts</p>
+              </div>
+              <Link href="/cdp-wallets" className="font-dl-mono text-xs text-dl-navy underline underline-offset-2 shrink-0 ml-4">
+                Manage Wallets
+              </Link>
+            </div>
+            <div className="p-6">
+              {cdpLoading ? (
+                <p className="text-sm text-dl-gray font-dl-mono">Fetching live balances...</p>
+              ) : !cdp?.isLive || cdp.wallets.length === 0 ? (
+                <p className="text-sm text-dl-gray">
+                  {cdp?.error ?? 'No CDP wallets configured.'}{' '}
+                  <Link href="/cdp-wallets" className="text-dl-navy underline text-xs">Create a wallet</Link>
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-dl-border">
+                    <thead>
+                      <tr className="bg-dl-bg-alt">
+                        <th className="px-4 py-3 text-left font-dl-mono text-xs text-dl-gray uppercase">Name</th>
+                        <th className="px-4 py-3 text-left font-dl-mono text-xs text-dl-gray uppercase">Address</th>
+                        <th className="px-4 py-3 text-right font-dl-mono text-xs text-dl-gray uppercase">ETH Balance</th>
+                        <th className="px-4 py-3 text-right font-dl-mono text-xs text-dl-gray uppercase">USDC Balance</th>
+                        <th className="px-4 py-3 text-left font-dl-mono text-xs text-dl-gray uppercase">Network</th>
+                        <th className="px-4 py-3 text-left font-dl-mono text-xs text-dl-gray uppercase">Explorer</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-dl-border">
+                      {cdp.wallets.map((w) => (
+                        <tr key={w.address}>
+                          <td className="px-4 py-3 text-sm font-dl-mono text-dl-navy">
+                            {w.name ?? 'Unnamed'}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-dl-mono text-dl-gray">
+                            {w.address.slice(0, 8)}…{w.address.slice(-6)}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-dl-mono text-dl-navy text-right">
+                            {w.ethBalance} ETH
+                          </td>
+                          <td className="px-4 py-3 text-sm font-dl-mono text-dl-forest text-right">
+                            ${w.usdcBalance}
+                          </td>
+                          <td className="px-4 py-3 text-xs font-dl-mono text-dl-gray">
+                            Base
+                          </td>
+                          <td className="px-4 py-3 text-xs">
+                            <a
+                              href={w.basescanUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-dl-mono text-dl-navy underline"
+                            >
+                              Basescan
+                            </a>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="text-xs text-dl-gray mt-3 font-dl-mono">
+                    Fetched {new Date(cdp.fetchedAt).toLocaleTimeString()} · Base mainnet · Coinbase CDP
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </>
       ) : (
