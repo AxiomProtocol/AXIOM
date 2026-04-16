@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../lib/db';
-import { onrampPurchaseIntents } from '../../../shared/schema';
+import { db } from '../../../server/db';
+import { onrampPurchaseIntents } from '../../../shared/onrampSchema';
 import { getProviderWidgetUrl } from '../../../lib/onramp/config';
 import { randomBytes } from 'crypto';
 

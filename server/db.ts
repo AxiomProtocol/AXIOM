@@ -6,6 +6,7 @@ import * as axauSchema from '../shared/axauSchema';
 import * as treasurySchema from '../shared/treasurySchema';
 import * as allocationPolicySchema from '../shared/allocationPolicySchema';
 import * as circleSchema from '../shared/circleSchema';
+import * as onrampSchema from '../shared/onrampSchema';
 import {
   index,
   pgTable,
@@ -29,6 +30,7 @@ const dbSchema = {
   ...treasurySchema,
   ...allocationPolicySchema,
   ...circleSchema,
+  ...onrampSchema,
 };
 
 function getPool(): Pool {

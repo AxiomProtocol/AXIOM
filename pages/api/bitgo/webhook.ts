@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../lib/db';
+import { db } from '../../../server/db';
 import { bitgoWebhooks } from '../../../shared/bitgoSchema';
 import { bridgeService } from '../../../lib/services/BridgeService';
 

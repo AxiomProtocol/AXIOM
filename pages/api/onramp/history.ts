@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '../../../lib/db';
-import { onrampPurchaseIntents, OnrampPurchaseIntent } from '../../../shared/schema';
+import { db } from '../../../server/db';
+import { onrampPurchaseIntents, OnrampPurchaseIntent } from '../../../shared/onrampSchema';
 import { eq, desc } from 'drizzle-orm';
 
 interface HistoryResponse {
