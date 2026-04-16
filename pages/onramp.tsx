@@ -454,19 +454,23 @@ export default function OnrampPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Capital Stack Entry | Axiom Protocol</title>
+        <title>Start With Dollars | Axiom Protocol</title>
+        <meta
+          name="description"
+          content="Turn dollars into opportunity in minutes. Start with cash, move into Axiom Dollars, and choose your path — income, reserve access, or capital participation."
+        />
       </Head>
 
       <SectionHeading
-        title="Capital Stack Entry"
-        subtitle="Your guided path from US dollars into the Axiom capital stack — powered by Coinbase"
+        title="Start With Dollars"
+        subtitle="The easiest public entry into Axiom — buy digital dollars, move into Axiom Dollars, and choose your path"
       />
 
       {/* ── Cinematic Hero Banner ────────────────────────────────────────────── */}
-      <div className="mt-6 relative overflow-hidden border border-dl-border" style={{ height: '320px' }}>
+      <div className="mt-6 relative overflow-hidden border border-dl-border" style={{ height: '340px' }}>
         <img
           src="/images/coinbase/onramp-hero.png"
-          alt="Capital Stack Entry — powered by Coinbase"
+          alt="Turn dollars into opportunity — powered by Coinbase infrastructure"
           className="w-full h-full object-cover"
           style={{ objectPosition: 'center 30%' }}
         />
@@ -474,43 +478,103 @@ export default function OnrampPage() {
           className="absolute inset-0 flex flex-col justify-end p-8"
           style={{ background: 'linear-gradient(to top, rgba(30,58,95,0.92) 0%, rgba(30,58,95,0.45) 60%, transparent 100%)' }}
         >
-          <p className="text-xs font-dl-mono text-blue-200 uppercase tracking-widest mb-1">Powered by Coinbase Developer Platform</p>
-          <p className="text-2xl font-bold text-white font-dl-serif leading-tight">
-            From fiat to the capital stack —<br />in three guided steps.
+          <p className="text-xs font-dl-mono text-blue-200 uppercase tracking-widest mb-2">Powered by Coinbase Infrastructure</p>
+          <p className="text-2xl md:text-3xl font-bold text-white font-dl-serif leading-tight">
+            Turn Dollars Into<br />Opportunity in Minutes.
           </p>
-          <p className="text-sm text-blue-100 font-dl-mono mt-2 max-w-xl">
-            Buy USDC with your card. Convert to AXUSD at 1:1 via the Peg Stability Module. Acquire AXAU, the reserve instrument backed by gold and land.
+          <p className="text-sm text-blue-100 font-dl-mono mt-3 max-w-2xl leading-relaxed">
+            Start with cash, move into Axiom Dollars, and choose your path — income, reserve access, or capital participation.
           </p>
+          <div className="flex flex-wrap gap-3 mt-5">
+            <a
+              href="#how-it-works"
+              className="inline-block bg-dl-gold text-dl-navy px-6 py-3 text-xs font-bold hover:opacity-90 font-dl-mono uppercase tracking-wider"
+            >
+              Start With Dollars →
+            </a>
+            <a
+              href="#how-it-works"
+              className="inline-block border border-white text-white px-6 py-3 text-xs font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider"
+              style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+            >
+              See How It Works
+            </a>
+          </div>
         </div>
       </div>
 
-      {/* ── Intro — always visible ──────────────────────────────────────────── */}
-      <div className="mt-8 grid lg:grid-cols-3 gap-0 border border-dl-border">
+      {/* ── Trust Strip — 4 institutional guarantees ───────────────────────── */}
+      <div className="mt-0 border-l border-r border-b border-dl-border grid md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-dl-border bg-dl-bg">
+        {[
+          { label: 'Powered By Coinbase', detail: 'Infrastructure for payments and identity' },
+          { label: 'Delivered On Arbitrum One', detail: 'Fast settlement, low fees' },
+          { label: '1:1 Dollar Conversion', detail: 'No market pricing, no slippage' },
+          { label: 'Reserve Access', detail: 'Available after identity verification' },
+        ].map(item => (
+          <div key={item.label} className="p-4 flex items-start gap-3">
+            <span
+              className="inline-flex items-center justify-center shrink-0"
+              style={{ width: 18, height: 18, border: '1px solid #b8860b', marginTop: 2 }}
+            >
+              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4l2.5 2.5L9 1" stroke="#b8860b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <div>
+              <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wider font-bold">{item.label}</p>
+              <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mt-1">{item.detail}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Intro — three benefit-led steps ─────────────────────────────────── */}
+      <div id="how-it-works" className="mt-8 grid lg:grid-cols-3 gap-0 border border-dl-border">
         <div className="p-6 border-b lg:border-b-0 lg:border-r border-dl-border">
           <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-2">Step 1</p>
-          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-1">Buy USDC with your card</p>
+          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-1">Fund Your Wallet</p>
           <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
-            Use Coinbase Pay to purchase USDC directly from your bank card or account. No crypto experience needed — KYC, payment processing, and delivery are all handled by Coinbase. USDC arrives in your wallet on Arbitrum One, typically within minutes.
+            Use your card or bank account to purchase digital dollars (USDC) through Coinbase infrastructure. Funds are delivered to your wallet on Arbitrum One within minutes. Payment and identity checks are handled by Coinbase under its own compliance standards.
           </p>
         </div>
         <div className="p-6 border-b lg:border-b-0 lg:border-r border-dl-border">
           <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-2">Step 2 (optional)</p>
-          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-1">Convert to AXUSD</p>
+          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-1">Move Into Axiom Dollars</p>
           <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
-            If you want to participate in Axiom products — savings, lending, or AXAU — convert your USDC to AXUSD at a 1:1 rate through the Peg Stability Module. This requires two wallet confirmations: one approval and one swap. No price impact, no slippage.
+            Convert USDC into AXUSD through Axiom&apos;s instant 1:1 conversion engine — no market pricing, no slippage. AXUSD unlocks access to the broader Axiom ecosystem.
           </p>
         </div>
         <div className="p-6">
           <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-2">Step 3 (optional)</p>
-          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-1">Acquire AXAU</p>
+          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-1">Choose Your Growth Path</p>
           <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
-            AXAU is the Axiom reserve instrument backed by gold and land net asset value. Converting AXUSD to AXAU requires identity verification through ERC-3643. Purchase requests enter an operational queue and are fulfilled within 1–2 business days.
+            Use AXUSD to enter savings, reserve access (AXAU), and other capital pathways inside Axiom. Reserve access requires identity verification.
           </p>
         </div>
       </div>
 
-      {/* ── Asset Guide ─────────────────────────────────────────────────────── */}
+      {/* ── What Happens After You Start ────────────────────────────────────── */}
       <div className="mt-0 border-l border-r border-b border-dl-border">
+        <div className="px-6 py-4 border-b border-dl-border bg-dl-bg">
+          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">What Happens After You Start?</p>
+        </div>
+        <ol className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-dl-border list-none m-0 p-0">
+          {[
+            { num: '1', title: 'Buy Digital Dollars', body: 'Card or bank checkout through Coinbase. Delivered on Arbitrum One.' },
+            { num: '2', title: 'Move Into AXUSD',     body: 'Instant 1:1 conversion into Axiom Dollars — no slippage.' },
+            { num: '3', title: 'Choose Reserve, Savings, or Capital Access', body: 'Enter the Axiom ecosystem on the path that fits your goal.' },
+          ].map(s => (
+            <li key={s.num} className="p-6">
+              <p className="font-dl-serif text-2xl text-dl-gold font-bold mb-1">{s.num}</p>
+              <p className="text-sm font-bold text-dl-navy font-dl-serif mb-1">{s.title}</p>
+              <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">{s.body}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      {/* ── Asset Guide ─────────────────────────────────────────────────────── */}
+      <div className="mt-6 border-l border-r border-b border-t border-dl-border">
         <div className="px-6 py-4 border-b border-dl-border bg-dl-bg">
           <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">Asset Guide</p>
         </div>
@@ -518,28 +582,28 @@ export default function OnrampPage() {
           {[
             {
               symbol: 'USDC',
-              full: 'USD Coin',
+              full: 'Digital Dollars',
               chain: 'Arbitrum One',
-              desc: 'A regulated US dollar stablecoin issued by Circle. 1 USDC = $1.00 USD at all times. Widely accepted across DeFi. Holding USDC in your wallet gives you immediate access to the broader Arbitrum ecosystem.',
-              use: 'Bridge, trading, payments',
+              desc: 'Digital dollars widely used for payments, transfers, and entry into the broader on-chain economy. Issued by Circle. 1 USDC always equals $1.00.',
+              use: 'Entry asset, payments, transfers',
               img: '/images/coinbase/icon-usdc.png',
               imgAlt: 'USDC 3D coin',
             },
             {
               symbol: 'AXUSD',
-              full: 'Axiom USD Stablecoin',
-              chain: 'Arbitrum One (ERC-3643)',
-              desc: 'The Axiom Protocol stablecoin, pegged 1:1 to USDC via the Peg Stability Module. AXUSD is required to participate in Axiom savings, lending, and liquidity pools. It carries identity compliance built in via ERC-3643.',
-              use: 'Savings, lending, protocol participation',
+              full: 'Axiom Dollars',
+              chain: 'Arbitrum One',
+              desc: "Axiom's internal dollar rail used across savings, lending, and ecosystem access. Pegged 1:1 to USDC and identity-aware by design.",
+              use: 'Savings, lending, ecosystem access',
               img: '/images/coinbase/icon-axusd.png',
               imgAlt: 'AXUSD 3D stablecoin',
             },
             {
               symbol: 'AXAU',
-              full: 'Axiom Reserve Instrument',
+              full: 'Axiom Reserve Asset',
               chain: 'Arbitrum One',
-              desc: 'A reserve instrument priced against a blend of gold (XAU/USD) and land net asset value. AXAU is designed for long-term capital preservation within the Axiom ecosystem. Identity verification is required before purchase.',
-              use: 'Reserve instrument, long-term holding',
+              desc: 'A reserve asset for long-term capital preservation, structured around a blend of gold and land-backed reserve positions. Available through verified access.',
+              use: 'Reserve asset, long-term holding',
               img: '/images/coinbase/icon-axau.png',
               imgAlt: 'AXAU 3D gold coin',
             },
@@ -627,11 +691,11 @@ export default function OnrampPage() {
               <span className="text-xs text-dl-gray">→</span>
               <span className="text-xs font-dl-mono text-dl-navy">USDC via Coinbase</span>
               <span className="text-xs text-dl-gray">→</span>
-              <span className="text-xs font-dl-mono text-dl-navy">AXUSD via PSM</span>
+              <span className="text-xs font-dl-mono text-dl-navy">AXUSD via 1:1 conversion</span>
               {destination === 'AXAU' && (
                 <>
                   <span className="text-xs text-dl-gray">→</span>
-                  <span className="text-xs font-dl-mono text-dl-navy">AXAU via Reserve</span>
+                  <span className="text-xs font-dl-mono text-dl-navy">AXAU via reserve access</span>
                 </>
               )}
             </div>
@@ -730,10 +794,10 @@ export default function OnrampPage() {
                 <StepBadge n={2} done={step2Done} active={step2Active && !step2Done} />
                 <div>
                   <p className="text-sm font-bold text-dl-navy font-dl-serif">
-                    Convert USDC to AXUSD via PSM
+                    Move Into Axiom Dollars (AXUSD)
                   </p>
                   <p className="text-xs text-dl-gray font-dl-mono">
-                    1:1 swap through the Peg Stability Module. Two wallet confirmations: approve + swap.
+                    Instant 1:1 conversion engine. Two wallet confirmations: approve + swap.
                   </p>
                 </div>
                 {step2Done && (
@@ -1100,43 +1164,43 @@ export default function OnrampPage() {
           {[
             {
               q: 'What is Coinbase Pay and is it safe?',
-              a: 'Coinbase Pay is a regulated fiat-to-crypto payment service operated by Coinbase, Inc. — one of the largest publicly traded crypto companies in the US. Your bank details and identity verification are handled entirely by Coinbase under their own compliance and security standards. Axiom Protocol never sees your payment card or bank credentials.',
+              a: 'Coinbase Pay is the payment infrastructure that powers this entry flow. Payment details and identity checks are handled by Coinbase under its own compliance standards. Axiom receives only the information needed to complete delivery and maintain transaction history.',
             },
             {
               q: 'Do I need a Coinbase account?',
-              a: 'No. Coinbase Pay supports guest checkout using a debit or credit card without requiring you to create or log in to a Coinbase account. If you already have a Coinbase account, you can use it to access additional payment methods like bank transfers.',
+              a: 'No. Card checkout can be completed without creating a full Coinbase trading account, depending on the payment method available in your region. If you already have a Coinbase account, additional methods like bank transfers may be available.',
             },
             {
-              q: 'How long does it take to receive USDC?',
-              a: 'Card payments are typically processed within 5–15 minutes. Bank transfers (ACH) may take 1–3 business days depending on your bank. Once the purchase is confirmed by Coinbase, USDC is delivered directly to your connected wallet on Arbitrum One.',
+              q: 'How long does it take to receive my digital dollars?',
+              a: 'Card payments are typically delivered within 5–15 minutes. Bank transfers may take 1–3 business days depending on your bank. Once Coinbase confirms the purchase, digital dollars (USDC) arrive in your wallet on Arbitrum One.',
             },
             {
               q: 'What fees does Coinbase charge?',
-              a: 'Coinbase Pay charges a transaction fee that varies by payment method and amount, typically ranging from 1% to 3.99% for card purchases. Bank transfers generally carry lower fees. The exact fee is shown inside the Coinbase Pay widget before you confirm the transaction.',
+              a: 'Coinbase applies a transaction fee that varies by payment method and amount, typically in the 1%–3.99% range for card purchases. Bank transfers generally carry lower fees. The exact fee is shown before you confirm.',
             },
             {
-              q: 'What is the Peg Stability Module (PSM)?',
-              a: 'The PSM is an on-chain contract that swaps USDC for AXUSD at a 1:1 rate (minus a small protocol fee). It exists to ensure AXUSD always maintains its dollar peg. When you use the PSM, you send USDC and receive an equivalent amount of AXUSD — no market pricing, no slippage.',
+              q: 'What is the 1:1 conversion engine?',
+              a: "Axiom's instant 1:1 conversion system for moving from USDC into AXUSD without market slippage. You send digital dollars and receive an equivalent amount of Axiom Dollars — no pricing risk, no slippage, just a small protocol fee.",
             },
             {
-              q: 'Why does converting to AXUSD require two wallet transactions?',
-              a: 'ERC-20 tokens on Ethereum and Arbitrum require a two-step process: first you authorize the PSM contract to access your USDC (approve), then you execute the swap (swapCollateralForAXUSD). Both transactions require gas fees in ETH. This is standard behavior for all Arbitrum DeFi protocols.',
+              q: 'Why does converting to AXUSD take two wallet confirmations?',
+              a: 'Moving digital tokens on Arbitrum requires a brief two-step pattern: first you authorize the conversion engine to access your USDC, then you execute the swap. Both confirmations require a small amount of ETH for gas. This is standard behavior across the network.',
             },
             {
-              q: 'What is AXAU and who can buy it?',
-              a: 'AXAU is the Axiom reserve instrument, priced against a blend of XAU (gold) and land net asset value. It is designed for participants who want long-term capital preservation within the Axiom ecosystem. AXAU purchases require identity verification through ERC-3643 compliance credentials. Requests enter an operational queue and are fulfilled within 1–2 business days.',
+              q: 'What is AXAU and who can access it?',
+              a: 'AXAU is the Axiom reserve asset, structured around a blend of gold and land-backed reserve positions. It is designed for participants who want long-term capital preservation. Access requires identity verification, after which requests enter an operational queue and are fulfilled within 1–2 business days.',
             },
             {
               q: 'I already have USDC — do I need to buy more?',
-              a: 'No. If you already hold USDC on Arbitrum One, you can skip Step 1 entirely. Use the "I already have USDC — skip to conversion" link on the page to proceed directly to the PSM conversion step.',
+              a: 'No. If you already hold USDC on Arbitrum One, you can skip Step 1 entirely and move directly to the conversion step using the link on this page.',
             },
             {
-              q: 'What happens if the Coinbase widget does not open?',
-              a: 'The widget opens in a popup window. If it does not appear, your browser may be blocking popups. Allow popups for this site in your browser settings, then click the button again. If the problem persists, contact Axiom support.',
+              q: 'What happens if the Coinbase window does not open?',
+              a: 'The flow opens in a popup window. If nothing appears, your browser may be blocking popups. Allow popups for this site and try again. If the issue persists, contact Axiom support.',
             },
             {
               q: 'Which networks are supported?',
-              a: 'USDC purchases via Coinbase Pay are delivered to Arbitrum One (chain ID 42161). The PSM and AXUSD contracts are deployed on Arbitrum One. AXAU minting also occurs on Arbitrum One. Make sure your wallet is set to Arbitrum One before attempting any on-chain steps.',
+              a: 'Digital dollars purchased through this flow are delivered to Arbitrum One (chain ID 42161). The conversion engine, AXUSD, and AXAU all settle on Arbitrum One. Make sure your wallet is set to Arbitrum One before any on-chain step.',
             },
           ].map((item, i) => (
             <div key={i} className="px-6 py-4">
@@ -1173,25 +1237,25 @@ export default function OnrampPage() {
         </div>
         <div className="grid lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-dl-border">
           <div className="p-6 space-y-3">
-            <p className="text-sm font-bold text-dl-navy font-dl-serif">Coinbase Developer Platform (CDP)</p>
+            <p className="text-sm font-bold text-dl-navy font-dl-serif">Powered by Coinbase Infrastructure</p>
             <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
-              Axiom Protocol uses the Coinbase Developer Platform to power this onramp. CDP provides the Coinbase Pay widget (for user-facing fiat purchases), live crypto price feeds via Coinbase Advanced Trade, and server-managed treasury wallets on Base mainnet. This integration gives Axiom participants access to institutional-grade payment infrastructure without leaving the protocol interface.
+              Axiom uses Coinbase infrastructure to power this entry path: regulated payment processing for buying digital dollars, live market price feeds, and institutional treasury wallets on Base. The result is institutional-grade payment infrastructure delivered inside the Axiom interface.
             </p>
             <div className="border-t border-dl-border pt-3 space-y-1">
               <div className="flex justify-between text-xs font-dl-mono">
-                <span className="text-dl-gray">Payment widget</span>
-                <span className="text-dl-navy">Coinbase Pay</span>
+                <span className="text-dl-gray">Payment infrastructure</span>
+                <span className="text-dl-navy">Coinbase</span>
               </div>
               <div className="flex justify-between text-xs font-dl-mono">
                 <span className="text-dl-gray">Price data</span>
-                <span className="text-dl-navy">Coinbase Advanced Trade</span>
+                <span className="text-dl-navy">Coinbase market feeds</span>
               </div>
               <div className="flex justify-between text-xs font-dl-mono">
                 <span className="text-dl-gray">Treasury wallets</span>
-                <span className="text-dl-navy">CDP Server Wallets (Base)</span>
+                <span className="text-dl-navy">Coinbase-managed (Base)</span>
               </div>
               <div className="flex justify-between text-xs font-dl-mono">
-                <span className="text-dl-gray">KYC provider</span>
+                <span className="text-dl-gray">Identity verification</span>
                 <span className="text-dl-navy">Coinbase (independent)</span>
               </div>
             </div>
@@ -1199,13 +1263,13 @@ export default function OnrampPage() {
           <div className="p-6 space-y-3">
             <p className="text-sm font-bold text-dl-navy font-dl-serif">Privacy and Data Handling</p>
             <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
-              When you use Coinbase Pay, your wallet address is shared with Coinbase to direct the USDC delivery. No other personal information is passed from Axiom to Coinbase. Your payment card details, bank credentials, and identity documents remain exclusively with Coinbase under their privacy policy.
+              When you use this entry path, your wallet address is shared with Coinbase to direct delivery of your digital dollars. No other personal information is passed from Axiom to Coinbase. Payment details, bank credentials, and identity documents remain exclusively with Coinbase under its privacy policy.
             </p>
             <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
-              Axiom Protocol records your wallet address and purchase intent on its own servers for transaction history and audit purposes only. This data is not sold or shared with third parties outside of the Axiom Protocol ecosystem.
+              Axiom records your wallet address and purchase intent on its own servers for transaction history and audit purposes only. This data is not sold or shared with third parties outside the Axiom ecosystem.
             </p>
             <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
-              Coinbase Pay sessions expire after a fixed period. If the widget closes without a completed purchase, no transaction is recorded and no funds move.
+              Sessions expire after a fixed period. If the window closes without a completed purchase, no transaction is recorded and no funds move.
             </p>
           </div>
         </div>

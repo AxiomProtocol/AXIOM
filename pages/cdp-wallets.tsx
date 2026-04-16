@@ -36,7 +36,7 @@ export default function CdpWalletsPage() {
       const json = await res.json() as WalletListData;
       setData(json);
     } catch {
-      setData({ accounts: [], isLive: false, configured: false, error: 'Request failed' });
+      setData({ accounts: [], isLive: false, configured: false, canCreate: false, error: 'Request failed' });
     } finally {
       setLoading(false);
     }
@@ -72,19 +72,23 @@ export default function CdpWalletsPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>CDP Wallet Infrastructure | Axiom Protocol</title>
+        <title>Treasury Wallet Infrastructure | Axiom Protocol</title>
+        <meta
+          name="description"
+          content="Axiom uses Coinbase-managed distributed key infrastructure to secure treasury assets, operational reserves, and capital movement — without exposing private keys."
+        />
       </Head>
 
       <SectionHeading
-        title="CDP Wallet Infrastructure"
-        subtitle="Coinbase Developer Platform server wallets — Axiom Protocol treasury and operational reserve accounts on Base"
+        title="Treasury Wallet Infrastructure"
+        subtitle="Institutional wallet security for Axiom treasury and operations — powered by Coinbase distributed key infrastructure"
       />
 
       {/* ── Cinematic Hero Banner ────────────────────────────────────────────── */}
-      <div className="mt-6 relative overflow-hidden border border-dl-border" style={{ height: '280px' }}>
+      <div className="mt-6 relative overflow-hidden border border-dl-border" style={{ height: '320px' }}>
         <img
           src="/images/coinbase/cdp-hero.png"
-          alt="CDP secure data center infrastructure"
+          alt="Institutional treasury infrastructure secured by Coinbase"
           className="w-full h-full object-cover"
           style={{ objectPosition: 'center center' }}
         />
@@ -92,47 +96,94 @@ export default function CdpWalletsPage() {
           className="absolute inset-0 flex flex-col justify-end p-8"
           style={{ background: 'linear-gradient(to top, rgba(10,20,50,0.95) 0%, rgba(10,20,50,0.5) 55%, transparent 100%)' }}
         >
-          <p className="text-xs font-dl-mono text-blue-300 uppercase tracking-widest mb-1">Coinbase MPC Infrastructure</p>
-          <p className="text-2xl font-bold text-white font-dl-serif leading-tight">
-            Institutional-grade custody.<br />No private key exposure.
+          <p className="text-xs font-dl-mono text-blue-300 uppercase tracking-widest mb-2">Coinbase Treasury Infrastructure</p>
+          <p className="text-2xl md:text-3xl font-bold text-white font-dl-serif leading-tight">
+            Institutional Wallet Security<br />for Treasury and Operations.
           </p>
-          <p className="text-sm text-blue-100 font-dl-mono mt-2 max-w-xl">
-            Server wallet accounts secured by Coinbase multi-party computation — programmatically controlled, fully auditable, zero single points of failure.
+          <p className="text-sm text-blue-100 font-dl-mono mt-3 max-w-2xl leading-relaxed">
+            Axiom uses Coinbase-managed distributed key infrastructure to secure treasury assets, operational reserves, and capital movement — without exposing private keys.
           </p>
+          <div className="flex flex-wrap gap-3 mt-5">
+            <a
+              href="#architecture"
+              className="inline-block border-2 border-white text-white px-5 py-2.5 text-xs font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider"
+              style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}
+            >
+              View Wallet Architecture
+            </a>
+            <a
+              href="#create-wallet"
+              className="inline-block border border-white text-white px-5 py-2.5 text-xs font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider"
+              style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+            >
+              Create Treasury Wallet
+            </a>
+          </div>
         </div>
       </div>
 
+      {/* ── Trust Strip — 4 institutional guarantees ───────────────────────── */}
+      <div className="mt-0 border-l border-r border-b border-dl-border grid md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-dl-border bg-dl-bg">
+        {[
+          { label: 'No Key Exposure',    detail: 'Private keys never stored on Axiom side' },
+          { label: 'Distributed Security', detail: 'Key shares split across secure nodes' },
+          { label: 'Separated Accounts', detail: 'Treasury and operations kept distinct' },
+          { label: 'Auditable History',  detail: 'Every action recorded on-chain' },
+        ].map(item => (
+          <div key={item.label} className="p-4 flex items-start gap-3">
+            <span
+              className="inline-flex items-center justify-center shrink-0"
+              style={{ width: 18, height: 18, border: '1px solid #b8860b', marginTop: 2 }}
+            >
+              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4l2.5 2.5L9 1" stroke="#b8860b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <div>
+              <p className="text-xs font-dl-mono text-dl-navy uppercase tracking-wider font-bold">{item.label}</p>
+              <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mt-1">{item.detail}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* ── Intro ─────────────────────────────────────────────────────────── */}
-      <div className="mt-6 grid lg:grid-cols-2 gap-0 border border-dl-border">
+      <div id="architecture" className="mt-6 grid lg:grid-cols-2 gap-0 border border-dl-border">
         <div className="p-6 border-b lg:border-b-0 lg:border-r border-dl-border">
-          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">What are CDP Server Wallets?</p>
+          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">What Are Axiom Treasury Wallets?</p>
           <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-3">
-            Coinbase Developer Platform (CDP) server wallets are EVM accounts managed entirely through the Coinbase API — no private key storage required on the Axiom side. The private key is generated and held inside Coinbase's secure multi-party computation (MPC) infrastructure, meaning no single party can unilaterally move funds. Transactions are signed via API call with programmatic controls.
+            Axiom&apos;s treasury wallets are institutionally managed blockchain accounts accessed through Coinbase infrastructure. Private keys are never stored on Axiom&apos;s side.
+          </p>
+          <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-3">
+            Wallet operations are authorized through secure session controls and distributed key protection. This allows treasury activity to remain programmable, auditable, and operationally secure.
           </p>
           <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
-            Axiom uses CDP server wallets as an institutional-grade layer for treasury management and operational reserves. These accounts are deployed on Base mainnet and interact with USDC and other Base-native assets.
+            Axiom uses these accounts as an institutional-grade layer for treasury management and operational reserves on Base, with USDC and Base-native assets.
           </p>
         </div>
         <div className="p-6">
-          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">Why Base Mainnet?</p>
+          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">Why Base?</p>
           <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-3">
-            Base is an Ethereum Layer 2 network built and supported by Coinbase. It offers low transaction fees, fast finality, and native integration with Coinbase infrastructure. CDP server wallets are natively supported on Base, making it the natural network for Axiom's Coinbase-managed treasury accounts. Note that the primary Axiom Protocol operates on Arbitrum One — these CDP wallets serve a separate treasury and operational function.
+            Base gives Axiom access to fast settlement, low fees, and direct integration with Coinbase infrastructure.
+          </p>
+          <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-3">
+            These treasury wallets support reserve and operational functions on Base while the core Axiom protocol continues to operate on Arbitrum One. The result is cleaner separation between treasury execution and protocol settlement.
           </p>
           <div className="border border-dl-border bg-dl-bg p-3 space-y-1">
             <div className="flex justify-between text-xs font-dl-mono">
-              <span className="text-dl-gray">Network</span>
+              <span className="text-dl-gray">Treasury network</span>
               <span className="text-dl-navy">Base Mainnet (Chain 8453)</span>
             </div>
             <div className="flex justify-between text-xs font-dl-mono">
-              <span className="text-dl-gray">Key custody</span>
-              <span className="text-dl-navy">Coinbase MPC</span>
+              <span className="text-dl-gray">Key protection</span>
+              <span className="text-dl-navy">Distributed key (Coinbase)</span>
             </div>
             <div className="flex justify-between text-xs font-dl-mono">
-              <span className="text-dl-gray">Access method</span>
-              <span className="text-dl-navy">CDP API (JWT-authenticated)</span>
+              <span className="text-dl-gray">Authorization</span>
+              <span className="text-dl-navy">Secure session (short-lived)</span>
             </div>
             <div className="flex justify-between text-xs font-dl-mono">
-              <span className="text-dl-gray">Explorer</span>
+              <span className="text-dl-gray">Public verification</span>
               <span className="text-dl-navy">Basescan.org</span>
             </div>
           </div>
@@ -142,27 +193,27 @@ export default function CdpWalletsPage() {
       {/* ── Wallet Purposes ───────────────────────────────────────────────── */}
       <div className="mt-0 border-l border-r border-b border-dl-border">
         <div className="px-6 py-4 border-b border-dl-border bg-dl-bg">
-          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">Deployed Wallets — Purpose and Scope</p>
+          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">Deployed Treasury Accounts — Purpose and Scope</p>
         </div>
         <div className="grid lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-dl-border">
           <div className="p-6">
-            <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-1">axiom-treasury</p>
+            <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-1">Treasury Account · axiom-treasury</p>
             <p className="font-dl-mono text-xs text-dl-gray mb-3 break-all">0x103A1F07836C4b33543F8BF6D49b062a0F71AbC5</p>
             <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-2">
-              The primary treasury account for Axiom Protocol on Base. This wallet is designated for holding USDC and ETH acquired through the Coinbase Pay onramp and other protocol capital inflows. It serves as the starting point for capital deployed across Base-native positions.
+              Long-term capital and reserve positioning on Base. Holds USDC and ETH received through the Coinbase entry path and other protocol inflows.
             </p>
             <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
-              Funds in this wallet are managed through CDP API calls with programmatic authorization. No manual private key access is used at any point.
+              All movement is authorized through secure session controls. No manual private key access is used at any point.
             </p>
           </div>
           <div className="p-6">
-            <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-1">axiom-operations-reserve</p>
+            <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-1">Operations Reserve · axiom-operations-reserve</p>
             <p className="font-dl-mono text-xs text-dl-gray mb-3 break-all">0x8424Eb7e1A79bcC8fdE8c1D705ba0A44747758c1</p>
             <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-2">
-              The operational reserve account for day-to-day protocol activities on Base. This wallet covers gas fees, small operational disbursements, and acts as a buffer between the main treasury and live protocol interactions.
+              Day-to-day operational flows, gas, and execution buffer on Base. Sits between the main treasury and live protocol activity.
             </p>
             <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
-              Keeping treasury and operations reserve separate reduces risk exposure and provides cleaner on-chain accounting. Transfers between accounts go through the CDP API with full audit logs.
+              Keeping treasury and operations separate reduces risk exposure and produces cleaner on-chain accounting. Transfers between accounts are authorized and recorded.
             </p>
           </div>
         </div>
@@ -170,7 +221,7 @@ export default function CdpWalletsPage() {
 
       <div className="mt-6 grid md:grid-cols-3 gap-0 border border-dl-border">
         <div className="p-5 border-b md:border-b-0 md:border-r border-dl-border">
-          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">CDP Configured</p>
+          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">Infrastructure Configured</p>
           {loading ? (
             <p className="text-lg font-dl-mono text-dl-navy mt-1">—</p>
           ) : (
@@ -178,11 +229,11 @@ export default function CdpWalletsPage() {
           )}
         </div>
         <div className="p-5 border-b md:border-b-0 md:border-r border-dl-border">
-          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">Server Wallets</p>
+          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">Treasury Accounts</p>
           <p className="text-lg font-dl-mono text-dl-navy mt-1">{loading ? '—' : data?.accounts.length ?? 0}</p>
         </div>
         <div className="p-5">
-          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">API Status</p>
+          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">Connection Status</p>
           <p className="text-lg font-dl-mono text-dl-navy mt-1">
             {loading ? '—' : data?.isLive ? 'Live' : 'Offline'}
           </p>
@@ -192,7 +243,7 @@ export default function CdpWalletsPage() {
       <div className="mt-8 grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-bold text-dl-navy font-dl-serif">Server Wallet Accounts</h3>
+            <h3 className="text-base font-bold text-dl-navy font-dl-serif">Treasury Accounts</h3>
             <button
               onClick={loadWallets}
               className="text-xs font-dl-mono text-dl-gray hover:text-dl-navy border border-dl-border px-3 py-1"
@@ -211,11 +262,11 @@ export default function CdpWalletsPage() {
             </div>
           ) : !data?.configured ? (
             <div className="border border-dl-border p-6">
-              <p className="text-sm text-dl-gray font-dl-mono">CDP API keys not configured. Set COINBASE_API_KEY and COINBASE_API_KEY2.</p>
+              <p className="text-sm text-dl-gray font-dl-mono">Coinbase treasury infrastructure is not yet configured. Set COINBASE_API_KEY and COINBASE_API_KEY2 to enable.</p>
             </div>
           ) : data.accounts.length === 0 ? (
             <div className="border border-dl-border p-6 text-center">
-              <p className="text-sm text-dl-gray font-dl-mono">No server wallet accounts found. Create one using the panel.</p>
+              <p className="text-sm text-dl-gray font-dl-mono">No treasury accounts found. Create one using the panel.</p>
             </div>
           ) : (
             <div className="border border-dl-border overflow-x-auto">
@@ -243,13 +294,16 @@ export default function CdpWalletsPage() {
           )}
         </div>
 
-        <div>
-          <h3 className="text-base font-bold text-dl-navy font-dl-serif mb-3">Create Wallet</h3>
+        <div id="create-wallet">
+          <h3 className="text-base font-bold text-dl-navy font-dl-serif mb-3">Create Treasury Wallet</h3>
           <div className="border border-dl-border p-5">
+            <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-4">
+              Provision a new institutional treasury account on Base. Private keys are protected by Coinbase distributed key infrastructure — never stored on the Axiom side.
+            </p>
             <div className="space-y-4">
               <div>
                 <label className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider block mb-1">
-                  Wallet Name (optional)
+                  Account Label (optional)
                 </label>
                 <input
                   type="text"
@@ -261,17 +315,17 @@ export default function CdpWalletsPage() {
               </div>
 
               {createError && (
-                <p className="text-xs font-dl-mono text-red-700 border border-red-300 bg-red-50 px-3 py-2">{createError}</p>
+                <p role="alert" aria-live="polite" className="text-xs font-dl-mono text-red-700 border border-red-300 bg-red-50 px-3 py-2">{createError}</p>
               )}
               {createSuccess && (
-                <p className="text-xs font-dl-mono text-green-700 border border-green-300 bg-green-50 px-3 py-2">
+                <p role="status" aria-live="polite" className="text-xs font-dl-mono text-green-700 border border-green-300 bg-green-50 px-3 py-2">
                   Created: {createSuccess}
                 </p>
               )}
 
               {data && !data.canCreate && data.configured && (
                 <p className="text-xs font-dl-mono text-amber-700 border border-amber-300 bg-amber-50 px-3 py-2">
-                  Set CDP_WALLET_SECRET in environment secrets to enable wallet creation.
+                  Set CDP_WALLET_SECRET in environment secrets to enable account provisioning.
                 </p>
               )}
 
@@ -280,17 +334,17 @@ export default function CdpWalletsPage() {
                 disabled={creating || !data?.configured || !data?.canCreate}
                 className="w-full py-2 bg-dl-navy text-white font-dl-mono text-sm hover:bg-[#162d4a] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {creating ? 'Creating...' : 'Create Server Wallet'}
+                {creating ? 'Provisioning...' : 'Create Treasury Wallet'}
               </button>
             </div>
 
             <div className="mt-5 pt-5 border-t border-dl-border">
-              <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-2">About CDP Wallets</p>
+              <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-2">About Treasury Wallets</p>
               <ul className="text-xs text-dl-gray font-dl-mono space-y-1">
-                <li>Server-side managed EVM accounts</li>
-                <li>Deployed on Base mainnet</li>
-                <li>Accessible via CDP API</li>
-                <li>No private key storage required</li>
+                <li>Institutionally managed blockchain accounts</li>
+                <li>Deployed on Base for fast, low-fee settlement</li>
+                <li>Authorized through secure session controls</li>
+                <li>Private keys never stored on Axiom side</li>
               </ul>
             </div>
           </div>
@@ -319,48 +373,48 @@ export default function CdpWalletsPage() {
               className="h-28 w-28 object-cover shrink-0"
             />
             <div>
-              <p className="text-xs font-dl-mono text-blue-300 uppercase tracking-widest mb-1">Multi-Party Computation</p>
+              <p className="text-xs font-dl-mono text-blue-300 uppercase tracking-widest mb-1">Distributed Key Security</p>
               <p className="text-lg font-bold text-white font-dl-serif leading-tight">
                 Zero single points of failure.<br />Keys never exist in full.
               </p>
               <p className="text-xs text-blue-100 font-dl-mono mt-1">
-                Coinbase MPC distributes key shares across independent secure nodes.
+                Coinbase distributes key shares across independent secure nodes.
               </p>
             </div>
           </div>
         </div>
         <div className="grid lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-dl-border">
           <div className="p-5">
-            <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">MPC Key Architecture</p>
+            <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">Distributed Key Security</p>
             <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
-              CDP uses multi-party computation to ensure the private key never exists in full form on any single server. Key shares are distributed across Coinbase's infrastructure. This eliminates single-point-of-failure key exposure and meets institutional custody standards.
+              Treasury wallet keys are split into shares held inside Coinbase&apos;s secure infrastructure. The complete private key never exists on any single server, eliminating single-point-of-failure exposure and meeting institutional custody standards.
             </p>
           </div>
           <div className="p-5">
-            <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">JWT Authentication</p>
+            <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">Secure Session Authorization</p>
             <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
-              Every API call to CDP is authenticated via a short-lived JWT signed with Axiom's EC private key. The JWT expires after 2 minutes, preventing replay attacks. API key credentials are stored as environment secrets and never exposed to client-side code.
+              Every request to move treasury assets is authorized through short-lived signed sessions that expire within minutes. Credentials are stored as protected environment secrets and never exposed to client-side code.
             </p>
           </div>
           <div className="p-5">
-            <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">Audit Trail</p>
+            <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">Every Action Is Recorded</p>
             <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
-              All wallet operations — account creation, balance checks, transaction signing — generate audit logs on both the CDP platform and Axiom's internal database. On-chain activity is fully verifiable on Basescan. No funds can move without an authenticated API request.
+              Account creation, balance checks, and transaction signing are logged on both the Coinbase platform and Axiom&apos;s internal database. On-chain activity is fully verifiable on Basescan. No funds can move without an authorized request.
             </p>
           </div>
         </div>
       </div>
 
       <div className="mt-6 border border-dl-border p-6">
-        <h3 className="text-base font-bold text-dl-navy font-dl-serif mb-4">CDP Infrastructure Capabilities</h3>
+        <h3 className="text-base font-bold text-dl-navy font-dl-serif mb-4">Treasury Infrastructure Capabilities</h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
-            { label: 'Server Wallets', status: 'Live', desc: 'Create and manage EVM server wallet accounts via the CDP API.' },
-            { label: 'Smart Accounts', status: 'Available', desc: 'ERC-4337 account abstraction wallets for gas sponsorship and batch transactions.' },
-            { label: 'Token Swaps', status: 'Available', desc: 'Built-in swap API supporting ETH, USDC, and Base ecosystem assets.' },
-            { label: 'Policy Engine', status: 'Available', desc: 'Transaction rules, spending limits, and multi-party authorization controls.' },
-            { label: 'Headless Onramp', status: 'Available', desc: 'Programmatic fiat-to-crypto onramp without iframe widget dependency.' },
-            { label: 'AgentKit', status: 'Available', desc: 'AI agent tooling for autonomous treasury and DAO operations.' },
+            { label: 'Treasury Accounts',           status: 'Live',      desc: 'Provision and manage institutional blockchain accounts on Base.' },
+            { label: 'Programmable Account Controls', status: 'Available', desc: 'Account abstraction features supporting gas sponsorship and batched operations.' },
+            { label: 'Asset Conversion',            status: 'Available', desc: 'Built-in conversion between ETH, USDC, and other Base ecosystem assets.' },
+            { label: 'Spending Controls',           status: 'Available', desc: 'Transaction rules, spending limits, and multi-party authorization policies.' },
+            { label: 'Embedded Funding Infrastructure', status: 'Available', desc: 'Programmatic dollar-to-digital-asset funding without an external widget.' },
+            { label: 'Automation Layer',            status: 'Available', desc: 'Tooling for authorized automated treasury and operational workflows.' },
           ].map(cap => (
             <div key={cap.label} className="border border-dl-border p-4">
               <div className="flex items-start justify-between mb-2">
