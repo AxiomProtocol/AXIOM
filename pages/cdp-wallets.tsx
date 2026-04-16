@@ -13,6 +13,7 @@ interface WalletListData {
   accounts: CdpWalletAccount[];
   isLive: boolean;
   configured: boolean;
+  canCreate: boolean;
   error?: string;
 }
 
@@ -180,9 +181,15 @@ export default function CdpWalletsPage() {
                 </p>
               )}
 
+              {data && !data.canCreate && data.configured && (
+                <p className="text-xs font-dl-mono text-amber-700 border border-amber-300 bg-amber-50 px-3 py-2">
+                  Set CDP_WALLET_SECRET in environment secrets to enable wallet creation.
+                </p>
+              )}
+
               <button
                 onClick={handleCreate}
-                disabled={creating || !data?.configured}
+                disabled={creating || !data?.configured || !data?.canCreate}
                 className="w-full py-2 bg-dl-navy text-white font-dl-mono text-sm hover:bg-[#162d4a] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {creating ? 'Creating...' : 'Create Server Wallet'}
