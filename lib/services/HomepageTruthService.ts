@@ -187,8 +187,47 @@ function pickHeroHeadline(): { variant: HeroHeadlineVariant; headline: string; s
   return { variant: 'A', ...HERO_HEADLINE_VARIANTS.A, verifiedFrom: 'default:A' };
 }
 
+// ── Route registry ──────────────────────────────────────────────────
+// IMPORTANT: serverless platforms (Vercel, Netlify Functions, etc.) do
+// not bundle the `pages/` directory into the runtime function. That means
+// `fs.existsSync(process.cwd()/pages/...)` returns false at request time
+// even when the route is deployed and reachable, which previously caused
+// the entire homepage status table to collapse to empty.
+//
+// Solution: a hardcoded allowlist of routes the homepage may reference.
+// Any new route the homepage cares about must be added here. The dev
+// fallback below auto-discovers via filesystem so local development still
+// catches drift without requiring a manual update.
+const KNOWN_HOMEPAGE_ROUTES: ReadonlySet<string> = new Set([
+  '/banking',
+  '/axusd-3643',
+  '/dex',
+  '/axau',
+  '/axau-early-access',
+  '/savings',
+  '/borrow',
+  '/observer',
+  '/solvency',
+  '/disclosure',
+  '/lending-fund',
+  '/infrastructure',
+  '/proof-of-execution',
+  '/contact',
+  '/start',
+  '/yield',
+  '/credit',
+  '/verify',
+  '/wealth-practice',
+  '/pilot',
+  '/mirdt',
+]);
+
 function pageExists(routePath: string): boolean {
-  // routePath like "/savings" — accept either pages/savings.tsx or pages/savings/index.tsx
+  if (KNOWN_HOMEPAGE_ROUTES.has(routePath)) return true;
+  // Dev-only filesystem fallback so newly created pages light up
+  // automatically. In production (NODE_ENV=production) we trust the
+  // allowlist above so serverless functions stay deterministic.
+  if (process.env.NODE_ENV === 'production') return false;
   const trimmed = routePath.replace(/^\//, '');
   const candidates = [
     join(process.cwd(), 'pages', `${trimmed}.tsx`),
