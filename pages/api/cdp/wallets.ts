@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { listEvmAccounts, createEvmAccount, CdpWalletAccount } from '../../../lib/cdp/walletService';
+import { listEvmAccounts, createEvmAccount, updateEvmAccount, CdpWalletAccount } from '../../../lib/cdp/walletService';
 import { isCdpConfigured, canCreateWallets } from '../../../lib/cdp/client';
 
 interface ListResponse {
@@ -48,6 +48,21 @@ export default async function handler(
       return res.status(500).json({ error: result.error });
     }
     return res.status(201).json(result);
+  }
+
+  if (req.method === 'PATCH') {
+    if (!configured) {
+      return res.status(503).json({ error: 'CDP not configured' });
+    }
+    const { address, name } = req.body as { address?: string; name?: string };
+    if (!address || !name) {
+      return res.status(400).json({ error: 'address and name are required' });
+    }
+    const result = await updateEvmAccount(address, name);
+    if (result.error) {
+      return res.status(500).json({ error: result.error });
+    }
+    return res.status(200).json(result);
   }
 
   return res.status(405).json({ error: 'Method not allowed' });

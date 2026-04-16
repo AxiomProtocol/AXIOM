@@ -63,6 +63,43 @@ function slugifyName(name: string): string {
     .padEnd(2, '0');
 }
 
+export interface CdpUpdateAccountResult {
+  account: CdpWalletAccount | null;
+  error?: string;
+}
+
+/**
+ * Update (rename) an EVM server wallet account by address.
+ */
+export async function updateEvmAccount(
+  address: string,
+  newName: string
+): Promise<CdpUpdateAccountResult> {
+  if (!isCdpConfigured()) {
+    return { account: null, error: 'CDP not configured' };
+  }
+
+  try {
+    const cdp = getCdpClient();
+    const safeName = slugifyName(newName);
+    const account = await cdp.evm.updateAccount({
+      address: address as `0x${string}`,
+      update: { name: safeName },
+    });
+
+    return {
+      account: {
+        address: account.address,
+        name: account.name ?? null,
+        network: 'base-mainnet',
+      },
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to update CDP account';
+    return { account: null, error: msg };
+  }
+}
+
 /**
  * Create a new named EVM server wallet account.
  */
