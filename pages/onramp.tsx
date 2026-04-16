@@ -462,6 +462,28 @@ export default function OnrampPage() {
         subtitle="Your guided path from US dollars into the Axiom capital stack — powered by Coinbase"
       />
 
+      {/* ── Cinematic Hero Banner ────────────────────────────────────────────── */}
+      <div className="mt-6 relative overflow-hidden border border-dl-border" style={{ height: '320px' }}>
+        <img
+          src="/images/coinbase/onramp-hero.png"
+          alt="Capital Stack Entry — powered by Coinbase"
+          className="w-full h-full object-cover"
+          style={{ objectPosition: 'center 30%' }}
+        />
+        <div
+          className="absolute inset-0 flex flex-col justify-end p-8"
+          style={{ background: 'linear-gradient(to top, rgba(30,58,95,0.92) 0%, rgba(30,58,95,0.45) 60%, transparent 100%)' }}
+        >
+          <p className="text-xs font-dl-mono text-blue-200 uppercase tracking-widest mb-1">Powered by Coinbase Developer Platform</p>
+          <p className="text-2xl font-bold text-white font-dl-serif leading-tight">
+            From fiat to the capital stack —<br />in three guided steps.
+          </p>
+          <p className="text-sm text-blue-100 font-dl-mono mt-2 max-w-xl">
+            Buy USDC with your card. Convert to AXUSD at 1:1 via the Peg Stability Module. Acquire AXAU, the reserve instrument backed by gold and land.
+          </p>
+        </div>
+      </div>
+
       {/* ── Intro — always visible ──────────────────────────────────────────── */}
       <div className="mt-8 grid lg:grid-cols-3 gap-0 border border-dl-border">
         <div className="p-6 border-b lg:border-b-0 lg:border-r border-dl-border">
@@ -500,6 +522,8 @@ export default function OnrampPage() {
               chain: 'Arbitrum One',
               desc: 'A regulated US dollar stablecoin issued by Circle. 1 USDC = $1.00 USD at all times. Widely accepted across DeFi. Holding USDC in your wallet gives you immediate access to the broader Arbitrum ecosystem.',
               use: 'Bridge, trading, payments',
+              img: '/images/coinbase/icon-usdc.png',
+              imgAlt: 'USDC 3D coin',
             },
             {
               symbol: 'AXUSD',
@@ -507,6 +531,8 @@ export default function OnrampPage() {
               chain: 'Arbitrum One (ERC-3643)',
               desc: 'The Axiom Protocol stablecoin, pegged 1:1 to USDC via the Peg Stability Module. AXUSD is required to participate in Axiom savings, lending, and liquidity pools. It carries identity compliance built in via ERC-3643.',
               use: 'Savings, lending, protocol participation',
+              img: '/images/coinbase/icon-axusd.png',
+              imgAlt: 'AXUSD 3D stablecoin',
             },
             {
               symbol: 'AXAU',
@@ -514,12 +540,22 @@ export default function OnrampPage() {
               chain: 'Arbitrum One',
               desc: 'A reserve instrument priced against a blend of gold (XAU/USD) and land net asset value. AXAU is designed for long-term capital preservation within the Axiom ecosystem. Identity verification is required before purchase.',
               use: 'Reserve instrument, long-term holding',
+              img: '/images/coinbase/icon-axau.png',
+              imgAlt: 'AXAU 3D gold coin',
             },
           ].map(a => (
             <div key={a.symbol} className="p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-base font-bold text-dl-navy font-dl-serif">{a.symbol}</span>
-                <span className="text-xs font-dl-mono text-dl-gray">{a.full}</span>
+              <div className="flex items-start gap-4 mb-3">
+                <img
+                  src={a.img}
+                  alt={a.imgAlt}
+                  className="w-16 h-16 object-cover shrink-0"
+                  style={{ border: '1px solid rgba(30,58,95,0.12)' }}
+                />
+                <div>
+                  <p className="text-base font-bold text-dl-navy font-dl-serif">{a.symbol}</p>
+                  <p className="text-xs font-dl-mono text-dl-gray">{a.full}</p>
+                </div>
               </div>
               <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-2">{a.desc}</p>
               <div className="flex justify-between text-xs font-dl-mono border-t border-dl-border pt-2">
@@ -1115,6 +1151,25 @@ export default function OnrampPage() {
       <div className="mt-6 border border-dl-border">
         <div className="px-6 py-4 border-b border-dl-border bg-dl-bg">
           <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">About the Coinbase Integration</p>
+        </div>
+        {/* Lifestyle image strip */}
+        <div className="relative overflow-hidden border-b border-dl-border" style={{ height: '200px' }}>
+          <img
+            src="/images/coinbase/coinbase-pay-card.png"
+            alt="Coinbase Pay — card and smartphone"
+            className="w-full h-full object-cover"
+            style={{ objectPosition: 'center 40%' }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(to right, rgba(30,58,95,0.88) 0%, rgba(30,58,95,0.3) 55%, transparent 100%)' }}
+          />
+          <div className="absolute inset-0 flex flex-col justify-center px-8">
+            <p className="text-xs font-dl-mono text-blue-200 uppercase tracking-widest mb-1">Coinbase Developer Platform</p>
+            <p className="text-xl font-bold text-white font-dl-serif max-w-sm">
+              Institutional-grade payment rails, consumer-grade simplicity.
+            </p>
+          </div>
         </div>
         <div className="grid lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-dl-border">
           <div className="p-6 space-y-3">

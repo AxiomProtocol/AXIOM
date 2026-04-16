@@ -366,6 +366,54 @@ uri = "file://public/images/products/collateral-visual.png"
 type = "image"
 title = "crypto-collateral-scale"
 
+[[generated]]
+id = "YCbGA0Te4kQ70XP4XubIB"
+uri = "file://public/images/coinbase/onramp-hero.png"
+type = "image"
+title = "onramp hero cinematic"
+
+[[generated]]
+id = "YfRQ9QqxKX5_Dbf8k-Jyf"
+uri = "file://public/images/coinbase/icon-usdc.png"
+type = "image"
+title = "USDC 3D coin icon"
+
+[[generated]]
+id = "FjtRrMXMmoemavTZWIfmV"
+uri = "file://public/images/coinbase/icon-axusd.png"
+type = "image"
+title = "AXUSD 3D stablecoin icon"
+
+[[generated]]
+id = "wSgHqsum-Q46cYbhNAwxV"
+uri = "file://public/images/coinbase/icon-axau.png"
+type = "image"
+title = "AXAU 3D gold reserve coin"
+
+[[generated]]
+id = "Eeww-hgbNjctdeEU0JGm8"
+uri = "file://public/images/coinbase/cdp-hero.png"
+type = "image"
+title = "CDP data center hero"
+
+[[generated]]
+id = "-txVND61mbuyA3EVDWU0G"
+uri = "file://public/images/coinbase/security-shield.png"
+type = "image"
+title = "security shield 3D icon"
+
+[[generated]]
+id = "tC2GGAHsSdXTvUknG1ai9"
+uri = "file://public/images/coinbase/coinbase-pay-card.png"
+type = "image"
+title = "Coinbase pay card lifestyle"
+
+[[generated]]
+id = "WpdDhl8uil6fGnyipK5i_"
+uri = "file://public/images/coinbase/blockchain-network.png"
+type = "image"
+title = "blockchain network visualization"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
@@ -467,3 +515,33 @@ id = "krqW51eZ807mPf0W4CPUU"
 uri = "file://documents/Axiom_Protocol_Product_Suite_Whitepaper_v1.0.md"
 type = "text"
 title = "Axiom Protocol — Product Suite White Paper v1.0"
+
+[[outputs]]
+id = "zkwQJTqddTztBIio7CaEZ"
+uri = "file://attached_assets/stock_images/fintech_payment_mobile_1.jpg"
+type = "image"
+title = "person using smartphone for digital payment fintech modern dark background"
+
+[[outputs]]
+id = "9Z38NIkDMXXkxHLo_E67m"
+uri = "file://attached_assets/stock_images/fintech_payment_mobile_2.jpg"
+type = "image"
+title = "person using smartphone for digital payment fintech modern dark background"
+
+[[outputs]]
+id = "cXaUiaD54WtPhew7vw6xJ"
+uri = "file://attached_assets/stock_images/data_center_servers_1.jpg"
+type = "image"
+title = "secure server data center blue lighting institutional finance technology"
+
+[[outputs]]
+id = "Id-6qoZM69xPW6Jcczc60"
+uri = "file://attached_assets/stock_images/data_center_servers_2.jpg"
+type = "image"
+title = "secure server data center blue lighting institutional finance technology"
+
+[[outputs]]
+id = "5o6DO7NMpyyg1skt0miDH"
+uri = "file://attached_assets/stock_images/gold_crypto_coins.jpg"
+type = "image"
+title = "gold coins cryptocurrency investment luxury dark background"

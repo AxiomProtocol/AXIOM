@@ -518,20 +518,35 @@ export default function SavingsPage() {
                       <p className="text-xs text-dl-gray mt-3 leading-relaxed">
                         Depositing requires two on-chain transactions: approve and deposit. Actual execution happens in your wallet.
                       </p>
-                      <div className="mt-4 border border-dl-border bg-dl-bg p-4">
-                        <p className="font-dl-mono text-xs text-dl-gray mb-2 uppercase tracking-widest">Don't have AXUSD yet?</p>
-                        <p className="text-xs text-dl-gray leading-relaxed mb-1">
-                          The fastest way is to buy USDC with a debit or credit card via Coinbase Pay, then convert 1:1 to AXUSD through the Peg Stability Module — all in one guided flow.
-                        </p>
-                        <p className="text-xs text-dl-gray leading-relaxed mb-3">
-                          No Coinbase account required. USDC arrives in your wallet on Arbitrum One within minutes. The PSM conversion takes two wallet confirmations and has no price impact.
-                        </p>
-                        <Link
-                          href="/onramp"
-                          className="font-dl-mono text-xs text-dl-navy underline underline-offset-2"
-                        >
-                          Get AXUSD via Capital Stack Entry
-                        </Link>
+                      <div className="mt-4 border border-dl-border overflow-hidden">
+                        <div className="relative" style={{ height: '100px' }}>
+                          <img
+                            src="/images/coinbase/onramp-hero.png"
+                            alt="Coinbase Pay onramp"
+                            className="w-full h-full object-cover"
+                            style={{ objectPosition: 'center 60%' }}
+                          />
+                          <div
+                            className="absolute inset-0 flex items-end px-4 pb-3"
+                            style={{ background: 'linear-gradient(to top, rgba(30,58,95,0.95) 0%, rgba(30,58,95,0.5) 60%, transparent 100%)' }}
+                          >
+                            <p className="font-dl-mono text-xs text-blue-200 uppercase tracking-widest">Don't have AXUSD yet?</p>
+                          </div>
+                        </div>
+                        <div className="p-4 bg-dl-bg">
+                          <p className="text-xs text-dl-gray leading-relaxed mb-1">
+                            The fastest way is to buy USDC with a debit or credit card via Coinbase Pay, then convert 1:1 to AXUSD through the Peg Stability Module — all in one guided flow.
+                          </p>
+                          <p className="text-xs text-dl-gray leading-relaxed mb-3">
+                            No Coinbase account required. USDC arrives in your wallet on Arbitrum One within minutes. The PSM conversion takes two wallet confirmations and has no price impact.
+                          </p>
+                          <Link
+                            href="/onramp"
+                            className="font-dl-mono text-xs text-dl-navy underline underline-offset-2"
+                          >
+                            Get AXUSD via Capital Stack Entry
+                          </Link>
+                        </div>
                       </div>
                     </>
                   ) : (

@@ -1512,8 +1512,26 @@ export default function InvestPage() {
                       <p className="text-sm text-dl-navy">Loading wallet position...</p>
                     </div>
                   ) : parseFloat(vaultPosition.axusdBalanceUsd) < parseFloat(amount) ? (
-                    <div className="border border-dl-border bg-dl-bg p-6 mb-6">
-                      <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-2">Insufficient AXUSD Balance</p>
+                    <div className="border border-dl-border overflow-hidden mb-6">
+                      <div className="relative" style={{ height: '140px' }}>
+                        <img
+                          src="/images/coinbase/blockchain-network.png"
+                          alt="Blockchain network"
+                          className="w-full h-full object-cover"
+                          style={{ objectPosition: 'center center' }}
+                        />
+                        <div
+                          className="absolute inset-0 flex items-end px-6 pb-4"
+                          style={{ background: 'linear-gradient(to top, rgba(30,58,95,0.95) 0%, rgba(30,58,95,0.4) 60%, transparent 100%)' }}
+                        >
+                          <div>
+                            <p className="text-xs font-dl-mono text-blue-200 uppercase tracking-widest mb-0.5">Insufficient AXUSD Balance</p>
+                            <p className="text-lg font-bold text-white font-dl-serif">Choose your path to get AXUSD</p>
+                          </div>
+                        </div>
+                      </div>
+                    <div className="bg-dl-bg p-6">
+                      <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-2 sr-only">Insufficient AXUSD Balance</p>
                       <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-4">
                         You need {formatUSD(amount)} AXUSD to invest. Your current balance is ${parseFloat(vaultPosition.axusdBalanceUsd).toLocaleString()} AXUSD. Choose one of the three options below to acquire the amount you need.
                       </p>
@@ -1563,6 +1581,7 @@ export default function InvestPage() {
                           PSM / Vault Engine
                         </Link>
                       </div>
+                    </div>
                     </div>
                   ) : (
                     <>

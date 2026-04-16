@@ -233,24 +233,39 @@ export default function AxiomRailDeposit() {
         {step === 'bank' && (
           <>
             {/* Coinbase Pay alternative */}
-            <div style={{ border: '1px solid #b8860b', background: '#fffbf0', padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
-              <p style={{ fontFamily: 'monospace', fontSize: 10, color: '#b8860b', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 0.5rem' }}>
-                Prefer card over bank transfer?
-              </p>
-              <p style={{ fontSize: 12, color: '#374151', margin: '0 0 0.4rem', lineHeight: 1.6 }}>
-                Skip the bank form entirely. Use Coinbase Pay to buy USDC directly with a debit or credit card — no Coinbase account required, no routing numbers, no wire fees. USDC arrives in your wallet on Arbitrum One within minutes.
-              </p>
-              <p style={{ fontSize: 12, color: '#374151', margin: '0 0 0.6rem', lineHeight: 1.6 }}>
-                Once you have USDC, convert it 1:1 to {asset} through the Peg Stability Module in the same guided flow.
-              </p>
-              <a
-                href="/onramp"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontFamily: 'monospace', fontSize: 12, color: '#1e3a5f', textDecoration: 'underline' }}
-              >
-                Capital Stack Entry (Coinbase Pay)
-              </a>
+            <div style={{ border: '1px solid #b8860b', marginBottom: '1.25rem', overflow: 'hidden' }}>
+              <div style={{ position: 'relative', height: '110px' }}>
+                <img
+                  src="/images/coinbase/coinbase-pay-card.png"
+                  alt="Coinbase Pay — debit card and smartphone"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 35%', display: 'block' }}
+                />
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: 'linear-gradient(to right, rgba(30,58,95,0.92) 0%, rgba(30,58,95,0.5) 55%, transparent 100%)',
+                  display: 'flex', alignItems: 'flex-end', padding: '0.6rem 1rem'
+                }}>
+                  <p style={{ fontFamily: 'monospace', fontSize: 10, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: 1, margin: 0 }}>
+                    Prefer card over bank transfer?
+                  </p>
+                </div>
+              </div>
+              <div style={{ background: '#fffbf0', padding: '0.75rem 1rem' }}>
+                <p style={{ fontSize: 12, color: '#374151', margin: '0 0 0.4rem', lineHeight: 1.6 }}>
+                  Skip the bank form entirely. Use Coinbase Pay to buy USDC directly with a debit or credit card — no Coinbase account required, no routing numbers, no wire fees. USDC arrives in your wallet on Arbitrum One within minutes.
+                </p>
+                <p style={{ fontSize: 12, color: '#374151', margin: '0 0 0.6rem', lineHeight: 1.6 }}>
+                  Once you have USDC, convert it 1:1 to {asset} through the Peg Stability Module in the same guided flow.
+                </p>
+                <a
+                  href="/onramp"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontFamily: 'monospace', fontSize: 12, color: '#1e3a5f', textDecoration: 'underline' }}
+                >
+                  Capital Stack Entry (Coinbase Pay)
+                </a>
+              </div>
             </div>
 
             {/* Receiving instructions */}

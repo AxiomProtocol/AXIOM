@@ -80,6 +80,28 @@ export default function CdpWalletsPage() {
         subtitle="Coinbase Developer Platform server wallets — Axiom Protocol treasury and operational reserve accounts on Base"
       />
 
+      {/* ── Cinematic Hero Banner ────────────────────────────────────────────── */}
+      <div className="mt-6 relative overflow-hidden border border-dl-border" style={{ height: '280px' }}>
+        <img
+          src="/images/coinbase/cdp-hero.png"
+          alt="CDP secure data center infrastructure"
+          className="w-full h-full object-cover"
+          style={{ objectPosition: 'center center' }}
+        />
+        <div
+          className="absolute inset-0 flex flex-col justify-end p-8"
+          style={{ background: 'linear-gradient(to top, rgba(10,20,50,0.95) 0%, rgba(10,20,50,0.5) 55%, transparent 100%)' }}
+        >
+          <p className="text-xs font-dl-mono text-blue-300 uppercase tracking-widest mb-1">Coinbase MPC Infrastructure</p>
+          <p className="text-2xl font-bold text-white font-dl-serif leading-tight">
+            Institutional-grade custody.<br />No private key exposure.
+          </p>
+          <p className="text-sm text-blue-100 font-dl-mono mt-2 max-w-xl">
+            Server wallet accounts secured by Coinbase multi-party computation — programmatically controlled, fully auditable, zero single points of failure.
+          </p>
+        </div>
+      </div>
+
       {/* ── Intro ─────────────────────────────────────────────────────────── */}
       <div className="mt-6 grid lg:grid-cols-2 gap-0 border border-dl-border">
         <div className="p-6 border-b lg:border-b-0 lg:border-r border-dl-border">
@@ -278,6 +300,34 @@ export default function CdpWalletsPage() {
       <div className="mt-6 border border-dl-border">
         <div className="px-6 py-4 border-b border-dl-border bg-dl-bg">
           <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">Security Model</p>
+        </div>
+        {/* Security visual strip */}
+        <div className="relative overflow-hidden border-b border-dl-border" style={{ height: '180px' }}>
+          <img
+            src="/images/coinbase/blockchain-network.png"
+            alt="Blockchain network infrastructure"
+            className="w-full h-full object-cover"
+            style={{ objectPosition: 'center center' }}
+          />
+          <div
+            className="absolute inset-0 flex items-center gap-6 px-8"
+            style={{ background: 'linear-gradient(to right, rgba(10,20,50,0.92) 0%, rgba(10,20,50,0.6) 50%, transparent 100%)' }}
+          >
+            <img
+              src="/images/coinbase/security-shield.png"
+              alt="Digital security shield"
+              className="h-28 w-28 object-cover shrink-0"
+            />
+            <div>
+              <p className="text-xs font-dl-mono text-blue-300 uppercase tracking-widest mb-1">Multi-Party Computation</p>
+              <p className="text-lg font-bold text-white font-dl-serif leading-tight">
+                Zero single points of failure.<br />Keys never exist in full.
+              </p>
+              <p className="text-xs text-blue-100 font-dl-mono mt-1">
+                Coinbase MPC distributes key shares across independent secure nodes.
+              </p>
+            </div>
+          </div>
         </div>
         <div className="grid lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-dl-border">
           <div className="p-5">
