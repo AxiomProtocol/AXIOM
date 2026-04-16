@@ -9,8 +9,58 @@ import {
   Landmark, Users, FileText,
   Wallet, Scale, ArrowRight,
   Target, Search, BrainCircuit, CheckCircle2, ChevronRight,
-  Shield, Layers, Activity, Building2, BarChart3
+  Shield, Layers, Activity, Building2, BarChart3,
+  TrendingUp, Coins, ShieldCheck, Eye
 } from 'lucide-react';
+
+// Public-facing paths — written for first-time visitors. Each card routes to
+// an existing production page. Keep copy benefit-led and free of jargon.
+const CHOOSE_YOUR_PATH = [
+  {
+    icon: TrendingUp,
+    title: 'Earn on Idle Dollars',
+    body: 'Move into Axiom\u2019s income layer and put digital dollars to work.',
+    cta: 'Explore Yield',
+    href: '/savings',
+    accent: 'border-l-dl-forest',
+    accentColor: 'text-dl-forest',
+  },
+  {
+    icon: Coins,
+    title: 'Borrow Without Selling Bitcoin',
+    body: 'Access liquidity while keeping your long-term upside.',
+    cta: 'View Credit Access',
+    href: '/borrow',
+    accent: 'border-l-dl-navy',
+    accentColor: 'text-dl-navy',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Protect Wealth With Reserve Assets',
+    body: 'Apply for access to Axiom\u2019s reserve layer structured around hard assets.',
+    cta: 'Apply for Reserve Access',
+    href: '/axau-early-access',
+    accent: 'border-l-dl-gold',
+    accentColor: 'text-dl-gold',
+  },
+  {
+    icon: Eye,
+    title: 'Verify the System First',
+    body: 'Read the disclosure, solvency, proof-of-execution, and observer layers before participating.',
+    cta: 'View Verification',
+    href: '/infrastructure',
+    accent: 'border-l-dl-navy',
+    accentColor: 'text-dl-navy',
+  },
+];
+
+// Above-the-fold trust bar — short, truthful, no metric fabrication.
+const HERO_TRUST_ITEMS = [
+  'Built on Arbitrum One',
+  'Banking rails connected',
+  'Public solvency console',
+  'Self-custody by default',
+];
 
 const PLATFORM_STATS = [
   { label: 'Network', value: 'Arbitrum One', detail: 'Chain ID 42161 — production mainnet · All contracts live' },
@@ -383,53 +433,111 @@ export function DesignLawHome() {
           )}
         </nav>
 
-        {/* HERO */}
+        {/* HERO — benefit-led, retail-readable, premium tone preserved */}
         <div className="border-t-4 border-dl-gold">
-          <div className="relative w-full" style={{ height: '420px' }}>
+          <div className="relative w-full" style={{ minHeight: '480px' }}>
             <img
               src="/images/homepage-hero.png"
               alt="On-chain financial infrastructure for real-world assets on Arbitrum One"
-              className="w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover"
               style={{ display: 'block' }}
             />
-            <div className="absolute inset-0" style={{ backgroundColor: 'rgba(14, 28, 55, 0.78)' }}>
-              <div className="max-w-7xl mx-auto px-6 h-full flex flex-col justify-center">
-                <h1 className="font-dl-serif text-3xl md:text-5xl leading-tight mb-6" style={{ color: '#ffffff', maxWidth: '760px', textShadow: '0 2px 12px rgba(0,0,0,0.7)' }}>
-                  The Financial Operating System<br className="hidden md:block" />
-                  for the On-Chain Economy.<br className="hidden md:block" />
-                  <span style={{ color: '#f0d98a' }}>Verifiable. Institutional. Live.</span>
+            <div className="relative" style={{ backgroundColor: 'rgba(14, 28, 55, 0.80)' }}>
+              <div className="max-w-7xl mx-auto px-6 py-14 md:py-20 flex flex-col justify-center">
+                <p className="font-dl-mono text-xs uppercase tracking-widest mb-3" style={{ color: '#f0d98a', textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
+                  Axiom Protocol · Live on Arbitrum One
+                </p>
+                <h1 className="font-dl-serif text-3xl md:text-5xl leading-tight mb-4" style={{ color: '#ffffff', maxWidth: '820px', textShadow: '0 2px 12px rgba(0,0,0,0.7)' }}>
+                  Build Wealth With<br className="hidden md:block" />
+                  Modern Financial Infrastructure.
                 </h1>
-                <div className="flex flex-col sm:flex-row flex-wrap gap-3">
-                  <Link href="/infrastructure">
-                    <span className="inline-block border-2 border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider">
-                      Verify the Infrastructure →
+                <p className="text-base md:text-lg leading-relaxed mb-7" style={{ color: '#ffffff', maxWidth: '720px', textShadow: '0 1px 8px rgba(0,0,0,0.7)' }}>
+                  Earn on idle dollars, borrow without selling Bitcoin, access reserve assets,
+                  and verify every system on-chain.
+                </p>
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6">
+                  <Link href="/start">
+                    <span className="inline-block bg-dl-gold text-dl-navy px-6 py-3 text-sm font-bold hover:opacity-90 font-dl-mono uppercase tracking-wider">
+                      Start Here →
                     </span>
                   </Link>
                   <Link href="/axau-early-access">
-                    <span className="inline-block border border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}>
+                    <span className="inline-block border-2 border-white text-white px-6 py-3 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider" style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}>
                       Apply for Reserve Access
                     </span>
                   </Link>
-                  <Link href="/disclosure">
-                    <span className="inline-block border border-white text-white px-5 py-2.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                      Institutional Disclosure
+                  <Link href="/infrastructure">
+                    <span className="inline-block border border-white text-white px-6 py-3 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                      Verify the Infrastructure
                     </span>
                   </Link>
+                </div>
+                {/* Above-the-fold trust bar */}
+                <div className="flex flex-wrap gap-x-6 gap-y-2 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.18)', maxWidth: '780px' }}>
+                  {HERO_TRUST_ITEMS.map((item) => (
+                    <div key={item} className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5" style={{ color: '#f0d98a' }} />
+                      <span className="font-dl-mono text-xs uppercase tracking-wider" style={{ color: '#ffffff', textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+                        {item}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* INTRO STRIP — content moved from hero */}
+        {/* CHOOSE YOUR PATH — directly under hero, segments visitors quickly */}
+        <div className="border-b border-dl-border" style={{ backgroundColor: '#fafaf8' }}>
+          <div className="max-w-7xl mx-auto px-6 py-12">
+            <div className="mb-6">
+              <SectionHeading>Choose Your Path</SectionHeading>
+              <p className="text-sm text-dl-gray mt-1 max-w-2xl">
+                Axiom is built for different capital goals. Start with the path that matches what you want to do.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border border-dl-border bg-dl-bg">
+              {CHOOSE_YOUR_PATH.map((card, i) => {
+                const Icon = card.icon;
+                return (
+                  <Link
+                    key={card.title}
+                    href={card.href}
+                    className={`block p-6 border-l-4 ${card.accent} no-underline hover:bg-dl-bg-alt
+                      ${i < CHOOSE_YOUR_PATH.length - 1 ? 'border-b lg:border-b-0 lg:border-r border-dl-border' : ''}
+                      ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <Icon className={`w-5 h-5 ${card.accentColor}`} />
+                      <p className={`font-dl-mono text-xs uppercase tracking-widest ${card.accentColor}`}>
+                        Path {String(i + 1).padStart(2, '0')}
+                      </p>
+                    </div>
+                    <h3 className="font-dl-serif text-lg text-dl-navy font-bold mb-2 leading-tight">
+                      {card.title}
+                    </h3>
+                    <p className="text-sm text-dl-gray leading-relaxed mb-5">{card.body}</p>
+                    <span className="inline-flex items-center gap-1.5 text-xs text-dl-navy font-dl-mono font-bold uppercase tracking-wider">
+                      {card.cta}
+                      <ChevronRight className="w-3 h-3" />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* INTRO STRIP — kept for serious readers, simplified language */}
         <div className="border-b border-dl-border" style={{ backgroundColor: '#f8f7f4' }}>
           <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row md:items-center gap-6">
             <p className="text-sm leading-relaxed text-dl-navy flex-1" style={{ maxWidth: '680px' }}>
-              FDIC-insured banking enters capital. Identity-gated AXUSD settles it. The DEX maintains the peg. AXAU holds reserve positions structured around PAXG. Reg D capital programs deploy it. Intelligence scores it. Solvency proves it. One operating system — not a collection of tokens.
+              FDIC-insured banking moves capital in. A verified compliance layer settles it. An instant conversion engine maintains the peg. Reserve positions hold value in hard assets. Capital programs deploy it. Public reserve verification proves it. One operating system — not a collection of tokens.
             </p>
             <p className="font-dl-mono text-xs text-dl-gray whitespace-nowrap md:text-right leading-relaxed">
-              L00 Banking · L01 AXUSD Rail<br />
-              L01.5 DEX + PSM · L02 AXAU Reserve<br />
+              L00 Banking · L01 Settlement<br />
+              L01.5 Conversion · L02 Reserve<br />
               L03 Capital · L04 Intelligence · L05 Trust<br />
               <span className="text-dl-navy font-bold">Arbitrum One</span>
             </p>

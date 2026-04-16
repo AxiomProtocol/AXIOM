@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useAccount } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
 
@@ -67,6 +67,22 @@ const DOC_TYPES = [
 ];
 
 type Step = 'form' | 'submitted' | 'full' | 'already_submitted';
+type FormStep = 'step1' | 'step2';
+
+// CTA labels — extracted to a constant so the team can A/B test later
+// without hunting through the file.
+const CTA = {
+  primary:  'Reserve My Spot',
+  continue: 'Continue',
+  submit:   'Submit Application',
+};
+
+// 3-point trust strip displayed directly above the form.
+const FORM_TRUST_ITEMS = [
+  { label: 'Takes about 60 seconds' },
+  { label: 'No deposit required today' },
+  { label: 'Wallet help included' },
+];
 
 interface SlotData {
   cap: number;
@@ -324,6 +340,9 @@ export default function AxauAccessPage() {
 
   const [slots, setSlots]               = useState<SlotData | null>(null);
   const [step, setStep]                 = useState<Step>('form');
+  const [formStep, setFormStep]         = useState<FormStep>('step1');
+  const [walletChoice, setWalletChoice] = useState<'have' | 'create' | ''>('');
+  const [step1Error, setStep1Error]     = useState<string | null>(null);
   const [submissionId, setSubmissionId] = useState('');
   const [emailQueued, setEmailQueued]   = useState(false);
   const [submitting, setSubmitting]     = useState(false);
@@ -334,6 +353,24 @@ export default function AxauAccessPage() {
     walletAddress: '', email: '', fullName: '',
     dateOfBirth: '', country: 'US', documentType: '',
   });
+
+  // Auto-advance: when a wallet is connected/created we have an address,
+  // but the user must still confirm step 1 explicitly. Just enable Continue.
+  function handleStep1Continue(e: FormEvent) {
+    e.preventDefault();
+    setStep1Error(null);
+    if (!form.email)      { setStep1Error('Please enter your email.'); return; }
+    if (!form.country)    { setStep1Error('Please select your country.'); return; }
+    if (!walletChoice)    { setStep1Error('Please choose how you want to use a wallet.'); return; }
+    setFormStep('step2');
+    // Move to step 2 form area smoothly on mobile
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        const el = document.getElementById('apply');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  }
 
   useEffect(() => {
     if (isConnected && address) setForm(f => ({ ...f, walletAddress: address }));
@@ -396,30 +433,35 @@ export default function AxauAccessPage() {
         <meta name="description" content="Join the first 100 verified participants in AXAU — an identity-gated reserve unit structured around PAXG-backed reserve infrastructure on Arbitrum One. Founding cohort status included." />
       </Head>
 
-      {/* ── CINEMATIC HERO ── */}
-      <div style={{ position: 'relative', width: '100%', height: 'clamp(280px, 42vw, 500px)', overflow: 'hidden', background: C.navyDeep }}>
+      {/* ── CINEMATIC HERO — focused conversion copy ── */}
+      <div style={{ position: 'relative', width: '100%', minHeight: 'clamp(360px, 46vw, 540px)', overflow: 'hidden', background: C.navyDeep }}>
         <Image src="/axau-early-access/hero-vault.png" alt="AXAU gold reserve vault" fill sizes="100vw" style={{ objectFit: 'cover', objectPosition: 'center 40%', opacity: 0.82 }} priority />
-        {/* Two-layer overlay: bottom-to-top dark gradient + left panel for text area */}
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(14,28,55,0.45) 0%, rgba(14,28,55,0.75) 50%, rgba(14,28,55,0.97) 100%)` }} />
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to right, rgba(14,28,55,0.85) 0%, rgba(14,28,55,0.60) 55%, transparent 100%)` }} />
-        <div style={{ position: 'absolute', bottom: 40, left: 40, right: '38%' }}>
-          <p style={{ fontFamily: mono, fontSize: 10, letterSpacing: '0.2em', color: '#f0d98a', textTransform: 'uppercase', margin: '0 0 10px', textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}>
-            Layer 02 Reserve Infrastructure · Arbitrum One · ERC-3643 Identity-Gated
-          </p>
-          <h1 style={{ fontFamily: serif, fontSize: 'clamp(30px, 4.5vw, 52px)', fontWeight: 700, color: '#ffffff', lineHeight: 1.08, margin: '0 0 14px', textShadow: `0 2px 16px rgba(0,0,0,0.95), 0 0 40px rgba(0,0,0,0.6)` }}>
-            Apply for Reserve Access.<br />Enter the Infrastructure Layer.
-          </h1>
-          <p style={{ fontFamily: body, fontSize: 14, color: '#ffffff', lineHeight: 1.75, margin: '0 0 20px', maxWidth: 440, textShadow: '0 1px 6px rgba(0,0,0,0.95)' }}>
-            AXAU is the Axiom Protocol&apos;s Layer 02 reserve unit — structured around PAXG-backed reserve positions on Arbitrum One, with coverage ratio enforced on-chain by the NAVEngine contract before every mint. Access requires an ERC-3643 on-chain identity credential — no anonymous positions, no custodial holding. Founding participants receive priority access, founding cohort status recorded at verification, and governance signaling rights. The first 100 verified participants form the founding cohort.
-          </p>
-          <a href="#apply" style={{
-            display: 'inline-block', padding: '12px 28px',
-            background: C.gold, color: C.navyDeep,
-            fontFamily: mono, fontSize: 11, letterSpacing: '0.14em',
-            textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700,
-          }}>
-            CLAIM YOUR SPOT →
-          </a>
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to right, rgba(14,28,55,0.88) 0%, rgba(14,28,55,0.62) 55%, transparent 100%)` }} />
+        <div style={{ position: 'relative', maxWidth: 1100, margin: '0 auto', padding: 'clamp(40px, 6vw, 72px) clamp(20px, 5vw, 48px)' }}>
+          <div style={{ maxWidth: 600 }}>
+            <p style={{ fontFamily: mono, fontSize: 10, letterSpacing: '0.2em', color: '#f0d98a', textTransform: 'uppercase', margin: '0 0 12px', textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}>
+              Founding Cohort · Reserve Layer · Arbitrum One
+            </p>
+            <h1 style={{ fontFamily: serif, fontSize: 'clamp(30px, 4.6vw, 52px)', fontWeight: 700, color: '#ffffff', lineHeight: 1.08, margin: '0 0 14px', textShadow: `0 2px 16px rgba(0,0,0,0.95), 0 0 40px rgba(0,0,0,0.6)` }}>
+              Join the First 100<br />AXAU Founding Members.
+            </h1>
+            <p style={{ fontFamily: body, fontSize: 15, color: '#ffffff', lineHeight: 1.7, margin: '0 0 14px', textShadow: '0 1px 6px rgba(0,0,0,0.95)' }}>
+              Get priority access to Axiom&apos;s reserve layer structured around gold-linked and hard-asset reserve positions.
+            </p>
+            <p style={{ fontFamily: mono, fontSize: 12, color: '#f0d98a', lineHeight: 1.7, margin: '0 0 24px', textShadow: '0 1px 6px rgba(0,0,0,0.95)', letterSpacing: '0.02em' }}>
+              No deposit required today. Apply first. Verify next. Access opens after approval.
+            </p>
+            <a href="#apply" style={{
+              display: 'inline-block', padding: '14px 32px',
+              background: C.gold, color: C.navyDeep,
+              fontFamily: mono, fontSize: 12, letterSpacing: '0.14em',
+              textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700,
+              border: `2px solid ${C.gold}`,
+            }}>
+              {CTA.primary} →
+            </a>
+          </div>
         </div>
         <div style={{ position: 'absolute', top: 20, right: 24, fontFamily: mono, fontSize: 9, letterSpacing: '0.2em', color: '#f0d98a', textTransform: 'uppercase', textAlign: 'right', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
           <div>ARBITRUM ONE</div>
@@ -568,17 +610,50 @@ export default function AxauAccessPage() {
         {step === 'submitted'        && <SuccessScreen submissionId={submissionId} emailQueued={emailQueued} />}
         {step === 'already_submitted'&& <AlreadySubmittedScreen />}
 
-        {/* ── APPLICATION FORM ── */}
+        {/* ── APPLICATION FORM — 2-step conversion flow ── */}
         {step === 'form' && (
           <div id="apply">
+            {/* 3-point trust strip — sits directly above the form */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: 0,
+              border: `1px solid ${C.border}`,
+              borderBottom: 'none',
+              background: C.bgAlt,
+            }}>
+              {FORM_TRUST_ITEMS.map((it, i) => (
+                <div key={it.label} style={{
+                  padding: '14px 20px',
+                  borderRight: i < FORM_TRUST_ITEMS.length - 1 ? `1px solid ${C.border}` : 'none',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <span style={{
+                    width: 20, height: 20, flexShrink: 0,
+                    border: `1px solid ${C.gold}`, background: C.bg,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                      <path d="M1 4.5l3 3 6-7" stroke={C.gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <span style={{ fontFamily: body, fontSize: 13, color: C.navy, fontWeight: 600 }}>{it.label}</span>
+                </div>
+              ))}
+            </div>
+
             {/* Accent banner */}
             <div style={{ position: 'relative', width: '100%', height: 120, overflow: 'hidden', border: `1px solid ${C.border}`, borderBottom: 'none' }}>
               <Image src="/axau-early-access/gold-bar-aerial.png" alt="AXAU gold reserve bar" fill sizes="(max-width: 768px) 100vw, 800px" style={{ objectFit: 'cover', objectPosition: 'center 30%' }} />
               <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to right, ${C.navyDeep}d0 0%, ${C.navyDeep}44 60%, transparent 100%)` }} />
               <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, display: 'flex', alignItems: 'center', padding: '0 28px' }}>
                 <div>
-                  <p style={{ fontFamily: mono, fontSize: 9, letterSpacing: '0.2em', color: C.goldPale, textTransform: 'uppercase', margin: '0 0 4px' }}>IDENTITY VERIFICATION</p>
-                  <p style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: '#ffffff', margin: 0 }}>Secure Your Founding Spot</p>
+                  <p style={{ fontFamily: mono, fontSize: 9, letterSpacing: '0.2em', color: C.goldPale, textTransform: 'uppercase', margin: '0 0 4px' }}>
+                    {formStep === 'step1' ? 'STEP 1 OF 2 · RESERVE YOUR SPOT' : 'STEP 2 OF 2 · IDENTITY APPLICATION'}
+                  </p>
+                  <p style={{ fontFamily: serif, fontSize: 20, fontWeight: 700, color: '#ffffff', margin: 0 }}>
+                    {formStep === 'step1' ? 'Reserve Your Founding Spot' : 'Complete Identity Application'}
+                  </p>
                 </div>
               </div>
               {slots && !slots.isFull && (
@@ -589,95 +664,222 @@ export default function AxauAccessPage() {
               )}
             </div>
 
-            <form onSubmit={handleSubmit} style={{ border: `1px solid ${C.border}`, borderTop: `3px solid ${C.gold}`, background: C.bg, padding: '32px 36px' }}>
-              <p style={{ fontFamily: mono, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.muted, margin: '0 0 20px', paddingBottom: 14, borderBottom: `1px solid ${C.border}` }}>
-                IDENTITY VERIFICATION APPLICATION
-              </p>
+            {/* Step indicator — semantic ordered list with aria-current */}
+            <ol
+              aria-label="Application progress"
+              style={{
+                display: 'flex', gap: 0, listStyle: 'none', margin: 0, padding: 0,
+                border: `1px solid ${C.border}`, borderBottom: 'none', borderTop: 'none',
+                background: C.bg,
+              }}
+            >
+              {[
+                { id: 'step1', label: '1 · Reserve Spot', active: formStep === 'step1', done: formStep === 'step2' },
+                { id: 'step2', label: '2 · Identity Application', active: formStep === 'step2', done: false },
+              ].map((s, i) => (
+                <li
+                  key={s.id}
+                  aria-current={s.active ? 'step' : undefined}
+                  style={{
+                    flex: 1, padding: '12px 18px',
+                    borderRight: i === 0 ? `1px solid ${C.border}` : 'none',
+                    borderTop: s.active ? `3px solid ${C.gold}` : `3px solid ${C.border}`,
+                    background: s.active ? C.bg : C.bgAlt,
+                    fontFamily: mono, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase',
+                    color: s.active ? C.navy : s.done ? C.green : C.muted,
+                    fontWeight: s.active ? 700 : 400,
+                  }}
+                >
+                  <span aria-hidden="true">{s.done ? '✓ ' : ''}</span>
+                  {s.done && <span className="sr-only">Completed: </span>}
+                  {s.label}
+                </li>
+              ))}
+            </ol>
 
-              <CircleWalletEntry
-                context="early-access"
-                onWalletReady={(addr) => setForm(f => ({ ...f, walletAddress: addr }))}
-              />
+            {/* ─── STEP 1: Reserve Your Spot ─── */}
+            {formStep === 'step1' && (
+              <form onSubmit={handleStep1Continue} style={{ border: `1px solid ${C.border}`, background: C.bg, padding: '32px 36px' }}>
+                <p style={{ fontFamily: body, fontSize: 13, color: C.muted, lineHeight: 1.7, margin: '0 0 24px' }}>
+                  Three quick questions. Takes about 60 seconds. No deposit required today.
+                </p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-                <div>
-                  <label style={labelStyle}>Wallet Address *</label>
-                  <input required type="text" placeholder="0x..." {...field('walletAddress')} pattern="^0x[a-fA-F0-9]{40}$" title="Enter a valid Ethereum wallet address starting with 0x" style={inputStyle} />
-                </div>
-                <div>
+                <div style={{ marginBottom: 18 }}>
                   <label style={labelStyle}>Email Address *</label>
                   <input required type="email" placeholder="you@example.com" {...field('email')} style={inputStyle} />
+                  <p style={{ fontFamily: body, fontSize: 11, color: C.muted, margin: '6px 0 0' }}>
+                    Used to notify you when your wallet is activated. We don&apos;t spam.
+                  </p>
                 </div>
-              </div>
 
-              <div style={{ marginBottom: 16 }}>
-                <label style={labelStyle}>Full Legal Name *</label>
-                <input required type="text" placeholder="As it appears on your government-issued ID" {...field('fullName')} minLength={2} style={inputStyle} />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-                <div>
-                  <label style={labelStyle}>Date of Birth *</label>
-                  <input required type="date" {...field('dateOfBirth')} max={new Date(Date.now() - 18 * 365.25 * 24 * 3600 * 1000).toISOString().slice(0, 10)} style={inputStyle} />
-                </div>
-                <div>
+                <div style={{ marginBottom: 22 }}>
                   <label style={labelStyle}>Country of Residence *</label>
                   <select required {...field('country')} style={{ ...inputStyle, cursor: 'pointer' }}>
                     {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
                   </select>
                 </div>
-              </div>
 
-              <div style={{ marginBottom: 28 }}>
-                <label style={labelStyle}>Government ID Type *</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                  {DOC_TYPES.map(d => {
-                    const selected = form.documentType === d.value;
-                    return (
-                      <button key={d.value} type="button" onClick={() => setForm(f => ({ ...f, documentType: d.value }))} style={{ padding: '12px 16px', textAlign: 'left', cursor: 'pointer', border: selected ? `2px solid ${C.navy}` : `1px solid ${C.border}`, background: selected ? '#eef2f8' : C.bg, fontFamily: body, fontSize: 13, color: selected ? C.navy : C.text, fontWeight: selected ? 700 : 400, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {selected && (
-                          <span style={{ width: 16, height: 16, background: C.navy, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                          </span>
-                        )}
-                        {d.label}
-                      </button>
-                    );
-                  })}
+                <div style={{ marginBottom: 24 }}>
+                  <label style={labelStyle}>Wallet *</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    {[
+                      { value: 'have',   label: 'I already have a wallet',          sub: 'Use MetaMask, Rabby, etc.' },
+                      { value: 'create', label: 'Create one with email or Google',  sub: 'No crypto experience needed' },
+                    ].map(opt => {
+                      const selected = walletChoice === opt.value;
+                      return (
+                        <button key={opt.value} type="button" onClick={() => setWalletChoice(opt.value as 'have' | 'create')} style={{
+                          padding: '14px 16px', textAlign: 'left', cursor: 'pointer',
+                          border: selected ? `2px solid ${C.navy}` : `1px solid ${C.border}`,
+                          background: selected ? '#eef2f8' : C.bg,
+                          fontFamily: body,
+                        }}>
+                          <p style={{ fontFamily: body, fontSize: 13, fontWeight: 700, color: selected ? C.navy : C.text, margin: '0 0 3px' }}>
+                            {opt.label}
+                          </p>
+                          <p style={{ fontFamily: body, fontSize: 11, color: C.muted, margin: 0 }}>{opt.sub}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              {error && (
-                <div style={{ padding: '12px 16px', background: C.redBg, border: `1px solid #fca5a5`, marginBottom: 20, fontFamily: body, fontSize: 13, color: C.red, lineHeight: 1.5 }}>
-                  {error}
-                </div>
-              )}
+                {/* Inline wallet creation flow when user picks "create" */}
+                {walletChoice === 'create' && (
+                  <div style={{ marginBottom: 24, padding: '20px 22px', background: C.bgAlt, border: `1px solid ${C.border}` }}>
+                    <CircleWalletEntry
+                      context="early-access"
+                      onWalletReady={(addr) => setForm(f => ({ ...f, walletAddress: addr }))}
+                    />
+                  </div>
+                )}
 
-              {/* Reward reminder above submit */}
-              <div style={{ background: C.goldBg, border: `1px solid ${C.gold}40`, borderLeft: `3px solid ${C.gold}`, padding: '12px 16px', marginBottom: 20 }}>
-                <p style={{ fontFamily: body, fontSize: 12, color: C.navy, margin: 0, lineHeight: 1.6 }}>
-                  <strong>Founding cohort designations</strong> — including founding status, priority pathway for future reserve launches subject to governance, fee recognition subject to governance, and governance signaling rights — are designated to the first 100 verified participants only.
-                </p>
-              </div>
+                {step1Error && (
+                  <div role="alert" aria-live="polite" style={{ padding: '12px 16px', background: C.redBg, border: `1px solid #fca5a5`, marginBottom: 16, fontFamily: body, fontSize: 13, color: C.red, lineHeight: 1.5 }}>
+                    {step1Error}
+                  </div>
+                )}
 
-              <p style={{ fontFamily: body, fontSize: 12, color: C.muted, lineHeight: 1.65, margin: '0 0 24px', padding: '12px 16px', background: C.bgAlt, border: `1px solid ${C.border}` }}>
-                By submitting, you confirm the information is accurate and that you are at least 18 years old. Applications are queued for ops review — you will be notified by email once your wallet is enabled. No document upload is required at this stage.
-              </p>
-
-              <button
-                type="submit"
-                disabled={submitting || !form.documentType}
-                style={{
+                <button type="submit" style={{
                   width: '100%', padding: '16px',
-                  background: submitting || !form.documentType ? '#94a3b8' : C.navy,
-                  color: '#fff', border: 'none',
-                  cursor: submitting || !form.documentType ? 'not-allowed' : 'pointer',
+                  background: C.navy, color: '#fff', border: 'none', cursor: 'pointer',
                   fontFamily: mono, fontSize: 12, letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: 700,
-                }}
-              >
-                {submitting ? 'SUBMITTING...' : 'CLAIM YOUR FOUNDING SPOT →'}
-              </button>
-            </form>
+                }}>
+                  {CTA.continue} →
+                </button>
+
+                <p style={{ fontFamily: body, fontSize: 11, color: C.muted, lineHeight: 1.6, margin: '14px 0 0', textAlign: 'center' }}>
+                  No deposit required. We only ask for identity details on the next step.
+                </p>
+              </form>
+            )}
+
+            {/* ─── STEP 2: Complete Identity Application ─── */}
+            {formStep === 'step2' && (
+              <form onSubmit={handleSubmit} style={{ border: `1px solid ${C.border}`, background: C.bg, padding: '32px 36px' }}>
+                <p style={{ fontFamily: body, fontSize: 13, color: C.muted, lineHeight: 1.7, margin: '0 0 6px' }}>
+                  Required for reserve eligibility and verification review. <strong style={{ color: C.navy }}>No document upload is required at this stage.</strong>
+                </p>
+                <p style={{ fontFamily: body, fontSize: 12, color: C.muted, lineHeight: 1.7, margin: '0 0 22px' }}>
+                  We collect this once. Your wallet becomes a verified participant after approval.
+                </p>
+
+                {walletChoice === 'create' && !form.walletAddress && (
+                  <div style={{ marginBottom: 22, padding: '16px 18px', background: C.goldBg, border: `1px solid ${C.gold}40`, borderLeft: `3px solid ${C.gold}` }}>
+                    <p style={{ fontFamily: body, fontSize: 13, color: C.navy, margin: 0, lineHeight: 1.6 }}>
+                      Finish creating your wallet first — your address will appear in the field below automatically.
+                    </p>
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                  <div>
+                    <label style={labelStyle}>Wallet Address *</label>
+                    <input required type="text" placeholder="0x..." {...field('walletAddress')} pattern="^0x[a-fA-F0-9]{40}$" title="Enter a valid Ethereum wallet address starting with 0x" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Full Legal Name *</label>
+                    <input required type="text" placeholder="As it appears on government ID" {...field('fullName')} minLength={2} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 22 }}>
+                  <div>
+                    <label style={labelStyle}>Date of Birth *</label>
+                    <input required type="date" {...field('dateOfBirth')} max={new Date(Date.now() - 18 * 365.25 * 24 * 3600 * 1000).toISOString().slice(0, 10)} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Country</label>
+                    <input type="text" disabled value={COUNTRIES.find(c => c.code === form.country)?.name ?? form.country} style={{ ...inputStyle, background: C.bgAlt, color: C.muted, cursor: 'not-allowed' }} />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 24 }}>
+                  <label style={labelStyle}>Government ID Type *</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                    {DOC_TYPES.map(d => {
+                      const selected = form.documentType === d.value;
+                      return (
+                        <button key={d.value} type="button" onClick={() => setForm(f => ({ ...f, documentType: d.value }))} style={{ padding: '12px 16px', textAlign: 'left', cursor: 'pointer', border: selected ? `2px solid ${C.navy}` : `1px solid ${C.border}`, background: selected ? '#eef2f8' : C.bg, fontFamily: body, fontSize: 13, color: selected ? C.navy : C.text, fontWeight: selected ? 700 : 400, display: 'flex', alignItems: 'center', gap: 8 }}>
+                          {selected && (
+                            <span style={{ width: 16, height: 16, background: C.navy, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            </span>
+                          )}
+                          {d.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p style={{ fontFamily: body, fontSize: 11, color: C.muted, margin: '8px 0 0' }}>
+                    Tells our review team what kind of ID to expect. No document upload is required at this stage.
+                  </p>
+                </div>
+
+                {error && (
+                  <div style={{ padding: '12px 16px', background: C.redBg, border: `1px solid #fca5a5`, marginBottom: 18, fontFamily: body, fontSize: 13, color: C.red, lineHeight: 1.5 }}>
+                    {error}
+                  </div>
+                )}
+
+                {/* Founding cohort reminder kept — preserves urgency */}
+                <div style={{ background: C.goldBg, border: `1px solid ${C.gold}40`, borderLeft: `3px solid ${C.gold}`, padding: '12px 16px', marginBottom: 18 }}>
+                  <p style={{ fontFamily: body, fontSize: 12, color: C.navy, margin: 0, lineHeight: 1.6 }}>
+                    <strong>Founding cohort designations</strong> — founding status, priority pathway for future reserve launches subject to governance, fee recognition subject to governance, and governance signaling rights — are designated to the first 100 verified participants only.
+                  </p>
+                </div>
+
+                <p style={{ fontFamily: body, fontSize: 11, color: C.muted, lineHeight: 1.65, margin: '0 0 16px', textAlign: 'center' }}>
+                  Applications are reviewed before reserve access is enabled.
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 10 }}>
+                  <button type="button" onClick={() => setFormStep('step1')} style={{
+                    padding: '16px 22px', background: C.bg, color: C.navy, border: `1px solid ${C.border}`, cursor: 'pointer',
+                    fontFamily: mono, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700,
+                  }}>
+                    ← Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting || !form.documentType}
+                    style={{
+                      padding: '16px',
+                      background: submitting || !form.documentType ? '#94a3b8' : C.navy,
+                      color: '#fff', border: 'none',
+                      cursor: submitting || !form.documentType ? 'not-allowed' : 'pointer',
+                      fontFamily: mono, fontSize: 12, letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: 700,
+                    }}
+                  >
+                    {submitting ? 'SUBMITTING…' : `${CTA.submit} →`}
+                  </button>
+                </div>
+
+                <p style={{ fontFamily: body, fontSize: 11, color: C.muted, lineHeight: 1.6, margin: '14px 0 0', textAlign: 'center' }}>
+                  By submitting, you confirm the information is accurate and that you are at least 18 years old.
+                </p>
+              </form>
+            )}
           </div>
         )}
 
