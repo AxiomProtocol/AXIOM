@@ -67,6 +67,9 @@ export default async function handler(
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Database error';
+    const code = (err as Record<string, unknown>)?.code;
+    const detail = (err as Record<string, unknown>)?.detail;
+    console.error('[onramp/intent] Insert failed:', { msg, code, detail, intentId });
     return res.status(500).json({ error: msg });
   }
 
