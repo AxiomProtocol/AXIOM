@@ -77,8 +77,74 @@ export default function CdpWalletsPage() {
 
       <SectionHeading
         title="CDP Wallet Infrastructure"
-        subtitle="Coinbase Developer Platform server wallet accounts — treasury and institutional custody layer"
+        subtitle="Coinbase Developer Platform server wallets — Axiom Protocol treasury and operational reserve accounts on Base"
       />
+
+      {/* ── Intro ─────────────────────────────────────────────────────────── */}
+      <div className="mt-6 grid lg:grid-cols-2 gap-0 border border-dl-border">
+        <div className="p-6 border-b lg:border-b-0 lg:border-r border-dl-border">
+          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">What are CDP Server Wallets?</p>
+          <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-3">
+            Coinbase Developer Platform (CDP) server wallets are EVM accounts managed entirely through the Coinbase API — no private key storage required on the Axiom side. The private key is generated and held inside Coinbase's secure multi-party computation (MPC) infrastructure, meaning no single party can unilaterally move funds. Transactions are signed via API call with programmatic controls.
+          </p>
+          <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
+            Axiom uses CDP server wallets as an institutional-grade layer for treasury management and operational reserves. These accounts are deployed on Base mainnet and interact with USDC and other Base-native assets.
+          </p>
+        </div>
+        <div className="p-6">
+          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">Why Base Mainnet?</p>
+          <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-3">
+            Base is an Ethereum Layer 2 network built and supported by Coinbase. It offers low transaction fees, fast finality, and native integration with Coinbase infrastructure. CDP server wallets are natively supported on Base, making it the natural network for Axiom's Coinbase-managed treasury accounts. Note that the primary Axiom Protocol operates on Arbitrum One — these CDP wallets serve a separate treasury and operational function.
+          </p>
+          <div className="border border-dl-border bg-dl-bg p-3 space-y-1">
+            <div className="flex justify-between text-xs font-dl-mono">
+              <span className="text-dl-gray">Network</span>
+              <span className="text-dl-navy">Base Mainnet (Chain 8453)</span>
+            </div>
+            <div className="flex justify-between text-xs font-dl-mono">
+              <span className="text-dl-gray">Key custody</span>
+              <span className="text-dl-navy">Coinbase MPC</span>
+            </div>
+            <div className="flex justify-between text-xs font-dl-mono">
+              <span className="text-dl-gray">Access method</span>
+              <span className="text-dl-navy">CDP API (JWT-authenticated)</span>
+            </div>
+            <div className="flex justify-between text-xs font-dl-mono">
+              <span className="text-dl-gray">Explorer</span>
+              <span className="text-dl-navy">Basescan.org</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Wallet Purposes ───────────────────────────────────────────────── */}
+      <div className="mt-0 border-l border-r border-b border-dl-border">
+        <div className="px-6 py-4 border-b border-dl-border bg-dl-bg">
+          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">Deployed Wallets — Purpose and Scope</p>
+        </div>
+        <div className="grid lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-dl-border">
+          <div className="p-6">
+            <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-1">axiom-treasury</p>
+            <p className="font-dl-mono text-xs text-dl-gray mb-3 break-all">0x103A1F07836C4b33543F8BF6D49b062a0F71AbC5</p>
+            <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-2">
+              The primary treasury account for Axiom Protocol on Base. This wallet is designated for holding USDC and ETH acquired through the Coinbase Pay onramp and other protocol capital inflows. It serves as the starting point for capital deployed across Base-native positions.
+            </p>
+            <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
+              Funds in this wallet are managed through CDP API calls with programmatic authorization. No manual private key access is used at any point.
+            </p>
+          </div>
+          <div className="p-6">
+            <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-1">axiom-operations-reserve</p>
+            <p className="font-dl-mono text-xs text-dl-gray mb-3 break-all">0x8424Eb7e1A79bcC8fdE8c1D705ba0A44747758c1</p>
+            <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-2">
+              The operational reserve account for day-to-day protocol activities on Base. This wallet covers gas fees, small operational disbursements, and acts as a buffer between the main treasury and live protocol interactions.
+            </p>
+            <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
+              Keeping treasury and operations reserve separate reduces risk exposure and provides cleaner on-chain accounting. Transfers between accounts go through the CDP API with full audit logs.
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div className="mt-6 grid md:grid-cols-3 gap-0 border border-dl-border">
         <div className="p-5 border-b md:border-b-0 md:border-r border-dl-border">
@@ -209,7 +275,33 @@ export default function CdpWalletsPage() {
         </div>
       </div>
 
-      <div className="mt-8 border border-dl-border p-6">
+      <div className="mt-6 border border-dl-border">
+        <div className="px-6 py-4 border-b border-dl-border bg-dl-bg">
+          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider">Security Model</p>
+        </div>
+        <div className="grid lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-dl-border">
+          <div className="p-5">
+            <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">MPC Key Architecture</p>
+            <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
+              CDP uses multi-party computation to ensure the private key never exists in full form on any single server. Key shares are distributed across Coinbase's infrastructure. This eliminates single-point-of-failure key exposure and meets institutional custody standards.
+            </p>
+          </div>
+          <div className="p-5">
+            <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">JWT Authentication</p>
+            <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
+              Every API call to CDP is authenticated via a short-lived JWT signed with Axiom's EC private key. The JWT expires after 2 minutes, preventing replay attacks. API key credentials are stored as environment secrets and never exposed to client-side code.
+            </p>
+          </div>
+          <div className="p-5">
+            <p className="text-sm font-bold text-dl-navy font-dl-serif mb-2">Audit Trail</p>
+            <p className="text-xs text-dl-gray font-dl-mono leading-relaxed">
+              All wallet operations — account creation, balance checks, transaction signing — generate audit logs on both the CDP platform and Axiom's internal database. On-chain activity is fully verifiable on Basescan. No funds can move without an authenticated API request.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 border border-dl-border p-6">
         <h3 className="text-base font-bold text-dl-navy font-dl-serif mb-4">CDP Infrastructure Capabilities</h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[

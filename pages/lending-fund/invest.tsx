@@ -1512,33 +1512,55 @@ export default function InvestPage() {
                       <p className="text-sm text-dl-navy">Loading wallet position...</p>
                     </div>
                   ) : parseFloat(vaultPosition.axusdBalanceUsd) < parseFloat(amount) ? (
-                    <div className="border border-dl-border bg-dl-bg-alt p-6 mb-6">
-                      <h4 className="font-medium text-dl-navy mb-2">Insufficient AXUSD Balance</h4>
-                      <p className="text-sm mb-4 text-dl-gray">
-                        You need {formatUSD(amount)} AXUSD to invest, but your balance is ${parseFloat(vaultPosition.axusdBalanceUsd).toLocaleString()}.
+                    <div className="border border-dl-border bg-dl-bg p-6 mb-6">
+                      <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-2">Insufficient AXUSD Balance</p>
+                      <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-4">
+                        You need {formatUSD(amount)} AXUSD to invest. Your current balance is ${parseFloat(vaultPosition.axusdBalanceUsd).toLocaleString()} AXUSD. Choose one of the three options below to acquire the amount you need.
                       </p>
-                      <p className="text-sm mb-3 text-dl-gray">
-                        <strong>How to get AXUSD:</strong>
-                      </p>
-                      <ul className="text-sm space-y-2 mb-5 text-dl-gray">
-                        <li>1. <strong>Fastest:</strong> Buy USDC with a debit or credit card via Coinbase Pay, then convert 1:1 to AXUSD — all on the{' '}
-                          <Link href="/onramp" className="text-dl-navy underline">Capital Stack Entry</Link> page.
-                        </li>
-                        <li>2. Already have USDC? Swap for AXUSD 1:1 via the <Link href="/axusd" className="text-dl-navy underline">PSM (Peg Stability Module)</Link>.</li>
-                        <li>3. Mint AXUSD by depositing ETH/BTC collateral in the <Link href="/axusd" className="text-dl-navy underline">Vault Engine</Link>.</li>
-                      </ul>
+                      <div className="grid lg:grid-cols-3 gap-0 border border-dl-border mb-5">
+                        <div className="p-4 border-b lg:border-b-0 lg:border-r border-dl-border">
+                          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-1">Option 1 — Fastest</p>
+                          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-1">Buy with a card via Coinbase</p>
+                          <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-2">
+                            Purchase USDC using a debit or credit card through Coinbase Pay, then convert 1:1 to AXUSD through the Peg Stability Module. No Coinbase account required. USDC typically arrives within minutes.
+                          </p>
+                          <Link href="/onramp" className="text-xs font-dl-mono text-dl-navy underline">
+                            Capital Stack Entry
+                          </Link>
+                        </div>
+                        <div className="p-4 border-b lg:border-b-0 lg:border-r border-dl-border">
+                          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-1">Option 2 — Already have USDC</p>
+                          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-1">Swap USDC via PSM</p>
+                          <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-2">
+                            If you already hold USDC on Arbitrum One, convert it directly to AXUSD at a 1:1 rate through the Peg Stability Module. Requires two wallet confirmations: approve and swap.
+                          </p>
+                          <Link href="/axusd" className="text-xs font-dl-mono text-dl-navy underline">
+                            Peg Stability Module
+                          </Link>
+                        </div>
+                        <div className="p-4">
+                          <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-1">Option 3 — Advanced</p>
+                          <p className="text-sm font-bold text-dl-navy font-dl-serif mb-1">Mint via Vault Engine</p>
+                          <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-2">
+                            Deposit ETH or BTC as collateral in the Axiom Vault Engine to mint AXUSD. This path requires maintaining a sufficient collateralization ratio and managing liquidation risk.
+                          </p>
+                          <Link href="/axusd" className="text-xs font-dl-mono text-dl-navy underline">
+                            Vault Engine
+                          </Link>
+                        </div>
+                      </div>
                       <div className="flex flex-wrap gap-3">
                         <Link
                           href="/onramp"
-                          className="inline-block px-6 py-3 bg-dl-navy text-white font-medium text-sm"
+                          className="inline-block px-5 py-2 bg-dl-navy text-white font-dl-mono text-xs"
                         >
                           Buy USDC via Coinbase Pay
                         </Link>
                         <Link
                           href="/axusd"
-                          className="inline-block px-6 py-3 border border-dl-navy text-dl-navy font-medium text-sm"
+                          className="inline-block px-5 py-2 border border-dl-navy text-dl-navy font-dl-mono text-xs"
                         >
-                          Get AXUSD (PSM / Vault)
+                          PSM / Vault Engine
                         </Link>
                       </div>
                     </div>

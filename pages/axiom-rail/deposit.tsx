@@ -233,12 +233,15 @@ export default function AxiomRailDeposit() {
         {step === 'bank' && (
           <>
             {/* Coinbase Pay alternative */}
-            <div style={{ border: '1px solid #b8860b', background: '#fffbf0', padding: '0.75rem 1rem', marginBottom: '1.25rem' }}>
-              <p style={{ fontFamily: 'monospace', fontSize: 10, color: '#b8860b', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 0.4rem' }}>
-                Prefer card over wire?
+            <div style={{ border: '1px solid #b8860b', background: '#fffbf0', padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
+              <p style={{ fontFamily: 'monospace', fontSize: 10, color: '#b8860b', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 0.5rem' }}>
+                Prefer card over bank transfer?
               </p>
-              <p style={{ fontSize: 12, color: '#374151', margin: '0 0 0.5rem', lineHeight: 1.5 }}>
-                Skip the bank form — buy USDC directly with a debit or credit card via Coinbase Pay, then convert to {asset} from your wallet.
+              <p style={{ fontSize: 12, color: '#374151', margin: '0 0 0.4rem', lineHeight: 1.6 }}>
+                Skip the bank form entirely. Use Coinbase Pay to buy USDC directly with a debit or credit card — no Coinbase account required, no routing numbers, no wire fees. USDC arrives in your wallet on Arbitrum One within minutes.
+              </p>
+              <p style={{ fontSize: 12, color: '#374151', margin: '0 0 0.6rem', lineHeight: 1.6 }}>
+                Once you have USDC, convert it 1:1 to {asset} through the Peg Stability Module in the same guided flow.
               </p>
               <a
                 href="/onramp"
@@ -246,7 +249,7 @@ export default function AxiomRailDeposit() {
                 rel="noopener noreferrer"
                 style={{ fontFamily: 'monospace', fontSize: 12, color: '#1e3a5f', textDecoration: 'underline' }}
               >
-                Capital Stack Entry
+                Capital Stack Entry (Coinbase Pay)
               </a>
             </div>
 
