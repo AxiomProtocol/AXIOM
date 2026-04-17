@@ -5,10 +5,47 @@
 
 ---
 
+## 0. Vault Status: Bootstrap / Pre-Live
+
+Axiom Earn AXUSD is deployed on Arbitrum One and recognized by the
+Euler Earn factory perspective, but it is not yet operating as a fully
+live public yield product. At this stage, deposited AXUSD does not
+earn active strategy yield. The current legacy strategy path is capped
+at zero, and the canonical EVK strategy migration is still pending.
+
+**Current limitations:**
+
+- No active yield is being generated
+- Borrow-side functionality is not live
+- Strategy verification is still pending
+- Oracle adapter registration with Euler governance is still outstanding
+- Operational ownership transfer to the AXIOM Risk Council Safe is still pending
+
+This vault may be displayed in the Axiom Protocol interface for visibility,
+wallet connection, balance tracking, and controlled testing. It should
+not yet be represented as a live yield-bearing product for general
+public capital deployment.
+
+**Status target before public launch:**
+
+- [ ] Oracle adapters registered by Euler governance
+- [ ] Canonical EVK vault deployed and perspective-verified
+- [ ] Earn vault supply queue switched to the canonical EVK strategy
+- [ ] Ownership and curator controls transferred to the AXIOM Risk Council Safe
+
+Run the diagnostic at any time to check progress against these targets:
+
+```bash
+node scripts/diagnose-axusd-vault-unknown.js
+```
+
+---
+
 ## 1. Vault Identity
 
 | Field | Value |
 |---|---|
+| Deployment status | **Bootstrap / Pre-Live** (see §0) |
 | Contract name | Axiom Earn AXUSD |
 | Symbol | `earnAXUSD` |
 | Address (Arbitrum One) | `0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B` |
@@ -195,53 +232,47 @@ shares. Unregistered addresses will revert at the `AXUSD.transfer` step.
 
 ---
 
-## 6. Risk Disclosures (Current State)
+## 6. Risk Disclosures
 
-### 6.1 Material limitations until canonical EVK vault is live
+### 6.1 Operational status
 
-The following conditions exist as of 2026-04-17 and should be considered
-before deploying capital into this vault:
+See §0 for the current Bootstrap / Pre-Live status, the full list of
+limitations, and the pre-launch checklist. This vault should not be
+represented as a live yield-bearing product for general public capital
+deployment until all four launch targets in §0 are cleared.
 
-1. **No active yield.** The supply queue cap is set to zero. All
-   deposited AXUSD sits idle. No lending interest or strategy yield
-   is currently earned.
+### 6.2 Technical risk details
 
-2. **Broken strategy oracle.** The only registered strategy
-   (`eAXUSD-6`) carries a broken oracle configuration: its
-   `unitOfAccount` is set to USDC (not the USD pseudo address), and
-   its `governorAdmin` has not been renounced. This means the Euler V2
-   borrow-side risk engine cannot price collateral for that vault. This
-   does **not** corrupt deposit accounting (share price is shielded by
-   ERC-4626 arithmetic), but it means borrowing against AXUSD deposited
-   via this vault is currently non-functional.
+**Broken strategy oracle (deposit accounting is not affected).**
+The legacy `eAXUSD-6` strategy has its `unitOfAccount` set to USDC
+rather than the USD pseudo address, and its `governorAdmin` has not
+been renounced. This breaks the Euler V2 borrow-side risk engine for
+that vault. Deposit accounting inside the Earn wrapper is shielded by
+ERC-4626 arithmetic (`convertToAssets` does not touch the oracle), so
+AXUSD deposited through `earnAXUSD` is not at risk of mis-pricing. The
+limitation is that borrowing against deposited AXUSD is non-functional
+until the canonical EVK strategy replaces the legacy one.
 
-3. **Governance role held by a single EOA.** The `owner` address is a
-   deployer EOA, not a multisig. Any ownership action (queue changes,
-   fee changes, curator assignment) requires a single private key.
-   Transfer to the AXIOM Risk Council Safe is pending.
+**Governance held by a single EOA.** Until the ownership transfer to
+the AXIOM Risk Council Safe is complete (runbook at
+`documents/euler-axusd-risk-council-safe.md`), all curator and queue
+operations require the deployer private key.
 
-4. **Both oracle adapters unregistered.** The AXUSD/USD and USDC/USD
-   adapters are deployed and functionally correct but have not yet been
-   added to the `oracleAdapterRegistry` by Euler governance. Until
-   registered, neither the Earn vault nor its underlying EVK strategy
-   will be approved by the Governed perspective.
+**Euler identity constraint for integrators.** The Earn vault does not
+itself enforce ERC-3643 compliance, but AXUSD transfers into and out of
+the vault call the AXUSD compliance module. Addresses not registered in
+the Axiom identity registry will revert at the transfer step.
 
-5. **Euler identity constraint.** The Earn vault itself is not subject
-   to the ERC-3643 identity check, but the underlying AXUSD transfer
-   to and from the vault calls the AXUSD compliance module. Integrators
-   that are not in the AXUSD identity registry will revert.
+### 6.3 Terminal risk status
 
-### 6.2 Terminal risk status
-
-Run the one-shot diagnostic at any time to get the current normalized
-status:
+Run the diagnostic at any time to get the current normalized status:
 
 ```bash
 node scripts/diagnose-axusd-vault-unknown.js
 ```
 
-Expected output today: `BLOCKED_ON_EULER_GOVERNANCE` (both adapters
-unregistered; strategy EVK vault preconditions also violated).
+Expected output today: `BLOCKED_ON_EULER_GOVERNANCE` (both oracle
+adapters unregistered; strategy EVK vault preconditions also violated).
 
 ---
 
