@@ -365,6 +365,7 @@ async function main() {
     };
     if (!asJson) {
       line('asset == AXUSD',                       preconds.assetIsAxusd,    vaultMeta.asset);
+      line('oracle (router) is set',               !!vaultMeta.oracle && vaultMeta.oracle !== ethers.ZeroAddress, vaultMeta.oracle || '0x0');
       line('unitOfAccount == USD pseudo (0x...0348)', preconds.uoaIsUsdPseudo, vaultMeta.unitOfAccount);
       line('UoA recognized by Ungoverned 0x',      preconds.uoaRecognized);
       line('governorAdmin == 0x0 (renounced)',     preconds.governorRenounced, vaultMeta.governorAdmin);
