@@ -15,9 +15,24 @@ interface YieldOpportunity {
   link: string;
   description: string;
   featured?: boolean;
+  /** "bootstrap" = pre-live; undefined = normal */
+  status?: 'bootstrap';
 }
 
 const YIELD_OPPORTUNITIES: YieldOpportunity[] = [
+  {
+    id: 'earn-axusd-vault',
+    name: 'Axiom Earn AXUSD',
+    protocol: 'Euler Earn',
+    asset: 'AXUSD',
+    rate: 'Inactive',
+    tvl: '$0',
+    type: 'lending',
+    risk: 'low',
+    link: '/earn/axusd',
+    description: 'ERC-4626 yield vault on Arbitrum One. Bootstrap / Pre-Live — not yet operating as a live yield product. Visible for wallet connection, balance tracking, and controlled testing.',
+    status: 'bootstrap',
+  },
   {
     id: 'euler-axusd',
     name: 'AXUSD Lending',
@@ -155,9 +170,13 @@ export default function EarnPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredOpportunities.filter(o => !o.featured).map((opportunity) => (
-          <div 
+          <div
             key={opportunity.id}
-            className="bg-dl-bg p-5 border border-dl-border"
+            className={`bg-dl-bg p-5 border ${
+              opportunity.status === 'bootstrap'
+                ? 'border-dl-gold'
+                : 'border-dl-border'
+            }`}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -167,9 +186,16 @@ export default function EarnPage() {
                   <p className="text-dl-gray text-sm">{opportunity.protocol}</p>
                 </div>
               </div>
-              <span className={`px-2 py-1 text-xs font-dl-mono border ${getRiskColor(opportunity.risk)}`}>
-                {opportunity.risk}
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                {opportunity.status === 'bootstrap' && (
+                  <span className="px-2 py-0.5 text-xs font-dl-mono border border-dl-gold text-dl-gold">
+                    Bootstrap
+                  </span>
+                )}
+                <span className={`px-2 py-1 text-xs font-dl-mono border ${getRiskColor(opportunity.risk)}`}>
+                  {opportunity.risk}
+                </span>
+              </div>
             </div>
 
             <p className="text-dl-gray text-sm mb-4">{opportunity.description}</p>
@@ -177,7 +203,11 @@ export default function EarnPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-dl-gray text-xs">Rate</p>
-                <p className="text-dl-forest font-dl-mono font-medium">{opportunity.rate}</p>
+                <p className={`font-dl-mono font-medium ${
+                  opportunity.rate === 'Inactive' ? 'text-dl-gray' : 'text-dl-forest'
+                }`}>
+                  {opportunity.rate}
+                </p>
               </div>
               <div>
                 <p className="text-dl-gray text-xs">Asset</p>

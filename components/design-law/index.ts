@@ -16,6 +16,8 @@ export { SectionHeading } from './SectionHeading';
 export { DetailGrid } from './DetailGrid';
 export { DesignLawLayout } from './DesignLawLayout';
 
+export { VaultStatusBanner } from './VaultStatusBanner';
+
 // ConnectWalletButton and NexusBankingPanel are intentionally NOT exported here.
 // Both import wagmi which is browser-only. Import them with next/dynamic ssr:false
 // at each usage site.

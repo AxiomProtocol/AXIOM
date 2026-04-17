@@ -15,6 +15,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/axau', label: 'AXAU Reserve' },
       { href: '/axau-early-access', label: 'AXAU Early Access' },
       { href: '/axusd-3643', label: 'AXUSD Settlement Rail' },
+      { href: '/earn/axusd', label: 'Earn AXUSD (Bootstrap)' },
       { href: '/dex', label: 'Protocol Exchange' },
       { href: '/banking', label: 'Banking Infrastructure' },
       { href: '/onramp', label: 'On / Off Ramp' },
