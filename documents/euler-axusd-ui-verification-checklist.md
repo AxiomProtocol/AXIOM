@@ -154,6 +154,39 @@ mismatch the diagnostic will surface.
 
 ---
 
+## Step E — 24-hour escalation if labels do not flip
+
+The Euler V2 UI typically picks up registry and perspective changes
+within minutes of the on-chain event, but sometimes a snapshot/cache
+layer pins the old state. If the diagnostic prints
+`Status: OK_VERIFIED` but the UI still shows Unknown labels **24
+hours after** the on-chain change, escalate as follows:
+
+- [ ] Re-run `node scripts/diagnose-axusd-vault-unknown.js` and confirm
+      `OK_VERIFIED` is still the terminal status. Save the output.
+- [ ] Re-run with `JSON=1 node scripts/diagnose-axusd-vault-unknown.js
+      > /tmp/axiom-diag.json` and attach the JSON to the escalation.
+- [ ] Open a thread in the Euler community Discord (`#dev-help` or
+      `#support`) referencing:
+        - vault address,
+        - both registry `Added(...)` event tx hashes from
+          `0x3942A72f87Db5Ad9C22d8826FDe15E23b81b1cBf`,
+        - the perspective `isVerified(vault)` static-call returning
+          true on Blockscout,
+        - the diagnostic JSON.
+- [ ] In parallel, email `support@euler.finance` (or the address
+      confirmed in the submission outreach) with the same evidence
+      bundle and subject line "Euler V2 UI labels stale for verified
+      vault — chain id 42161 — vault `<address>`".
+- [ ] If neither channel responds within another 24 hours, post the
+      same evidence on the Euler governance forum and tag the team
+      that owns the indexer.
+
+The on-chain state is the contract — the UI is downstream — so do not
+modify any Axiom contract while waiting for the UI to refresh.
+
+---
+
 ## Re-run cadence
 
 Run this checklist:
