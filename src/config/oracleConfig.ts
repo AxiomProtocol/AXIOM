@@ -1,41 +1,62 @@
 /**
  * Axiom Protocol — Oracle Configuration
  *
- * This file tracks the ERC-7726 compatible oracle adapter addresses.
- * AXIOMOracleAdapter implements ERC-7726:
+ * Tracks ERC-7726 oracle adapter addresses.
  *   getQuote(uint256 inAmount, address base, address quote) → uint256 outAmount
  *
- * Deployment status: DEPLOYED ✓ (AXIOMOracleAdapter v2)
- * Source: contracts/oracle/AXIOMOracleAdapter.sol
- * Deployed via: scripts/deploy-axusd-oracle-v2.js
- * primaryAxusd: 0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7 (ERC-3643 AXUSD)
- *
- * Verified on-chain:
- *   getQuote(1e18, ERC3643_AXUSD, USDC) = 1,000,000 ✓  (peg = $1.00)
- *
- * Legacy references (kept for compatibility):
- *   Legacy OracleAdapter (Phase 3, Contract 31): 0xE3b1f38AaBAd138d0EF2e2C7429ee57c512fDF3D
- *   Legacy OracleAdapterRegistry (EulerVaultService): 0x91c8B55D234de4b48C1F1F1c5e9c4b6C8CB96f84
- *   Legacy PRICE_ORACLE (vault-stats.ts): 0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15
+ * Legacy references:
+ *   OracleAdapter (Phase 3, Contract 31): 0xE3b1f38AaBAd138d0EF2e2C7429ee57c512fDF3D
+ *   OracleAdapterRegistry (EulerVaultService): 0x91c8B55D234de4b48C1F1F1c5e9c4b6C8CB96f84
+ *   PRICE_ORACLE (vault-stats.ts): 0x1045B6c70AC7b491bf724B5Aa4D89F542D955E15
  */
 
 import { ethers } from 'ethers';
 
 /**
- * AXIOMOracleAdapter v2 — ERC-7726 compliant oracle for AXUSD/USD, USDC→AXUSD,
- * ETH→AXUSD, ARB→AXUSD pricing on Arbitrum One.
- * Status: DEPLOYED ✓ | Source: contracts/oracle/AXIOMOracleAdapter.sol
+ * AXIOMOracleAdapter v2 — multi-asset ERC-7726 router (USDC/USDT/WETH/WBTC/ARB ↔ AXUSD).
+ * Source: contracts/oracle/AXIOMOracleAdapter.sol.
  * Also serves as immutable oracle in eAXUSD-6 EVK vault (MetaProxy trailing data).
  */
 export const AXUSD_ORACLE_ADAPTER: string = '0xc894d1500CB1FBf8F045e87bd357A51345197c4e';
 
 /**
- * Returns true when the ERC-7726 oracle has been deployed to Arbitrum One.
+ * AXUSDPegOracleAdapter — single-pair ERC-7726 fixed-rate AXUSD↔USD adapter.
+ * Source: contracts/oracle/AXUSDPegOracleAdapter.sol. Canonical AXUSD→USD
+ * price source for off-chain valuation. USD pseudo-address is the ISO-4217
+ * 840 sentinel (0x…0348).
+ */
+export const AXUSD_USD_PEG_ADAPTER: string = '0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6';
+
+/** Minimal ABI for AXUSDPegOracleAdapter — only the bits the helper needs. */
+export const AXUSD_PEG_ABI = [
+  'function getQuote(uint256 inAmount, address base, address quote) view returns (uint256 outAmount)',
+  'function AXUSD() view returns (address)',
+  'function USD() view returns (address)',
+] as const;
+
+/** ISO-4217 USD pseudo-address used by AXUSDPegOracleAdapter / Euler unit-of-account. */
+export const ISO4217_USD_ADDRESS = '0x0000000000000000000000000000000000000348';
+
+/**
+ * Returns true when the legacy multi-asset ERC-7726 router has been deployed
+ * to Arbitrum One. Used by consumers that read the multi-asset router
+ * (vault-stats, axusd-vault, EulerVaultService).
  */
 export function isOracleDeployed(): boolean {
   return (
     AXUSD_ORACLE_ADAPTER.length === 42 &&
     AXUSD_ORACLE_ADAPTER !== ethers.ZeroAddress
+  );
+}
+
+/**
+ * Returns true when the AXUSDPegOracleAdapter is deployed. This is the
+ * adapter consulted by axusdUsdValuation.ts and reported in API metadata.
+ */
+export function isPegOracleDeployed(): boolean {
+  return (
+    AXUSD_USD_PEG_ADAPTER.length === 42 &&
+    AXUSD_USD_PEG_ADAPTER !== ethers.ZeroAddress
   );
 }
 

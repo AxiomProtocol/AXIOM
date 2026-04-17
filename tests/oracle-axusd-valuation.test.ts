@@ -1,20 +1,21 @@
 /**
- * Regression test for Task #95.
+ * Regression test for Task #99 (replaces the Task #95 inversion-workaround test).
  *
  * Asserts the invariant: no production code path that values an AXUSD principal
- * via the legacy AXIOMOracleAdapter can ever surface a 0 USD value to internal
- * tooling, even though that adapter returns 0 for getQuote(*, AXUSD, USDC).
+ * via the canonical AXUSDPegOracleAdapter can ever surface a $0 USD value to
+ * internal tooling — even if the immutable peg adapter unexpectedly reverts or
+ * zero-quotes (a defensive guard the helper retains as belt-and-braces).
  *
  * Run: npx tsx tests/oracle-axusd-valuation.test.ts
  */
 
 import {
-  USDC_ARBITRUM,
   ACTIVE_AXUSD_ARBITRUM,
   principalUsdToAxusdWei18,
   valueAxusdAsUsd,
   type Erc7726QuoteReader,
 } from '../server/services/oracle/axusdUsdValuation';
+import { ISO4217_USD_ADDRESS } from '../src/config/oracleConfig';
 
 let failed = 0;
 let passed = 0;
@@ -30,28 +31,21 @@ function assert(condition: boolean, message: string) {
 }
 
 /**
- * Mocks the legacy adapter's documented behaviour:
- *   getQuote(*, USDC, AXUSD) → working (returns 1e18 per 1 USDC at 1:1 peg)
- *   getQuote(*, AXUSD, USDC) → BROKEN, returns 0  (the Task #95 bug)
- *   getQuote(0, ...)         → 0 by ERC-7726 convention
+ * Mocks the AXUSDPegOracleAdapter behaviour:
+ *   getQuote(X, AXUSD, USD)   → X * 1e8 / 1e18   (peg = 1.00 USD, USD is 8-dec)
+ *   getQuote(0, ...)          → 0 by ERC-7726 convention
+ *   any other pair            → reverts
  */
-function makeLegacyAdapterMock(): Erc7726QuoteReader {
+function makePegAdapterMock(): Erc7726QuoteReader {
   return {
     async getQuote(inAmount: bigint, base: string, quote: string): Promise<bigint> {
       if (inAmount === 0n) return 0n;
       if (
-        base.toLowerCase() === USDC_ARBITRUM.toLowerCase() &&
-        quote.toLowerCase() === ACTIVE_AXUSD_ARBITRUM.toLowerCase()
-      ) {
-        // 1 USDC → 1 AXUSD (decimal-normalised, peg = 1.0)
-        return inAmount * 10n ** 12n;
-      }
-      if (
         base.toLowerCase() === ACTIVE_AXUSD_ARBITRUM.toLowerCase() &&
-        quote.toLowerCase() === USDC_ARBITRUM.toLowerCase()
+        quote.toLowerCase() === ISO4217_USD_ADDRESS.toLowerCase()
       ) {
-        // BROKEN branch — what the on-chain adapter actually does today.
-        return 0n;
+        // 1 AXUSD (18-dec) → 1.00 USD (8-dec) at peg
+        return inAmount / 10n ** 10n;
       }
       throw new Error('mock: unsupported pair');
     },
@@ -75,19 +69,18 @@ function makeZeroAdapterMock(): Erc7726QuoteReader {
 }
 
 async function main() {
-  console.log('Running Task #95 AXUSD valuation regression tests...\n');
+  console.log('Running Task #99 AXUSD valuation regression tests...\n');
 
-  // 1. Working USDC→AXUSD direction produces a sensible USD value.
+  // 1. Direct AXUSD→USD peg quote produces a sensible USD value.
   {
     const principalWei = principalUsdToAxusdWei18(50_000);
-    const v = await valueAxusdAsUsd(makeLegacyAdapterMock(), principalWei);
-    assert(v.usdValue === '50000.00', 'USDC→AXUSD inversion values 50,000 AXUSD as 50,000.00 USD');
-    assert(v.source === 'erc7726_inverse', 'Source is erc7726_inverse when on-chain quote works');
-    assert(v.onChainQuoteUsable === true, 'onChainQuoteUsable is true for the working direction');
+    const v = await valueAxusdAsUsd(makePegAdapterMock(), principalWei);
+    assert(v.usdValue === '50000.00', 'Peg adapter values 50,000 AXUSD as 50,000.00 USD');
+    assert(v.source === 'erc7726_peg', 'Source is erc7726_peg when on-chain quote works');
+    assert(v.onChainQuoteUsable === true, 'onChainQuoteUsable is true for the canonical path');
   }
 
-  // 2. CRITICAL: the broken AXUSD→USDC direction must NEVER produce a $0 value.
-  //    This is the regression test for Task #95.
+  // 2. CRITICAL: zero on-chain quote must NEVER produce a $0 USD value.
   {
     const principalWei = principalUsdToAxusdWei18(50_000);
     const v = await valueAxusdAsUsd(makeZeroAdapterMock(), principalWei);
@@ -108,7 +101,7 @@ async function main() {
 
   // 4. Zero AXUSD principal is the only case allowed to return $0.
   {
-    const v = await valueAxusdAsUsd(makeLegacyAdapterMock(), 0n);
+    const v = await valueAxusdAsUsd(makePegAdapterMock(), 0n);
     assert(v.usdValue === '0.00', 'Zero AXUSD principal correctly returns $0.00');
     assert(v.usdcOut === 0n, 'Zero AXUSD principal returns 0 usdcOut');
   }
@@ -121,7 +114,7 @@ async function main() {
     assert(principalUsdToAxusdWei18(NaN) === 0n, 'NaN USD → 0 wei (defensive)');
   }
 
-  // 6. Sweep a range of principal amounts against the broken oracle —
+  // 6. Sweep a range of principal amounts against a misbehaving oracle —
   //    every single one must produce a strictly positive USD value.
   {
     const amounts = [0.01, 1, 100, 50_000, 250_000, 999_999.99];
@@ -134,7 +127,23 @@ async function main() {
         allNonZero = false;
       }
     }
-    assert(allNonZero, 'Sweep: no principal in {0.01, 1, 100, 50k, 250k, 999999.99} produces $0 against broken oracle');
+    assert(allNonZero, 'Sweep: no principal in {0.01, 1, 100, 50k, 250k, 999999.99} produces $0 against zero-quote oracle');
+  }
+
+  // 7. Sweep against the working peg adapter — every quote must equal principal in USD.
+  {
+    const amounts = [1, 100, 50_000, 250_000];
+    let allMatch = true;
+    for (const amt of amounts) {
+      const principalWei = principalUsdToAxusdWei18(amt);
+      const v = await valueAxusdAsUsd(makePegAdapterMock(), principalWei);
+      const expected = amt.toFixed(2);
+      if (v.usdValue !== expected || v.source !== 'erc7726_peg') {
+        console.error(`    SUB-FAIL: amount=${amt} got usdValue=${v.usdValue} src=${v.source}, expected ${expected}/erc7726_peg`);
+        allMatch = false;
+      }
+    }
+    assert(allMatch, 'Sweep: peg adapter quotes match principal exactly across amounts');
   }
 
   console.log(`\nTotal: ${passed} passed, ${failed} failed`);

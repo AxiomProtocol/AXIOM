@@ -39,7 +39,9 @@ pragma solidity ^0.8.24;
  *   getQuote(X, WBTC,  AXUSD) → X * btcUsd * 1e10   (WBTC 8-dec → 18-dec result)
  *   getQuote(X, ARB,   AXUSD) → X * arbUsd / 1e8    (Chainlink ARB/USD 8-dec)
  *
- * Deployed: PENDING — run `npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne`
+ * `_psmRate()` returns a neutral (1, 1) ratio when the PSM address is zero
+ * or its USDC balance is zero, and `_axusdToUsdc` / `_usdcToAxusd`
+ * short-circuit to the decimal-normalised quote when `psmNumer == 0`.
  */
 
 interface AggregatorV3Interface {
@@ -196,7 +198,9 @@ contract AXIOMOracleAdapter {
         uint256 baseOut = inAxusd / 1e12; // decimals normalisation
         if (!psmFallbackEnabled) return baseOut;
         (uint256 psmNumer, uint256 psmDenom) = _psmRate();
-        if (psmDenom == 0) return baseOut;
+        // Defensive: short-circuit on a zero numerator or denominator so the
+        // multiplicative chain cannot collapse a non-zero input to zero.
+        if (psmDenom == 0 || psmNumer == 0) return baseOut;
         return (baseOut * psmNumer) / psmDenom;
     }
 
@@ -265,7 +269,11 @@ contract AXIOMOracleAdapter {
      *         If > 1, AXUSD is over-collateralised. Fallback to 1:1 if read fails.
      */
     function _psmRate() internal view returns (uint256 numer, uint256 denom) {
+        // No meaningful PSM data → return neutral (1, 1) so downstream
+        // conversions produce a valid 1:1 quote instead of zero.
+        if (primaryPsm == address(0)) return (1, 1);
         try IERC20Decimals(USDC).balanceOf(primaryPsm) returns (uint256 psmUsdc) {
+            if (psmUsdc == 0) return (1, 1);
             try IERC20Decimals(primaryAxusd).totalSupply() returns (uint256 supply18) {
                 if (supply18 == 0) return (1, 1);
                 // Convert supply from 18-dec to 6-dec for comparison

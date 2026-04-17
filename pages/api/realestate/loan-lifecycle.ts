@@ -3,7 +3,7 @@ import { pool } from '../../../server/db';
 import { verifyCreditAuth, isAdminRequest } from '../../../lib/community-credit-auth';
 import { CREDIT_MARKET_ADDRESS, FIXED_LOAN_NFT_ADDRESS } from '../../../src/config/activeContracts.generated';
 import { CREDIT_MARKET_ABI as CM_ABI, FIXED_LOAN_ABI as FL_ABI } from '../../../src/config/creditMarket.generated';
-import { AXUSD_ORACLE_ADAPTER, ERC7726_ABI, isOracleDeployed } from '../../../src/config/oracleConfig';
+import { AXUSD_USD_PEG_ADAPTER, AXUSD_PEG_ABI, isPegOracleDeployed } from '../../../src/config/oracleConfig';
 import {
   principalUsdToAxusdWei18,
   valueAxusdAsUsd,
@@ -806,13 +806,11 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     const receipt = await tx.wait(1);
     const chainTxHash: string = receipt?.hash ?? tx.hash;
 
-    // ── ERC-7726 oracle write-down valuation (Task #95) ──────────────────────
-    // The legacy AXIOMOracleAdapter returns 0 for getQuote(*, AXUSD, USDC),
-    // so we read the working USDC→AXUSD direction and invert via the shared
-    // valueAxusdAsUsd helper. The helper guarantees a non-zero USD value for
-    // any non-zero AXUSD principal (falling back to static 1:1 parity if the
-    // on-chain quote is unusable) so charge-off accounting can never silently
-    // record a $0 write-down.
+    // ── ERC-7726 oracle write-down valuation ──────────────────────
+    // Reads the AXUSD→USD peg adapter (AXUSDPegOracleAdapter) directly. Falls
+    // back to static 1:1 parity only if the immutable adapter unexpectedly
+    // reverts or zero-quotes, so charge-off accounting can never silently
+    // record a $0 write-down for a non-zero AXUSD principal.
     const principalUsd = parseFloat(loan.outstanding_principal_usd);
     const principalWei18 = principalUsdToAxusdWei18(principalUsd);
 
@@ -820,12 +818,12 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     let oracleUsed: 'erc7726_on_chain' | 'static_parity' = 'static_parity';
 
     if (principalWei18 > 0n) {
-      if (isOracleDeployed()) {
+      if (isPegOracleDeployed()) {
         const provider = new ethersLib.JsonRpcProvider(ARBITRUM_RPC);
-        const oracleContract = new ethersLib.Contract(AXUSD_ORACLE_ADAPTER, ERC7726_ABI as readonly string[], provider);
+        const oracleContract = new ethersLib.Contract(AXUSD_USD_PEG_ADAPTER, AXUSD_PEG_ABI as readonly string[], provider);
         const valuation = await valueAxusdAsUsd(oracleContract as unknown as Erc7726QuoteReader, principalWei18);
         writeDownUsdValue = valuation.usdValue;
-        oracleUsed = valuation.source === 'erc7726_inverse' ? 'erc7726_on_chain' : 'static_parity';
+        oracleUsed = valuation.source === 'erc7726_peg' ? 'erc7726_on_chain' : 'static_parity';
       } else {
         writeDownUsdValue = principalUsd.toFixed(2);
       }
@@ -846,13 +844,13 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
       writeDownUsdValue,
       oracleContext: {
         standard: 'ERC-7726',
-        interface: 'getQuote(1 USDC, USDC, AXUSD) [inverted to value AXUSD principal]',
-        oracleAddress: AXUSD_ORACLE_ADAPTER,
-        oracleDeployed: isOracleDeployed(),
+        interface: 'getQuote(amount, AXUSD, USD) on AXUSDPegOracleAdapter',
+        oracleAddress: AXUSD_USD_PEG_ADAPTER,
+        oracleDeployed: isPegOracleDeployed(),
         priceSource: oracleUsed,
         note: oracleUsed === 'erc7726_on_chain'
-          ? 'Write-down USD value computed via ERC-7726 USDC→AXUSD quote (inverted) at charge-off time. The legacy AXUSD→USDC direction is bypassed because it returns 0 (Task #95).'
-          : 'ERC-7726 USDC→AXUSD quote unavailable. Write-down USD value uses static 1:1 AXUSD≈USD parity (never zero for a non-zero principal).',
+          ? 'Write-down USD value computed via direct ERC-7726 AXUSD→USD quote on the immutable peg adapter at charge-off time.'
+          : 'Peg adapter quote unavailable. Write-down USD value uses static 1:1 AXUSD≈USD parity (never zero for a non-zero principal).',
       },
     });
   }
@@ -864,12 +862,11 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     const receipt = await tx.wait(1);
     const chainTxHash: string = receipt?.hash ?? tx.hash;
 
-    // ── ERC-7726 oracle: compute outstanding exposure in USD (Task #95) ──────
-    // The legacy AXIOMOracleAdapter returns 0 for getQuote(*, AXUSD, USDC), so
-    // we route through the shared valueAxusdAsUsd helper which inverts the
-    // working USDC→AXUSD direction and falls back to static 1:1 parity if the
-    // on-chain quote is unusable. This guarantees default-event accounting
-    // never records a $0 exposure for a non-zero AXUSD principal.
+    // ── ERC-7726 oracle: compute outstanding exposure in USD ──────
+    // Reads the AXUSD→USD peg adapter directly (AXUSDPegOracleAdapter) and
+    // falls back to static 1:1 parity only if the immutable adapter unexpectedly
+    // reverts or zero-quotes. Guarantees default-event accounting never records
+    // a $0 exposure for a non-zero AXUSD principal.
     const principalUsd = parseFloat(loan.outstanding_principal_usd);
     const principalWei18 = principalUsdToAxusdWei18(principalUsd);
 
@@ -877,12 +874,12 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
     let oracleUsed: 'erc7726_on_chain' | 'static_parity' = 'static_parity';
 
     if (principalWei18 > 0n) {
-      if (isOracleDeployed()) {
+      if (isPegOracleDeployed()) {
         const provider = new ethersLib.JsonRpcProvider(ARBITRUM_RPC);
-        const oracleContract = new ethersLib.Contract(AXUSD_ORACLE_ADAPTER, ERC7726_ABI as readonly string[], provider);
+        const oracleContract = new ethersLib.Contract(AXUSD_USD_PEG_ADAPTER, AXUSD_PEG_ABI as readonly string[], provider);
         const valuation = await valueAxusdAsUsd(oracleContract as unknown as Erc7726QuoteReader, principalWei18);
         exposureUsdValue = valuation.usdValue;
-        oracleUsed = valuation.source === 'erc7726_inverse' ? 'erc7726_on_chain' : 'static_parity';
+        oracleUsed = valuation.source === 'erc7726_peg' ? 'erc7726_on_chain' : 'static_parity';
       } else {
         exposureUsdValue = principalUsd.toFixed(2);
       }
@@ -900,13 +897,13 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
       exposureUsdValue,
       oracleContext: {
         standard: 'ERC-7726',
-        interface: 'getQuote(1 USDC, USDC, AXUSD) [inverted to value AXUSD principal]',
-        oracleAddress: AXUSD_ORACLE_ADAPTER,
-        oracleDeployed: isOracleDeployed(),
+        interface: 'getQuote(amount, AXUSD, USD) on AXUSDPegOracleAdapter',
+        oracleAddress: AXUSD_USD_PEG_ADAPTER,
+        oracleDeployed: isPegOracleDeployed(),
         priceSource: oracleUsed,
         note: oracleUsed === 'erc7726_on_chain'
-          ? 'Default exposure USD value computed via ERC-7726 USDC→AXUSD quote (inverted) at default time. The legacy AXUSD→USDC direction is bypassed because it returns 0 (Task #95).'
-          : 'ERC-7726 USDC→AXUSD quote unavailable. Exposure USD value uses static 1:1 AXUSD≈USD parity (never zero for a non-zero principal).',
+          ? 'Default exposure USD value computed via direct ERC-7726 AXUSD→USD quote on the immutable peg adapter at default time.'
+          : 'Peg adapter quote unavailable. Exposure USD value uses static 1:1 AXUSD≈USD parity (never zero for a non-zero principal).',
       },
     });
   }
