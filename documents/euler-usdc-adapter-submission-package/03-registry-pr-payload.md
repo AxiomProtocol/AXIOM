@@ -61,12 +61,12 @@ arbitrum: register ChainlinkUSDCOracleAdapter (USDC/USD)
 > the deployed adapter is attached below.
 >
 > ### Address
-> Adapter:    `<DEPLOYED_ADDRESS>` (Arbiscan-verified, see deploy tx)
+> Adapter:    `0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61` (Arbiscan-verified, see deploy tx)
 > Base:       `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` (USDC)
 > Quote:      `0x0000000000000000000000000000000000000348` (USD pseudo)
 > Underlying: `0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3` (Chainlink USDC/USD)
 > Network:    Arbitrum One (42161)
-> Deploy tx:  `<TX_HASH>`
+> Deploy tx:  `0x38c1745690ad9d5949c9b0f1ebbfcda056c2956a16310f3a1c24ca68fdf13a0b`
 > Source:     `contracts/oracle/ChainlinkUSDCOracleAdapter.sol`
 
 ## File changes
@@ -80,7 +80,7 @@ fields like `addedAt` that are populated post-merge).
 
 ```json
 {
-  "adapter": "<DEPLOYED_ADDRESS>",
+  "adapter": "0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61",
   "base":    "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
   "quote":   "0x0000000000000000000000000000000000000348",
   "name":    "ChainlinkUSDCOracleAdapter",
@@ -89,9 +89,9 @@ fields like `addedAt` that are populated post-merge).
   "feedDescription": "USDC / USD",
   "feedDecimals": 8,
   "maxStaleness": 86400,
-  "deployer":"<DEPLOYER_EOA>",
-  "deployTx":"<TX_HASH>",
-  "deployBlock": <BLOCK_NUMBER>,
+  "deployer":"0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+  "deployTx":"0x38c1745690ad9d5949c9b0f1ebbfcda056c2956a16310f3a1c24ca68fdf13a0b",
+  "deployBlock": 453471601,
   "verified": true
 }
 ```
@@ -99,7 +99,7 @@ fields like `addedAt` that are populated post-merge).
 ### 2. `addresses/42161/labels.json` — optional, if format requires
 
 ```json
-"<DEPLOYED_ADDRESS>": "ChainlinkUSDCOracleAdapter (USDC/USD, Chainlink)"
+"0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61": "ChainlinkUSDCOracleAdapter (USDC/USD, Chainlink)"
 ```
 
 ### 3. Conformance attachment

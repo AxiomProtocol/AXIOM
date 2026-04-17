@@ -46,11 +46,11 @@ arbitrum: register AXUSDPegOracleAdapter (AXUSD/USD)
 > deployed adapter is attached below.
 >
 > ### Address
-> Adapter: `<DEPLOYED_ADDRESS>` (Arbiscan-verified, see deploy tx)
+> Adapter: `0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6` (Arbiscan-verified, see deploy tx)
 > Base:    `0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7` (AXUSD)
 > Quote:   `0x0000000000000000000000000000000000000348` (USD pseudo)
 > Network: Arbitrum One (42161)
-> Deploy tx: `<TX_HASH>`
+> Deploy tx: `0x1274edad7ec6a203ce2df57a3416bcfd6b6a01b11fb9bac1b3c5934728517ee5`
 > Source:  `contracts/oracle/AXUSDPegOracleAdapter.sol`
 
 ## File changes
@@ -64,14 +64,14 @@ fields like `addedAt` that are populated post-merge).
 
 ```json
 {
-  "adapter": "<DEPLOYED_ADDRESS>",
+  "adapter": "0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6",
   "base":    "0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7",
   "quote":   "0x0000000000000000000000000000000000000348",
   "name":    "AXUSDPegOracleAdapter",
   "type":    "FixedRate",
-  "deployer":"<DEPLOYER_EOA>",
-  "deployTx":"<TX_HASH>",
-  "deployBlock": <BLOCK_NUMBER>,
+  "deployer":"0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+  "deployTx":"0x1274edad7ec6a203ce2df57a3416bcfd6b6a01b11fb9bac1b3c5934728517ee5",
+  "deployBlock": 453471379,
   "verified": true
 }
 ```
@@ -79,7 +79,7 @@ fields like `addedAt` that are populated post-merge).
 ### 2. `addresses/42161/labels.json` — optional, if format requires
 
 ```json
-"<DEPLOYED_ADDRESS>": "AXUSDPegOracleAdapter (AXUSD/USD, FixedRate)"
+"0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6": "AXUSDPegOracleAdapter (AXUSD/USD, FixedRate)"
 ```
 
 ### 3. Conformance attachment

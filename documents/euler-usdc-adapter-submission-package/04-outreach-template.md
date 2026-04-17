@@ -13,10 +13,10 @@ transactions.
 >
 > 1. AXUSD/USD `FixedRate` adapter
 >    - PR: `<LINK_TO_AXUSD_PR>`
->    - Adapter: `<AXUSD_DEPLOYED_ADDRESS>`
+>    - Adapter: `0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6`
 > 2. USDC/USD `Chainlink` adapter (this submission)
 >    - PR: `<LINK_TO_USDC_PR>`
->    - Adapter: `<USDC_DEPLOYED_ADDRESS>`
+>    - Adapter: `0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61`
 >    - Underlying: `0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3`
 >      (Chainlink USDC/USD, 8 dec, 24h heartbeat)
 >
@@ -50,13 +50,13 @@ transactions.
 >
 >   PR 1 (AXUSD/USD, FixedRate):
 >     PR:        <LINK_TO_AXUSD_PR>
->     Adapter:   <AXUSD_DEPLOYED_ADDRESS>
+>     Adapter:   0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6
 >     Base:      0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7  (AXUSD ERC-3643)
 >     Quote:     0x0000000000000000000000000000000000000348  (USD pseudo)
 >
 >   PR 2 (USDC/USD, Chainlink):
 >     PR:        <LINK_TO_USDC_PR>
->     Adapter:   <USDC_DEPLOYED_ADDRESS>
+>     Adapter:   0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61
 >     Base:      0xaf88d065e77c8cC2239327C5EDb3A432268e5831  (USDC)
 >     Quote:     0x0000000000000000000000000000000000000348  (USD pseudo)
 >     Feed:      0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3  (Chainlink USDC/USD)

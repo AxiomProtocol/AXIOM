@@ -32,8 +32,12 @@ verification still fails on the collateral leg with
 | Staleness window | 86400 s (24h heartbeat, immutable constant) |
 | Governance | None — adapter has no setters |
 | External calls | One: `latestRoundData()` on the Chainlink aggregator |
-| Deployed at | `<set after running scripts/deploy-usdc-usd-chainlink-adapter.js>` |
-| Deploy tx | `<set after deployment>` |
+| Deployed at | `0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61` (Arbitrum One, block 453471601) |
+| Deploy tx | `0x38c1745690ad9d5949c9b0f1ebbfcda056c2956a16310f3a1c24ca68fdf13a0b` |
+| Deployer | `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` (EOA) |
+| Gas used | 456,434 |
+| Wrapped feed | `0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3` (Chainlink USDC/USD, 8 dec, 24h heartbeat) |
+| Post-deploy probe | `getQuote(1e6 USDC, USDC, USD) = 99984400` (≈ $0.999844, live feed) ; `getQuote(1e8 USD, USD, USDC) = 1000156` ✓ |
 
 ## Why this adapter is fit for the registry
 

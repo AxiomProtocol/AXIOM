@@ -19,8 +19,11 @@ in the Euler V2 UI.
 | Pricing | 1 AXUSD = 1.000 USD (fixed peg, immutable) |
 | Governance | None — adapter has no setters |
 | External calls | None — pure decimal conversion |
-| Deployed at | `<set after running scripts/deploy-axusd-peg-adapter.js>` |
-| Deploy tx | `<set after deployment>` |
+| Deployed at | `0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6` (Arbitrum One, block 453471379) |
+| Deploy tx | `0x1274edad7ec6a203ce2df57a3416bcfd6b6a01b11fb9bac1b3c5934728517ee5` |
+| Deployer | `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` (EOA) |
+| Gas used | 320,204 |
+| Post-deploy probe | `getQuote(1e18 AXUSD, AXUSD, USD) = 100000000` ✓ ; `getQuote(1e8 USD, USD, AXUSD) = 1e18` ✓ |
 
 ## Why this adapter is fit for the registry
 

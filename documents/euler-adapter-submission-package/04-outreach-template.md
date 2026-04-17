@@ -12,7 +12,7 @@ unannounced PR can sit for weeks.
 > backed 1:1 by USDC via `CanonicalPSM`.
 >
 > PR: `<LINK_TO_PR>`
-> Adapter: `<DEPLOYED_ADDRESS>` (Arbiscan-verified)
+> Adapter: `0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6` (Arbiscan-verified)
 > Base / Quote: AXUSD `0xD611...Ade7` / USD pseudo `0x...0348`
 >
 > Adapter is immutable, single-pair, bidirectional, ERC-7726 conformant,
@@ -38,12 +38,12 @@ unannounced PR can sit for weeks.
 > adapter on Arbitrum One:
 >
 >     PR:        <LINK_TO_PR>
->     Adapter:   <DEPLOYED_ADDRESS>
+>     Adapter:   0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6
 >     Base:      0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7  (AXUSD ERC-3643)
 >     Quote:     0x0000000000000000000000000000000000000348  (USD pseudo)
 >     Type:      FixedRate
 >     Network:   Arbitrum One (42161)
->     Deploy tx: <TX_HASH>
+>     Deploy tx: 0x1274edad7ec6a203ce2df57a3416bcfd6b6a01b11fb9bac1b3c5934728517ee5
 >
 > Context:
 >
