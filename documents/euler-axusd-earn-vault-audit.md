@@ -97,14 +97,27 @@ EVK vault.
 
 This is **automatically fixed** by the canonical EVK redeploy work
 already documented in `euler-axusd-vault-unknown-fix.md`.  The required
-sequence after that vault ships is:
+sequence after that vault ships is automated in
+`scripts/switch-axusd-earn-strategy.js`:
 
-1. `submitCap(canonical_eaxusd, target_cap)` on this Earn vault.
-2. Wait the timelock (currently 0 → instant).
+```bash
+DEPLOYER_PRIVATE_KEY=... \
+CANONICAL_EVK_VAULT=0x<new_vault> \
+node scripts/switch-axusd-earn-strategy.js
+```
+
+That script idempotently:
+
+1. Sanity-checks the canonical vault (asset == AXUSD, perspective-verified).
+2. `submitCap(canonical_eaxusd, target_cap)` and waits the timelock.
 3. `acceptCap(canonical_eaxusd)`.
-4. `setSupplyQueue([canonical_eaxusd])` (drop the legacy strategy).
-5. Re-run `node scripts/audit-axusd-euler-earn-vault.js` to confirm both
-   Earn perspectives now verify.
+4. `setSupplyQueue([canonical_eaxusd])` (drops legacy from supply queue).
+5. Evicts the legacy strategy from the withdraw queue
+   (`submitCap(legacy, 0)` + `acceptCap` + `submitMarketRemoval` +
+   `updateWithdrawQueue`).  Bails if the legacy strategy still holds AXUSD;
+   the operator must rebalance first or pass `SKIP_LEGACY_REMOVAL=1`.
+6. Re-runs `scripts/audit-axusd-euler-earn-vault.js` and asserts that
+   BOTH Earn perspectives report VERIFIED.
 
 ### 4b. Owner is an unlabeled deployer EOA
 
