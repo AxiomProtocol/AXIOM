@@ -120,16 +120,117 @@ any other Arbitrum vault whose `owner` / `curator` is the same Safe.
 
 ---
 
+## Appendix A — Signer rotation (without changing the Safe address)
+
+The Safe address is a CREATE2 derivation of `(initial signers, initial
+threshold, saltNonce)` — but **owner-set mutations after deploy do not
+change the address**. Adding/removing signers or moving the threshold
+happens via `OwnerManager` calls *inside the existing proxy*, and the
+proxy's address (and therefore the `axiomRiskCouncil` label registered
+in `euler-xyz/euler-interfaces`) is preserved.
+
+> **⚠️ Do not "re-deploy" to rotate signers.** Running
+> `scripts/deploy-axusd-risk-council-safe.js` again with a different
+> signer set, threshold, or saltNonce produces a **different** Safe at
+> a **different** address. The Euler UI would silently fall back to the
+> raw address (the labeled one no longer holds the role) and you'd have
+> to redo steps 3–5 from scratch. Always rotate **inside** the existing
+> Safe.
+
+### A.1 The four rotation primitives
+
+All four calls below are sent **by the Safe to itself** — i.e. they are
+ordinary Safe transactions that need ≥ threshold signatures from the
+*current* owners.
+
+| Action | Function (on the Safe) | When to use |
+|---|---|---|
+| Add a signer | `addOwnerWithThreshold(newOwner, threshold)` | A new council member joins. Optionally bumps threshold in the same tx. |
+| Remove a signer | `removeOwner(prevOwner, owner, threshold)` | A signer leaves or a key is rotated out. Drops the count by 1; you must also pass the new threshold (≤ remaining owners). |
+| Replace a signer | `swapOwner(prevOwner, oldOwner, newOwner)` | A signer rotates one key for another (e.g. lost-key recovery while the old quorum is still reachable). Threshold unchanged. |
+| Re-key threshold only | `changeThreshold(threshold)` | Move from 2-of-3 ↔ 3-of-3 etc. without changing the owner set. |
+
+`prevOwner` is the linked-list predecessor of `owner` in
+`Safe.getOwners()` (or the sentinel `0x0000…0001` if `owner` is the
+first entry). The helper script computes it for you from a live RPC
+read; you only need to pass `PREV_OWNER=0x...` explicitly when the
+RPC lookup is unavailable (e.g. running fully offline).
+
+### A.2 Helper script
+
+```bash
+# Add a new council member, bump threshold to 2.
+SAFE=0x<existing-safe> ACTION=add \
+  NEW_OWNER=0x<new-member> THRESHOLD=2 \
+  node scripts/rotate-axusd-risk-council-safe-signers.js
+
+# Replace a lost key in-place (threshold unchanged).
+SAFE=0x<existing-safe> ACTION=swap \
+  OLD_OWNER=0x<lost-key> NEW_OWNER=0x<replacement> \
+  node scripts/rotate-axusd-risk-council-safe-signers.js
+
+# Remove a departing signer, lower threshold to match.
+SAFE=0x<existing-safe> ACTION=remove \
+  OLD_OWNER=0x<leaver> THRESHOLD=2 \
+  node scripts/rotate-axusd-risk-council-safe-signers.js
+
+# Just bump the threshold.
+SAFE=0x<existing-safe> ACTION=threshold THRESHOLD=3 \
+  node scripts/rotate-axusd-risk-council-safe-signers.js
+```
+
+For each action the script:
+
+- Reads the live owner set / threshold via RPC and sanity-checks the
+  request (e.g. refuses to "add" a signer that's already an owner, or
+  set a threshold above the post-rotation owner count).
+- Resolves `prevOwner` from the on-chain linked list when needed.
+- Prints raw calldata targeting the Safe address itself.
+- Writes a Safe Transaction Builder batch JSON to
+  `documents/euler-interfaces-pr/safe-rotate-<action>.batch.json`
+  (override with `OUT=...`) that the existing signers can import via
+  `app.safe.global → Apps → Transaction Builder → Load batch`.
+
+### A.3 Example Safe Tx Builder batch (add + raise threshold)
+
+The script emits, e.g. for `ACTION=add NEW_OWNER=0xNEW THRESHOLD=2`:
+
+```json
+{
+  "version": "1.0",
+  "chainId": "42161",
+  "meta": {
+    "name": "AXIOM Risk Council — rotate signers (add)",
+    "description": "In-place owner-set rotation on the existing Safe 0x<safe>. Action: addOwnerWithThreshold(0xNEW, 2). Executed inside the existing Safe proxy so its CREATE2 address — and the axiomRiskCouncil label registered in euler-xyz/euler-interfaces — are preserved."
+  },
+  "transactions": [
+    {
+      "to": "0x<safe>",
+      "value": "0",
+      "data": "0x0d582f13000000000000000000000000<NEW>0000000000000000000000000000000000000000000000000000000000000002"
+    }
+  ]
+}
+```
+
+After import, collect the *current* signers' approvals and execute.
+The Safe address and its registered label are unchanged; only the
+owner set / threshold inside the proxy are updated.
+
+---
+
 ## Files added by this task
 
 | File | Purpose |
 |---|---|
 | `scripts/deploy-axusd-risk-council-safe.js` | Predicts + prints the deploy calldata for the AXIOM Risk Council Safe; emits the PR JSON patch. |
 | `scripts/transfer-axusd-earn-vault-to-safe.js` | Emits `transferOwnership` / `acceptOwnership` / `setCurator` calldata + a Safe Tx Builder batch JSON for the handover. |
+| `scripts/rotate-axusd-risk-council-safe-signers.js` | Emits in-place `addOwnerWithThreshold` / `removeOwner` / `swapOwner` / `changeThreshold` calldata + a Safe Tx Builder batch — for rotating signers without changing the Safe's CREATE2 address (Appendix A). |
 | `documents/euler-axusd-risk-council-safe.md` | This runbook. |
 | `documents/euler-interfaces-pr/PR_DESCRIPTION.md` | Drop-in PR body for `euler-xyz/euler-interfaces`. |
 | `documents/euler-interfaces-pr/MultisigAddresses.patch.json` | JSON snippet to add to `addresses/42161/MultisigAddresses.json` (auto-filled by step 2). |
 | `documents/euler-interfaces-pr/safe-accept-ownership.batch.json` | Safe Tx Builder batch the new Safe imports to accept ownership + set curator (auto-generated by step 3). |
+| `documents/euler-interfaces-pr/safe-rotate-<action>.batch.json` | Safe Tx Builder batch for an in-place signer rotation (auto-generated by Appendix A's helper). |
 
 No existing scripts or contracts were modified. No on-chain transactions
 have been sent by this task — every state change is gated on a human
