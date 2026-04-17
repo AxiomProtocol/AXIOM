@@ -136,6 +136,42 @@ This change is cosmetic and can be deferred.  It overlaps with the
 multisig migration already implied by `euler-axusd-vault-unknown-fix.md`
 § 4.
 
+#### 4b-status (2026-04-17 re-verification)
+
+The full runbook for this fix lives at
+`documents/euler-axusd-risk-council-safe.md`.  Re-running
+`node scripts/audit-axusd-euler-earn-vault.js` today reports:
+
+```
+Owner label:    UNLABELED ✗ (deployer EOA — UI shows raw address)
+Curator label:  NONE (curator=0x0 — UI typically shows "None" or owner)
+```
+
+**The labeling fix has NOT shipped yet.**  Specifically:
+
+1. On-chain `owner` is still the deployer EOA `0x8d78…4C96` — runbook
+   steps 2–3 (`transferOwnership` from the deployer + `acceptOwnership`
+   from the new Safe) have not been broadcast.
+2. On-chain `curator` is still `0x0` — runbook step 4 (`setCurator`)
+   has not been broadcast.
+3. Upstream `addresses/42161/MultisigAddresses.json` on
+   `euler-xyz/euler-interfaces@master` currently contains only
+   `DAO`, `labs`, `securityCouncil`, `securityPartnerA`,
+   `securityPartnerB` — no `axiomRiskCouncil` key, so runbook step 5
+   (the `euler-interfaces` PR) has not merged either.
+
+Until those three prerequisites are met *and* Euler ships an interfaces
+bundle that contains the new label, there is nothing for the V2 UI to
+render and nothing to screenshot.  The Earn vault's perspective
+verification status (§2 above) is unaffected — only the cosmetic
+Owner / Risk Manager label is pending.
+
+Re-verify by re-running the audit script and watching for both
+`Owner label: LABELED ✓` and `Curator label: LABELED ✓` in the verdict
+block.  Once that flips, capture a screenshot of the vault page on
+`app.euler.finance` showing "AXIOM Risk Council" under both *Owner*
+and *Risk Manager* and save it next to this document.
+
 ### 4c. Underlying strategy carries the legacy oracle bug
 
 The legacy `eAXUSD-6` EVK vault has the zero-borrow-pricing bug
