@@ -164,6 +164,23 @@ would have permanently bricked governance.
 
 ---
 
+## 4a. One-shot diagnostic
+
+For a single read-only command that combines the audit, both adapter
+conformance probes, the registry isValid checks, and the perspective
+isVerified checks, run:
+
+```
+node scripts/diagnose-axusd-vault-unknown.js
+```
+
+It auto-detects whether the target vault is the EVK eVault, the Earn
+wrapper, or unrecognized, prints a verdict, and emits the exact Euler
+governance calldata for any missing registry registration. Set
+`VAULT=0x...` to override the target, or `JSON=1` for machine-readable
+output. The plain-English UI verification checklist this diagnostic
+backs is at `documents/euler-axusd-ui-verification-checklist.md`.
+
 ## 5. Manual UI verification checklist
 
 After step 1 + step 2 above, verify in the Euler V2 app

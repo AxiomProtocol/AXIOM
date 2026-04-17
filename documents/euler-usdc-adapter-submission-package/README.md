@@ -118,3 +118,5 @@ governance multisig transaction.
 | `documents/euler-axusd-vault-unknown-fix.md` | Upstream context: why both submissions exist |
 | `scripts/deploy-axusd-evk-vault-canonical.js` | Vault deploy that consumes both adapters |
 | `scripts/audit-axusd-evk-vault.js` | Vault-side audit; both oracle rows turn green once both registry txs land |
+| `scripts/diagnose-axusd-vault-unknown.js` | One-shot, read-only diagnostic; prints adapter-registry status, perspective status, and the next concrete action |
+| `documents/euler-axusd-ui-verification-checklist.md` | Plain-English UI verification checklist — run after Euler governance executes the registry call |

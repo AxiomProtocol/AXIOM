@@ -90,5 +90,7 @@ governance and the canonical vault redeploy (tracked separately).
 | `scripts/deploy-axusd-peg-adapter.js` | Deployment script (idempotent printout, single tx) |
 | `scripts/verify-axusd-peg-adapter.js` | Read-only conformance harness — attach output to the PR |
 | `documents/euler-axusd-vault-unknown-fix.md` | Upstream context: why this submission exists |
+| `documents/euler-axusd-ui-verification-checklist.md` | Plain-English UI verification checklist — run after Euler governance executes the registry call |
+| `scripts/diagnose-axusd-vault-unknown.js` | One-shot, read-only diagnostic; prints adapter-registry status, perspective status, and the next concrete action |
 | `scripts/audit-axusd-evk-vault.js` | Vault-side audit; will turn green once registry tx lands |
 | `scripts/fix-axusd-evk-vault-metadata.js` | Idempotent perspective-verify call; safe to re-run |
