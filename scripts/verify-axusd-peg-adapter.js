@@ -122,29 +122,28 @@ async function main() {
   }
 
   // ── Immutability surface (must NOT have any setter) ─────────────────────
-  console.log('\n[4/4] Immutability surface');
-  for (const sig of [
-    'function setGovernor(address)',
-    'function setOracle(address)',
-    'function setRate(uint256)',
-    'function setMaxStaleness(uint256)',
-    'function transferOwnership(address)',
-  ]) {
-    const probeAbi = [sig];
-    const probeContract = new ethers.Contract(ADAPTER, probeAbi, provider);
-    const m = sig.match(/function (\w+)/)[1];
-    let calldata;
-    try {
-      calldata = probeContract.interface.encodeFunctionData(m, [
-        m.endsWith('Ownership') || m.startsWith('setGovernor') || m.startsWith('setOracle')
-          ? '0x0000000000000000000000000000000000000000'
-          : 0,
-      ]);
-    } catch { continue; }
-    const result = await provider.call({ to: ADAPTER, data: calldata }).catch(() => '__revert__');
-    // For an immutable adapter, the function selector should not exist → revert with 0x.
-    const hasSetter = result !== '__revert__' && result !== '0x';
-    record(`No ${m}() — immutable surface`, !hasSetter, hasSetter ? 'setter present!' : 'absent');
+  // Inspect runtime bytecode for forbidden function selectors. This is more
+  // reliable than eth_call probing because state-mutating functions can return
+  // empty data on call simulation, producing a false-negative absence signal.
+  console.log('\n[4/4] Immutability surface (bytecode selector scan)');
+  const runtime = code.toLowerCase();
+  const forbidden = [
+    'setGovernor(address)',
+    'setOracle(address)',
+    'setRate(uint256)',
+    'setMaxStaleness(uint256)',
+    'setPsmFallback(bool)',
+    'setPsmAddresses(address,address)',
+    'transferOwnership(address)',
+    'renounceOwnership()',
+    'upgradeTo(address)',
+    'upgradeToAndCall(address,bytes)',
+  ];
+  for (const sig of forbidden) {
+    const selector = ethers.id(sig).slice(2, 10).toLowerCase(); // first 4 bytes hex, no 0x
+    const found = runtime.includes(selector);
+    record(`No ${sig} selector in runtime bytecode`, !found,
+      found ? `selector 0x${selector} present` : `selector 0x${selector} absent`);
   }
 
   finish();

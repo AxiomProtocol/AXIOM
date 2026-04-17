@@ -16,7 +16,7 @@
  *
  * After deploy:
  *   1. Record the address printed at the end.
- *   2. Run `node scripts/verify-axusd-peg-adapter.js DEPLOYED=<addr>` to confirm
+ *   2. Run `DEPLOYED=<addr> node scripts/verify-axusd-peg-adapter.js` to confirm
  *      ERC-7726 conformance + bidirectional pricing on-chain.
  *   3. Update `documents/euler-adapter-submission-package/03-registry-pr-payload.md`
  *      with the deployed address.
