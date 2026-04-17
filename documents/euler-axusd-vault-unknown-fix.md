@@ -258,3 +258,36 @@ build the oracle layer first and deploy the vault once.
   risk incident that needs disclosure + freeze + migration.  If no
   borrows exist, deprecate the vault directly via the new canonical path.
 
+---
+
+## 8. Earn-vault switch attempt (2026-04-17, status check)
+
+`scripts/switch-axusd-earn-strategy.js` was scheduled to run once the
+canonical safe replacement vault was live.  Status check today:
+
+| Prerequisite | State |
+|---|---|
+| AXUSD/USD peg adapter built | **Not yet** (§7d follow-up still open) |
+| USDC/USD adapter wired | **Not yet** (§7d follow-up still open) |
+| Both adapters registered in `oracleAdapterRegistry` | **Not yet** (Euler governance gate) |
+| Canonical EVK vault deployed (`scripts/deploy-axusd-evk-vault-canonical.js`) | **Not run** — no `.local/canonical-deploy-state.json` present |
+| Canonical vault perspective-verified | **N/A** (no vault to verify) |
+
+`DRY_RUN=1 node scripts/switch-axusd-earn-strategy.js` was executed and
+exited at the input-validation step exactly as designed:
+
+```
+✗ CANONICAL_EVK_VAULT not set and could not be loaded from STATE_FILE.
+```
+
+Even if a canonical address were forced via env, the script's step-[1]
+sanity check would still refuse to proceed because no Ungoverned
+perspective can verify a vault until the AXUSD/USD + USDC/USD adapters
+are added to the adapter registry by Euler governance.
+
+**Conclusion:** the switch is still blocked on upstream work.  No
+on-chain transactions were broadcast.  The script remains correct and
+idempotent; re-run it (without `DRY_RUN`) once the prerequisite chain in
+the table above is fully green and the canonical address is in
+`.local/canonical-deploy-state.json` (or supplied via `CANONICAL_EVK_VAULT`).
+
