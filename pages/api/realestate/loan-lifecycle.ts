@@ -9,6 +9,7 @@ import {
   valueAxusdAsUsd,
   type Erc7726QuoteReader,
 } from '../../../server/services/oracle/axusdUsdValuation';
+import { recordAxusdParityFallback } from '../../../server/services/oracle/axusdParityFallbackAlert';
 
 const ARBITRUM_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY ?? ''}`;
 
@@ -824,8 +825,29 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
         const valuation = await valueAxusdAsUsd(oracleContract as unknown as Erc7726QuoteReader, principalWei18);
         writeDownUsdValue = valuation.usdValue;
         oracleUsed = valuation.source === 'erc7726_peg' ? 'erc7726_on_chain' : 'static_parity';
+        if (valuation.source === 'static_parity') {
+          recordAxusdParityFallback({
+            caller: 'loan-lifecycle:charge_off',
+            loanId: loan.loan_id,
+            principalUsd: principalUsd.toFixed(2),
+            extra: {
+              oracleAddress: AXUSD_USD_PEG_ADAPTER,
+              chainTxHash,
+              onChainQuoteUsable: valuation.onChainQuoteUsable,
+            },
+          });
+        }
       } else {
         writeDownUsdValue = principalUsd.toFixed(2);
+        recordAxusdParityFallback({
+          caller: 'loan-lifecycle:charge_off',
+          loanId: loan.loan_id,
+          principalUsd: principalUsd.toFixed(2),
+          extra: {
+            reason: 'oracle_not_deployed',
+            chainTxHash,
+          },
+        });
       }
     }
 
@@ -880,8 +902,29 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
         const valuation = await valueAxusdAsUsd(oracleContract as unknown as Erc7726QuoteReader, principalWei18);
         exposureUsdValue = valuation.usdValue;
         oracleUsed = valuation.source === 'erc7726_peg' ? 'erc7726_on_chain' : 'static_parity';
+        if (valuation.source === 'static_parity') {
+          recordAxusdParityFallback({
+            caller: 'loan-lifecycle:default',
+            loanId: loan.loan_id,
+            principalUsd: principalUsd.toFixed(2),
+            extra: {
+              oracleAddress: AXUSD_USD_PEG_ADAPTER,
+              chainTxHash,
+              onChainQuoteUsable: valuation.onChainQuoteUsable,
+            },
+          });
+        }
       } else {
         exposureUsdValue = principalUsd.toFixed(2);
+        recordAxusdParityFallback({
+          caller: 'loan-lifecycle:default',
+          loanId: loan.loan_id,
+          principalUsd: principalUsd.toFixed(2),
+          extra: {
+            reason: 'oracle_not_deployed',
+            chainTxHash,
+          },
+        });
       }
     }
 
