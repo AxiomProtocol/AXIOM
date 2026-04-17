@@ -1,22 +1,81 @@
-# 03 — Registry PR Payload
+# 03 — Registry Governance Request Payload
 
-This document contains the **exact** content to drop into a pull request
-against [`euler-xyz/euler-interfaces`](https://github.com/euler-xyz/euler-interfaces).
+> **Note (2026-04-17 — corrected):** an earlier draft of this document
+> assumed registration happens via a pull request to
+> `euler-xyz/euler-interfaces`. That is incorrect. The Arbitrum
+> `oracleAdapterRegistry` (`0x3942A72f87Db5Ad9C22d8826FDe15E23b81b1cBf`)
+> is governed by `Ownable`, owner =
+> `0xb3dCA151d92c6e40450e67098444DcF60d99Bc3d` (Euler governance
+> multisig). Registration is **on-chain only** — there is no JSON file
+> in the `euler-interfaces` repo for adapters. The unblock is a
+> governance request to the registry owner asking them to call `add()`.
+> The full PR-flow boilerplate has been removed below; outreach
+> instructions live in `04-outreach-template.md`.
 
-The Euler maintainers use the merged `addresses/42161/...` files to build
-the governance transaction that calls
-`oracleAdapterRegistry.add(adapter, base, quote)` on Arbitrum
-(`oracleAdapterRegistry` = `0x3942A72f87Db5Ad9C22d8826FDe15E23b81b1cBf`).
-The on-chain registration tx is signed by Euler governance, **not** by
-Axiom — that is what makes this an off-chain coordination task.
+This document contains the exact governance call data Axiom needs Euler
+to execute on Arbitrum One in order to register the AXUSD/USD adapter.
 
-## Branch / PR title
+## Target
+
+| Field | Value |
+|---|---|
+| Network | Arbitrum One (chainId 42161) |
+| Registry | `0x3942A72f87Db5Ad9C22d8826FDe15E23b81b1cBf` (`oracleAdapterRegistry`) |
+| Registry owner | `0xb3dCA151d92c6e40450e67098444DcF60d99Bc3d` (Euler governance multisig) |
+| Function | `add(address element, address base, address quote)` |
+| Access | `onlyOwner` |
+
+## Call payload
 
 ```
-arbitrum: register AXUSDPegOracleAdapter (AXUSD/USD)
+to:    0x3942A72f87Db5Ad9C22d8826FDe15E23b81b1cBf
+value: 0
+data:  add(
+         element = 0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6,  // AXUSDPegOracleAdapter
+         base    = 0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7,  // AXUSD
+         quote   = 0x0000000000000000000000000000000000000348   // USD pseudo
+       )
 ```
 
-## PR description (paste verbatim)
+Solidity-encoded selector + calldata (for direct multisig submission):
+
+```
+function: add(address,address,address)
+selector: 0xa693686f   (= keccak256("add(address,address,address)")[:4])
+args:
+  0x0000000000000000000000001862D3c85382c4f4b81a9a9e0d31b289963D70d6
+  0x000000000000000000000000D6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7
+  0x0000000000000000000000000000000000000000000000000000000000000348
+
+full calldata (for paste into a multisig "raw transaction" field):
+0xa693686f0000000000000000000000001862d3c85382c4f4b81a9a9e0d31b289963d70d6000000000000000000000000d6110f59a978ada6ef5c0e9d6baa04455d46ade70000000000000000000000000000000000000000000000000000000000000348
+```
+
+Reproduce locally:
+
+```js
+const { ethers } = require('ethers');
+new ethers.Interface([
+  'function add(address element, address base, address quote)'
+]).encodeFunctionData('add', [
+  '0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6', // adapter
+  '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7', // AXUSD
+  '0x0000000000000000000000000000000000000348', // USD pseudo
+]);
+```
+
+Expected event on success:
+
+```
+Added(
+  element = 0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6,
+  asset0  = 0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7,
+  asset1  = 0x0000000000000000000000000000000000000348,
+  addedAt = block.timestamp
+)
+```
+
+## Adapter facts (paste into outreach / governance proposal)
 
 > Adds the AXUSD/USD price adapter to the Arbitrum One
 > `oracleAdapterRegistry`. AXUSD is a USD-pegged ERC-3643 stablecoin
@@ -46,65 +105,29 @@ arbitrum: register AXUSDPegOracleAdapter (AXUSD/USD)
 > deployed adapter is attached below.
 >
 > ### Address
-> Adapter: `0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6` (Arbiscan-verified, see deploy tx)
-> Base:    `0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7` (AXUSD)
-> Quote:   `0x0000000000000000000000000000000000000348` (USD pseudo)
-> Network: Arbitrum One (42161)
-> Deploy tx: `0x1274edad7ec6a203ce2df57a3416bcfd6b6a01b11fb9bac1b3c5934728517ee5`
-> Source:  `contracts/oracle/AXUSDPegOracleAdapter.sol`
+> Adapter:    `0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6` (Blockscout-verified)
+> Base:       `0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7` (AXUSD)
+> Quote:      `0x0000000000000000000000000000000000000348` (USD pseudo)
+> Network:    Arbitrum One (42161)
+> Deploy tx:  `0x1274edad7ec6a203ce2df57a3416bcfd6b6a01b11fb9bac1b3c5934728517ee5`
+> Source:     `contracts/oracle/AXUSDPegOracleAdapter.sol`
+> Explorer:   https://arbitrum.blockscout.com/address/0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6#code
 
-## File changes
+## Pre-request checklist (Axiom side)
 
-### 1. `addresses/42161/SnapshotRegistry/oracleAdapterRegistry.json`
-
-Append the entry below to the existing JSON array. Field names mirror
-existing entries in the registry — confirm the exact schema with the
-maintainers before committing (the file structure may include extra
-fields like `addedAt` that are populated post-merge).
-
-```json
-{
-  "adapter": "0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6",
-  "base":    "0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7",
-  "quote":   "0x0000000000000000000000000000000000000348",
-  "name":    "AXUSDPegOracleAdapter",
-  "type":    "FixedRate",
-  "deployer":"0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
-  "deployTx":"0x1274edad7ec6a203ce2df57a3416bcfd6b6a01b11fb9bac1b3c5934728517ee5",
-  "deployBlock": 453471379,
-  "verified": true
-}
-```
-
-### 2. `addresses/42161/labels.json` — optional, if format requires
-
-```json
-"0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6": "AXUSDPegOracleAdapter (AXUSD/USD, FixedRate)"
-```
-
-### 3. Conformance attachment
-
-Attach the full output of `DEPLOYED=<addr> node scripts/verify-axusd-peg-adapter.js`
-as a comment on the PR (or as a code block in the PR description). Every
-check should be `[PASS]`. If any check is `[FAIL]`, do not open the PR
-until the underlying issue is resolved.
-
-## Pre-PR checklist (Axiom side)
-
-- [ ] Adapter deployed to Arbitrum One via `scripts/deploy-axusd-peg-adapter.js`
-- [ ] Address recorded above
-- [ ] Source verified on Arbiscan (`npx hardhat verify --network arbitrum <addr>`)
-- [ ] Conformance script run, all checks pass
-- [ ] Conformance output captured for the PR description
-- [ ] AXIOM team has reviewed the PR description for accuracy
+- [x] Adapter deployed to Arbitrum One via `scripts/deploy-axusd-peg-adapter.js`
+- [x] Address recorded above
+- [x] Source verified on Arbitrum Blockscout
+- [ ] Conformance script run, all checks pass — capture output for the proposal
+- [ ] AXIOM team has reviewed the proposal text for accuracy
 - [ ] Outreach to Euler Labs queued (see `04-outreach-template.md`)
 
-## Post-PR checklist (Euler side, tracked)
+## Post-request checklist (Euler side, tracked)
 
-- [ ] PR reviewed by Euler Labs
+- [ ] Governance request acknowledged
 - [ ] Governance tx scheduled
-- [ ] Governance tx executed: `oracleAdapterRegistry.add(<addr>, AXUSD, USD)`
-- [ ] On-chain confirmation via `oracleAdapterRegistry.isValid(<addr>, ts)` returning true
+- [ ] Governance tx executed: `oracleAdapterRegistry.add(0x1862…D70d6, AXUSD, USD)`
+- [ ] On-chain confirmation via `oracleAdapterRegistry.isValid(0x1862…D70d6, ts)` returning true
 
 ## Post-acceptance checklist (Axiom side, tracked)
 

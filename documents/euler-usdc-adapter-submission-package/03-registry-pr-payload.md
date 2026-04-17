@@ -1,27 +1,84 @@
-# 03 — Registry PR Payload
+# 03 — Registry Governance Request Payload
 
-This document contains the **exact** content to drop into a pull
-request against
-[`euler-xyz/euler-interfaces`](https://github.com/euler-xyz/euler-interfaces).
+> **Note (2026-04-17 — corrected):** an earlier draft of this document
+> assumed registration happens via a pull request to
+> `euler-xyz/euler-interfaces`. That is incorrect. The Arbitrum
+> `oracleAdapterRegistry` (`0x3942A72f87Db5Ad9C22d8826FDe15E23b81b1cBf`)
+> is governed by `Ownable`, owner =
+> `0xb3dCA151d92c6e40450e67098444DcF60d99Bc3d` (Euler governance
+> multisig). Registration is **on-chain only** — there is no JSON file
+> in the `euler-interfaces` repo for adapters. The unblock is a
+> governance request to the registry owner asking them to call `add()`.
+> Outreach instructions live in `04-outreach-template.md`.
 
-The Euler maintainers use the merged `addresses/42161/...` files to
-build the governance transaction that calls
-`oracleAdapterRegistry.add(adapter, base, quote)` on Arbitrum
-(`oracleAdapterRegistry` = `0x3942A72f87Db5Ad9C22d8826FDe15E23b81b1cBf`).
-The on-chain registration tx is signed by Euler governance, **not** by
-Axiom — that is what makes this an off-chain coordination task.
+This document contains the exact governance call data Axiom needs Euler
+to execute on Arbitrum One in order to register the USDC/USD adapter.
 
-This PR should be opened **at the same time** as the AXUSD/USD adapter
-PR so the two can be batched into a single Euler governance
+It should be requested **at the same time** as the AXUSD/USD adapter so
+the two `add()` calls can be batched into a single Euler governance
 transaction.
 
-## Branch / PR title
+## Target
+
+| Field | Value |
+|---|---|
+| Network | Arbitrum One (chainId 42161) |
+| Registry | `0x3942A72f87Db5Ad9C22d8826FDe15E23b81b1cBf` (`oracleAdapterRegistry`) |
+| Registry owner | `0xb3dCA151d92c6e40450e67098444DcF60d99Bc3d` (Euler governance multisig) |
+| Function | `add(address element, address base, address quote)` |
+| Access | `onlyOwner` |
+
+## Call payload
 
 ```
-arbitrum: register ChainlinkUSDCOracleAdapter (USDC/USD)
+to:    0x3942A72f87Db5Ad9C22d8826FDe15E23b81b1cBf
+value: 0
+data:  add(
+         element = 0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61,  // ChainlinkUSDCOracleAdapter
+         base    = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831,  // USDC (Arbitrum native)
+         quote   = 0x0000000000000000000000000000000000000348   // USD pseudo
+       )
 ```
 
-## PR description (paste verbatim)
+Solidity-encoded selector + calldata (for direct multisig submission):
+
+```
+function: add(address,address,address)
+selector: 0xa693686f   (= keccak256("add(address,address,address)")[:4])
+args:
+  0x00000000000000000000000049EBE245b8fAC6f9cF70c2Ca415e0749fB602E61
+  0x000000000000000000000000af88d065e77c8cC2239327C5EDb3A432268e5831
+  0x0000000000000000000000000000000000000000000000000000000000000348
+
+full calldata (for paste into a multisig "raw transaction" field):
+0xa693686f00000000000000000000000049ebe245b8fac6f9cf70c2ca415e0749fb602e61000000000000000000000000af88d065e77c8cc2239327c5edb3a432268e58310000000000000000000000000000000000000000000000000000000000000348
+```
+
+Reproduce locally:
+
+```js
+const { ethers } = require('ethers');
+new ethers.Interface([
+  'function add(address element, address base, address quote)'
+]).encodeFunctionData('add', [
+  '0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61', // adapter
+  '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // USDC
+  '0x0000000000000000000000000000000000000348', // USD pseudo
+]);
+```
+
+Expected event on success:
+
+```
+Added(
+  element = 0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61,
+  asset0  = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831,
+  asset1  = 0x0000000000000000000000000000000000000348,
+  addedAt = block.timestamp
+)
+```
+
+## Adapter facts (paste into outreach / governance proposal)
 
 > Adds a USDC/USD price adapter to the Arbitrum One
 > `oracleAdapterRegistry`. The adapter wraps the Chainlink `USDC / USD`
@@ -35,7 +92,7 @@ arbitrum: register ChainlinkUSDCOracleAdapter (USDC/USD)
 > (`latestRoundData()`).
 >
 > ### Why a separate USDC/USD adapter
-> This submission is paired with the AXUSD/USD adapter PR
+> This submission is paired with the AXUSD/USD adapter request
 > (`AXUSDPegOracleAdapter`). The canonical AXUSD eVault uses USDC as
 > collateral; for `eulerUngoverned0xPerspective` to verify the vault
 > the EulerRouter must price BOTH the asset (AXUSD) and the collateral
@@ -47,7 +104,7 @@ arbitrum: register ChainlinkUSDCOracleAdapter (USDC/USD)
 > ### Why hard-code the feed
 > The Chainlink feed address is a `constant` baked into bytecode rather
 > than a constructor parameter. This means verifying the contract on
-> Arbiscan also verifies the feed binding — there is no deploy-time
+> Blockscout also verifies the feed binding — there is no deploy-time
 > knob for an attacker to mis-set.
 >
 > ### Submission package
@@ -61,80 +118,38 @@ arbitrum: register ChainlinkUSDCOracleAdapter (USDC/USD)
 > the deployed adapter is attached below.
 >
 > ### Address
-> Adapter:    `0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61` (Arbiscan-verified, see deploy tx)
+> Adapter:    `0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61` (Blockscout-verified)
 > Base:       `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` (USDC)
 > Quote:      `0x0000000000000000000000000000000000000348` (USD pseudo)
 > Underlying: `0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3` (Chainlink USDC/USD)
 > Network:    Arbitrum One (42161)
 > Deploy tx:  `0x38c1745690ad9d5949c9b0f1ebbfcda056c2956a16310f3a1c24ca68fdf13a0b`
 > Source:     `contracts/oracle/ChainlinkUSDCOracleAdapter.sol`
+> Explorer:   https://arbitrum.blockscout.com/address/0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61#code
 
-## File changes
-
-### 1. `addresses/42161/SnapshotRegistry/oracleAdapterRegistry.json`
-
-Append the entry below to the existing JSON array. Field names mirror
-existing entries in the registry — confirm the exact schema with the
-maintainers before committing (the file structure may include extra
-fields like `addedAt` that are populated post-merge).
-
-```json
-{
-  "adapter": "0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61",
-  "base":    "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-  "quote":   "0x0000000000000000000000000000000000000348",
-  "name":    "ChainlinkUSDCOracleAdapter",
-  "type":    "Chainlink",
-  "feed":    "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
-  "feedDescription": "USDC / USD",
-  "feedDecimals": 8,
-  "maxStaleness": 86400,
-  "deployer":"0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
-  "deployTx":"0x38c1745690ad9d5949c9b0f1ebbfcda056c2956a16310f3a1c24ca68fdf13a0b",
-  "deployBlock": 453471601,
-  "verified": true
-}
-```
-
-### 2. `addresses/42161/labels.json` — optional, if format requires
-
-```json
-"0x49EBE245b8fAC6f9cF70c2Ca415e0749fB602E61": "ChainlinkUSDCOracleAdapter (USDC/USD, Chainlink)"
-```
-
-### 3. Conformance attachment
-
-Attach the full output of
-`DEPLOYED=<addr> node scripts/verify-usdc-usd-chainlink-adapter.js`
-as a comment on the PR (or as a code block in the PR description).
-Every check should be `[PASS]`. If any check is `[FAIL]`, do not open
-the PR until the underlying issue is resolved.
-
-## Pre-PR checklist (Axiom side)
+## Pre-request checklist (Axiom side)
 
 - [ ] `node scripts/check-usdc-usd-adapter-registry.js` shows no
       pre-existing valid USDC/USD adapter (re-confirm right before
-      opening the PR)
-- [ ] Adapter deployed to Arbitrum One via
+      sending outreach)
+- [x] Adapter deployed to Arbitrum One via
       `scripts/deploy-usdc-usd-chainlink-adapter.js`
-- [ ] Address recorded above
-- [ ] Source verified on Arbiscan
-      (`npx hardhat verify --network arbitrum <addr>`)
-- [ ] Conformance script run, all checks pass
-- [ ] Conformance output captured for the PR description
-- [ ] AXUSD/USD adapter PR opened in the same session (so Euler can
+- [x] Address recorded above
+- [x] Source verified on Arbitrum Blockscout
+- [ ] Conformance script run, all checks pass — capture output for the proposal
+- [ ] AXUSD/USD adapter requested in the same session (so Euler can
       batch the two governance txs)
-- [ ] AXIOM team has reviewed the PR description for accuracy
+- [ ] AXIOM team has reviewed the proposal text for accuracy
 - [ ] Outreach to Euler Labs queued (see `04-outreach-template.md`)
 
-## Post-PR checklist (Euler side, tracked)
+## Post-request checklist (Euler side, tracked)
 
-- [ ] PR reviewed by Euler Labs
-- [ ] Governance tx scheduled (ideally batched with the AXUSD/USD PR)
+- [ ] Governance request acknowledged
+- [ ] Governance tx scheduled (ideally batched with the AXUSD/USD request)
 - [ ] Governance tx executed:
-      `oracleAdapterRegistry.add(<addr>, USDC, USD)`
+      `oracleAdapterRegistry.add(0x49EB…2E61, USDC, USD)`
 - [ ] On-chain confirmation via
-      `oracleAdapterRegistry.isValid(<addr>, ts)` returning true
+      `oracleAdapterRegistry.isValid(0x49EB…2E61, ts)` returning true
 
 ## Post-acceptance checklist (Axiom side, tracked)
 

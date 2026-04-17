@@ -113,7 +113,7 @@ governance is renounced — see
 Yes. The deploy script (`scripts/deploy-usdc-usd-chainlink-adapter.js`)
 compiles this exact source via Hardhat and prints an
 `npx hardhat verify` command in its post-deploy printout, allowing
-public bytecode verification on Arbiscan immediately after deployment.
+public bytecode verification on Blockscout immediately after deployment.
 
 **Q17. Is the deployer EOA or a multisig?**
 EOA (`DEPLOYER_PRIVATE_KEY`). This is acceptable because the adapter

@@ -52,18 +52,23 @@ detailed rejection rationale and on-chain evidence.
 
 ## Submission steps (chronological)
 
+> **Note:** an earlier draft listed step 4 as "open a PR against
+> `euler-xyz/euler-interfaces`". That repo holds no per-adapter JSON
+> file; the `oracleAdapterRegistry` is on-chain only and only the
+> registry owner (Euler governance multisig) can call `add()`. Step 4
+> is therefore an off-chain governance request, not a PR.
+
 | # | Step | Owner | Status |
 |---|------|-------|--------|
-| 1 | Deploy adapter (`scripts/deploy-axusd-peg-adapter.js`) | AXIOM deployer | pending |
-| 2 | Verify on Arbiscan (`npx hardhat verify`) | AXIOM deployer | pending |
-| 3 | Run conformance script and attach output to PR | AXIOM | pending |
-| 4 | Open PR against `euler-xyz/euler-interfaces` (template in [03-registry-pr-payload.md](./03-registry-pr-payload.md)) | AXIOM | pending |
-| 5 | Notify Euler Labs (template in [04-outreach-template.md](./04-outreach-template.md)) | AXIOM | pending |
-| 6 | Wait for Euler governance tx that calls `oracleAdapterRegistry.add(adapter, AXUSD, USD)` | Euler Labs | pending |
-| 7 | Re-run `scripts/fix-axusd-evk-vault-metadata.js` against the new canonical AXUSD vault to confirm `perspectiveVerify` succeeds | AXIOM | pending |
-| 8 | Confirm Euler V2 UI shows recognized vault type / risk manager | AXIOM | pending |
+| 1 | Deploy adapter (`scripts/deploy-axusd-peg-adapter.js`) | AXIOM deployer | done — block 453471379, tx `0x1274edad…17ee5` |
+| 2 | Verify on Arbitrum Blockscout (`npx hardhat verify --network arbitrum`) | AXIOM deployer | done — https://arbitrum.blockscout.com/address/0x1862D3c85382c4f4b81a9a9e0d31b289963D70d6#code |
+| 3 | Run conformance script and capture output for the proposal | AXIOM | pending |
+| 4 | Send governance request to Euler Labs asking the registry owner to call `oracleAdapterRegistry.add(adapter, AXUSD, USD)` (template in [04-outreach-template.md](./04-outreach-template.md), call payload in [03-registry-pr-payload.md](./03-registry-pr-payload.md)) | AXIOM | pending |
+| 5 | Wait for Euler governance tx | Euler Labs | pending |
+| 6 | Re-run `scripts/fix-axusd-evk-vault-metadata.js` against the new canonical AXUSD vault to confirm `perspectiveVerify` succeeds | AXIOM | pending |
+| 7 | Confirm Euler V2 UI shows recognized vault type / risk manager | AXIOM | pending |
 
-Steps 1–5 are the AXIOM scope of this task. Steps 6–8 wait on Euler
+Steps 1–4 are the AXIOM scope of this task. Steps 5–7 wait on Euler
 governance and the canonical vault redeploy (tracked separately).
 
 ## Files in this package
@@ -73,8 +78,8 @@ governance and the canonical vault redeploy (tracked separately).
 | `README.md` (this file) | Index and submission timeline |
 | `01-adapter-spec.md` | Technical specification of `AXUSDPegOracleAdapter` |
 | `02-audit-checklist.md` | Standard Euler oracle-adapter review questions, answered |
-| `03-registry-pr-payload.md` | Exact PR description and JSON delta to file against `euler-xyz/euler-interfaces` |
-| `04-outreach-template.md` | Discord / email message templates for Euler Labs |
+| `03-registry-pr-payload.md` | Governance call payload (the exact `add(…)` calldata for Euler's multisig) |
+| `04-outreach-template.md` | Discord / email message templates for the Euler governance request |
 | `05-why-not-existing-adapter.md` | Rejection rationale for `0xc894...7c4e` with on-chain probe results |
 
 ## Related artifacts in the repo

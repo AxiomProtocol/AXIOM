@@ -132,7 +132,7 @@ address has the same operational risk as a setter — the deployer can
 choose a malicious feed at deploy time, and a reviewer must inspect the
 deploy tx to verify. By hard-coding `FEED` as `constant`, the adapter
 bytecode itself attests to the feed selection, and verifying the
-adapter on Arbiscan also verifies the feed binding.
+adapter on Blockscout also verifies the feed binding.
 
 ## Auditability
 
