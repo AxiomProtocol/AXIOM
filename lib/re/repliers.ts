@@ -157,50 +157,48 @@ export async function searchListings(params: {
   if (!keyInfo) return { data: EMPTY_LISTINGS, isTestMode: true };
 
   try {
-    const body: Record<string, unknown> = {};
-    const addressParts: Record<string, string> = {};
-    if (params.city) addressParts.city = params.city;
-    if (params.state) addressParts.state = params.state;
-    if (params.zip) addressParts.zip = params.zip;
-    if (params.streetNumber) addressParts.streetNumber = params.streetNumber;
-    if (params.streetName) addressParts.streetName = params.streetName;
-    if (params.streetSuffix) addressParts.streetSuffix = params.streetSuffix;
-    if (Object.keys(addressParts).length > 0) body.address = addressParts;
-    if (params.status) body.status = params.status;
-    if (params.lastStatus) {
-      body.lastStatus = Array.isArray(params.lastStatus) ? params.lastStatus : [params.lastStatus];
-    }
-    if (params.minPrice) body.minPrice = params.minPrice;
-    if (params.maxPrice) body.maxPrice = params.maxPrice;
-    if (params.minBeds) body.minBeds = params.minBeds;
-    if (params.maxBeds) body.maxBeds = params.maxBeds;
-    if (params.minBaths) body.minBaths = params.minBaths;
-    if (params.minSqft) body.minSqft = params.minSqft;
-    if (params.maxSqft) body.maxSqft = params.maxSqft;
-    if (params.propertyType) {
-      body.propertyType = Array.isArray(params.propertyType) ? params.propertyType : [params.propertyType];
-    }
-    if (params.classes) {
-      body.class = Array.isArray(params.classes) ? params.classes : [params.classes];
-    }
-    if (params.style) {
-      body.style = Array.isArray(params.style) ? params.style : [params.style];
-    }
-    if (params.search) body.search = params.search;
-    if (params.daysOnMarketMin || params.daysOnMarketMax) {
-      const dom: Record<string, number> = {};
-      if (params.daysOnMarketMin) dom.min = params.daysOnMarketMin;
-      if (params.daysOnMarketMax) dom.max = params.daysOnMarketMax;
-      body.daysOnMarket = dom;
-    }
-    if (params.addressKey) body.addressKey = params.addressKey;
-    if (params.pageNum) body.pageNum = params.pageNum;
-    if (params.resultsPerPage) body.resultsPerPage = params.resultsPerPage;
+    const qs = new URLSearchParams();
+    const appendArr = (key: string, val: string | string[] | undefined) => {
+      if (!val) return;
+      const arr = Array.isArray(val) ? val : [val];
+      arr.filter(Boolean).forEach((v) => qs.append(key, String(v)));
+    };
+    const appendNum = (key: string, val: number | undefined) => {
+      if (val == null || !Number.isFinite(val)) return;
+      qs.append(key, String(val));
+    };
+    const appendStr = (key: string, val: string | undefined) => {
+      if (val) qs.append(key, val);
+    };
 
-    const res = await fetch(`${REPLIERS_BASE}/listings`, {
-      method: 'POST',
+    appendStr('city', params.city);
+    appendStr('state', params.state);
+    appendStr('zip', params.zip);
+    appendStr('streetNumber', params.streetNumber);
+    appendStr('streetName', params.streetName);
+    appendStr('streetSuffix', params.streetSuffix);
+    appendStr('status', params.status);
+    appendArr('lastStatus', params.lastStatus);
+    appendNum('minPrice', params.minPrice);
+    appendNum('maxPrice', params.maxPrice);
+    appendNum('minBeds', params.minBeds);
+    appendNum('maxBeds', params.maxBeds);
+    appendNum('minBaths', params.minBaths);
+    appendNum('minSqft', params.minSqft);
+    appendNum('maxSqft', params.maxSqft);
+    appendArr('propertyType', params.propertyType);
+    appendArr('class', params.classes);
+    appendArr('style', params.style);
+    appendStr('search', params.search);
+    appendNum('minDaysOnMarket', params.daysOnMarketMin);
+    appendNum('maxDaysOnMarket', params.daysOnMarketMax);
+    appendStr('addressKey', params.addressKey);
+    appendNum('pageNum', params.pageNum);
+    appendNum('resultsPerPage', params.resultsPerPage);
+
+    const res = await fetch(`${REPLIERS_BASE}/listings?${qs.toString()}`, {
+      method: 'GET',
       headers: repliersHeaders(keyInfo.key),
-      body: JSON.stringify(body),
       signal: AbortSignal.timeout(15000),
     });
 
