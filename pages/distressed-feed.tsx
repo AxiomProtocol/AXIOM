@@ -1218,6 +1218,163 @@ const MLS_STRATEGIES: { id: string; label: string; hint: string }[] = [
   { id: 'all', label: 'All Active', hint: 'No distress filter applied' },
 ];
 
+function fmtCurrency(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return '--';
+  return `$${Math.round(n).toLocaleString()}`;
+}
+
+function fmtSignedCurrency(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return '--';
+  const sign = n > 0 ? '+' : (n < 0 ? '-' : '');
+  return `${sign}$${Math.abs(Math.round(n)).toLocaleString()}`;
+}
+
+function CmaReport({ report }: { report: any }) {
+  const subject = report.subject || {};
+  const avm = report.avm || {};
+  const stats = report.stats || {};
+  const sold = report.comps?.sold || [];
+  const active = report.comps?.active || [];
+
+  const deltaColor = (n: number | null | undefined) => {
+    if (n == null) return 'text-[#5a6c7d]';
+    return n < 0 ? 'text-[#1a5e1a]' : 'text-[#8b1a1a]';
+  };
+
+  return (
+    <div className="mt-4 border border-[#2c3e50]">
+      <div className="bg-[#2c3e50] px-4 py-2 flex items-center justify-between">
+        <div className="font-serif text-sm uppercase tracking-wider text-white">
+          Comparative Market Analysis
+        </div>
+        <div className="font-mono text-xs text-[#cbd5e1]">
+          {report.generatedAt ? new Date(report.generatedAt).toLocaleString() : ''}
+        </div>
+      </div>
+
+      <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-3 border-b border-[#cbd5e1]">
+        <div>
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">AVM Estimate</div>
+          <div className="font-mono text-base text-[#2c3e50]">{fmtCurrency(avm.price)}</div>
+          {(avm.priceMin || avm.priceMax) && (
+            <div className="font-mono text-xs text-[#5a6c7d]">
+              {fmtCurrency(avm.priceMin)} – {fmtCurrency(avm.priceMax)}
+            </div>
+          )}
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">ARV (Blended)</div>
+          <div className="font-mono text-base text-[#2c3e50]">{fmtCurrency(stats.arvBlend)}</div>
+          <div className="font-mono text-xs text-[#5a6c7d]">PPSF + median sold</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Median Sold</div>
+          <div className="font-mono text-base text-[#2c3e50]">{fmtCurrency(stats.soldMedianPrice)}</div>
+          <div className="font-mono text-xs text-[#5a6c7d]">{stats.soldCount} sold comps</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Median Active</div>
+          <div className="font-mono text-base text-[#2c3e50]">{fmtCurrency(stats.activeMedianPrice)}</div>
+          <div className="font-mono text-xs text-[#5a6c7d]">{stats.activeCount} active comps</div>
+        </div>
+      </div>
+
+      <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-3 border-b border-[#cbd5e1] bg-[#f8f6f0]">
+        <div>
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Subject List</div>
+          <div className="font-mono text-sm">{fmtCurrency(subject.listPrice)}</div>
+          <div className="font-mono text-xs text-[#5a6c7d]">{stats.subjectPpsf ? `$${stats.subjectPpsf}/sf` : '--'}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">vs AVM</div>
+          <div className={`font-mono text-sm ${deltaColor(stats.vsAvm)}`}>{fmtSignedCurrency(stats.vsAvm)}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">vs ARV</div>
+          <div className={`font-mono text-sm ${deltaColor(stats.vsArv)}`}>{fmtSignedCurrency(stats.vsArv)}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">vs Median Sold</div>
+          <div className={`font-mono text-sm ${deltaColor(stats.vsMedianSold)}`}>{fmtSignedCurrency(stats.vsMedianSold)}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Sold $/SF (median)</div>
+          <div className="font-mono text-sm">{stats.soldMedianPpsf ? `$${stats.soldMedianPpsf}` : '--'}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Sold $/SF (avg)</div>
+          <div className="font-mono text-sm">{stats.soldAvgPpsf ? `$${stats.soldAvgPpsf}` : '--'}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Sold DOM (median)</div>
+          <div className="font-mono text-sm">{stats.soldMedianDom ?? '--'}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">ARV by $/SF</div>
+          <div className="font-mono text-sm">{fmtCurrency(stats.arvByPpsf)}</div>
+        </div>
+      </div>
+
+      <CmaCompTable title={`Sold Comparables (${sold.length})`} comps={sold} kind="sold" />
+      <CmaCompTable title={`Active Comparables (${active.length})`} comps={active} kind="active" />
+
+      {report.isTestMode && (
+        <div className="m-4 border border-[#8b6914] bg-[#fff8e1] p-2 font-mono text-xs text-[#8b6914]">
+          Test Data — Limited market coverage. Add REPLIERS_API_KEY for full comp data.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CmaCompTable({ title, comps, kind }: { title: string; comps: any[]; kind: 'sold' | 'active' }) {
+  if (!comps.length) {
+    return (
+      <div className="p-4 border-b border-[#cbd5e1]">
+        <div className="text-xs uppercase tracking-wider text-[#5a6c7d] mb-2">{title}</div>
+        <div className="font-mono text-xs text-[#5a6c7d]">No matching comps in this scope.</div>
+      </div>
+    );
+  }
+  return (
+    <div className="p-4 border-b border-[#cbd5e1] last:border-b-0">
+      <div className="text-xs uppercase tracking-wider text-[#5a6c7d] mb-2">{title}</div>
+      <div className="overflow-x-auto">
+        <table className="w-full font-mono text-xs">
+          <thead>
+            <tr className="text-left text-[#5a6c7d] border-b border-[#cbd5e1]">
+              <th className="py-1 pr-3">Address</th>
+              <th className="py-1 pr-3">Bd/Ba</th>
+              <th className="py-1 pr-3">SqFt</th>
+              <th className="py-1 pr-3">Yr</th>
+              <th className="py-1 pr-3">{kind === 'sold' ? 'Sold' : 'List'}</th>
+              <th className="py-1 pr-3">$/SF</th>
+              <th className="py-1 pr-3">DOM</th>
+              <th className="py-1 pr-3">{kind === 'sold' ? 'Sold Date' : 'Listed'}</th>
+              <th className="py-1">Match</th>
+            </tr>
+          </thead>
+          <tbody>
+            {comps.map((c, i) => (
+              <tr key={c.mlsNumber || i} className="border-b border-[#e5e7eb]">
+                <td className="py-1 pr-3">{c.address || '--'}, {c.city} {c.state}</td>
+                <td className="py-1 pr-3">{c.beds ?? '--'}/{c.baths ?? '--'}</td>
+                <td className="py-1 pr-3">{c.sqft?.toLocaleString() || '--'}</td>
+                <td className="py-1 pr-3">{c.yearBuilt || '--'}</td>
+                <td className="py-1 pr-3">{fmtCurrency(kind === 'sold' ? c.soldPrice : c.listPrice)}</td>
+                <td className="py-1 pr-3">{c.pricePerSqft ? `$${c.pricePerSqft}` : '--'}</td>
+                <td className="py-1 pr-3">{c.daysOnMarket ?? '--'}</td>
+                <td className="py-1 pr-3">{(kind === 'sold' ? c.soldDate : c.listDate) || '--'}</td>
+                <td className="py-1">{c.distanceScore}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function MlsTab() {
   const [listings, setListings] = useState<MlsListing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1229,6 +1386,10 @@ function MlsTab() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [promoting, setPromoting] = useState<string | null>(null);
   const [promoteError, setPromoteError] = useState<string | null>(null);
+
+  const [cmaLoading, setCmaLoading] = useState<string | null>(null);
+  const [cmaError, setCmaError] = useState<string | null>(null);
+  const [cmaByKey, setCmaByKey] = useState<Record<string, any>>({});
 
   const [strategy, setStrategy] = useState<string>('price_reduced');
   const [filterCity, setFilterCity] = useState('');
@@ -1273,6 +1434,32 @@ function MlsTab() {
   }, [page, strategy, filterCity, filterState, filterMinPrice, filterMaxPrice, filterMinBeds, filterMinBaths, filterMinSqft, filterMinDom, filterPropertyType]);
 
   useEffect(() => { fetchMls(); }, [fetchMls]);
+
+  async function runCma(listing: MlsListing) {
+    const key = listing.mlsNumber || listing.address;
+    setCmaLoading(key);
+    setCmaError(null);
+    try {
+      const params = new URLSearchParams();
+      if (listing.mlsNumber) params.set('mlsNumber', listing.mlsNumber);
+      if (listing.city) params.set('city', listing.city);
+      if (listing.state) params.set('state', listing.state);
+      if (listing.zip) params.set('zip', listing.zip);
+      if (listing.bedrooms != null) params.set('beds', String(listing.bedrooms));
+      if (listing.bathrooms != null) params.set('baths', String(listing.bathrooms));
+      if (listing.sqft != null) params.set('sqft', String(listing.sqft));
+      if (listing.yearBuilt != null) params.set('yearBuilt', String(listing.yearBuilt));
+      if (listing.listPrice) params.set('listPrice', String(listing.listPrice));
+      const res = await fetch(`/api/distressed-feed/cma?${params.toString()}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `CMA request failed (${res.status})`);
+      setCmaByKey((prev) => ({ ...prev, [key]: data }));
+    } catch (err) {
+      setCmaError(err instanceof Error ? err.message : 'CMA request failed');
+    } finally {
+      setCmaLoading(null);
+    }
+  }
 
   async function promoteMlsToDeal(listing: MlsListing) {
     const key = listing.mlsNumber || listing.address;
@@ -1581,6 +1768,15 @@ function MlsTab() {
                         >
                           {promoting === (listing.mlsNumber || listing.address) ? 'Creating Deal...' : 'Promote to Deal'}
                         </button>
+                        <button
+                          onClick={() => runCma(listing)}
+                          disabled={cmaLoading === (listing.mlsNumber || listing.address)}
+                          className="border border-[#8b6914] px-4 py-2 font-mono text-xs text-[#8b6914] hover:bg-[#8b6914] hover:text-white disabled:opacity-50 min-h-[44px]"
+                        >
+                          {cmaLoading === (listing.mlsNumber || listing.address)
+                            ? 'Running CMA...'
+                            : (cmaByKey[listing.mlsNumber || listing.address] ? 'Refresh CMA' : 'Run CMA')}
+                        </button>
                         {listing.sourceUrl && (
                           <a
                             href={listing.sourceUrl}
@@ -1592,6 +1788,14 @@ function MlsTab() {
                           </a>
                         )}
                       </div>
+                      {cmaError && cmaLoading === null && cmaByKey[listing.mlsNumber || listing.address] === undefined && (
+                        <div className="mt-3 border border-[#8b6914] bg-[#fff8e1] p-2 font-mono text-xs text-[#8b6914]">
+                          {cmaError}
+                        </div>
+                      )}
+                      {cmaByKey[listing.mlsNumber || listing.address] && (
+                        <CmaReport report={cmaByKey[listing.mlsNumber || listing.address]} />
+                      )}
                     </div>
                   )}
                 </div>
