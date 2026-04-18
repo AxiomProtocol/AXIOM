@@ -1,10 +1,10 @@
 /**
- * Regression test for Task #99 (replaces the Task #95 inversion-workaround test).
+ * Regression test for Task #102 (direct-quote path using corrected v3 adapter).
  *
- * Asserts the invariant: no production code path that values an AXUSD principal
- * via the canonical AXUSDPegOracleAdapter can ever surface a $0 USD value to
- * internal tooling — even if the immutable peg adapter unexpectedly reverts or
- * zero-quotes (a defensive guard the helper retains as belt-and-braces).
+ * Asserts the invariant: the canonical valueAxusdAsUsd helper always reads the
+ * AXUSD→USD price directly from the corrected AXIOMOracleAdapter v3 (Task #99
+ * fix). The static-parity fallback workaround has been removed; any oracle
+ * revert or zero-quote is a hard error surfaced to the caller.
  *
  * Run: npx tsx tests/oracle-axusd-valuation.test.ts
  */
@@ -31,7 +31,7 @@ function assert(condition: boolean, message: string) {
 }
 
 /**
- * Mocks the AXUSDPegOracleAdapter behaviour:
+ * Mocks the corrected AXIOMOracleAdapter v3 behaviour:
  *   getQuote(X, AXUSD, USD)   → X * 1e8 / 1e18   (peg = 1.00 USD, USD is 8-dec)
  *   getQuote(0, ...)          → 0 by ERC-7726 convention
  *   any other pair            → reverts
@@ -69,34 +69,39 @@ function makeZeroAdapterMock(): Erc7726QuoteReader {
 }
 
 async function main() {
-  console.log('Running Task #99 AXUSD valuation regression tests...\n');
+  console.log('Running Task #102 AXUSD valuation regression tests (direct-quote path)...\n');
 
   // 1. Direct AXUSD→USD peg quote produces a sensible USD value.
   {
     const principalWei = principalUsdToAxusdWei18(50_000);
     const v = await valueAxusdAsUsd(makePegAdapterMock(), principalWei);
     assert(v.usdValue === '50000.00', 'Peg adapter values 50,000 AXUSD as 50,000.00 USD');
-    assert(v.source === 'erc7726_peg', 'Source is erc7726_peg when on-chain quote works');
+    assert(v.source === 'erc7726_peg', 'Source is erc7726_peg on the direct-quote path');
     assert(v.onChainQuoteUsable === true, 'onChainQuoteUsable is true for the canonical path');
   }
 
-  // 2. CRITICAL: zero on-chain quote must NEVER produce a $0 USD value.
+  // 2. Zero on-chain quote must throw — no silent static-parity fallback.
   {
     const principalWei = principalUsdToAxusdWei18(50_000);
-    const v = await valueAxusdAsUsd(makeZeroAdapterMock(), principalWei);
-    assert(v.usdValue !== '0.00', 'Zero on-chain quote does NOT produce $0 USD value');
-    assert(v.usdcOut > 0n, 'usdcOut is strictly positive for a non-zero AXUSD principal');
-    assert(v.source === 'static_parity', 'Falls back to static parity when on-chain quote is zero');
-    assert(v.onChainQuoteUsable === false, 'onChainQuoteUsable is false when adapter returns 0');
+    let threw = false;
+    try {
+      await valueAxusdAsUsd(makeZeroAdapterMock(), principalWei);
+    } catch {
+      threw = true;
+    }
+    assert(threw, 'Zero on-chain quote throws an error (no silent fallback in v3 path)');
   }
 
-  // 3. Reverting oracle also falls back safely (never $0).
+  // 3. Reverting oracle surfaces the error — no silent static-parity fallback.
   {
     const principalWei = principalUsdToAxusdWei18(123_456.78);
-    const v = await valueAxusdAsUsd(makeRevertingAdapterMock(), principalWei);
-    assert(v.usdValue !== '0.00', 'Reverting oracle does NOT produce $0 USD value');
-    assert(v.usdcOut > 0n, 'usdcOut is strictly positive when oracle reverts');
-    assert(v.source === 'static_parity', 'Falls back to static parity when oracle reverts');
+    let threw = false;
+    try {
+      await valueAxusdAsUsd(makeRevertingAdapterMock(), principalWei);
+    } catch {
+      threw = true;
+    }
+    assert(threw, 'Reverting oracle surfaces the error (no silent fallback in v3 path)');
   }
 
   // 4. Zero AXUSD principal is the only case allowed to return $0.
@@ -114,23 +119,7 @@ async function main() {
     assert(principalUsdToAxusdWei18(NaN) === 0n, 'NaN USD → 0 wei (defensive)');
   }
 
-  // 6. Sweep a range of principal amounts against a misbehaving oracle —
-  //    every single one must produce a strictly positive USD value.
-  {
-    const amounts = [0.01, 1, 100, 50_000, 250_000, 999_999.99];
-    let allNonZero = true;
-    for (const amt of amounts) {
-      const principalWei = principalUsdToAxusdWei18(amt);
-      const v = await valueAxusdAsUsd(makeZeroAdapterMock(), principalWei);
-      if (v.usdcOut <= 0n || v.usdValue === '0.00') {
-        console.error(`    SUB-FAIL: amount=${amt} produced usdValue=${v.usdValue}, usdcOut=${v.usdcOut}`);
-        allNonZero = false;
-      }
-    }
-    assert(allNonZero, 'Sweep: no principal in {0.01, 1, 100, 50k, 250k, 999999.99} produces $0 against zero-quote oracle');
-  }
-
-  // 7. Sweep against the working peg adapter — every quote must equal principal in USD.
+  // 6. Sweep against the working peg adapter — every quote must equal principal in USD.
   {
     const amounts = [1, 100, 50_000, 250_000];
     let allMatch = true;
@@ -144,6 +133,21 @@ async function main() {
       }
     }
     assert(allMatch, 'Sweep: peg adapter quotes match principal exactly across amounts');
+  }
+
+  // 7. Source is always 'erc7726_peg' — static_parity no longer exists.
+  {
+    const amounts = [1, 100, 50_000, 250_000];
+    let allErc7726 = true;
+    for (const amt of amounts) {
+      const principalWei = principalUsdToAxusdWei18(amt);
+      const v = await valueAxusdAsUsd(makePegAdapterMock(), principalWei);
+      if (v.source !== 'erc7726_peg') {
+        console.error(`    SUB-FAIL: amount=${amt} returned source=${v.source}, expected erc7726_peg`);
+        allErc7726 = false;
+      }
+    }
+    assert(allErc7726, 'Source is always erc7726_peg on the direct-quote path');
   }
 
   console.log(`\nTotal: ${passed} passed, ${failed} failed`);

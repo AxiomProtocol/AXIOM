@@ -456,11 +456,12 @@ export const EULER_LENDING_CONTRACTS = {
 // Interface: getQuote(uint256 inAmount, address base, address quote) → uint256 outAmount
 // Supports pairs: USDC↔AXUSD, USDT↔AXUSD, WETH→AXUSD, ARB→AXUSD, WBTC→AXUSD
 export const ERC7726_ORACLE_CONTRACTS = {
-  // AXIOMOracleAdapter v2 — DEPLOYED ✓ ERC-7726 compliant price oracle for AXUSD
+  // AXIOMOracleAdapter v3 — corrected ERC-7726 price oracle for AXUSD (Task #99 fix).
   // Source: contracts/oracle/AXIOMOracleAdapter.sol
-  // primaryAxusd = ERC-3643 AXUSD (0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7)
-  // Verified: getQuote(1e18, ERC3643_AXUSD, USDC) = 1,000,000 (peg = $1.00) ✓
-  AXUSD_ERC7726_ORACLE_ADAPTER: '0xc894d1500CB1FBf8F045e87bd357A51345197c4e',
+  // Deploy: npx hardhat run scripts/deploy-axusd-oracle-v3.js --network arbitrum
+  // v2 broken address (superseded): 0xc894d1500CB1FBf8F045e87bd357A51345197c4e
+  // TODO: Replace the placeholder below with the actual deployed v3 address.
+  AXUSD_ERC7726_ORACLE_ADAPTER: '0xc894d1500CB1FBf8F045e87bd357A51345197c4e', // TODO: update to v3 address after deployment
 
   // DEPRECATED legacy oracles (active until AXUSD_ERC7726_ORACLE_ADAPTER is live):
   // Phase 3 OracleAdapter (AXUSD_GENIUS_CONTRACTS.ORACLE_ADAPTER)

@@ -13,11 +13,13 @@
 import { ethers } from 'ethers';
 
 /**
- * AXIOMOracleAdapter v2 — multi-asset ERC-7726 router (USDC/USDT/WETH/WBTC/ARB ↔ AXUSD).
+ * AXIOMOracleAdapter v3 — corrected multi-asset ERC-7726 router (USDC/USDT/WETH/WBTC/ARB ↔ AXUSD).
  * Source: contracts/oracle/AXIOMOracleAdapter.sol.
- * Also serves as immutable oracle in eAXUSD-6 EVK vault (MetaProxy trailing data).
+ * Deployed via scripts/deploy-axusd-oracle-v3.js (Task #99 fix: AXUSD→USDC branch no longer zero).
+ * v2 broken address (superseded): 0xc894d1500CB1FBf8F045e87bd357A51345197c4e
+ * TODO: Replace the placeholder below with the actual deployed v3 address.
  */
-export const AXUSD_ORACLE_ADAPTER: string = '0xc894d1500CB1FBf8F045e87bd357A51345197c4e';
+export const AXUSD_ORACLE_ADAPTER: string = '0xc894d1500CB1FBf8F045e87bd357A51345197c4e'; // TODO: update to v3 address after deployment
 
 /**
  * AXUSDPegOracleAdapter — single-pair ERC-7726 fixed-rate AXUSD↔USD adapter.

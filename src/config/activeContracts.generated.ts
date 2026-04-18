@@ -82,14 +82,16 @@ export const FIXED_LOAN_NFT_ADDRESS = '0x511A0cD642532585dc87e41C84f7f499a975551
 export const IDENTITY_REGISTRY_ADDRESS = '0x58f64a1262d5434d6C7637a2309b0999bB6D1970' as const;
 
 /**
- * ERC-7726 Oracle Adapter — PENDING_DEPLOYMENT
+ * ERC-7726 Oracle Adapter v3 — corrected AXIOMOracleAdapter (Task #99 fix).
  * Source: contracts/oracle/AXIOMOracleAdapter.sol
- * Deploy: npx hardhat run scripts/deploy-axusd-oracle.js --network arbitrumOne
- * After deploying, update this address and AXUSD_ORACLE_ADAPTER in src/config/oracleConfig.ts.
+ * Deploy: npx hardhat run scripts/deploy-axusd-oracle-v3.js --network arbitrum
+ * After deploying, replace this address and AXUSD_ORACLE_ADAPTER in src/config/oracleConfig.ts.
  * Interface: getQuote(uint256 inAmount, address base, address quote) → uint256 outAmount
  * Pairs: USDC↔AXUSD, USDT↔AXUSD, WETH→AXUSD, ARB→AXUSD, WBTC→AXUSD
+ * v2 broken address (superseded): 0xc894d1500CB1FBf8F045e87bd357A51345197c4e
+ * TODO: Replace the placeholder below with the actual deployed v3 address.
  */
-export const ERC7726_ORACLE_ADAPTER_ADDRESS = '0xc894d1500CB1FBf8F045e87bd357A51345197c4e' as const;
+export const ERC7726_ORACLE_ADAPTER_ADDRESS = '0xc894d1500CB1FBf8F045e87bd357A51345197c4e' as const; // TODO: update to v3 address after deployment
 
 /**
  * EVK Open Money Market — ERC-3643 AXUSD Open Lending Vault (Task #38)
