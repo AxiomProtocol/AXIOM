@@ -1485,6 +1485,11 @@ function MlsTab() {
                             <div className="font-mono text-xs text-[#5a6c7d]">{listing.daysOnMarket}d on market</div>
                           )}
                         </div>
+                        {listing.propertyType && (
+                          <div className="border border-[#2c3e50] px-2 py-1 min-h-[28px] flex items-center bg-[#f5f0e8]">
+                            <span className="font-mono text-xs text-[#2c3e50] uppercase tracking-wide">{listing.propertyType}</span>
+                          </div>
+                        )}
                         <div className="border border-[#8b6914] px-2 py-1 min-h-[28px] flex items-center">
                           <span className="font-mono text-xs uppercase text-[#8b6914]">{listing.lastStatusLabel || listing.lastStatus}</span>
                         </div>

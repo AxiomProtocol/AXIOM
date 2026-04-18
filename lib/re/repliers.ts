@@ -145,6 +145,7 @@ export async function searchListings(params: {
   maxSqft?: number;
   propertyType?: string | string[];
   classes?: string | string[];
+  style?: string | string[];
   search?: string;
   daysOnMarketMin?: number;
   daysOnMarketMax?: number;
@@ -181,6 +182,9 @@ export async function searchListings(params: {
     }
     if (params.classes) {
       body.class = Array.isArray(params.classes) ? params.classes : [params.classes];
+    }
+    if (params.style) {
+      body.style = Array.isArray(params.style) ? params.style : [params.style];
     }
     if (params.search) body.search = params.search;
     if (params.daysOnMarketMin || params.daysOnMarketMax) {

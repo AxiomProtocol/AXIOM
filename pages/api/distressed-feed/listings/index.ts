@@ -10,6 +10,8 @@ interface StrategyPreset {
   daysOnMarketMin?: number;
   propertyTypes?: string[];
   classes?: string[];
+  styles?: string[];
+  styleKeywords?: string[];
   descriptionKeywords?: string[];
   searchKeyword?: string;
 }
@@ -53,28 +55,32 @@ const STRATEGY_PRESETS: Record<string, StrategyPreset> = {
   },
   land: {
     label: 'Land / Lots',
-    propertyTypes: [
-      'Land', 'Vacant Land', 'Lot', 'Vacant Lot', 'Unimproved Land',
-      'Acreage', 'Vacant Residential', 'Vacant', 'Lots/Land', 'Farm',
-      'Agricultural', 'Ranch',
+    propertyTypes: ['Land', 'Farm'],
+    styles: [
+      'Lot', 'Acreage', 'Unimproved Land', 'Vacant Land', 'Vacant Lot',
+      'Vacant Residential', 'Agricultural', 'Ranch', 'Farm',
     ],
+    styleKeywords: ['lot', 'acreage', 'land', 'unimproved', 'vacant', 'agricultural', 'ranch', 'farm'],
   },
   multifamily_2_4: {
     label: '2-4 Unit Multifamily',
-    propertyTypes: [
-      'Duplex', 'Triplex', 'Fourplex', 'Quadruplex',
+    propertyTypes: ['Residential Income'],
+    styles: [
+      'Duplex', 'Triplex', 'Fourplex', 'Quadruplex', 'Half Duplex',
       '2-4 Family', '2 Family', '3 Family', '4 Family',
-      'Multi-Family', 'Multifamily',
-      '2 Units', '3 Units', '4 Units', 'Income Property',
+      'Multi-Family', 'Multi Family', 'Multifamily',
     ],
+    styleKeywords: ['duplex', 'triplex', 'fourplex', 'quadruplex', 'multi family', 'multi-family', 'multifamily', '2 family', '3 family', '4 family', '2-4 family'],
   },
   multifamily_5_plus: {
     label: '5+ Unit Multifamily',
-    propertyTypes: [
-      'Apartment Building', '5+ Family', '6+ Family', '8+ Family',
-      'Apartment', '5 Or More Units', '5+ Units', '5-10 Units',
-      'Income/Multi-Family',
+    propertyTypes: ['Residential Income'],
+    classes: ['CommercialProperty'],
+    styles: [
+      'Apartment Building', 'Apartment', '5+ Family', '6+ Family', '8+ Family',
+      '5 Or More Units', '5+ Units', '5-10 Units',
     ],
+    styleKeywords: ['apartment', '5+ unit', '5+ family', '6+ unit', '5 or more', '5-10 unit', '6+ family', '8+ family'],
   },
 };
 
@@ -89,6 +95,29 @@ function postFilterByDescriptionKeywords(
     if (!desc) return false;
     return lowerKeywords.some((k) => desc.includes(k));
   });
+}
+
+function listingMatchesPropertyIntent(
+  l: { class?: string; details?: { style?: string; propertyType?: string } } & Record<string, unknown>,
+  preset: StrategyPreset,
+): boolean {
+  const style = String(l.details?.style || '').toLowerCase();
+  const ptype = String(l.details?.propertyType || '').toLowerCase();
+  const cls = String(l.class || '').toLowerCase();
+
+  if (preset.styleKeywords && preset.styleKeywords.length) {
+    if (preset.styleKeywords.some((k) => style.includes(k.toLowerCase()))) return true;
+  }
+  if (preset.styles && preset.styles.length) {
+    if (preset.styles.some((s) => style === s.toLowerCase())) return true;
+  }
+  if (preset.propertyTypes && preset.propertyTypes.length) {
+    if (preset.propertyTypes.some((p) => ptype === p.toLowerCase())) return true;
+  }
+  if (preset.classes && preset.classes.length) {
+    if (preset.classes.some((c) => cls === c.toLowerCase())) return true;
+  }
+  return false;
 }
 
 async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
@@ -132,8 +161,15 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
     : preset.daysOnMarketMin;
   const domMax = max_dom ? parseInt(String(max_dom), 10) : undefined;
 
-  const needsClientPostFilter = !!(preset.descriptionKeywords && preset.descriptionKeywords.length > 0);
-  const fetchPageSize = needsClientPostFilter ? 100 : 20;
+  const hasPropertyIntent = !!(
+    (preset.styles && preset.styles.length) ||
+    (preset.styleKeywords && preset.styleKeywords.length) ||
+    (preset.propertyTypes && preset.propertyTypes.length) ||
+    (preset.classes && preset.classes.length)
+  );
+  const hasDescriptionIntent = !!(preset.descriptionKeywords && preset.descriptionKeywords.length);
+  const needsClientPostFilter = hasPropertyIntent || hasDescriptionIntent;
+  const fetchPageSize = needsClientPostFilter ? 200 : 20;
 
   const result = await searchListings({
     city: city ? String(city) : undefined,
@@ -150,6 +186,7 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
     minSqft: min_sqft ? parseInt(String(min_sqft), 10) : undefined,
     propertyType: propertyTypes,
     classes: preset.classes,
+    style: preset.styles,
     search: preset.searchKeyword,
     resultsPerPage: fetchPageSize,
     pageNum,
@@ -163,15 +200,35 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
     Ter: 'Terminated',
   };
 
-  if (needsClientPostFilter && preset.descriptionKeywords) {
-    raw = postFilterByDescriptionKeywords(raw as any, preset.descriptionKeywords).slice(0, 20) as typeof raw;
+  if (hasPropertyIntent) {
+    raw = raw.filter((l) => listingMatchesPropertyIntent(l as any, preset)) as typeof raw;
+  }
+  if (hasDescriptionIntent && preset.descriptionKeywords) {
+    raw = postFilterByDescriptionKeywords(raw as any, preset.descriptionKeywords) as typeof raw;
+  }
+  if (needsClientPostFilter) {
+    raw = raw.slice(0, 20) as typeof raw;
   }
 
-  const listings = raw.map((l) => {
+  function buildPropertyTypeLabel(l: any): string {
+    const style = l.details?.style?.trim();
+    const ptype = l.details?.propertyType?.trim();
+    const cls = l.class?.trim();
+    const friendlyClass = cls ? cls.replace(/Property$/, '') : '';
+    if (style && ptype && style.toLowerCase() !== ptype.toLowerCase()) {
+      return `${style} (${ptype})`;
+    }
+    if (style) return style;
+    if (ptype) return ptype;
+    if (friendlyClass) return friendlyClass;
+    return 'Unknown';
+  }
+
+  const listings = raw.map((l: any) => {
     const addr = l.address || {};
     const fullAddress = [addr.streetNumber, addr.streetName, addr.streetSuffix].filter(Boolean).join(' ');
     const sqftRaw = l.details?.sqft;
-    const sqft = sqftRaw ? parseInt(sqftRaw.replace(/[^0-9]/g, ''), 10) || null : null;
+    const sqft = sqftRaw ? parseInt(String(sqftRaw).replace(/[^0-9]/g, ''), 10) || null : null;
 
     return {
       mlsNumber: l.mlsNumber || null,
@@ -180,7 +237,10 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
       city: addr.city || '',
       state: addr.state || '',
       zip: addr.zip || '',
-      propertyType: l.details?.propertyType || 'Residential',
+      propertyType: buildPropertyTypeLabel(l),
+      propertyStyle: l.details?.style || null,
+      propertyClass: l.class || null,
+      propertyTypeRaw: l.details?.propertyType || null,
       bedrooms: l.details?.numBedrooms ?? null,
       bathrooms: l.details?.numBathrooms ?? null,
       sqft,
