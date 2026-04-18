@@ -462,6 +462,66 @@ uri = "file://attached_assets/generated_images/product_land_pipeline_story.png"
 type = "image"
 title = "land pipeline story"
 
+[[generated]]
+id = "AXzImpihoTGBogZSzFgPd"
+uri = "file://attached_assets/generated_images/fin_axau_reserve.png"
+type = "image"
+title = "axau reserve"
+
+[[generated]]
+id = "IWdooisnZXL_BtquCtc6k"
+uri = "file://attached_assets/generated_images/fin_axusd_rail.png"
+type = "image"
+title = "axusd settlement rail"
+
+[[generated]]
+id = "XgTEO8qUc9Uanm2A97kkm"
+uri = "file://attached_assets/generated_images/fin_earn_axusd.png"
+type = "image"
+title = "earn axusd vault"
+
+[[generated]]
+id = "1-iSIGAAZDiebfxM2wYKf"
+uri = "file://attached_assets/generated_images/fin_dex_exchange.png"
+type = "image"
+title = "protocol exchange dex"
+
+[[generated]]
+id = "RHdchoCYkTeYMc-GCITFz"
+uri = "file://attached_assets/generated_images/fin_capital_program.png"
+type = "image"
+title = "capital program"
+
+[[generated]]
+id = "T4z79vfwUtubTmgRYlZMa"
+uri = "file://attached_assets/generated_images/fin_syndication.png"
+type = "image"
+title = "syndication private capital"
+
+[[generated]]
+id = "bG3g7e9VazMbF4mc-kOd_"
+uri = "file://attached_assets/generated_images/fin_savings.png"
+type = "image"
+title = "axusd savings"
+
+[[generated]]
+id = "ELm6D1NtGTuXw8pFu1uwl"
+uri = "file://attached_assets/generated_images/fin_community_credit.png"
+type = "image"
+title = "community credit"
+
+[[generated]]
+id = "-_8qokhpbrMfarNoU7bbq"
+uri = "file://attached_assets/generated_images/fin_nexus_card.png"
+type = "image"
+title = "nexus card"
+
+[[generated]]
+id = "Jxinc_H9aw11qFoTpm8RS"
+uri = "file://attached_assets/generated_images/fin_onramp.png"
+type = "image"
+title = "on off ramp"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
@@ -641,3 +701,63 @@ id = "UpXi8uo7-3oqXFxXCPGWq"
 uri = "file://attached_assets/generated_images/product_land_pipeline_story.png"
 type = "image"
 title = "Land Pipeline — Story / Reels (9:16)"
+
+[[outputs]]
+id = "96Q3tKsSGziw5aZdZh9da"
+uri = "file://attached_assets/generated_images/fin_axau_reserve.png"
+type = "image"
+title = "AXAU Reserve Instrument (1:1)"
+
+[[outputs]]
+id = "dH0rlJ_ZjIhCM-c2vcmn5"
+uri = "file://attached_assets/generated_images/fin_axusd_rail.png"
+type = "image"
+title = "AXUSD Settlement Rail (9:16)"
+
+[[outputs]]
+id = "zNGJG0JpCZ7KButQS6Sqy"
+uri = "file://attached_assets/generated_images/fin_earn_axusd.png"
+type = "image"
+title = "Earn AXUSD Vault (1:1)"
+
+[[outputs]]
+id = "QiJyocO2d3eDZ2KfPwyhM"
+uri = "file://attached_assets/generated_images/fin_dex_exchange.png"
+type = "image"
+title = "Protocol Exchange / DEX (16:9)"
+
+[[outputs]]
+id = "ne_TLn2AM3jRC_5bzEYzj"
+uri = "file://attached_assets/generated_images/fin_capital_program.png"
+type = "image"
+title = "Capital Program — Reg D (9:16)"
+
+[[outputs]]
+id = "-vgzq0EWx7it8HPCNBx6t"
+uri = "file://attached_assets/generated_images/fin_syndication.png"
+type = "image"
+title = "Private Capital Formation / Syndication (1:1)"
+
+[[outputs]]
+id = "MY7KhzM1rK7omYybIhpuY"
+uri = "file://attached_assets/generated_images/fin_savings.png"
+type = "image"
+title = "AXUSD Yield Savings (9:16)"
+
+[[outputs]]
+id = "b2hI1TppWNBga_IXqOAXP"
+uri = "file://attached_assets/generated_images/fin_community_credit.png"
+type = "image"
+title = "Community Entry Credit (1:1)"
+
+[[outputs]]
+id = "qafkSi9EXI1T1wJzwdr7K"
+uri = "file://attached_assets/generated_images/fin_nexus_card.png"
+type = "image"
+title = "Nexus Card — FDIC Banking (9:16)"
+
+[[outputs]]
+id = "h_Gbty591Y15DGTrdxXUP"
+uri = "file://attached_assets/generated_images/fin_onramp.png"
+type = "image"
+title = "On / Off Ramp — Capital Stack Entry (1:1)"
