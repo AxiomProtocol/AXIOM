@@ -190,8 +190,22 @@ export async function searchListings(params: {
     appendArr('class', params.classes);
     appendArr('style', params.style);
     appendStr('search', params.search);
-    appendNum('minDaysOnMarket', params.daysOnMarketMin);
-    appendNum('maxDaysOnMarket', params.daysOnMarketMax);
+    if (params.status === 'U') {
+      appendNum('minDaysOnMarket', params.daysOnMarketMin);
+      appendNum('maxDaysOnMarket', params.daysOnMarketMax);
+    } else {
+      const isoCutoff = (daysAgo: number): string => {
+        const d = new Date();
+        d.setUTCDate(d.getUTCDate() - daysAgo);
+        return d.toISOString().slice(0, 10);
+      };
+      if (params.daysOnMarketMin && params.daysOnMarketMin > 0) {
+        qs.append('maxListDate', isoCutoff(params.daysOnMarketMin));
+      }
+      if (params.daysOnMarketMax && params.daysOnMarketMax > 0) {
+        qs.append('minListDate', isoCutoff(params.daysOnMarketMax));
+      }
+    }
     appendStr('addressKey', params.addressKey);
     appendNum('pageNum', params.pageNum);
     appendNum('resultsPerPage', params.resultsPerPage);
