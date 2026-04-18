@@ -432,6 +432,36 @@ uri = "file://attached_assets/generated_images/axiom_flyer_wide.png"
 type = "image"
 title = "axiom flyer wide"
 
+[[generated]]
+id = "DPeYFKhP-dCkPxcaUdIvf"
+uri = "file://attached_assets/generated_images/product_axau_early_access_story.png"
+type = "image"
+title = "axau early access story"
+
+[[generated]]
+id = "A5XvCggzyZ2m2XEqh14Nm"
+uri = "file://attached_assets/generated_images/product_axau_early_access_square.png"
+type = "image"
+title = "axau early access square"
+
+[[generated]]
+id = "9OkYeGx0JP_DsJvDv_sJ-"
+uri = "file://attached_assets/generated_images/product_wealth_practice_square.png"
+type = "image"
+title = "wealth practice square"
+
+[[generated]]
+id = "EUS4F_6pHj4MgRrl6Hc2x"
+uri = "file://attached_assets/generated_images/product_lending_fund_wide.png"
+type = "image"
+title = "lending fund wide"
+
+[[generated]]
+id = "_E4xGJpolp4QYaUOf_DIr"
+uri = "file://attached_assets/generated_images/product_land_pipeline_story.png"
+type = "image"
+title = "land pipeline story"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
@@ -581,3 +611,33 @@ id = "uXCfqaNnoASF-Xdi5jtR1"
 uri = "file://attached_assets/generated_images/axiom_flyer_wide.png"
 type = "image"
 title = "Widescreen Flyer — LinkedIn / Twitter Banner (16:9)"
+
+[[outputs]]
+id = "Enh0DySGrx9R9BX7nORjU"
+uri = "file://attached_assets/generated_images/product_axau_early_access_story.png"
+type = "image"
+title = "AXAU Early Access — Story / Reels (9:16)"
+
+[[outputs]]
+id = "BIcy94WOUNk2L1L52J3EV"
+uri = "file://attached_assets/generated_images/product_axau_early_access_square.png"
+type = "image"
+title = "AXAU Early Access — Feed Post (1:1)"
+
+[[outputs]]
+id = "iH2Ubk_L9EOuI2th-_v4o"
+uri = "file://attached_assets/generated_images/product_wealth_practice_square.png"
+type = "image"
+title = "The Wealth Practice — Feed Post (1:1)"
+
+[[outputs]]
+id = "uOqylVE7uJ8HpQgAgiQGg"
+uri = "file://attached_assets/generated_images/product_lending_fund_wide.png"
+type = "image"
+title = "Lending Fund — LinkedIn / Twitter Banner (16:9)"
+
+[[outputs]]
+id = "UpXi8uo7-3oqXFxXCPGWq"
+uri = "file://attached_assets/generated_images/product_land_pipeline_story.png"
+type = "image"
+title = "Land Pipeline — Story / Reels (9:16)"
