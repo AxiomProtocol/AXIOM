@@ -761,3 +761,9 @@ id = "h_Gbty591Y15DGTrdxXUP"
 uri = "file://attached_assets/generated_images/fin_onramp.png"
 type = "image"
 title = "On / Off Ramp — Capital Stack Entry (1:1)"
+
+[[outputs]]
+id = "b7vW9AJNUDPNdLxTz-7uh"
+uri = "file://documents/marketing/axiom-social-media-marketing-playbook.md"
+type = "text"
+title = "Axiom Protocol — Social Media & Marketing Playbook"
