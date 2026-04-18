@@ -169,9 +169,12 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
   );
   const hasDescriptionIntent = !!(preset.descriptionKeywords && preset.descriptionKeywords.length);
   const needsClientPostFilter = hasPropertyIntent || hasDescriptionIntent;
-  const fetchPageSize = needsClientPostFilter ? 200 : 20;
+  const PAGE_LIMIT = 20;
+  const fetchPageSize = needsClientPostFilter ? 100 : PAGE_LIMIT;
+  const MAX_REPLIERS_PAGES = needsClientPostFilter ? 10 : 1;
+  const TARGET_FILTERED = pageNum * PAGE_LIMIT + PAGE_LIMIT * 2;
 
-  const result = await searchListings({
+  const baseSearchParams = {
     city: city ? String(city) : undefined,
     state: state ? String(state) : undefined,
     zip: zip ? String(zip) : undefined,
@@ -186,13 +189,30 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
     minSqft: min_sqft ? parseInt(String(min_sqft), 10) : undefined,
     propertyType: propertyTypes,
     classes: preset.classes,
-    style: preset.styles,
     search: preset.searchKeyword,
     resultsPerPage: fetchPageSize,
-    pageNum,
-  });
+  };
 
-  let raw = result.data?.listings || [];
+  let raw: any[] = [];
+  let upstreamTotal = 0;
+  let upstreamPages = 0;
+  let isTestMode = false;
+
+  for (let p = 1; p <= MAX_REPLIERS_PAGES; p += 1) {
+    const result = await searchListings({ ...baseSearchParams, pageNum: p });
+    isTestMode = result.isTestMode || isTestMode;
+    const pageListings = result.data?.listings || [];
+    upstreamTotal = result.data?.count || upstreamTotal;
+    upstreamPages = result.data?.numPages || upstreamPages;
+    raw.push(...pageListings);
+    if (pageListings.length === 0) break;
+    if (upstreamPages && p >= upstreamPages) break;
+    const filteredSoFar = hasPropertyIntent
+      ? raw.filter((l) => listingMatchesPropertyIntent(l as any, preset)).length
+      : raw.length;
+    if (filteredSoFar >= TARGET_FILTERED) break;
+  }
+
   const lastStatusLabel: Record<string, string> = {
     Pc: 'Price Changed',
     Exp: 'Expired',
@@ -201,13 +221,17 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
   };
 
   if (hasPropertyIntent) {
-    raw = raw.filter((l) => listingMatchesPropertyIntent(l as any, preset)) as typeof raw;
+    raw = raw.filter((l) => listingMatchesPropertyIntent(l as any, preset));
   }
   if (hasDescriptionIntent && preset.descriptionKeywords) {
     raw = postFilterByDescriptionKeywords(raw as any, preset.descriptionKeywords) as typeof raw;
   }
+
+  const filteredTotal = raw.length;
+  const filteredPages = Math.max(1, Math.ceil(filteredTotal / PAGE_LIMIT));
   if (needsClientPostFilter) {
-    raw = raw.slice(0, 20) as typeof raw;
+    const start = (pageNum - 1) * PAGE_LIMIT;
+    raw = raw.slice(start, start + PAGE_LIMIT);
   }
 
   function buildPropertyTypeLabel(l: any): string {
@@ -261,16 +285,16 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader('Cache-Control', 'no-store');
   return res.json({
     listings,
-    isTestMode: result.isTestMode,
+    isTestMode,
     configured: true,
     source: 'mls_repliers',
     strategies: Object.entries(STRATEGY_PRESETS).map(([id, p]) => ({ id, label: p.label })),
     activeStrategy: strategyKey,
     pagination: {
       page: pageNum,
-      total: needsClientPostFilter ? listings.length : (result.data?.count || listings.length),
-      totalPages: needsClientPostFilter ? 1 : (result.data?.numPages || 1),
-      limit: 20,
+      total: needsClientPostFilter ? filteredTotal : (upstreamTotal || listings.length),
+      totalPages: needsClientPostFilter ? filteredPages : (upstreamPages || 1),
+      limit: PAGE_LIMIT,
     },
   });
 }
