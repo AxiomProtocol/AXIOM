@@ -90,7 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       description: l.details?.description || null,
       addressKey: l.addressKey || null,
       sourceUrl: l.mlsNumber
-        ? `https://repliers.com/listing/${l.mlsNumber}`
+        ? `/property/${encodeURIComponent(l.mlsNumber)}`
         : null,
     };
   });

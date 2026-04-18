@@ -278,7 +278,7 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
       images: l.images || [],
       description: l.details?.description || null,
       addressKey: l.addressKey || null,
-      sourceUrl: l.mlsNumber ? `https://repliers.com/listing/${l.mlsNumber}` : null,
+      sourceUrl: l.mlsNumber ? `/property/${encodeURIComponent(l.mlsNumber)}` : null,
     };
   });
 

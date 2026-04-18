@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { DesignLawLayout } from '../components/design-law/DesignLawLayout';
 import Head from 'next/head';
 import Image from 'next/image';
+import Link from 'next/link';
 
 type Tab = 'feed' | 'mls' | 'submit' | 'buybox';
 
@@ -1643,11 +1644,14 @@ function MlsTab() {
           <div className="space-y-0">
             {listings.map((listing) => {
               const key = listing.mlsNumber || listing.address;
+              const detailHref = listing.mlsNumber ? `/property/${encodeURIComponent(listing.mlsNumber)}` : null;
+              const CardWrapper: any = detailHref ? Link : 'div';
+              const cardWrapperProps: any = detailHref ? { href: detailHref } : {};
               return (
                 <div key={key} className="border border-[#2c3e50] border-b-0 last:border-b">
-                  <div
-                    className="p-3 sm:p-4 cursor-pointer hover:bg-[#f5f0e8] min-h-[44px]"
-                    onClick={() => setExpanded(expanded === key ? null : key)}
+                  <CardWrapper
+                    {...cardWrapperProps}
+                    className="block p-3 sm:p-4 hover:bg-[#f5f0e8] min-h-[44px] cursor-pointer"
                   >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1680,124 +1684,19 @@ function MlsTab() {
                         <div className="border border-[#8b6914] px-2 py-1 min-h-[28px] flex items-center">
                           <span className="font-mono text-xs uppercase text-[#8b6914]">{listing.lastStatusLabel || listing.lastStatus}</span>
                         </div>
-                        <div className="border border-[#5a6c7d] px-2 py-1 min-h-[28px] flex items-center">
-                          <span className="font-mono text-xs text-[#5a6c7d] uppercase">MLS via Repliers</span>
-                        </div>
                         {isTestMode && (
                           <div className="border border-[#8b6914] px-2 py-0.5 min-h-[28px] flex items-center">
                             <span className="font-mono text-xs text-[#8b6914] uppercase">Test Data</span>
                           </div>
                         )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {expanded === key && (
-                    <div className="border-t border-[#2c3e50] p-3 sm:p-4 bg-[#faf8f4]">
-                      {listing.images && listing.images.length > 0 && (
-                        <div className="mb-4">
-                          <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory -mx-3 px-3 sm:mx-0 sm:px-0 touch-pan-x">
-                            {listing.images.map((img, idx) => (
-                              <img
-                                key={idx}
-                                src={img}
-                                alt={`${listing.address} - Photo ${idx + 1}`}
-                                className="w-[280px] sm:w-64 h-[200px] sm:h-44 object-cover border border-[#2c3e50] flex-shrink-0 snap-center"
-                              />
-                            ))}
+                        {detailHref && (
+                          <div className="border border-[#2c3e50] bg-[#2c3e50] text-white px-3 py-1 min-h-[28px] flex items-center">
+                            <span className="font-mono text-xs uppercase tracking-wide">View Detail &rarr;</span>
                           </div>
-                          <div className="font-mono text-xs text-[#5a6c7d] mt-1">{listing.images.length} photos — swipe to browse</div>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                        <div>
-                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Property Type</div>
-                          <div className="font-mono text-sm">{listing.propertyType || '--'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Bedrooms</div>
-                          <div className="font-mono text-sm">{listing.bedrooms ?? '--'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Bathrooms</div>
-                          <div className="font-mono text-sm">{listing.bathrooms ?? '--'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Sq Ft</div>
-                          <div className="font-mono text-sm">{listing.sqft?.toLocaleString() || '--'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Year Built</div>
-                          <div className="font-mono text-sm">{listing.yearBuilt || '--'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">List Price</div>
-                          <div className="font-mono text-sm">{formatCurrency(listing.listPrice)}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">Days on Market</div>
-                          <div className="font-mono text-sm">{listing.daysOnMarket ?? '--'}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d]">MLS #</div>
-                          <div className="font-mono text-sm">{listing.mlsNumber || '--'}</div>
-                        </div>
-                      </div>
-
-                      {listing.description && (
-                        <div className="mb-4">
-                          <div className="text-xs uppercase tracking-wider text-[#5a6c7d] mb-1">Description</div>
-                          <div className="font-mono text-sm text-[#2c3e50]">{listing.description}</div>
-                        </div>
-                      )}
-
-                      {isTestMode && (
-                        <div className="border border-[#8b6914] bg-[#fff8e1] p-2 mb-4">
-                          <div className="font-mono text-xs text-[#8b6914]">
-                            Test Data — Limited market coverage. Add REPLIERS_API_KEY for full MLS access.
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex gap-2 flex-wrap">
-                        <button
-                          onClick={() => promoteMlsToDeal(listing)}
-                          disabled={!!promoting}
-                          className="border border-[#2c3e50] px-4 py-2 font-mono text-xs text-[#2c3e50] hover:bg-[#2c3e50] hover:text-white disabled:opacity-50 min-h-[44px]"
-                        >
-                          {promoting === (listing.mlsNumber || listing.address) ? 'Creating Deal...' : 'Promote to Deal'}
-                        </button>
-                        <button
-                          onClick={() => runCma(listing)}
-                          disabled={cmaLoading === (listing.mlsNumber || listing.address)}
-                          className="border border-[#8b6914] px-4 py-2 font-mono text-xs text-[#8b6914] hover:bg-[#8b6914] hover:text-white disabled:opacity-50 min-h-[44px]"
-                        >
-                          {cmaLoading === (listing.mlsNumber || listing.address)
-                            ? 'Running CMA...'
-                            : (cmaByKey[listing.mlsNumber || listing.address] ? 'Refresh CMA' : 'Run CMA')}
-                        </button>
-                        {listing.sourceUrl && (
-                          <a
-                            href={listing.sourceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="border border-[#5a6c7d] px-4 py-2 font-mono text-xs text-[#5a6c7d] hover:bg-[#5a6c7d] hover:text-white min-h-[44px] flex items-center"
-                          >
-                            View MLS Listing
-                          </a>
                         )}
                       </div>
-                      {cmaError && cmaLoading === null && cmaByKey[listing.mlsNumber || listing.address] === undefined && (
-                        <div className="mt-3 border border-[#8b6914] bg-[#fff8e1] p-2 font-mono text-xs text-[#8b6914]">
-                          {cmaError}
-                        </div>
-                      )}
-                      {cmaByKey[listing.mlsNumber || listing.address] && (
-                        <CmaReport report={cmaByKey[listing.mlsNumber || listing.address]} />
-                      )}
                     </div>
-                  )}
+                  </CardWrapper>
                 </div>
               );
             })}
