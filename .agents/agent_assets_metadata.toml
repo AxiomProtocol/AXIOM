@@ -414,6 +414,24 @@ uri = "file://public/images/coinbase/blockchain-network.png"
 type = "image"
 title = "blockchain network visualization"
 
+[[generated]]
+id = "gdGkuHi3pzCD_qmmNWwtK"
+uri = "file://attached_assets/generated_images/axiom_flyer_square.png"
+type = "image"
+title = "axiom flyer square"
+
+[[generated]]
+id = "D6DeWFJ9aMwq4EmF4vJS2"
+uri = "file://attached_assets/generated_images/axiom_flyer_story.png"
+type = "image"
+title = "axiom flyer story"
+
+[[generated]]
+id = "raMgwZLtBTgCdWMZPNaqC"
+uri = "file://attached_assets/generated_images/axiom_flyer_wide.png"
+type = "image"
+title = "axiom flyer wide"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
@@ -545,3 +563,21 @@ id = "5o6DO7NMpyyg1skt0miDH"
 uri = "file://attached_assets/stock_images/gold_crypto_coins.jpg"
 type = "image"
 title = "gold coins cryptocurrency investment luxury dark background"
+
+[[outputs]]
+id = "EJfKzRFPGGZDd9cSOdlET"
+uri = "file://attached_assets/generated_images/axiom_flyer_square.png"
+type = "image"
+title = "Square Flyer — Instagram / Twitter Feed (1:1)"
+
+[[outputs]]
+id = "M6gzXQUYdG-rkfVkQB5FL"
+uri = "file://attached_assets/generated_images/axiom_flyer_story.png"
+type = "image"
+title = "Vertical Flyer — Stories / TikTok / Reels (9:16)"
+
+[[outputs]]
+id = "uXCfqaNnoASF-Xdi5jtR1"
+uri = "file://attached_assets/generated_images/axiom_flyer_wide.png"
+type = "image"
+title = "Widescreen Flyer — LinkedIn / Twitter Banner (16:9)"
