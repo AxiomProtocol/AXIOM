@@ -140,7 +140,14 @@ export async function searchListings(params: {
   maxPrice?: number;
   minBeds?: number;
   maxBeds?: number;
+  minBaths?: number;
+  minSqft?: number;
+  maxSqft?: number;
+  propertyType?: string | string[];
+  classes?: string | string[];
+  search?: string;
   daysOnMarketMin?: number;
+  daysOnMarketMax?: number;
   addressKey?: string;
   pageNum?: number;
   resultsPerPage?: number;
@@ -166,7 +173,22 @@ export async function searchListings(params: {
     if (params.maxPrice) body.maxPrice = params.maxPrice;
     if (params.minBeds) body.minBeds = params.minBeds;
     if (params.maxBeds) body.maxBeds = params.maxBeds;
-    if (params.daysOnMarketMin) body.daysOnMarket = { min: params.daysOnMarketMin };
+    if (params.minBaths) body.minBaths = params.minBaths;
+    if (params.minSqft) body.minSqft = params.minSqft;
+    if (params.maxSqft) body.maxSqft = params.maxSqft;
+    if (params.propertyType) {
+      body.propertyType = Array.isArray(params.propertyType) ? params.propertyType : [params.propertyType];
+    }
+    if (params.classes) {
+      body.class = Array.isArray(params.classes) ? params.classes : [params.classes];
+    }
+    if (params.search) body.search = params.search;
+    if (params.daysOnMarketMin || params.daysOnMarketMax) {
+      const dom: Record<string, number> = {};
+      if (params.daysOnMarketMin) dom.min = params.daysOnMarketMin;
+      if (params.daysOnMarketMax) dom.max = params.daysOnMarketMax;
+      body.daysOnMarket = dom;
+    }
     if (params.addressKey) body.addressKey = params.addressKey;
     if (params.pageNum) body.pageNum = params.pageNum;
     if (params.resultsPerPage) body.resultsPerPage = params.resultsPerPage;

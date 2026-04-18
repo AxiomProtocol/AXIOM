@@ -4,10 +4,108 @@ import { dpListings } from '../../../../shared/distressedFeedSchema';
 import { eq, and, gte, lte, sql, desc, asc } from 'drizzle-orm';
 import { searchListings, isRepliersConfigured } from '../../../../lib/re/repliers';
 
+interface StrategyPreset {
+  label: string;
+  lastStatus?: string[];
+  daysOnMarketMin?: number;
+  propertyTypes?: string[];
+  classes?: string[];
+  descriptionKeywords?: string[];
+  searchKeyword?: string;
+}
+
+const STRATEGY_PRESETS: Record<string, StrategyPreset> = {
+  all: {
+    label: 'All Active',
+  },
+  price_reduced: {
+    label: 'Price Reduced',
+    lastStatus: ['Pc'],
+    daysOnMarketMin: 30,
+  },
+  expired: {
+    label: 'Expired / Withdrawn',
+    lastStatus: ['Exp', 'Sus', 'Ter'],
+    daysOnMarketMin: 60,
+  },
+  stale: {
+    label: 'Stale (90+ DOM)',
+    daysOnMarketMin: 90,
+  },
+  fixer_upper: {
+    label: 'Fixer-Upper',
+    descriptionKeywords: [
+      'fixer', 'tlc', 'handyman', 'investor special', 'as-is', 'as is',
+      'needs work', 'needs rehab', 'rehab', 'cash only', 'sold as-is',
+      'cosmetic', 'sweat equity', 'project house', 'estate sale', 'distressed',
+      'opportunity', 'bring your tools', 'value add', 'bring offers',
+    ],
+    searchKeyword: 'fixer',
+  },
+  fsbo: {
+    label: 'For Sale by Owner',
+    descriptionKeywords: [
+      'for sale by owner', 'fsbo', 'no agent', 'no realtor',
+      'owner finance', 'owner financing', 'seller financing', 'owner will carry',
+      'owner-financed', 'sold by owner',
+    ],
+    searchKeyword: 'fsbo',
+  },
+  land: {
+    label: 'Land / Lots',
+    propertyTypes: [
+      'Land', 'Vacant Land', 'Lot', 'Vacant Lot', 'Unimproved Land',
+      'Acreage', 'Vacant Residential', 'Vacant', 'Lots/Land', 'Farm',
+      'Agricultural', 'Ranch',
+    ],
+  },
+  multifamily_2_4: {
+    label: '2-4 Unit Multifamily',
+    propertyTypes: [
+      'Duplex', 'Triplex', 'Fourplex', 'Quadruplex',
+      '2-4 Family', '2 Family', '3 Family', '4 Family',
+      'Multi-Family', 'Multifamily',
+      '2 Units', '3 Units', '4 Units', 'Income Property',
+    ],
+  },
+  multifamily_5_plus: {
+    label: '5+ Unit Multifamily',
+    propertyTypes: [
+      'Apartment Building', '5+ Family', '6+ Family', '8+ Family',
+      'Apartment', '5 Or More Units', '5+ Units', '5-10 Units',
+      'Income/Multi-Family',
+    ],
+  },
+};
+
+function postFilterByDescriptionKeywords(
+  listings: Array<{ description?: string | null; details?: { description?: string } } & Record<string, unknown>>,
+  keywords: string[],
+): typeof listings {
+  if (!keywords.length) return listings;
+  const lowerKeywords = keywords.map((k) => k.toLowerCase());
+  return listings.filter((l) => {
+    const desc = String((l.description ?? l.details?.description ?? '')).toLowerCase();
+    if (!desc) return false;
+    return lowerKeywords.some((k) => desc.includes(k));
+  });
+}
+
 async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
-  const { city, state, zip, min_price, max_price, min_bedrooms, min_beds, page = '1' } = req.query;
+  const {
+    city, state, zip,
+    min_price, max_price,
+    min_bedrooms, min_beds, max_beds,
+    min_baths, min_sqft,
+    min_dom, max_dom,
+    property_type,
+    strategy = 'price_reduced',
+    page = '1',
+  } = req.query;
   const effectiveMinBeds = min_beds || min_bedrooms;
   const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
+  const strategyKey = String(strategy);
+  const preset = STRATEGY_PRESETS[strategyKey] || STRATEGY_PRESETS.all;
 
   if (!isRepliersConfigured()) {
     return res.json({
@@ -15,30 +113,59 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
       isTestMode: true,
       configured: false,
       source: 'mls_repliers',
+      strategies: Object.entries(STRATEGY_PRESETS).map(([id, p]) => ({ id, label: p.label })),
+      activeStrategy: strategyKey,
       pagination: { page: pageNum, total: 0, totalPages: 0, limit: 20 },
     });
   }
+
+  const userPropertyTypes = property_type
+    ? String(property_type).split(',').map((s) => s.trim()).filter(Boolean)
+    : undefined;
+
+  const propertyTypes = userPropertyTypes && userPropertyTypes.length > 0
+    ? userPropertyTypes
+    : preset.propertyTypes;
+
+  const dom = min_dom !== undefined && min_dom !== ''
+    ? parseInt(String(min_dom), 10)
+    : preset.daysOnMarketMin;
+  const domMax = max_dom ? parseInt(String(max_dom), 10) : undefined;
+
+  const needsClientPostFilter = !!(preset.descriptionKeywords && preset.descriptionKeywords.length > 0);
+  const fetchPageSize = needsClientPostFilter ? 100 : 20;
 
   const result = await searchListings({
     city: city ? String(city) : undefined,
     state: state ? String(state) : undefined,
     zip: zip ? String(zip) : undefined,
-    lastStatus: ['Pc', 'Exp'],
-    daysOnMarketMin: 60,
+    lastStatus: preset.lastStatus,
+    daysOnMarketMin: dom,
+    daysOnMarketMax: domMax,
     minPrice: min_price ? parseInt(String(min_price), 10) : undefined,
     maxPrice: max_price ? parseInt(String(max_price), 10) : undefined,
     minBeds: effectiveMinBeds ? parseInt(String(effectiveMinBeds), 10) : undefined,
-    resultsPerPage: 20,
+    maxBeds: max_beds ? parseInt(String(max_beds), 10) : undefined,
+    minBaths: min_baths ? parseInt(String(min_baths), 10) : undefined,
+    minSqft: min_sqft ? parseInt(String(min_sqft), 10) : undefined,
+    propertyType: propertyTypes,
+    classes: preset.classes,
+    search: preset.searchKeyword,
+    resultsPerPage: fetchPageSize,
     pageNum,
   });
 
-  const raw = result.data?.listings || [];
+  let raw = result.data?.listings || [];
   const lastStatusLabel: Record<string, string> = {
     Pc: 'Price Changed',
     Exp: 'Expired',
     Sus: 'Suspended',
     Ter: 'Terminated',
   };
+
+  if (needsClientPostFilter && preset.descriptionKeywords) {
+    raw = postFilterByDescriptionKeywords(raw as any, preset.descriptionKeywords).slice(0, 20) as typeof raw;
+  }
 
   const listings = raw.map((l) => {
     const addr = l.address || {};
@@ -77,10 +204,12 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
     isTestMode: result.isTestMode,
     configured: true,
     source: 'mls_repliers',
+    strategies: Object.entries(STRATEGY_PRESETS).map(([id, p]) => ({ id, label: p.label })),
+    activeStrategy: strategyKey,
     pagination: {
       page: pageNum,
-      total: result.data?.count || listings.length,
-      totalPages: result.data?.numPages || 1,
+      total: needsClientPostFilter ? listings.length : (result.data?.count || listings.length),
+      totalPages: needsClientPostFilter ? 1 : (result.data?.numPages || 1),
       limit: 20,
     },
   });

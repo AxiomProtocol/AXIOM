@@ -1206,6 +1206,18 @@ interface MlsListing {
   sourceUrl: string | null;
 }
 
+const MLS_STRATEGIES: { id: string; label: string; hint: string }[] = [
+  { id: 'price_reduced', label: 'Price Reduced', hint: 'Recent price cuts (lastStatus=Pc, 30+ DOM)' },
+  { id: 'expired', label: 'Expired / Withdrawn', hint: 'Expired, suspended, or terminated (60+ DOM)' },
+  { id: 'stale', label: 'Stale (90+ DOM)', hint: 'Active 90+ days — motivated sellers' },
+  { id: 'fixer_upper', label: 'Fixer-Upper', hint: 'Description: TLC, as-is, rehab, handyman, etc.' },
+  { id: 'fsbo', label: 'For Sale by Owner', hint: 'FSBO / owner financing keywords' },
+  { id: 'land', label: 'Land / Lots', hint: 'Vacant land, lots, acreage, agricultural' },
+  { id: 'multifamily_2_4', label: '2-4 Unit Multifamily', hint: 'Duplex, triplex, fourplex' },
+  { id: 'multifamily_5_plus', label: '5+ Unit Multifamily', hint: 'Apartment buildings, 5+ units' },
+  { id: 'all', label: 'All Active', hint: 'No distress filter applied' },
+];
+
 function MlsTab() {
   const [listings, setListings] = useState<MlsListing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1218,21 +1230,33 @@ function MlsTab() {
   const [promoting, setPromoting] = useState<string | null>(null);
   const [promoteError, setPromoteError] = useState<string | null>(null);
 
+  const [strategy, setStrategy] = useState<string>('price_reduced');
   const [filterCity, setFilterCity] = useState('');
   const [filterState, setFilterState] = useState('');
   const [filterMinPrice, setFilterMinPrice] = useState('');
   const [filterMaxPrice, setFilterMaxPrice] = useState('');
   const [filterMinBeds, setFilterMinBeds] = useState('');
+  const [filterMinBaths, setFilterMinBaths] = useState('');
+  const [filterMinSqft, setFilterMinSqft] = useState('');
+  const [filterMinDom, setFilterMinDom] = useState('');
+  const [filterPropertyType, setFilterPropertyType] = useState('');
+
+  const activeStrategy = MLS_STRATEGIES.find((s) => s.id === strategy) || MLS_STRATEGIES[0];
 
   const fetchMls = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page) });
+      params.set('strategy', strategy);
       if (filterCity) params.set('city', filterCity);
       if (filterState) params.set('state', filterState);
       if (filterMinPrice) params.set('min_price', filterMinPrice);
       if (filterMaxPrice) params.set('max_price', filterMaxPrice);
       if (filterMinBeds) params.set('min_beds', filterMinBeds);
+      if (filterMinBaths) params.set('min_baths', filterMinBaths);
+      if (filterMinSqft) params.set('min_sqft', filterMinSqft);
+      if (filterMinDom) params.set('min_dom', filterMinDom);
+      if (filterPropertyType) params.set('property_type', filterPropertyType);
       params.set('source', 'mls_repliers');
       const res = await fetch(`/api/distressed-feed/listings?${params.toString()}`, { cache: 'no-store' });
       const data = await res.json();
@@ -1246,7 +1270,7 @@ function MlsTab() {
     } finally {
       setLoading(false);
     }
-  }, [page, filterCity, filterState, filterMinPrice, filterMaxPrice, filterMinBeds]);
+  }, [page, strategy, filterCity, filterState, filterMinPrice, filterMaxPrice, filterMinBeds, filterMinBaths, filterMinSqft, filterMinDom, filterPropertyType]);
 
   useEffect(() => { fetchMls(); }, [fetchMls]);
 
@@ -1295,7 +1319,7 @@ function MlsTab() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-4">
-        <h3 className="font-serif text-lg text-[#2c3e50]">ACTIVE MLS — PRICE REDUCED &amp; RECENTLY EXPIRED</h3>
+        <h3 className="font-serif text-lg text-[#2c3e50]">ACTIVE MLS — DISTRESSED &amp; INVESTOR-FRIENDLY FILTERS</h3>
         {isTestMode && (
           <span className="border border-[#8b6914] px-2 py-0.5 font-mono text-xs text-[#8b6914] uppercase tracking-wide">
             Test Data
@@ -1304,10 +1328,33 @@ function MlsTab() {
       </div>
 
       <p className="font-mono text-sm text-[#5a6c7d] mb-4">
-        Live MLS listings filtered for price reductions (lastStatus: Pc) and recently expired listings
-        (lastStatus: Exp) with 60+ days on market. Data via Repliers Realtime MLS API.
+        Live MLS listings via Repliers Realtime API, filtered through distressed-investor strategy presets.
+        Pick a strategy below to surface motivated sellers, fixer-uppers, FSBO leads, land, or multifamily inventory.
         {isTestMode && ' Running on test key — market coverage is limited.'}
       </p>
+
+      <div className="border border-[#2c3e50] p-3 mb-4 bg-[#faf8f4]">
+        <div className="font-mono text-xs uppercase tracking-wider text-[#5a6c7d] mb-2">Strategy</div>
+        <div className="flex flex-wrap gap-2 mb-2">
+          {MLS_STRATEGIES.map((s) => {
+            const active = strategy === s.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => { setStrategy(s.id); setPage(1); }}
+                className={`border px-3 py-2 font-mono text-xs uppercase tracking-wide min-h-[36px] ${
+                  active
+                    ? 'border-[#2c3e50] bg-[#2c3e50] text-white'
+                    : 'border-[#2c3e50] text-[#2c3e50] hover:bg-[#f5f0e8]'
+                }`}
+              >
+                {s.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="font-mono text-xs text-[#5a6c7d]">{activeStrategy.hint}</div>
+      </div>
 
       {!configured && (
         <div className="border border-[#8b6914] bg-[#fff8e1] p-4 mb-4">
@@ -1317,7 +1364,7 @@ function MlsTab() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-3">
         <input
           type="text"
           placeholder="City"
@@ -1348,10 +1395,42 @@ function MlsTab() {
           className="border border-[#2c3e50] px-3 py-2 font-mono text-sm focus:outline-none focus:border-[#8b6914] min-h-[44px]"
         />
         <input
+          type="text"
+          placeholder="Property Type override"
+          value={filterPropertyType}
+          onChange={e => { setFilterPropertyType(e.target.value); setPage(1); }}
+          title="Comma-separated property types (overrides strategy preset). Example: Duplex,Triplex"
+          className="border border-[#2c3e50] px-3 py-2 font-mono text-sm focus:outline-none focus:border-[#8b6914] min-h-[44px]"
+        />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        <input
           type="number"
           placeholder="Min Beds"
           value={filterMinBeds}
           onChange={e => { setFilterMinBeds(e.target.value); setPage(1); }}
+          className="border border-[#2c3e50] px-3 py-2 font-mono text-sm focus:outline-none focus:border-[#8b6914] min-h-[44px]"
+        />
+        <input
+          type="number"
+          placeholder="Min Baths"
+          value={filterMinBaths}
+          onChange={e => { setFilterMinBaths(e.target.value); setPage(1); }}
+          className="border border-[#2c3e50] px-3 py-2 font-mono text-sm focus:outline-none focus:border-[#8b6914] min-h-[44px]"
+        />
+        <input
+          type="number"
+          placeholder="Min Sqft"
+          value={filterMinSqft}
+          onChange={e => { setFilterMinSqft(e.target.value); setPage(1); }}
+          className="border border-[#2c3e50] px-3 py-2 font-mono text-sm focus:outline-none focus:border-[#8b6914] min-h-[44px]"
+        />
+        <input
+          type="number"
+          placeholder="Min Days on Market"
+          value={filterMinDom}
+          onChange={e => { setFilterMinDom(e.target.value); setPage(1); }}
+          title="Override the strategy's default minimum days on market"
           className="border border-[#2c3e50] px-3 py-2 font-mono text-sm focus:outline-none focus:border-[#8b6914] min-h-[44px]"
         />
       </div>
