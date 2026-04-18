@@ -352,3 +352,18 @@ export const communityTreasuryLedger = pgTable('community_credit_treasury_ledger
 
 export type CommunityTreasuryLedger = typeof communityTreasuryLedger.$inferSelect;
 export type InsertCommunityTreasuryLedger = typeof communityTreasuryLedger.$inferInsert;
+
+export const axusdOracleFallbackEvents = pgTable('axusd_oracle_fallback_events', {
+  id: serial('id').primaryKey(),
+  occurredAt: timestamp('occurred_at').defaultNow().notNull(),
+  caller: varchar('caller', { length: 255 }).notNull(),
+  loanId: varchar('loan_id', { length: 255 }),
+  principalUsd: decimal('principal_usd', { precision: 28, scale: 8 }),
+  reason: text('reason'),
+}, (table) => ({
+  occurredAtIdx: index('axusd_oracle_fallback_occurred_at_idx').on(table.occurredAt),
+  callerIdx: index('axusd_oracle_fallback_caller_idx').on(table.caller),
+}));
+
+export type AxusdOracleFallbackEvent = typeof axusdOracleFallbackEvents.$inferSelect;
+export type InsertAxusdOracleFallbackEvent = typeof axusdOracleFallbackEvents.$inferInsert;
