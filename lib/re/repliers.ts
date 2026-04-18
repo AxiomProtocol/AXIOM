@@ -1,4 +1,14 @@
 const REPLIERS_BASE = 'https://api.repliers.io';
+const REPLIERS_CDN = 'https://cdn.repliers.io';
+
+export type RepliersImageSize = 'small' | 'medium' | 'large';
+
+export function buildRepliersImageUrl(image: string, size: RepliersImageSize = 'large'): string {
+  if (!image) return '';
+  if (image.startsWith('http://') || image.startsWith('https://')) return image;
+  const filename = image.replace(/^\/+/, '');
+  return `${REPLIERS_CDN}/${filename}?class=${size}`;
+}
 
 function getApiKey(): { key: string; isTestMode: boolean } | null {
   const prodKey = process.env.REPLIERS_API_KEY;
@@ -111,7 +121,7 @@ export function isRepliersConfigured(): boolean {
 
 function normalizeImageUrls(images?: string[]): string[] {
   if (!images) return [];
-  return images.map((img) => img.startsWith('http') ? img : `${REPLIERS_BASE}/${img}`);
+  return images.map((img) => buildRepliersImageUrl(img, 'large'));
 }
 
 const EMPTY_LISTINGS: RepliersListingsResponse = { listings: [], count: 0, numPages: 0, page: 1 };

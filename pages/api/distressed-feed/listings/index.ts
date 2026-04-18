@@ -64,7 +64,7 @@ async function handleMlsRepliers(req: NextApiRequest, res: NextApiResponse) {
       lastStatus: l.lastStatus || '',
       lastStatusLabel: lastStatusLabel[l.lastStatus || ''] || l.lastStatus || '',
       listDate: l.listDate || null,
-      images: (l.images || []).map((img) => img.startsWith('http') ? img : `https://api.repliers.io/${img}`),
+      images: l.images || [],
       description: l.details?.description || null,
       addressKey: l.addressKey || null,
       sourceUrl: l.mlsNumber ? `https://repliers.com/listing/${l.mlsNumber}` : null,
