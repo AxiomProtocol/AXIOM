@@ -103,7 +103,8 @@
     "test:cost-intelligence": "vitest run tests/cost-intelligence",
     "test:ivcee": "vitest run lib/ivcee",
     "test:vitest": "vitest run",
-    "test:prune-oracle-fallback": "vitest run tests/prune-oracle-fallback.test.ts"
+    "test:prune-oracle-fallback": "vitest run tests/prune-oracle-fallback.test.ts",
+    "test:e2e:audit-csv": "playwright test e2e/cap-infra-audit-csv.spec.ts"
   },
   "keywords": [],
   "author": "",
