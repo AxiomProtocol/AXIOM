@@ -9246,7 +9246,7 @@ export const capLedgerEntries = pgTable("cap_ledger_entries", {
   createdIdx: index("cap_ledger_created_idx").on(table.createdAt),
 }));
 
-export const capPositions = pgTable("cap_positions", {
+export const capPositions = pgTable("cap_trading_positions", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   instrument: varchar("instrument", { length: 50 }).notNull(),
   venue: varchar("venue", { length: 50 }).default('PAPER').notNull(),
@@ -9262,9 +9262,9 @@ export const capPositions = pgTable("cap_positions", {
   mirdtSetupId: uuid("mirdt_setup_id"),
   mirdtTradeId: uuid("mirdt_trade_id"),
 }, (table) => ({
-  instrumentIdx: index("cap_pos_instrument_idx").on(table.instrument),
-  statusIdx: index("cap_pos_status_idx").on(table.status),
-  openedIdx: index("cap_pos_opened_idx").on(table.openedAt),
+  instrumentIdx: index("cap_trading_pos_instrument_idx").on(table.instrument),
+  statusIdx: index("cap_trading_pos_status_idx").on(table.status),
+  openedIdx: index("cap_trading_pos_opened_idx").on(table.openedAt),
 }));
 
 export const capTrades = pgTable("cap_trades", {

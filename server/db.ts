@@ -7,6 +7,7 @@ import * as treasurySchema from '../shared/treasurySchema';
 import * as allocationPolicySchema from '../shared/allocationPolicySchema';
 import * as circleSchema from '../shared/circleSchema';
 import * as onrampSchema from '../shared/onrampSchema';
+import * as capInfraSchema from '../shared/capInfraSchema';
 import {
   index,
   pgTable,
@@ -31,6 +32,7 @@ const dbSchema = {
   ...allocationPolicySchema,
   ...circleSchema,
   ...onrampSchema,
+  ...capInfraSchema,
 };
 
 function getPool(): Pool {

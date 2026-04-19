@@ -8,6 +8,7 @@ export default defineConfig({
       'lib/**/*.test.ts',
       'tests/cost-intelligence/**/*.test.ts',
       'tests/mirdt-lexicon.test.ts',
+      'tests/prune-oracle-fallback.test.ts',
     ],
     exclude: [
       'node_modules/**',

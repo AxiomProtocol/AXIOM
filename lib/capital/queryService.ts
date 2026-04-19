@@ -28,7 +28,7 @@ export async function getCapitalState() {
   try {
     const { rows: positions } = await p.query(`
       SELECT id, instrument, status, side, quantity, avg_entry_price, realized_pnl
-      FROM cap_positions
+      FROM cap_trading_positions
     `);
 
     const open = positions.filter(r => r.status === 'OPEN');
@@ -70,7 +70,7 @@ export async function getPerformanceMetrics(period: 'day' | 'week' | 'month' | '
 
     const { rows: allPositions } = await p.query(`
       SELECT id, instrument, status, side, quantity, avg_entry_price, avg_exit_price, realized_pnl, opened_at, closed_at
-      FROM cap_positions
+      FROM cap_trading_positions
     `);
 
     const posRecords: PositionRecord[] = allPositions.map(r => ({
@@ -169,7 +169,7 @@ export async function getDrawdownState(period: 'day' | 'week' | 'month' | 'year'
 
     const { rows: positions } = await p.query(`
       SELECT realized_pnl, closed_at
-      FROM cap_positions
+      FROM cap_trading_positions
       WHERE status = 'CLOSED' AND closed_at IS NOT NULL
       ORDER BY closed_at ASC
     `);

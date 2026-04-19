@@ -20,6 +20,9 @@
     "test:readiness-gate": "npm run test:lexicon",
     "test:note-portal": "npx tsx tests/capital-compute.test.ts",
     "test:smoke": "npx tsx scripts/smoke-test.ts",
+    "test:capinfra-smoke": "npx tsx scripts/capinfra-smoke.ts",
+    "test:capinfra-correctness": "npx tsx scripts/capinfra-correctness.ts",
+    "test:capinfra": "npm run test:capinfra-smoke && npm run test:capinfra-correctness",
     "test:contracts": "npx tsx tests/contracts-policy-and-validators.test.ts",
     "test:all": "npm run test:lexicon && npx tsx tests/capital-compute.test.ts",
     "test:invariants": "hardhat test test/invariants/*.test.ts --config hardhat.config.ts",
@@ -97,7 +100,8 @@
     "admin:audit-logs": "./scripts/cli/admin-ops.sh audit-logs",
     "test:cost-intelligence": "vitest run tests/cost-intelligence",
     "test:ivcee": "vitest run lib/ivcee",
-    "test:vitest": "vitest run"
+    "test:vitest": "vitest run",
+    "test:prune-oracle-fallback": "vitest run tests/prune-oracle-fallback.test.ts"
   },
   "keywords": [],
   "author": "",

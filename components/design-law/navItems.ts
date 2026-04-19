@@ -78,6 +78,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/execution-framework', label: 'Execution Framework' },
       { href: '/transparency', label: 'Transparency' },
       { href: '/founder-ops', label: 'Founder Ops' },
+      { href: '/operations/cap-infra', label: 'Cap-Infra Console' },
       { href: '/products', label: 'All Products' },
     ],
   },

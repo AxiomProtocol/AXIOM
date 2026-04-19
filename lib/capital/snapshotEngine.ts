@@ -57,7 +57,7 @@ export async function ingestMirdtTrades(pool?: Pool): Promise<{ ingested: number
 
     for (const t of trades) {
       const { rows: existing } = await p.query(
-        `SELECT id FROM cap_positions WHERE mirdt_trade_id = $1 LIMIT 1`,
+        `SELECT id FROM cap_trading_positions WHERE mirdt_trade_id = $1 LIMIT 1`,
         [t.id]
       );
       if (existing.length > 0) {
@@ -79,7 +79,7 @@ export async function ingestMirdtTrades(pool?: Pool): Promise<{ ingested: number
       const pnl = t.pnl ? parseFloat(t.pnl) : null;
 
       const { rows: [pos] } = await p.query(`
-        INSERT INTO cap_positions (instrument, venue, strategy_id, status, side, quantity, avg_entry_price, avg_exit_price, realized_pnl, opened_at, closed_at, mirdt_setup_id, mirdt_trade_id)
+        INSERT INTO cap_trading_positions (instrument, venue, strategy_id, status, side, quantity, avg_entry_price, avg_exit_price, realized_pnl, opened_at, closed_at, mirdt_setup_id, mirdt_trade_id)
         VALUES ($1, 'PAPER', 'MIRDT', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id
       `, [t.symbol || 'UNKNOWN', status, side, qty, entryPrice, exitPrice, pnl, t.opened_at, t.closed_at, t.setup_id, t.id]);
@@ -118,7 +118,7 @@ export async function createSnapshot(): Promise<SnapshotResult> {
 
     const { rows: positions } = await p.query(`
       SELECT id, instrument, status, side, quantity, avg_entry_price, avg_exit_price, realized_pnl, opened_at, closed_at
-      FROM cap_positions
+      FROM cap_trading_positions
     `);
 
     const posRecords: PositionRecord[] = positions.map(r => ({

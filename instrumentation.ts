@@ -1165,7 +1165,7 @@ export async function register() {
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )`, 'cap_ledger_entries');
 
-      await exec(`CREATE TABLE IF NOT EXISTS cap_positions (
+      await exec(`CREATE TABLE IF NOT EXISTS cap_trading_positions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         instrument VARCHAR(50) NOT NULL,
         venue VARCHAR(50) NOT NULL DEFAULT 'PAPER',
@@ -1180,7 +1180,7 @@ export async function register() {
         closed_at TIMESTAMP,
         mirdt_setup_id UUID,
         mirdt_trade_id UUID
-      )`, 'cap_positions');
+      )`, 'cap_trading_positions');
 
       await exec(`CREATE TABLE IF NOT EXISTS cap_trades (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1282,9 +1282,9 @@ export async function register() {
       await exec(`CREATE INDEX IF NOT EXISTS cap_ledger_account_idx ON cap_ledger_entries(account_id)`, 'idx cap_ledger_acct');
       await exec(`CREATE INDEX IF NOT EXISTS cap_ledger_external_idx ON cap_ledger_entries(external_id)`, 'idx cap_ledger_ext');
       await exec(`CREATE INDEX IF NOT EXISTS cap_ledger_created_idx ON cap_ledger_entries(created_at)`, 'idx cap_ledger_created');
-      await exec(`CREATE INDEX IF NOT EXISTS cap_pos_instrument_idx ON cap_positions(instrument)`, 'idx cap_pos_instr');
-      await exec(`CREATE INDEX IF NOT EXISTS cap_pos_status_idx ON cap_positions(status)`, 'idx cap_pos_status');
-      await exec(`CREATE INDEX IF NOT EXISTS cap_pos_opened_idx ON cap_positions(opened_at)`, 'idx cap_pos_opened');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_trading_pos_instrument_idx ON cap_trading_positions(instrument)`, 'idx cap_trading_pos_instr');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_trading_pos_status_idx ON cap_trading_positions(status)`, 'idx cap_trading_pos_status');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_trading_pos_opened_idx ON cap_trading_positions(opened_at)`, 'idx cap_trading_pos_opened');
       await exec(`CREATE INDEX IF NOT EXISTS cap_trade_position_idx ON cap_trades(position_id)`, 'idx cap_trade_pos');
       await exec(`CREATE INDEX IF NOT EXISTS cap_trade_executed_idx ON cap_trades(executed_at)`, 'idx cap_trade_exec');
       await exec(`CREATE INDEX IF NOT EXISTS cap_fee_incurred_idx ON cap_fees(incurred_at)`, 'idx cap_fee_incurred');
