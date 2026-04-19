@@ -14,7 +14,7 @@ import Head from 'next/head';
 import { useEffect, useState, useCallback } from 'react';
 import type { GetServerSideProps } from 'next';
 import { DesignLawLayout } from '../../components/design-law';
-import { PRUNE_STALE_HOURS } from '../../lib/admin/config';
+import { PRUNE_STALE_HOURS, PRUNE_GAP_WARN_HOURS } from '../../lib/admin/config';
 
 const PAGE_SIZE = 50;
 
@@ -236,6 +236,9 @@ function PruneStatusPanel({
                   Pruned At (UTC)
                 </th>
                 <th className="px-4 py-3 text-right uppercase tracking-wider text-dl-gray whitespace-nowrap">
+                  Gap Since Prev
+                </th>
+                <th className="px-4 py-3 text-right uppercase tracking-wider text-dl-gray whitespace-nowrap">
                   Rows Deleted
                 </th>
                 <th className="px-4 py-3 text-right uppercase tracking-wider text-dl-gray whitespace-nowrap">
@@ -247,25 +250,53 @@ function PruneStatusPanel({
               </tr>
             </thead>
             <tbody>
-              {pruneHistory.map((run, i) => (
-                <tr
-                  key={run.pruned_at}
-                  className={i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}
-                >
-                  <td className="px-4 py-2 text-dl-navy whitespace-nowrap">
-                    {formatTs(run.pruned_at)}
-                  </td>
-                  <td className="px-4 py-2 text-right text-dl-navy font-bold">
-                    {run.deleted_count.toLocaleString('en-US')}
-                  </td>
-                  <td className="px-4 py-2 text-right text-dl-navy">
-                    {run.retention_days}
-                  </td>
-                  <td className="px-4 py-2 text-dl-gray">
-                    {run.triggered_by}
-                  </td>
-                </tr>
-              ))}
+              {pruneHistory.map((run, i) => {
+                const prevRun = pruneHistory[i + 1];
+                const gapHours = prevRun
+                  ? (new Date(run.pruned_at).getTime() - new Date(prevRun.pruned_at).getTime()) /
+                    (1000 * 60 * 60)
+                  : null;
+                const gapLabel =
+                  gapHours === null
+                    ? '—'
+                    : gapHours >= 48
+                      ? `${(gapHours / 24).toFixed(1)}d`
+                      : `${gapHours.toFixed(1)}h`;
+                const isGapOverdue = gapHours !== null && gapHours > PRUNE_GAP_WARN_HOURS;
+                const rowBg = isGapOverdue
+                  ? 'bg-amber-50'
+                  : i % 2 === 0
+                    ? 'bg-dl-bg'
+                    : 'bg-dl-bg-alt';
+                return (
+                  <tr key={run.pruned_at} className={rowBg}>
+                    <td className="px-4 py-2 text-dl-navy whitespace-nowrap">
+                      {formatTs(run.pruned_at)}
+                    </td>
+                    <td
+                      className={`px-4 py-2 text-right whitespace-nowrap font-bold ${
+                        isGapOverdue ? 'text-amber-700' : 'text-dl-gray'
+                      }`}
+                    >
+                      {gapLabel}
+                      {isGapOverdue && (
+                        <span className="ml-1 text-amber-600" title={`Gap exceeds ${PRUNE_GAP_WARN_HOURS}h — possible missed run`}>
+                          ⚠
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-right text-dl-navy font-bold">
+                      {run.deleted_count.toLocaleString('en-US')}
+                    </td>
+                    <td className="px-4 py-2 text-right text-dl-navy">
+                      {run.retention_days}
+                    </td>
+                    <td className="px-4 py-2 text-dl-gray">
+                      {run.triggered_by}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

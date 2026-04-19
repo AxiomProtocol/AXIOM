@@ -4,6 +4,13 @@
  */
 export const PRUNE_STALE_HOURS = 48;
 
+/**
+ * Number of hours between consecutive prune runs above which a gap is
+ * highlighted as abnormal in the Data Hygiene history table.
+ * Set to 25h so a single missed daily run is immediately visible.
+ */
+export const PRUNE_GAP_WARN_HOURS = 25;
+
 const DEFAULT_ADMIN_WALLETS = [
   '0xa6ed10e752d5facd989ee9ced113b3a064b47493',
 ];
