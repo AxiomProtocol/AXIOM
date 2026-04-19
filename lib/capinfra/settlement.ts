@@ -715,14 +715,15 @@ export async function approveAchInstruction(
     throw new ConflictError('ach_adapter_disabled_during_approve', {});
   }
 
-  // Call Increase via adapter (mode must be MANUAL_APPROVAL configured to actually
-  // submit — for the approval path we temporarily override the dispatch to LIVE_CANARY
-  // semantics by calling the adapter directly. The adapter's dispatcher returns
-  // submitted=true for any mode that calls Increase).
+  // Approval-time dispatch must perform a real submission and must not route
+  // through the MANUAL_APPROVAL pendingApproval branch.
   const adapter = getAdapter('ACH');
+  if (!adapter.dispatchAfterApproval) {
+    throw new ConflictError('ach_adapter_missing_approval_dispatch', {});
+  }
   let receipt;
   try {
-    receipt = await adapter.dispatch({ instruction: pre, asset });
+    receipt = await adapter.dispatchAfterApproval({ instruction: pre, asset });
   } catch (err) {
     await recordSingleActorAction({
       actionType: 'ach.rejection',
@@ -734,6 +735,13 @@ export async function approveAchInstruction(
       correlationId: correlationId ?? null,
     });
     return _failInstruction(instructionId, actor, correlationId, `approve_dispatch_failed:${(err as Error).message}`);
+  }
+  if (!receipt.submitted || receipt.pendingApproval) {
+    throw new ConflictError('approve_dispatch_must_submit_once', {
+      instructionId,
+      submitted: Boolean(receipt.submitted),
+      pendingApproval: Boolean(receipt.pendingApproval),
+    });
   }
 
   // Record approval action.
