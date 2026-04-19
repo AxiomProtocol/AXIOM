@@ -87,8 +87,8 @@ jobs:
       - name: Run capinfra smoke + correctness tests
         run: npm run test:capinfra
 
-      - name: Run oracle-fallback pruning tests
-        run: npm run test:prune-oracle-fallback
+      - name: Run vitest suite
+        run: npm run test:vitest
 
       - name: Install Playwright Chromium browser
         run: npx playwright install chromium --with-deps
