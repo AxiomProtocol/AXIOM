@@ -5,10 +5,20 @@ import { db } from '../../../../../server/db';
 import {
   capUsers,
   capWallets,
+  capIdentityProfiles,
 } from '../../../../../shared/capInfraSchema';
-import { ilike, or, inArray } from 'drizzle-orm';
+import { ilike, or, inArray, eq } from 'drizzle-orm';
 
 const MAX_RESULTS = 10;
+
+const USER_SELECT = {
+  id: capUsers.id,
+  primaryEmail: capUsers.primaryEmail,
+  externalId: capUsers.externalId,
+  entityType: capUsers.entityType,
+  status: capUsers.status,
+  legalName: capIdentityProfiles.legalName,
+};
 
 export default createRouter([
   {
@@ -24,19 +34,15 @@ export default createRouter([
       const pattern = `%${q}%`;
 
       const byUser = await db
-        .select({
-          id: capUsers.id,
-          primaryEmail: capUsers.primaryEmail,
-          externalId: capUsers.externalId,
-          entityType: capUsers.entityType,
-          status: capUsers.status,
-        })
+        .select(USER_SELECT)
         .from(capUsers)
+        .leftJoin(capIdentityProfiles, eq(capIdentityProfiles.userId, capUsers.id))
         .where(
           or(
             ilike(capUsers.primaryEmail, pattern),
             ilike(capUsers.externalId, pattern),
             ilike(capUsers.id, pattern),
+            ilike(capIdentityProfiles.legalName, pattern),
           ),
         )
         .limit(MAX_RESULTS);
@@ -55,14 +61,9 @@ export default createRouter([
 
         if (walletUserIds.length > 0) {
           byWallet = await db
-            .select({
-              id: capUsers.id,
-              primaryEmail: capUsers.primaryEmail,
-              externalId: capUsers.externalId,
-              entityType: capUsers.entityType,
-              status: capUsers.status,
-            })
+            .select(USER_SELECT)
             .from(capUsers)
+            .leftJoin(capIdentityProfiles, eq(capIdentityProfiles.userId, capUsers.id))
             .where(inArray(capUsers.id, walletUserIds))
             .limit(MAX_RESULTS - byUser.length);
         }

@@ -485,16 +485,16 @@ function makeUserFetcher(operatorKey: string) {
   return async (q: string): Promise<Suggestion[]> => {
     const params = new URLSearchParams({ q });
     const data = await callApi<{
-      items: Array<{ id: string; primaryEmail: string | null; externalId: string | null }>;
+      items: Array<{ id: string; primaryEmail: string | null; externalId: string | null; legalName: string | null }>;
     }>(`/api/capinfra/operator/users/search?${params}`, operatorKey);
-    return (data.items ?? []).map((u) => ({
-      label: u.primaryEmail
-        ? `${u.primaryEmail} (${u.id})`
-        : u.externalId
-        ? `ext:${u.externalId} (${u.id})`
-        : u.id,
-      value: u.id,
-    }));
+    return (data.items ?? []).map((u) => {
+      const namePart = u.legalName ? `${u.legalName} ` : '';
+      const emailPart = u.primaryEmail ? `<${u.primaryEmail}> ` : u.externalId ? `ext:${u.externalId} ` : '';
+      return {
+        label: `${namePart}${emailPart}(${u.id})`,
+        value: u.id,
+      };
+    });
   };
 }
 
