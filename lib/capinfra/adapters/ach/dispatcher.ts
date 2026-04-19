@@ -46,6 +46,8 @@ import {
 
 const DISPATCH_TIMEOUT_MS = 10_000;
 
+type AchConfig = Awaited<ReturnType<typeof requireAchConfig>>;
+
 export async function dispatchAch(input: AdapterDispatchInput): Promise<AdapterDispatchResult> {
   const cfg = await requireAchConfig();
   const mode = modeOf(cfg);
@@ -124,64 +126,94 @@ export async function dispatchAch(input: AdapterDispatchInput): Promise<AdapterD
 
   // ── LIVE_CANARY / LIVE ───────────────────────────────────────────────
   if (mode === 'LIVE_CANARY' || mode === 'LIVE') {
-    const payloadJson = instruction.payloadJson as Record<string, unknown> | null;
-    const routingNumber = String(payloadJson?.routingNumber ?? '');
-    const accountNumber = String(payloadJson?.accountNumber ?? '');
-
-    if (!routingNumber || !accountNumber) {
-      throw new AdapterValidationError(
-        'ROUTING_OR_ACCOUNT_MISSING',
-        'ACH dispatch requires payloadJson.routingNumber and payloadJson.accountNumber',
-      );
-    }
-
-    const amountCents = Number(decimalStringToCents(instruction.amount));
-    if (amountCents <= 0 || !Number.isFinite(amountCents)) {
-      throw new AdapterValidationError('AMOUNT_INVALID', 'amount converts to non-positive cents');
-    }
-
-    const descriptor = String(payloadJson?.statementDescriptor ?? `AXIOM-${instruction.id.slice(-6)}`);
-    const idempotencyKey = `ach-dispatch-${instruction.id}`;
-
-    const ac = new AbortController();
-    const timer = setTimeout(() => ac.abort(), DISPATCH_TIMEOUT_MS);
-    let transfer;
-    try {
-      transfer = await submitAchTransfer({
-        environment: envOf(cfg),
-        accountId: cfg.accountId,
-        amountCents,
-        routingNumber,
-        accountNumber,
-        statementDescriptor: descriptor,
-        idempotencyKey,
-        signal: ac.signal,
-      });
-    } finally {
-      clearTimeout(timer);
-    }
-
-    // submitted=true signals settlement.ts to transition to SUBMITTED, NOT SETTLED.
-    // No portfolio writes. No reserve credit.
-    // SUBMITTED means Increase accepted. Not bank-final.
-    return {
-      externalRef: transfer.id,
-      settledAt: new Date(),
-      submitted: true,
-      receiptJson: {
-        mode,
-        kind: 'ACH',
-        environment: envOf(cfg),
-        accountId: cfg.accountId,
-        increaseTransferId: transfer.id,
-        increaseStatus: transfer.status,
-        configVersion: cfg.configVersion,
-        submittedAt: new Date().toISOString(),
-        note: 'SUBMITTED means Increase API accepted. Clearing confirmed by reconciliation only.',
-      },
-    };
+    return submitAchDispatch(input, cfg, mode);
   }
 
   // Unreachable if all modes are handled above — but TypeScript guard.
   throw new AdapterValidationError('UNKNOWN_MODE', `unhandled ACH adapter mode: ${mode}`);
+}
+
+/**
+ * Approval-time submit path used only by ACH operator approval.
+ *
+ * This path is intentionally mode-locked to MANUAL_APPROVAL and always
+ * performs a real Increase submission (never returns pendingApproval).
+ */
+export async function dispatchAchAfterOperatorApproval(
+  input: AdapterDispatchInput,
+): Promise<AdapterDispatchResult> {
+  const cfg = await requireAchConfig();
+  const mode = modeOf(cfg);
+  if (mode !== 'MANUAL_APPROVAL') {
+    throw new AdapterValidationError(
+      'APPROVAL_SUBMIT_REQUIRES_MANUAL_APPROVAL_MODE',
+      `approval submission requires MANUAL_APPROVAL mode; got ${mode}`,
+    );
+  }
+  return submitAchDispatch(input, cfg, mode, 'ach-approve');
+}
+
+async function submitAchDispatch(
+  input: AdapterDispatchInput,
+  cfg: AchConfig,
+  mode: 'MANUAL_APPROVAL' | 'LIVE_CANARY' | 'LIVE',
+  idempotencyKeyPrefix: 'ach-dispatch' | 'ach-approve' = 'ach-dispatch',
+): Promise<AdapterDispatchResult> {
+  const { instruction } = input;
+  const payloadJson = instruction.payloadJson as Record<string, unknown> | null;
+  const routingNumber = String(payloadJson?.routingNumber ?? '');
+  const accountNumber = String(payloadJson?.accountNumber ?? '');
+
+  if (!routingNumber || !accountNumber) {
+    throw new AdapterValidationError(
+      'ROUTING_OR_ACCOUNT_MISSING',
+      'ACH dispatch requires payloadJson.routingNumber and payloadJson.accountNumber',
+    );
+  }
+
+  const amountCents = Number(decimalStringToCents(instruction.amount));
+  if (amountCents <= 0 || !Number.isFinite(amountCents)) {
+    throw new AdapterValidationError('AMOUNT_INVALID', 'amount converts to non-positive cents');
+  }
+
+  const descriptor = String(payloadJson?.statementDescriptor ?? `AXIOM-${instruction.id.slice(-6)}`);
+  const idempotencyKey = `${idempotencyKeyPrefix}-${instruction.id}`;
+
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), DISPATCH_TIMEOUT_MS);
+  let transfer;
+  try {
+    transfer = await submitAchTransfer({
+      environment: envOf(cfg),
+      accountId: cfg.accountId,
+      amountCents,
+      routingNumber,
+      accountNumber,
+      statementDescriptor: descriptor,
+      idempotencyKey,
+      signal: ac.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+
+  // submitted=true signals settlement.ts to transition to SUBMITTED, NOT SETTLED.
+  // No portfolio writes. No reserve credit.
+  // SUBMITTED means Increase accepted. Not bank-final.
+  return {
+    externalRef: transfer.id,
+    settledAt: new Date(),
+    submitted: true,
+    receiptJson: {
+      mode,
+      kind: 'ACH',
+      environment: envOf(cfg),
+      accountId: cfg.accountId,
+      increaseTransferId: transfer.id,
+      increaseStatus: transfer.status,
+      configVersion: cfg.configVersion,
+      submittedAt: new Date().toISOString(),
+      note: 'SUBMITTED means Increase API accepted. Clearing confirmed by reconciliation only.',
+    },
+  };
 }

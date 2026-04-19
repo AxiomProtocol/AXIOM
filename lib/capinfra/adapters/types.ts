@@ -104,6 +104,12 @@ export interface SettlementAdapter {
   /** Human-readable name for diagnostics. */
   readonly name: string;
   dispatch(input: AdapterDispatchInput): Promise<AdapterDispatchResult>;
+  /**
+   * Optional approval-time dispatch path.
+   * Used for dual-actor flows that must bypass pendingApproval staging and
+   * perform a real external submission exactly once.
+   */
+  dispatchAfterApproval?(input: AdapterDispatchInput): Promise<AdapterDispatchResult>;
   /** Optional admin-detail health probe. */
   health?(): Promise<AdapterHealth>;
   /** Optional per-adapter webhook verifier (pure function over body+headers). */
