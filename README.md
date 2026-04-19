@@ -111,6 +111,20 @@ npm install
 npm run dev
 ```
 
+### Running Tests
+
+Integration tests (including `tests/prune-oracle-fallback.test.ts`) require the database schema to be fully migrated before they can run. Always apply migrations first:
+
+```bash
+# 1. Apply all pending migrations
+npm run db:migrate
+
+# 2. Run the full vitest suite
+npm run test:vitest
+```
+
+Skipping the migration step will cause integration tests to fail with an explicit error listing which migrations are missing. In CI, `db:migrate` is run automatically as part of the test job before `vitest` is invoked (see `.github/workflows/main.yml`).
+
 ### Production Build
 ```bash
 npm run prebuild
