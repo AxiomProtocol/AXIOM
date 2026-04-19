@@ -329,9 +329,31 @@ function TypeAheadPicker({
 
 // ─── Section: Asset summary ────────────────────────────────────────
 
+const ASSET_CSV_HEADER =
+  'Symbol,Name,Type,Custody,Settlement,Status,Spot Price,Spot Source,Spot As-Of (UTC),Last Reserve (UTC),Audit Events';
+
+function buildAssetCsvRow(row: AssetSummaryRow): string {
+  return [
+    row.asset.symbol,
+    row.asset.displayName,
+    row.asset.assetType,
+    row.asset.custodyModel,
+    row.asset.settlementType,
+    row.asset.status,
+    row.latestSpot ? row.latestSpot.price : '',
+    row.latestSpot ? row.latestSpot.source : '',
+    row.latestSpot ? fmtTs(row.latestSpot.observedAt) : '',
+    row.latestReserve ? fmtTs(row.latestReserve.observedAt) : '',
+    String(row.auditEventCount),
+  ]
+    .map(escapeCsvCell)
+    .join(',');
+}
+
 function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
   const [rows, setRows] = useState<AssetSummaryRow[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [csvLoading, setCsvLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -355,17 +377,48 @@ function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
     load();
   }, [load]);
 
+  const downloadAssetCsv = useCallback(() => {
+    if (!rows || rows.length === 0) return;
+    setCsvLoading(true);
+    try {
+      const csv = [ASSET_CSV_HEADER, ...rows.map(buildAssetCsvRow)].join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      a.download = `asset-registry-${ts}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } finally {
+      setCsvLoading(false);
+    }
+  }, [rows]);
+
   return (
     <section className="mb-12">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-dl-serif text-xl text-dl-navy">Asset Registry</h2>
-        <button
-          onClick={load}
-          disabled={loading}
-          className="font-dl-mono text-xs uppercase tracking-wider border border-dl-border px-3 py-1.5 hover:bg-dl-bg-alt disabled:opacity-50"
-        >
-          {loading ? 'Loading…' : 'Refresh'}
-        </button>
+        <div className="flex items-center gap-2">
+          {rows && rows.length > 0 && (
+            <button
+              onClick={downloadAssetCsv}
+              disabled={csvLoading || loading}
+              className="font-dl-mono text-xs uppercase tracking-wider border border-dl-border px-3 py-1.5 hover:bg-dl-bg-alt disabled:opacity-50"
+            >
+              {csvLoading ? 'Exporting…' : 'Download CSV'}
+            </button>
+          )}
+          <button
+            onClick={load}
+            disabled={loading}
+            className="font-dl-mono text-xs uppercase tracking-wider border border-dl-border px-3 py-1.5 hover:bg-dl-bg-alt disabled:opacity-50"
+          >
+            {loading ? 'Loading…' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       {error && (

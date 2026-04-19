@@ -1023,6 +1023,187 @@ export async function externallySettleInstruction(
   return settled;
 }
 
+// ─── External settlement (webhook-confirmed rail) ──────────────────
+//
+// Used exclusively by the Stellar webhook processor (and future
+// external-rail processors). The adapter dispatch is skipped because
+// the external event IS the settlement receipt. We still go through
+// AUTHORIZED → EXECUTING → SETTLED in a single atomic transaction
+// so the state machine audit trail is complete.
+//
+// Safety contracts:
+//   1. Only AUTHORIZED instructions can be externally settled. Any
+//      other current state is a ConflictError (state machine
+//      violation), NOT silently ignored.
+//   2. Terminal states (SETTLED, FAILED, CANCELLED) are immutable;
+//      attempting to settle a terminal instruction returns the
+//      existing row unchanged with a ConflictError so the processor
+//      can distinguish "already done" from "genuinely wrong state".
+//   3. No portfolio writes bypass the existing `applySettlement` call
+//      inside the transaction — the same portfolio mutation path is
+//      used whether an instruction settles via adapter dispatch or via
+//      an external event.
+//   4. The webhookEventId is embedded in the audit payload so the
+//      audit trail cross-references both the instruction and the
+//      originating webhook event.
+
+export interface ExternalSettleInput {
+  instructionId: string;
+  externalRef: string;
+  settledAt: Date;
+  webhookEventId: string;
+  observedAmount?: string;
+  observedAsset?: string;
+  actor: string;
+  correlationId?: string;
+}
+
+export async function externallySettleInstruction(
+  input: ExternalSettleInput,
+): Promise<CapSettlementInstruction> {
+  const { instructionId, externalRef, settledAt, webhookEventId, actor, correlationId } = input;
+
+  const pre = await getInstruction(instructionId);
+  if (!pre) throw new NotFoundError(`instruction ${instructionId} not found`);
+
+  // Terminal states are immutable — surface a ConflictError so the
+  // processor can tell the difference from a transition-error and
+  // mark the webhook event accordingly.
+  const TERMINAL: Status[] = ['SETTLED', 'FAILED', 'CANCELLED'];
+  if (TERMINAL.includes(pre.status)) {
+    throw new ConflictError(
+      `external_settle_on_terminal:${pre.status}`,
+      { instructionId, currentStatus: pre.status, webhookEventId },
+    );
+  }
+
+  // Only AUTHORIZED is valid; anything else (PENDING, EXECUTING) is
+  // a hard ConflictError so the caller can quarantine the webhook event.
+  if (pre.status !== 'AUTHORIZED') {
+    throw new ConflictError(
+      `external_settle_requires_authorized:${pre.status}`,
+      { instructionId, currentStatus: pre.status, webhookEventId },
+    );
+  }
+
+  // Load the asset for portfolio writes.
+  const asset = await getAssetById(pre.assetId);
+  if (!asset) throw new NotFoundError(`asset ${pre.assetId} not found`);
+
+  // Atomic: AUTHORIZED → EXECUTING → SETTLED with portfolio writes
+  // in a single transaction.
+  const settled = await db.transaction(async (tx) => {
+    const current = await reloadInstruction(tx, instructionId);
+    if (!current) throw new NotFoundError(`instruction ${instructionId} vanished`);
+
+    // Re-check inside the transaction to guard against concurrent transitions.
+    if (TERMINAL.includes(current.status)) {
+      throw new ConflictError(
+        `external_settle_on_terminal:${current.status}`,
+        { instructionId, currentStatus: current.status, webhookEventId },
+      );
+    }
+    if (current.status !== 'AUTHORIZED') {
+      throw new ConflictError(
+        `external_settle_requires_authorized:${current.status}`,
+        { instructionId, currentStatus: current.status, webhookEventId },
+      );
+    }
+
+    // Step 1: AUTHORIZED → EXECUTING (audit)
+    await tx
+      .update(capSettlementInstructions)
+      .set({ status: 'EXECUTING', updatedAt: new Date() })
+      .where(eq(capSettlementInstructions.id, instructionId));
+    await emitAuditEventStrict(
+      {
+        eventType: 'settlement.executing',
+        aggregateType: 'settlement_instruction',
+        aggregateId: instructionId,
+        userId: current.userId,
+        assetId: current.assetId,
+        instructionId,
+        actor,
+        correlationId: correlationId ?? null,
+        payloadJson: { source: 'external_webhook', webhookEventId },
+      },
+      tx,
+    );
+
+    // Step 2: EXECUTING → SETTLED + portfolio writes (same path as
+    // adapter-dispatched settlement).
+    const [next] = await tx
+      .update(capSettlementInstructions)
+      .set({
+        status: 'SETTLED',
+        externalRef,
+        settledAt,
+        updatedAt: new Date(),
+        payloadJson: {
+          ...(current.payloadJson as Record<string, unknown> | null ?? {}),
+          externalSettlement: {
+            webhookEventId,
+            observedAmount: input.observedAmount ?? null,
+            observedAsset: input.observedAsset ?? null,
+          },
+        },
+      })
+      .where(eq(capSettlementInstructions.id, instructionId))
+      .returning();
+
+    await applySettlement(tx, next, asset, actor);
+
+    await emitAuditEventStrict(
+      {
+        eventType: 'settlement.settled',
+        aggregateType: 'settlement_instruction',
+        aggregateId: instructionId,
+        userId: next.userId,
+        assetId: next.assetId,
+        instructionId: next.id,
+        actor,
+        correlationId: correlationId ?? null,
+        payloadJson: {
+          externalRef,
+          settledAt: settledAt.toISOString(),
+          source: 'external_webhook',
+          webhookEventId,
+          observedAmount: input.observedAmount ?? null,
+          observedAsset: input.observedAsset ?? null,
+        },
+      },
+      tx,
+    );
+
+    return next;
+  });
+
+  await _dispatchNotifications(await buildCtx(settled, 'settlement.settled', correlationId));
+  return settled;
+}
+
+// ─── Read by external ref (reconciliation + webhook processor) ──────
+
+/**
+ * Returns all instructions that match a given external rail reference
+ * (e.g., Stellar tx hash). Normally at most one row exists, but the
+ * ambiguous-match check in the webhook processor needs the count to
+ * decide whether to proceed or emit a MANUAL_INTERVENTION drift.
+ */
+export async function getInstructionsByExternalRef(
+  externalRef: string,
+  settlementType?: string,
+): Promise<CapSettlementInstruction[]> {
+  const conditions: SQL[] = [eq(capSettlementInstructions.externalRef, externalRef)];
+  if (settlementType) {
+    conditions.push(eq(capSettlementInstructions.settlementType, settlementType as typeof capSettlementInstructions.settlementType.dataType));
+  }
+  return db
+    .select()
+    .from(capSettlementInstructions)
+    .where(and(...conditions));
+}
+
 // ─── Cancel ────────────────────────────────────────────────────────
 
 export async function cancelInstruction(
