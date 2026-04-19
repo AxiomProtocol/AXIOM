@@ -142,17 +142,6 @@ export async function getClaims(userId: string): Promise<CapClaim[]> {
   return db.select().from(capClaims).where(eq(capClaims.userId, userId));
 }
 
-/**
- * Returns only the claims slice of the projection (used by
- * GET /identity/users/:userId/claims). Validates the user exists so a
- * missing user surfaces 404 rather than an empty list.
- */
-export async function getClaims(userId: string): Promise<CapClaim[]> {
-  const [user] = await db.select().from(capUsers).where(eq(capUsers.id, userId)).limit(1);
-  if (!user) throw new NotFoundError(`user ${userId} not found`);
-  return db.select().from(capClaims).where(eq(capClaims.userId, userId));
-}
-
 export interface LinkWalletInput {
   userId: string;
   chain: string;

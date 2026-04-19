@@ -464,6 +464,11 @@ export const capRiskPolicies = pgTable('cap_risk_policies', {
 }, (t) => ({
   nameVerUq: uniqueIndex('cap_risk_policies_name_version_uq').on(t.name, t.version),
   activeIdx: index('cap_risk_policies_active_idx').on(t.isActive),
+  // Partial unique index: ≤1 active policy per scope (clarification #2).
+  // Enforces the service-layer invariant in publication.ts at the DB level.
+  activeScopeUq: uniqueIndex('cap_risk_policies_active_scope_uq')
+    .on(t.scopeHash)
+    .where(sql`${t.isActive} = true`),
 }));
 
 // ────────────────────────────────────────────────────────────────────
