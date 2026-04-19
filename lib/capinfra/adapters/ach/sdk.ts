@@ -20,7 +20,7 @@ import { createHash } from 'node:crypto';
 export type IncreaseEnvironment = 'sandbox' | 'production';
 
 const BASE_URLS: Record<IncreaseEnvironment, string> = {
-  sandbox: 'https://sandbox.increase.com',
+  sandbox: process.env.INCREASE_SANDBOX_BASE_URL || 'https://sandbox.increase.com',
   production: 'https://api.increase.com',
 };
 

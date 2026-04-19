@@ -1151,7 +1151,7 @@ async function main() {
     settlementType: 'ACH',
     amount: '10',
     idempotencyKey: `smoke-3b3-manual-${Date.now()}`,
-    payloadJson: { smoke: true, stage: '56' },
+    payloadJson: { smoke: true, stage: '56', routingNumber: '021000021', accountNumber: '9876543210' },
     correlationId: 'smoke-56',
   };
   const si56 = await call('/api/capinfra/settlement/instructions', {
@@ -1188,8 +1188,14 @@ async function main() {
   });
   console.log('  approve PENDING_OPERATOR_APPROVAL →', apr57.status);
   assert(apr57.status === 200, `approve 200 (got ${apr57.status})`);
-  const a57 = apr57.body as { instruction: { status: string } };
+  const a57 = apr57.body as { instruction: { status: string; externalRef: string | null } };
   assert(a57.instruction.status === 'SUBMITTED', `approve → SUBMITTED (got ${a57.instruction.status})`);
+  // Prove: approve yields a real Increase transfer id (not PENDING-APPROVAL-*).
+  assert(
+    a57.instruction.externalRef != null && !a57.instruction.externalRef.startsWith('PENDING-APPROVAL-'),
+    `externalRef is a real transfer id, not PENDING-APPROVAL-* (got ${a57.instruction.externalRef})`,
+  );
+  console.log(`  ✓ externalRef=${a57.instruction.externalRef} (no PENDING-APPROVAL-*)`);
 
   // 58. Create a second ACH instruction and reject it → FAILED.
   const si58 = await call('/api/capinfra/settlement/instructions', {
