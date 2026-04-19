@@ -113,21 +113,64 @@ function getPruneStaleness(lastPrune: LastPrune | null): {
 function PruneStatusPanel({
   lastPrune,
   pruneHistory,
+  adminKey,
 }: {
   lastPrune: LastPrune | null;
   pruneHistory: LastPrune[];
+  adminKey: string;
 }) {
   const { isStale, hoursAgo } = getPruneStaleness(lastPrune);
+  const [csvLoading, setCsvLoading] = useState(false);
+
+  async function handleDownloadCsv() {
+    setCsvLoading(true);
+    try {
+      const r = await fetch('/api/admin/oracle-fallbacks-prune-csv', {
+        headers: { 'x-admin-key': adminKey },
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        alert(`CSV export failed: ${(j as { error?: string }).error ?? r.statusText}`);
+        return;
+      }
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'oracle-fallback-prune-history.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: unknown) {
+      alert(`CSV export failed: ${e instanceof Error ? e.message : 'network_error'}`);
+    } finally {
+      setCsvLoading(false);
+    }
+  }
 
   return (
     <div className="mb-10">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-dl-serif text-xl text-dl-navy">Data Hygiene</h2>
-        {pruneHistory.length > 0 && (
-          <span className="font-dl-mono text-xs text-dl-gray">
-            {pruneHistory.length} run{pruneHistory.length !== 1 ? 's' : ''} recorded
-          </span>
-        )}
+        <div className="flex items-center gap-4">
+          {pruneHistory.length > 0 && (
+            <span className="font-dl-mono text-xs text-dl-gray">
+              {pruneHistory.length} run{pruneHistory.length !== 1 ? 's' : ''} recorded
+            </span>
+          )}
+          <button
+            onClick={handleDownloadCsv}
+            disabled={csvLoading}
+            className={`px-3 py-1.5 font-dl-mono text-xs uppercase tracking-wider border ${
+              csvLoading
+                ? 'bg-dl-bg-alt text-dl-gray border-dl-border cursor-not-allowed opacity-50'
+                : 'bg-dl-bg text-dl-navy border-dl-border hover:bg-dl-bg-alt cursor-pointer'
+            }`}
+          >
+            {csvLoading ? 'Exporting…' : 'Download CSV'}
+          </button>
+        </div>
       </div>
 
       {/* Staleness warning */}
@@ -328,7 +371,7 @@ export default function OracleFallbacksDashboard({ adminKey }: PageProps) {
             </div>
 
             {/* DATA HYGIENE / PRUNE STATUS */}
-            <PruneStatusPanel lastPrune={data.lastPrune} pruneHistory={data.pruneHistory ?? []} />
+            <PruneStatusPanel lastPrune={data.lastPrune} pruneHistory={data.pruneHistory ?? []} adminKey={adminKey} />
 
             {/* TOP CALLERS (7d) */}
             {data.topCallers.length > 0 && (
