@@ -7097,6 +7097,484 @@ END $seed$`, 'seed dp_listings');
       await exec(`CREATE INDEX IF NOT EXISTS onramp_intents_provider_idx ON onramp_purchase_intents(provider)`, 'index onramp_intents_provider_idx');
       await exec(`CREATE INDEX IF NOT EXISTS onramp_intents_intent_id_idx ON onramp_purchase_intents(intent_id)`, 'index onramp_intents_intent_id_idx');
 
+      // ═══════════════════════════════════════════
+      //  CAPITAL INFRASTRUCTURE (capinfra) TABLES
+      //  All tables are cap_-prefixed. Created in
+      //  dependency order (parents before children).
+      // ═══════════════════════════════════════════
+
+      // ── capinfra Enums ──
+      await exec(enumSafe('cap_entity_type', ['NATURAL_PERSON','LEGAL_ENTITY','INSTITUTION','INTERNAL_TREASURY']), 'enum cap_entity_type');
+      await exec(enumSafe('cap_record_status', ['ACTIVE','INACTIVE','SUSPENDED','ARCHIVED','PENDING']), 'enum cap_record_status');
+      await exec(enumSafe('cap_claim_type', ['KYC_VERIFIED','ACCREDITED_INVESTOR','JURISDICTION_ALLOWED','AML_CLEARED','SANCTIONS_CLEARED','INSTITUTIONAL','PROFESSIONAL_INVESTOR']), 'enum cap_claim_type');
+      await exec(enumSafe('cap_claim_status', ['VALID','EXPIRED','REVOKED','PENDING']), 'enum cap_claim_status');
+      await exec(enumSafe('cap_asset_type', ['STABLE_ASSET','PHYSICAL_METAL','REAL_ESTATE','CREDIT','CARBON','EQUITY','TREASURY_BILL','OTHER']), 'enum cap_asset_type');
+      await exec(enumSafe('cap_asset_subtype', ['GOLD','SILVER','PLATINUM','PALLADIUM','TREASURY_BILL','MONEY_MARKET','REIT','COMMERCIAL','RESIDENTIAL','NONE']), 'enum cap_asset_subtype');
+      await exec(enumSafe('cap_custody_model', ['ALLOCATED_PHYSICAL','ISSUER_CUSTODY','SEGREGATED_CUSTODY','OMNIBUS_CUSTODY','ON_CHAIN_NATIVE']), 'enum cap_custody_model');
+      await exec(enumSafe('cap_redemption_type', ['PHYSICAL_DELIVERY','CASH','IN_KIND','NONE']), 'enum cap_redemption_type');
+      await exec(enumSafe('cap_settlement_type', ['INTERNAL','EVM','STELLAR','ACH','WIRE','SWIFT']), 'enum cap_settlement_type');
+      await exec(enumSafe('cap_price_type', ['SPOT','NAV','INDICATIVE','MARK_TO_MODEL','MID','BID','ASK']), 'enum cap_price_type');
+      await exec(enumSafe('cap_action_type', ['MINT','REDEEM','TRANSFER','BUY','SELL','STAKE','UNSTAKE','CUSTODY_MOVE']), 'enum cap_action_type');
+      await exec(enumSafe('cap_route_type', ['DIRECT','INTERMEDIATED','ATOMIC_SWAP','CCTP']), 'enum cap_route_type');
+      await exec(enumSafe('cap_settlement_status', ['PENDING','AUTHORIZED','EXECUTING','SETTLED','FAILED','CANCELLED','PENDING_OPERATOR_APPROVAL','SUBMITTED']), 'enum cap_settlement_status');
+      await exec(enumSafe('cap_exposure_class', ['UNRESTRICTED','RESTRICTED','ACCREDITED','INSTITUTIONAL']), 'enum cap_exposure_class');
+      await exec(enumSafe('cap_severity_level', ['INFO','LOW','MEDIUM','HIGH','CRITICAL']), 'enum cap_severity_level');
+
+      // ── capinfra: Identity ──
+      await exec(`CREATE TABLE IF NOT EXISTS cap_users (
+        id VARCHAR(40) PRIMARY KEY,
+        external_id VARCHAR(200),
+        entity_type cap_entity_type NOT NULL DEFAULT 'NATURAL_PERSON',
+        primary_email VARCHAR(320),
+        jurisdiction VARCHAR(8),
+        status cap_record_status NOT NULL DEFAULT 'ACTIVE',
+        metadata_json JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_users');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_users_external_uq ON cap_users(external_id)`, 'index cap_users_external_uq');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_users_email_idx ON cap_users(primary_email)`, 'index cap_users_email_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_users_status_idx ON cap_users(status)`, 'index cap_users_status_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_wallets (
+        id VARCHAR(40) PRIMARY KEY,
+        user_id VARCHAR(40) NOT NULL REFERENCES cap_users(id) ON DELETE CASCADE,
+        chain VARCHAR(32) NOT NULL,
+        chain_id INTEGER,
+        address VARCHAR(80) NOT NULL,
+        label VARCHAR(120),
+        is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+        status cap_record_status NOT NULL DEFAULT 'ACTIVE',
+        verified_at TIMESTAMP,
+        metadata_json JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_wallets');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_wallets_user_idx ON cap_wallets(user_id)`, 'index cap_wallets_user_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_wallets_address_idx ON cap_wallets(address)`, 'index cap_wallets_address_idx');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_wallets_chain_address_uq ON cap_wallets(chain, address)`, 'index cap_wallets_chain_address_uq');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_identity_profiles (
+        id VARCHAR(40) PRIMARY KEY,
+        user_id VARCHAR(40) NOT NULL REFERENCES cap_users(id) ON DELETE CASCADE,
+        legal_name VARCHAR(255),
+        date_of_birth VARCHAR(10),
+        country_of_residence VARCHAR(8),
+        country_of_citizenship VARCHAR(8),
+        tax_id_hash VARCHAR(128),
+        risk_rating VARCHAR(20),
+        exposure_class cap_exposure_class NOT NULL DEFAULT 'UNRESTRICTED',
+        cached_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        source_json JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_identity_profiles');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_identity_profiles_user_uq ON cap_identity_profiles(user_id)`, 'index cap_identity_profiles_user_uq');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_identity_profiles_exposure_idx ON cap_identity_profiles(exposure_class)`, 'index cap_identity_profiles_exposure_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_claims (
+        id VARCHAR(40) PRIMARY KEY,
+        user_id VARCHAR(40) NOT NULL REFERENCES cap_users(id) ON DELETE CASCADE,
+        claim_type cap_claim_type NOT NULL,
+        status cap_claim_status NOT NULL DEFAULT 'VALID',
+        issuer VARCHAR(200) NOT NULL,
+        issued_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        expires_at TIMESTAMP,
+        evidence_uri TEXT,
+        evidence_hash VARCHAR(128),
+        payload_json JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_claims');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_claims_user_type_idx ON cap_claims(user_id, claim_type)`, 'index cap_claims_user_type_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_claims_status_idx ON cap_claims(status)`, 'index cap_claims_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_claims_expires_idx ON cap_claims(expires_at)`, 'index cap_claims_expires_idx');
+
+      // ── capinfra: Asset Registry ──
+      await exec(`CREATE TABLE IF NOT EXISTS cap_assets (
+        id VARCHAR(40) PRIMARY KEY,
+        symbol VARCHAR(32) NOT NULL,
+        display_name VARCHAR(200) NOT NULL,
+        asset_type cap_asset_type NOT NULL,
+        asset_subtype cap_asset_subtype NOT NULL DEFAULT 'NONE',
+        custody_model cap_custody_model NOT NULL,
+        redemption_type cap_redemption_type NOT NULL DEFAULT 'NONE',
+        settlement_type cap_settlement_type NOT NULL,
+        chain VARCHAR(32),
+        chain_id INTEGER,
+        contract_address VARCHAR(80),
+        decimals INTEGER NOT NULL DEFAULT 18,
+        issuer VARCHAR(200),
+        base_policy_json JSONB,
+        exposure_class cap_exposure_class NOT NULL DEFAULT 'RESTRICTED',
+        status cap_record_status NOT NULL DEFAULT 'ACTIVE',
+        metadata_json JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_assets');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_assets_symbol_uq ON cap_assets(symbol)`, 'index cap_assets_symbol_uq');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_assets_type_status_idx ON cap_assets(asset_type, status)`, 'index cap_assets_type_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_assets_contract_idx ON cap_assets(contract_address)`, 'index cap_assets_contract_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_asset_markets (
+        id VARCHAR(40) PRIMARY KEY,
+        asset_id VARCHAR(40) NOT NULL REFERENCES cap_assets(id) ON DELETE CASCADE,
+        venue VARCHAR(100) NOT NULL,
+        pair VARCHAR(40) NOT NULL,
+        route_type cap_route_type NOT NULL DEFAULT 'DIRECT',
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        metadata_json JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_asset_markets');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_asset_markets_asset_venue_pair_uq ON cap_asset_markets(asset_id, venue, pair)`, 'index cap_asset_markets_asset_venue_pair_uq');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_asset_markets_asset_idx ON cap_asset_markets(asset_id)`, 'index cap_asset_markets_asset_idx');
+
+      // ── capinfra: Market Data ──
+      await exec(`CREATE TABLE IF NOT EXISTS cap_price_snapshots (
+        id VARCHAR(40) PRIMARY KEY,
+        asset_id VARCHAR(40) NOT NULL REFERENCES cap_assets(id) ON DELETE CASCADE,
+        price_type cap_price_type NOT NULL,
+        source VARCHAR(100) NOT NULL,
+        quote_currency VARCHAR(16) NOT NULL DEFAULT 'USD',
+        price NUMERIC(30,10) NOT NULL,
+        confidence NUMERIC(5,2),
+        stale_sec INTEGER,
+        observed_at TIMESTAMP NOT NULL,
+        ingested_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        payload_json JSONB
+      )`, 'table cap_price_snapshots');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_price_snapshots_asset_type_obs_idx ON cap_price_snapshots(asset_id, price_type, observed_at)`, 'index cap_price_snapshots_asset_type_obs_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_price_snapshots_source_idx ON cap_price_snapshots(source)`, 'index cap_price_snapshots_source_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_reserve_snapshots (
+        id VARCHAR(40) PRIMARY KEY,
+        asset_id VARCHAR(40) NOT NULL REFERENCES cap_assets(id) ON DELETE CASCADE,
+        reserve_value_usd NUMERIC(30,10) NOT NULL,
+        liability_value_usd NUMERIC(30,10) NOT NULL,
+        coverage_ratio NUMERIC(20,8),
+        warning_level cap_severity_level NOT NULL DEFAULT 'INFO',
+        notes TEXT,
+        payload_json JSONB,
+        observed_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_reserve_snapshots');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_reserve_snapshots_asset_obs_idx ON cap_reserve_snapshots(asset_id, observed_at)`, 'index cap_reserve_snapshots_asset_obs_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_reserve_snapshots_warning_idx ON cap_reserve_snapshots(warning_level)`, 'index cap_reserve_snapshots_warning_idx');
+
+      // ── capinfra: Positions / Settlement ──
+      await exec(`CREATE TABLE IF NOT EXISTS cap_positions (
+        id VARCHAR(40) PRIMARY KEY,
+        user_id VARCHAR(40) NOT NULL REFERENCES cap_users(id) ON DELETE CASCADE,
+        asset_id VARCHAR(40) NOT NULL REFERENCES cap_assets(id) ON DELETE CASCADE,
+        wallet_id VARCHAR(40) REFERENCES cap_wallets(id),
+        quantity NUMERIC(30,10) NOT NULL DEFAULT 0,
+        average_cost NUMERIC(30,10),
+        current_value_usd NUMERIC(30,10),
+        status cap_record_status NOT NULL DEFAULT 'ACTIVE',
+        metadata_json JSONB,
+        as_of TIMESTAMP NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_positions');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_positions_user_asset_wallet_uq ON cap_positions(user_id, asset_id, wallet_id)`, 'index cap_positions_user_asset_wallet_uq');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_positions_user_status_idx ON cap_positions(user_id, status)`, 'index cap_positions_user_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_positions_asset_idx ON cap_positions(asset_id)`, 'index cap_positions_asset_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_settlement_instructions (
+        id VARCHAR(40) PRIMARY KEY,
+        user_id VARCHAR(40) NOT NULL REFERENCES cap_users(id),
+        asset_id VARCHAR(40) NOT NULL REFERENCES cap_assets(id),
+        action_type cap_action_type NOT NULL,
+        route_type cap_route_type NOT NULL DEFAULT 'DIRECT',
+        settlement_type cap_settlement_type NOT NULL,
+        amount NUMERIC(30,10) NOT NULL,
+        quote_currency VARCHAR(16) NOT NULL DEFAULT 'USD',
+        counterparty_id VARCHAR(40),
+        adapter_id VARCHAR(40),
+        external_ref VARCHAR(200),
+        idempotency_key VARCHAR(200) NOT NULL,
+        status cap_settlement_status NOT NULL DEFAULT 'PENDING',
+        policy_decision_id VARCHAR(40),
+        payload_json JSONB,
+        authorized_at TIMESTAMP,
+        settled_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_settlement_instructions');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_settlement_instructions_idem_uq ON cap_settlement_instructions(idempotency_key)`, 'index cap_settlement_instructions_idem_uq');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_settlement_instructions_user_status_idx ON cap_settlement_instructions(user_id, status)`, 'index cap_settlement_instructions_user_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_settlement_instructions_asset_status_idx ON cap_settlement_instructions(asset_id, status)`, 'index cap_settlement_instructions_asset_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_settlement_instructions_external_ref_idx ON cap_settlement_instructions(external_ref)`, 'index cap_settlement_instructions_external_ref_idx');
+
+      // ── capinfra: Policy + Risk ──
+      await exec(`CREATE TABLE IF NOT EXISTS cap_policy_decisions (
+        id VARCHAR(40) PRIMARY KEY,
+        user_id VARCHAR(40) NOT NULL REFERENCES cap_users(id),
+        asset_id VARCHAR(40) NOT NULL REFERENCES cap_assets(id),
+        action_type cap_action_type NOT NULL,
+        amount NUMERIC(30,10),
+        jurisdiction VARCHAR(8),
+        product_context VARCHAR(100),
+        allowed BOOLEAN NOT NULL,
+        reason_code VARCHAR(100) NOT NULL,
+        policy_version VARCHAR(40) NOT NULL,
+        required_claims_json JSONB,
+        warnings_json JSONB,
+        limits_json JSONB,
+        idempotency_key VARCHAR(200) NOT NULL,
+        input_hash VARCHAR(128) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_policy_decisions');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_policy_decisions_idem_uq ON cap_policy_decisions(idempotency_key)`, 'index cap_policy_decisions_idem_uq');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_policy_decisions_user_asset_idx ON cap_policy_decisions(user_id, asset_id)`, 'index cap_policy_decisions_user_asset_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_policy_decisions_created_idx ON cap_policy_decisions(created_at)`, 'index cap_policy_decisions_created_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_risk_decisions (
+        id VARCHAR(40) PRIMARY KEY,
+        user_id VARCHAR(40) REFERENCES cap_users(id),
+        asset_id VARCHAR(40) REFERENCES cap_assets(id),
+        instruction_id VARCHAR(40),
+        decision VARCHAR(40) NOT NULL,
+        severity cap_severity_level NOT NULL DEFAULT 'INFO',
+        reason_code VARCHAR(100) NOT NULL,
+        policy_version VARCHAR(40) NOT NULL,
+        payload_json JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_risk_decisions');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_risk_decisions_user_idx ON cap_risk_decisions(user_id)`, 'index cap_risk_decisions_user_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_risk_decisions_asset_idx ON cap_risk_decisions(asset_id)`, 'index cap_risk_decisions_asset_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_risk_decisions_severity_idx ON cap_risk_decisions(severity)`, 'index cap_risk_decisions_severity_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_risk_policies (
+        id VARCHAR(40) PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        version VARCHAR(40) NOT NULL,
+        scope_json JSONB NOT NULL,
+        scope_hash VARCHAR(64),
+        rules_json JSONB NOT NULL,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        effective_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        expires_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_risk_policies');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_risk_policies_name_version_uq ON cap_risk_policies(name, version)`, 'index cap_risk_policies_name_version_uq');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_risk_policies_active_idx ON cap_risk_policies(is_active)`, 'index cap_risk_policies_active_idx');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_risk_policies_scope_hash_active_uq ON cap_risk_policies(scope_hash) WHERE is_active = true`, 'index cap_risk_policies_scope_hash_active_uq');
+
+      // ── capinfra: Audit (append-only spine) ──
+      await exec(`CREATE TABLE IF NOT EXISTS cap_audit_events (
+        id VARCHAR(40) PRIMARY KEY,
+        event_type VARCHAR(100) NOT NULL,
+        aggregate_type VARCHAR(60) NOT NULL,
+        aggregate_id VARCHAR(80) NOT NULL,
+        user_id VARCHAR(40),
+        asset_id VARCHAR(40),
+        instruction_id VARCHAR(40),
+        payload_json JSONB,
+        correlation_id VARCHAR(80),
+        actor VARCHAR(80),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_audit_events');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_audit_events_type_created_idx ON cap_audit_events(event_type, created_at)`, 'index cap_audit_events_type_created_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_audit_events_agg_idx ON cap_audit_events(aggregate_type, aggregate_id)`, 'index cap_audit_events_agg_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_audit_events_user_idx ON cap_audit_events(user_id)`, 'index cap_audit_events_user_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_audit_events_asset_idx ON cap_audit_events(asset_id)`, 'index cap_audit_events_asset_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_audit_events_instruction_idx ON cap_audit_events(instruction_id)`, 'index cap_audit_events_instruction_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_audit_events_correlation_idx ON cap_audit_events(correlation_id)`, 'index cap_audit_events_correlation_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_audit_events_created_idx ON cap_audit_events(created_at)`, 'index cap_audit_events_created_idx');
+
+      // ── capinfra: Documents / Counterparties / Adapters ──
+      await exec(`CREATE TABLE IF NOT EXISTS cap_documents (
+        id VARCHAR(40) PRIMARY KEY,
+        owner_type VARCHAR(40) NOT NULL,
+        owner_id VARCHAR(80) NOT NULL,
+        document_type VARCHAR(60) NOT NULL,
+        uri TEXT NOT NULL,
+        content_hash VARCHAR(128),
+        mime_type VARCHAR(100),
+        uploaded_by VARCHAR(80),
+        metadata_json JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_documents');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_documents_owner_idx ON cap_documents(owner_type, owner_id)`, 'index cap_documents_owner_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_documents_type_idx ON cap_documents(document_type)`, 'index cap_documents_type_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_counterparties (
+        id VARCHAR(40) PRIMARY KEY,
+        legal_name VARCHAR(255) NOT NULL,
+        category VARCHAR(80) NOT NULL,
+        jurisdiction VARCHAR(8),
+        status cap_record_status NOT NULL DEFAULT 'ACTIVE',
+        metadata_json JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_counterparties');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_counterparties_name_idx ON cap_counterparties(legal_name)`, 'index cap_counterparties_name_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_counterparties_category_idx ON cap_counterparties(category)`, 'index cap_counterparties_category_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_adapters (
+        id VARCHAR(40) PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        kind VARCHAR(60) NOT NULL,
+        config_json JSONB NOT NULL,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_adapters');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_adapters_name_uq ON cap_adapters(name)`, 'index cap_adapters_name_uq');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_adapters_kind_idx ON cap_adapters(kind)`, 'index cap_adapters_kind_idx');
+
+      // ── capinfra: Notifications ──
+      await exec(`CREATE TABLE IF NOT EXISTS cap_notifications (
+        id VARCHAR(40) PRIMARY KEY,
+        user_id VARCHAR(40),
+        channel VARCHAR(20) NOT NULL,
+        topic VARCHAR(100) NOT NULL,
+        severity cap_severity_level NOT NULL DEFAULT 'INFO',
+        subject VARCHAR(240) NOT NULL,
+        body_json JSONB,
+        correlation_id VARCHAR(80),
+        related_event_id VARCHAR(40),
+        read_at TIMESTAMP,
+        delivered_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_notifications');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_notifications_user_unread_idx ON cap_notifications(user_id, read_at)`, 'index cap_notifications_user_unread_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_notifications_topic_created_idx ON cap_notifications(topic, created_at)`, 'index cap_notifications_topic_created_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_notifications_correlation_idx ON cap_notifications(correlation_id)`, 'index cap_notifications_correlation_idx');
+
+      // ── capinfra: Phase 3A — Reserve / Admin Actions / Webhook Ingress ──
+      await exec(`CREATE TABLE IF NOT EXISTS cap_reserve_config (
+        id VARCHAR(40) PRIMARY KEY,
+        mode VARCHAR(32) NOT NULL,
+        config_json JSONB,
+        version VARCHAR(40) NOT NULL,
+        effective_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        superseded_at TIMESTAMP,
+        primary_actor VARCHAR(80) NOT NULL,
+        secondary_actor VARCHAR(80) NOT NULL,
+        reason_code VARCHAR(100) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_reserve_config');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_reserve_config_effective_idx ON cap_reserve_config(effective_at)`, 'index cap_reserve_config_effective_idx');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_reserve_config_version_uq ON cap_reserve_config(version)`, 'index cap_reserve_config_version_uq');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_reserve_holdings (
+        id VARCHAR(40) PRIMARY KEY,
+        asset_id VARCHAR(40) NOT NULL REFERENCES cap_assets(id),
+        source VARCHAR(32) NOT NULL,
+        direction VARCHAR(8) NOT NULL,
+        amount NUMERIC(30,10) NOT NULL,
+        reference_id VARCHAR(200),
+        attestation_ref VARCHAR(200),
+        reason_code VARCHAR(100) NOT NULL,
+        idempotency_key VARCHAR(200) NOT NULL,
+        actor VARCHAR(80) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_reserve_holdings');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_reserve_holdings_idem_uq ON cap_reserve_holdings(idempotency_key)`, 'index cap_reserve_holdings_idem_uq');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_reserve_holdings_asset_idx ON cap_reserve_holdings(asset_id)`, 'index cap_reserve_holdings_asset_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_reserve_holdings_created_idx ON cap_reserve_holdings(created_at)`, 'index cap_reserve_holdings_created_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_reserve_holdings_snapshots (
+        id VARCHAR(40) PRIMARY KEY,
+        as_of TIMESTAMP NOT NULL,
+        mode VARCHAR(32) NOT NULL,
+        checksum VARCHAR(64) NOT NULL,
+        line_count INTEGER NOT NULL,
+        sources_json JSONB,
+        created_by VARCHAR(80) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_reserve_holdings_snapshots');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_reserve_holdings_snapshots_as_of_idx ON cap_reserve_holdings_snapshots(as_of)`, 'index cap_reserve_holdings_snapshots_as_of_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_reserve_holdings_snapshots_checksum_idx ON cap_reserve_holdings_snapshots(checksum)`, 'index cap_reserve_holdings_snapshots_checksum_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_reserve_holdings_snapshot_lines (
+        id VARCHAR(40) PRIMARY KEY,
+        snapshot_id VARCHAR(40) NOT NULL REFERENCES cap_reserve_holdings_snapshots(id) ON DELETE CASCADE,
+        asset_id VARCHAR(40) NOT NULL,
+        attestation_ref VARCHAR(200),
+        line_index INTEGER NOT NULL,
+        gross NUMERIC(30,10) NOT NULL,
+        encumbered NUMERIC(30,10) NOT NULL DEFAULT 0,
+        available NUMERIC(30,10) NOT NULL
+      )`, 'table cap_reserve_holdings_snapshot_lines');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_reserve_holdings_snap_lines_snap_idx ON cap_reserve_holdings_snapshot_lines(snapshot_id)`, 'index cap_reserve_holdings_snap_lines_snap_idx');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_reserve_holdings_snap_lines_snap_line_uq ON cap_reserve_holdings_snapshot_lines(snapshot_id, line_index)`, 'index cap_reserve_holdings_snap_lines_snap_line_uq');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_admin_actions (
+        id VARCHAR(40) PRIMARY KEY,
+        action_type VARCHAR(80) NOT NULL,
+        subject_type VARCHAR(60) NOT NULL,
+        subject_id VARCHAR(80) NOT NULL,
+        primary_actor VARCHAR(80) NOT NULL,
+        secondary_actor VARCHAR(80),
+        reason_code VARCHAR(100) NOT NULL,
+        payload_json JSONB,
+        correlation_id VARCHAR(80),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_admin_actions');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_admin_actions_type_idx ON cap_admin_actions(action_type)`, 'index cap_admin_actions_type_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_admin_actions_subject_idx ON cap_admin_actions(subject_type, subject_id)`, 'index cap_admin_actions_subject_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_admin_actions_created_idx ON cap_admin_actions(created_at)`, 'index cap_admin_actions_created_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_webhook_events (
+        id VARCHAR(40) PRIMARY KEY,
+        adapter_key VARCHAR(60) NOT NULL,
+        external_event_id VARCHAR(200),
+        raw_payload_json JSONB,
+        raw_headers_json JSONB,
+        signature_verified BOOLEAN NOT NULL DEFAULT FALSE,
+        status VARCHAR(32) NOT NULL DEFAULT 'RECEIVED',
+        attempts INTEGER NOT NULL DEFAULT 0,
+        last_error TEXT,
+        settlement_instruction_id VARCHAR(40),
+        received_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        processed_at TIMESTAMP,
+        reclassified_by VARCHAR(80),
+        reclassified_at TIMESTAMP,
+        reclassification_reason VARCHAR(200)
+      )`, 'table cap_webhook_events');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_webhook_events_adapter_status_idx ON cap_webhook_events(adapter_key, status)`, 'index cap_webhook_events_adapter_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_webhook_events_received_idx ON cap_webhook_events(received_at)`, 'index cap_webhook_events_received_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_webhook_events_external_idx ON cap_webhook_events(adapter_key, external_event_id)`, 'index cap_webhook_events_external_idx');
+
+      // ── capinfra: Phase 3B.1b — Reconciliation ──
+      await exec(`CREATE TABLE IF NOT EXISTS cap_reconciliation_runs (
+        id VARCHAR(40) PRIMARY KEY,
+        adapter_key VARCHAR(60) NOT NULL,
+        window_since TIMESTAMP NOT NULL,
+        window_until TIMESTAMP NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'QUEUED',
+        compared_count INTEGER NOT NULL DEFAULT 0,
+        drift_count INTEGER NOT NULL DEFAULT 0,
+        notes TEXT,
+        triggered_by VARCHAR(80) NOT NULL,
+        started_at TIMESTAMP,
+        finished_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_reconciliation_runs');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_reconciliation_runs_adapter_started_idx ON cap_reconciliation_runs(adapter_key, started_at)`, 'index cap_reconciliation_runs_adapter_started_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_reconciliation_drift (
+        id VARCHAR(40) PRIMARY KEY,
+        run_id VARCHAR(40) NOT NULL REFERENCES cap_reconciliation_runs(id),
+        adapter_key VARCHAR(60) NOT NULL,
+        kind VARCHAR(40) NOT NULL,
+        severity VARCHAR(30) NOT NULL,
+        external_ref VARCHAR(200),
+        instruction_id VARCHAR(40),
+        detail_json JSONB,
+        remediation VARCHAR(30) NOT NULL DEFAULT 'NONE',
+        remediation_ref VARCHAR(80),
+        remediation_failure_json JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_reconciliation_drift');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_reconciliation_drift_run_idx ON cap_reconciliation_drift(run_id)`, 'index cap_reconciliation_drift_run_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_reconciliation_drift_adapter_severity_idx ON cap_reconciliation_drift(adapter_key, severity, created_at)`, 'index cap_reconciliation_drift_adapter_severity_idx');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
