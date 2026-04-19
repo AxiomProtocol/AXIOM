@@ -270,7 +270,9 @@ integrationDescribe('prune_oracle_fallback_events SQL function (integration)', (
   // the unit-test mock is registered above.
   let pgPool: Pool;
   let tableExists = false;
+  let historyTableExists = false;
   const insertedIds: number[] = [];
+  const insertedHistoryIds: number[] = [];
 
   beforeAll(async () => {
     pgPool = new Pool({
@@ -308,6 +310,28 @@ integrationDescribe('prune_oracle_fallback_events SQL function (integration)', (
           'psql "$DATABASE_URL" -f migrations/0045_oracle_fallback_pruning.sql).',
         );
       }
+
+      // Check whether the prune-history table has been migrated (migrations 0046 + 0047).
+      // Treat a missing history table as a hard failure (same policy as above) so CI
+      // cannot pass while the logging trigger goes untested.
+      const historyTblCheck = await pgPool.query<{ exists: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1 FROM information_schema.tables
+           WHERE table_schema = 'public'
+             AND table_name = 'oracle_fallback_prune_history'
+         ) AS exists`,
+      );
+      historyTableExists = historyTblCheck.rows[0].exists === true;
+
+      if (!historyTableExists) {
+        throw new Error(
+          'Integration test prerequisite missing: ' +
+          'oracle_fallback_prune_history table not found. Apply migrations 0046 and ' +
+          '0047 before running integration tests ' +
+          '(e.g. psql "$DATABASE_URL" -f migrations/0046_oracle_fallback_prune_history.sql && ' +
+          'psql "$DATABASE_URL" -f migrations/0047_oracle_fallback_prune_history_logging.sql).',
+        );
+      }
     } catch (err) {
       tableExists = false;
       throw err;
@@ -334,6 +358,14 @@ integrationDescribe('prune_oracle_fallback_events SQL function (integration)', (
         [insertedIds],
       );
       insertedIds.length = 0;
+    }
+    // Clean up history rows written during tests.
+    if (historyTableExists && insertedHistoryIds.length > 0) {
+      await pgPool.query(
+        `DELETE FROM oracle_fallback_prune_history WHERE id = ANY($1::bigint[])`,
+        [insertedHistoryIds],
+      );
+      insertedHistoryIds.length = 0;
     }
   });
 
@@ -402,5 +434,138 @@ integrationDescribe('prune_oracle_fallback_events SQL function (integration)', (
     await pgPool.query('DELETE FROM axusd_oracle_fallback_events WHERE id = $1', [boundaryId]);
     const idx = insertedIds.indexOf(boundaryId);
     if (idx !== -1) insertedIds.splice(idx, 1);
+  });
+
+  // ── oracle_fallback_prune_history logging ──────────────────────────────────
+  //
+  // These tests verify that migration 0047 correctly updated
+  // prune_oracle_fallback_events() to insert an audit row into the
+  // oracle_fallback_prune_history table (created by migration 0046) on every
+  // invocation.
+
+  describe('oracle_fallback_prune_history logging', () => {
+    // Helper: record the current max history id, call the prune function, then
+    // fetch the single new row whose id exceeds that max. Using id comparison
+    // instead of timestamps avoids any clock-skew between application and DB.
+    async function callPruneAndCaptureHistoryId(
+      retentionDays: number,
+      triggeredBy?: string,
+    ): Promise<{ deletedCount: number; historyId: number }> {
+      const maxBefore = await pgPool.query<{ max_id: number | null }>(
+        'SELECT MAX(id) AS max_id FROM oracle_fallback_prune_history',
+      );
+      const prevMaxId = maxBefore.rows[0].max_id ?? 0;
+
+      const pruneResult = await pgPool.query<{ deleted_count: string }>(
+        triggeredBy
+          ? 'SELECT deleted_count FROM prune_oracle_fallback_events($1, $2)'
+          : 'SELECT deleted_count FROM prune_oracle_fallback_events($1)',
+        triggeredBy ? [retentionDays, triggeredBy] : [retentionDays],
+      );
+      const deletedCount = parseInt(pruneResult.rows[0].deleted_count, 10);
+
+      // The new history row must have an id greater than prevMaxId.
+      const historyResult = await pgPool.query<{ id: number }>(
+        'SELECT id FROM oracle_fallback_prune_history WHERE id > $1 ORDER BY id DESC LIMIT 1',
+        [prevMaxId],
+      );
+      // Fail fast if the history row was not inserted — migration 0047 did not fire.
+      expect(historyResult.rows).toHaveLength(1);
+      const historyId: number = historyResult.rows[0].id;
+      insertedHistoryIds.push(historyId);
+
+      return { deletedCount, historyId };
+    }
+
+    it('inserts exactly one history row per prune invocation', async () => {
+      const maxBefore = await pgPool.query<{ max_id: number | null }>(
+        'SELECT MAX(id) AS max_id FROM oracle_fallback_prune_history',
+      );
+      const prevMaxId = maxBefore.rows[0].max_id ?? 0;
+
+      await pgPool.query('SELECT deleted_count FROM prune_oracle_fallback_events($1)', [90]);
+
+      const result = await pgPool.query<{ id: number }>(
+        'SELECT id FROM oracle_fallback_prune_history WHERE id > $1',
+        [prevMaxId],
+      );
+
+      expect(result.rows).toHaveLength(1);
+      insertedHistoryIds.push(result.rows[0].id);
+    });
+
+    it('records a deleted_count in the history row that matches the function return value', async () => {
+      const now = new Date();
+      const tooOld = new Date(now.getTime() - 100 * 24 * 60 * 60 * 1000);
+      await insertRow(tooOld);
+
+      const { deletedCount, historyId } = await callPruneAndCaptureHistoryId(90);
+
+      const historyRow = await pgPool.query<{ deleted_count: string }>(
+        'SELECT deleted_count FROM oracle_fallback_prune_history WHERE id = $1',
+        [historyId],
+      );
+
+      expect(historyRow.rows).toHaveLength(1);
+      // History row must record the same count the function returned.
+      expect(parseInt(historyRow.rows[0].deleted_count, 10)).toBe(deletedCount);
+      // At least the one old row we inserted must have been pruned.
+      expect(deletedCount).toBeGreaterThanOrEqual(1);
+    });
+
+    it('records the correct retention_days value in the history row', async () => {
+      const { historyId } = await callPruneAndCaptureHistoryId(30);
+
+      const historyRow = await pgPool.query<{ retention_days: number }>(
+        'SELECT retention_days FROM oracle_fallback_prune_history WHERE id = $1',
+        [historyId],
+      );
+
+      expect(historyRow.rows).toHaveLength(1);
+      expect(historyRow.rows[0].retention_days).toBe(30);
+    });
+
+    it('records deleted_count = 0 when no rows fall outside the retention window', async () => {
+      const now = new Date();
+      // Insert a row well within the window so nothing is pruned.
+      const recent = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+      await insertRow(recent);
+
+      const { deletedCount, historyId } = await callPruneAndCaptureHistoryId(90);
+
+      const historyRow = await pgPool.query<{ deleted_count: string }>(
+        'SELECT deleted_count FROM oracle_fallback_prune_history WHERE id = $1',
+        [historyId],
+      );
+
+      expect(historyRow.rows).toHaveLength(1);
+      expect(parseInt(historyRow.rows[0].deleted_count, 10)).toBe(0);
+      // Confirm the function return and the history row agree.
+      expect(deletedCount).toBe(0);
+    });
+
+    it('records the triggered_by value passed as a parameter', async () => {
+      const { historyId } = await callPruneAndCaptureHistoryId(90, 'http');
+
+      const historyRow = await pgPool.query<{ triggered_by: string }>(
+        'SELECT triggered_by FROM oracle_fallback_prune_history WHERE id = $1',
+        [historyId],
+      );
+
+      expect(historyRow.rows).toHaveLength(1);
+      expect(historyRow.rows[0].triggered_by).toBe('http');
+    });
+
+    it('defaults triggered_by to pg_cron when the parameter is omitted', async () => {
+      const { historyId } = await callPruneAndCaptureHistoryId(90);
+
+      const historyRow = await pgPool.query<{ triggered_by: string }>(
+        'SELECT triggered_by FROM oracle_fallback_prune_history WHERE id = $1',
+        [historyId],
+      );
+
+      expect(historyRow.rows).toHaveLength(1);
+      expect(historyRow.rows[0].triggered_by).toBe('pg_cron');
+    });
   });
 });
