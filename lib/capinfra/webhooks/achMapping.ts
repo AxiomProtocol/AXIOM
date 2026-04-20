@@ -63,6 +63,10 @@ function parseOccurredAt(raw: unknown): Date {
   return new Date();
 }
 
+/**
+ * Convert a signed integer cents value into an absolute USD decimal string.
+ * Example: -1234 -> "12.34", 500 -> "5.00".
+ */
 function centsToDecimalString(cents: number): string {
   const abs = Math.abs(cents);
   const whole = Math.floor(abs / 100);

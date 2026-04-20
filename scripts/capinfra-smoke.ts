@@ -72,6 +72,7 @@
 import 'dotenv/config';
 import { createHmac, createHash } from 'node:crypto';
 import { Pool } from 'pg';
+import { generateId } from '../lib/capinfra/ids';
 
 let _pool: Pool | null = null;
 function smokePool(): Pool {
@@ -114,7 +115,7 @@ async function purgeSmokeSubmitted(userId: string, assetId: string): Promise<num
 }
 
 async function insertVerifiedAchWebhookEvent(payload: Record<string, unknown>): Promise<string> {
-  const id = `we_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  const id = generateId('we');
   const externalEventId =
     typeof payload.id === 'string' && payload.id.length > 0 ? payload.id : `evt_${Date.now().toString(36)}`;
   await smokePool().query(
