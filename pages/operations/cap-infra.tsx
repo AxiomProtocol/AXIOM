@@ -351,11 +351,26 @@ function buildAssetCsvRow(row: AssetSummaryRow): string {
     .join(',');
 }
 
+const ASSET_TYPE_OPTIONS = [
+  'STABLE_ASSET',
+  'PHYSICAL_METAL',
+  'REAL_ESTATE',
+  'CREDIT',
+  'CARBON',
+  'EQUITY',
+  'TREASURY_BILL',
+  'OTHER',
+];
+
+const ASSET_STATUS_OPTIONS = ['ACTIVE', 'INACTIVE', 'SUSPENDED', 'ARCHIVED', 'PENDING'];
+
 function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
   const [rows, setRows] = useState<AssetSummaryRow[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [csvLoading, setCsvLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -378,17 +393,29 @@ function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
     load();
   }, [load]);
 
+  const filteredRows = rows
+    ? rows.filter((row) => {
+        if (filterType && row.asset.assetType !== filterType) return false;
+        if (filterStatus && row.asset.status !== filterStatus) return false;
+        return true;
+      })
+    : null;
+
   const downloadAssetCsv = useCallback(() => {
-    if (!rows || rows.length === 0) return;
+    if (!filteredRows || filteredRows.length === 0) return;
     setCsvLoading(true);
     try {
-      const csv = [ASSET_CSV_HEADER, ...rows.map(buildAssetCsvRow)].join('\r\n');
+      const csv = [ASSET_CSV_HEADER, ...filteredRows.map(buildAssetCsvRow)].join('\r\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-      a.download = `asset-registry-${ts}.csv`;
+      const date = new Date().toISOString().slice(0, 10);
+      const parts = ['asset-registry'];
+      if (filterStatus) parts.push(filterStatus);
+      if (filterType) parts.push(filterType);
+      parts.push(date);
+      a.download = `${parts.join('-')}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -396,14 +423,16 @@ function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
     } finally {
       setCsvLoading(false);
     }
-  }, [rows]);
+  }, [filteredRows, filterStatus, filterType]);
+
+  const hasFilters = filterType !== '' || filterStatus !== '';
 
   return (
     <section className="mb-12">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-dl-serif text-xl text-dl-navy">Asset Registry</h2>
         <div className="flex items-center gap-2">
-          {rows && rows.length > 0 && (
+          {filteredRows && filteredRows.length > 0 && (
             <button
               onClick={downloadAssetCsv}
               disabled={csvLoading || loading}
@@ -422,19 +451,67 @@ function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
         </div>
       </div>
 
+      {rows && (
+        <div className="flex items-end gap-3 mb-4">
+          <div>
+            <span className="block font-dl-mono text-[10px] uppercase tracking-wider text-dl-gray mb-1">
+              Type
+            </span>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="border border-dl-border bg-dl-bg px-2 py-1.5 font-dl-mono text-xs text-dl-navy"
+            >
+              <option value="">All types</option>
+              {ASSET_TYPE_OPTIONS.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <span className="block font-dl-mono text-[10px] uppercase tracking-wider text-dl-gray mb-1">
+              Status
+            </span>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="border border-dl-border bg-dl-bg px-2 py-1.5 font-dl-mono text-xs text-dl-navy"
+            >
+              <option value="">All statuses</option>
+              {ASSET_STATUS_OPTIONS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+          {hasFilters && (
+            <button
+              onClick={() => { setFilterType(''); setFilterStatus(''); }}
+              className="font-dl-mono text-[10px] uppercase tracking-wider text-dl-gray hover:text-dl-navy pb-1.5"
+            >
+              Clear
+            </button>
+          )}
+          {filteredRows && rows && filteredRows.length !== rows.length && (
+            <span className="font-dl-mono text-[10px] text-dl-gray pb-1.5">
+              {filteredRows.length} of {rows.length} shown
+            </span>
+          )}
+        </div>
+      )}
+
       {error && (
         <div className="mb-4 border-l-4 border-l-red-500 border border-dl-border bg-red-50 p-3">
           <p className="font-dl-mono text-xs text-red-700">Error: {error}</p>
         </div>
       )}
 
-      {!error && rows && rows.length === 0 && (
+      {!error && filteredRows && filteredRows.length === 0 && (
         <div className="border border-dl-border bg-dl-bg-alt p-6 text-sm text-dl-gray font-dl-mono text-center">
-          No active assets registered.
+          {hasFilters ? 'No assets match the current filters.' : 'No active assets registered.'}
         </div>
       )}
 
-      {rows && rows.length > 0 && (
+      {filteredRows && filteredRows.length > 0 && (
         <div className="border border-dl-border overflow-x-auto">
           <table className="w-full font-dl-mono text-xs">
             <thead className="bg-dl-bg-alt border-b border-dl-border">
@@ -453,7 +530,7 @@ function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row, i) => (
+              {filteredRows.map((row, i) => (
                 <tr key={row.asset.id} className={i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}>
                   <td className="px-3 py-2 text-dl-navy font-bold">{row.asset.symbol}</td>
                   <td className="px-3 py-2 text-dl-navy">{row.asset.displayName}</td>
