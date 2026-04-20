@@ -106,3 +106,16 @@ export const LENDING_PLATFORM_MODULE_ABI = [
   "function isPlatformWhitelisted(address,address) view returns (bool)",
   "function getPlatforms(address) view returns (address[])",
 ] as const;
+
+/**
+ * AxiomIdentity (ONCHAINID) — ERC-734/735 compatible.
+ * Used by ERC3643Service to push claims on-chain after KYC approval.
+ */
+export const ONCHAIN_IDENTITY_ABI = [
+  "function addKey(bytes32 _key, uint256 _purpose, uint256 _keyType) returns (bool)",
+  "function getKeysByPurpose(uint256 _purpose) view returns (bytes32[])",
+  "function keyHasPurpose(bytes32 _key, uint256 _purpose) view returns (bool)",
+  "function addClaim(uint256 _topic, uint256 _scheme, address _issuer, bytes _signature, bytes _data, string _uri) returns (bytes32 claimRequestId)",
+  "function getClaimIdsByTopic(uint256 _topic) view returns (bytes32[])",
+  "function getClaim(bytes32 _claimId) view returns (uint256 topic, uint256 scheme, address issuer, bytes signature, bytes data, string uri)",
+] as const;

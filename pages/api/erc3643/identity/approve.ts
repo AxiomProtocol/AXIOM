@@ -69,13 +69,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         registryTxHash: result.registryTxHash,
         t1Claim: {
           ...result.t1Claim,
-          issuanceMode: 'erc3643_offchain_signature',
+          issuanceMode: 'erc3643_onchain',
         },
         t3Claim: {
           ...result.t3Claim,
-          issuanceMode: 'erc3643_offchain_signature',
+          issuanceMode: 'erc3643_onchain',
         },
-        note: 'ERC-3643 T-REX architecture: topic claims are issued as off-chain ClaimIssuer signatures (no on-chain claim tx). Claims are verified by IdentityRegistry during AXUSD transfers via ClaimIssuer.isClaimValid().',
+        note: 'ERC-3643 T-REX: claims issued on-chain via identity.addClaim(). IdentityRegistry.isVerified() reads getClaimIdsByTopic() and validates via ClaimIssuer.isClaimValid() on each transfer.',
       },
     });
   } catch (err: unknown) {

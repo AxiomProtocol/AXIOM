@@ -11,6 +11,7 @@ import {
   CLAIM_ISSUER_ABI,
   MODULAR_COMPLIANCE_ABI,
   LENDING_PLATFORM_MODULE_ABI,
+  ONCHAIN_IDENTITY_ABI,
 } from '../../shared/contracts-3643';
 import { GOVERNANCE_SAFE, SAFE_MINT_THRESHOLD_AXUSD, DEPLOYER_EOA } from '../../src/config/adminRoles';
 
@@ -140,7 +141,9 @@ export class ERC3643Service {
       signer
     );
 
-    const tx = await factory.createIdentity(wallet, wallet);
+    // Use deployer (signer) as the MANAGEMENT_KEY so the service can call addClaim on-chain.
+    const deployerAddr = await signer.getAddress();
+    const tx = await factory.createIdentity(wallet, deployerAddr);
     const receipt = await tx.wait();
     const identityAddr = await factory.getIdentity(wallet);
 
@@ -185,7 +188,8 @@ export class ERC3643Service {
     topic: number,
     identityRecord: { id: string; onchainIdAddress: string },
     signer: ethers.Signer,
-    now: Date
+    now: Date,
+    onchainTxHash?: string
   ) {
     const validityDays = CLAIM_VALIDITY_DAYS[topic] || 365;
     const validityMs = validityDays * 24 * 3600 * 1000;
@@ -215,7 +219,7 @@ export class ERC3643Service {
       refreshRequiredBy,
       revoked: false,
     }).returning();
-    return { inserted, expiresAt, refreshRequiredBy, signature };
+    return { inserted, expiresAt, refreshRequiredBy, signature, claimData };
   }
 
   static async issueClaim(wallet: string, topic: number, data: string = '', opts?: { tx?: DbTx }) {
@@ -236,13 +240,59 @@ export class ERC3643Service {
           .limit(1)).length > 0;
 
     const identityAddr = dbIdentity[0].onchainIdAddress;
+    if (!identityAddr) throw new Error(`No on-chain identity address for wallet ${wallet}`);
+
     const now = new Date();
-    const buildClaim = (tx: DbTx) => ERC3643Service._buildAndInsertClaim(
-      tx, wallet, topic, { id: dbIdentity[0].id, onchainIdAddress: identityAddr ?? '' }, signer, now
+
+    // Build claim payload (sig + data) — same encoding used on-chain and for ClaimIssuer.isClaimValid()
+    const validityDays = CLAIM_VALIDITY_DAYS[topic] || 365;
+    const expiresAt = new Date(now.getTime() + validityDays * 24 * 3600 * 1000);
+    const refreshRequiredBy = new Date(expiresAt.getTime() - CLAIM_REFRESH_WARNING_DAYS * 24 * 3600 * 1000);
+    const claimData = ethers.AbiCoder.defaultAbiCoder().encode(
+      ['address', 'uint256', 'uint256'],
+      [wallet, topic, Math.floor(now.getTime() / 1000) + validityDays * 24 * 3600]
     );
-    const { inserted, expiresAt, refreshRequiredBy, signature } = opts?.tx
-      ? await buildClaim(opts.tx)
-      : await db.transaction(async (tx) => buildClaim(tx));
+    const dataHash = ethers.keccak256(
+      ethers.AbiCoder.defaultAbiCoder().encode(
+        ['address', 'uint256', 'bytes'],
+        [identityAddr, topic, claimData]
+      )
+    );
+    const signature = await signer.signMessage(ethers.getBytes(dataHash));
+
+    // Push claim on-chain via identity.addClaim() — deployer holds MANAGEMENT_KEY on all
+    // identities created via registerIdentity(), so this call is authorised.
+    const identity = new ethers.Contract(identityAddr, ONCHAIN_IDENTITY_ABI, signer);
+    const onchainTx = await identity.addClaim(
+      topic,
+      1, // scheme: ECDSA
+      ERC3643_CONTRACTS.CLAIM_ISSUER,
+      signature,
+      claimData,
+      ''
+    );
+    const receipt = await onchainTx.wait(1);
+    const onchainTxHash: string = receipt.hash;
+
+    // Persist claim to DB (inside caller-supplied transaction if provided)
+    const insertClaim = async (dbTx: DbTx) => {
+      const [inserted] = await dbTx.insert(t3Claims).values({
+        identityId: dbIdentity[0].id,
+        topic,
+        issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
+        claimData: ethers.hexlify(claimData),
+        signature,
+        validFrom: now,
+        validUntil: expiresAt,
+        expiresAt,
+        refreshRequiredBy,
+        revoked: false,
+      }).returning();
+      return inserted;
+    };
+    const inserted = opts?.tx
+      ? await insertClaim(opts.tx)
+      : await db.transaction((dbTx) => insertClaim(dbTx));
 
     const callerAddress = await signer.getAddress();
 
@@ -251,7 +301,8 @@ export class ERC3643Service {
       callerAddress,
       targetAddress: wallet,
       role: 'COMPLIANCE_ROLE',
-      metadata: { topic, claimId: inserted.id, expiresAt: expiresAt.toISOString(), isRenewal },
+      txHash: onchainTxHash,
+      metadata: { topic, claimId: inserted.id, expiresAt: expiresAt.toISOString(), isRenewal, onchainTxHash },
     });
 
     if (isRenewal) {
@@ -261,9 +312,10 @@ export class ERC3643Service {
         topic,
         claimId: inserted.id,
         operatorAddress: callerAddress.toLowerCase(),
+        txHash: onchainTxHash,
         result: 'success',
-        notes: `Topic ${topic} claim renewed — new expiry: ${expiresAt.toISOString()}`,
-        metadata: { expiresAt: expiresAt.toISOString(), refreshRequiredBy: refreshRequiredBy.toISOString() },
+        notes: `Topic ${topic} claim renewed on-chain — new expiry: ${expiresAt.toISOString()}`,
+        metadata: { expiresAt: expiresAt.toISOString(), refreshRequiredBy: refreshRequiredBy.toISOString(), onchainTxHash },
       }).catch((e) => {
         console.error('[issueClaim] renewal compliance log insert failed (non-fatal):', e);
       });
@@ -273,7 +325,7 @@ export class ERC3643Service {
       claimId: inserted.id,
       topic,
       isRenewal,
-      txHash: undefined as string | undefined,
+      txHash: onchainTxHash,
       signature,
       identityAddress: identityAddr,
       expiresAt,
@@ -331,36 +383,31 @@ export class ERC3643Service {
       .limit(1);
     if (!dbIdentity) throw new Error('Identity record not found after registration');
 
-    let t1Claim!: { id: string; [key: string]: unknown };
-    let t3Claim!: { id: string; [key: string]: unknown };
-    let t1ExpiresAt!: Date;
-    let t3ExpiresAt!: Date;
+    let t1: Awaited<ReturnType<typeof ERC3643Service.issueClaim>>;
+    let t3: Awaited<ReturnType<typeof ERC3643Service.issueClaim>>;
 
     try {
-      const txResult = await db.transaction(async (tx) => {
-        const t1 = await ERC3643Service.issueClaim(walletAddress, 1, '', { tx });
-        const t3 = await ERC3643Service.issueClaim(walletAddress, 3, '', { tx });
-        await tx.update(t3KycSubmissions)
-          .set({ status: 'bridged', bridgedAt: now, bridgeError: null, updatedAt: now })
-          .where(eq(t3KycSubmissions.id, submissionId));
-        return { t1, t3 };
-      });
+      // Issue claims on-chain then persist to DB. Each call:
+      //   1. signs claim payload
+      //   2. calls identity.addClaim() on-chain (deployer holds MANAGEMENT_KEY)
+      //   3. inserts claim record to DB with txHash in metadata
+      t1 = await ERC3643Service.issueClaim(walletAddress, 1);
+      t3 = await ERC3643Service.issueClaim(walletAddress, 3);
 
-      t1Claim = { id: txResult.t1.claimId } as typeof t1Claim;
-      t3Claim = { id: txResult.t3.claimId } as typeof t3Claim;
-      t1ExpiresAt = txResult.t1.expiresAt;
-      t3ExpiresAt = txResult.t3.expiresAt;
-    } catch (txErr: unknown) {
-      const errMsg = txErr instanceof Error ? txErr.message : String(txErr);
+      await db.update(t3KycSubmissions)
+        .set({ status: 'bridged', bridgedAt: now, bridgeError: null, updatedAt: now })
+        .where(eq(t3KycSubmissions.id, submissionId));
+    } catch (claimErr: unknown) {
+      const errMsg = claimErr instanceof Error ? claimErr.message : String(claimErr);
       await db.update(t3KycSubmissions)
         .set({
           status: 'partial_bridge',
-          bridgeError: `registerIdentity succeeded (on-chain) but claim/status DB transaction failed: ${errMsg}`,
+          bridgeError: `registerIdentity succeeded (on-chain) but on-chain claim issuance failed: ${errMsg}`,
           updatedAt: now,
         })
         .where(eq(t3KycSubmissions.id, submissionId))
         .catch(() => {});
-      throw new Error(`Claim issuance DB transaction failed after on-chain identity registration: ${errMsg}`);
+      throw new Error(`On-chain claim issuance failed after identity registration: ${errMsg}`);
     }
 
     const callerAddress = (await signer.getAddress()).toLowerCase();
@@ -370,21 +417,23 @@ export class ERC3643Service {
         wallet: walletAddress,
         action: 'issuance',
         topic: 1,
-        claimId: t1Claim.id,
+        claimId: t1.claimId,
         operatorAddress: callerAddress,
+        txHash: t1.txHash,
         result: 'success',
-        notes: 'Topic 1 (KYC) issued — atomic KYC approval; ERC-3643 off-chain claim (ClaimIssuer signature, verified by IdentityRegistry on transfer)',
-        metadata: { identityAddress: regResult.onchainIdAddress, registryTxHash: regResult.registryTxHash, expiresAt: t1ExpiresAt, claimScheme: 'erc3643_offchain_sig' },
+        notes: 'Topic 1 (KYC) issued on-chain — atomic KYC approval; identity.addClaim() confirmed on Arbitrum',
+        metadata: { identityAddress: regResult.onchainIdAddress, registryTxHash: regResult.registryTxHash, expiresAt: t1.expiresAt, claimScheme: 'erc3643_onchain', onchainTxHash: t1.txHash },
       },
       {
         wallet: walletAddress,
         action: 'issuance',
         topic: 3,
-        claimId: t3Claim.id,
+        claimId: t3.claimId,
         operatorAddress: callerAddress,
+        txHash: t3.txHash,
         result: 'success',
-        notes: 'Topic 3 (Sanctions) issued — atomic KYC approval; ERC-3643 off-chain claim',
-        metadata: { expiresAt: t3ExpiresAt, claimScheme: 'erc3643_offchain_sig' },
+        notes: 'Topic 3 (Sanctions) issued on-chain — atomic KYC approval; identity.addClaim() confirmed on Arbitrum',
+        metadata: { expiresAt: t3.expiresAt, claimScheme: 'erc3643_onchain', onchainTxHash: t3.txHash },
       },
     ]).catch((e) => {
       console.error('[atomicKycApproval] compliance log insert failed (non-fatal):', e);
@@ -394,8 +443,8 @@ export class ERC3643Service {
       identityAddress: regResult.onchainIdAddress,
       registerIdentityTxHash: regResult.txHash === 'IDEMPOTENT_SKIP' ? undefined : regResult.txHash,
       registryTxHash: regResult.registryTxHash === 'IDEMPOTENT_SKIP' ? undefined : regResult.registryTxHash,
-      t1Claim: { claimId: t1Claim.id, expiresAt: t1ExpiresAt },
-      t3Claim: { claimId: t3Claim.id, expiresAt: t3ExpiresAt },
+      t1Claim: { claimId: t1.claimId, expiresAt: t1.expiresAt, txHash: t1.txHash },
+      t3Claim: { claimId: t3.claimId, expiresAt: t3.expiresAt, txHash: t3.txHash },
     };
   }
 
