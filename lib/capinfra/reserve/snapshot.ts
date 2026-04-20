@@ -22,6 +22,7 @@ import { generateId } from '../ids';
 import { emitAuditEventStrict } from '../audit';
 import { getActiveSolvencyMode } from './solvencyMode';
 import { NotFoundError } from '../errors';
+import { bridgeToSolvencySnapshot, type BridgeResult } from './solvencyBridge';
 
 interface AggregatedLine {
   assetId: string;
@@ -121,6 +122,9 @@ export async function createSnapshot(actor: string): Promise<{
   snapshot: CapReserveHoldingsSnapshot;
   checksum: string;
   lineCount: number;
+  solvencySnapshotId?: string;
+  solvencyChecksum?: string;
+  reservesTotalUsd?: number;
 }> {
   const { projection, checksum, mode, modeVersion } = await projectSnapshot();
   const id = generateId('rhs');
@@ -170,7 +174,40 @@ export async function createSnapshot(actor: string): Promise<{
       .where(eq(capReserveHoldingsSnapshots.id, id));
     return snap;
   });
-  return { snapshot: result, checksum, lineCount: projection.lineCount };
+
+  // ── Solvency Snapshot Bridge ───────────────────────────────────────────────
+  // After the reserve snapshot is committed, create the corresponding canonical
+  // solvency_snapshots row so disclosure surfaces reflect live reserve state.
+  // Non-blocking: bridge failure is caught and logged; reserve snapshot
+  // creation is never aborted by a bridge write error.
+  let bridgeResult: BridgeResult | undefined;
+  try {
+    bridgeResult = await bridgeToSolvencySnapshot({
+      reserveSnapshotId: id,
+      reserveChecksum: checksum,
+      asOf,
+      mode,
+      modeVersion,
+      lines: projection.lines.map((l) => ({
+        assetId: l.assetId,
+        available: l.available,
+      })),
+    });
+  } catch (err) {
+    console.error(
+      '[reserve.snapshot] solvency bridge failed (non-blocking):',
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+
+  return {
+    snapshot: result,
+    checksum,
+    lineCount: projection.lineCount,
+    solvencySnapshotId: bridgeResult?.solvencySnapshotId,
+    solvencyChecksum: bridgeResult?.solvencyChecksum,
+    reservesTotalUsd: bridgeResult?.reservesTotalUsd,
+  };
 }
 
 export async function getSnapshot(id: string) {
