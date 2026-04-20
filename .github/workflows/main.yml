@@ -97,6 +97,7 @@ jobs:
             playwright-report/
             test-results/
           if-no-files-found: ignore
+          retention-days: 14
 
       - name: Upload dev-server log artifact
         if: always()
@@ -105,6 +106,7 @@ jobs:
           name: devserver-log
           path: /tmp/devserver.log
           if-no-files-found: ignore
+          retention-days: 14
 
   deploy:
     needs: predeploy-tests
