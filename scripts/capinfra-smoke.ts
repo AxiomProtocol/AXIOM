@@ -131,6 +131,26 @@ async function insertVerifiedAchWebhookEvent(payload: Record<string, unknown>): 
 const BASE = process.env.CAPINFRA_BASE_URL || 'http://localhost:5000';
 const KEY = process.env.ADMIN_SOLVENCY_KEY;
 
+// ─── Real Axiom Banking destination for ACH dispatch checks ────────
+// The ACH dispatcher (lib/capinfra/adapters/ach/dispatcher.ts) reads
+// payloadJson.routingNumber and payloadJson.accountNumber and forwards
+// them to Increase. Production Increase rejects synthetic test numbers,
+// so checks #56 and the GAP-001 block (#68/#69/#70) require real Axiom
+// Banking destination details. The account is expected to hold no funds
+// — debits will return NSF at the ACH network without moving money,
+// while still exercising the create → authorize → execute → approve
+// transfer-creation path end-to-end.
+const SMOKE_ROUTING_NUMBER = process.env.AXIOM_SMOKE_ROUTING_NUMBER;
+const SMOKE_ACCOUNT_NUMBER = process.env.AXIOM_SMOKE_ACCOUNT_NUMBER;
+if (!SMOKE_ROUTING_NUMBER || !SMOKE_ACCOUNT_NUMBER) {
+  console.error(
+    '[capinfra-smoke] AXIOM_SMOKE_ROUTING_NUMBER and AXIOM_SMOKE_ACCOUNT_NUMBER must be set to the real Axiom Banking ACH destination.\n' +
+      '  These are required for checks #56 and #68–#70 against production Increase.\n' +
+      '  Set them as Replit secrets, then re-run.',
+  );
+  process.exit(1);
+}
+
 if (!KEY) {
   console.error('[capinfra-smoke] ADMIN_SOLVENCY_KEY missing');
   process.exit(1);
@@ -1173,7 +1193,7 @@ async function main() {
     settlementType: 'ACH',
     amount: '10',
     idempotencyKey: `smoke-3b3-manual-${Date.now()}`,
-    payloadJson: { smoke: true, stage: '56', routingNumber: '021000021', accountNumber: '9876543210' },
+    payloadJson: { smoke: true, stage: '56', routingNumber: SMOKE_ROUTING_NUMBER, accountNumber: SMOKE_ACCOUNT_NUMBER },
     correlationId: 'smoke-56',
   };
   const si56 = await call('/api/capinfra/settlement/instructions', {
@@ -1498,7 +1518,7 @@ async function main() {
         settlementType: 'ACH',
         amount: gap001Amount,
         idempotencyKey: `smoke-gap001-${Date.now()}`,
-        payloadJson: { smoke: true, stage: 'gap001-68', routingNumber: '021000021', accountNumber: '9876543210' },
+        payloadJson: { smoke: true, stage: 'gap001-68', routingNumber: SMOKE_ROUTING_NUMBER, accountNumber: SMOKE_ACCOUNT_NUMBER },
         correlationId: 'smoke-gap001',
       }),
     });
