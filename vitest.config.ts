@@ -6,9 +6,7 @@ export default defineConfig({
     environment: 'node',
     include: [
       'lib/**/*.test.ts',
-      'tests/cost-intelligence/**/*.test.ts',
-      'tests/mirdt-lexicon.test.ts',
-      'tests/prune-oracle-fallback.test.ts',
+      'tests/**/*.test.ts',
     ],
     exclude: [
       'node_modules/**',
