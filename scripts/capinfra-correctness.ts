@@ -25,9 +25,13 @@
  */
 
 import 'dotenv/config';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../server/db';
-import { capSettlementInstructions, capWebhookEvents } from '../shared/capInfraSchema';
+import {
+  capPositions,
+  capSettlementInstructions,
+  capWebhookEvents,
+} from '../shared/capInfraSchema';
 import { generateId } from '../lib/capinfra/ids';
 import { processEvent } from '../lib/capinfra/webhooks/processor';
 
@@ -385,6 +389,163 @@ async function testAchTerminalReplayNoOp(axau: AssetRow): Promise<void> {
   console.log('  ✓ terminal instruction unchanged; replay stays no-op');
 }
 
+// ──── Test 5: ACH SUBMITTED → confirmation lifecycle (GAP-001) ──────────
+//
+// Proves three production-only invariants that the smoke harness can only
+// observe by creating real Increase transfers (impossible against a
+// production Increase key with synthetic test routing/account numbers).
+// We exercise the same code path the webhook processor uses in production
+// by directly seeding a SUBMITTED instruction at the DB boundary, then
+// driving processEvent — bypassing the live Increase API call without
+// stubbing or mocking any application code.
+//
+// Behaviors proven in sequence:
+//   1. SUBMITTED remains uncredited before confirmation
+//      (position quantity does not change when an instruction reaches
+//       SUBMITTED — credit only happens on bank-final confirmation).
+//   2. Confirmation settles and credits exactly once
+//      (matching webhook → processor outcome=SETTLED → instruction
+//       transitions to SETTLED → position quantity increases by amount).
+//   3. Duplicate confirmation does not double-credit
+//      (replay of the same processed webhook event is a no-op; position
+//       quantity stays at the post-settle value).
+
+async function readPositionQty(userId: string, assetId: string): Promise<string> {
+  const rows = await db
+    .select({ quantity: capPositions.quantity })
+    .from(capPositions)
+    .where(and(eq(capPositions.userId, userId), eq(capPositions.assetId, assetId)))
+    .limit(1);
+  return rows.length > 0 ? rows[0].quantity : '0';
+}
+
+async function testAchSubmittedConfirmLifecycle(axau: AssetRow): Promise<void> {
+  console.log('\n[5] ACH SUBMITTED → confirmation lifecycle (GAP-001)');
+
+  const instructionId = generateId('si');
+  const externalRef = `ach-submit-credit-${Date.now()}`;
+  const idem = `corr-ach-submit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const amountDecimal = '2.0000000000';
+  const amountCents = -200; // ACH debit; processor compares |amount| in cents
+
+  // ── Setup: snapshot position BEFORE inserting the SUBMITTED row ─────
+  const qtyT0 = await readPositionQty(SMOKE_USER, axau.id);
+
+  // Seed a SUBMITTED instruction directly. This mirrors the post-approve
+  // state in MANUAL_APPROVAL mode — bank-accepted but not bank-final —
+  // without invoking the live Increase transfer creation.
+  await db.insert(capSettlementInstructions).values({
+    id: instructionId,
+    userId: SMOKE_USER,
+    assetId: axau.id,
+    actionType: 'MINT',
+    settlementType: 'ACH',
+    amount: amountDecimal,
+    idempotencyKey: idem,
+    status: 'SUBMITTED',
+    externalRef,
+    payloadJson: { source: 'capinfra-correctness-gap001' },
+  });
+
+  // ── Behavior 1: SUBMITTED remains uncredited before confirmation ────
+  const [stateSubmitted] = await db
+    .select({ status: capSettlementInstructions.status })
+    .from(capSettlementInstructions)
+    .where(eq(capSettlementInstructions.id, instructionId))
+    .limit(1);
+  assert(
+    stateSubmitted?.status === 'SUBMITTED',
+    `instruction is SUBMITTED post-seed (got ${stateSubmitted?.status})`,
+  );
+  const qtyAfterSubmit = await readPositionQty(SMOKE_USER, axau.id);
+  assert(
+    qtyAfterSubmit === qtyT0,
+    `SUBMITTED does not credit position (qtyT0=${qtyT0} vs after-submit=${qtyAfterSubmit})`,
+  );
+  console.log(
+    `  ✓ SUBMITTED remains uncredited before confirmation (qty unchanged at ${qtyAfterSubmit})`,
+  );
+
+  // ── Behavior 2: Confirmation settles and credits once ───────────────
+  const eventId = await insertVerifiedAchWebhookEvent({
+    id: `evt-gap001-${Date.now()}`,
+    category: 'transaction.created',
+    created_at: new Date().toISOString(),
+    transaction: {
+      id: `txn-gap001-${Date.now()}`,
+      amount: amountCents,
+      currency: 'USD',
+      route_type: 'ach',
+      account_id: 'acct_gap001_correctness',
+      description: 'correctness GAP-001 settlement confirmation',
+      created_at: new Date().toISOString(),
+      source: { ach_transfer_id: externalRef },
+    },
+  });
+
+  const settle = await processEvent(eventId);
+  assert(
+    settle.outcome === 'SETTLED',
+    `webhook processor settles SUBMITTED → SETTLED (got ${settle.outcome})`,
+  );
+  assert(
+    settle.instructionId === instructionId,
+    `processor matches the seeded instruction (got ${settle.instructionId})`,
+  );
+  const [stateSettled] = await db
+    .select({ status: capSettlementInstructions.status })
+    .from(capSettlementInstructions)
+    .where(eq(capSettlementInstructions.id, instructionId))
+    .limit(1);
+  assert(
+    stateSettled?.status === 'SETTLED',
+    `instruction transitions to SETTLED (got ${stateSettled?.status})`,
+  );
+  const qtyAfterSettle = await readPositionQty(SMOKE_USER, axau.id);
+  const delta = Number(qtyAfterSettle) - Number(qtyAfterSubmit);
+  const expectedDelta = Number(amountDecimal);
+  assert(
+    Math.abs(delta - expectedDelta) < 1e-9,
+    `position credited by exactly the instruction amount (delta=${delta}, expected=${expectedDelta})`,
+  );
+  console.log(
+    `  ✓ confirmation settles and credits once (qty ${qtyAfterSubmit} → ${qtyAfterSettle}, +${delta})`,
+  );
+
+  // ── Behavior 3: Duplicate confirmation does not double-credit ───────
+  const replay = await processEvent(eventId);
+  assert(
+    replay.outcome === 'NO_OP_ALREADY_PROCESSED',
+    `duplicate webhook is a no-op (got ${replay.outcome})`,
+  );
+  const qtyAfterReplay = await readPositionQty(SMOKE_USER, axau.id);
+  assert(
+    qtyAfterReplay === qtyAfterSettle,
+    `position unchanged by duplicate (after-settle=${qtyAfterSettle} vs after-replay=${qtyAfterReplay})`,
+  );
+  const [stateAfterReplay] = await db
+    .select({ status: capSettlementInstructions.status })
+    .from(capSettlementInstructions)
+    .where(eq(capSettlementInstructions.id, instructionId))
+    .limit(1);
+  assert(
+    stateAfterReplay?.status === 'SETTLED',
+    `instruction stays SETTLED after replay (got ${stateAfterReplay?.status})`,
+  );
+  console.log(
+    `  ✓ duplicate confirmation does not double-credit (qty stays at ${qtyAfterReplay})`,
+  );
+
+  // ── Cleanup: remove the synthetic webhook event row ────────────────
+  // We intentionally do NOT delete the SETTLED instruction or reverse
+  // the position credit — the seeded amount (2.0000000000) is small,
+  // monotonic across runs, and matches the test-data semantics already
+  // accumulated by prior smoke runs against this same SMOKE_USER+AXAU
+  // pair. Deleting a SETTLED instruction without reversing the ledger
+  // pair would corrupt the double-entry book.
+  await db.delete(capWebhookEvents).where(eq(capWebhookEvents.id, eventId));
+}
+
 async function main() {
   console.log(`[capinfra-correctness] base=${BASE}`);
   const { axau } = await getAssets();
@@ -392,6 +553,7 @@ async function main() {
   await testAuditPagination(axau);
   await testAchMissingRemoteNoSettle();
   await testAchTerminalReplayNoOp(axau);
+  await testAchSubmittedConfirmLifecycle(axau);
   console.log('\n[capinfra-correctness] OK');
 }
 
