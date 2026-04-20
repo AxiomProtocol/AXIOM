@@ -221,8 +221,8 @@ export async function processEvent(eventId: string): Promise<ProcessResult> {
 
   // Accept AUTHORIZED (Stellar / non-ACH webhook path) and SUBMITTED
   // (ACH settlement-confirmation path: webhook or reconciliation).
-  const PROCESSABLE = ['AUTHORIZED', 'SUBMITTED'] as const;
-  if (!(PROCESSABLE as readonly string[]).includes(instruction.status)) {
+  const PROCESSABLE_STATUSES = ['AUTHORIZED', 'SUBMITTED'] as const;
+  if (!(PROCESSABLE_STATUSES as readonly string[]).includes(instruction.status)) {
     const outcome: ProcessOutcome = 'FAILED_WRONG_STATE';
     const detail = `Instruction ${instruction.id} is in state ${instruction.status}; only AUTHORIZED or SUBMITTED is processable`;
     await finaliseEvent(eventId, outcome, instruction.id, detail);

@@ -949,8 +949,8 @@ export async function externallySettleInstruction(
     );
   }
   // Accept AUTHORIZED (Stellar/non-ACH path) and SUBMITTED (ACH confirmation path).
-  const ELIGIBLE: Status[] = ['AUTHORIZED', 'SUBMITTED'];
-  if (!ELIGIBLE.includes(pre.status)) {
+  const ELIGIBLE_STATUSES: Status[] = ['AUTHORIZED', 'SUBMITTED'];
+  if (!ELIGIBLE_STATUSES.includes(pre.status)) {
     throw new ConflictError(
       `external_settle_requires_authorized_or_submitted:${pre.status}`,
       { instructionId, currentStatus: pre.status, webhookEventId },
@@ -969,7 +969,7 @@ export async function externallySettleInstruction(
         { instructionId, currentStatus: current.status, webhookEventId },
       );
     }
-    if (!ELIGIBLE.includes(current.status)) {
+    if (!ELIGIBLE_STATUSES.includes(current.status)) {
       throw new ConflictError(
         `external_settle_requires_authorized_or_submitted:${current.status}`,
         { instructionId, currentStatus: current.status, webhookEventId },
