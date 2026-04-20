@@ -13,8 +13,9 @@
  *     no Increase transfer submitted yet; these are local holding refs).
  *   - SUBMITTED instructions ARE included in local lookup (they have a real
  *     Increase transfer id as externalRef and must be compared for drift).
- *   - MANUAL_APPROVAL mode: skip remote Increase fetch entirely (no transfers
- *     were submitted to Increase while in MANUAL_APPROVAL mode).
+ *   - MANUAL_APPROVAL mode: remote Increase fetch remains enabled because
+ *     approved instructions submit real transfers and may need
+ *     reconciliation-confirmed settlement.
  *
  * Amount comparison uses deterministic integer arithmetic via
  * decimalStringToCents (no floating-point).
@@ -61,7 +62,7 @@ export interface IncreaseDiffInput {
   /**
    * Adapter mode affects reconciliation behavior:
    *   DRY_RUN       — skip remote Increase API fetch entirely (DRYRUN-* refs have no counterpart)
-   *   MANUAL_APPROVAL — skip remote fetch (no transfers submitted to Increase in this mode)
+   *   MANUAL_APPROVAL — full remote fetch (approved instructions submit to Increase)
    *   LIVE_CANARY / LIVE — full remote fetch + diff
    */
   adapterMode?: string;
@@ -102,13 +103,10 @@ export async function runIncreaseDiff(input: IncreaseDiffInput): Promise<Increas
     triggeredBy: input.triggeredBy,
   });
 
-  // DRY_RUN and MANUAL_APPROVAL: skip remote Increase API fetch entirely.
-  //   DRY_RUN         — DRYRUN-ACH-* refs never appear in Increase.
-  //   MANUAL_APPROVAL — no transfers have been submitted to Increase.
-  if (input.adapterMode === 'DRY_RUN' || input.adapterMode === 'MANUAL_APPROVAL') {
-    const note = input.adapterMode === 'MANUAL_APPROVAL'
-      ? 'MANUAL_APPROVAL_SKIP: no transfers submitted to Increase in MANUAL_APPROVAL mode'
-      : 'DRY_RUN_SKIP: remote Increase API fetch omitted in DRY_RUN mode';
+  // DRY_RUN: skip remote Increase API fetch entirely because DRYRUN-ACH-*
+  // refs are synthetic and never appear in Increase.
+  if (input.adapterMode === 'DRY_RUN') {
+    const note = 'DRY_RUN_SKIP: remote Increase API fetch omitted in DRY_RUN mode';
     await markRunStarted(run.id);
     await markRunCompleted(run.id, 0, 0, note);
     return { run: { ...run, status: 'COMPLETED', comparedCount: 0, driftCount: 0 }, comparedCount: 0, driftCount: 0 };
