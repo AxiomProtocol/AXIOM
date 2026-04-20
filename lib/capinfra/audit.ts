@@ -8,9 +8,9 @@
  */
 
 import { db } from '../../server/db';
-import { capAuditEvents, type NewCapAuditEvent } from '../../shared/capInfraSchema';
+import { capAuditEvents, capIdentityProfiles, type NewCapAuditEvent } from '../../shared/capInfraSchema';
 import { generateId } from './ids';
-import { and, desc, eq, gte, lte, lt, or, SQL, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lte, lt, or, SQL, sql } from 'drizzle-orm';
 
 type DbLike = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -140,5 +140,23 @@ export async function listAuditEvents(filters: AuditQueryFilters) {
   const last = items[items.length - 1];
   const nextCursor = hasMore && last ? encodeCursor(last.createdAt, last.id) : null;
 
-  return { items, nextCursor };
+  // Batch-fetch legal names for every distinct userId on this page (single query).
+  const userIds = [...new Set(items.map((r) => r.userId).filter((id): id is string => id != null))];
+  const legalNameMap: Record<string, string | null> = {};
+  if (userIds.length > 0) {
+    const profiles = await db
+      .select({ userId: capIdentityProfiles.userId, legalName: capIdentityProfiles.legalName })
+      .from(capIdentityProfiles)
+      .where(inArray(capIdentityProfiles.userId, userIds));
+    for (const p of profiles) {
+      legalNameMap[p.userId] = p.legalName ?? null;
+    }
+  }
+
+  const enrichedItems = items.map((r) => ({
+    ...r,
+    legalName: r.userId != null ? (legalNameMap[r.userId] ?? null) : null,
+  }));
+
+  return { items: enrichedItems, nextCursor };
 }

@@ -93,6 +93,7 @@ interface AuditEvent {
   eventType: string;
   actor: string;
   userId?: string | null;
+  legalName?: string | null;
   assetId?: string | null;
   instructionId?: string | null;
   payloadJson?: Record<string, unknown> | null;
@@ -829,7 +830,18 @@ function AuditSearchSection({ operatorKey }: { operatorKey: string }) {
                       </td>
                       <td className="px-3 py-2 text-dl-navy">{ev.eventType}</td>
                       <td className="px-3 py-2 text-dl-gray">{ev.actor}</td>
-                      <td className="px-3 py-2 text-dl-gray">{ev.userId ?? <span className="text-dl-border">—</span>}</td>
+                      <td className="px-3 py-2 text-dl-gray">
+                        {ev.userId ? (
+                          <div>
+                            <div className="break-all">{ev.userId}</div>
+                            {ev.legalName && (
+                              <div className="text-[10px] text-dl-navy font-medium mt-0.5">{ev.legalName}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-dl-border">—</span>
+                        )}
+                      </td>
                       <td className="px-3 py-2 text-dl-gray">{ev.assetId ?? <span className="text-dl-border">—</span>}</td>
                       <td className="px-3 py-2">
                         {ev.payloadJson ? (
