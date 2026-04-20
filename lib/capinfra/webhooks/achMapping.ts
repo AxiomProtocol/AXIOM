@@ -63,6 +63,13 @@ function parseOccurredAt(raw: unknown): Date {
   return new Date();
 }
 
+function centsToDecimalString(cents: number): string {
+  const abs = Math.abs(cents);
+  const whole = Math.floor(abs / 100);
+  const frac = String(abs % 100).padStart(2, '0');
+  return `${whole}.${frac}`;
+}
+
 /**
  * Map a verified Increase webhook payload to a settlement transition
  * intent. Returns null when the event type is advisory-only or when
@@ -92,7 +99,7 @@ export function mapAchEvent(
       }
       if (!txRef) return null;
       const amountCents = typeof tx['amount'] === 'number' ? tx['amount'] : null;
-      const amountStr = amountCents !== null ? String(Math.abs(amountCents)) : null;
+      const amountStr = amountCents !== null ? centsToDecimalString(amountCents) : null;
       return {
         eventType: category,
         txHash: txRef,

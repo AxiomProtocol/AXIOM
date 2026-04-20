@@ -6,7 +6,7 @@
  * Returns the run id and summary; callers use
  * GET /reconciliation/runs/[id]/drift to read full drift detail.
  *
- * DRY_RUN only in Phase 3B.2; the adapter mode remains unchanged.
+ * Runs reconciliation in active mode semantics (not forced dry-run).
  */
 
 import { z } from 'zod';
@@ -37,7 +37,7 @@ export default createRouter([
         triggeredBy: actor,
         remediationAssetId: body.remediationAssetId ?? null,
         remediationUserId: body.remediationUserId ?? null,
-        dryRun: true,
+        dryRun: false,
       });
       res.status(200).json({
         runId: result.run.id,

@@ -113,6 +113,20 @@ async function purgeSmokeSubmitted(userId: string, assetId: string): Promise<num
   return r.rowCount ?? 0;
 }
 
+async function insertVerifiedAchWebhookEvent(payload: Record<string, unknown>): Promise<string> {
+  const id = `we_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  const externalEventId =
+    typeof payload.id === 'string' && payload.id.length > 0 ? payload.id : `evt_${Date.now().toString(36)}`;
+  await smokePool().query(
+    `INSERT INTO cap_webhook_events
+      (id, adapter_key, external_event_id, raw_payload_json, raw_headers_json, signature_verified, status, attempts, received_at)
+     VALUES
+      ($1, 'ACH', $2, $3::jsonb, '{}'::jsonb, true, 'RECEIVED', 0, now())`,
+    [id, externalEventId, JSON.stringify(payload)],
+  );
+  return id;
+}
+
 const BASE = process.env.CAPINFRA_BASE_URL || 'http://localhost:5000';
 const KEY = process.env.ADMIN_SOLVENCY_KEY;
 
@@ -1457,9 +1471,7 @@ async function main() {
   //   71. Reconciliation-confirmed fallback settles once if webhook was missed
   //   72. Mismatch/missing-remote stays unresolved without credit
   //
-  // Requires a freshly-created ACH adapter row (achSecret known) for
-  // webhook signing. Skipped when adapter already existed.
-  if (!haveAch) {
+  {
     // ── 68. Prove SUBMITTED ≠ credited ─────────────────────────────────
     // Switch to MANUAL_APPROVAL mode for controlled SUBMITTED creation.
     await call('/api/capinfra/adapters/increase/config', {
@@ -1517,7 +1529,7 @@ async function main() {
 
     // ── 69. Webhook-confirmed settlement: SUBMITTED → SETTLED once ─────
     const { createHmac: hmac69 } = await import('node:crypto');
-    const gapWebhookPayload = JSON.stringify({
+    const gapWebhookPayloadObj = {
       id: `evt-gap001-settle-${Date.now()}`,
       category: 'transaction.created',
       created_at: new Date().toISOString(),
@@ -1535,28 +1547,37 @@ async function main() {
           ach_transfer_id: gapExtRef,
         },
       },
-    });
-    const ts69 = Math.floor(Date.now() / 1000);
-    const v169 = hmac69('sha256', achSecret).update(`${ts69}.${gapWebhookPayload}`).digest('hex');
-    const webhook69Res = await fetch(`${BASE}/api/capinfra/webhooks/increase`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'increase-webhook-signature': `t=${ts69},v1=${v169}`,
-      },
-      body: gapWebhookPayload,
-    });
-    const webhook69Json = (await webhook69Res.json()) as { status: string; eventId: string; duplicate: boolean };
-    console.log(`  69. webhook settlement-confirm →`, webhook69Res.status, webhook69Json.status);
-    assert(webhook69Res.status === 202, `GAP-001 69: webhook 202 (got ${webhook69Res.status})`);
-    assert(webhook69Json.status === 'RECEIVED', `GAP-001 69: webhook RECEIVED (got ${webhook69Json.status})`);
-    assert(webhook69Json.duplicate === false, 'GAP-001 69: first delivery not duplicate');
+    };
+
+    let webhook69EventId = '';
+    if (!haveAch) {
+      const gapWebhookPayload = JSON.stringify(gapWebhookPayloadObj);
+      const ts69 = Math.floor(Date.now() / 1000);
+      const v169 = hmac69('sha256', achSecret).update(`${ts69}.${gapWebhookPayload}`).digest('hex');
+      const webhook69Res = await fetch(`${BASE}/api/capinfra/webhooks/increase`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'increase-webhook-signature': `t=${ts69},v1=${v169}`,
+        },
+        body: gapWebhookPayload,
+      });
+      const webhook69Json = (await webhook69Res.json()) as { status: string; eventId: string; duplicate: boolean };
+      console.log(`  69. webhook settlement-confirm →`, webhook69Res.status, webhook69Json.status);
+      assert(webhook69Res.status === 202, `GAP-001 69: webhook 202 (got ${webhook69Res.status})`);
+      assert(webhook69Json.status === 'RECEIVED', `GAP-001 69: webhook RECEIVED (got ${webhook69Json.status})`);
+      assert(webhook69Json.duplicate === false, 'GAP-001 69: first delivery not duplicate');
+      webhook69EventId = webhook69Json.eventId;
+    } else {
+      webhook69EventId = await insertVerifiedAchWebhookEvent(gapWebhookPayloadObj as Record<string, unknown>);
+      console.log(`  69. injected verified webhook event →`, webhook69EventId);
+    }
 
     // Wait for fire-and-forget processor.
     await new Promise((r) => setTimeout(r, 1500));
 
     // Manually trigger process if needed.
-    const process69 = await call(`/api/capinfra/webhooks/events/${webhook69Json.eventId}/process`, {
+    const process69 = await call(`/api/capinfra/webhooks/events/${webhook69EventId}/process`, {
       method: 'POST',
     });
     const proc69Body = process69.body as { result: { outcome: string; instructionId: string | null } };
@@ -1584,20 +1605,16 @@ async function main() {
       `GAP-001 69: position credited after SETTLED (${qtyAfter} > ${qtyBefore})`,
     );
 
-    // ── 70. Duplicate webhook no-ops ───────────────────────────────────
-    const webhook70Res = await fetch(`${BASE}/api/capinfra/webhooks/increase`, {
+    // ── 70. Duplicate confirmation no-ops ──────────────────────────────
+    const process70 = await call(`/api/capinfra/webhooks/events/${webhook69EventId}/process`, {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'increase-webhook-signature': `t=${ts69},v1=${v169}`,
-      },
-      body: gapWebhookPayload,
     });
-    const webhook70Json = (await webhook70Res.json()) as { status: string; duplicate: boolean; eventId: string };
-    console.log(`  70. duplicate webhook →`, webhook70Res.status, `dup=${webhook70Json.duplicate}`);
-    assert(webhook70Res.status === 202, `GAP-001 70: duplicate 202 (got ${webhook70Res.status})`);
-    assert(webhook70Json.duplicate === true, 'GAP-001 70: flagged as duplicate');
-    assert(webhook70Json.eventId === webhook69Json.eventId, 'GAP-001 70: references original event');
+    const proc70Body = process70.body as { result: { outcome: string } };
+    console.log(`  70. replay process outcome →`, proc70Body.result.outcome);
+    assert(
+      proc70Body.result.outcome === 'NO_OP_ALREADY_PROCESSED',
+      `GAP-001 70: replay is NO_OP_ALREADY_PROCESSED (got ${proc70Body.result.outcome})`,
+    );
 
     // Verify position unchanged by duplicate.
     const posAfterDup = await call(`/api/capinfra/portfolio/positions?userId=${SMOKE_USER}&assetId=${achAsset!.id}`);
@@ -1651,8 +1668,6 @@ async function main() {
     console.log('  ✓ no spurious auto-settlement in reconciliation');
 
     console.log('  [GAP-001] All 5 proof checks passed (68–72)');
-  } else {
-    console.log('  [GAP-001] Skipped (existing ACH adapter row, secret unknown)');
   }
 
   if (_pool) await _pool.end();

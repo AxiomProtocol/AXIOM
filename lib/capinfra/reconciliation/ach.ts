@@ -5,7 +5,7 @@
  *
  * Phase 3B.3: mode-aware behavior:
  *   DRY_RUN         — diff engine skips remote fetch (DRYRUN-* refs are synthetic)
- *   MANUAL_APPROVAL — diff engine skips remote fetch (no transfers submitted)
+ *   MANUAL_APPROVAL — diff engine performs remote fetch (approved transfers submit)
  *   LIVE_CANARY     — full remote diff
  *   LIVE            — full remote diff
  *
