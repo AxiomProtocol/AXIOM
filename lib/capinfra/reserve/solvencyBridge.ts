@@ -58,8 +58,30 @@ export interface BridgeResult {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Multiplier for rounding USD amounts to two decimal places. */
+const CENTS_PER_DOLLAR = 100;
+
+/** Multiplier for converting a decimal fraction to a basis-point percentage (0–100). */
+const BASIS_POINTS_MULTIPLIER = 10_000;
+
+/**
+ * Maximum number of source entries carried forward from the previous
+ * solvency snapshot. Capped to prevent unbounded payload growth when
+ * many snapshots chain together.
+ */
+const MAX_HISTORICAL_SOURCES = 9;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** Round a number to two decimal places (cent precision). */
+function roundToCents(value: number): number {
+  return Math.round(value * CENTS_PER_DOLLAR) / CENTS_PER_DOLLAR;
+}
 
 /** Stable key-sort canonicalization for deterministic JSON hashing. */
 function canonicalize(value: unknown): unknown {
@@ -137,7 +159,7 @@ export async function bridgeToSolvencySnapshot(
         ]);
         if (price) {
           const raw = Number(line.available) * Number(price.price);
-          usd = Number.isFinite(raw) ? Math.round(raw * 100) / 100 : 0;
+          usd = Number.isFinite(raw) ? roundToCents(raw) : 0;
         }
         if (asset?.symbol) symbol = asset.symbol;
       } catch {
@@ -147,8 +169,7 @@ export async function bridgeToSolvencySnapshot(
     }),
   );
 
-  const reservesTotalUsd =
-    Math.round(lineResults.reduce((sum, l) => sum + l.usd, 0) * 100) / 100;
+  const reservesTotalUsd = roundToCents(lineResults.reduce((sum, l) => sum + l.usd, 0));
 
   const compositionTotal = reservesTotalUsd;
   const bridgeComposition = lineResults
@@ -158,7 +179,7 @@ export async function bridgeToSolvencySnapshot(
       valueUsd: l.usd,
       pct:
         compositionTotal > 0
-          ? Math.round((l.usd / compositionTotal) * 10000) / 100
+          ? Math.round((l.usd / compositionTotal) * BASIS_POINTS_MULTIPLIER) / CENTS_PER_DOLLAR
           : 0,
     }));
 
@@ -201,7 +222,7 @@ export async function bridgeToSolvencySnapshot(
         label: 'CapInfra Reserve Snapshot',
         detail: `ID: ${input.reserveSnapshotId}, checksum: ${input.reserveChecksum}, mode: ${input.mode}/${input.modeVersion}`,
       },
-      ...existingSources.slice(0, 9),
+      ...existingSources.slice(0, MAX_HISTORICAL_SOURCES),
     ],
   };
 
