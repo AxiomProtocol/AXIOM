@@ -14,19 +14,20 @@
  *                                                       → (timeout) → FAILED
  *
  * ACH LIVE_CANARY / LIVE path:
- *     PENDING → AUTHORIZED → SUBMITTED
+ *     PENDING → AUTHORIZED → SUBMITTED → (webhook/recon confirmation) → SETTLED
  *                          → FAILED (Increase API error)
+ *                                      → FAILED (returned/reversed/declined)
  *
  * Contract invariants:
  *   - SUBMITTED ≠ bank-final. No portfolio writes on SUBMITTED.
  *     SUBMITTED means Increase production API accepted the transfer.
- *     Clearing is confirmed by reconciliation only.
+ *     Clearing is confirmed by webhook or reconciliation only.
  *   - No workflow may infer economic completion, reserve credit, treasury
  *     availability, or bank-final settlement from SUBMITTED status alone.
  *   - Terminal states (SETTLED, FAILED, CANCELLED) are immutable.
- *   - SUBMITTED is terminal in this phase; transitions out require
- *     reconciliation + operator review.
- *   - Portfolio writes happen ONLY inside the EXECUTING → SETTLED tx.
+ *   - SUBMITTED → SETTLED requires explicit ACH settlement-confirming
+ *     events only (transaction.created with matching externalRef + amount).
+ *   - Portfolio writes happen ONLY inside the → SETTLED tx.
  *   - Notifications fan out AFTER the settlement transaction commits.
  *   - Adapters are reached only through adapters/registry.ts.
  *
@@ -76,8 +77,9 @@ const VALID_TRANSITIONS: Record<Status, Status[]> = {
   EXECUTING: ['SETTLED', 'FAILED'],
   // PENDING_OPERATOR_APPROVAL: operator must approve (→ SUBMITTED) or reject (→ FAILED).
   PENDING_OPERATOR_APPROVAL: ['SUBMITTED', 'FAILED'],
-  // SUBMITTED: terminal in Phase 3B.3. Transitions out require reconciliation gate.
-  SUBMITTED: [],
+  // SUBMITTED: bank-accepted but not bank-final. Transitions to SETTLED or FAILED
+  // require webhook-confirmed or reconciliation-confirmed ACH settlement events.
+  SUBMITTED: ['SETTLED', 'FAILED'],
   SETTLED: [],
   FAILED: [],
   CANCELLED: [],
@@ -946,9 +948,11 @@ export async function externallySettleInstruction(
       { instructionId, currentStatus: pre.status, webhookEventId },
     );
   }
-  if (pre.status !== 'AUTHORIZED') {
+  // Accept AUTHORIZED (Stellar/non-ACH path) and SUBMITTED (ACH confirmation path).
+  const ELIGIBLE: Status[] = ['AUTHORIZED', 'SUBMITTED'];
+  if (!ELIGIBLE.includes(pre.status)) {
     throw new ConflictError(
-      `external_settle_requires_authorized:${pre.status}`,
+      `external_settle_requires_authorized_or_submitted:${pre.status}`,
       { instructionId, currentStatus: pre.status, webhookEventId },
     );
   }
@@ -965,30 +969,41 @@ export async function externallySettleInstruction(
         { instructionId, currentStatus: current.status, webhookEventId },
       );
     }
-    if (current.status !== 'AUTHORIZED') {
+    if (!ELIGIBLE.includes(current.status)) {
       throw new ConflictError(
-        `external_settle_requires_authorized:${current.status}`,
+        `external_settle_requires_authorized_or_submitted:${current.status}`,
         { instructionId, currentStatus: current.status, webhookEventId },
       );
     }
-    await tx
-      .update(capSettlementInstructions)
-      .set({ status: 'EXECUTING', updatedAt: new Date() })
-      .where(eq(capSettlementInstructions.id, instructionId));
-    await emitAuditEventStrict(
-      {
-        eventType: 'settlement.executing',
-        aggregateType: 'settlement_instruction',
-        aggregateId: instructionId,
-        userId: current.userId,
-        assetId: current.assetId,
-        instructionId,
-        actor,
-        correlationId: correlationId ?? null,
-        payloadJson: { source: 'external_webhook', webhookEventId },
-      },
-      tx,
-    );
+
+    // For SUBMITTED → SETTLED (ACH confirmation): skip the intermediate
+    // EXECUTING step. The instruction already passed through the dispatch
+    // gate when it was first submitted to Increase. Transition directly
+    // to SETTLED.
+    const fromSubmitted = current.status === 'SUBMITTED';
+
+    if (!fromSubmitted) {
+      // AUTHORIZED path (Stellar / non-ACH): transition via EXECUTING.
+      await tx
+        .update(capSettlementInstructions)
+        .set({ status: 'EXECUTING', updatedAt: new Date() })
+        .where(eq(capSettlementInstructions.id, instructionId));
+      await emitAuditEventStrict(
+        {
+          eventType: 'settlement.executing',
+          aggregateType: 'settlement_instruction',
+          aggregateId: instructionId,
+          userId: current.userId,
+          assetId: current.assetId,
+          instructionId,
+          actor,
+          correlationId: correlationId ?? null,
+          payloadJson: { source: 'external_webhook', webhookEventId },
+        },
+        tx,
+      );
+    }
+
     const [next] = await tx
       .update(capSettlementInstructions)
       .set({
@@ -1001,6 +1016,7 @@ export async function externallySettleInstruction(
           webhookEventId,
           observedAmount: input.observedAmount ?? null,
           observedAsset: input.observedAsset ?? null,
+          ...(fromSubmitted ? { confirmedFromSubmitted: true } : {}),
         },
       })
       .where(eq(capSettlementInstructions.id, instructionId))
@@ -1017,10 +1033,11 @@ export async function externallySettleInstruction(
         actor,
         correlationId: correlationId ?? null,
         payloadJson: {
-          source: 'external_webhook',
+          source: fromSubmitted ? 'ach_confirmation' : 'external_webhook',
           externalRef,
           settledAt: settledAt.toISOString(),
           webhookEventId,
+          fromSubmitted,
         },
       },
       tx,
@@ -1101,7 +1118,7 @@ async function _failInstruction(
     const current = await reloadInstruction(tx, instructionId);
     if (!current) throw new NotFoundError(`instruction ${instructionId} not found`);
     // Only fail from non-terminal states.
-    if (['SETTLED', 'FAILED', 'CANCELLED', 'SUBMITTED'].includes(current.status)) {
+    if (['SETTLED', 'FAILED', 'CANCELLED'].includes(current.status)) {
       throw new ConflictError(`fail_on_terminal:${current.status}`, { instructionId });
     }
     const [next] = await tx
