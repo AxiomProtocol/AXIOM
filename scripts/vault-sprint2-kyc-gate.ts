@@ -53,6 +53,7 @@ import {
   ACTIVE_AXUSD,
   CREDIT_MARKET_ADDRESS,
 } from '../src/config/activeContracts.generated';
+import { DEPLOYER_EOA } from '../src/config/adminRoles';
 
 // ── Environment ───────────────────────────────────────────────────────────────
 
@@ -87,6 +88,7 @@ const ONCHAIN_IDENTITY_ABI = [
   'function getClaimIdsByTopic(uint256 topic) view returns (bytes32[])',
   'function getClaim(bytes32 claimId) view returns (uint256 topic, uint256 scheme, address issuer, bytes signature, bytes data, string uri)',
   'function getKeysByPurpose(uint256 purpose) view returns (bytes32[])',
+  'function keyHasPurpose(bytes32 key, uint256 purpose) view returns (bool)',
 ] as const;
 
 const CANONICAL_PSM_GATING_ABI = [
@@ -385,9 +387,9 @@ async function phaseC_KycFlow(freshWallet: string): Promise<KycResult | null> {
     `createIdentityTx=${registerTxHash ?? 'IDEMPOTENT_SKIP'} registryTx=${registryTxHash ?? 'IDEMPOTENT_SKIP'}`);
 
   const issuanceMode = (approveData?.t1Claim as Record<string, unknown> | undefined)?.issuanceMode as string | undefined;
-  record('C4 Claim issuance mode is off-chain signature', issuanceMode === 'erc3643_offchain_signature',
-    `issuanceMode=${issuanceMode} — claims stored in DB only (no identity.addClaim() tx)`,
-    issuanceMode === 'erc3643_offchain_signature' ? 'known' : undefined);
+  record('C4 Claim issuance mode is on-chain (identity.addClaim tx)', issuanceMode === 'erc3643_onchain',
+    `issuanceMode=${issuanceMode} — expected erc3643_onchain after F1/F5 remediation`,
+    issuanceMode === 'erc3643_onchain' ? undefined : 'hard');
 
   return { submissionId, approvalBody: approveJson };
 }
@@ -596,14 +598,29 @@ async function phaseF_BlockerSummary(freshWallet: string): Promise<void> {
   const requiredTopics: bigint[] = await claimTopicsReg.getClaimTopics().catch(() => []);
   const topicsStr = requiredTopics.map(t => t.toString()).join(', ') || '(none)';
 
-  // F1: Off-chain-only claim issuance
-  record('F1 [BLOCKER] ERC3643Service.issueClaim() is DB-only (no on-chain addClaim tx)', false,
-    'atomicKycApproval issues Topics 1+3 via ECDSA signature stored in DB. ' +
-    'AxiomIdentity.addClaim() is never called. IdentityRegistry.isVerified() calls ' +
-    'onchainId.getClaimIdsByTopic() which returns [] for these wallets. ' +
-    'Fix: after registerIdentity, call identity.addClaim(topic, 1, claimIssuer, sig, data, "") ' +
-    'from a key with MANAGEMENT_KEY or CLAIM_SIGNER_KEY purpose.',
-    'hard');
+  // F1: On-chain claim presence — live check after KYC approval
+  {
+    const identityRegistry = new ethers.Contract(
+      ERC3643_CONTRACTS.IDENTITY_REGISTRY,
+      IDENTITY_REGISTRY_ABI,
+      provider,
+    );
+    const identityAddr: string = await identityRegistry.identity(freshWallet).catch(() => ethers.ZeroAddress);
+    let f1Pass = false;
+    let f1Detail = `freshWallet=${freshWallet} identityAddress=${identityAddr}`;
+    if (identityAddr && identityAddr !== ethers.ZeroAddress) {
+      const onchainId = new ethers.Contract(identityAddr, ONCHAIN_IDENTITY_ABI, provider);
+      const t1Ids: string[] = await onchainId.getClaimIdsByTopic(1).catch(() => []);
+      const t3Ids: string[] = await onchainId.getClaimIdsByTopic(3).catch(() => []);
+      f1Pass = t1Ids.length > 0 && t3Ids.length > 0;
+      f1Detail += ` topic1ClaimIds=[${t1Ids.join(',') || 'empty'}] topic3ClaimIds=[${t3Ids.join(',') || 'empty'}]`;
+    } else {
+      f1Detail += ' — identity not registered (registration step failed?)';
+    }
+    record('F1 issueClaim() pushes claims on-chain via identity.addClaim()', f1Pass,
+      f1Detail,
+      f1Pass ? undefined : 'hard');
+  }
 
   // F2: PSM MINTER_ROLE
   const axusd = new ethers.Contract(ACTIVE_AXUSD, AXUSD_ACCESS_CONTROL_ABI, provider);
@@ -633,14 +650,31 @@ async function phaseF_BlockerSummary(freshWallet: string): Promise<void> {
       : 'Safe: topic 2 not currently required by ClaimTopicsRegistry (accreditation optional for Vault access).'),
     t2Required ? 'hard' : 'known');
 
-  // F5: ClaimIssuer key access on ONCHAINID
-  record('F5 [BLOCKER] Deployer cannot call identity.addClaim() without a claim key', false,
-    'factory.createIdentity(wallet, wallet) sets wallet as the MANAGEMENT_KEY of the ONCHAINID. ' +
-    'The deployer EOA has no MANAGEMENT_KEY or CLAIM_SIGNER_KEY on user identities. ' +
-    'Fix path A: after createIdentity, call identity.addKey(keccak256(claimIssuer), 3, 1) from ' +
-    'the wallet (requires wallet sig) to grant ClaimIssuer CLAIM_SIGNER_KEY purpose. ' +
-    'Fix path B: redesign factory to add the deployer or ClaimIssuer as a CLAIM_SIGNER_KEY at creation.',
-    'hard');
+  // F5: Deployer key authority on user ONCHAINID — live check
+  {
+    const identityRegistry = new ethers.Contract(
+      ERC3643_CONTRACTS.IDENTITY_REGISTRY,
+      IDENTITY_REGISTRY_ABI,
+      provider,
+    );
+    const identityAddr: string = await identityRegistry.identity(freshWallet).catch(() => ethers.ZeroAddress);
+    let f5Pass = false;
+    let f5Detail = `deployer=${DEPLOYER_EOA} identityAddress=${identityAddr}`;
+    if (identityAddr && identityAddr !== ethers.ZeroAddress) {
+      const onchainId = new ethers.Contract(identityAddr, ONCHAIN_IDENTITY_ABI, provider);
+      // keccak256(abi.encode(address)) — matches AxiomIdentity.initialize() key hash
+      const deployerKeyHash = ethers.keccak256(
+        ethers.AbiCoder.defaultAbiCoder().encode(['address'], [DEPLOYER_EOA])
+      );
+      f5Pass = await onchainId.keyHasPurpose(deployerKeyHash, 1).catch(() => false); // purpose 1 = MANAGEMENT_KEY
+      f5Detail += ` deployerKeyHash=${deployerKeyHash} hasManagementKey=${f5Pass}`;
+    } else {
+      f5Detail += ' — identity not registered (cannot probe keys)';
+    }
+    record('F5 Deployer holds MANAGEMENT_KEY on user identity (can call addClaim)', f5Pass,
+      f5Detail,
+      f5Pass ? undefined : 'hard');
+  }
 
   // F6: ClaimIssuer.isClaimValid() does not check validUntil
   record('F6 [KNOWN] ClaimIssuer.isClaimValid() does not enforce expiry', false,
