@@ -182,46 +182,6 @@ export class ERC3643Service {
     };
   }
 
-  private static async _buildAndInsertClaim(
-    tx: DbTx,
-    wallet: string,
-    topic: number,
-    identityRecord: { id: string; onchainIdAddress: string },
-    signer: ethers.Signer,
-    now: Date,
-    onchainTxHash?: string
-  ) {
-    const validityDays = CLAIM_VALIDITY_DAYS[topic] || 365;
-    const validityMs = validityDays * 24 * 3600 * 1000;
-    const refreshWarningMs = CLAIM_REFRESH_WARNING_DAYS * 24 * 3600 * 1000;
-    const expiresAt = new Date(now.getTime() + validityMs);
-    const refreshRequiredBy = new Date(expiresAt.getTime() - refreshWarningMs);
-    const claimData = ethers.AbiCoder.defaultAbiCoder().encode(
-      ['address', 'uint256', 'uint256'],
-      [wallet, topic, Math.floor(now.getTime() / 1000) + validityDays * 24 * 3600]
-    );
-    const dataHash = ethers.keccak256(
-      ethers.AbiCoder.defaultAbiCoder().encode(
-        ['address', 'uint256', 'bytes'],
-        [identityRecord.onchainIdAddress, topic, claimData]
-      )
-    );
-    const signature = await signer.signMessage(ethers.getBytes(dataHash));
-    const [inserted] = await tx.insert(t3Claims).values({
-      identityId: identityRecord.id,
-      topic,
-      issuerAddress: ERC3643_CONTRACTS.CLAIM_ISSUER.toLowerCase(),
-      claimData: ethers.hexlify(claimData),
-      signature,
-      validFrom: now,
-      validUntil: expiresAt,
-      expiresAt,
-      refreshRequiredBy,
-      revoked: false,
-    }).returning();
-    return { inserted, expiresAt, refreshRequiredBy, signature, claimData };
-  }
-
   static async issueClaim(wallet: string, topic: number, data: string = '', opts?: { tx?: DbTx }) {
     const signer = getSigner();
     const dbIdentity = await db.select().from(t3Identities).where(eq(t3Identities.wallet, wallet.toLowerCase())).limit(1);
@@ -391,8 +351,16 @@ export class ERC3643Service {
       //   1. signs claim payload
       //   2. calls identity.addClaim() on-chain (deployer holds MANAGEMENT_KEY)
       //   3. inserts claim record to DB with txHash in metadata
-      t1 = await ERC3643Service.issueClaim(walletAddress, 1);
-      t3 = await ERC3643Service.issueClaim(walletAddress, 3);
+      try {
+        t1 = await ERC3643Service.issueClaim(walletAddress, 1);
+      } catch (err: unknown) {
+        throw new Error(`Topic 1 (KYC) on-chain claim failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+      try {
+        t3 = await ERC3643Service.issueClaim(walletAddress, 3);
+      } catch (err: unknown) {
+        throw new Error(`Topic 3 (Sanctions) on-chain claim failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
 
       await db.update(t3KycSubmissions)
         .set({ status: 'bridged', bridgedAt: now, bridgeError: null, updatedAt: now })
