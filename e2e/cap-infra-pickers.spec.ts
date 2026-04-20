@@ -146,6 +146,106 @@ test.describe('Audit Search — TypeAheadPicker', () => {
   });
 });
 
+test.describe('TypeAheadPicker — zero results (empty state)', () => {
+  test('no dropdown appears when the assets API returns zero results', async ({ page }) => {
+    await page.route('**/api/capinfra/assets**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ items: [] }),
+      }),
+    );
+
+    await gotoConsole(page);
+
+    const errors: string[] = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+
+    const assetInput = page.locator('input[placeholder="symbol or asset ID"]').first();
+    const pickerContainer = assetInput.locator('..');
+    await assetInput.click();
+    await assetInput.type('AXAU', { delay: 50 });
+    await page.waitForTimeout(400);
+
+    await expect(pickerContainer.locator('ul')).not.toBeVisible();
+    expect(errors, 'No unhandled JS errors should be thrown').toHaveLength(0);
+  });
+
+  test('no dropdown appears when the user search API returns zero results', async ({ page }) => {
+    await page.route('**/api/capinfra/operator/users/search**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ items: [] }),
+      }),
+    );
+
+    await gotoConsole(page);
+
+    const errors: string[] = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+
+    const userInput = page.locator('input[placeholder="email, wallet, or user ID"]').first();
+    const pickerContainer = userInput.locator('..');
+    await userInput.click();
+    await userInput.type('capinfra-smoke', { delay: 50 });
+    await page.waitForTimeout(400);
+
+    await expect(pickerContainer.locator('ul')).not.toBeVisible();
+    expect(errors, 'No unhandled JS errors should be thrown').toHaveLength(0);
+  });
+});
+
+test.describe('TypeAheadPicker — API error state', () => {
+  test('no dropdown and no unhandled error when the assets API returns a 500', async ({ page }) => {
+    await page.route('**/api/capinfra/assets**', (route) =>
+      route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'internal server error' }),
+      }),
+    );
+
+    await gotoConsole(page);
+
+    const errors: string[] = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+
+    const assetInput = page.locator('input[placeholder="symbol or asset ID"]').first();
+    const pickerContainer = assetInput.locator('..');
+    await assetInput.click();
+    await assetInput.type('AXAU', { delay: 50 });
+    await page.waitForTimeout(400);
+
+    await expect(pickerContainer.locator('ul')).not.toBeVisible();
+    expect(errors, 'No unhandled JS errors should be thrown').toHaveLength(0);
+  });
+
+  test('no dropdown and no unhandled error when the user search API returns a 401', async ({ page }) => {
+    await page.route('**/api/capinfra/operator/users/search**', (route) =>
+      route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'unauthenticated' }),
+      }),
+    );
+
+    await gotoConsole(page);
+
+    const errors: string[] = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+
+    const userInput = page.locator('input[placeholder="email, wallet, or user ID"]').first();
+    const pickerContainer = userInput.locator('..');
+    await userInput.click();
+    await userInput.type('capinfra-smoke', { delay: 50 });
+    await page.waitForTimeout(400);
+
+    await expect(pickerContainer.locator('ul')).not.toBeVisible();
+    expect(errors, 'No unhandled JS errors should be thrown').toHaveLength(0);
+  });
+});
+
 test.describe('Eligibility Inspector — TypeAheadPicker', () => {
   test('asset picker shows suggestions and fills with ast_ ID on selection', async ({ page }) => {
     await gotoConsole(page);
