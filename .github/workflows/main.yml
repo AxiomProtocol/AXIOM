@@ -46,6 +46,27 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install chromium --with-deps
 
+      - name: Start dev server
+        env:
+          PORT: "5000"
+          NODE_ENV: test
+        run: npm run dev > /tmp/devserver.log 2>&1 &
+
+      - name: Wait for dev server to be ready
+        run: |
+          echo "Waiting for dev server on port 5000..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5000/api/healthz > /dev/null 2>&1; then
+              echo "Dev server is ready after ${i}s"
+              exit 0
+            fi
+            echo "  attempt ${i}/30..."
+            sleep 2
+          done
+          echo "Dev server did not become ready in time"
+          cat /tmp/devserver.log
+          exit 1
+
       - name: Run audit CSV e2e tests
         env:
           PORT: "5000"
