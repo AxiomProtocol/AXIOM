@@ -104,7 +104,8 @@
     "test:ivcee": "vitest run lib/ivcee",
     "test:vitest": "vitest run",
     "test:prune-oracle-fallback": "vitest run tests/prune-oracle-fallback.test.ts",
-    "test:e2e:audit-csv": "playwright test e2e/cap-infra-audit-csv.spec.ts"
+    "test:e2e:audit-csv": "playwright test e2e/cap-infra-audit-csv.spec.ts",
+    "test:e2e:asset-csv": "playwright test e2e/cap-infra-asset-registry-csv.spec.ts"
   },
   "keywords": [],
   "author": "",
