@@ -88,6 +88,16 @@ jobs:
           NODE_ENV: test
         run: npm run test:e2e:asset-csv
 
+      - name: Upload Playwright report and traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+
       - name: Upload dev-server log artifact
         if: always()
         uses: actions/upload-artifact@v4
