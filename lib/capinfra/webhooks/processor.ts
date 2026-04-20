@@ -45,6 +45,7 @@ import { mapStellarEvent } from './stellarMapping';
 import { mapAchEvent } from './achMapping';
 import { STELLAR_ADAPTER_KIND } from '../adapters/stellar';
 import { ACH_ADAPTER_KIND } from '../adapters/ach';
+import { decimalStringToCents } from '../adapters/ach/sdk';
 import type { SettlementTransitionIntent } from './stellarMapping';
 
 const PROCESSOR_ACTOR = 'webhook-processor';
@@ -56,6 +57,7 @@ export type ProcessOutcome =
   | 'FAILED_WRONG_STATE'
   | 'FAILED_TERMINAL_NO_OP'
   | 'FAILED_TRANSITION_ERROR'
+  | 'FAILED_AMOUNT_MISMATCH'
   | 'NO_OP_ALREADY_PROCESSED'
   | 'NO_OP_EVENT_TYPE'
   | 'NO_OP_MISSING_TX_HASH'
@@ -217,11 +219,35 @@ export async function processEvent(eventId: string): Promise<ProcessResult> {
     return { webhookEventId: eventId, outcome, instructionId: instruction.id, detail };
   }
 
-  if (instruction.status !== 'AUTHORIZED') {
+  // Accept AUTHORIZED (Stellar / non-ACH webhook path) and SUBMITTED
+  // (ACH settlement-confirmation path: webhook or reconciliation).
+  const PROCESSABLE_STATUSES = ['AUTHORIZED', 'SUBMITTED'] as const;
+  if (!(PROCESSABLE_STATUSES as readonly string[]).includes(instruction.status)) {
     const outcome: ProcessOutcome = 'FAILED_WRONG_STATE';
-    const detail = `Instruction ${instruction.id} is in state ${instruction.status}; only AUTHORIZED is processable`;
+    const detail = `Instruction ${instruction.id} is in state ${instruction.status}; only AUTHORIZED or SUBMITTED is processable`;
     await finaliseEvent(eventId, outcome, instruction.id, detail);
     return { webhookEventId: eventId, outcome, instructionId: instruction.id, detail };
+  }
+
+  // ── ACH SUBMITTED amount-match guard (guardrail #4) ──────────────
+  // When confirming a SUBMITTED ACH instruction, the observed amount
+  // from the settlement-confirming event MUST match the instruction
+  // amount exactly. Mismatches stay unresolved (not auto-settled).
+  if (
+    instruction.status === 'SUBMITTED' &&
+    event.adapterKey === ACH_ADAPTER_KIND &&
+    intent.action === 'SETTLE'
+  ) {
+    if (intent.observedAmount) {
+      const observedCents = decimalStringToCents(intent.observedAmount);
+      const instructionCents = decimalStringToCents(instruction.amount);
+      if (observedCents !== instructionCents) {
+        const outcome: ProcessOutcome = 'FAILED_AMOUNT_MISMATCH';
+        const detail = `Amount mismatch: instruction=${instruction.amount} (${instructionCents}¢) vs observed=${intent.observedAmount} (${observedCents}¢); staying unresolved`;
+        await finaliseEvent(eventId, outcome, instruction.id, detail);
+        return { webhookEventId: eventId, outcome, instructionId: instruction.id, detail };
+      }
+    }
   }
 
   // ── Attempt the canonical settlement transition ───────────────────

@@ -29,7 +29,7 @@ import {
   type IncreaseTransaction,
   type IncreaseEnvironment,
 } from '../adapters/ach/sdk';
-import { createInstruction } from '../settlement';
+import { createInstruction, externallySettleInstruction } from '../settlement';
 import { ConflictError, PolicyDeniedError } from '../errors';
 import {
   createRun,
@@ -294,6 +294,88 @@ async function _runDiff(
         remediation: 'NONE',
       });
       driftCount++;
+      continue;
+    }
+
+    // ── Reconciliation-confirmed settlement for SUBMITTED instructions ──
+    // When a SUBMITTED instruction has a matching remote transaction with
+    // matching amount, the reconciliation run can finalize it to SETTLED
+    // using the canonical externallySettleInstruction path. This is the
+    // fallback path if the webhook was missed. Idempotent: if the
+    // instruction was already settled by a prior webhook, the ConflictError
+    // on terminal state is caught and logged as INFORMATIONAL.
+    if (localInstruction.status === 'SUBMITTED' && !input.dryRun) {
+      const idemKey = `recon:ach:confirm-submitted:${run.id}:${ref}`;
+      let reconSettleOutcome: 'SETTLED' | 'ALREADY_TERMINAL' | 'ERROR' = 'ERROR';
+      let reconSettleError: string | undefined;
+
+      try {
+        await externallySettleInstruction({
+          instructionId: localInstruction.id,
+          externalRef: ref,
+          settledAt: tx.created_at ? new Date(tx.created_at) : new Date(),
+          webhookEventId: `recon:${run.id}`,
+          observedAmount: String(Math.abs(tx.amount)),
+          actor: RECONCILER_ACTOR,
+          correlationId: idemKey,
+        });
+        reconSettleOutcome = 'SETTLED';
+      } catch (err: unknown) {
+        if (err instanceof ConflictError && err.message.startsWith('external_settle_on_terminal')) {
+          // Already settled (by webhook or prior recon run) — idempotent no-op.
+          reconSettleOutcome = 'ALREADY_TERMINAL';
+        } else {
+          reconSettleError = err instanceof Error ? err.message : String(err);
+        }
+      }
+
+      if (reconSettleOutcome === 'SETTLED') {
+        await appendDriftRow({
+          runId: run.id,
+          adapterKey: 'ACH',
+          kind: 'CONFIRMED_SUBMITTED',
+          severity: 'INFORMATIONAL',
+          externalRef: ref,
+          instructionId: localInstruction.id,
+          detailJson: {
+            action: 'RECON_SETTLED',
+            increaseTransactionId: tx.id,
+            amountCents: tx.amount,
+          },
+          remediation: 'SETTLED_BY_RECON',
+        });
+      } else if (reconSettleOutcome === 'ALREADY_TERMINAL') {
+        await appendDriftRow({
+          runId: run.id,
+          adapterKey: 'ACH',
+          kind: 'CONFIRMED_SUBMITTED',
+          severity: 'INFORMATIONAL',
+          externalRef: ref,
+          instructionId: localInstruction.id,
+          detailJson: {
+            action: 'ALREADY_SETTLED',
+            increaseTransactionId: tx.id,
+            note: 'Instruction already settled (likely by webhook); recon no-op.',
+          },
+          remediation: 'NONE',
+        });
+      } else {
+        await appendDriftRow({
+          runId: run.id,
+          adapterKey: 'ACH',
+          kind: 'RECON_SETTLE_FAILED',
+          severity: 'BLOCKING',
+          externalRef: ref,
+          instructionId: localInstruction.id,
+          detailJson: {
+            action: 'SETTLE_FAILED',
+            increaseTransactionId: tx.id,
+            error: reconSettleError,
+          },
+          remediation: 'ALERT_RAISED',
+        });
+        driftCount++;
+      }
     }
   }
 
