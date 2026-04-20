@@ -25,6 +25,11 @@
  */
 
 import 'dotenv/config';
+import { eq } from 'drizzle-orm';
+import { db } from '../server/db';
+import { capSettlementInstructions, capWebhookEvents } from '../shared/capInfraSchema';
+import { generateId } from '../lib/capinfra/ids';
+import { processEvent } from '../lib/capinfra/webhooks/processor';
 
 const BASE = process.env.CAPINFRA_BASE_URL || 'http://localhost:5000';
 const KEY = process.env.ADMIN_SOLVENCY_KEY;
@@ -84,6 +89,23 @@ interface AuditEventRow {
 }
 
 const SMOKE_USER = 'usr_capinfra_smoke';
+
+async function insertVerifiedAchWebhookEvent(payload: Record<string, unknown>): Promise<string> {
+  const id = generateId('we');
+  const externalEventId =
+    typeof payload.id === 'string' && payload.id.length > 0 ? payload.id : `evt-${Date.now()}`;
+  await db.insert(capWebhookEvents).values({
+    id,
+    adapterKey: 'ACH',
+    externalEventId,
+    rawPayloadJson: payload,
+    rawHeadersJson: {},
+    signatureVerified: true,
+    status: 'RECEIVED',
+    attempts: 0,
+  });
+  return id;
+}
 
 async function getAssets(): Promise<{ axau: AssetRow; axusd: AssetRow }> {
   const res = await call('/api/capinfra/assets', { withAuth: false });
@@ -271,11 +293,105 @@ async function testAuditPagination(axau: AssetRow): Promise<void> {
   );
 }
 
+// ──────── Test 3: ACH missing remote match stays unresolved ─────────────
+
+async function testAchMissingRemoteNoSettle(): Promise<void> {
+  console.log('\n[3] ACH confirmation requires remote match');
+  const missingRef = `ach-missing-${Date.now()}`;
+  const eventId = await insertVerifiedAchWebhookEvent({
+    id: `evt-missing-${Date.now()}`,
+    category: 'transaction.created',
+    created_at: new Date().toISOString(),
+    transaction: {
+      id: `txn-missing-${Date.now()}`,
+      amount: -1234,
+      currency: 'USD',
+      route_type: 'ach',
+      account_id: 'acct_missing',
+      description: 'correctness missing remote',
+      created_at: new Date().toISOString(),
+      source: { ach_transfer_id: missingRef },
+    },
+  });
+
+  const result = await processEvent(eventId);
+  assert(
+    result.outcome === 'FAILED_NO_INSTRUCTION',
+    `missing remote match must fail unresolved (got ${result.outcome})`,
+  );
+
+  await db.delete(capWebhookEvents).where(eq(capWebhookEvents.id, eventId));
+  console.log('  ✓ missing remote match does not settle');
+}
+
+// ──────── Test 4: terminal instructions remain no-op on replay ──────────
+
+async function testAchTerminalReplayNoOp(axau: AssetRow): Promise<void> {
+  console.log('\n[4] ACH terminal replay is idempotent no-op');
+  const instructionId = generateId('si');
+  const externalRef = `ach-terminal-${Date.now()}`;
+  const idem = `corr-ach-terminal-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  await db.insert(capSettlementInstructions).values({
+    id: instructionId,
+    userId: SMOKE_USER,
+    assetId: axau.id,
+    actionType: 'MINT',
+    settlementType: 'ACH',
+    amount: '1.0000000000',
+    idempotencyKey: idem,
+    status: 'SETTLED',
+    externalRef,
+    settledAt: new Date(),
+    payloadJson: { source: 'capinfra-correctness-terminal' },
+  });
+
+  const eventId = await insertVerifiedAchWebhookEvent({
+    id: `evt-terminal-${Date.now()}`,
+    category: 'transaction.created',
+    created_at: new Date().toISOString(),
+    transaction: {
+      id: `txn-terminal-${Date.now()}`,
+      amount: -100,
+      currency: 'USD',
+      route_type: 'ach',
+      account_id: 'acct_terminal',
+      description: 'correctness terminal replay',
+      created_at: new Date().toISOString(),
+      source: { ach_transfer_id: externalRef },
+    },
+  });
+
+  const first = await processEvent(eventId);
+  assert(
+    first.outcome === 'FAILED_TERMINAL_NO_OP',
+    `terminal instruction replay must no-op (got ${first.outcome})`,
+  );
+  const second = await processEvent(eventId);
+  assert(
+    second.outcome === 'NO_OP_ALREADY_PROCESSED',
+    `replay of processed terminal event must no-op idempotently (got ${second.outcome})`,
+  );
+
+  const [after] = await db
+    .select({ status: capSettlementInstructions.status })
+    .from(capSettlementInstructions)
+    .where(eq(capSettlementInstructions.id, instructionId))
+    .limit(1);
+  assert(after?.status === 'SETTLED', `terminal instruction remains SETTLED (got ${after?.status})`);
+
+  await db.delete(capWebhookEvents).where(eq(capWebhookEvents.id, eventId));
+  await db.delete(capSettlementInstructions).where(eq(capSettlementInstructions.id, instructionId));
+  console.log('  ✓ terminal instruction unchanged; replay stays no-op');
+}
+
 async function main() {
   console.log(`[capinfra-correctness] base=${BASE}`);
   const { axau } = await getAssets();
   await testPolicyIdempotency(axau);
   await testAuditPagination(axau);
+  await testAchMissingRemoteNoSettle();
+  await testAchTerminalReplayNoOp(axau);
   console.log('\n[capinfra-correctness] OK');
 }
 

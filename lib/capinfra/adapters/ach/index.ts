@@ -6,7 +6,7 @@
  */
 
 import type { SettlementAdapter, AdapterDispatchInput, AdapterWebhookVerifyInput } from '../types';
-import { dispatchAch } from './dispatcher';
+import { dispatchAch, dispatchAchAfterOperatorApproval } from './dispatcher';
 import { achHealth } from './health';
 import { verifyAchWebhook } from './webhook';
 import { loadAchConfig } from './config';
@@ -16,6 +16,9 @@ export const achAdapter: SettlementAdapter = {
   name: 'capinfra-ach-increase',
   async dispatch(input: AdapterDispatchInput) {
     return dispatchAch(input);
+  },
+  async dispatchAfterApproval(input: AdapterDispatchInput) {
+    return dispatchAchAfterOperatorApproval(input);
   },
   async health() {
     return achHealth();

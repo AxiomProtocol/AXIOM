@@ -5,7 +5,8 @@ import { getSiweWallet } from '../../../../../lib/server/banking/siweHelper';
 import { eq } from 'drizzle-orm';
 
 async function increaseUpdateCard(cardId: string, status: 'disabled' | 'active'): Promise<{ id: string; status: string }> {
-  const apiKey = process.env.INCREASE_API_KEY ?? '';
+  const apiKey = process.env.INCREASE_API_KEY;
+  if (!apiKey) throw new Error('INCREASE_API_KEY environment variable is not set');
   const isLive = process.env.INCREASE_ENVIRONMENT === 'production';
   const baseUrl = isLive ? (process.env.INCREASE_BASE_URL ?? 'https://api.increase.com') : 'https://sandbox.increase.com';
 

@@ -89,7 +89,7 @@ export interface DriftRowInput {
   externalRef?: string;
   instructionId?: string;
   detailJson?: Record<string, unknown>;
-  remediation: 'NONE' | 'ALERT_RAISED' | 'ENQUEUED_INSTRUCTION';
+  remediation: 'NONE' | 'ALERT_RAISED' | 'ENQUEUED_INSTRUCTION' | 'SETTLED_BY_RECON';
   remediationRef?: string;
   remediationFailureJson?: Record<string, unknown>;
 }

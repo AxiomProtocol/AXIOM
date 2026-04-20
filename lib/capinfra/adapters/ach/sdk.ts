@@ -20,7 +20,7 @@ import { createHash } from 'node:crypto';
 export type IncreaseEnvironment = 'sandbox' | 'production';
 
 const BASE_URLS: Record<IncreaseEnvironment, string> = {
-  sandbox: 'https://sandbox.increase.com',
+  sandbox: process.env.INCREASE_SANDBOX_BASE_URL || 'https://sandbox.increase.com',
   production: 'https://api.increase.com',
 };
 
@@ -77,7 +77,8 @@ export async function fetchIncreaseTransactionsPage(opts: {
   });
   if (opts.cursor) params.set('cursor', opts.cursor);
 
-  const apiKey = process.env.INCREASE_API_KEY ?? '';
+  const apiKey = process.env.INCREASE_API_KEY;
+  if (!apiKey) throw new Error('INCREASE_API_KEY environment variable is not set');
   const res = await fetch(`${base}/transactions?${params.toString()}`, {
     method: 'GET',
     headers: {
@@ -121,7 +122,8 @@ export async function validateIncreaseCredentials(opts: {
   signal?: AbortSignal;
 }): Promise<CredentialProbeResult> {
   const base = BASE_URLS[opts.environment];
-  const apiKey = process.env.INCREASE_API_KEY ?? '';
+  const apiKey = process.env.INCREASE_API_KEY;
+  if (!apiKey) throw new Error('INCREASE_API_KEY environment variable is not set');
   const started = Date.now();
   try {
     const res = await fetch(`${base}/accounts/${opts.accountId}`, {
@@ -210,7 +212,8 @@ export interface AchTransferResult {
  */
 export async function submitAchTransfer(input: AchTransferInput): Promise<AchTransferResult> {
   const base = BASE_URLS[input.environment];
-  const apiKey = process.env.INCREASE_API_KEY ?? '';
+  const apiKey = process.env.INCREASE_API_KEY;
+  if (!apiKey) throw new Error('INCREASE_API_KEY environment variable is not set');
   const body = {
     account_id: input.accountId,
     amount: input.amountCents,

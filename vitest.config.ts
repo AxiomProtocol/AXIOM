@@ -9,7 +9,6 @@ export default defineConfig({
       'tests/cost-intelligence/**/*.test.ts',
       'tests/mirdt-lexicon.test.ts',
       'tests/prune-oracle-fallback.test.ts',
-      'tests/prune-health.test.ts',
     ],
     exclude: [
       'node_modules/**',

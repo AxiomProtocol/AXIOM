@@ -236,9 +236,6 @@ export const capIdentityProfiles = pgTable('cap_identity_profiles', {
 }, (t) => ({
   userUq: uniqueIndex('cap_identity_profiles_user_uq').on(t.userId),
   exposureIdx: index('cap_identity_profiles_exposure_idx').on(t.exposureClass),
-  legalNameTrgmIdx: index('cap_identity_profiles_legal_name_trgm_idx')
-    .using('gin')
-    .on(sql`${t.legalName} gin_trgm_ops`),
 }));
 
 export const capClaims = pgTable('cap_claims', {

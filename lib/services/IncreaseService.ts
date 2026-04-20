@@ -30,7 +30,8 @@ async function increaseRequest<T>(
   body?: Record<string, unknown>,
   idempotencyKey?: string,
 ): Promise<T> {
-  const apiKey = process.env.INCREASE_API_KEY ?? '';
+  const apiKey = process.env.INCREASE_API_KEY;
+  if (!apiKey) throw new Error('INCREASE_API_KEY environment variable is not set');
   const headers: Record<string, string> = {
     Authorization: `Bearer ${apiKey}`,
     'Content-Type': 'application/json',

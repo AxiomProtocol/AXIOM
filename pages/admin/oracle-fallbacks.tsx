@@ -15,8 +15,6 @@ import { useEffect, useState, useCallback } from 'react';
 import type { GetServerSideProps } from 'next';
 import { DesignLawLayout } from '../../components/design-law';
 import { PRUNE_STALE_HOURS, PRUNE_GAP_WARN_HOURS } from '../../lib/admin/config';
-import { getPruneStaleness } from '../../lib/admin/prune-staleness';
-import type { LastPrune } from '../../lib/admin/prune-staleness';
 
 const PAGE_SIZE = 50;
 
@@ -38,6 +36,13 @@ interface WindowedCounts {
   last1h: number;
   last24h: number;
   last7d: number;
+}
+
+interface LastPrune {
+  pruned_at: string;
+  deleted_count: number;
+  retention_days: number;
+  triggered_by: string;
 }
 
 interface OracleFallbackData {
@@ -94,6 +99,15 @@ function formatTs(isoString: string): string {
   } catch {
     return isoString;
   }
+}
+
+function getPruneStaleness(lastPrune: LastPrune | null): {
+  isStale: boolean;
+  hoursAgo: number | null;
+} {
+  if (!lastPrune) return { isStale: true, hoursAgo: null };
+  const hoursAgo = (Date.now() - new Date(lastPrune.pruned_at).getTime()) / (1000 * 60 * 60);
+  return { isStale: hoursAgo >= PRUNE_STALE_HOURS, hoursAgo };
 }
 
 function PruneStatusPanel({

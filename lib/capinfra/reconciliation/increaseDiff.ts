@@ -13,8 +13,9 @@
  *     no Increase transfer submitted yet; these are local holding refs).
  *   - SUBMITTED instructions ARE included in local lookup (they have a real
  *     Increase transfer id as externalRef and must be compared for drift).
- *   - MANUAL_APPROVAL mode: skip remote Increase fetch entirely (no transfers
- *     were submitted to Increase while in MANUAL_APPROVAL mode).
+ *   - MANUAL_APPROVAL mode: remote Increase fetch remains enabled because
+ *     approved instructions submit real transfers and may need
+ *     reconciliation-confirmed settlement.
  *
  * Amount comparison uses deterministic integer arithmetic via
  * decimalStringToCents (no floating-point).
@@ -29,7 +30,7 @@ import {
   type IncreaseTransaction,
   type IncreaseEnvironment,
 } from '../adapters/ach/sdk';
-import { createInstruction } from '../settlement';
+import { createInstruction, externallySettleInstruction } from '../settlement';
 import { ConflictError, PolicyDeniedError } from '../errors';
 import {
   createRun,
@@ -61,7 +62,7 @@ export interface IncreaseDiffInput {
   /**
    * Adapter mode affects reconciliation behavior:
    *   DRY_RUN       — skip remote Increase API fetch entirely (DRYRUN-* refs have no counterpart)
-   *   MANUAL_APPROVAL — skip remote fetch (no transfers submitted to Increase in this mode)
+   *   MANUAL_APPROVAL — full remote fetch (approved instructions submit to Increase)
    *   LIVE_CANARY / LIVE — full remote fetch + diff
    */
   adapterMode?: string;
@@ -102,13 +103,10 @@ export async function runIncreaseDiff(input: IncreaseDiffInput): Promise<Increas
     triggeredBy: input.triggeredBy,
   });
 
-  // DRY_RUN and MANUAL_APPROVAL: skip remote Increase API fetch entirely.
-  //   DRY_RUN         — DRYRUN-ACH-* refs never appear in Increase.
-  //   MANUAL_APPROVAL — no transfers have been submitted to Increase.
-  if (input.adapterMode === 'DRY_RUN' || input.adapterMode === 'MANUAL_APPROVAL') {
-    const note = input.adapterMode === 'MANUAL_APPROVAL'
-      ? 'MANUAL_APPROVAL_SKIP: no transfers submitted to Increase in MANUAL_APPROVAL mode'
-      : 'DRY_RUN_SKIP: remote Increase API fetch omitted in DRY_RUN mode';
+  // DRY_RUN: skip remote Increase API fetch entirely because DRYRUN-ACH-*
+  // refs are synthetic and never appear in Increase.
+  if (input.adapterMode === 'DRY_RUN') {
+    const note = 'DRY_RUN_SKIP: remote Increase API fetch omitted in DRY_RUN mode';
     await markRunStarted(run.id);
     await markRunCompleted(run.id, 0, 0, note);
     return { run: { ...run, status: 'COMPLETED', comparedCount: 0, driftCount: 0 }, comparedCount: 0, driftCount: 0 };
@@ -294,6 +292,88 @@ async function _runDiff(
         remediation: 'NONE',
       });
       driftCount++;
+      continue;
+    }
+
+    // ── Reconciliation-confirmed settlement for SUBMITTED instructions ──
+    // When a SUBMITTED instruction has a matching remote transaction with
+    // matching amount, the reconciliation run can finalize it to SETTLED
+    // using the canonical externallySettleInstruction path. This is the
+    // fallback path if the webhook was missed. Idempotent: if the
+    // instruction was already settled by a prior webhook, the ConflictError
+    // on terminal state is caught and logged as INFORMATIONAL.
+    if (localInstruction.status === 'SUBMITTED' && !input.dryRun) {
+      const idemKey = `recon:ach:confirm-submitted:${run.id}:${ref}`;
+      let reconSettleOutcome: 'SETTLED' | 'ALREADY_TERMINAL' | 'ERROR' = 'ERROR';
+      let reconSettleError: string | undefined;
+
+      try {
+        await externallySettleInstruction({
+          instructionId: localInstruction.id,
+          externalRef: ref,
+          settledAt: tx.created_at ? new Date(tx.created_at) : new Date(),
+          webhookEventId: `recon:${run.id}`,
+          observedAmount: String(Math.abs(tx.amount)),
+          actor: RECONCILER_ACTOR,
+          correlationId: idemKey,
+        });
+        reconSettleOutcome = 'SETTLED';
+      } catch (err: unknown) {
+        if (err instanceof ConflictError && err.message.startsWith('external_settle_on_terminal')) {
+          // Already settled (by webhook or prior recon run) — idempotent no-op.
+          reconSettleOutcome = 'ALREADY_TERMINAL';
+        } else {
+          reconSettleError = err instanceof Error ? err.message : String(err);
+        }
+      }
+
+      if (reconSettleOutcome === 'SETTLED') {
+        await appendDriftRow({
+          runId: run.id,
+          adapterKey: 'ACH',
+          kind: 'CONFIRMED_SUBMITTED',
+          severity: 'INFORMATIONAL',
+          externalRef: ref,
+          instructionId: localInstruction.id,
+          detailJson: {
+            action: 'RECON_SETTLED',
+            increaseTransactionId: tx.id,
+            amountCents: tx.amount,
+          },
+          remediation: 'SETTLED_BY_RECON',
+        });
+      } else if (reconSettleOutcome === 'ALREADY_TERMINAL') {
+        await appendDriftRow({
+          runId: run.id,
+          adapterKey: 'ACH',
+          kind: 'CONFIRMED_SUBMITTED',
+          severity: 'INFORMATIONAL',
+          externalRef: ref,
+          instructionId: localInstruction.id,
+          detailJson: {
+            action: 'ALREADY_SETTLED',
+            increaseTransactionId: tx.id,
+            note: 'Instruction already settled (likely by webhook); recon no-op.',
+          },
+          remediation: 'NONE',
+        });
+      } else {
+        await appendDriftRow({
+          runId: run.id,
+          adapterKey: 'ACH',
+          kind: 'RECON_SETTLE_FAILED',
+          severity: 'BLOCKING',
+          externalRef: ref,
+          instructionId: localInstruction.id,
+          detailJson: {
+            action: 'SETTLE_FAILED',
+            increaseTransactionId: tx.id,
+            error: reconSettleError,
+          },
+          remediation: 'ALERT_RAISED',
+        });
+        driftCount++;
+      }
     }
   }
 
