@@ -71,7 +71,7 @@ export const SETTLEMENT_LIFECYCLE = [
 
 type Status = CapSettlementInstruction['status'];
 
-const VALID_TRANSITIONS: Record<Status, Status[]> = {
+export const VALID_TRANSITIONS: Record<Status, Status[]> = {
   PENDING: ['AUTHORIZED', 'CANCELLED'],
   AUTHORIZED: ['EXECUTING', 'PENDING_OPERATOR_APPROVAL', 'SUBMITTED', 'CANCELLED'],
   EXECUTING: ['SETTLED', 'FAILED'],
