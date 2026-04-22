@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useWallet } from "../components/WalletConnect/WalletContext";
 import { DesignLawLayout } from "../components/design-law";
+import { CollateralClassificationPanel } from "../components/disclosure/CollateralClassificationPanel";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -634,6 +635,28 @@ function Disclosures() {
   );
 }
 
+// ─── Collateral Classification ───────────────────────────────────────────────
+
+function CollateralClassificationSection() {
+  return (
+    <section style={{ borderBottom: `1px solid ${C.border}`, padding: '48px 0', background: C.bg }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 20px' }}>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>Collateral Risk Policy</p>
+        <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(22px, 3.5vw, 32px)', fontWeight: 600, color: C.navy, margin: 0 }}>
+          Live Admission Classification
+        </h2>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7, marginTop: 8, marginBottom: 16, maxWidth: 720 }}>
+          The badge below is read live from the asset registry the policy
+          evaluator enforces server-side. For YELLOW assets, the per-transaction
+          cap is loaded directly from the active policy publication {'\u2014'}
+          there are no hardcoded numbers in this section.
+        </p>
+        <CollateralClassificationPanel symbol="AXUSD-TREASURY" compact />
+      </div>
+    </section>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function AXUSDPage() {
   return (
@@ -649,6 +672,7 @@ export default function AXUSDPage() {
       <ReserveConnection />
       <IssuanceMechanics />
       <GovernanceSupplyCap />
+      <CollateralClassificationSection />
       <ContractRegistry />
       <FAQ />
       <Disclosures />

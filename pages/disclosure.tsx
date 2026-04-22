@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
+import { CollateralClassificationPanel } from '../components/disclosure/CollateralClassificationPanel';
 import {
   Landmark, AlertTriangle, ShieldCheck, FileText, Layers, Shield,
   BookOpen, Lock, BarChart3, Scale, Eye, Target, Coins, Radio,
@@ -466,6 +467,19 @@ export default function DisclosurePage() {
             <p className="text-xs text-dl-gray font-dl-mono mt-2">
               Policy version: 2026-04-21.1
             </p>
+          </div>
+
+          <div className="mt-6">
+            <h3 className="font-dl-serif text-dl-navy text-lg mb-2">
+              Live Asset Classifications
+            </h3>
+            <p className="text-sm text-dl-gray leading-relaxed mb-3">
+              The classification, rationale, and (for YELLOW) per-transaction
+              cap below are read live from the asset registry that the policy
+              evaluator enforces server-side. There are no hardcoded numbers
+              here {'\u2014'} if the registry changes, this section changes.
+            </p>
+            <CollateralClassificationPanel />
           </div>
         </section>
 

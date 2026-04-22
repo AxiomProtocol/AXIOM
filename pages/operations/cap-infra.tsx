@@ -19,7 +19,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import type { GetServerSideProps } from 'next';
 import React, { Fragment, useCallback, useEffect, useRef, useState } from 'react';
-import { DesignLawLayout } from '../../components/design-law';
+import { DesignLawLayout, CollateralClassBadge } from '../../components/design-law';
 import {
   readOperatorCookie,
   isValidOperatorKey,
@@ -359,21 +359,6 @@ const ASSET_TYPE_OPTIONS = [
 ];
 
 const ASSET_STATUS_OPTIONS = ['ACTIVE', 'INACTIVE', 'SUSPENDED', 'ARCHIVED', 'PENDING'];
-
-function CollateralClassBadge({ value }: { value: 'GREEN' | 'YELLOW' | 'RED' }) {
-  const styles: Record<typeof value, string> = {
-    GREEN: 'border-emerald-700 bg-emerald-50 text-emerald-800',
-    YELLOW: 'border-amber-500 bg-amber-50 text-amber-800',
-    RED: 'border-red-700 bg-red-50 text-red-800',
-  };
-  return (
-    <span
-      className={`inline-block px-1.5 py-0.5 border text-[10px] uppercase tracking-wider font-bold ${styles[value]}`}
-    >
-      {value}
-    </span>
-  );
-}
 
 export function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
   const [rows, setRows] = useState<AssetSummaryRow[] | null>(null);

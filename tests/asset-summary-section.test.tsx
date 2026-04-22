@@ -26,6 +26,9 @@ vi.mock('next/link', () => ({
 
 vi.mock('../components/design-law', () => ({
   DesignLawLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  CollateralClassBadge: ({ value }: { value: string }) => (
+    <span data-testid="collateral-class-badge">{value}</span>
+  ),
 }));
 
 const { AssetSummarySection } = await import('../pages/operations/cap-infra');

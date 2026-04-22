@@ -3,6 +3,7 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { DesignLawLayout } from '../components/design-law';
+import { CollateralClassificationPanel } from '../components/disclosure/CollateralClassificationPanel';
 import { ChevronDown } from 'lucide-react';
 
 const LiveNavPanel = dynamic(() => import('../components/axau/LiveNavPanel'), { ssr: false });
@@ -610,6 +611,28 @@ function FAQ() {
   );
 }
 
+// ─── Collateral Classification ───────────────────────────────────────────────
+
+function CollateralClassificationSection() {
+  return (
+    <section style={{ borderBottom: `1px solid ${C.border}`, padding: '48px 0' }}>
+      <div style={{ marginBottom: 16 }}>
+        <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>Collateral Risk Policy</p>
+        <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(22px, 3.5vw, 32px)', fontWeight: 600, color: C.navy, margin: 0 }}>
+          Live Admission Classification
+        </h2>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7, marginTop: 8, maxWidth: 720 }}>
+          The badge below is read live from the asset registry the policy
+          evaluator enforces server-side. RED assets are not borrowable, YELLOW
+          assets enforce a per-transaction cap, and GREEN assets are subject to
+          global caps only.
+        </p>
+      </div>
+      <CollateralClassificationPanel symbol="AXAU" compact />
+    </section>
+  );
+}
+
 // ─── Disclosures ─────────────────────────────────────────────────────────────
 
 function Disclosures() {
@@ -663,6 +686,7 @@ export default function AxauPage() {
       <ReserveFlow />
       <HowItWorks />
       <LiveDashboard />
+      <CollateralClassificationSection />
       <MintTerminal />
       <ReserveArchitecture />
       <FAQ />

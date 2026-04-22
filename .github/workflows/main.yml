@@ -3,6 +3,8 @@ name: Deploy to Cloud Run
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -103,6 +105,13 @@ jobs:
           DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
           NODE_ENV: test
         run: npm run test:user-search-index
+
+      - name: Run PruneStatusPanel render tests
+        env:
+          DATABASE_URL: placeholder
+          SKIP_MIGRATIONS: "true"
+          NODE_ENV: test
+        run: npm run test:prune-status-panel
 
       - name: Get Playwright version
         id: playwright-version
@@ -269,6 +278,7 @@ jobs:
 
   deploy:
     needs: predeploy-tests
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

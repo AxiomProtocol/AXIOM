@@ -17,6 +17,8 @@ export { DetailGrid } from './DetailGrid';
 export { DesignLawLayout } from './DesignLawLayout';
 
 export { VaultStatusBanner } from './VaultStatusBanner';
+export { CollateralClassBadge } from './CollateralClassBadge';
+export type { CollateralClass } from './CollateralClassBadge';
 
 // ConnectWalletButton and NexusBankingPanel are intentionally NOT exported here.
 // Both import wagmi which is browser-only. Import them with next/dynamic ssr:false
