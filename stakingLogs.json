@@ -1,0 +1,92 @@
+[
+  {
+    "date": "2025-04-30",
+    "sourceWallet": {
+      "label": "Liquidity Wallet",
+      "address": "0xEBC2d815F22be8Ec40423D217714880A97303FDa"
+    },
+    "rewardAmountSWF": 3.25,
+    "rewardAmountETH": 0.001,
+    "transferredTo": {
+      "label": "Rewards Wallet",
+      "address": "0xfe1A5CF0e5e308b5ADf18f030f5b36037f0E7170"
+    },
+    "txHash": "",
+    "notes": "Manual reward from LP earnings"
+  },
+  {
+    "date": "2025-06-09T01:16:10.258Z",
+    "sourceWallet": {
+      "label": "User-0x1234...7890",
+      "address": ""
+    },
+    "rewardAmountSWF": "55",
+    "rewardAmountETH": "0",
+    "transferredTo": {
+      "label": "SWF Staking Pool",
+      "address": ""
+    },
+    "txHash": "0xa39468565d889",
+    "notes": "Stake transaction from React interface - stake"
+  },
+  {
+    "date": "2025-06-09T01:21:01.579Z",
+    "sourceWallet": {
+      "label": "User-0x1234...7890",
+      "address": ""
+    },
+    "rewardAmountSWF": "44",
+    "rewardAmountETH": "0",
+    "transferredTo": {
+      "label": "SWF Staking Pool",
+      "address": ""
+    },
+    "txHash": "0xd9a5e4b8912e2",
+    "notes": "Stake transaction from React interface - stake"
+  },
+  {
+    "date": "2025-06-09T01:23:46.509Z",
+    "sourceWallet": {
+      "label": "User-0x0251...c1c1",
+      "address": ""
+    },
+    "rewardAmountSWF": "44",
+    "rewardAmountETH": "0",
+    "transferredTo": {
+      "label": "SWF Staking Pool",
+      "address": ""
+    },
+    "txHash": "0x4b9ab818f45d9",
+    "notes": "Stake transaction from React interface - stake"
+  },
+  {
+    "date": "2025-06-09T01:33:25.227Z",
+    "sourceWallet": {
+      "label": "User-0x0251...c1c1",
+      "address": ""
+    },
+    "rewardAmountSWF": "11",
+    "rewardAmountETH": "0",
+    "transferredTo": {
+      "label": "SWF Staking Pool",
+      "address": ""
+    },
+    "txHash": "0x80142a3547caf",
+    "notes": "Stake transaction from React interface - stake_transfer"
+  },
+  {
+    "date": "2025-06-09T03:50:06.122Z",
+    "sourceWallet": {
+      "label": "User-0x0251...c1c1",
+      "address": ""
+    },
+    "rewardAmountSWF": "12",
+    "rewardAmountETH": "0",
+    "transferredTo": {
+      "label": "SWF Staking Pool",
+      "address": ""
+    },
+    "txHash": "0x042415d60461e",
+    "notes": "Stake transaction from React interface - stake_transfer"
+  }
+]

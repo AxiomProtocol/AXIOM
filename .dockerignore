@@ -1,0 +1,150 @@
+# ============================================
+# .dockerignore - Aggressive exclusions for deployment
+# Target: Under 8 GiB image size
+# ============================================
+
+# === NODE MODULES (rebuilt during deployment) ===
+node_modules/
+
+# === NEXT.JS BUILD ARTIFACTS ===
+.next/cache/
+.next/trace/
+.next/*.log
+
+# === VERSION CONTROL ===
+.git/
+.gitignore
+.gitattributes
+
+# === IDE AND EDITOR ===
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-*
+
+# === TEST FILES ===
+test/
+tests/
+__tests__/
+coverage/
+.nyc_output/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+
+# === DOCUMENTATION ===
+docs/
+AXIOM.wiki/
+wiki/
+prompts/
+*.md
+!README.md
+
+# === DATA AND LOGS ===
+crawled_data/
+tribevest_analysis/
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === TEMPORARY DIRECTORIES ===
+temp-compile-*/
+denet-storage/
+download/
+recruit-standalone/
+tmp/
+.tmp/
+
+# === PYTHON (not needed) ===
+*.py
+pyproject.toml
+uv.lock
+__pycache__/
+.venv/
+venv/
+
+# === HARDHAT/SOLIDITY (VERY LARGE) ===
+cache/
+cache-*/
+artifacts/
+artifacts-*/
+stablecoin-deploy/
+typechain/
+typechain-types/
+universe-blockchain/
+hardhat.config.*
+hardhat.*.config.*
+contracts/
+contracts-*/
+integration/
+scripts/capital-bridge/
+
+# === ARCHIVE (Development artifacts moved here) ===
+archive/
+
+# === LARGE BINARY FILES ===
+*.zip
+*.tar.gz
+*.sarif
+*.tgz
+*.gz
+
+# === REPLIT SPECIFIC ===
+replit_agent/
+.replit
+replit.nix
+.cache/
+.config/
+.upm/
+
+# === ENVIRONMENT FILES ===
+.env.local
+.env.development
+.env.test
+.env.example
+
+# === BACKUP FILES ===
+*.backup
+*.json.backup
+*.bak
+*~
+
+# === LARGE STATIC ASSETS ===
+public/keygrow-proof/
+public/generated/
+attached_assets/
+
+# === BUILD ARTIFACTS ===
+.pnpm-store/
+.pnpm-debug.log
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# === SECURITY TOOLS ===
+reports/
+slither-*
+.slither/
+
+# === SOURCE MAPS (large, not needed in prod) ===
+*.map
+.next/**/*.map
+
+# === LARGE DEVDEPENDENCIES ARTIFACTS ===
+.turbo/
+.vercel/
+.netlify/
+
+# === SCRIPTS NOT NEEDED AT RUNTIME ===
+scripts/
+!scripts/start.js
+
+# === DRIZZLE MIGRATION ARTIFACTS ===
+drizzle/
+
+# === MONGODB/REDIS DATA ===
+data/
+dump/

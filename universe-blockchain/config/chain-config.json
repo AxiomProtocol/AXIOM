@@ -1,0 +1,72 @@
+{
+  "chainName": "Universe Blockchain",
+  "chainId": 888777,
+  "description": "Axiom Smart City's sovereign Layer 3 blockchain - powering America's first on-chain smart city economy",
+  "networkType": "mainnet",
+  "parentChain": {
+    "chainId": 42161,
+    "name": "Arbitrum One",
+    "rpc": "https://arb1.arbitrum.io/rpc"
+  },
+  "chainConfig": {
+    "chainType": "rollup",
+    "dataAvailability": "rollup",
+    "nativeToken": {
+      "enabled": true,
+      "symbol": "AXM",
+      "name": "Axiom Protocol Token",
+      "decimals": 18,
+      "parentChainAddress": "TBD"
+    },
+    "blockTime": 250,
+    "gasLimit": 32000000,
+    "targetGasLimit": 64000000,
+    "maxCodeSize": 24576,
+    "maxInitCodeSize": 49152
+  },
+  "governance": {
+    "owner": "TBD",
+    "upgradeExecutor": "TBD",
+    "validators": [],
+    "batchPosters": [],
+    "challengePeriod": 604800,
+    "minimumStake": "0.1"
+  },
+  "features": {
+    "fraudProofs": true,
+    "fastWithdrawals": false,
+    "customFeeToken": true,
+    "wasm": true,
+    "arbOS": "latest"
+  },
+  "treasury": {
+    "enabled": true,
+    "autoSwap": {
+      "enabled": true,
+      "burnPercentage": 50,
+      "swapPercentage": 50,
+      "minETHBalance": 1.0,
+      "dexRouter": "TBD"
+    }
+  },
+  "compliance": {
+    "identityRegistry": "TBD",
+    "complianceModule": "TBD",
+    "kycRequired": false
+  },
+  "infrastructure": {
+    "raasProvider": "TBD",
+    "sequencerUrl": "https://sequencer.universe.axiom.city",
+    "rpcUrls": [
+      "https://rpc.universe.axiom.city",
+      "wss://ws.universe.axiom.city"
+    ],
+    "explorerUrl": "https://explorer.universe.axiom.city",
+    "bridgeUrl": "https://bridge.universe.axiom.city"
+  },
+  "deploymentPlan": {
+    "testnetDate": "2026-02-15",
+    "mainnetDate": "2026-05-15",
+    "migrationPeriod": "2026-05-15 to 2026-09-01"
+  }
+}

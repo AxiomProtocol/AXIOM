@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://axiomprotocol.app/sitemap.xml
+
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /dashboard
+Disallow: /profile/

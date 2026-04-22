@@ -1,0 +1,835 @@
+======================================================================
+AXIOM PROTOCOL — USER MANUAL
+$100 Per Week Capital Deployment Strategy
+Building Toward $1,500+ Per Month in Variable Income
+======================================================================
+
+DOCUMENT CLASSIFICATION: INTERNAL
+PREPARED: February 2026
+VERSION: 1.0
+
+This manual is for informational and educational purposes only.
+All rates referenced are variable and subject to market conditions.
+This is not investment advice. All participation carries risk of
+loss. Past performance does not indicate future results.
+
+======================================================================
+TABLE OF CONTENTS
+======================================================================
+
+  1. Introduction & Purpose
+  2. Prerequisites
+  3. Available Products Overview
+  4. The $100/Week Deployment Strategy
+  5. Phase 1: Foundation (Months 1-6)
+  6. Phase 2: Acceleration (Months 7-12)
+  7. Phase 3: Compounding (Months 13-18)
+  8. Phase 4: Income Target (Months 19-24)
+  9. Income Projection Tables
+ 10. Probability of Success Analysis
+ 11. Risk Factors & Mitigation
+ 12. Frequently Asked Questions
+ 13. Glossary of Terms
+
+
+======================================================================
+1. INTRODUCTION & PURPOSE
+======================================================================
+
+This manual provides a step-by-step strategy for deploying $100
+per week ($433/month, $5,200/year) across Axiom Protocol products
+to build a portfolio that targets $1,500 or more per month in
+variable income over a 24-month period.
+
+The strategy uses five income-generating products within the Axiom
+Protocol ecosystem. Each product carries different risk profiles,
+time horizons, and income characteristics. By diversifying across
+all five, the strategy aims to build multiple independent income
+streams that compound over time.
+
+Total capital deployed over 24 months: $10,400
+Target monthly income at Month 24: $1,500+ (variable)
+
+Important: The $1,500/month target is a projection based on
+variable rates. Actual results will differ based on market
+conditions, protocol health, participation levels, and the
+Adaptive Metrics Engine (AME) policy state. There is no
+guarantee this target will be achieved.
+
+
+======================================================================
+2. PREREQUISITES
+======================================================================
+
+Before beginning, you will need:
+
+  A. Web3 Wallet
+     - Install MetaMask browser extension or mobile app
+     - Secure your seed phrase offline (never share it)
+     - Connect to Arbitrum One network (Chain ID: 42161)
+
+  B. Initial Funds
+     - $100 in USDC, ETH, or fiat (for first week)
+     - Small amount of ETH on Arbitrum One for gas fees
+       (approximately $0.10 per transaction)
+
+  C. Axiom Protocol Access
+     - Visit the Axiom Protocol platform
+     - Connect your wallet via the "Access Platform" button
+     - Complete any required onboarding steps
+
+  D. AXUSD Acquisition
+     - Several products operate in AXUSD (Axiom's stablecoin)
+     - Acquire AXUSD through the Peg Stability Module (PSM)
+       by depositing USDC at a 1:1 ratio
+     - The PSM contract is verified on Arbitrum One
+
+  E. AXM Token Acquisition
+     - AXM is the governance token required for staking
+       and DEX liquidity provision
+     - Acquire AXM through the Axiom Exchange Hub
+     - AXM price is variable and subject to market conditions
+
+
+======================================================================
+3. AVAILABLE PRODUCTS OVERVIEW
+======================================================================
+
+Product 1: AXM STAKING
+  - What it does: Lock AXM tokens to earn variable rewards
+  - Variable APY: 12% - 25% (subject to change)
+  - Lock-up: None (flexible withdrawal)
+  - Minimum: No minimum
+  - Income type: Token rewards (compoundable)
+  - Risk level: Low-moderate (token price volatility)
+
+Product 2: WEALTH PRACTICE (Group Economics)
+  - What it does: Rotating savings circles where members
+    contribute weekly/monthly and receive lump-sum payouts
+  - Income type: Lump-sum capital accumulation
+  - Contribution: Fixed amount agreed by circle members
+  - Cycle: Determined by group size (e.g., 10 members =
+    10-week cycle)
+  - Currency: AXUSD
+  - Risk level: Low (insurance fund covers defaults)
+
+Product 3: DEX LIQUIDITY PROVISION
+  - What it does: Provide token pairs to Axiom Exchange Hub
+    and earn a share of trading fees
+  - Fee share: 0.3% of trading volume distributed to LPs
+  - Lock-up: None (withdraw anytime)
+  - Minimum: No minimum
+  - Income type: Trading fees (continuous)
+  - Risk level: Moderate (impermanent loss exposure)
+
+Product 4: LENDING FUND PARTICIPATION
+  - What it does: Deposit AXUSD into a lending pool that
+    funds short-term bridge loans secured by real property
+  - Variable target rate: 10% - 14% annually
+  - Minimum participation: $100
+  - Loan security: Real property (max 70% LTV of ARV)
+  - Structure: Designed to align with SEC Reg D 506(c)
+  - Income type: Interest distributions
+  - Risk level: Low-moderate (property-secured)
+
+Product 5: DePIN NODE INCOME
+  - What it does: Operate decentralized infrastructure nodes
+    that provide storage, compute, and data services
+  - Entry cost: $15 - $40 (smartphone-based starter node)
+  - Income type: Service fees and protocol rewards
+  - Lock-up: None
+  - Risk level: Low (infrastructure service demand)
+
+
+======================================================================
+4. THE $100/WEEK DEPLOYMENT STRATEGY
+======================================================================
+
+Weekly allocation of $100 across products:
+
+  AXM Staking:              $35/week  (35%)
+  Wealth Practice:           $25/week  (25%)
+  DEX Liquidity Provision:   $20/week  (20%)
+  Lending Fund:              $15/week  (15%)
+  DePIN Node Reserve:         $5/week   (5%)
+
+This allocation balances growth potential (staking, DEX) with
+stability (lending fund, wealth practice) and infrastructure
+income (DePIN). The allocation shifts over the four phases as
+your portfolio grows.
+
+Monthly capital deployment: $433
+Quarterly capital deployment: $1,300
+Annual capital deployment: $5,200
+
+
+======================================================================
+5. PHASE 1: FOUNDATION (MONTHS 1-6)
+======================================================================
+
+OBJECTIVE: Establish positions across all five products. Build
+reputation in Wealth Practice. Begin earning variable income.
+
+TOTAL CAPITAL DEPLOYED BY END OF PHASE 1: $2,600
+
+----------------------------------------------------------------------
+MONTH 1 — SETUP AND FIRST POSITIONS
+----------------------------------------------------------------------
+
+Week 1: Initial Setup ($100)
+  Step 1: Connect wallet to Axiom Protocol platform
+  Step 2: Convert $50 USDC to AXUSD via the PSM
+  Step 3: Convert $35 to AXM via the Exchange Hub
+  Step 4: Deposit $35 worth of AXM into the Staking Hub
+          - Navigate to the Staking page
+          - Click "Stake AXM"
+          - Enter the amount and confirm the transaction
+          - Rewards begin accumulating immediately
+  Step 5: Deposit $25 AXUSD into your Wealth Practice wallet
+          - Navigate to the Wealth Practice page
+          - Browse available circles or create one
+          - Join a circle with a $100/month contribution
+            (your $25/week accumulates toward this)
+  Step 6: Provide $20 in DEX liquidity
+          - Navigate to the Exchange Hub
+          - Select a trading pair (e.g., AXM/AXUSD)
+          - Provide equal value of both tokens
+          - Receive LP tokens representing your share
+  Step 7: Deposit $15 AXUSD into the Lending Fund
+          - Navigate to the Lending Fund page
+          - Click "Participate"
+          - Enter amount and confirm deposit
+  Step 8: Set aside $5 in DePIN reserve
+          - Hold in wallet until $40 accumulated (Week 8)
+
+Week 2-4: Continue Weekly Deposits ($100/week)
+  Step 1: Each week, repeat the allocation:
+          $35 to AXM Staking (buy AXM, stake immediately)
+          $25 to Wealth Practice contribution
+          $20 to DEX liquidity (add to existing position)
+          $15 to Lending Fund
+          $5 to DePIN reserve
+  Step 2: Claim staking rewards weekly and restake
+          - Navigate to Staking Hub
+          - Click "Claim Rewards"
+          - Immediately restake claimed rewards
+          - This compounds your staking position
+
+----------------------------------------------------------------------
+MONTH 1 CHECKPOINT
+----------------------------------------------------------------------
+  Capital deployed:                          $400
+  AXM Staking position:                     ~$140
+  Wealth Practice contributions:             ~$100
+  DEX Liquidity position:                    ~$80
+  Lending Fund position:                     ~$60
+  DePIN reserve:                             ~$20
+  Estimated monthly income (variable):       ~$2-5
+
+----------------------------------------------------------------------
+MONTHS 2-3: BUILD POSITIONS
+----------------------------------------------------------------------
+
+  Continue the same weekly deployment pattern.
+  Key actions:
+  - Compound all staking rewards weekly (restake)
+  - Make Wealth Practice contributions on schedule
+  - Monitor DEX LP position for fee accumulation
+  - Lending Fund interest begins accruing
+
+  Month 2 actions:
+  Step 1: Continue $100/week allocation as above
+  Step 2: Verify Wealth Practice circle is active
+          and contributions are on track
+  Step 3: Check Lending Fund dashboard for accrued
+          interest — do not withdraw, let it compound
+
+  Month 3 actions:
+  Step 1: Continue $100/week allocation
+  Step 2: DePIN reserve reaches ~$60
+  Step 3: Research DePIN node options for purchase
+          in Month 4
+
+----------------------------------------------------------------------
+MONTHS 4-6: FIRST INCOME AND DePIN ACTIVATION
+----------------------------------------------------------------------
+
+  Month 4 actions:
+  Step 1: Continue $100/week allocation
+  Step 2: DePIN reserve reaches ~$80
+  Step 3: Purchase a starter DePIN node ($15-$40)
+          - Navigate to the DePIN page
+          - Select a starter node tier
+          - Complete purchase and activation
+          - Node begins earning service fees
+  Step 4: First Wealth Practice payout may occur
+          (depending on circle size and rotation)
+  Step 5: Redirect any Wealth Practice payout into
+          AXM Staking or Lending Fund for compounding
+
+  Month 5-6 actions:
+  Step 1: Continue $100/week allocation
+  Step 2: DePIN node operational — monitor earnings
+  Step 3: Compound all income back into positions
+  Step 4: First meaningful staking reward accumulation
+
+----------------------------------------------------------------------
+PHASE 1 CHECKPOINT (END OF MONTH 6)
+----------------------------------------------------------------------
+  Total capital deployed:                    $2,600
+  AXM Staking position:                     ~$950-$1,050
+  Wealth Practice contributions:             ~$650
+  DEX Liquidity position:                   ~$530-$560
+  Lending Fund position:                    ~$400-$420
+  DePIN node + reserve:                     ~$140-$160
+  Estimated monthly income (variable):       ~$25-$55
+
+
+======================================================================
+6. PHASE 2: ACCELERATION (MONTHS 7-12)
+======================================================================
+
+OBJECTIVE: Shift from pure accumulation to income generation.
+Begin reinvesting earned income. Join a second Wealth Practice
+circle. Upgrade DePIN node tier.
+
+TOTAL CAPITAL DEPLOYED BY END OF PHASE 2: $5,200
+
+ALLOCATION SHIFT: As positions grow, earned income creates a
+second funding stream beyond the $100/week contributions.
+
+----------------------------------------------------------------------
+MONTHS 7-9: COMPOUND AND EXPAND
+----------------------------------------------------------------------
+
+  Step 1: Continue $100/week base allocation
+  Step 2: All earned income (staking rewards, LP fees,
+          lending interest, DePIN earnings) is reinvested:
+          - 50% of earned income to AXM Staking
+          - 30% of earned income to Lending Fund
+          - 20% of earned income to DEX Liquidity
+  Step 3: Join a second Wealth Practice circle
+          - Use a portion of first circle payout as seed
+          - Larger contribution amount if affordable
+          - This creates overlapping payout cycles
+  Step 4: Upgrade DePIN node to next tier when affordable
+          - Higher tier nodes earn proportionally more
+          - Target: $100-$250 tier by Month 9
+
+----------------------------------------------------------------------
+MONTHS 10-12: INCOME STREAM ESTABLISHMENT
+----------------------------------------------------------------------
+
+  Step 1: Continue $100/week base allocation
+  Step 2: Continue reinvesting all earned income
+  Step 3: By Month 12, each product should be generating
+          measurable income independently:
+          - Staking: Weekly reward claims
+          - DEX: Continuous fee accumulation
+          - Lending Fund: Monthly interest distributions
+          - DePIN: Daily/weekly node earnings
+          - Wealth Practice: Periodic lump-sum payouts
+
+----------------------------------------------------------------------
+PHASE 2 CHECKPOINT (END OF MONTH 12)
+----------------------------------------------------------------------
+  Total capital deployed:                    $5,200
+  Total portfolio value (with compounding):  ~$5,800-$6,800
+  AXM Staking position:                     ~$2,200-$2,600
+  Wealth Practice (2 circles):               ~$1,300-$1,400
+  DEX Liquidity position:                   ~$1,200-$1,400
+  Lending Fund position:                    ~$850-$1,000
+  DePIN infrastructure:                     ~$250-$400
+  Estimated monthly income (variable):       ~$80-$170
+
+
+======================================================================
+7. PHASE 3: COMPOUNDING (MONTHS 13-18)
+======================================================================
+
+OBJECTIVE: Income from existing positions now meaningfully
+supplements the $100/week contributions. Focus on maximizing
+compound growth and diversifying across more Wealth Practice
+circles and higher-yield positions.
+
+TOTAL CAPITAL DEPLOYED BY END OF PHASE 3: $7,800
+
+----------------------------------------------------------------------
+KEY ACTIONS
+----------------------------------------------------------------------
+
+  Step 1: Continue $100/week base allocation
+  Step 2: Earned income now adds an estimated $80-$170/month
+          in additional deployable capital
+  Step 3: Total monthly deployment: $433 + $80-$170 earned
+          = $513 - $603/month working capital
+  Step 4: Consider joining a third Wealth Practice circle
+          funded entirely from earned income
+  Step 5: Increase DEX liquidity positions to capture
+          higher fee volume as pools grow
+  Step 6: Monitor Lending Fund for higher-rate loan
+          opportunities
+  Step 7: Evaluate Solar Farm participation if available
+          (physical asset with contractual revenue)
+
+----------------------------------------------------------------------
+MONTH 13-15: SCALING POSITIONS
+----------------------------------------------------------------------
+
+  - Staking position compounds aggressively with weekly
+    restaking of all rewards
+  - DEX LP fees reinvested to grow position
+  - Wealth Practice overlapping payouts create periodic
+    capital infusions for redeployment
+  - DePIN nodes upgraded to maximize infrastructure income
+
+----------------------------------------------------------------------
+MONTH 16-18: APPROACHING CRITICAL MASS
+----------------------------------------------------------------------
+
+  - Portfolio reaches the size where compound growth
+    accelerates meaningfully
+  - Monthly earned income begins approaching the base
+    $100/week contribution level
+  - Multiple Wealth Practice circles create regular
+    payout events
+
+----------------------------------------------------------------------
+PHASE 3 CHECKPOINT (END OF MONTH 18)
+----------------------------------------------------------------------
+  Total capital deployed:                    $7,800
+  Total portfolio value (with compounding):  ~$9,500-$12,500
+  AXM Staking position:                     ~$4,000-$5,200
+  Wealth Practice (2-3 circles):             ~$2,000-$2,500
+  DEX Liquidity position:                   ~$1,800-$2,500
+  Lending Fund position:                    ~$1,200-$1,700
+  DePIN infrastructure:                     ~$500-$600
+  Estimated monthly income (variable):       ~$250-$600
+
+
+======================================================================
+8. PHASE 4: INCOME TARGET (MONTHS 19-24)
+======================================================================
+
+OBJECTIVE: Portfolio reaches critical mass where variable
+income approaches and potentially exceeds $1,500/month.
+Begin transitioning from full compounding to partial income
+withdrawal.
+
+TOTAL CAPITAL DEPLOYED BY END OF PHASE 4: $10,400
+
+----------------------------------------------------------------------
+KEY ACTIONS
+----------------------------------------------------------------------
+
+  Step 1: Continue $100/week base allocation
+  Step 2: Shift compounding strategy:
+          - Months 19-21: Reinvest 75% of earned income,
+            withdraw 25% as spendable income
+          - Months 22-24: Reinvest 50% of earned income,
+            withdraw 50% as spendable income
+  Step 3: Optimize positions for income over growth:
+          - Increase Lending Fund allocation (stable income)
+          - Maintain staking position (do not reduce)
+          - Ensure DEX positions are in high-volume pools
+  Step 4: Wealth Practice circles at full maturity with
+          overlapping payout schedules
+  Step 5: DePIN nodes at optimal tier generating consistent
+          infrastructure income
+
+----------------------------------------------------------------------
+MONTH 19-21: PARTIAL INCOME EXTRACTION
+----------------------------------------------------------------------
+
+  At this stage, earned income is estimated at $250-$600/month.
+  Reinvesting 75% while withdrawing 25% means:
+  - Withdrawable income: $62-$150/month
+  - Reinvested income: $188-$450/month
+  - Total growth capital: $433 + $188-$450 = $621-$883/month
+  - Portfolio grows rapidly toward critical mass
+
+----------------------------------------------------------------------
+MONTH 22-24: TARGET INCOME
+----------------------------------------------------------------------
+
+  Portfolio value with compounding: ~$14,000-$21,000+
+
+  At this portfolio size, the income breakdown by product:
+
+  AXM Staking (variable 12-25% APY on ~$6,000-$9,000):
+    Monthly income estimate: $60-$188
+
+  DEX Liquidity Fees (on ~$3,000-$4,500 position):
+    Monthly income estimate: $30-$90
+    (dependent on trading volume)
+
+  Lending Fund Interest (variable 10-14% on ~$2,500-$3,500):
+    Monthly income estimate: $21-$41
+
+  Wealth Practice Payouts (3 circles, overlapping cycles):
+    Monthly equivalent: $200-$500
+    (lump sums averaged across payout frequency)
+
+  DePIN Node Income (mid-tier nodes):
+    Monthly income estimate: $50-$150
+
+  COMBINED MONTHLY INCOME RANGE (VARIABLE):
+  Conservative: $361/month
+  Base case: $969/month
+  Optimistic: $1,569/month+
+
+  To consistently reach $1,500+/month, the optimistic scenario
+  requires favorable market conditions across all products. See
+  Section 10 for probability analysis.
+
+----------------------------------------------------------------------
+CONTINUING BEYOND MONTH 24
+----------------------------------------------------------------------
+
+  If you continue the $100/week deployment beyond Month 24
+  while fully reinvesting earned income:
+
+  Month 30 projected income range: $800-$2,200/month
+  Month 36 projected income range: $1,200-$3,500/month
+
+  The compounding effect accelerates significantly after
+  Month 24 because earned income exceeds the $100/week base
+  contribution, creating exponential rather than linear growth.
+
+
+======================================================================
+9. INCOME PROJECTION TABLES
+======================================================================
+
+All figures are estimates based on variable rates. Actual
+results will differ.
+
+----------------------------------------------------------------------
+CONSERVATIVE SCENARIO
+(Staking 12% APY, Lending 10%, Low DEX volume, Slow circles)
+----------------------------------------------------------------------
+
+  Month   Deployed   Portfolio   Monthly Income
+  ------  ---------  ----------  --------------
+     3      $1,300     $1,320         $3
+     6      $2,600     $2,700        $25
+     9      $3,900     $4,200        $50
+    12      $5,200     $5,900        $80
+    15      $6,500     $7,800       $140
+    18      $7,800    $10,000       $250
+    21      $9,100    $12,500       $361
+    24     $10,400    $15,200       $500
+
+----------------------------------------------------------------------
+BASE CASE SCENARIO
+(Staking 18% APY, Lending 12%, Moderate DEX volume, Active circles)
+----------------------------------------------------------------------
+
+  Month   Deployed   Portfolio   Monthly Income
+  ------  ---------  ----------  --------------
+     3      $1,300     $1,350        $5
+     6      $2,600     $2,850        $40
+     9      $3,900     $4,600        $85
+    12      $5,200     $6,800       $170
+    15      $6,500     $9,500       $350
+    18      $7,800    $12,500       $600
+    21      $9,100    $16,000       $969
+    24     $10,400    $20,500     $1,500
+
+----------------------------------------------------------------------
+OPTIMISTIC SCENARIO
+(Staking 25% APY, Lending 14%, High DEX volume, Multiple circles)
+----------------------------------------------------------------------
+
+  Month   Deployed   Portfolio   Monthly Income
+  ------  ---------  ----------  --------------
+     3      $1,300     $1,380        $8
+     6      $2,600     $3,000        $55
+     9      $3,900     $5,100       $130
+    12      $5,200     $7,800       $250
+    15      $6,500    $11,200       $520
+    18      $7,800    $15,500       $850
+    21      $9,100    $20,500     $1,350
+    24     $10,400    $26,000     $2,100+
+
+
+======================================================================
+10. PROBABILITY OF SUCCESS ANALYSIS
+======================================================================
+
+"Success" is defined as achieving $1,500/month in variable
+income. Probability estimates are based on the relationship
+between required portfolio size and historical rate ranges.
+
+----------------------------------------------------------------------
+REACHING $1,500/MONTH BY MONTH 24
+----------------------------------------------------------------------
+
+  To generate $1,500/month, the portfolio needs to produce
+  an effective blended yield of approximately:
+
+  At $15,000 portfolio: 120% effective yield — NOT ACHIEVABLE
+  At $20,000 portfolio: 90% effective yield — NOT ACHIEVABLE
+    through yield alone; requires active Wealth Practice
+    payout cycles contributing significantly
+
+  At $20,000+ portfolio with active Wealth Practice circles:
+    - $500-$600/month from Wealth Practice payouts
+    - $900-$1,000/month needed from yield products
+    - Requires ~55-60% blended APY across yield products
+    - ACHIEVABLE if staking APY is 20%+ and DEX volume
+      is strong
+
+  Probability assessment:
+    By Month 24:     35-45% probability
+    By Month 30:     55-65% probability
+    By Month 36:     70-80% probability
+
+----------------------------------------------------------------------
+PROBABILITY FACTORS
+----------------------------------------------------------------------
+
+  INCREASES probability of success:
+  + Consistent $100/week deposits with no missed weeks
+  + Disciplined compounding (reinvesting all income)
+  + Joining multiple Wealth Practice circles with
+    overlapping payout schedules
+  + Active participation in high-volume DEX pools
+  + Upgrading DePIN nodes to higher-earning tiers
+  + AXM token price appreciation (increases staking
+    position value)
+  + Favorable AME policy state (NORMAL mode allows
+    full yield distribution)
+
+  DECREASES probability of success:
+  - Missed weekly contributions
+  - Withdrawing income before Month 19
+  - AXM token price decline (reduces staking value)
+  - Low DEX trading volume (reduces LP fee income)
+  - AME defensive or emergency mode (suppresses yield)
+  - Wealth Practice circle defaults (mitigated by
+    insurance fund but causes delays)
+  - Lending Fund borrower defaults (mitigated by
+    property collateral)
+  - DePIN network demand below projections
+
+----------------------------------------------------------------------
+ADJUSTED TIMELINE EXPECTATIONS
+----------------------------------------------------------------------
+
+  $500/month income:
+    Conservative: Month 21-24
+    Base case: Month 15-18
+    Optimistic: Month 12-15
+    Probability by Month 18: 60-70%
+
+  $1,000/month income:
+    Conservative: Month 30+
+    Base case: Month 21-24
+    Optimistic: Month 18-21
+    Probability by Month 24: 45-55%
+
+  $1,500/month income:
+    Conservative: Month 36+
+    Base case: Month 24-30
+    Optimistic: Month 21-24
+    Probability by Month 24: 35-45%
+    Probability by Month 36: 70-80%
+
+  The most reliable path to $1,500/month within 24 months
+  requires all of the following:
+  1. Zero missed weekly contributions
+  2. Full compounding through Month 18 (no withdrawals)
+  3. At least 3 active Wealth Practice circles by Month 12
+  4. AXM staking APY averaging 18%+ over the period
+  5. At least one mid-tier DePIN node by Month 9
+
+
+======================================================================
+11. RISK FACTORS & MITIGATION
+======================================================================
+
+RISK: AXM token price decline
+  Impact: Reduces dollar value of staking position and rewards
+  Mitigation: Diversification across AXUSD-denominated products
+  (Lending Fund, Wealth Practice) provides stability. Continue
+  buying during price dips to lower average cost.
+
+RISK: Smart contract vulnerability
+  Impact: Potential loss of deposited funds
+  Mitigation: Axiom Protocol uses verified contracts on Arbitrum
+  One. Spread capital across multiple products to limit single-
+  contract exposure.
+
+RISK: DEX impermanent loss
+  Impact: LP position value decreases relative to holding tokens
+  Mitigation: Limit DEX allocation to 20% of portfolio. Choose
+  stable pairs (AXM/AXUSD) to minimize divergence.
+
+RISK: Lending Fund borrower default
+  Impact: Delayed or reduced interest payments
+  Mitigation: All loans secured by real property at maximum 70%
+  LTV. Default recovery through property liquidation.
+
+RISK: Wealth Practice member default
+  Impact: Delayed payout to remaining circle members
+  Mitigation: Insurance fund (funded by 5% of DePIN node
+  rewards) covers shortfalls. AxiomScore system filters
+  unreliable participants.
+
+RISK: AME policy mode change
+  Impact: Yield distribution may be reduced or suspended during
+  DEFENSIVE, RESTRICTED, or EMERGENCY modes
+  Mitigation: This is a protective mechanism. It preserves
+  protocol health. Income resumes when stability is restored.
+  The hard brake requires 3 consecutive safe snapshots to
+  release, preventing premature resumption.
+
+RISK: Regulatory changes
+  Impact: Product availability or structure may change
+  Mitigation: Axiom Protocol is designed to align with evolving
+  regulatory frameworks. Diversification across product types
+  reduces single-regulation exposure.
+
+RISK: Missed contributions
+  Impact: Delays compounding and extends timeline to target
+  Mitigation: Set up a recurring weekly reminder. Even partial
+  contributions are better than skipping entirely.
+
+
+======================================================================
+12. FREQUENTLY ASKED QUESTIONS
+======================================================================
+
+Q: Can I start with less than $100/week?
+A: Yes. The strategy scales linearly. At $50/week, expect the
+   same income targets to take approximately 36-48 months
+   instead of 24 months. The allocation percentages remain
+   the same.
+
+Q: Can I start with more than $100/week?
+A: Yes. At $200/week, the timeline compresses significantly.
+   The $1,500/month target becomes achievable in approximately
+   12-18 months under base case conditions.
+
+Q: What if I miss a week?
+A: Resume the following week with the normal $100 allocation.
+   Do not try to "catch up" by doubling. Consistency matters
+   more than any single contribution.
+
+Q: When should I start withdrawing income?
+A: The strategy recommends full reinvestment through Month 18
+   and partial withdrawal (25-50%) from Month 19 onward. Early
+   withdrawal significantly delays reaching the income target.
+
+Q: What is the minimum portfolio size to generate $1,500/month?
+A: At a blended effective yield of 10-15% (achievable through
+   combined staking, lending, DEX, and DePIN), you need
+   approximately $120,000-$180,000 in deployed capital from
+   yield alone. However, the Wealth Practice payout structure
+   supplements yield income, reducing the required portfolio
+   to approximately $15,000-$25,000 when combined with active
+   circle participation.
+
+Q: What happens during an AME hard brake event?
+A: Yield distribution is temporarily suspended to protect
+   protocol solvency. Your positions remain intact. Income
+   resumes after 3 consecutive safe stability snapshots. This
+   is a feature, not a failure — it prevents loss of capital.
+
+Q: Is my capital locked?
+A: Staking, DEX liquidity, and DePIN nodes have no mandatory
+   lock-up. You can withdraw at any time. Wealth Practice
+   contributions follow the circle schedule. Lending Fund
+   participation follows the fund terms.
+
+Q: What fees should I expect?
+A: Arbitrum One gas fees are approximately $0.05-$0.20 per
+   transaction. Batch your weekly deployments into a single
+   session to minimize total gas costs. There are no platform
+   fees on staking or DEX liquidity provision.
+
+Q: Can I track my progress?
+A: Each product has a dashboard showing your position, earned
+   income, and historical performance. The Solvency page shows
+   overall protocol health. The Capital Accounting page provides
+   detailed ledger and performance analytics.
+
+
+======================================================================
+13. GLOSSARY OF TERMS
+======================================================================
+
+AME (Adaptive Metrics Engine): The deterministic financial
+  computation engine that governs protocol policy mode, yield
+  distribution, and risk controls.
+
+APY (Annual Percentage Yield): The annualized rate of return
+  accounting for compounding. All APY figures in this manual
+  are variable and subject to change.
+
+AXUSD: Axiom Protocol's stablecoin, designed to maintain a
+  1:1 peg with USD. Used for Wealth Practice contributions,
+  Lending Fund participation, and stable-pair DEX liquidity.
+
+AXM: The Axiom Protocol governance token. Used for staking,
+  governance voting, DEX liquidity, and protocol participation.
+
+AxiomScore: An on-chain reputation score (300-850) that tracks
+  participation reliability. Higher scores qualify for better
+  Wealth Practice circle placement and larger capital access.
+
+Compounding: Reinvesting earned income back into the same or
+  other products to generate income on the income itself.
+
+DePIN (Decentralized Physical Infrastructure Network): A network
+  of physical nodes that provide storage, compute, and data
+  services in exchange for protocol rewards.
+
+DSCR (Debt Service Coverage Ratio): Net operating income divided
+  by debt service payments. Values above 1.0 indicate the
+  ability to cover debt from operating income.
+
+Hard Brake: An automated safety mechanism that suspends yield
+  distribution when critical stability thresholds are breached.
+  Requires consecutive safe snapshots to release.
+
+Impermanent Loss: The temporary reduction in value of a
+  liquidity provider's position compared to simply holding
+  the tokens, caused by price divergence between paired tokens.
+
+LP (Liquidity Provider): A user who deposits token pairs into
+  a DEX pool to facilitate trading and earn a share of fees.
+
+LTV (Loan-to-Value): The ratio of a loan amount to the value
+  of the underlying asset. Lower LTV means more equity cushion.
+
+PSM (Peg Stability Module): The mechanism for minting and
+  redeeming AXUSD at a 1:1 ratio with USDC, maintaining the
+  stablecoin peg.
+
+Stability Score: A composite score (0-100) measuring protocol
+  health across coverage, reserves, liquidity, redemption stress,
+  and volatility pressure. Scores above 75 indicate STABLE band.
+
+Wealth Practice: The Axiom Protocol group economics product
+  based on rotating savings circles (ROSCA/SUSU). Members
+  contribute fixed amounts and receive lump-sum payouts on
+  a rotating schedule.
+
+
+======================================================================
+
+AXIOM PROTOCOL
+Build Wealth Together, On-Chain.
+Governance-First Wealth Infrastructure
+Arbitrum One
+
+This document is for internal educational purposes only.
+All rates are variable and subject to market conditions.
+All projections are estimates and carry uncertainty.
+This is not investment advice. All participation carries
+risk of loss, including potential loss of principal.
+No guaranteed returns. No guaranteed yield.
+
+======================================================================

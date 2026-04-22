@@ -1,0 +1,113 @@
+// DEPRECATED: This endpoint is a legacy registration path (wallet-address + body fields, no KYC).
+// The canonical participant onboarding endpoint is POST /api/banking/participant/onboard
+// which performs full SIWE authentication, KYC field collection, entity + account + card provisioning.
+// This endpoint is kept for backward compatibility but should not be used in new integrations.
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { db } from '../../../../server/db';
+import { increaseParticipants } from '../../../../shared/increaseParticipantSchema';
+import { IncreaseService, getAccountId, getEntityId } from '../../../../lib/services/IncreaseService';
+import { getSiweWallet } from '../../../../lib/server/banking/siweHelper';
+import { eq } from 'drizzle-orm';
+
+function generateRef(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let ref = 'AXM-';
+  for (let i = 0; i < 8; i++) ref += chars[Math.floor(Math.random() * chars.length)];
+  return ref;
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { walletAddress, fullName, email, phone } = req.body;
+
+  if (!walletAddress || !/^0x[a-fA-F0-9]{40}$/i.test(walletAddress)) {
+    return res.status(400).json({ error: 'Valid wallet address required' });
+  }
+  if (!fullName || typeof fullName !== 'string' || fullName.trim().length < 2) {
+    return res.status(400).json({ error: 'Full name required' });
+  }
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    return res.status(400).json({ error: 'Valid email required' });
+  }
+
+  const wallet = walletAddress.toLowerCase();
+
+  const siweWallet = await getSiweWallet(req);
+  if (!siweWallet) {
+    return res.status(401).json({ error: 'Wallet sign-in required — connect your wallet and sign in to register' });
+  }
+  if (siweWallet !== '__dev__' && siweWallet.toLowerCase() !== wallet) {
+    return res.status(403).json({ error: 'You may only register your own connected wallet' });
+  }
+
+  try {
+    const existing = await db
+      .select()
+      .from(increaseParticipants)
+      .where(eq(increaseParticipants.walletAddress, wallet))
+      .limit(1);
+
+    if (existing.length > 0) {
+      return res.status(200).json({ success: true, participant: existing[0], isNew: false });
+    }
+
+    let participantRef = generateRef();
+    let attempts = 0;
+    while (attempts < 5) {
+      const refCheck = await db
+        .select()
+        .from(increaseParticipants)
+        .where(eq(increaseParticipants.participantRef, participantRef))
+        .limit(1);
+      if (refCheck.length === 0) break;
+      participantRef = generateRef();
+      attempts++;
+    }
+
+    const accountId = getAccountId();
+
+    let virtualAccountNumberId: string | null = null;
+    let virtualRoutingNumber: string | null = null;
+    let virtualAccountNumber: string | null = null;
+
+    if (accountId) {
+      try {
+        const vAccount = await IncreaseService.createParticipantVirtualAccount({
+          account_id: accountId,
+          participant_ref: participantRef,
+          full_name: fullName.trim(),
+        });
+        virtualAccountNumberId = vAccount.id;
+        virtualRoutingNumber = vAccount.routing_number;
+        virtualAccountNumber = vAccount.account_number;
+      } catch (err) {
+        console.warn('[register] Virtual account provisioning failed (non-fatal):', err instanceof Error ? err.message : err);
+      }
+    }
+
+    const [participant] = await db
+      .insert(increaseParticipants)
+      .values({
+        walletAddress: wallet,
+        participantRef,
+        fullName: fullName.trim(),
+        email: email.toLowerCase().trim(),
+        phone: phone?.trim() || null,
+        status: 'registered',
+        virtualAccountNumberId,
+        virtualRoutingNumber,
+        virtualAccountNumber,
+        cardStatus: 'not_requested',
+        // Store shared entity/account IDs (B2B model — no per-participant entities)
+        increaseEntityId: getEntityId() || null,
+        increaseAccountId: accountId || null,
+      })
+      .returning();
+
+    return res.status(201).json({ success: true, participant, isNew: true });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: msg });
+  }
+}

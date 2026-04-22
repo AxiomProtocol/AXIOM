@@ -1,0 +1,46 @@
+[
+  {
+    "operatorId": "OP-6f85cf46-2dcf-4f8b-a711-0c39316770fd",
+    "walletAddress": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "displayName": "Gamma Observer",
+    "email": "gamma.observer@example.com",
+    "role": "OBSERVER",
+    "status": "ACTIVE",
+    "suspended": false,
+    "verificationTier": "LIGHT",
+    "settlementsCompleted": 0,
+    "attestationsProvided": 0,
+    "incidentCount": 0,
+    "createdAt": "2026-02-01T01:52:09.741Z",
+    "updatedAt": "2026-02-01T01:52:22.388Z",
+    "verificationArtifacts": {
+      "emailProofHash": "sha256:4d2048cf4785712927fe891f9edd6df8c2f76e8a0edc5ea3a7102010f9e5c522",
+      "walletSignatureHash": "sha256:cf10ae7fcf76f4f93b7897ab6206ea928b78b86b986a7627156d393b995138e1"
+    },
+    "certificationHash": "sha256:c27c06cb16dea9e9f4ccc794ac34ec8291b57e12d8ce708a7ce474478d986905",
+    "activatedAt": "2026-02-01T01:52:22.388Z"
+  },
+  {
+    "operatorId": "OP-2392338b-b234-4ffe-8273-ac27725e00ba",
+    "walletAddress": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "displayName": "Delta Validator",
+    "email": "delta.validator@example.com",
+    "role": "VALIDATOR",
+    "status": "ACTIVE",
+    "suspended": false,
+    "verificationTier": "STANDARD",
+    "settlementsCompleted": 0,
+    "attestationsProvided": 0,
+    "incidentCount": 0,
+    "createdAt": "2026-02-01T01:52:09.742Z",
+    "updatedAt": "2026-02-01T01:52:22.389Z",
+    "verificationArtifacts": {
+      "emailProofHash": "sha256:882440e0371c21532d7ba06f933e8a4f811dc8cd7b7f9dd38901070fe68d5b55",
+      "walletSignatureHash": "sha256:97af2ce94644710e7822f69b01bb72deb9210e781c1d101d396e7d7755f555b7",
+      "kycDocumentHash": "sha256:82d84128f51e3d2d4988dcd676ea5c7890ceadeebb336c8855e623fc553cf4c1",
+      "referenceCheckHash": "sha256:917d1a04970755362c55d36b15bb38f75178dae800c3f92c8649ee8e91fd3b11"
+    },
+    "certificationHash": "sha256:baa7f42e0f4b687f3f9f8e11360250a33251f7a747a6425fbd54b1347145fe6a",
+    "activatedAt": "2026-02-01T01:52:22.389Z"
+  }
+]

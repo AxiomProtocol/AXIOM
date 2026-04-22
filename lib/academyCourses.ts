@@ -1,0 +1,5905 @@
+export interface Lesson {
+  id: number;
+  title: string;
+  duration: number;
+  content: string;
+  keyTakeaways?: string[];
+}
+
+export interface Course {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  category: string;
+  difficulty: string;
+  durationMinutes: number;
+  lessons: Lesson[];
+  requiredTier: string;
+  isFeatured: boolean;
+}
+
+export const COURSES_DATA: Course[] = [
+  {
+    id: 1,
+    slug: 'financial-foundations-101',
+    title: 'Financial Foundations 101',
+    description: 'Master the essential money skills everyone needs. Learn budgeting, saving, and how to build a solid financial foundation.',
+    category: 'Finance',
+    difficulty: 'beginner',
+    durationMinutes: 45,
+    requiredTier: 'free',
+    isFeatured: true,
+    lessons: [
+      {
+        id: 1,
+        title: 'Why Financial Literacy Matters',
+        duration: 8,
+        content: `Financial literacy is the foundation of building wealth and achieving financial freedom. It's not about how much money you make—it's about understanding how money works.
+
+## The Cost of Financial Illiteracy
+
+Most people never learn about money in school:
+
+- **67% of Americans** can't pass a basic financial literacy test
+- **78% of workers** live paycheck to paycheck
+- Average credit card debt is over **$6,000** per household
+- Nearly half of adults have no retirement savings
+
+These statistics aren't about intelligence—they're about education.
+
+## What Financial Literacy Includes
+
+Being financially literate means understanding:
+
+1. How to create and stick to a budget
+2. The difference between good debt and bad debt
+3. How compound interest works (for and against you)
+4. Basic investing principles
+5. How to protect yourself from scams and bad decisions
+
+## The Wealth Gap
+
+The difference between wealthy people and everyone else often comes down to financial knowledge:
+
+- Wealthy families teach their children about money
+- They understand how to make money work for them
+- They think long-term, not paycheck to paycheck
+- They use financial tools strategically
+
+## Your Learning Journey
+
+This course will give you the foundational knowledge to:
+
+- Take control of your money instead of letting it control you
+- Make informed decisions about saving and spending
+- Build habits that create long-term wealth
+- Understand the financial system and use it to your advantage
+
+> "An investment in knowledge pays the best interest." — Benjamin Franklin`,
+        keyTakeaways: [
+          'Financial literacy is learned, not inherited',
+          'Most people struggle financially due to lack of education, not income',
+          'Understanding money basics is the first step to building wealth',
+          'This knowledge can change the trajectory of your entire life'
+        ]
+      },
+      {
+        id: 2,
+        title: 'The Power of Compound Interest',
+        duration: 10,
+        content: `Albert Einstein reportedly called compound interest "the eighth wonder of the world." Whether he actually said it or not, the principle is incredibly powerful.
+
+## What Is Compound Interest?
+
+Simple interest: You earn interest only on your original amount.
+Compound interest: You earn interest on your interest.
+
+Here's a simple example:
+
+- You invest $1,000 at 10% annual interest
+- Year 1: You earn $100, now have $1,100
+- Year 2: You earn $110 (10% of $1,100), now have $1,210
+- Year 3: You earn $121, now have $1,331
+
+The magic is that your earnings accelerate over time.
+
+## The Rule of 72
+
+Want to know how long it takes to double your money? Divide 72 by your interest rate:
+
+- At 6% interest: 72 ÷ 6 = 12 years to double
+- At 8% interest: 72 ÷ 8 = 9 years to double
+- At 10% interest: 72 ÷ 10 = 7.2 years to double
+
+## Time Is Your Greatest Asset
+
+The earlier you start, the more compound interest works for you:
+
+**Starting at age 25:**
+- Invest $200/month until age 65
+- At 8% return = $702,000
+
+**Starting at age 35:**
+- Invest $200/month until age 65
+- At 8% return = $298,000
+
+Same monthly amount, but starting 10 years earlier more than doubles your result.
+
+## Compound Interest Works Against You Too
+
+Credit cards and loans use compound interest against you:
+
+- 20% credit card interest compounds daily
+- A $5,000 balance paying minimums takes 25+ years to pay off
+- You'd pay over $12,000 in interest
+
+## The Bottom Line
+
+Make compound interest your friend:
+
+1. Start saving and investing as early as possible
+2. Be consistent—even small amounts matter
+3. Avoid high-interest debt at all costs
+4. Be patient—wealth building takes time`,
+        keyTakeaways: [
+          'Compound interest means earning interest on your interest',
+          'Time is more powerful than the amount you invest',
+          'The Rule of 72 helps you calculate how long to double your money',
+          'High-interest debt uses compound interest against you'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Building an Emergency Fund',
+        duration: 8,
+        content: `An emergency fund is your financial safety net. It's the foundation that makes everything else possible.
+
+## Why You Need an Emergency Fund
+
+Life is unpredictable:
+
+- Car repairs average $500-$600 per incident
+- Medical emergencies can cost thousands
+- Job loss happens—even to good employees
+- Home repairs are inevitable
+
+Without savings, these become crises that lead to debt.
+
+## How Much Do You Need?
+
+The standard recommendation is 3-6 months of expenses:
+
+- **Starter fund**: $1,000 (your first goal)
+- **Basic fund**: 3 months of expenses
+- **Full fund**: 6 months of expenses
+- **Enhanced fund**: 12 months (if self-employed or single income)
+
+Calculate your monthly essentials:
+- Rent/mortgage
+- Utilities
+- Food
+- Transportation
+- Insurance
+- Minimum debt payments
+
+## Where to Keep Your Emergency Fund
+
+Your emergency fund should be:
+
+1. **Accessible**: You can get it within 1-2 days
+2. **Safe**: Not subject to market losses
+3. **Separate**: Not mixed with spending money
+
+Best options:
+- High-yield savings account (online banks often pay 4-5%)
+- Money market account
+- NOT in investments that can lose value
+
+## How to Build Your Fund
+
+Starting from zero? Here's a plan:
+
+1. Set a goal of $1,000 first
+2. Automate transfers—even $25/week adds up
+3. Put "found money" into savings (tax refunds, gifts, bonuses)
+4. Cut one expense and redirect that money
+5. Sell things you don't need
+
+## When to Use Your Emergency Fund
+
+Use it ONLY for true emergencies:
+
+- Job loss
+- Medical emergencies
+- Essential car repairs
+- Urgent home repairs
+
+NOT for:
+- Vacations
+- Sales or "deals"
+- Planned expenses (save separately for these)
+- Wants disguised as needs`,
+        keyTakeaways: [
+          'An emergency fund prevents debt when life happens',
+          'Start with $1,000, then build to 3-6 months of expenses',
+          'Keep it in a high-yield savings account, separate from spending',
+          'Only use it for true emergencies, not wants'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Understanding Credit and Debt',
+        duration: 8,
+        content: `Credit is a tool. Like any tool, it can build or destroy depending on how you use it.
+
+## What Is Credit?
+
+Credit is borrowed money that you promise to pay back:
+
+- Credit cards
+- Car loans
+- Mortgages
+- Student loans
+- Personal loans
+
+Your credit score (300-850) tells lenders how risky you are.
+
+## Good Debt vs. Bad Debt
+
+**Good debt** helps you build wealth:
+- Mortgage (builds equity, often appreciates)
+- Student loans for high-earning careers
+- Business loans that generate income
+
+**Bad debt** drains your wealth:
+- Credit cards for daily expenses
+- Car loans on depreciating assets
+- Payday loans (predatory rates)
+- Loans for vacations or lifestyle
+
+## Understanding Your Credit Score
+
+Your score is based on:
+
+1. **Payment history (35%)**: Pay on time, every time
+2. **Credit utilization (30%)**: Keep balances below 30% of limits
+3. **Length of history (15%)**: Older accounts help
+4. **Credit mix (10%)**: Different types of credit
+5. **New credit (10%)**: Don't apply for too many accounts
+
+## The True Cost of Debt
+
+A $30,000 car at 7% for 5 years:
+- Monthly payment: $594
+- Total paid: $35,640
+- Interest cost: $5,640
+
+The same $30,000 on credit cards at 22%:
+- Paying $500/month takes 10+ years
+- Total paid: $60,000+
+- Interest cost: $30,000+
+
+## Getting Out of Debt
+
+Two proven methods:
+
+**Avalanche method**: Pay highest interest first
+- Saves the most money
+- Mathematically optimal
+
+**Snowball method**: Pay smallest balance first
+- Provides quick wins
+- Psychologically motivating
+
+Choose what works for your personality.`,
+        keyTakeaways: [
+          'Credit is a tool—good debt builds wealth, bad debt destroys it',
+          'Your credit score affects interest rates on everything',
+          'Payment history and utilization are the biggest score factors',
+          'Have a strategy to eliminate high-interest debt'
+        ]
+      },
+      {
+        id: 5,
+        title: 'Creating Your First Budget',
+        duration: 7,
+        content: `A budget isn't about restriction—it's about intention. It tells your money where to go instead of wondering where it went.
+
+## Why Budgets Fail
+
+Most budgets fail because they're:
+
+- Too complicated to maintain
+- Too restrictive to follow
+- Based on ideals, not reality
+- Created once and never adjusted
+
+A good budget is simple, flexible, and based on your actual life.
+
+## The 50/30/20 Framework
+
+A simple starting point:
+
+- **50% Needs**: Rent, utilities, groceries, insurance, minimum payments
+- **30% Wants**: Entertainment, dining out, subscriptions, hobbies
+- **20% Savings/Debt**: Emergency fund, retirement, extra debt payments
+
+Adjust these percentages based on your situation and goals.
+
+## Creating Your Budget
+
+Step 1: Track your spending for 30 days
+- Use an app or simple spreadsheet
+- Categorize every expense
+- Don't change behavior yet—just observe
+
+Step 2: Calculate your income
+- After-tax, take-home pay
+- Include all sources
+
+Step 3: Assign every dollar a job
+- Start with needs
+- Then savings goals
+- Then wants
+
+Step 4: Review weekly
+- Are you on track?
+- What needs adjustment?
+
+## Budgeting Tools
+
+Choose what works for you:
+
+- **Apps**: Mint, YNAB, Personal Capital
+- **Spreadsheets**: Google Sheets, Excel
+- **Envelope system**: Cash in physical envelopes
+- **Notebook**: Simple pen and paper
+
+## Common Budget Categories
+
+Needs:
+- Housing (aim for under 30% of income)
+- Utilities
+- Groceries
+- Transportation
+- Insurance
+- Minimum debt payments
+
+Wants:
+- Dining out
+- Entertainment
+- Subscriptions
+- Shopping
+- Hobbies
+
+Savings:
+- Emergency fund
+- Retirement
+- Goals (vacation, car, house)`,
+        keyTakeaways: [
+          'A budget gives every dollar a purpose',
+          'The 50/30/20 rule is a simple starting framework',
+          'Track spending before creating a budget',
+          'Review and adjust your budget regularly'
+        ]
+      },
+      {
+        id: 6,
+        title: 'Setting Financial Goals',
+        duration: 7,
+        content: `Without clear goals, you're just saving for "someday." Goals transform vague wishes into achievable plans.
+
+## Types of Financial Goals
+
+**Short-term (under 1 year)**:
+- Build $1,000 emergency fund
+- Pay off one credit card
+- Save for a vacation
+
+**Medium-term (1-5 years)**:
+- Full 6-month emergency fund
+- Pay off all credit card debt
+- Save for a house down payment
+- Buy a car in cash
+
+**Long-term (5+ years)**:
+- Financial independence
+- Retirement
+- Children's education
+- Generational wealth
+
+## SMART Goals
+
+Make goals Specific, Measurable, Achievable, Relevant, Time-bound:
+
+Bad goal: "I want to save more money."
+
+SMART goal: "I will save $5,000 for an emergency fund by December 31st by automatically transferring $200 from each paycheck to my savings account."
+
+## Prioritizing Your Goals
+
+Not all goals are equal. Consider:
+
+1. **Emergency fund first**: This prevents future debt
+2. **High-interest debt second**: This is an immediate return
+3. **Retirement contributions**: Get any employer match (free money)
+4. **Other goals**: Based on your values and timeline
+
+## Breaking Down Big Goals
+
+A $20,000 house down payment seems impossible.
+Break it down:
+- Timeline: 3 years
+- Monthly needed: $556
+- Weekly needed: $139
+- Daily needed: $20
+
+Suddenly it's one less restaurant meal per day.
+
+## Staying Motivated
+
+- Write goals down and review monthly
+- Visualize what achieving the goal means
+- Celebrate milestones along the way
+- Find an accountability partner
+- Track progress visually (charts, apps)
+
+## Adjusting Goals
+
+Life changes. Your goals should too:
+
+- Review goals quarterly
+- Adjust timelines as needed
+- Add new goals as you achieve old ones
+- Don't abandon goals—adjust them
+
+> "A goal without a plan is just a wish."`,
+        keyTakeaways: [
+          'Goals turn vague wishes into actionable plans',
+          'Use the SMART framework for clear, achievable goals',
+          'Prioritize emergency fund, high-interest debt, then other goals',
+          'Break big goals into small, daily actions'
+        ]
+      }
+    ]
+  },
+  {
+    id: 2,
+    slug: 'keygrow-rent-to-own',
+    title: 'KeyGrow: Path to Homeownership',
+    description: 'Learn how rent-to-own works, how equity builds with each payment, and strategies to accelerate your path to ownership.',
+    category: 'Real Estate',
+    difficulty: 'beginner',
+    durationMinutes: 60,
+    requiredTier: 'free',
+    isFeatured: true,
+    lessons: [
+      {
+        id: 1,
+        title: 'The Homeownership Challenge',
+        duration: 8,
+        content: `For millions of people, buying a home feels impossible. Let's understand why traditional homeownership is so difficult and how rent-to-own offers a different path.
+
+## The Traditional Barriers
+
+Most people face significant obstacles to buying a home:
+
+- **Down payment**: 10-20% of the home price (that's $25,000-$50,000 on a $250,000 home)
+- **Credit requirements**: Banks want scores of 620-740+
+- **Income documentation**: Self-employed and gig workers struggle
+- **Closing costs**: Additional 2-5% of the purchase price
+- **Competition**: Cash buyers and investors outbid regular buyers
+
+## The Renting Trap
+
+When you rent, you're building someone else's wealth:
+
+1. Average rent: $1,500/month
+2. Annual rent payments: $18,000
+3. After 5 years: $90,000 paid
+4. Your equity: $0
+
+Every rent check makes your landlord richer while you stay in the same position.
+
+## The Gap Between Renting and Buying
+
+Traditional paths assume you can either:
+- Save while renting (difficult when rent takes 30-50% of income)
+- Get help from family (not available to everyone)
+- Wait for prices to drop (they usually don't)
+
+## What is Rent-to-Own?
+
+Rent-to-own is a hybrid approach:
+
+- You rent a property with the option to buy it later
+- A portion of your rent goes toward your future purchase
+- You lock in a purchase price upfront
+- Time to improve credit and save for down payment
+
+> "Rent-to-own turns your monthly housing payment into an investment in your future."`,
+        keyTakeaways: [
+          'Traditional homeownership requires large upfront capital most people don\'t have',
+          'Renting builds zero equity despite significant monthly payments',
+          'Rent-to-own bridges the gap between renting and buying',
+          'You can work toward ownership while living in your future home'
+        ]
+      },
+      {
+        id: 2,
+        title: 'How KeyGrow Works',
+        duration: 10,
+        content: `KeyGrow is Axiom's innovative rent-to-own program that uses blockchain technology to make homeownership accessible and transparent.
+
+## The KeyGrow Model
+
+Here's how KeyGrow works step by step:
+
+1. **Browse properties**: Find homes in your budget and preferred area
+2. **Apply to enroll**: Submit your application for a specific property
+3. **Pay option fee**: A $500 refundable fee reserves your option to buy
+4. **Move in and pay rent**: Your monthly rent is split into components
+5. **Build equity**: 20% of each rent payment becomes your equity
+6. **Exercise option**: Buy the home when you're ready (within the term)
+
+## The Equity Building Formula
+
+Every rent payment is divided:
+
+- **20% - Your Equity**: Goes directly toward your purchase
+- **10% - Maintenance Reserve**: For repairs and upkeep
+- **5% - Vacancy Protection**: Insurance against gaps
+- **65% - Property Owner**: Fair return for the investor
+
+Example with $1,500 rent:
+- Your monthly equity: $300
+- Annual equity: $3,600
+- 5-year equity: $18,000
+
+## Blockchain Transparency
+
+Everything is recorded on-chain:
+
+- Equity tokenized as ERC-1155 shares
+- 100,000 shares per property
+- Your share count visible in your wallet
+- Immutable record of all payments
+
+## The Option Fee (AXM Staking)
+
+Your $500 option fee isn't just sitting idle:
+
+1. Converted to AXM tokens
+2. Staked at 8% APR
+3. Rewards accumulate toward your down payment
+4. Fully credited at closing
+
+## Flexibility Built In
+
+Life happens, and KeyGrow accounts for that:
+
+- Grace periods for temporary hardship
+- Option to extend your term
+- Transfer option to another property
+- Exit with accumulated equity if needed`,
+        keyTakeaways: [
+          'KeyGrow splits rent into equity, maintenance, protection, and owner portions',
+          '20% of every rent payment builds toward your home purchase',
+          'Blockchain provides transparent, immutable records of your equity',
+          'The option fee earns staking rewards while protecting your right to buy'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Calculating Your Path to Ownership',
+        duration: 8,
+        content: `Let's run through the math so you understand exactly how KeyGrow gets you to homeownership.
+
+## Sample Scenario
+
+Let's use realistic numbers:
+- Property Price: $250,000
+- Monthly Rent: $1,500
+- Term: 5 years (60 months)
+- Down Payment Goal: 10% ($25,000)
+
+## Equity Accumulation
+
+With 20% equity from rent:
+
+- Monthly equity: $1,500 × 20% = $300
+- Annual equity: $300 × 12 = $3,600
+- 5-year equity: $3,600 × 5 = $18,000
+
+## Option Fee Growth
+
+Your $500 option fee staked at 8% APR:
+
+- Year 1: $500 → $540
+- Year 2: $540 → $583
+- Year 3: $583 → $630
+- Year 4: $630 → $680
+- Year 5: $680 → $735
+
+That's $235 in free money from staking!
+
+## Total at Year 5
+
+- Rent equity: $18,000
+- Option fee + rewards: $735
+- **Total toward purchase: $18,735**
+
+## Closing the Gap
+
+You need $25,000 for 10% down. You have $18,735.
+
+Gap: $6,265
+
+Options to cover the gap:
+1. Save $104/month additionally
+2. Extend term by 1.5 years
+3. Negotiate seller credit
+4. Use first-time buyer programs
+
+## The Comparison
+
+Without KeyGrow (traditional renting):
+- 5 years of rent: $90,000 paid
+- Equity built: $0
+- Path to ownership: None
+
+With KeyGrow:
+- 5 years of rent: $90,000 paid
+- Equity built: $18,735
+- Path to ownership: Clear`,
+        keyTakeaways: [
+          'You can build nearly $19,000 in equity over 5 years with KeyGrow',
+          'Option fee staking adds extra value at no cost to you',
+          'The math works for properties in the $50,000-$375,000 range',
+          'Traditional renting would leave you with zero equity over the same period'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Choosing the Right Property',
+        duration: 8,
+        content: `Not every property is a good fit for rent-to-own. Here's how to evaluate KeyGrow opportunities.
+
+## Affordability Analysis
+
+The first filter is whether you can afford it:
+
+- Monthly rent should be 25-30% of gross income
+- Example: $60,000 income = $1,250-$1,500 max rent
+- Don't stretch beyond what's comfortable
+- Remember: you're committing for years
+
+## Location Considerations
+
+Think about your life over the next 5+ years:
+
+1. **Job access**: Can you commute from here?
+2. **Schools**: Important if you have or want kids
+3. **Growth potential**: Is the area improving?
+4. **Amenities**: Grocery, healthcare, recreation nearby?
+5. **Safety**: Research crime statistics
+
+## Property Condition
+
+Evaluate the physical property:
+
+- Age and construction quality
+- Major systems (roof, HVAC, plumbing)
+- Recent renovations or needed repairs
+- Lot size and outdoor space
+- Storage and layout for your needs
+
+## Financial Metrics
+
+KeyGrow provides helpful analytics:
+
+- **Price-to-Rent Ratio**: Lower is better for buyers
+- **Affordability Index**: Your income vs. area costs
+- **Cap Rate**: Property's investment quality
+- **Time-to-Ownership**: Months until you can buy
+
+## Red Flags to Avoid
+
+Watch out for these warning signs:
+
+- Prices significantly above comparable sales
+- Properties in declining areas
+- Major deferred maintenance
+- Unclear ownership or title issues
+- Terms that seem too good to be true
+
+## Using Walk Score
+
+Location quality at a glance:
+
+- Walk Score: 70+ is good for walkability
+- Transit Score: Access to public transportation
+- Bike Score: Cycling infrastructure
+
+> "The best KeyGrow property is one you'd be happy to own for 10+ years."`,
+        keyTakeaways: [
+          'Affordability should drive your property selection',
+          'Consider your life circumstances over the full term',
+          'Evaluate both the property condition and location quality',
+          'Use KeyGrow\'s financial metrics to compare options'
+        ]
+      },
+      {
+        id: 5,
+        title: 'The Enrollment Process',
+        duration: 8,
+        content: `Ready to enroll in KeyGrow? Here's exactly what to expect through the process.
+
+## Step 1: Create Your Profile
+
+Before browsing properties:
+
+1. Connect your wallet to Axiom
+2. Complete your profile information
+3. Verify your identity (KYC requirements)
+4. Link your bank account for payments
+
+## Step 2: Get Pre-Qualified
+
+Understand your budget:
+
+- Input your income information
+- Review debt obligations
+- See your maximum monthly rent
+- Understand term options
+
+## Step 3: Browse Properties
+
+Search the KeyGrow marketplace:
+
+- Filter by location, price, and features
+- Review property details and photos
+- Check financial metrics
+- Save favorites for comparison
+
+## Step 4: Submit Application
+
+For a specific property:
+
+1. Click "Apply for KeyGrow"
+2. Confirm your information
+3. Answer property-specific questions
+4. Submit for review
+
+## Step 5: Pay Option Fee
+
+If approved:
+
+- $500 option fee required
+- Pay in USDC, ETH, or fiat
+- Automatically converted to AXM
+- Staked for 8% APR rewards
+- Fully refundable if you don't proceed
+
+## Step 6: Sign Agreements
+
+Review and sign:
+
+- Option Agreement (your right to purchase)
+- Lease Agreement (rental terms)
+- KeyGrow Terms (equity program)
+- All stored on IPFS and blockchain
+
+## Step 7: Move In
+
+Welcome home:
+
+- Receive keys and access
+- Set up utility accounts
+- Begin monthly rent payments
+- Track equity in your dashboard
+
+## Timeline
+
+Typical enrollment takes 2-4 weeks:
+- Application review: 3-5 days
+- Document preparation: 5-7 days
+- Signing and payment: 2-3 days
+- Move-in coordination: 3-5 days`,
+        keyTakeaways: [
+          'Enrollment requires identity verification and financial pre-qualification',
+          'The $500 option fee is staked and earns rewards',
+          'All agreements are stored immutably on blockchain',
+          'The full process typically takes 2-4 weeks'
+        ]
+      },
+      {
+        id: 6,
+        title: 'Building and Tracking Equity',
+        duration: 8,
+        content: `Once enrolled, you'll want to monitor your progress toward homeownership. Here's how to track and maximize your equity.
+
+## Your KeyGrow Dashboard
+
+Access real-time information:
+
+- Current equity balance
+- Tokenized shares owned
+- Payment history
+- Option fee staking rewards
+- Time remaining on term
+
+## Tokenized Equity Shares
+
+Your equity is represented as ERC-1155 tokens:
+
+- 100,000 shares per property
+- Your share count = equity percentage
+- Example: 5,000 shares = 5% equity
+- Visible in your wallet and dashboard
+
+## Monthly Statements
+
+Each month you'll see:
+
+1. Rent payment received
+2. Equity portion credited
+3. New share tokens issued
+4. Updated total equity
+5. Progress toward goal
+
+## Accelerating Your Equity
+
+Build equity faster with these strategies:
+
+- **Extra payments**: Apply additional amounts to equity
+- **Referral bonuses**: Earn credits for bringing others
+- **Staking rewards**: Keep option fee staked longer
+- **Improvement credits**: Some upgrades may count
+
+## Tax Considerations
+
+Consult a tax professional, but generally:
+
+- Rent payments may not be deductible
+- Staking rewards are taxable income
+- Capital gains on tokens possible
+- First-time buyer credits may apply at purchase
+
+## When You're Ready to Buy
+
+Exercising your option:
+
+1. Notify Axiom of intent to purchase
+2. Secure traditional mortgage financing
+3. Equity applied to down payment
+4. Complete standard home closing
+5. Congratulations—you're a homeowner!
+
+> "Every rent payment is a step closer to holding your own keys."`,
+        keyTakeaways: [
+          'Track your equity through the KeyGrow dashboard and your wallet',
+          'Equity is tokenized as ERC-1155 shares for transparency',
+          'You can accelerate equity through extra payments and referrals',
+          'When ready, exercise your option and complete a normal home purchase'
+        ]
+      },
+      {
+        id: 7,
+        title: 'Common Questions and Concerns',
+        duration: 5,
+        content: `Let's address the most common questions about KeyGrow.
+
+## What if I lose my job?
+
+KeyGrow includes protections:
+
+- Grace periods for temporary hardship
+- Option to pause and resume
+- Equity preserved even if you exit
+- No penalty for circumstances beyond control
+
+## What if property values drop?
+
+Your purchase price is locked:
+
+- You can still buy at agreed price
+- You can walk away (keeping accumulated equity)
+- Market risk is on the seller, not you
+
+## What if values increase?
+
+You benefit:
+
+- Buy at locked price below market
+- Instant equity on purchase
+- Your patience rewarded
+
+## Can I make changes to the property?
+
+With approval:
+
+- Cosmetic changes usually allowed
+- Structural changes require owner consent
+- Some improvements may add to equity
+- Document everything
+
+## What happens to my equity if I leave?
+
+Your equity is yours:
+
+- Tokenized shares remain in your wallet
+- May be redeemable for cash value
+- Potential transfer to another property
+- Specific terms in your agreement
+
+## Is this too good to be true?
+
+KeyGrow works because:
+
+- Owners get reliable income and future sale
+- Axiom earns modest fees
+- Blockchain reduces overhead
+- Aligned incentives create value for all
+
+## What about traditional rent-to-own?
+
+Traditional programs have issues:
+
+- Often scams that forfeit payments
+- No transparency in equity tracking
+- Sellers can back out
+- Poor legal protections
+
+KeyGrow solves these with blockchain transparency and smart contracts.`,
+        keyTakeaways: [
+          'KeyGrow includes protections for financial hardship',
+          'Locked purchase prices protect you from market changes',
+          'Your tokenized equity belongs to you even if you exit',
+          'Blockchain technology solves problems in traditional rent-to-own'
+        ]
+      },
+      {
+        id: 8,
+        title: 'Your Next Steps',
+        duration: 5,
+        content: `You now understand how KeyGrow can help you achieve homeownership. Here's how to move forward.
+
+## Immediate Actions
+
+Do these today:
+
+1. **Use the Equity Calculator**: See your personalized numbers at /tools/equity-calculator
+2. **Browse properties**: Explore what's available in your area
+3. **Connect your wallet**: Set up your Axiom profile
+4. **Join the community**: Connect with other KeyGrow participants
+
+## Prepare Your Finances
+
+Before enrolling:
+
+- Review your credit report
+- Calculate your comfortable rent range
+- Build a small emergency fund
+- Reduce high-interest debt if possible
+
+## Research Properties
+
+Take your time to:
+
+- Explore multiple options
+- Visit neighborhoods (virtually or in person)
+- Check crime stats and school ratings
+- Talk to current residents if possible
+
+## Ask Questions
+
+Reach out for clarity:
+
+- Use the support chat on the platform
+- Ask in community Discord
+- Schedule a call with KeyGrow team
+- Review the FAQ section
+
+## Spread the Word
+
+Help others discover KeyGrow:
+
+- Share your journey on social media
+- Refer friends and family
+- Join the conversation about housing solutions
+- Become an advocate for accessible homeownership
+
+## Your Future Home Awaits
+
+Remember: every month you delay is another month of rent going to someone else's equity.
+
+KeyGrow gives you a real, transparent path to owning your home. The technology is ready. The properties are available. The only missing piece is you.
+
+> "The best time to start building equity was yesterday. The second best time is today."`,
+        keyTakeaways: [
+          'Use the Equity Calculator to see your personalized projections',
+          'Prepare your finances while researching properties',
+          'Connect with the community for support and guidance',
+          'Every month you wait is equity you\'re not building'
+        ]
+      }
+    ]
+  },
+  {
+    id: 3,
+    slug: 'financial-literacy',
+    title: 'Financial Literacy Fundamentals',
+    description: 'Master budgeting, saving, credit management, and wealth building strategies for long-term financial health.',
+    category: 'Finance',
+    difficulty: 'beginner',
+    durationMinutes: 90,
+    requiredTier: 'pro',
+    isFeatured: true,
+    lessons: [
+      {
+        id: 1,
+        title: 'Understanding Your Money',
+        duration: 8,
+        content: `Financial literacy starts with understanding how money flows through your life. Let's build that foundation.
+
+## Income: Money In
+
+Your income is everything you earn:
+
+- **Gross income**: Before taxes and deductions
+- **Net income**: What actually hits your bank account
+- **Passive income**: Money earned without active work
+- **Side income**: Extra earnings from gigs or projects
+
+Know the difference between gross and net—it's your net income that pays bills.
+
+## Expenses: Money Out
+
+Track where your money goes:
+
+- **Fixed expenses**: Same every month (rent, car payment)
+- **Variable expenses**: Change monthly (groceries, utilities)
+- **Discretionary**: Nice to have (dining out, entertainment)
+- **Periodic**: Occasional (car repair, gifts)
+
+## The Simple Equation
+
+Your financial health comes down to:
+
+Income - Expenses = Surplus (or Deficit)
+
+If expenses exceed income, you're going into debt. If income exceeds expenses, you can save and invest.
+
+## Cash Flow Awareness
+
+Most people don't know where their money goes. For one month:
+
+1. Track every dollar spent
+2. Categorize each expense
+3. Identify surprises
+4. Find opportunities to cut
+
+## The Psychology of Money
+
+Money is emotional. Understand your patterns:
+
+- Do you spend when stressed?
+- Do you avoid looking at accounts?
+- Do you buy to impress others?
+- Do you feel guilty about spending?
+
+Awareness is the first step to change.
+
+> "You can't manage what you don't measure."`,
+        keyTakeaways: [
+          'Know the difference between gross and net income',
+          'Categorize expenses as fixed, variable, discretionary, and periodic',
+          'Track spending for at least one month to understand patterns',
+          'Money is emotional—understand your psychology around it'
+        ]
+      },
+      {
+        id: 2,
+        title: 'Creating a Budget That Works',
+        duration: 8,
+        content: `A budget isn't a restriction—it's a plan for your money. Let's create one you'll actually follow.
+
+## The 50/30/20 Framework
+
+A simple starting point:
+
+- **50% Needs**: Housing, food, transportation, utilities
+- **30% Wants**: Entertainment, dining, hobbies
+- **20% Savings/Debt**: Emergency fund, retirement, debt payoff
+
+Adjust these percentages to fit your situation.
+
+## Zero-Based Budgeting
+
+Every dollar gets a job:
+
+1. List all income for the month
+2. Assign every dollar to a category
+3. Income minus all assignments = $0
+4. Adjust until it balances
+
+This ensures intentional spending.
+
+## The Envelope Method
+
+Physical or digital "envelopes":
+
+- Groceries: $400
+- Gas: $150
+- Fun money: $200
+- When envelope is empty, stop spending in that category
+
+Works great for variable expenses.
+
+## Building Your Budget
+
+Step-by-step:
+
+1. Calculate monthly net income
+2. List all fixed expenses
+3. Estimate variable expenses
+4. Include savings as an "expense"
+5. Allocate discretionary spending
+6. Review and adjust monthly
+
+## Common Budgeting Mistakes
+
+Avoid these pitfalls:
+
+- Being too restrictive (you'll quit)
+- Forgetting periodic expenses
+- Not including fun money
+- Failing to adjust when life changes
+- Giving up after one bad month
+
+## Digital Tools
+
+Consider using:
+
+- Spreadsheets (full control)
+- Budgeting apps (automatic tracking)
+- Bank categorization features
+- Axiom's upcoming financial tools`,
+        keyTakeaways: [
+          'The 50/30/20 framework is a good starting point',
+          'Zero-based budgeting gives every dollar a purpose',
+          'Include fun money so the budget feels sustainable',
+          'Review and adjust your budget monthly'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Emergency Fund Essentials',
+        duration: 7,
+        content: `An emergency fund is your financial safety net. Without one, any unexpected expense becomes a crisis.
+
+## Why You Need It
+
+Emergencies happen:
+
+- Job loss or reduced hours
+- Medical expenses
+- Car breakdown
+- Home repairs
+- Family emergencies
+
+Without savings, these become credit card debt.
+
+## How Much to Save
+
+Build in stages:
+
+1. **Starter fund**: $1,000 (covers minor emergencies)
+2. **Basic fund**: 1 month of expenses
+3. **Solid fund**: 3 months of expenses
+4. **Secure fund**: 6 months of expenses
+
+Your target depends on job stability and risk tolerance.
+
+## Where to Keep It
+
+Your emergency fund needs to be:
+
+- **Accessible**: Can access within 1-2 days
+- **Safe**: Not at risk of loss
+- **Separate**: Not mixed with regular spending
+
+Good options:
+- High-yield savings account
+- Money market account
+- Stable value crypto (USDC) for quick access
+
+## Building Your Fund
+
+Start small and build:
+
+1. Set up automatic transfers
+2. Start with $25-50 per paycheck
+3. Add tax refunds and bonuses
+4. Sell unused items
+5. Celebrate milestones
+
+## When to Use It
+
+Emergency fund is for true emergencies:
+
+- Unexpected necessary expenses
+- Income replacement during job loss
+- Medical bills
+
+NOT for:
+- Planned expenses
+- Sales or deals
+- Vacations
+- Impulse purchases
+
+## Replenishing After Use
+
+If you use your emergency fund:
+
+1. Stop extra debt payments temporarily
+2. Redirect all extra money to rebuilding
+3. Return to normal once restored
+4. Consider increasing the target`,
+        keyTakeaways: [
+          'Start with a $1,000 starter fund, then build to 3-6 months of expenses',
+          'Keep emergency funds accessible but separate from daily spending',
+          'Use automatic transfers to build consistently',
+          'Only use for true emergencies, and replenish immediately after'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Understanding and Building Credit',
+        duration: 8,
+        content: `Your credit score impacts everything from loan rates to rental applications. Let's understand and improve it.
+
+## What is a Credit Score?
+
+A number (300-850) representing your creditworthiness:
+
+- **Excellent**: 750+
+- **Good**: 700-749
+- **Fair**: 650-699
+- **Poor**: Below 650
+
+Higher scores = better loan terms and more opportunities.
+
+## The Five Factors
+
+Your score is calculated from:
+
+1. **Payment History (35%)**: Do you pay on time?
+2. **Credit Utilization (30%)**: How much of available credit used?
+3. **Length of History (15%)**: How long have accounts been open?
+4. **Credit Mix (10%)**: Different types of credit
+5. **New Credit (10%)**: Recent applications
+
+## Improving Your Score
+
+Actionable strategies:
+
+- **Never miss a payment**: Set up autopay minimums
+- **Keep utilization under 30%**: Use less than 30% of available credit
+- **Don't close old accounts**: Length of history matters
+- **Limit new applications**: Each hard inquiry impacts score
+- **Dispute errors**: Check reports for mistakes
+
+## Building Credit from Scratch
+
+If you have no credit history:
+
+1. Become an authorized user on parent's card
+2. Get a secured credit card
+3. Try a credit-builder loan
+4. Report rent payments (some services offer this)
+5. Keep accounts active with small purchases
+
+## Monitoring Your Credit
+
+Check regularly:
+
+- Free annual reports from AnnualCreditReport.com
+- Free score monitoring from many banks/cards
+- Credit Karma or similar services
+- Review for errors and fraud
+
+## The Long Game
+
+Credit building takes time:
+
+- No quick fixes that are legitimate
+- Consistent good behavior compounds
+- Negative marks fade over time (7 years)
+- Start now—future you will thank you`,
+        keyTakeaways: [
+          'Payment history and utilization are the biggest factors (65%)',
+          'Keep credit utilization under 30% of available credit',
+          'Build credit with secured cards and authorized user status',
+          'Check your credit reports regularly for errors and fraud'
+        ]
+      },
+      {
+        id: 5,
+        title: 'Debt Management Strategies',
+        duration: 8,
+        content: `Not all debt is equal. Learn to manage debt strategically for financial freedom.
+
+## Good Debt vs. Bad Debt
+
+Some debt can be useful:
+
+**Potentially Good Debt:**
+- Mortgage (builds equity, often tax-deductible)
+- Student loans (increases earning potential)
+- Business loans (generates income)
+
+**Usually Bad Debt:**
+- Credit card debt (high interest, no asset)
+- Payday loans (predatory rates)
+- Car loans (depreciating asset)
+
+## Understanding Interest
+
+Interest is the cost of borrowing:
+
+- **APR**: Annual Percentage Rate
+- **Compound interest**: Interest on interest
+
+$5,000 credit card balance at 20% APR:
+- Minimum payments only: 15 years to pay off, $7,500 in interest
+- $200/month: 2.5 years, $1,000 in interest
+
+## The Avalanche Method
+
+Pay off highest interest first:
+
+1. List all debts with interest rates
+2. Pay minimums on all
+3. Put extra money toward highest rate
+4. When paid off, attack next highest
+5. Mathematically optimal approach
+
+## The Snowball Method
+
+Pay off smallest balance first:
+
+1. List all debts by balance
+2. Pay minimums on all
+3. Put extra money toward smallest
+4. When paid off, attack next smallest
+5. Psychological wins keep you motivated
+
+## Negotiating with Creditors
+
+You have more power than you think:
+
+- Request interest rate reduction
+- Ask about hardship programs
+- Negotiate settlements on old debt
+- Get payment plans in writing
+
+## Avoiding New Debt
+
+Break the cycle:
+
+- Build emergency fund first
+- Use debit or cash for discretionary spending
+- Wait 24 hours before purchases over $100
+- Unsubscribe from marketing emails`,
+        keyTakeaways: [
+          'Distinguish between potentially good debt and usually bad debt',
+          'Choose avalanche (math optimal) or snowball (psychology optimal) method',
+          'High-interest debt should be priority one',
+          'Negotiate with creditors—they often have options they don\'t advertise'
+        ]
+      },
+      {
+        id: 6,
+        title: 'Introduction to Investing',
+        duration: 8,
+        content: `Investing is how wealth is built over time. Let's cover the fundamentals.
+
+## Why Invest?
+
+Money loses value to inflation:
+
+- $1,000 today might buy only $800 worth of goods in 10 years
+- Savings accounts often don't keep up with inflation
+- Investing helps your money grow faster than inflation
+
+## The Power of Compound Growth
+
+Money grows exponentially:
+
+$10,000 invested at 7% annual return:
+- Year 5: $14,025
+- Year 10: $19,671
+- Year 20: $38,697
+- Year 30: $76,122
+
+Time is your biggest advantage.
+
+## Types of Investments
+
+Common investment vehicles:
+
+- **Stocks**: Ownership in companies (higher risk/reward)
+- **Bonds**: Loans to governments/companies (lower risk/reward)
+- **Real Estate**: Property ownership (tangible asset)
+- **Mutual Funds**: Pooled investments (diversification)
+- **ETFs**: Exchange-traded funds (low-cost diversification)
+- **Crypto**: Digital assets (high risk/reward)
+
+## Risk and Reward
+
+Higher potential returns = higher risk:
+
+- Bank savings: Low return, very low risk
+- Bonds: Moderate return, low risk
+- Stocks: Higher return, higher risk
+- Crypto: Highest potential return, highest risk
+
+Diversification reduces overall risk.
+
+## Getting Started
+
+Steps to begin investing:
+
+1. Pay off high-interest debt first
+2. Build emergency fund
+3. Contribute to employer 401(k) match
+4. Open an IRA or brokerage account
+5. Start with low-cost index funds
+6. Automate contributions
+
+## Common Mistakes
+
+Avoid these pitfalls:
+
+- Timing the market (impossible consistently)
+- Panic selling during downturns
+- Putting all eggs in one basket
+- Ignoring fees
+- Not starting because amount seems small`,
+        keyTakeaways: [
+          'Investing fights inflation and builds wealth over time',
+          'Compound growth makes time your biggest advantage',
+          'Diversification reduces risk',
+          'Start with low-cost index funds and automate contributions'
+        ]
+      },
+      {
+        id: 7,
+        title: 'Retirement Planning Basics',
+        duration: 7,
+        content: `Retirement may seem far away, but starting early makes all the difference.
+
+## Why Start Now?
+
+The math is compelling:
+
+**Starting at age 25** ($200/month at 7%):
+- By age 65: $524,000
+
+**Starting at age 35** ($200/month at 7%):
+- By age 65: $243,000
+
+10 years of delay costs over $280,000!
+
+## Retirement Account Types
+
+Tax-advantaged accounts:
+
+**401(k)** - Employer sponsored:
+- Pre-tax contributions
+- Employer match = free money
+- 2024 limit: $23,000
+
+**Traditional IRA**:
+- Tax-deductible contributions
+- Pay taxes in retirement
+- 2024 limit: $7,000
+
+**Roth IRA**:
+- After-tax contributions
+- Tax-free growth and withdrawal
+- Income limits apply
+
+## The Employer Match
+
+Free money you shouldn't miss:
+
+If employer matches 50% up to 6%:
+- You contribute 6% ($3,600 on $60,000 salary)
+- Employer adds $1,800
+- That's 50% immediate return!
+
+Always contribute enough to get the full match.
+
+## How Much Do You Need?
+
+Common rules of thumb:
+
+- 25x annual expenses for retirement
+- Save 15% of income throughout career
+- Aim for 70-80% of pre-retirement income
+
+Use retirement calculators for your specific situation.
+
+## Social Security
+
+Don't count on it fully:
+
+- Benefits may be reduced for younger generations
+- Average benefit: ~$1,800/month
+- Supplement, not replacement, for savings
+- Know your estimated benefit (ssa.gov)
+
+## Action Steps
+
+Start today:
+
+1. Find out if employer offers 401(k)
+2. Contribute at least enough for full match
+3. Open an IRA if no employer plan
+4. Set up automatic increases annually`,
+        keyTakeaways: [
+          'Starting 10 years earlier can double your retirement savings',
+          'Never leave employer match money on the table',
+          'Aim to save 15% of income for retirement',
+          'Roth accounts provide tax-free growth and withdrawal'
+        ]
+      },
+      {
+        id: 8,
+        title: 'Protecting Your Wealth',
+        duration: 7,
+        content: `Building wealth is only half the equation. Protecting it is equally important.
+
+## Insurance Essentials
+
+Protect against catastrophic loss:
+
+**Health Insurance**:
+- Medical bills are #1 cause of bankruptcy
+- Even healthy young people need coverage
+- Understand deductibles and out-of-pocket max
+
+**Auto Insurance**:
+- Liability protects you from lawsuits
+- Consider umbrella policy for extra protection
+- Shop around annually for better rates
+
+**Renter's/Home Insurance**:
+- Covers possessions and liability
+- Surprisingly affordable
+- Document valuables with photos
+
+**Life Insurance** (if dependents):
+- Term life is most cost-effective
+- Coverage = 10x income is common rule
+- Review as family situation changes
+
+## Estate Planning Basics
+
+Everyone needs these:
+
+1. **Will**: Directs asset distribution
+2. **Power of Attorney**: Someone manages affairs if incapacitated
+3. **Healthcare Directive**: Medical wishes if unable to communicate
+4. **Beneficiary designations**: Keep updated on accounts
+
+## Identity Protection
+
+Guard your information:
+
+- Monitor credit reports
+- Use strong, unique passwords
+- Enable two-factor authentication
+- Be cautious with personal info online
+- Consider credit freeze if not actively seeking credit
+
+## Avoiding Scams
+
+Common warning signs:
+
+- Urgency ("Act now!")
+- Too good to be true returns
+- Requests for unusual payment (gift cards, wire)
+- Unsolicited contact about money
+- Pressure to keep secret
+
+When in doubt, pause and research.
+
+## Building a Financial Team
+
+As wealth grows, consider:
+
+- Fee-only financial advisor
+- Tax professional (CPA)
+- Estate planning attorney
+- Insurance broker
+
+> "It's not about how much you make, it's about how much you keep."`,
+        keyTakeaways: [
+          'Insurance protects against catastrophic financial loss',
+          'Everyone needs a will, power of attorney, and healthcare directive',
+          'Monitor credit and practice good digital security',
+          'Recognize common scam tactics and take time to verify'
+        ]
+      }
+    ]
+  },
+  {
+    id: 4,
+    slug: 'depin-explained',
+    title: 'DePIN: Decentralized Infrastructure',
+    description: 'Discover how DePIN (Decentralized Physical Infrastructure Networks) works and how to participate in the network.',
+    category: 'Blockchain',
+    difficulty: 'intermediate',
+    durationMinutes: 75,
+    requiredTier: 'pro',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'What is DePIN?',
+        duration: 8,
+        content: `DePIN stands for Decentralized Physical Infrastructure Networks. It's one of the most exciting developments in blockchain technology.
+
+## The Problem with Traditional Infrastructure
+
+Traditional infrastructure is centralized:
+
+- Large corporations control networks
+- High barriers to entry
+- Single points of failure
+- Profits flow to shareholders, not users
+- Limited by corporate priorities
+
+Examples: Telecom networks, cloud computing, GPS systems, power grids.
+
+## The DePIN Solution
+
+DePIN flips the model:
+
+- Networks owned and operated by participants
+- Token incentives reward contribution
+- No single point of failure
+- Value flows to contributors
+- Community-driven expansion
+
+## How DePIN Works
+
+The basic model:
+
+1. Protocol defines what infrastructure is needed
+2. Participants provide hardware/resources
+3. Smart contracts verify contributions
+4. Tokens reward valid contributions
+5. Network value increases with participants
+6. Token value reflects network utility
+
+## Real DePIN Examples
+
+Projects already operating:
+
+- **Helium**: Decentralized wireless network
+- **Filecoin**: Distributed file storage
+- **Render**: GPU computing power
+- **Hivemapper**: Community-built maps
+- **Axiom DePIN**: Smart city infrastructure
+
+## Why DePIN Matters
+
+Benefits for everyone:
+
+**For participants**:
+- Earn from resources you already have
+- Low barrier to entry
+- Passive income potential
+
+**For users**:
+- Lower costs than centralized alternatives
+- Greater resilience and uptime
+- Privacy and data control
+
+**For society**:
+- More equitable wealth distribution
+- Faster infrastructure deployment
+- Innovation not limited by corporations`,
+        keyTakeaways: [
+          'DePIN uses tokens to incentivize building physical infrastructure',
+          'Participants contribute resources and earn rewards',
+          'Networks are more resilient without central points of failure',
+          'Value flows to contributors rather than corporate shareholders'
+        ]
+      },
+      {
+        id: 2,
+        title: 'The Token Economics of DePIN',
+        duration: 8,
+        content: `Understanding token economics is key to successful DePIN participation.
+
+## The Flywheel Effect
+
+DePIN creates a virtuous cycle:
+
+1. Token rewards attract participants
+2. More participants = better network
+3. Better network attracts users
+4. User demand increases token value
+5. Higher value attracts more participants
+6. Repeat
+
+## Supply Side Economics
+
+Participants provide resources:
+
+- Hardware (nodes, sensors, storage)
+- Bandwidth
+- Location/coverage
+- Maintenance and uptime
+
+Rewards are typically proportional to contribution quality and quantity.
+
+## Demand Side Economics
+
+Users pay for services:
+
+- Direct payment for usage
+- Subscription models
+- Data access fees
+- Enterprise contracts
+
+This demand is what ultimately backs token value.
+
+## Token Distribution Models
+
+How tokens are allocated:
+
+- **Mining/Emissions**: Ongoing rewards for contribution
+- **Staking**: Locking tokens for network security
+- **Burn mechanisms**: Reducing supply as usage grows
+- **Treasury**: Funding development and growth
+
+## Evaluating DePIN Opportunities
+
+Key metrics to consider:
+
+1. **Unit economics**: Is providing service profitable?
+2. **Network effect**: Does more participation improve value?
+3. **Demand sources**: Who pays for the service?
+4. **Competition**: Centralized alternatives?
+5. **Team and development**: Active progress?
+
+## Risks to Consider
+
+DePIN isn't risk-free:
+
+- Token price volatility
+- Hardware costs and depreciation
+- Protocol changes affecting rewards
+- Regulatory uncertainty
+- Network adoption risk`,
+        keyTakeaways: [
+          'DePIN creates a flywheel where participation drives value',
+          'Both supply (providers) and demand (users) matter for success',
+          'Evaluate unit economics before investing in hardware',
+          'Token volatility is a significant risk factor'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Axiom DePIN Nodes',
+        duration: 10,
+        content: `Axiom's DePIN network powers smart city infrastructure. Here's how you can participate.
+
+## Types of Axiom Nodes
+
+Different nodes serve different purposes:
+
+**Gateway Nodes**:
+- Connect IoT devices to the network
+- Process and relay sensor data
+- Suitable for home or business deployment
+- Entry-level hardware requirements
+
+**Validator Nodes**:
+- Verify data integrity
+- Participate in consensus
+- Higher staking requirements
+- More significant rewards
+
+**Storage Nodes**:
+- Distributed data storage
+- Historical records and analytics
+- Storage capacity determines rewards
+- Redundancy across network
+
+## Node Tiers and Rewards
+
+Axiom uses tiered rewards:
+
+| Tier | Stake Required | Monthly Reward Est. |
+|------|---------------|-------------------|
+| Bronze | 1,000 AXM | 50-100 AXM |
+| Silver | 5,000 AXM | 300-500 AXM |
+| Gold | 25,000 AXM | 1,800-2,500 AXM |
+| Platinum | 100,000 AXM | 8,000-12,000 AXM |
+
+Actual rewards depend on network activity and uptime.
+
+## Getting Started
+
+Steps to run an Axiom node:
+
+1. Purchase or lease node hardware
+2. Acquire required AXM stake
+3. Install node software
+4. Configure network settings
+5. Register node on-chain
+6. Maintain uptime for rewards
+
+## Hardware Requirements
+
+Minimum specifications:
+
+- Raspberry Pi 4 or equivalent (Gateway)
+- 8GB RAM, 256GB storage
+- Stable internet connection
+- Backup power recommended
+- Static IP or dynamic DNS
+
+## Node Leasing Option
+
+Don't want to run hardware?
+
+Axiom offers node leasing:
+- Rent node capacity from operators
+- Lower barrier to entry
+- No technical maintenance
+- Share in node rewards
+- Great for testing before buying
+
+## Community and Support
+
+Resources available:
+
+- Node operator Discord channel
+- Technical documentation
+- Weekly operator calls
+- Troubleshooting support
+- Network monitoring dashboard`,
+        keyTakeaways: [
+          'Axiom offers multiple node types for different participation levels',
+          'Tiered staking determines reward potential',
+          'Node leasing allows participation without hardware ownership',
+          'Active community support helps new operators succeed'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Setting Up Your First Node',
+        duration: 10,
+        content: `Ready to run a node? This lesson walks through the setup process.
+
+## Hardware Preparation
+
+Before you begin:
+
+1. Acquire compatible hardware
+2. Download node software image
+3. Flash to SD card or SSD
+4. Gather network information
+5. Prepare your AXM stake
+
+## Network Configuration
+
+Ensure proper connectivity:
+
+- Static IP or reliable DDNS
+- Port forwarding (check documentation for required ports)
+- Firewall exceptions
+- Bandwidth allocation
+- Uptime monitoring setup
+
+## Software Installation
+
+Step-by-step:
+
+\`\`\`
+1. Boot device with Axiom node image
+2. Complete initial configuration wizard
+3. Connect wallet for staking
+4. Stake required AXM amount
+5. Generate node credentials
+6. Start node services
+\`\`\`
+
+## Registration and Staking
+
+On-chain registration:
+
+1. Connect wallet to axiomprotocol.app
+2. Navigate to Node Operator portal
+3. Register node with generated credentials
+4. Stake AXM to activate node
+5. Confirm transaction on-chain
+6. Node appears in network registry
+
+## Monitoring and Maintenance
+
+Keep your node healthy:
+
+**Daily checks**:
+- Verify node is online
+- Check pending rewards
+- Monitor resource usage
+
+**Weekly tasks**:
+- Review performance metrics
+- Update software if available
+- Check network announcements
+
+**Monthly review**:
+- Claim accumulated rewards
+- Assess profitability
+- Consider tier upgrades
+
+## Troubleshooting Common Issues
+
+If problems arise:
+
+- **Node offline**: Check power, network, and process
+- **Low rewards**: Verify uptime and stake tier
+- **Connection errors**: Review firewall and ports
+- **Software issues**: Consult documentation and Discord
+
+> "A well-maintained node is a profitable node."`,
+        keyTakeaways: [
+          'Proper hardware and network preparation prevents issues',
+          'Registration requires on-chain staking transaction',
+          'Regular monitoring ensures maximum uptime and rewards',
+          'Community resources help resolve common problems'
+        ]
+      },
+      {
+        id: 5,
+        title: 'Maximizing Node Profitability',
+        duration: 8,
+        content: `Running a node is an investment. Here's how to optimize your returns.
+
+## Understanding Your Costs
+
+Calculate total cost of ownership:
+
+**Upfront costs**:
+- Hardware purchase
+- Initial AXM stake
+- Setup time and effort
+
+**Ongoing costs**:
+- Electricity
+- Internet bandwidth
+- Maintenance and replacement
+- Opportunity cost of staked tokens
+
+## Revenue Optimization
+
+Maximize your earnings:
+
+**Uptime is everything**:
+- Target 99%+ availability
+- Use UPS for power backup
+- Redundant internet if possible
+- Monitor with alerts
+
+**Stake optimization**:
+- Higher tiers = better reward rates
+- Consider upgrading when profitable
+- Compound rewards into stake
+
+**Location matters**:
+- Coverage gaps pay premiums
+- Early to new regions earns more
+- Urban vs. rural considerations
+
+## ROI Calculation
+
+Monthly profit formula:
+
+\`\`\`
+Monthly Reward (AXM)
+× AXM Price ($)
+- Monthly Electricity
+- Monthly Internet Allocation
+- Hardware Depreciation (purchase / 36 months)
+= Net Monthly Profit
+\`\`\`
+
+## Tax Considerations
+
+Consult a professional, but be aware:
+
+- Token rewards are often taxable income
+- Hardware may be depreciable expense
+- Business structure options
+- Record keeping requirements
+
+## Scaling Your Operation
+
+Growth strategies:
+
+1. Reinvest rewards into additional nodes
+2. Upgrade to higher tiers
+3. Diversify across node types
+4. Geographic expansion
+5. Offer hosting services to others
+
+## Exit Strategy
+
+Plan for various scenarios:
+
+- Selling hardware on secondary market
+- Unstaking and selling tokens
+- Transferring operation to buyer
+- Gradual wind-down approach`,
+        keyTakeaways: [
+          'Calculate all costs to understand true profitability',
+          'Uptime is the biggest factor in maximizing rewards',
+          'Consider tax implications of token rewards',
+          'Reinvest earnings strategically to scale operation'
+        ]
+      }
+    ]
+  },
+  {
+    id: 5,
+    slug: 'susu-community-savings',
+    title: 'The Wealth Practice: Community Wealth Circles',
+    description: 'Learn the traditional community savings method modernized with blockchain for trust, transparency, and efficiency.',
+    category: 'Community',
+    difficulty: 'beginner',
+    durationMinutes: 30,
+    requiredTier: 'pro',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'The History of The Wealth Practice',
+        duration: 8,
+        content: `The Wealth Practice draws from one of humanity's oldest financial systems -- community wealth circles found in cultures worldwide.
+
+## Origins and Global Presence
+
+Community savings has many names worldwide:
+
+- **Partner, Box Hand**: Caribbean
+- **Tanda**: Mexico, Latin America
+- **Chit Fund**: India
+- **Hui**: China
+- **Gam'iya**: Egypt, Middle East
+- **Stokvel**: South Africa
+
+The concept spans continents and centuries.
+
+## How Traditional Community Savings Works
+
+The basic structure:
+
+1. Group of 10-20 trusted people form a circle
+2. Each contributes fixed amount regularly (weekly/monthly)
+3. Pooled funds go to one member each cycle
+4. Rotation continues until everyone receives once
+5. Process can repeat indefinitely
+
+Example: 10 people × $100/month = $1,000 payout each month to one person.
+
+## Why Community Savings Developed
+
+Traditional banking doesn't serve everyone:
+
+- No minimum balance requirements
+- No credit checks
+- No interest charges
+- Social accountability replaces collateral
+- Community builds wealth together
+
+## The Trust Problem
+
+Traditional community savings has vulnerabilities:
+
+- What if someone collects early and disappears?
+- What if the organizer takes the money?
+- How do you verify contributions?
+- What if someone can't pay?
+
+These risks have limited community savings growth.
+
+## Blockchain as the Solution
+
+Smart contracts solve trust issues:
+
+- Contributions are transparent and verifiable
+- Payouts are automatic and enforced by smart contract logic
+- No single person controls the funds
+- Rules are enforced by code
+- Participation history is public
+
+> "The Wealth Practice proves that communities can create their own financial systems. Blockchain makes them trustless and global."`,
+        keyTakeaways: [
+          'The Wealth Practice is based on a centuries-old savings method found in cultures worldwide',
+          'Groups pool money and take turns receiving the full pot',
+          'Traditional community savings requires high trust between members',
+          'Blockchain eliminates trust issues through transparent smart contracts'
+        ]
+      },
+      {
+        id: 2,
+        title: 'How Axiom Wealth Practice Works',
+        duration: 8,
+        content: `Axiom's Wealth Practice brings this ancient community savings model on-chain with smart contract security.
+
+## The Smart Contract Structure
+
+The Wealth Practice smart contract manages everything:
+
+- Pool creation and parameters
+- Member enrollment
+- Contribution collection
+- Payout distribution
+- Penalty enforcement
+
+All rules are code—no human intervention needed.
+
+## Creating a Pool
+
+Pool organizers set parameters:
+
+- **Contribution amount**: Fixed amount per cycle
+- **Cycle duration**: Weekly, bi-weekly, or monthly
+- **Member count**: 2-50 participants
+- **Token**: AXM or approved ERC20
+- **Payout order**: Sequential or random
+- **Grace period**: Days allowed for late payment
+
+## Joining a Pool
+
+Members participate by:
+
+1. Finding available pools
+2. Reviewing terms and members
+3. Committing to join (may require initial deposit)
+4. Making regular contributions
+5. Receiving payout when their turn arrives
+
+## The Payout Mechanism
+
+When it's your turn:
+
+- Smart contract automatically distributes
+- No request or approval needed
+- Full pool amount minus protocol fee
+- Directly to your wallet
+- Transaction recorded on-chain
+
+## Protocol Fees
+
+Axiom charges small fee:
+
+- 1-2% of each payout
+- Funds Axiom treasury
+- Supports platform development
+- Lower than traditional middlemen
+
+## Handling Defaults
+
+If someone misses a payment:
+
+- Grace period allows catch-up
+- Missed payments can be covered by deposit
+- Repeated defaults lead to removal
+- Other members are protected`,
+        keyTakeaways: [
+          'The Wealth Practice smart contract manages all pool operations',
+          'Organizers set contribution amount, cycle duration, and member count',
+          'Payouts are automatic when your turn arrives',
+          'Protocol fees are minimal (1-2%) and fund platform development'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Participating in Wealth Practice Pools',
+        duration: 7,
+        content: `Ready to join a Wealth Practice pool? Here's what you need to know.
+
+## Finding the Right Pool
+
+Browse available pools considering:
+
+- Contribution amount within your budget
+- Cycle duration that matches your cash flow
+- Member count (smaller = faster payout)
+- Token preference (AXM or stablecoin)
+- Grace period for flexibility
+
+## Before You Join
+
+Ask yourself:
+
+1. Can I commit to every contribution for the full cycle?
+2. Do I have emergency funds if unexpected expenses arise?
+3. Am I comfortable with the payout timeline?
+4. Do I understand the terms and penalties?
+
+## The Commitment
+
+When you join, you're committing to:
+
+- Make every scheduled contribution
+- Accept your assigned payout position
+- Follow pool rules
+- Stay for the entire cycle
+
+Breaking commitment affects your reputation and may lose deposits.
+
+## Managing Cash Flow
+
+Plan your finances around The Wealth Practice:
+
+- Set aside contribution amount from each paycheck
+- Use calendar reminders
+- Automate if possible
+- Don't rely on Wealth Practice payout for immediate expenses
+
+## Receiving Your Payout
+
+When your turn arrives:
+
+- Payout deposited automatically
+- Use wisely for intended purpose
+- Common uses: Debt payoff, down payment, business investment, emergency fund
+- Avoid spending on consumables
+
+## After the Cycle
+
+When cycle completes:
+
+- You can join another cycle
+- Consider organizing your own pool
+- Build reputation for better pools
+- Invite trusted friends and family
+
+> "The Wealth Practice works because everyone wins -- you just win at different times."`,
+        keyTakeaways: [
+          'Choose pools with contribution amounts you can reliably commit to',
+          'Plan cash flow to ensure you never miss a contribution',
+          'Use your payout wisely for long-term financial goals',
+          'Build reputation by completing cycles reliably'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Starting Your Own Pool',
+        duration: 7,
+        content: `Want to organize a Wealth Practice pool? Here's how to create a successful one.
+
+## Planning Your Pool
+
+Consider these factors:
+
+**Size**: 
+- Smaller (5-10): Faster payouts, easier to fill
+- Larger (15-20): Bigger payouts, more coordination
+
+**Contribution**:
+- Match to your community's capacity
+- $50-$500 monthly is common range
+- Higher amounts = more serious commitment
+
+**Duration**:
+- Weekly: Fast-moving, requires active management
+- Monthly: Most common, aligns with pay cycles
+- Bi-weekly: Balance of speed and manageability
+
+## Setting Up the Contract
+
+Creating pool on Axiom:
+
+1. Connect wallet to Axiom Wealth Practice
+2. Click "Create Pool"
+3. Set contribution amount
+4. Choose cycle duration
+5. Set member count
+6. Select payout order (sequential/random)
+7. Define grace period
+8. Deploy pool contract
+
+## Recruiting Members
+
+Build your circle:
+
+- Start with people you know
+- Explain The Wealth Practice concept to newcomers
+- Be transparent about terms
+- Screen for reliability
+- Maintain waitlist for future cycles
+
+## Pool Management
+
+Your responsibilities:
+
+- Answer member questions
+- Send reminders before due dates
+- Monitor for issues
+- Mediate any disputes
+- Communicate transparently
+
+## Building Pool Reputation
+
+Good pools attract good members:
+
+- Complete cycles successfully
+- Handle issues fairly
+- Maintain high completion rate
+- Grow organically through referrals
+
+## Common Challenges
+
+Be prepared for:
+
+- Members who want to drop out
+- Late payments during grace period
+- Questions about payout order
+- Requests for exceptions
+
+Have policies ready before issues arise.`,
+        keyTakeaways: [
+          'Plan pool size and contribution amounts based on your community',
+          'Monthly cycles align well with most people\'s pay schedules',
+          'Start with people you know and trust',
+          'Clear policies prevent disputes before they happen'
+        ]
+      }
+    ]
+  },
+  {
+    id: 6,
+    slug: 'governance-dao-participation',
+    title: 'DAO Governance Participation',
+    description: 'Understand how to participate in community governance, vote on proposals, and shape the future of Axiom.',
+    category: 'Governance',
+    difficulty: 'intermediate',
+    durationMinutes: 45,
+    requiredTier: 'pro',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'Understanding DAOs',
+        duration: 8,
+        content: `DAOs (Decentralized Autonomous Organizations) represent a new way for communities to govern themselves.
+
+## What is a DAO?
+
+A DAO is an organization where:
+
+- Rules are encoded in smart contracts
+- Decisions are made by token holders
+- Treasury is managed transparently
+- No single person has unilateral control
+- Code enforces the will of the community
+
+## How DAOs Differ from Traditional Organizations
+
+| Aspect | Traditional | DAO |
+|--------|-------------|-----|
+| Leadership | CEO/Board | Token holders |
+| Rules | Bylaws/contracts | Smart contracts |
+| Decisions | Top-down | Bottom-up voting |
+| Treasury | Banks/accountants | On-chain, transparent |
+| Membership | Employment/shares | Token ownership |
+
+## Types of DAOs
+
+DAOs serve different purposes:
+
+- **Protocol DAOs**: Govern DeFi protocols
+- **Investment DAOs**: Pool funds for investments
+- **Grant DAOs**: Distribute funds to projects
+- **Social DAOs**: Community membership
+- **Collector DAOs**: Acquire NFTs/assets
+- **Media DAOs**: Collaborative content creation
+
+Axiom is a hybrid—governing a smart city economy.
+
+## The Axiom Governance Structure
+
+Axiom's DAO includes:
+
+1. **AXM token holders**: Voting rights proportional to holdings
+2. **Council members**: Elected representatives
+3. **Working groups**: Specialized committees
+4. **Proposal system**: Formal change process
+5. **Treasury vault**: Community-controlled funds
+
+## Why Participation Matters
+
+Your voice counts:
+
+- Shape the direction of the project
+- Protect your investment
+- Contribute expertise
+- Build community
+- Earn governance rewards`,
+        keyTakeaways: [
+          'DAOs are organizations governed by code and token holders',
+          'Decisions are made through transparent voting processes',
+          'Axiom\'s DAO governs the entire smart city ecosystem',
+          'Participation gives you direct influence over the project\'s future'
+        ]
+      },
+      {
+        id: 2,
+        title: 'The Proposal Lifecycle',
+        duration: 8,
+        content: `Understanding how proposals work is essential for effective governance participation.
+
+## Proposal Types
+
+Axiom has different proposal categories:
+
+**Treasury Proposals**:
+- Request funds for projects
+- Budget allocations
+- Grant distributions
+
+**Parameter Changes**:
+- Fee adjustments
+- Staking requirements
+- Protocol parameters
+
+**Constitutional**:
+- Governance rule changes
+- Council elections
+- Fundamental amendments
+
+## The Proposal Journey
+
+Every proposal follows stages:
+
+### 1. Discussion (3-7 days)
+- Idea posted in forum
+- Community feedback
+- Refinement based on input
+- Temperature check (informal poll)
+
+### 2. Formal Proposal
+- Author submits on-chain proposal
+- Required AXM deposit
+- Proposal enters queue
+- Details finalized
+
+### 3. Voting Period (5-7 days)
+- Token holders cast votes
+- Voting power = AXM held
+- Can vote Yes, No, or Abstain
+- May change vote until period ends
+
+### 4. Timelock (2 days)
+- Passed proposals wait in timelock
+- Allows review before execution
+- Security measure against attacks
+
+### 5. Execution
+- Smart contract executes proposal
+- Treasury sends funds
+- Parameters change
+- Results are immutable
+
+## Proposal Requirements
+
+To submit a proposal:
+
+- Minimum AXM holding required
+- Deposit (refunded if proposal passes quorum)
+- Clear specification of changes
+- Forum discussion first (for significant proposals)`,
+        keyTakeaways: [
+          'Proposals go through discussion, voting, timelock, and execution phases',
+          'Different proposal types have different requirements',
+          'Forum discussion before formal proposals builds consensus',
+          'Timelock provides security review period before execution'
+        ]
+      },
+      {
+        id: 3,
+        title: 'How to Vote Effectively',
+        duration: 8,
+        content: `Voting is your primary governance power. Here's how to use it wisely.
+
+## Connecting and Voting
+
+Technical steps:
+
+1. Connect wallet to governance portal
+2. Ensure AXM is in voting wallet (not staked elsewhere)
+3. Navigate to active proposals
+4. Read proposal details
+5. Cast your vote
+6. Confirm transaction
+
+## Evaluating Proposals
+
+Questions to ask:
+
+- Does this benefit the community or special interests?
+- What are the risks and downsides?
+- Is the budget reasonable?
+- Who submitted it and what's their track record?
+- What does community sentiment look like?
+
+## Research Before Voting
+
+Do your homework:
+
+- Read the full proposal, not just title
+- Check forum discussion
+- Look at author's history
+- Consider opposition arguments
+- Understand implementation details
+
+## Voting Power and Delegation
+
+You have options:
+
+**Direct voting**: Use your AXM to vote yourself
+**Delegation**: Assign voting power to a trusted delegate
+
+When to delegate:
+- You don't have time to follow governance closely
+- You trust someone's judgment
+- You want your voice counted even when busy
+
+## Gas Costs
+
+Voting requires gas:
+
+- Check gas prices before voting
+- Batch votes if possible
+- Consider proposal importance vs. gas cost
+- Some DAOs offer gasless voting (Axiom working on this)
+
+## Voting Ethics
+
+Be a responsible voter:
+
+- Vote based on community benefit, not personal gain
+- Consider long-term consequences
+- Don't sell your vote
+- Engage thoughtfully in discussions`,
+        keyTakeaways: [
+          'Read full proposals and forum discussions before voting',
+          'Consider delegating if you can\'t follow governance closely',
+          'Evaluate proposals based on community benefit, not personal gain',
+          'Gas costs are a factor—consider importance vs. cost'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Creating Successful Proposals',
+        duration: 8,
+        content: `Want to propose a change? Here's how to create proposals that pass.
+
+## Start with Discussion
+
+Before formal proposal:
+
+1. Post idea in governance forum
+2. Explain the problem you're solving
+3. Outline your proposed solution
+4. Request feedback openly
+5. Be willing to modify based on input
+
+## Writing a Strong Proposal
+
+Essential elements:
+
+**Title**: Clear and specific
+**Summary**: One paragraph overview
+**Problem Statement**: What issue this addresses
+**Proposed Solution**: Detailed description
+**Implementation**: Technical specifications
+**Budget** (if applicable): Itemized costs
+**Timeline**: When and how it will be done
+**Risks**: Potential downsides and mitigations
+
+## Building Consensus
+
+Before formal vote:
+
+- Engage with critics constructively
+- Incorporate valid feedback
+- Build coalition of supporters
+- Address concerns directly
+- Consider compromise when reasonable
+
+## Avoiding Common Mistakes
+
+Proposals fail when they:
+
+- Ask for too much too fast
+- Lack clear implementation details
+- Ignore community feedback
+- Benefit author more than community
+- Don't address legitimate concerns
+- Have unrealistic timelines or budgets
+
+## After Submission
+
+Stay engaged:
+
+- Respond to questions during voting
+- Clarify misunderstandings
+- Provide updates
+- Be gracious whether you win or lose
+
+## If Your Proposal Fails
+
+Learn and improve:
+
+- Understand why it didn't pass
+- Gather feedback from voters
+- Revise and resubmit if appropriate
+- Sometimes timing matters—try again later`,
+        keyTakeaways: [
+          'Start with forum discussion to build consensus before formal proposal',
+          'Include problem, solution, implementation, budget, and timeline',
+          'Engage constructively with critics and incorporate feedback',
+          'Learn from failed proposals to improve future submissions'
+        ]
+      },
+      {
+        id: 5,
+        title: 'Advanced Governance Strategies',
+        duration: 8,
+        content: `Take your governance participation to the next level.
+
+## Building Influence
+
+Become a respected voice:
+
+- Participate consistently over time
+- Provide thoughtful analysis
+- Help newcomers understand proposals
+- Build reputation for fairness
+- Share expertise in your areas
+
+## Delegation and Delegates
+
+Understanding delegation:
+
+**As a delegator**:
+- Research delegate voting history
+- Choose delegates aligned with your values
+- Monitor their votes
+- Revoke delegation if needed
+
+**As a delegate**:
+- Communicate your voting philosophy
+- Explain your votes transparently
+- Engage with those who delegate to you
+- Take responsibility seriously
+
+## Governance Mining
+
+Some protocols reward participation:
+
+- Voting on proposals
+- Forum participation
+- Delegate activity
+- Proposal creation
+
+Check if Axiom offers governance incentives.
+
+## Working Groups
+
+Specialized participation:
+
+- Treasury committee
+- Technical committee
+- Grants committee
+- Community committee
+
+Join working groups matching your expertise.
+
+## Meta-Governance
+
+The governance of governance:
+
+- Voting system improvements
+- Quorum requirements
+- Voting period lengths
+- Proposal thresholds
+
+These foundational changes require careful consideration.
+
+## Protecting Against Attacks
+
+Be vigilant:
+
+- Watch for vote buying
+- Identify last-minute proposal manipulation
+- Flag suspicious proposals
+- Support security measures
+- Report concerning behavior
+
+> "Good governance is an ongoing commitment, not a one-time vote."`,
+        keyTakeaways: [
+          'Build influence through consistent, thoughtful participation',
+          'Delegation allows scaling of voice while maintaining accountability',
+          'Working groups offer specialized ways to contribute',
+          'Stay vigilant against governance attacks and manipulation'
+        ]
+      },
+      {
+        id: 6,
+        title: 'The Future of Governance',
+        duration: 5,
+        content: `Governance is evolving. Here's where it's headed.
+
+## Current Limitations
+
+DAOs face challenges:
+
+- Low voter turnout
+- Plutocracy (whale dominance)
+- Voter fatigue
+- Gas costs
+- Complexity barriers
+
+## Emerging Solutions
+
+Innovation is addressing these:
+
+**Quadratic voting**: Diminishing power for large holders
+**Conviction voting**: Time-weighted preferences
+**Optimistic governance**: Default approval with veto period
+**Futarchy**: Prediction markets guide decisions
+**Soulbound tokens**: Non-transferable reputation
+
+## Axiom's Governance Roadmap
+
+Planned improvements:
+
+- Gasless voting
+- Improved delegation tools
+- Council representation
+- Specialized voting tracks
+- Integration with city services
+
+## Your Ongoing Role
+
+Governance never stops:
+
+- Stay informed about proposals
+- Participate in discussions
+- Vote on important matters
+- Hold delegates accountable
+- Propose improvements
+
+## The Bigger Picture
+
+Axiom governance matters beyond token holders:
+
+- Blueprint for smart city democracy
+- Model for digital nation governance
+- Proof that decentralization works
+- Your participation shapes the future
+
+> "We're not just governing a protocol—we're pioneering new forms of collective decision-making."`,
+        keyTakeaways: [
+          'Current governance has limitations like low turnout and whale dominance',
+          'New voting mechanisms like quadratic voting address these issues',
+          'Axiom is continuously improving its governance systems',
+          'Your participation helps build models for future digital governance'
+        ]
+      }
+    ]
+  },
+  {
+    id: 7,
+    slug: 'real-estate-investing',
+    title: 'Real Estate Investment Strategies',
+    description: 'Advanced strategies for building wealth through real estate, from traditional investing to tokenized property ownership.',
+    category: 'Finance',
+    difficulty: 'advanced',
+    durationMinutes: 60,
+    requiredTier: 'pro',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'Introduction to Real Estate Investing',
+        duration: 10,
+        content: `Real estate has created more millionaires than any other asset class. Learn why and how to get started.
+
+## Why Real Estate?
+
+Real estate offers unique advantages:
+
+- **Tangible asset**: You can see, touch, and improve it
+- **Cash flow**: Monthly rental income
+- **Appreciation**: Property values tend to rise over time
+- **Leverage**: Use borrowed money to amplify returns
+- **Tax benefits**: Depreciation, deductions, and 1031 exchanges
+- **Inflation hedge**: Rents and values typically rise with inflation
+
+## Types of Real Estate Investments
+
+### Direct Ownership
+- Single-family rentals
+- Multi-family properties (2-4 units)
+- Commercial real estate
+- Land development
+
+### Indirect Ownership
+- REITs (Real Estate Investment Trusts)
+- Real estate crowdfunding
+- Tokenized property shares
+- Real estate funds
+
+## The BRRRR Strategy
+
+A popular wealth-building approach:
+
+1. **Buy**: Purchase undervalued property
+2. **Rehab**: Renovate to increase value
+3. **Rent**: Find quality tenants
+4. **Refinance**: Pull out your capital
+5. **Repeat**: Use that capital for the next deal
+
+## Getting Started
+
+Before your first investment:
+
+- Build emergency fund (3-6 months expenses)
+- Improve credit score (700+ ideal)
+- Save for down payment (20-25% for investment properties)
+- Research target markets
+- Build your team (agent, lender, contractor, property manager)`,
+        keyTakeaways: [
+          'Real estate builds wealth through cash flow, appreciation, leverage, and tax benefits',
+          'Multiple investment approaches exist from direct ownership to tokenized shares',
+          'The BRRRR strategy allows continuous portfolio growth',
+          'Proper preparation and team-building are essential before investing'
+        ]
+      },
+      {
+        id: 2,
+        title: 'Analyzing Investment Properties',
+        duration: 12,
+        content: `Success in real estate comes down to buying right. Learn how to analyze deals like a pro.
+
+## The 1% Rule
+
+Quick screening tool:
+
+- Monthly rent should be at least 1% of purchase price
+- $100,000 property should rent for $1,000/month minimum
+- Higher percentages indicate better cash flow potential
+
+## Cash Flow Analysis
+
+Calculate Net Operating Income (NOI):
+
+**Gross Rental Income**
+- Monthly rent x 12 months
+- Minus vacancy allowance (typically 5-10%)
+= Effective Gross Income
+
+**Operating Expenses**
+- Property taxes
+- Insurance
+- Utilities (if landlord paid)
+- Property management (8-12%)
+- Maintenance (10% of rent)
+- Repairs allowance
+- HOA fees
+- Lawn care/snow removal
+
+**NOI = Effective Gross Income - Operating Expenses**
+
+## Cap Rate
+
+Cap Rate = NOI / Property Value
+
+- 4-6%: Appreciation markets (coastal cities)
+- 7-9%: Balanced markets
+- 10%+: Cash flow markets (Midwest, South)
+
+## Cash-on-Cash Return
+
+Annual Cash Flow / Total Cash Invested x 100
+
+Example:
+- Purchase price: $150,000
+- Down payment (20%): $30,000
+- Closing costs: $5,000
+- Total invested: $35,000
+- Annual cash flow: $4,200
+
+Cash-on-Cash = $4,200 / $35,000 = 12%
+
+## Red Flags to Avoid
+
+Watch out for:
+
+- Deferred maintenance
+- Foundation issues
+- Environmental problems
+- Bad neighborhoods declining further
+- Properties requiring specialized knowledge
+- Sellers hiding information`,
+        keyTakeaways: [
+          'The 1% rule quickly screens potential investments',
+          'Cash flow analysis reveals true profitability after all expenses',
+          'Cap rate helps compare properties across different markets',
+          'Cash-on-cash return measures the efficiency of your invested capital'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Financing Your Investments',
+        duration: 10,
+        content: `Understanding financing options can make or break your real estate success.
+
+## Conventional Loans
+
+Traditional bank financing:
+
+- 20-25% down for investment properties
+- 15 or 30-year fixed terms
+- Best rates with good credit (720+)
+- Limited to 10 financed properties per person
+- Income documentation required
+
+## Portfolio Loans
+
+Held by local banks:
+
+- More flexible qualification
+- Can own unlimited properties
+- Higher rates (0.5-1% above conventional)
+- Relationship-based lending
+- Great for scaling beyond 10 properties
+
+## DSCR Loans
+
+Debt Service Coverage Ratio loans:
+
+- Based on property income, not personal income
+- DSCR = NOI / Debt Payments (target 1.25+)
+- No tax returns or W2s needed
+- Faster closing
+- Higher rates
+
+## Creative Financing
+
+Alternative approaches:
+
+- **Seller financing**: Owner becomes the bank
+- **Subject-to**: Take over existing mortgage
+- **Lease options**: Control without ownership
+- **Hard money**: Short-term, asset-based loans
+- **Private money**: Loans from individuals
+
+## Leverage Wisely
+
+Balance risk and return:
+
+- More leverage = higher returns but more risk
+- 75-80% LTV is conservative
+- Keep cash reserves for vacancies and repairs
+- Consider fixed-rate loans for predictability
+- Don't over-leverage in a rising rate environment`,
+        keyTakeaways: [
+          'Different loan types suit different investor situations',
+          'DSCR loans enable scaling without income documentation limits',
+          'Creative financing opens doors when traditional lending fails',
+          'Smart leverage amplifies returns while managing risk'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Tokenized Real Estate',
+        duration: 10,
+        content: `Blockchain technology is revolutionizing how we invest in real estate.
+
+## What is Tokenized Real Estate?
+
+Tokenization divides property ownership into digital tokens:
+
+- Each token represents fractional ownership
+- Recorded on blockchain for transparency
+- Can be traded on secondary markets
+- Lower minimum investments
+- Programmable compliance and dividends
+
+## Benefits Over Traditional REITs
+
+| Feature | REITs | Tokenized |
+|---------|-------|-----------|
+| Minimum | $1-100 | $10-500 |
+| Liquidity | Exchange hours | 24/7 |
+| Settlement | T+2 days | Minutes |
+| Transparency | Quarterly reports | Real-time |
+| Geographic access | Limited | Global |
+
+## KeyGrow: Rent-to-Own Tokenization
+
+Axiom's KeyGrow program uniquely tokenizes:
+
+- 100,000 shares per property
+- Earn shares through rent payments
+- Track equity on blockchain
+- Transparent ownership records
+- Path to full ownership
+
+## Due Diligence for Token Investments
+
+Before investing in tokenized real estate:
+
+1. Verify underlying property exists
+2. Confirm legal structure and rights
+3. Review smart contract audits
+4. Understand secondary market liquidity
+5. Check platform track record
+6. Review fee structures
+
+## The Future of Real Estate
+
+Tokenization enables:
+
+- Global investment in local properties
+- Fractional ownership of trophy assets
+- Instant settlement and transfers
+- Programmable rental distributions
+- Portfolio diversification at any budget`,
+        keyTakeaways: [
+          'Tokenization divides property into tradeable digital shares',
+          'Benefits include lower minimums, 24/7 trading, and global access',
+          'KeyGrow uniquely combines rent-to-own with tokenization',
+          'Always perform thorough due diligence on tokenized investments'
+        ]
+      },
+      {
+        id: 5,
+        title: 'Building Your Real Estate Portfolio',
+        duration: 10,
+        content: `A strategic approach to growing your real estate empire.
+
+## Portfolio Strategy
+
+Define your approach:
+
+- **Cash flow focused**: Maximize monthly income
+- **Appreciation focused**: Target growth markets
+- **Balanced**: Mix of both strategies
+- **Value-add**: Buy, improve, profit
+
+## The Path to 10 Properties
+
+Milestone approach:
+
+**Property 1-2: Learn the basics**
+- Single-family homes or duplexes
+- Close to home for easy management
+- Build systems and experience
+
+**Property 3-5: Scale up**
+- Consider small multifamily (3-4 units)
+- Hire property management
+- Refine your buy box
+
+**Property 6-10: Accelerate**
+- Portfolio lending
+- Larger commercial properties
+- Syndication opportunities
+- Geographic diversification
+
+## Geographic Diversification
+
+Spread risk across markets:
+
+- Don't put everything in one city
+- Consider landlord-friendly states
+- Balance appreciation and cash flow markets
+- Research economic drivers
+- Evaluate population and job trends
+
+## Exit Strategies
+
+Plan before you buy:
+
+- **Hold forever**: Generational wealth
+- **1031 exchange**: Defer taxes, upgrade
+- **Refinance**: Access equity tax-free
+- **Sell to tenant**: KeyGrow model
+- **Sell to investor**: Quick exit
+
+## Tax Optimization
+
+Legal strategies to minimize taxes:
+
+- Depreciation deductions
+- Cost segregation studies
+- 1031 exchanges
+- Qualified opportunity zones
+- Self-directed IRA investments
+- Real estate professional status`,
+        keyTakeaways: [
+          'Define your portfolio strategy before buying',
+          'Progress from simpler to more complex properties',
+          'Geographic diversification reduces concentration risk',
+          'Plan exit strategies and tax optimization from day one'
+        ]
+      }
+    ]
+  },
+  {
+    id: 8,
+    slug: 'blockchain-security',
+    title: 'Blockchain Security & Privacy',
+    description: 'Protect your digital assets with advanced security practices, wallet management, and privacy protection strategies.',
+    category: 'Blockchain',
+    difficulty: 'intermediate',
+    durationMinutes: 50,
+    requiredTier: 'pro',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'Understanding Crypto Threats',
+        duration: 10,
+        content: `The blockchain is secure, but users are vulnerable. Learn what threats you face.
+
+## Common Attack Vectors
+
+### Phishing
+Most crypto is lost to social engineering:
+
+- Fake websites mimicking exchanges
+- Fraudulent emails from "support"
+- Impersonators in Discord/Telegram
+- Malicious links in social media
+
+**Rule**: Never click links in messages about crypto.
+
+### Malware
+Software designed to steal:
+
+- Clipboard hijackers change wallet addresses
+- Keyloggers capture seed phrases
+- Screen capture malware
+- Fake wallet apps
+
+### SIM Swapping
+Attackers take over your phone number:
+
+- Call carrier pretending to be you
+- Transfer number to their SIM
+- Intercept 2FA codes
+- Access accounts
+
+### Smart Contract Exploits
+Bugs in code:
+
+- Infinite mint vulnerabilities
+- Reentrancy attacks
+- Oracle manipulation
+- Logic errors
+
+## The Human Element
+
+Technical security means nothing if:
+
+- You share your seed phrase
+- You approve malicious transactions
+- You connect to fake dApps
+- You trust strangers online
+
+## Security Mindset
+
+Adopt these principles:
+
+1. Assume you're a target
+2. Verify everything independently
+3. Use hardware security
+4. Limit attack surface
+5. Have recovery plans`,
+        keyTakeaways: [
+          'Phishing and social engineering are the biggest threats',
+          'Multiple attack vectors target crypto holders',
+          'Human error causes most security failures',
+          'A security-first mindset is essential'
+        ]
+      },
+      {
+        id: 2,
+        title: 'Wallet Security Best Practices',
+        duration: 10,
+        content: `Your wallet is your bank vault. Secure it properly.
+
+## Wallet Types
+
+### Hot Wallets
+Connected to internet:
+- Browser extensions (MetaMask)
+- Mobile apps
+- Desktop applications
+
+**Best for**: Small amounts, frequent transactions
+
+### Cold Wallets
+Offline storage:
+- Hardware wallets (Ledger, Trezor)
+- Paper wallets
+- Air-gapped computers
+
+**Best for**: Large holdings, long-term storage
+
+## Hardware Wallet Setup
+
+Essential steps:
+
+1. Buy directly from manufacturer
+2. Verify tamper-proof packaging
+3. Generate new seed phrase on device
+4. Write seed phrase on metal plate
+5. Never store seed digitally
+6. Test recovery before funding
+
+## Seed Phrase Protection
+
+Your seed phrase IS your crypto:
+
+**Do:**
+- Write on metal or titanium plate
+- Store in fireproof safe
+- Consider geographic distribution
+- Use sealed tamper-evident bags
+
+**Don't:**
+- Take photos
+- Store in password manager
+- Email to yourself
+- Keep on computer
+- Tell anyone
+
+## Multi-Signature Security
+
+Require multiple approvals:
+
+- 2-of-3 or 3-of-5 setups
+- Distribute keys geographically
+- Mix device types
+- Protect against single point of failure
+
+## Transaction Verification
+
+Before signing anything:
+
+1. Verify destination address (check multiple characters)
+2. Review transaction details on hardware wallet screen
+3. Confirm amounts match expectations
+4. Be suspicious of urgent requests
+5. When in doubt, don't sign`,
+        keyTakeaways: [
+          'Use cold storage for significant holdings',
+          'Seed phrase security is paramount - metal backups in secure locations',
+          'Multi-sig adds extra protection for large amounts',
+          'Always verify transactions on hardware wallet display'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Privacy in Blockchain',
+        duration: 10,
+        content: `Blockchain transparency is a double-edged sword. Protect your privacy.
+
+## The Privacy Challenge
+
+Public blockchains reveal:
+
+- All transaction history
+- Wallet balances
+- Connection between addresses
+- Timing patterns
+- Token holdings
+
+Anyone can analyze your entire financial history.
+
+## Privacy Risks
+
+Why this matters:
+
+- Targeted for theft (criminals see your balance)
+- Business intelligence leakage
+- Personal safety concerns
+- Unwanted marketing
+- Social engineering using your data
+
+## Privacy Practices
+
+### Address Hygiene
+- Use fresh addresses for receiving
+- Don't reuse addresses
+- Separate addresses by purpose
+- Avoid linking addresses publicly
+
+### Timing and Amounts
+- Avoid round numbers
+- Vary transaction timing
+- Break large transactions into smaller ones
+- Wait between related transactions
+
+### ENS and Identity
+- ENS names link to addresses permanently
+- Consider using for receiving only
+- Think before posting addresses publicly
+
+## Privacy Tools
+
+### Mixing Services
+Combine transactions to break links:
+- Understand legal implications
+- Use reputable services
+- Consider regulatory requirements
+
+### Privacy Chains
+Native privacy features:
+- Zcash (shielded transactions)
+- Monero (default privacy)
+- Secret Network (private smart contracts)
+
+### Layer 2 Privacy
+- Aztec Network
+- zkSync privacy features
+- Polygon Miden
+
+## The Regulatory Balance
+
+Navigate carefully:
+
+- Comply with local regulations
+- Understand reporting requirements
+- Privacy ≠ illegal activity
+- Legitimate privacy interests exist`,
+        keyTakeaways: [
+          'Public blockchain transparency creates real privacy risks',
+          'Good address hygiene limits exposure',
+          'Various tools exist but have trade-offs',
+          'Balance privacy with regulatory compliance'
+        ]
+      },
+      {
+        id: 4,
+        title: 'dApp Security',
+        duration: 10,
+        content: `Every dApp connection is a potential vulnerability. Learn to interact safely.
+
+## Connection Risks
+
+When you connect your wallet:
+
+- dApp sees your address
+- dApp can request transactions
+- Approvals may give unlimited access
+- Malicious sites mimic legitimate ones
+
+## Smart Approval Management
+
+### Token Approvals
+When you "approve" a token:
+- You're giving permission to spend
+- Often set to unlimited by default
+- Persists until you revoke
+- Can be exploited if contract is compromised
+
+### Limiting Approvals
+- Approve only what you need
+- Use exact amounts when possible
+- Revoke unused approvals regularly
+- Check approvals at revoke.cash or etherscan
+
+## Verifying dApps
+
+Before connecting:
+
+1. Check URL carefully (homograph attacks)
+2. Verify through official sources
+3. Look for audit reports
+4. Check contract verification on block explorer
+5. Research team and history
+6. Start with small amounts
+
+## Transaction Simulation
+
+Preview before signing:
+
+- Use tools like Pocket Universe or Fire
+- Simulate transaction outcomes
+- See what you're actually approving
+- Catch malicious transactions
+
+## Wallet Segregation
+
+Separate by risk:
+
+**Hot Wallet**: Small amounts for frequent dApp use
+
+**Vault Wallet**: Main holdings, rarely connected
+
+**Burner Wallet**: For new/risky dApps
+
+Never connect your main holdings to unknown dApps.
+
+## Recovering from Compromise
+
+If wallet is compromised:
+
+1. Don't panic - act quickly but carefully
+2. From CLEAN device, transfer assets to new wallet
+3. Revoke all approvals
+4. Report to relevant platforms
+5. Document for potential investigation
+6. Learn from the experience`,
+        keyTakeaways: [
+          'Wallet connections and approvals create ongoing risks',
+          'Regularly audit and revoke unused token approvals',
+          'Use separate wallets for different risk levels',
+          'Transaction simulation tools catch malicious requests'
+        ]
+      },
+      {
+        id: 5,
+        title: 'Operational Security',
+        duration: 10,
+        content: `Security extends beyond your wallet to your entire digital life.
+
+## Device Security
+
+Protect the hardware:
+
+- Keep operating systems updated
+- Use reputable antivirus/anti-malware
+- Enable disk encryption
+- Use strong device passwords
+- Avoid public computers for crypto
+
+## Network Security
+
+Protect connections:
+
+- Use VPN on public WiFi
+- Consider dedicated device for crypto
+- Avoid WiFi with sensitive transactions
+- Be aware of network monitoring
+
+## Account Security
+
+Protect online accounts:
+
+- Unique passwords for every site
+- Password manager (hardware key stored)
+- Hardware security keys (YubiKey)
+- Avoid SMS 2FA when possible
+- Use authenticator apps
+
+## SIM Swap Protection
+
+Protect your phone number:
+
+- Add PIN to carrier account
+- Request port-out protection
+- Consider Google Voice for crypto
+- Minimize phone number usage
+- Be wary of calls from "carrier"
+
+## Physical Security
+
+Don't advertise:
+
+- Avoid discussing holdings publicly
+- Be careful with crypto merchandise
+- Secure home office
+- Consider decoy wallet ($5 wrench attack)
+- Travel security for conferences
+
+## Incident Response Plan
+
+Before something happens:
+
+1. Document all accounts and access methods
+2. Create step-by-step emergency procedures
+3. Designate trusted contacts
+4. Secure backup access methods
+5. Practice your response plan
+
+## Estate Planning
+
+For the worst case:
+
+- Secure inheritance instructions
+- Consider dead man's switch services
+- Lawyer-held instructions
+- Trusted family member briefing
+- Test your inheritance plan`,
+        keyTakeaways: [
+          'Security extends to devices, networks, and accounts',
+          'Protect against SIM swapping and physical threats',
+          'Have incident response and estate plans ready',
+          'Operational security is an ongoing practice, not a one-time setup'
+        ]
+      }
+    ]
+  },
+  {
+    id: 9,
+    slug: 'web3-wealth-building',
+    title: 'Building Wealth in Web3',
+    description: 'Comprehensive strategies for generating income and building wealth in the blockchain economy.',
+    category: 'Finance',
+    difficulty: 'advanced',
+    durationMinutes: 55,
+    requiredTier: 'pro',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'Web3 Income Streams',
+        duration: 10,
+        content: `The blockchain economy offers unprecedented opportunities for wealth building.
+
+## Active Income Strategies
+
+### Development and Skills
+- Smart contract development
+- Frontend dApp development
+- Security auditing
+- Protocol contributions
+- Bug bounties
+
+### Content and Education
+- Technical writing
+- Video tutorials
+- Community management
+- Social media influence
+- Newsletter writing
+
+### Trading and Arbitrage
+- Spot trading
+- Derivatives trading
+- Cross-exchange arbitrage
+- DEX/CEX arbitrage
+- NFT flipping
+
+## Passive Income Strategies
+
+### Staking
+Earn by securing networks:
+- Proof of Stake validation
+- Liquid staking (Lido, Rocket Pool)
+- Delegated staking
+- Returns: 4-15% APY typically
+
+### Lending
+Provide liquidity for borrowers:
+- Aave, Compound protocols
+- Stablecoin lending
+- Variable and fixed rates
+- Returns: 2-10% APY
+
+### Liquidity Provision
+Supply to trading pools:
+- DEX liquidity pools
+- Concentrated liquidity (Uniswap V3)
+- Cross-chain bridges
+- Returns: Variable, can be 10-100%+
+- Risk: Impermanent loss
+
+### DePIN Participation
+Provide infrastructure:
+- Storage (Filecoin)
+- Compute (Render)
+- Wireless (Helium)
+- Data (Axiom Nodes)
+
+## Choosing Your Path
+
+Consider:
+- Your skills and interests
+- Time availability
+- Risk tolerance
+- Capital available
+- Long-term goals`,
+        keyTakeaways: [
+          'Web3 offers both active and passive income opportunities',
+          'Match strategies to your skills, time, and capital',
+          'Diversify across multiple income streams',
+          'Understand risks before committing capital'
+        ]
+      },
+      {
+        id: 2,
+        title: 'DeFi Yield Strategies',
+        duration: 12,
+        content: `DeFi offers yields impossible in traditional finance, but with risks to match.
+
+## Understanding APY vs APR
+
+**APR**: Simple interest rate
+**APY**: Includes compounding
+
+$10,000 at 10% for one year:
+- 10% APR = $11,000
+- 10% APY (daily compound) = $11,052
+
+## Stablecoin Strategies
+
+Lower risk approaches:
+
+### Basic Lending
+- Deposit USDC/USDT/DAI on Aave or Compound
+- Earn 2-8% depending on market conditions
+- Principal relatively stable
+- Smart contract risk remains
+
+### Curve Finance
+- Provide stablecoin liquidity
+- Earn trading fees + CRV rewards
+- Low impermanent loss (similar assets)
+- Stake LP tokens for boosted rewards
+
+## Higher Yield Strategies
+
+More risk, more reward:
+
+### Leveraged Lending
+1. Deposit collateral (ETH)
+2. Borrow stablecoins
+3. Deposit stablecoins for yield
+4. Repeat (loop)
+
+Risk: Liquidation if collateral drops
+
+### Concentrated Liquidity
+- Uniswap V3 positions
+- Higher capital efficiency
+- Requires active management
+- Higher IL risk if price moves out of range
+
+### Cross-Chain Yields
+- Bridge to lower-competition chains
+- Higher yields, newer protocols
+- Additional bridge and chain risk
+
+## Yield Farming
+
+Maximize rewards:
+
+1. Identify high-APY opportunities
+2. Deposit and stake
+3. Claim and compound rewards
+4. Exit before rewards dilute
+
+Warning: High APY usually means high inflation. Token rewards may drop in value.
+
+## Risk Management
+
+Protect your capital:
+
+- Never invest more than you can lose
+- Diversify across protocols
+- Monitor positions regularly
+- Set liquidation alerts
+- Keep some capital uninvested for opportunities`,
+        keyTakeaways: [
+          'Understand APY vs APR and how compounding works',
+          'Stablecoin strategies offer lower risk entry points',
+          'Higher yields come with proportionally higher risks',
+          'Active management and risk monitoring are essential'
+        ]
+      },
+      {
+        id: 3,
+        title: 'NFT Economics',
+        duration: 10,
+        content: `Beyond digital art, NFTs represent new economic models for creators and collectors.
+
+## NFT Value Drivers
+
+What makes NFTs valuable:
+
+- **Scarcity**: Limited supply
+- **Utility**: Access, benefits, rights
+- **Community**: Belonging to a group
+- **Status**: Social signaling
+- **Art**: Aesthetic appreciation
+- **Speculation**: Future value expectations
+
+## Creator Economics
+
+NFTs change creator income:
+
+### Primary Sales
+- Direct to collector
+- No gallery/label cut
+- Global audience
+- Set your own prices
+
+### Royalties
+- Earn on every resale
+- Typically 5-10%
+- Passive income forever
+- Enforced by smart contract
+
+### Membership NFTs
+- Sell access passes
+- Recurring revenue potential
+- Community building
+- Tiered benefits
+
+## Collector Strategies
+
+Building valuable collections:
+
+### Blue Chip
+- Established projects (CryptoPunks, BAYC)
+- Higher entry cost
+- More stable value
+- Status and community
+
+### Early Projects
+- New artists and projects
+- Lower entry cost
+- High upside potential
+- Higher risk
+
+### Utility Focus
+- Gaming assets
+- Membership passes
+- Domain names
+- Revenue-generating NFTs
+
+## Evaluating NFT Investments
+
+Due diligence:
+
+1. Team credibility and track record
+2. Community size and engagement
+3. Roadmap feasibility
+4. Art quality and uniqueness
+5. Secondary market volume
+6. Holder distribution
+7. Long-term utility
+
+## NFT Flipping
+
+Active trading approach:
+
+- Monitor new drops
+- Quick entry on promising projects
+- Exit within hours/days
+- Requires market knowledge
+- Time intensive`,
+        keyTakeaways: [
+          'NFT value comes from multiple factors beyond art',
+          'Creators benefit from royalties and direct sales',
+          'Different strategies suit different risk profiles',
+          'Research projects thoroughly before investing'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Portfolio Management',
+        duration: 12,
+        content: `Managing a Web3 portfolio requires different thinking than traditional finance.
+
+## Asset Allocation
+
+Building a balanced portfolio:
+
+### Core Holdings (50-70%)
+- Bitcoin
+- Ethereum
+- Major L1s
+- Blue-chip DeFi tokens
+
+### Growth (20-30%)
+- Emerging L1/L2s
+- New DeFi protocols
+- NFT projects
+- Gaming tokens
+
+### Speculation (5-15%)
+- Memecoins
+- Early projects
+- High-risk/high-reward plays
+
+### Stables (10-20%)
+- USDC, USDT, DAI
+- Dry powder for opportunities
+- Earning yield in DeFi
+
+## Rebalancing
+
+Maintain target allocation:
+
+- Monthly or quarterly review
+- Sell winners to target %
+- Add to underweight positions
+- Consider tax implications
+- Don't rebalance too frequently
+
+## Tracking Performance
+
+Tools and metrics:
+
+- DeBank for portfolio tracking
+- Zapper for DeFi positions
+- Dune dashboards for research
+- Tax software (Koinly, CoinTracker)
+
+Key metrics:
+- Total portfolio value
+- Return vs BTC/ETH
+- Yield income
+- Gas costs
+- Tax liability
+
+## Dollar Cost Averaging
+
+Reduce timing risk:
+
+- Regular purchases regardless of price
+- Removes emotion from investing
+- Best for long-term holdings
+- Automate with recurring buys
+
+## Taking Profits
+
+Essential for wealth building:
+
+- Set targets before entering positions
+- Take partial profits on the way up
+- Move profits to stables or BTC/ETH
+- Pay yourself (real world spending)
+- Reinvest systematically
+
+## Bear Market Strategy
+
+When markets crash:
+
+- Don't panic sell
+- Maintain stablecoin allocation
+- Continue DCA on conviction holdings
+- Avoid high-leverage positions
+- Build for the next cycle`,
+        keyTakeaways: [
+          'Allocate across risk levels with core, growth, and speculative tiers',
+          'Regular rebalancing maintains your target risk profile',
+          'Track performance and tax liability with proper tools',
+          'Systematic profit-taking turns paper gains into real wealth'
+        ]
+      },
+      {
+        id: 5,
+        title: 'Long-Term Wealth Building',
+        duration: 11,
+        content: `Building generational wealth through Web3 requires patience and strategy.
+
+## The Compound Effect
+
+Time is your greatest asset:
+
+- $10,000 at 15% for 10 years = $40,455
+- $10,000 at 15% for 20 years = $163,665
+- $10,000 at 15% for 30 years = $662,117
+
+Start early, stay consistent.
+
+## Conviction Investing
+
+Holding through volatility:
+
+- Deeply understand what you own
+- Invest in technology, not just price
+- Ignore short-term noise
+- Review thesis periodically
+- Know when you're wrong
+
+## Building Real Assets
+
+Beyond speculation:
+
+### Income-Producing Crypto
+- Staking yields
+- DePIN nodes
+- Rental income from virtual land
+- Revenue-sharing tokens
+
+### Real World Assets
+- Tokenized real estate (KeyGrow)
+- Tokenized commodities
+- Revenue-based tokens
+- RWA lending
+
+### Ownership Stakes
+- DAO tokens with treasury claims
+- Protocol revenue shares
+- Equity tokens (where legal)
+
+## Tax Efficiency
+
+Keep more of what you earn:
+
+- Long-term capital gains rates
+- Tax-loss harvesting
+- Opportunity zones
+- Charitable giving (crypto donations)
+- Self-directed IRAs
+- Relocating to favorable jurisdictions
+
+## Creating Multiple Income Streams
+
+Wealth stability:
+
+1. Active income (job/business)
+2. Staking/lending yields
+3. DePIN rewards
+4. Real estate income
+5. Protocol fees/royalties
+6. Trading profits
+
+## Wealth Preservation
+
+Protecting what you've built:
+
+- Diversification across asset classes
+- Geographic diversification
+- Cold storage security
+- Estate planning
+- Insurance where available
+- Stay informed on regulation
+
+## The Axiom Advantage
+
+Building wealth within the ecosystem:
+
+- AXM staking rewards
+- DePIN node operation
+- KeyGrow equity accumulation
+- Wealth Practice community participation
+- Governance participation
+- Ecosystem growth
+
+> "The goal isn't just to get rich in crypto—it's to build sustainable, generational wealth that improves your life and community."`,
+        keyTakeaways: [
+          'Compounding over time creates exponential wealth growth',
+          'Focus on income-producing assets, not just speculation',
+          'Tax efficiency significantly impacts long-term returns',
+          'Multiple income streams provide stability and acceleration'
+        ]
+      }
+    ]
+  },
+  {
+    id: 10,
+    slug: 'cryptocurrency-basics',
+    title: 'Cryptocurrency Basics',
+    description: 'Your first steps into the world of digital currencies. Learn what cryptocurrency is, how it works, and why it matters.',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 35,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'What is Cryptocurrency?',
+        duration: 8,
+        content: `Cryptocurrency is digital money that exists only on the internet. Unlike dollars or euros, no government or bank controls it.
+
+## Digital Money Explained
+
+Think of cryptocurrency like digital cash:
+
+- **Exists only online**: No physical coins or bills
+- **Decentralized**: No single company or government controls it
+- **Secure**: Protected by advanced mathematics
+- **Borderless**: Send anywhere in the world instantly
+
+## How It's Different from Regular Money
+
+| Feature | Regular Money | Cryptocurrency |
+|---------|--------------|----------------|
+| Who controls it | Banks & governments | Computer network |
+| Where it exists | Physical & digital | Only digital |
+| Transfer speed | Days for international | Minutes |
+| Transaction fees | Can be high | Usually low |
+| Privacy | Limited | More private |
+
+## Why People Use Cryptocurrency
+
+Different people use crypto for different reasons:
+
+- **Store value**: Like digital gold
+- **Send money**: Faster and cheaper than banks
+- **Access finance**: No bank account needed
+- **Privacy**: More control over your money
+- **Investment**: Potential for growth
+
+## Common Cryptocurrencies
+
+The most well-known include:
+
+- **Bitcoin (BTC)**: The first and largest
+- **Ethereum (ETH)**: Powers smart contracts
+- **Stablecoins**: Value tied to dollars
+- **AXM**: Axiom's ecosystem token`,
+        keyTakeaways: [
+          'Cryptocurrency is digital money not controlled by banks or governments',
+          'It exists only online and is secured by mathematics',
+          'People use crypto for payments, savings, and investment',
+          'Bitcoin and Ethereum are the most popular cryptocurrencies'
+        ]
+      },
+      {
+        id: 2,
+        title: 'How Cryptocurrency Works',
+        duration: 10,
+        content: `Behind every cryptocurrency is a technology called blockchain. Understanding the basics helps you use crypto confidently.
+
+## The Blockchain
+
+Think of blockchain as a public record book:
+
+- Every transaction is written down
+- Everyone can see the record
+- No one can erase or change past entries
+- Copies exist on thousands of computers
+
+## How Transactions Work
+
+When you send cryptocurrency:
+
+1. You create a transaction (like writing a check)
+2. Your wallet signs it with your private key
+3. The network verifies it's valid
+4. It gets added to the blockchain
+5. The recipient sees their balance update
+
+## Mining and Validation
+
+Who keeps the blockchain running?
+
+- **Miners/Validators**: Computers that process transactions
+- **Rewards**: They earn crypto for their work
+- **Security**: Makes it nearly impossible to cheat
+
+## Public and Private Keys
+
+Your crypto identity has two parts:
+
+**Public Key (Address)**
+- Like your email address
+- Share it to receive crypto
+- Anyone can see it
+
+**Private Key**
+- Like your password
+- NEVER share it
+- Controls your funds
+
+## Transaction Fees
+
+Every transaction has a small fee:
+
+- Pays the network validators
+- Varies by network congestion
+- Higher fees = faster processing`,
+        keyTakeaways: [
+          'Blockchain is a public record of all transactions',
+          'Transactions are verified by a network of computers',
+          'Your private key controls your funds - never share it',
+          'Small fees pay the network to process transactions'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Getting Your First Crypto',
+        duration: 8,
+        content: `Ready to get started? Here are the common ways to acquire cryptocurrency.
+
+## Cryptocurrency Exchanges
+
+The most common method:
+
+- **Centralized exchanges**: Coinbase, Kraken, Binance
+- Create account with ID verification
+- Link bank account or card
+- Buy crypto with regular money
+
+## Peer-to-Peer
+
+Buy directly from other people:
+
+- Platforms connect buyers and sellers
+- More privacy but more responsibility
+- Meet in safe locations for cash deals
+
+## Earn Crypto
+
+Get paid in cryptocurrency:
+
+- Some employers offer crypto payments
+- Freelance platforms with crypto options
+- Complete tasks for crypto rewards
+- Participate in DePIN networks
+
+## Receive as Payment
+
+Accept crypto for goods or services:
+
+- Set up a wallet to receive
+- Share your public address
+- Great for online businesses
+
+## What to Buy First
+
+For beginners, consider:
+
+1. **Bitcoin**: Most established, widely accepted
+2. **Ethereum**: Second largest, powers DeFi
+3. **Stablecoins**: No price volatility, good for learning
+
+## Start Small
+
+Important advice:
+
+- Only invest what you can afford to lose
+- Start with a small amount to learn
+- Understand before investing more
+- Never rush into big purchases`,
+        keyTakeaways: [
+          'Exchanges are the easiest way to buy crypto',
+          'You can also earn crypto through work or DePIN',
+          'Start with established coins like Bitcoin or Ethereum',
+          'Only invest what you can afford to lose'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Using Cryptocurrency Safely',
+        duration: 9,
+        content: `Crypto gives you control, but that means you're responsible for security. Follow these practices.
+
+## Protect Your Keys
+
+Your private key is everything:
+
+- Write it down on paper (not digitally)
+- Store in a safe, secure location
+- Never share with anyone
+- Consider a metal backup for fire protection
+
+## Recognize Scams
+
+Common crypto scams to avoid:
+
+- **"Send crypto to get more back"**: Always a scam
+- **Fake customer support**: Real support never asks for keys
+- **Too good to be true returns**: If it sounds impossible, it is
+- **Phishing sites**: Always check the URL carefully
+- **Romance scams**: Beware of online "friends" wanting crypto
+
+## Verify Before Sending
+
+Crypto transactions are irreversible:
+
+- Double-check addresses before sending
+- Send a small test amount first
+- Verify you're on legitimate websites
+- Don't rush important transactions
+
+## Keep Software Updated
+
+Stay protected:
+
+- Update wallet apps regularly
+- Keep your phone/computer updated
+- Use reputable wallet software only
+- Enable all available security features
+
+## Start with Trusted Platforms
+
+For beginners:
+
+- Use well-known exchanges
+- Enable two-factor authentication
+- Start with small amounts
+- Learn before taking risks`,
+        keyTakeaways: [
+          'Your private key controls your funds - protect it carefully',
+          'Never send crypto to "get more back" - always a scam',
+          'Double-check addresses before sending - transactions are irreversible',
+          'Use trusted platforms and keep software updated'
+        ]
+      }
+    ]
+  },
+  {
+    id: 11,
+    slug: 'wallet-setup-guide',
+    title: 'Wallet Setup & Safety',
+    description: 'Learn how to set up your first cryptocurrency wallet, understand different wallet types, and keep your assets secure.',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 40,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'Understanding Crypto Wallets',
+        duration: 8,
+        content: `A cryptocurrency wallet is your gateway to the blockchain world. Let's understand what it really is.
+
+## What is a Wallet?
+
+A crypto wallet doesn't actually "hold" your crypto:
+
+- Your crypto lives on the blockchain
+- The wallet holds your keys to access it
+- Think of it as a keychain, not a safe
+
+## Wallet Components
+
+Every wallet has:
+
+**Public Address**
+- Your receiving address (like an email)
+- Safe to share with anyone
+- Example: 0x742d35Cc6634C0532925a3b844Bc9e7595f1
+
+**Private Key**
+- Your secret password
+- NEVER share with anyone
+- Whoever has this controls your funds
+
+**Seed Phrase**
+- 12-24 words that generate your keys
+- Your ultimate backup
+- Write down and store securely
+
+## Types of Wallets
+
+Different wallets for different needs:
+
+- **Hot Wallets**: Connected to internet
+- **Cold Wallets**: Offline storage
+- **Custodial**: Someone else holds keys
+- **Non-custodial**: You control keys
+
+## Choosing the Right Wallet
+
+Consider:
+
+- How much crypto will you store?
+- How often will you transact?
+- What's your technical comfort level?
+- Which cryptocurrencies do you need?`,
+        keyTakeaways: [
+          'Wallets hold your keys, not your crypto',
+          'Your seed phrase is the ultimate backup - protect it',
+          'Never share your private key or seed phrase',
+          'Different wallet types suit different needs'
+        ]
+      },
+      {
+        id: 2,
+        title: 'Setting Up MetaMask',
+        duration: 10,
+        content: `MetaMask is the most popular wallet for Ethereum and compatible networks. Here's how to set it up.
+
+## Installing MetaMask
+
+Step by step:
+
+1. Go to metamask.io (verify URL carefully)
+2. Click "Download" for your browser
+3. Install the browser extension
+4. Click "Create a new wallet"
+
+## Creating Your Wallet
+
+The setup process:
+
+1. Create a strong password
+2. Watch the security video
+3. Reveal your Secret Recovery Phrase
+4. Write down ALL 12 words in order
+5. Verify by entering words in correct order
+
+## Critical: Backup Your Seed Phrase
+
+Your 12 words are your wallet:
+
+**DO:**
+- Write on paper immediately
+- Store in multiple secure locations
+- Consider a metal backup
+
+**DON'T:**
+- Screenshot or photograph
+- Store digitally (no notes app, email)
+- Share with anyone ever
+
+## Connecting to Axiom
+
+To use Axiom ecosystem:
+
+1. Open MetaMask
+2. Click network dropdown
+3. Add Arbitrum One network
+4. You're ready for Axiom!
+
+## First Transaction
+
+Before sending large amounts:
+
+- Add a small amount to practice
+- Send a tiny test transaction
+- Verify everything works
+- Then proceed with confidence`,
+        keyTakeaways: [
+          'Only download MetaMask from metamask.io',
+          'Write your seed phrase on paper - never digitally',
+          'Store backups in multiple secure locations',
+          'Practice with small amounts before large transactions'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Hot Wallets vs Cold Wallets',
+        duration: 10,
+        content: `Understanding when to use each type of wallet keeps your crypto secure.
+
+## Hot Wallets
+
+Connected to the internet:
+
+**Examples:**
+- MetaMask (browser)
+- Trust Wallet (mobile)
+- Coinbase Wallet (mobile)
+
+**Best For:**
+- Daily transactions
+- Small amounts
+- Interacting with dApps
+- Convenience
+
+**Risks:**
+- Vulnerable to hacks
+- Malware can target them
+- Phishing attacks
+
+## Cold Wallets
+
+Offline storage:
+
+**Examples:**
+- Ledger (hardware device)
+- Trezor (hardware device)
+- Paper wallets
+
+**Best For:**
+- Long-term storage
+- Large amounts
+- Maximum security
+
+**Trade-offs:**
+- Less convenient
+- Cost money to buy
+- Can be lost physically
+
+## The Smart Approach
+
+Use both strategically:
+
+**Hot Wallet** (checking account)
+- Keep small amounts
+- Use for regular activity
+- Acceptable loss if compromised
+
+**Cold Wallet** (savings account)
+- Store majority of holdings
+- Access only when needed
+- Maximum security for value
+
+## How Much in Each?
+
+General guidelines:
+
+- Hot: Amount you'd carry in regular wallet
+- Cold: Everything else
+- Adjust based on your activity level`,
+        keyTakeaways: [
+          'Hot wallets are convenient but less secure',
+          'Cold wallets are secure but less convenient',
+          'Use hot wallets like a checking account',
+          'Keep majority in cold storage like savings'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Wallet Security Best Practices',
+        duration: 12,
+        content: `Your crypto is only as safe as your security practices. Follow these guidelines.
+
+## Seed Phrase Protection
+
+The most important rule:
+
+- **Physical backup**: Paper or metal
+- **Multiple locations**: Home safe + bank box
+- **No digital copies**: No photos, no cloud
+- **Tell no one**: Not even family (unless estate planning)
+
+## Password Security
+
+For your wallet password:
+
+- Use unique, strong passwords
+- Enable password manager
+- Never reuse passwords
+- Change if any suspicion of compromise
+
+## Device Security
+
+Protect your devices:
+
+- Keep operating system updated
+- Use antivirus software
+- Avoid suspicious downloads
+- Don't use public WiFi for crypto
+
+## Recognizing Threats
+
+Watch for:
+
+- Fake wallet apps
+- Phishing emails pretending to be support
+- Malicious browser extensions
+- Fake websites (check URLs carefully)
+- Anyone asking for your seed phrase
+
+## Recovery Planning
+
+Prepare for emergencies:
+
+- Test recovery process with small amounts
+- Document wallet types and locations
+- Consider inheritance planning
+- Have trusted backup access method
+
+## Regular Security Checks
+
+Monthly routine:
+
+- Check wallet connections
+- Revoke unused approvals
+- Update software
+- Verify backup accessibility`,
+        keyTakeaways: [
+          'Physical seed phrase backups in multiple secure locations',
+          'Never store seed phrase digitally or share with anyone',
+          'Keep devices updated and use security software',
+          'Test your recovery process before you need it'
+        ]
+      }
+    ]
+  },
+  {
+    id: 12,
+    slug: 'blockchain-fundamentals',
+    title: 'Blockchain Fundamentals',
+    description: 'Understand how blockchain technology works, from blocks and chains to consensus mechanisms and smart contracts.',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 45,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'What is a Blockchain?',
+        duration: 10,
+        content: `Blockchain is the technology behind cryptocurrency. Understanding it helps you navigate the crypto world confidently.
+
+## The Simple Explanation
+
+A blockchain is:
+
+- A digital record book
+- Shared across many computers
+- That no one can change or erase
+
+## Blocks and Chains
+
+How it's structured:
+
+**Blocks**
+- Containers of transaction data
+- Created every few seconds/minutes
+- Has a unique fingerprint (hash)
+
+**Chain**
+- Blocks linked in order
+- Each references the previous one
+- Creates an unbreakable sequence
+
+## Why It's Special
+
+Traditional databases vs blockchain:
+
+| Traditional | Blockchain |
+|-------------|------------|
+| Controlled by one entity | Distributed globally |
+| Can be changed | Immutable record |
+| Private | Transparent |
+| Trust the company | Trust the math |
+
+## Real-World Analogy
+
+Think of blockchain like a Google Doc:
+
+- Everyone sees the same document
+- Changes are visible to all
+- History is preserved
+- No one can secretly edit
+
+But even better:
+- No single owner
+- Can't be shut down
+- Mathematically secured
+
+## Key Benefits
+
+Why blockchain matters:
+
+- **Transparency**: Anyone can verify
+- **Security**: Nearly impossible to hack
+- **Decentralization**: No single point of failure
+- **Immutability**: History can't be changed`,
+        keyTakeaways: [
+          'Blockchain is a shared, unchangeable digital record',
+          'Blocks contain transactions and link together in a chain',
+          'No single entity controls the blockchain',
+          'Transparency and security are built into the design'
+        ]
+      },
+      {
+        id: 2,
+        title: 'How Transactions Work',
+        duration: 10,
+        content: `Every time crypto changes hands, a specific process ensures the transaction is valid and recorded.
+
+## Creating a Transaction
+
+When you send crypto:
+
+1. You specify recipient address
+2. You specify amount to send
+3. Your wallet creates the transaction
+4. You sign it with your private key
+
+## The Signature
+
+Digital signatures prove:
+
+- You authorized this transaction
+- You own the sending address
+- The transaction hasn't been tampered with
+
+Like a handwritten signature, but:
+- Mathematically verifiable
+- Impossible to forge
+- Unique to each transaction
+
+## Broadcasting
+
+Once signed:
+
+1. Transaction sent to the network
+2. Nodes receive and validate it
+3. Pending until included in a block
+4. Once in a block, it's confirmed
+
+## Confirmation
+
+What confirmation means:
+
+- **0 confirmations**: Transaction sent, not yet in block
+- **1 confirmation**: Included in one block
+- **6+ confirmations**: Considered final
+
+More confirmations = more security
+
+## Transaction Fees
+
+Every transaction includes a fee:
+
+- Paid to validators/miners
+- Higher fee = faster processing
+- Varies by network congestion
+- Some networks have very low fees`,
+        keyTakeaways: [
+          'Transactions are signed with your private key',
+          'The network validates before adding to blockchain',
+          'More confirmations means more security',
+          'Fees incentivize network validators'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Consensus Mechanisms',
+        duration: 12,
+        content: `How do thousands of computers agree on what's true? Consensus mechanisms make this possible.
+
+## The Problem
+
+In a decentralized network:
+
+- No central authority
+- Anyone can participate
+- Some might try to cheat
+- Need agreement on truth
+
+## Proof of Work (PoW)
+
+The original method (Bitcoin):
+
+- Computers solve complex puzzles
+- First to solve adds the next block
+- Requires massive computing power
+- Very secure but uses lots of energy
+
+## Proof of Stake (PoS)
+
+Modern approach (Ethereum, Arbitrum):
+
+- Validators lock up crypto as stake
+- Selected to create blocks based on stake
+- Cheaters lose their staked funds
+- Much more energy efficient
+
+## Comparing Approaches
+
+| Feature | Proof of Work | Proof of Stake |
+|---------|--------------|----------------|
+| Energy use | Very high | Low |
+| Hardware | Expensive | Standard |
+| Security | Battle-tested | Proven secure |
+| Speed | Slower | Faster |
+
+## Why This Matters
+
+Consensus mechanisms ensure:
+
+- Everyone agrees on transaction history
+- No double-spending
+- Network stays secure
+- Decentralization is maintained
+
+## Axiom's Approach
+
+Axiom uses Arbitrum (Layer 2):
+
+- Inherits Ethereum security
+- Faster transactions
+- Lower fees
+- Proof of Stake based`,
+        keyTakeaways: [
+          'Consensus lets decentralized networks agree on truth',
+          'Proof of Work uses computing power for security',
+          'Proof of Stake uses staked crypto for security',
+          'Axiom on Arbitrum benefits from efficient PoS security'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Smart Contracts Explained',
+        duration: 13,
+        content: `Smart contracts are programs that run on blockchain. They power most of modern crypto.
+
+## What is a Smart Contract?
+
+A smart contract is:
+
+- Code stored on blockchain
+- Executes automatically
+- When conditions are met
+- Cannot be changed once deployed
+
+## Simple Example
+
+A basic smart contract:
+
+"If Bob sends 1 ETH, then send him 100 tokens"
+
+The contract:
+- Waits for Bob's payment
+- Verifies the amount
+- Automatically sends tokens
+- No human intervention needed
+
+## Real-World Applications
+
+Smart contracts power:
+
+- **DeFi**: Lending, borrowing, trading
+- **NFTs**: Digital ownership
+- **DAOs**: Decentralized organizations
+- **Token sales**: Automated distributions
+- **Gaming**: In-game assets and rewards
+
+## Benefits
+
+Why smart contracts matter:
+
+- **Trustless**: No intermediary needed
+- **Transparent**: Code is public
+- **Automatic**: Executes without delay
+- **Immutable**: Terms can't change
+
+## Risks to Know
+
+Be aware:
+
+- Bugs can cause losses
+- Code is law (no reversals)
+- Scammers create malicious contracts
+- Always verify before interacting
+
+## Axiom Smart Contracts
+
+Axiom uses smart contracts for:
+
+- AXM token transfers
+- DePIN node rewards
+- KeyGrow equity tracking
+- Wealth Practice savings pools
+- Governance voting`,
+        keyTakeaways: [
+          'Smart contracts are self-executing code on blockchain',
+          'They run automatically when conditions are met',
+          'They power DeFi, NFTs, DAOs, and more',
+          'Always verify contracts before interacting'
+        ]
+      }
+    ]
+  },
+  {
+    id: 13,
+    slug: 'intro-to-defi',
+    title: 'Introduction to DeFi',
+    description: 'Discover decentralized finance (DeFi) and how it provides financial services without traditional banks or intermediaries.',
+    category: 'Finance',
+    difficulty: 'beginner',
+    durationMinutes: 40,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'What is DeFi?',
+        duration: 10,
+        content: `DeFi (Decentralized Finance) recreates financial services using blockchain instead of banks.
+
+## Traditional Finance vs DeFi
+
+The old way:
+- Banks hold your money
+- Banks decide who gets loans
+- Banks take profits
+- Limited hours and access
+
+The DeFi way:
+- You control your money
+- Algorithms determine lending
+- Users share profits
+- 24/7 access globally
+
+## Core DeFi Services
+
+What you can do with DeFi:
+
+- **Lending**: Earn interest on your crypto
+- **Borrowing**: Get loans without credit checks
+- **Trading**: Swap tokens directly
+- **Earning**: Provide liquidity for rewards
+- **Saving**: Earn yield on deposits
+
+## Why DeFi Matters
+
+Benefits over traditional finance:
+
+- **Permissionless**: No application or approval
+- **Transparent**: See exactly how it works
+- **Global**: Anyone with internet can participate
+- **Interoperable**: Services work together
+- **Non-custodial**: You keep control
+
+## The Building Blocks
+
+DeFi is built on:
+
+- Smart contracts (automated rules)
+- Cryptocurrencies (digital money)
+- Wallets (your access point)
+- Protocols (the services)`,
+        keyTakeaways: [
+          'DeFi provides financial services without banks',
+          'You maintain control of your funds',
+          'Anyone can access DeFi with just an internet connection',
+          'Smart contracts automate all operations'
+        ]
+      },
+      {
+        id: 2,
+        title: 'Key DeFi Concepts',
+        duration: 10,
+        content: `Understanding DeFi requires knowing some key concepts and terminology.
+
+## Liquidity
+
+What it means:
+
+- Funds available for trading
+- More liquidity = easier trades
+- Users provide liquidity
+- Earn fees in return
+
+## Liquidity Pools
+
+How decentralized trading works:
+
+- Users deposit token pairs
+- Traders swap against the pool
+- Fees distributed to depositors
+- No order book needed
+
+## Yield
+
+Earning returns in DeFi:
+
+- **APR**: Annual percentage rate (simple)
+- **APY**: Includes compounding
+- Yields vary by risk
+- Higher yield usually = higher risk
+
+## Collateral
+
+For DeFi loans:
+
+- Must deposit assets to borrow
+- Usually over-collateralized (150%+)
+- Protects lenders
+- Liquidated if value drops
+
+## Gas Fees
+
+The cost of transactions:
+
+- Paid to network validators
+- Varies by network activity
+- Can be high on Ethereum mainnet
+- Much lower on Layer 2s like Arbitrum
+
+## Slippage
+
+Price movement during trades:
+
+- Difference between expected and actual price
+- Higher for larger trades
+- Lower with more liquidity
+- Set tolerance to protect yourself`,
+        keyTakeaways: [
+          'Liquidity pools enable decentralized trading',
+          'Yield rewards come with varying risk levels',
+          'DeFi loans require over-collateralization',
+          'Gas fees pay for transaction processing'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Common DeFi Applications',
+        duration: 10,
+        content: `Explore the main types of DeFi applications and what they offer.
+
+## Decentralized Exchanges (DEXs)
+
+Trade without intermediaries:
+
+- **Uniswap**: Largest DEX
+- **Curve**: Stablecoin trading
+- Swap any supported token
+- You keep custody of funds
+
+## Lending Protocols
+
+Earn or borrow:
+
+- **Aave**: Major lending platform
+- **Compound**: Algorithmic rates
+- Deposit to earn interest
+- Borrow against collateral
+
+## Stablecoins
+
+Crypto with stable value:
+
+- **USDC**: Backed by dollars
+- **DAI**: Crypto-collateralized
+- Essential for DeFi operations
+- Avoid volatility while staying in crypto
+
+## Yield Aggregators
+
+Optimize your returns:
+
+- Auto-compound rewards
+- Find best yields
+- Save gas fees
+- Simplify complex strategies
+
+## Derivatives
+
+Advanced financial products:
+
+- Options and futures
+- Synthetic assets
+- Leverage trading
+- Higher risk, higher potential reward
+
+## Axiom DeFi
+
+Our ecosystem includes:
+
+- AXM staking
+- Liquidity provision
+- Wealth Practice circles
+- Future: Full DEX functionality`,
+        keyTakeaways: [
+          'DEXs let you trade without giving up custody',
+          'Lending protocols pay interest on deposits',
+          'Stablecoins provide stability in volatile markets',
+          'Axiom offers multiple DeFi opportunities'
+        ]
+      },
+      {
+        id: 4,
+        title: 'DeFi Risks and Safety',
+        duration: 10,
+        content: `DeFi offers opportunities but comes with real risks. Know what to watch for.
+
+## Smart Contract Risk
+
+Code vulnerabilities:
+
+- Bugs can cause losses
+- Hacks have cost billions
+- Look for audited protocols
+- New contracts are riskier
+
+## Impermanent Loss
+
+For liquidity providers:
+
+- Occurs when prices change
+- Can reduce your returns
+- More volatile pairs = more risk
+- Calculate before providing liquidity
+
+## Liquidation Risk
+
+For borrowers:
+
+- If collateral value drops
+- Position may be liquidated
+- You lose your collateral
+- Monitor positions carefully
+
+## Rug Pulls
+
+Scam projects:
+
+- Creators steal user funds
+- Often unaudited protocols
+- Promises of high returns
+- Always research thoroughly
+
+## Protecting Yourself
+
+Best practices:
+
+1. Start with established protocols
+2. Begin with small amounts
+3. Understand before investing
+4. Check for audits
+5. Never invest more than you can lose
+6. Diversify across protocols
+
+## Due Diligence
+
+Before using any DeFi protocol:
+
+- How long has it operated?
+- Total value locked (TVL)?
+- Has it been audited?
+- Is the team known?
+- What do others say?`,
+        keyTakeaways: [
+          'Smart contract bugs can cause permanent losses',
+          'Impermanent loss affects liquidity providers',
+          'Always research protocols before depositing',
+          'Start small and use established protocols'
+        ]
+      }
+    ]
+  },
+  {
+    id: 14,
+    slug: 'nft-essentials',
+    title: 'NFT Essentials',
+    description: 'Learn what NFTs are, how they work, and their applications beyond digital art including gaming, membership, and real-world assets.',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 35,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'What are NFTs?',
+        duration: 9,
+        content: `NFTs (Non-Fungible Tokens) represent unique digital ownership. Let's understand what makes them special.
+
+## Fungible vs Non-Fungible
+
+**Fungible** (interchangeable):
+- One dollar = any other dollar
+- One Bitcoin = any other Bitcoin
+- Identical and replaceable
+
+**Non-Fungible** (unique):
+- Your house deed
+- A signed baseball card
+- Original artwork
+- Each one is different
+
+## What NFTs Represent
+
+NFTs can represent ownership of:
+
+- Digital art
+- Music and videos
+- Virtual real estate
+- Gaming items
+- Event tickets
+- Membership passes
+- Real-world assets
+
+## How NFTs Work
+
+Technical basics:
+
+- Stored on blockchain (usually Ethereum)
+- Each has unique identifier
+- Ownership publicly verifiable
+- Can be bought, sold, transferred
+
+## What You Actually Own
+
+Important distinction:
+
+- You own the token on blockchain
+- May or may not include copyright
+- May or may not include physical item
+- Read terms carefully
+
+## Why NFTs Matter
+
+The innovation:
+
+- Prove digital ownership
+- Enable creator royalties
+- Create digital scarcity
+- Build communities around ownership`,
+        keyTakeaways: [
+          'NFTs are unique tokens representing ownership',
+          'They can represent digital or physical assets',
+          'Ownership is verifiable on the blockchain',
+          'What you own depends on the specific NFT terms'
+        ]
+      },
+      {
+        id: 2,
+        title: 'NFT Use Cases',
+        duration: 9,
+        content: `NFTs go far beyond digital art. Explore the many applications.
+
+## Digital Art and Collectibles
+
+The most famous use:
+
+- Artists sell directly to collectors
+- Earn royalties on resales
+- Prove authenticity
+- Build collector communities
+
+## Gaming
+
+In-game ownership:
+
+- Own your characters and items
+- Trade across games potentially
+- Sell when you stop playing
+- True ownership vs renting
+
+## Membership and Access
+
+Digital passes:
+
+- Exclusive community access
+- Event tickets
+- VIP benefits
+- Loyalty programs
+
+## Music and Media
+
+Creator economy:
+
+- Musicians sell directly to fans
+- Royalty sharing with holders
+- Exclusive content access
+- Fan engagement tools
+
+## Real-World Assets
+
+Physical world connection:
+
+- Real estate deeds
+- Luxury goods authentication
+- Supply chain tracking
+- Identity documents
+
+## Axiom NFT Applications
+
+How Axiom uses NFTs:
+
+- KeyGrow property shares (ERC-1155)
+- DePIN node certificates
+- PMA membership tokens
+- Governance credentials`,
+        keyTakeaways: [
+          'NFTs power gaming economies and true item ownership',
+          'Membership NFTs provide access and community',
+          'Real-world assets can be tokenized as NFTs',
+          'Axiom uses NFTs for property shares and membership'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Buying and Selling NFTs',
+        duration: 8,
+        content: `Ready to participate? Here's how NFT marketplaces work.
+
+## NFT Marketplaces
+
+Where to find NFTs:
+
+- **OpenSea**: Largest marketplace
+- **Blur**: Trader-focused
+- **Magic Eden**: Multi-chain
+- Project-specific mints
+
+## Buying an NFT
+
+The process:
+
+1. Connect wallet to marketplace
+2. Browse collections
+3. Make offer or buy at listed price
+4. Confirm transaction
+5. NFT appears in your wallet
+
+## Minting
+
+Getting NFTs at launch:
+
+- "Mint" means create new NFT
+- Often cheaper than secondary
+- May require allowlist spot
+- Check project legitimacy first
+
+## Selling an NFT
+
+To sell what you own:
+
+1. List on marketplace
+2. Set price (fixed or auction)
+3. Buyer purchases
+4. Receive payment minus fees
+
+## Fees Involved
+
+Costs to know:
+
+- **Gas fees**: Network transaction costs
+- **Platform fees**: Marketplace cut (2-5%)
+- **Royalties**: Creator share (0-10%)
+
+## Safety Tips
+
+Protect yourself:
+
+- Verify collection contracts
+- Beware fake collections
+- Use burner wallets for new mints
+- Don't click random links`,
+        keyTakeaways: [
+          'OpenSea is the largest NFT marketplace',
+          'Minting is often cheaper than buying secondary',
+          'Factor in gas, platform fees, and royalties',
+          'Always verify collections before buying'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Evaluating NFT Projects',
+        duration: 9,
+        content: `Not all NFT projects are created equal. Learn how to assess them.
+
+## Red Flags
+
+Warning signs:
+
+- Anonymous team with no track record
+- Promises of guaranteed returns
+- Pressure to buy immediately
+- No clear utility or roadmap
+- Copied art from other projects
+
+## Green Flags
+
+Positive indicators:
+
+- Experienced, doxxed team
+- Clear utility and vision
+- Active community engagement
+- Reasonable expectations
+- Original creative vision
+
+## Research Checklist
+
+Before buying:
+
+1. Who is the team?
+2. What is the utility?
+3. How active is the community?
+4. What is the roadmap?
+5. Is the smart contract verified?
+6. What do trusted voices say?
+
+## Community Matters
+
+Strong communities have:
+
+- Active Discord/Telegram
+- Organic engagement
+- Long-term holders
+- Real value creation
+
+## Valuation Factors
+
+What affects NFT prices:
+
+- Rarity within collection
+- Historical sales data
+- Floor price trends
+- Team reputation
+- Market conditions
+- Utility provided
+
+## Long-term Thinking
+
+Sustainable approach:
+
+- Buy what you'd enjoy owning
+- Don't chase quick flips
+- Understand the risks
+- Only spend what you can lose`,
+        keyTakeaways: [
+          'Avoid anonymous teams and guaranteed return promises',
+          'Research team, utility, and community before buying',
+          'Strong communities indicate healthier projects',
+          'Only invest what you can afford to lose'
+        ]
+      }
+    ]
+  },
+  {
+    id: 15,
+    slug: 'tokenomics-101',
+    title: 'Tokenomics 101',
+    description: 'Understand how token economics work, from supply and distribution to utility and value drivers.',
+    category: 'Blockchain',
+    difficulty: 'beginner',
+    durationMinutes: 40,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'What is Tokenomics?',
+        duration: 10,
+        content: `Tokenomics is the economics of cryptocurrency tokens. Understanding it helps you evaluate projects.
+
+## Token Economics
+
+Tokenomics covers:
+
+- How many tokens exist
+- How they're distributed
+- What they're used for
+- How supply changes over time
+
+## Why It Matters
+
+Good tokenomics can:
+
+- Align incentives
+- Create sustainable value
+- Encourage participation
+- Support long-term growth
+
+Bad tokenomics can:
+
+- Benefit insiders only
+- Create selling pressure
+- Lead to price crashes
+- Kill project momentum
+
+## Key Components
+
+What to analyze:
+
+1. **Supply**: How many tokens?
+2. **Distribution**: Who gets them?
+3. **Utility**: What are they for?
+4. **Emission**: How are new ones created?
+5. **Burning**: How are they removed?
+
+## Supply Basics
+
+Types of supply:
+
+- **Circulating**: Currently tradeable
+- **Total**: All created so far
+- **Max**: Maximum that will ever exist
+
+## First Look Questions
+
+When evaluating a token:
+
+- What percentage is in circulation?
+- Who holds the largest amounts?
+- Is there a maximum supply?
+- How fast are new tokens released?`,
+        keyTakeaways: [
+          'Tokenomics determines how a token economy works',
+          'Good tokenomics aligns incentives for all participants',
+          'Understand supply, distribution, utility, and emissions',
+          'Poor tokenomics can doom even good projects'
+        ]
+      },
+      {
+        id: 2,
+        title: 'Token Distribution',
+        duration: 10,
+        content: `How tokens are distributed reveals who benefits and potential risks.
+
+## Common Allocations
+
+Typical distribution categories:
+
+- **Public Sale**: Sold to community
+- **Team/Founders**: Project creators
+- **Investors**: Early backers (VCs)
+- **Treasury**: Project reserves
+- **Ecosystem**: Rewards and incentives
+- **Advisors**: Early contributors
+
+## Healthy Distribution
+
+Good signs:
+
+- Fair public allocation (30%+)
+- Team tokens locked/vesting
+- Reasonable investor allocation
+- Transparent breakdowns
+
+## Red Flags
+
+Warning signs:
+
+- Team holds majority
+- No vesting periods
+- Hidden allocations
+- Large "marketing" reserves
+
+## Vesting Schedules
+
+Token release over time:
+
+- **Cliff**: Initial lock period
+- **Vesting**: Gradual release
+- Example: 1-year cliff, 3-year vest
+
+Why it matters:
+- Prevents immediate selling
+- Aligns long-term incentives
+- Protects token price
+
+## Analyzing Distribution
+
+Questions to ask:
+
+- What percentage can be sold now?
+- When do large unlocks happen?
+- Are team tokens locked?
+- Is distribution transparent?`,
+        keyTakeaways: [
+          'Fair distribution gives community reasonable allocation',
+          'Team and investor tokens should have vesting',
+          'Watch for upcoming large unlock events',
+          'Transparency in distribution is essential'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Token Utility',
+        duration: 10,
+        content: `What can you actually do with a token? Utility drives real demand.
+
+## Types of Utility
+
+Common token uses:
+
+**Governance**
+- Vote on proposals
+- Influence project direction
+- Delegate to representatives
+
+**Staking**
+- Lock tokens for rewards
+- Secure the network
+- Earn passive income
+
+**Payments**
+- Pay for services
+- Transaction fees
+- Platform access
+
+**Access**
+- Unlock features
+- Premium benefits
+- Community membership
+
+## Evaluating Utility
+
+Strong utility means:
+
+- Clear use cases
+- Necessary for the ecosystem
+- Creates genuine demand
+- Not easily replaceable
+
+Weak utility:
+
+- Vague promises
+- Could use any currency
+- No real necessity
+- Just for speculation
+
+## Value Accrual
+
+How value flows to token:
+
+- Fee revenue sharing
+- Buyback and burn
+- Staking rewards
+- Growing ecosystem use
+
+## AXM Token Utility
+
+Axiom's token provides:
+
+- Governance voting
+- Staking rewards
+- Platform fee discounts
+- DePIN participation
+- Wealth Practice pool contributions
+- Future: Native gas token`,
+        keyTakeaways: [
+          'Strong utility creates real demand for tokens',
+          'Governance, staking, and access are common utilities',
+          'Value should flow back to token holders',
+          'Beware tokens with vague or unnecessary utility'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Supply Dynamics',
+        duration: 10,
+        content: `How token supply changes over time significantly impacts value.
+
+## Inflationary Tokens
+
+Supply increases over time:
+
+- New tokens minted regularly
+- Often for staking rewards
+- Can dilute existing holders
+- Requires growing demand
+
+## Deflationary Tokens
+
+Supply decreases over time:
+
+- Tokens burned (destroyed)
+- Creates scarcity
+- Can increase value per token
+- Popular mechanism
+
+## Burn Mechanisms
+
+Ways tokens get burned:
+
+- Transaction fee burns
+- Buyback and burn programs
+- Deflationary mechanics
+- Community burns
+
+## Emission Schedules
+
+How new tokens enter circulation:
+
+- Mining/staking rewards
+- Scheduled releases
+- Ecosystem grants
+- Usually decreases over time
+
+## Supply Analysis
+
+What to check:
+
+- Current inflation rate
+- Planned emission schedule
+- Burn mechanisms in place
+- Net supply change
+
+## Practical Impact
+
+Why this matters:
+
+**High inflation** (10%+ annually)
+- Need strong demand growth
+- Staking rewards must compensate
+- Often decreases over time
+
+**Low inflation or deflationary**
+- Easier to maintain value
+- Scarcity increases
+- Long-term holder friendly`,
+        keyTakeaways: [
+          'Inflationary tokens require growing demand to maintain value',
+          'Deflationary mechanisms create scarcity',
+          'Understand emission schedules and burn rates',
+          'Net supply change impacts long-term value'
+        ]
+      }
+    ]
+  },
+  {
+    id: 16,
+    slug: 'web3-community-guide',
+    title: 'Web3 Community Guide',
+    description: 'Learn how to participate in Web3 communities, join DAOs, and contribute to decentralized projects.',
+    category: 'Community',
+    difficulty: 'beginner',
+    durationMinutes: 35,
+    requiredTier: 'free',
+    isFeatured: false,
+    lessons: [
+      {
+        id: 1,
+        title: 'Joining Web3 Communities',
+        duration: 9,
+        content: `Web3 communities are different from traditional organizations. Here's how to get started.
+
+## Where Communities Live
+
+Main platforms:
+
+- **Discord**: Primary hub for most projects
+- **Telegram**: Quick communication
+- **Twitter/X**: News and networking
+- **Farcaster**: Decentralized social
+
+## Finding Communities
+
+How to discover projects:
+
+- Follow crypto Twitter accounts
+- Join popular Discords
+- Read crypto news sites
+- Attend virtual events
+- Ask for recommendations
+
+## Getting Started
+
+First steps in a new community:
+
+1. Read the rules and FAQs
+2. Introduce yourself
+3. Listen and learn first
+4. Ask genuine questions
+5. Start contributing value
+
+## Community Culture
+
+What to expect:
+
+- Welcome atmosphere
+- Meme-friendly communication
+- Fast-moving conversations
+- Global participation
+- 24/7 activity
+
+## Building Your Presence
+
+Stand out positively:
+
+- Be helpful to newcomers
+- Share useful information
+- Engage constructively
+- Build relationships
+- Stay consistent`,
+        keyTakeaways: [
+          'Discord is the primary hub for Web3 communities',
+          'Listen and learn before contributing heavily',
+          'Add value through helpful participation',
+          'Consistency builds reputation over time'
+        ]
+      },
+      {
+        id: 2,
+        title: 'Understanding DAOs',
+        duration: 9,
+        content: `DAOs (Decentralized Autonomous Organizations) are community-governed entities. Here's how they work.
+
+## What is a DAO?
+
+Key characteristics:
+
+- Governed by token holders
+- Rules encoded in smart contracts
+- Treasury managed collectively
+- Decisions made by voting
+
+## DAO vs Traditional Organization
+
+| Aspect | Traditional | DAO |
+|--------|------------|-----|
+| Leadership | Executives | Community |
+| Rules | Legal contracts | Smart contracts |
+| Decisions | Top-down | Voting |
+| Membership | Employment | Token ownership |
+| Transparency | Limited | Full |
+
+## Types of DAOs
+
+Different purposes:
+
+- **Protocol DAOs**: Govern DeFi protocols
+- **Investment DAOs**: Pool funds for investing
+- **Social DAOs**: Community membership
+- **Service DAOs**: Provide services
+- **Collector DAOs**: Acquire assets
+
+## How Decisions Work
+
+Typical governance process:
+
+1. Member creates proposal
+2. Community discussion
+3. Formal voting period
+4. If passed, execution
+5. Results recorded on-chain
+
+## Getting Involved
+
+Ways to participate:
+
+- Hold governance tokens
+- Vote on proposals
+- Join working groups
+- Contribute skills
+- Delegate your votes`,
+        keyTakeaways: [
+          'DAOs are community-governed organizations',
+          'Token holders vote on decisions',
+          'Different DAOs serve different purposes',
+          'Participation options range from voting to active contribution'
+        ]
+      },
+      {
+        id: 3,
+        title: 'Contributing to Projects',
+        duration: 9,
+        content: `Web3 rewards contributors. Here's how to add value and get recognized.
+
+## Ways to Contribute
+
+Non-technical contributions:
+
+- Community moderation
+- Content creation
+- Translation
+- Marketing support
+- User support
+- Event organization
+
+Technical contributions:
+
+- Development
+- Security auditing
+- Documentation
+- Testing
+- Design
+
+## Starting Small
+
+Build experience:
+
+- Answer questions in Discord
+- Write helpful guides
+- Create educational content
+- Report bugs constructively
+- Participate in discussions
+
+## Bounty Programs
+
+Earn for contributions:
+
+- Many DAOs offer bounties
+- Complete specific tasks
+- Earn tokens or stablecoins
+- Build reputation
+
+## Building Reputation
+
+What matters:
+
+- Consistent participation
+- Quality over quantity
+- Following through on commitments
+- Being helpful and positive
+- Building relationships
+
+## Contributor Paths
+
+Career opportunities:
+
+- Start as community member
+- Take on small responsibilities
+- Build track record
+- Get paid contributor roles
+- Join core team potentially`,
+        keyTakeaways: [
+          'Many contribution types beyond coding',
+          'Start small and build experience',
+          'Bounty programs offer paid opportunities',
+          'Consistent quality work builds reputation'
+        ]
+      },
+      {
+        id: 4,
+        title: 'Community Safety',
+        duration: 8,
+        content: `Web3 communities attract scammers. Protect yourself with these practices.
+
+## Common Scams
+
+What to watch for:
+
+- **Fake moderators**: Real mods never DM first
+- **Phishing links**: Malicious websites
+- **Impersonators**: Fake accounts mimicking leaders
+- **Fake airdrops**: Free tokens that steal
+- **"Support" scams**: Never give seed phrases
+
+## Red Flags
+
+Warning signs:
+
+- Unsolicited direct messages
+- Urgency to act immediately
+- Requests for private keys
+- Too-good-to-be-true offers
+- Links from unknown sources
+
+## Protecting Yourself
+
+Best practices:
+
+- Never share seed phrase
+- Verify links independently
+- Use burner wallets for testing
+- Don't click DM links
+- Verify announcements in official channels
+
+## Verifying Information
+
+How to confirm legitimacy:
+
+- Check official announcements channel
+- Verify Twitter accounts (blue checkmarks, history)
+- Cross-reference multiple sources
+- Ask in public channels
+- When in doubt, wait
+
+## If Something Goes Wrong
+
+What to do:
+
+- Don't panic
+- Revoke token approvals
+- Move remaining funds to new wallet
+- Report to community moderators
+- Share experience to warn others`,
+        keyTakeaways: [
+          'Real moderators never DM first asking for info',
+          'Never share your seed phrase with anyone',
+          'Verify all links and announcements officially',
+          'Use burner wallets when testing new things'
+        ]
+      }
+    ]
+  }
+];

@@ -1,0 +1,315 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: axiom-protocol-prod
+  PROJECT_NUMBER: "1079666396865"
+  REGION: us-central1
+
+  CLOUD_RUN_SERVICE: axiom-protocol
+  ARTIFACT_REPOSITORY: axiom-repo
+  IMAGE_NAME: axiom-protocol
+
+  SERVICE_ACCOUNT: axiom-github-deployer@axiom-protocol-prod.iam.gserviceaccount.com
+  WIF_PROVIDER: projects/1079666396865/locations/global/workloadIdentityPools/github-pool/providers/github-pool
+
+jobs:
+  validate-workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PyYAML
+        run: pip install --quiet pyyaml
+
+      - name: Lint artifact retention-days in workflow YAML
+        run: python3 scripts/check-workflow-retention.py
+
+  predeploy-tests:
+    needs: validate-workflows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Verify TEST_DATABASE_URL secret is configured
+        env:
+          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+        run: |
+          if [ -z "${TEST_DATABASE_URL}" ]; then
+            echo "============================================================"
+            echo "MISSING REQUIRED SECRET: TEST_DATABASE_URL"
+            echo "============================================================"
+            echo "The predeploy-tests job requires the TEST_DATABASE_URL"
+            echo "GitHub Actions secret to be configured on this repository."
+            echo
+            echo "Without it, database migrations and integration tests cannot"
+            echo "run, and the pipeline would fail later in a much less obvious"
+            echo "step (e.g. 'Apply database migrations')."
+            echo
+            echo "Action: add a repository (or environment) secret named"
+            echo "TEST_DATABASE_URL pointing at a dedicated test database."
+            echo "See README.md (CI / GitHub Actions secrets) for details."
+            echo "============================================================"
+            exit 1
+          fi
+          echo "TEST_DATABASE_URL is configured (value hidden)."
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply database migrations (test database)
+        env:
+          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          NODE_ENV: test
+        run: npm run db:migrate
+
+      - name: Run capinfra smoke + correctness tests
+        run: npm run test:capinfra
+
+      - name: Run vitest suite
+        run: npm run test:vitest
+
+      - name: Run prune history CSV vitest tests
+        env:
+          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          ADMIN_SOLVENCY_KEY: ${{ secrets.ADMIN_SOLVENCY_KEY }}
+          NODE_ENV: test
+        run: npm run test:prune-history-csv
+
+      - name: Run user search index smoke test
+        env:
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          NODE_ENV: test
+        run: npm run test:user-search-index
+
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright Chromium (with browser download)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install chromium --with-deps
+
+      - name: Install Playwright system dependencies (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Start dev server
+        env:
+          PORT: "5000"
+          NODE_ENV: test
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          ADMIN_SOLVENCY_KEY: ${{ secrets.ADMIN_SOLVENCY_KEY }}
+        run: npm run dev > /tmp/devserver.log 2>&1 &
+
+      - name: Wait for dev server to be ready
+        run: |
+          echo "Waiting for dev server on port 5000..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5000/api/healthz > /dev/null 2>&1; then
+              echo "Dev server is ready after ${i}s"
+              exit 0
+            fi
+            echo "  attempt ${i}/30..."
+            sleep 2
+          done
+          echo "Dev server did not become ready in time"
+          cat /tmp/devserver.log
+          exit 1
+
+      - name: Run audit CSV e2e tests
+        env:
+          PORT: "5000"
+          PLAYWRIGHT_BASE_URL: http://localhost:5000
+          NODE_ENV: test
+        run: npm run test:e2e:audit-csv
+
+      - name: Pre-check picker test preconditions
+        env:
+          PORT: "5000"
+        run: |
+          echo "Verifying picker e2e preconditions before running tests..."
+          URL="http://localhost:${PORT}/api/capinfra/operator/auth/test-session"
+          echo "POSTing to ${URL}"
+          # Capture curl exit code separately from the -w status code.
+          # If we used `|| echo "000"`, curl already prints "000" on connection
+          # failure via -w, and the fallback would append another "000" giving
+          # "000000". Instead, run curl, check $?, and treat any non-zero exit
+          # as an unreachable server (HTTP_STATUS=000).
+          set +e
+          HTTP_STATUS=$(curl -s -o /tmp/test-session-precheck.body -w "%{http_code}" -X POST "${URL}")
+          CURL_EXIT=$?
+          set -e
+          if [ "${CURL_EXIT}" -ne 0 ]; then
+            HTTP_STATUS="000"
+          fi
+          echo "curl exit code: ${CURL_EXIT}"
+          echo "HTTP status: ${HTTP_STATUS}"
+          echo "Response body:"
+          cat /tmp/test-session-precheck.body || true
+          echo
+          if [ "${HTTP_STATUS}" = "200" ]; then
+            echo "Picker precondition check passed: dev server is up and test-session endpoint is enabled."
+            exit 0
+          fi
+          echo "============================================================"
+          echo "PICKER E2E PRECONDITION CHECK FAILED"
+          echo "============================================================"
+          if [ "${HTTP_STATUS}" = "000" ]; then
+            echo "Could not reach the dev server at ${URL}."
+            echo "Cause: the Next.js dev server is not listening on PORT ${PORT}."
+            echo "Action: ensure the 'Start dev server' and 'Wait for dev server to be ready' steps succeeded."
+            echo "Recent dev-server log:"
+            tail -n 50 /tmp/devserver.log || true
+          elif [ "${HTTP_STATUS}" = "404" ]; then
+            echo "test-session endpoint returned 404."
+            echo "Cause: NODE_ENV is set to 'production', which disables the test-session endpoint."
+            echo "Action: ensure the dev-server step runs with NODE_ENV=test."
+          elif [ "${HTTP_STATUS}" = "503" ]; then
+            echo "test-session endpoint returned 503 OPERATOR_KEY_NOT_CONFIGURED."
+            echo "Cause: ADMIN_SOLVENCY_KEY (operator admin key) is not available to the dev server."
+            echo "Action: ensure the operator admin key secret is provided to the 'Start dev server' step."
+          else
+            echo "test-session endpoint returned unexpected status ${HTTP_STATUS}."
+            echo "Action: inspect the response body above and the dev-server log for details."
+            echo "Recent dev-server log:"
+            tail -n 50 /tmp/devserver.log || true
+          fi
+          echo "============================================================"
+          exit 1
+
+      - name: Run picker e2e tests
+        env:
+          PORT: "5000"
+          PLAYWRIGHT_BASE_URL: http://localhost:5000
+          NODE_ENV: test
+        run: npm run test:e2e:pickers
+
+      - name: Run asset registry CSV e2e tests
+        env:
+          PORT: "5000"
+          PLAYWRIGHT_BASE_URL: http://localhost:5000
+          NODE_ENV: test
+        run: npm run test:e2e:asset-csv
+
+      - name: Run prune staleness e2e tests
+        env:
+          PORT: "5000"
+          PLAYWRIGHT_BASE_URL: http://localhost:5000
+          NODE_ENV: test
+          ADMIN_SOLVENCY_KEY: ${{ secrets.ADMIN_SOLVENCY_KEY }}
+        run: npm run test:e2e:prune-staleness
+
+      - name: Run prune history CSV e2e tests
+        env:
+          PORT: "5000"
+          PLAYWRIGHT_BASE_URL: http://localhost:5000
+          NODE_ENV: test
+          ADMIN_SOLVENCY_KEY: ${{ secrets.ADMIN_SOLVENCY_KEY }}
+        run: npm run test:e2e:prune-history-csv
+
+      - name: Upload prune history CSV vitest report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prune-history-csv-vitest-report-run-${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}
+          path: test-results/prune-history-csv-vitest-junit.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload Playwright report and traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-run-${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload dev-server log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devserver-log-run-${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}
+          path: /tmp/devserver.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+  deploy:
+    needs: predeploy-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Configure Docker auth for Artifact Registry
+        run: |
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push image
+        env:
+          IMAGE_URI: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        run: |
+          echo "IMAGE_URI=${IMAGE_URI}" >> $GITHUB_ENV
+          docker build -t "${IMAGE_URI}" .
+          docker push "${IMAGE_URI}"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "${CLOUD_RUN_SERVICE}" \
+            --image "${IMAGE_URI}" \
+            --region "${REGION}" \
+            --project "${PROJECT_ID}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --quiet
+
+      - name: Show service URL
+        run: |
+          gcloud run services describe "${CLOUD_RUN_SERVICE}" \
+            --region "${REGION}" \
+            --project "${PROJECT_ID}" \
+            --format="value(status.url)"

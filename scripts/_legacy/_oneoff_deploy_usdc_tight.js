@@ -1,0 +1,34 @@
+const hardhatEthers = require('hardhat').ethers;
+const { ethers } = require('ethers');
+const USDC = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+const USD  = '0x0000000000000000000000000000000000000348';
+(async () => {
+  const provider = new ethers.JsonRpcProvider(`https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
+  const deployer = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY, provider);
+  console.log('Deployer:', deployer.address);
+  const bal = await provider.getBalance(deployer.address);
+  console.log('Balance:', ethers.formatEther(bal), 'ETH');
+  const Factory = await hardhatEthers.getContractFactory('ChainlinkUSDCOracleAdapter');
+  const bytecode = Factory.bytecode;
+  const est = await provider.estimateGas({ from: deployer.address, data: bytecode });
+  console.log('Est gas:', est.toString());
+  const fee = await provider.getFeeData();
+  const gasLimit = est * 105n / 100n;
+  const maxFeePerGas = ethers.parseUnits('0.022', 'gwei');
+  const maxPriorityFeePerGas = ethers.parseUnits('0.001', 'gwei');
+  const cap = gasLimit * maxFeePerGas;
+  console.log('gasLimit:', gasLimit.toString(), '-> cap:', ethers.formatEther(cap), 'ETH');
+  if (cap > bal) { console.error('FAIL cap > balance — try lower maxFee'); process.exit(1); }
+  const nonce = await provider.getTransactionCount(deployer.address, 'pending');
+  console.log('Nonce:', nonce);
+  const tx = await deployer.sendTransaction({ type: 2, data: bytecode, nonce, gasLimit, maxFeePerGas, maxPriorityFeePerGas });
+  console.log('Sent:', tx.hash);
+  const r = await tx.wait(1);
+  console.log('Mined block:', r.blockNumber, 'gasUsed:', r.gasUsed.toString());
+  console.log('DEPLOYED:', r.contractAddress);
+  const abi = ['function getQuote(uint256,address,address) view returns (uint256)','function name() view returns (string)','function adapterType() view returns (string)','function FEED() view returns (address)'];
+  const a = new ethers.Contract(r.contractAddress, abi, provider);
+  console.log('name:', await a.name(), '| adapterType:', await a.adapterType(), '| FEED:', await a.FEED());
+  console.log('1 USDC->USD (8d):', (await a.getQuote(ethers.parseUnits('1',6), USDC, USD)).toString());
+  console.log('1 USD ->USDC(6d):', (await a.getQuote(ethers.parseUnits('1',8), USD, USDC)).toString());
+})().catch(e => { console.error('ERR:', e.shortMessage || e.message, e.code||''); process.exit(1); });

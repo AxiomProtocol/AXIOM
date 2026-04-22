@@ -1,0 +1,27 @@
+Randy, this is the right question and the honest answer is: most of what fails in DeFi is not cryptography. It is governance, accounting, and disclosure.
+
+Audits don't fail because the math is weak. They fail because the deployed bytecode differed from the audited bytecode, the audit scope was narrow, or the upgrade key was a single hot wallet.
+
+Bridges don't fail because bridges are impossible. They fail because the multisig was 2/3 on shared infrastructure and the bridged asset was treated as if it were the real underlying.
+
+Founders don't disappear because chains let them. They disappear because the team page was anonymous from day one.
+
+So we built Axiom Protocol around a different premise: every common failure mode gets a specific protection on the institutional layer between the substrate and the application, and every protection has to be verifiable by a stranger in one minute.
+
+A few of the controls that are live today:
+
+1. Fail-closed collateral admission on every borrow and every reserve mint. Bridged, wrapped, synthetic, and rehypothecated assets are default-denied on chain. Allow-listing one requires a community vote and a per-asset cap.
+
+2. Real founder, real US-incorporated entity, real LinkedIn. No anonymous core team. Treasury custody is multi-party (BitGo on Arbitrum, Increase on the fiat side, FDIC-insured at the depository layer). No single key can move funds.
+
+3. Public audit register that lists every audit with scope, date, and source path. We do not claim any audit we cannot point to. The bytecode-match indicator stays grey until the deployed bytecode actually matches the audited bytecode.
+
+4. Public governance page that lists every privileged role, the current key-management state, and the planned timelock migration. If a role is still EOA-controlled, the page says so. We refuse to hide it.
+
+5. Public dated solvency snapshot with a dedicated Loss Coverage Reserve line, separate from operating reserves. 72-hour post-mortem commitment for any incident affecting user funds.
+
+Every claim above is verifiable at axiom.
+
+The hardest part of this industry is not the technology. It is the discipline to publish what you have actually shipped, in plain language, and let strangers verify it before they trust you with anything. We are trying to do that.
+
+Open to questions and disagreement.

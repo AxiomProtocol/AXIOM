@@ -1,0 +1,6 @@
+{
+  "filter_paths": "node_modules,node_modules_backup,contracts-axusd-3643,temp_contracts",
+  "compile_force_framework": "hardhat",
+  "hardhat_artifacts_directory": "artifacts",
+  "hardhat_ignore_compile": true
+}

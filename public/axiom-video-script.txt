@@ -1,0 +1,68 @@
+AXIOM HOMEPAGE VIDEO SCRIPT
+Duration: 60-90 seconds
+============================
+
+SCENE 1 - HOOK (0-5 seconds)
+Visual: Aerial shot of a futuristic smart city at golden hour
+
+"What if a city could run itself?"
+
+
+SCENE 2 - INTRODUCTION (5-15 seconds)
+Visual: Sleek blockchain graphics, golden token animation
+
+"Welcome to Axiom - America's first on-chain smart city. A thousand acres of innovation where blockchain meets real life."
+
+
+SCENE 3 - THE PROBLEM (15-25 seconds)
+Visual: Old banking systems vs modern digital interface
+
+"Traditional cities run on outdated systems. Slow banks. Paper permits. Centralized control. We're changing that."
+
+
+SCENE 4 - THE SOLUTION (25-45 seconds)
+Visual: Dynamic showcase of platform features
+
+"Axiom is a complete digital economy. Decentralized banking with over 30 financial products. A built-in exchange for seamless trading. Tokenized real estate you can own in minutes. DePIN infrastructure that powers the city and rewards you for participating."
+
+Visual: Governance dashboard, voting interface
+
+"And true community governance - where every token holder has a voice."
+
+
+SCENE 5 - THE VISION (45-55 seconds)
+Visual: Futuristic cityscape with connected nodes
+
+"From energy credits to water rights. From business licenses to citizen identity. Every transaction. Every vote. Every asset - secured on-chain, governed by you."
+
+
+SCENE 6 - CALL TO ACTION (55-65 seconds)
+Visual: Axiom logo with golden glow
+
+"This isn't just a platform. It's a new way to live, work, and build wealth."
+
+Visual: Connect Wallet button
+
+"Axiom. The future of cities starts here."
+
+
+END CARD (65-70 seconds)
+Visual: Axiom logo centered
+
+AXIOM
+America's First On-Chain Smart City
+
+============================
+
+30-SECOND SHORT VERSION (for social media)
+
+"Imagine a city that runs on blockchain. Decentralized banking. Tokenized real estate. Community governance. DePIN infrastructure that rewards you. This is Axiom - America's first on-chain smart city. The future of cities starts here."
+
+============================
+
+INVIDEO AI SETTINGS
+
+Style: Modern futuristic smart city, black/white/gold colors
+Music: Inspirational electronic, building crescendo
+Voice: Confident, warm, American accent
+Visual Keywords: blockchain nodes, smart buildings, digital interfaces, golden tokens, diverse professionals

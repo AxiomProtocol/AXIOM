@@ -1,0 +1,85 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { db } from '../../../../server/db';
+import { t3KycSubmissions } from '../../../../shared/erc3643Schema';
+import { eq } from 'drizzle-orm';
+import { ERC3643Service } from '../../../../lib/services/ERC3643Service';
+
+function checkAdminKey(req: NextApiRequest): boolean {
+  const key = req.headers['x-admin-key'];
+  return key === process.env.ADMIN_SOLVENCY_KEY;
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (!checkAdminKey(req)) return res.status(401).json({ error: 'Unauthorized' });
+
+  const { submissionId, countryCode, reviewNote } = req.body as {
+    submissionId?: string;
+    countryCode?: number;
+    reviewNote?: string;
+  };
+
+  if (!submissionId || typeof submissionId !== 'string') {
+    return res.status(400).json({ error: 'submissionId required' });
+  }
+
+  const [submission] = await db.select()
+    .from(t3KycSubmissions)
+    .where(eq(t3KycSubmissions.id, submissionId))
+    .limit(1);
+
+  if (!submission) return res.status(404).json({ error: 'Submission not found' });
+  if (!['submitted', 'under_review'].includes(submission.status)) {
+    return res.status(400).json({
+      error: `Cannot approve submission in status: ${submission.status}`,
+    });
+  }
+
+  // FIX 3: Cap re-check — ensure the 100-slot early access cap has not been reached
+  const CAP = 100;
+  const capCheckResult = await db
+    .select({ id: t3KycSubmissions.id })
+    .from(t3KycSubmissions)
+    .where(eq(t3KycSubmissions.status, 'bridged'));
+  const approvedCount = capCheckResult.length;
+  if (approvedCount >= CAP) {
+    return res.status(409).json({
+      error: `Early access cap reached. ${approvedCount}/${CAP} participants already approved. Cannot approve additional participants until the cap is raised.`,
+      approvedCount,
+      cap: CAP,
+    });
+  }
+
+  try {
+    const result = await ERC3643Service.atomicKycApproval({
+      submissionId,
+      walletAddress: submission.walletAddress,
+      countryCode: countryCode ?? 840,
+      reviewNote,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        submissionId,
+        walletAddress: submission.walletAddress,
+        status: 'bridged',
+        identityAddress: result.identityAddress,
+        registerIdentityTxHash: result.registerIdentityTxHash,
+        registryTxHash: result.registryTxHash,
+        t1Claim: {
+          ...result.t1Claim,
+          issuanceMode: 'erc3643_onchain',
+        },
+        t3Claim: {
+          ...result.t3Claim,
+          issuanceMode: 'erc3643_onchain',
+        },
+        note: 'ERC-3643 T-REX: claims issued on-chain via identity.addClaim(). IdentityRegistry.isVerified() reads getClaimIdsByTopic() and validates via ClaimIssuer.isClaimValid() on each transfer.',
+      },
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: msg });
+  }
+}

@@ -1,0 +1,137 @@
+{
+  "generated": "2026-04-05",
+  "scoringCriteria": {
+    "sep24Available": { "weight": 30, "description": "Required — TRANSFER_SERVER_SEP0024 present in stellar.toml" },
+    "usCorridor": { "weight": 25, "description": "USD payout corridor for US recipients" },
+    "usdcSupport": { "weight": 20, "description": "USDC (Circle mainnet issuer) accepted as input asset" },
+    "latency": { "weight": 10, "description": "stellar.toml response latency. Under 200ms = 10pts, 200-500ms = 6pts, 500ms+ = 3pts" },
+    "mainnet": { "weight": 10, "description": "Runs on Stellar mainnet (not testnet)" },
+    "institutionalCredibility": { "weight": 5, "description": "Known entity, documented API, regulatory standing" }
+  },
+  "rankings": [
+    {
+      "rank": 1,
+      "anchorKey": "moneygram",
+      "anchorName": "MoneyGram (Stellar Access)",
+      "homeDomain": "stellar.moneygram.com",
+      "scores": {
+        "sep24Available": 30,
+        "usCorridor": 25,
+        "usdcSupport": 20,
+        "latency": 10,
+        "mainnet": 10,
+        "institutionalCredibility": 5
+      },
+      "totalScore": 100,
+      "transferServerSep24": "https://stellar.moneygram.com/stellaradapterservice/sep24",
+      "webAuthEndpoint": "https://stellar.moneygram.com/stellaradapterservice/auth",
+      "latencyAvgSeconds": 0.095,
+      "recommendedFor": "Production — US corridor, USDC→USD payout",
+      "partnershipRequired": true,
+      "activationBlocker": "MoneyGram Access requires business registration at partners.moneygram.com/access. API key needed for production SEP-24 sessions.",
+      "dryRunFeasible": true,
+      "notes": "Perfect match for Axiom. USDC issuer in toml (GA5ZSEJ...) is exactly Circle mainnet issuer. USD payout corridor. 95ms latency. MoneyGram Access is a documented program for Stellar anchoring. The SEP-10/24 endpoints are publicly accessible — initiation will succeed up to the interactive URL step without a formal partnership. Full production payout requires MoneyGram partnership."
+    },
+    {
+      "rank": 2,
+      "anchorKey": "testanchor",
+      "anchorName": "SDF Test Anchor",
+      "homeDomain": "testanchor.stellar.org",
+      "scores": {
+        "sep24Available": 30,
+        "usCorridor": 15,
+        "usdcSupport": 15,
+        "latency": 6,
+        "mainnet": 0,
+        "institutionalCredibility": 5
+      },
+      "totalScore": 71,
+      "transferServerSep24": "https://testanchor.stellar.org/sep24",
+      "webAuthEndpoint": "https://testanchor.stellar.org/auth",
+      "latencyAvgSeconds": 0.261,
+      "recommendedFor": "Staging / Integration testing only",
+      "partnershipRequired": false,
+      "activationBlocker": "TESTNET ONLY — will not process real payments. Requires configuring adapter for testnet network passphrase. Use STELLAR_ACTIVE_ANCHOR=testanchor with networkId=testnet.",
+      "dryRunFeasible": true,
+      "notes": "Zero partnership barrier. Immediately usable for end-to-end flow testing without real funds. USDC issuer is testnet-only (GBBD47...), different from mainnet. Must run adapter in testnet mode."
+    },
+    {
+      "rank": 3,
+      "anchorKey": "anclap",
+      "anchorName": "Anclap",
+      "homeDomain": "anclap.com",
+      "scores": {
+        "sep24Available": 30,
+        "usCorridor": 0,
+        "usdcSupport": 5,
+        "latency": 10,
+        "mainnet": 10,
+        "institutionalCredibility": 3
+      },
+      "totalScore": 58,
+      "transferServerSep24": "https://api.anclap.com/transfer24",
+      "webAuthEndpoint": "https://api.anclap.com/auth",
+      "latencyAvgSeconds": 0.178,
+      "recommendedFor": "LATAM expansion — ARS/PEN corridors",
+      "partnershipRequired": true,
+      "activationBlocker": "No USD payout corridor. Only Argentine Peso (ARS) and Peruvian Sol (PEN). Would need USDC→local currency swap on Stellar DEX before anchoring.",
+      "dryRunFeasible": true,
+      "notes": "Good for future LATAM expansion. Not suitable for primary US corridor use case."
+    },
+    {
+      "rank": 4,
+      "anchorKey": "mykobo",
+      "anchorName": "MyKobo",
+      "homeDomain": "mykobo.co",
+      "scores": {
+        "sep24Available": 30,
+        "usCorridor": 0,
+        "usdcSupport": 0,
+        "latency": 6,
+        "mainnet": 10,
+        "institutionalCredibility": 3
+      },
+      "totalScore": 49,
+      "transferServerSep24": "https://stellar.mykobo.co/sep24",
+      "webAuthEndpoint": "https://stellar.mykobo.co/auth",
+      "latencyAvgSeconds": 0.448,
+      "recommendedFor": "European expansion — EUR corridor",
+      "partnershipRequired": true,
+      "activationBlocker": "EURC only. No USDC or USD support. Euro corridor only.",
+      "dryRunFeasible": true,
+      "notes": "Valid anchor for European corridor. Reserve for future EUR payment integration."
+    },
+    {
+      "rank": 5,
+      "anchorKey": "ultrastellar",
+      "anchorName": "Ultra Stellar",
+      "homeDomain": "ultrastellar.com",
+      "scores": {
+        "sep24Available": 30,
+        "usCorridor": 0,
+        "usdcSupport": 0,
+        "latency": 3,
+        "mainnet": 10,
+        "institutionalCredibility": 1
+      },
+      "totalScore": 44,
+      "transferServerSep24": "https://ultracapital.xyz/sep24",
+      "webAuthEndpoint": "https://ultracapital.xyz/auth",
+      "latencyAvgSeconds": 0.584,
+      "recommendedFor": "Reserve / further investigation needed",
+      "partnershipRequired": true,
+      "activationBlocker": "Transfer server on different domain (ultracapital.xyz). No public asset list. Unknown corridor support.",
+      "dryRunFeasible": false,
+      "notes": "Low credibility score due to limited public documentation and domain mismatch."
+    }
+  ],
+  "recommendation": {
+    "production": "moneygram",
+    "staging": "testanchor",
+    "latam_expansion": "anclap",
+    "europe_expansion": "mykobo",
+    "primaryEnvVar": "STELLAR_ACTIVE_ANCHOR=moneygram",
+    "stagingEnvVar": "STELLAR_ACTIVE_ANCHOR=testanchor",
+    "rationale": "MoneyGram scores 100/100. It is the only anchor that simultaneously offers SEP-24, USDC support with Circle's mainnet issuer, USD payout corridor, sub-100ms latency, and mainnet operation. MoneyGram Access endpoints are publicly accessible for dry-run testing. Full production payout requires MoneyGram partnership activation."
+  }
+}

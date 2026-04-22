@@ -1,0 +1,38 @@
+{
+  "name": "universe-blockchain",
+  "version": "1.0.0",
+  "description": "Axiom Smart City's sovereign Layer 3 blockchain infrastructure",
+  "main": "index.js",
+  "type": "module",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "deploy:testnet": "tsx scripts/1-deploy-testnet.ts",
+    "deploy:mainnet": "tsx scripts/2-deploy-mainnet.ts",
+    "generate-node-config": "tsx scripts/3-generate-node-config.ts",
+    "deploy-bridge": "tsx scripts/4-deploy-bridge.ts",
+    "test-gas-swap": "tsx scripts/test-gas-swap.ts",
+    "monitor": "tsx scripts/monitor-chain.ts"
+  },
+  "keywords": [
+    "arbitrum",
+    "orbit",
+    "l3",
+    "blockchain",
+    "smart-city",
+    "axiom"
+  ],
+  "author": "Axiom Smart City",
+  "license": "MIT",
+  "dependencies": {
+    "@arbitrum/orbit-sdk": "^0.24.2",
+    "dotenv": "^17.2.3",
+    "viem": "^1.21.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}
