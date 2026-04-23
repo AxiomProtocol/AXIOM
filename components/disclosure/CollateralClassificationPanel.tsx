@@ -33,11 +33,14 @@ interface Props {
   // Filter to a specific symbol to render a single-asset panel (e.g. on the
   // AXAU public page). Omit to render all classified assets (disclosure page).
   symbol?: string;
+  // Filter to a specific asset id (used by operator surfaces that already
+  // hold the id, not the symbol). Mutually exclusive with `symbol`.
+  assetId?: string;
   // Render compact mode (single asset, smaller margins) for asset pages.
   compact?: boolean;
 }
 
-export function CollateralClassificationPanel({ symbol, compact = false }: Props) {
+export function CollateralClassificationPanel({ symbol, assetId, compact = false }: Props) {
   const [assets, setAssets] = useState<CapInfraAsset[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,15 +85,18 @@ export function CollateralClassificationPanel({ symbol, compact = false }: Props
     );
   }
 
-  const filtered = symbol
-    ? assets.filter((a) => a.symbol.toUpperCase() === symbol.toUpperCase())
-    : assets.filter((a) => !!a.collateralClass);
+  const filtered = assetId
+    ? assets.filter((a) => a.id === assetId)
+    : symbol
+      ? assets.filter((a) => a.symbol.toUpperCase() === symbol.toUpperCase())
+      : assets.filter((a) => !!a.collateralClass);
 
   if (filtered.length === 0) {
+    const filterLabel = symbol ?? assetId;
     return (
       <div className={compact ? '' : 'border border-dl-border p-4'}>
         <p className="text-xs font-dl-mono text-dl-gray">
-          No classification on file{symbol ? ` for ${symbol}` : ''}.
+          No classification on file{filterLabel ? ` for ${filterLabel}` : ''}.
         </p>
       </div>
     );

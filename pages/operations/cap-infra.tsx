@@ -20,6 +20,7 @@ import Link from 'next/link';
 import type { GetServerSideProps } from 'next';
 import React, { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { DesignLawLayout, CollateralClassBadge } from '../../components/design-law';
+import { CollateralClassificationPanel } from '../../components/disclosure/CollateralClassificationPanel';
 import {
   readOperatorCookie,
   isValidOperatorKey,
@@ -767,6 +768,22 @@ export function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
           </table>
         </div>
       )}
+
+      {filteredRows && filteredRows.length > 0 && (
+        <div className="mt-6">
+          <h3 className="font-dl-serif text-base text-dl-navy mb-2">
+            Live Collateral Classification
+          </h3>
+          <p className="text-xs text-dl-gray mb-3">
+            Same GREEN/YELLOW/RED classification, rationale, per-asset YELLOW cap,
+            and last-update timestamp shown to the public on{' '}
+            <code className="font-dl-mono">/disclosure</code> and the per-asset
+            pages — sourced live from{' '}
+            <code className="font-dl-mono">/api/capinfra/assets</code>.
+          </p>
+          <CollateralClassificationPanel />
+        </div>
+      )}
     </section>
   );
 }
@@ -975,6 +992,14 @@ function AuditSearchSection({ operatorKey }: { operatorKey: string }) {
   return (
     <section className="mb-12">
       <h2 className="font-dl-serif text-xl text-dl-navy mb-4">Audit Search</h2>
+      {filters.assetId.trim() && (
+        <div className="mb-4">
+          <p className="font-dl-mono text-[10px] uppercase tracking-wider text-dl-gray mb-2">
+            Live collateral classification for asset
+          </p>
+          <CollateralClassificationPanel assetId={filters.assetId.trim()} />
+        </div>
+      )}
       <form
         onSubmit={onSubmit}
         className="border border-dl-border bg-dl-bg p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4"
