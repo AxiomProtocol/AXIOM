@@ -215,6 +215,33 @@ integrationDescribe(
       );
     });
 
+    it('runs cleanly against a completely empty table and reports deleted_count = 0', async () => {
+      // Regression guard: a no-op invocation (zero rows visible to delete)
+      // must still execute the plpgsql body cleanly — including the
+      // cleanup-history INSERT added in migration 0049 — without raising.
+      // If a future change introduces e.g. a NOT NULL violation in the
+      // history insert when deleted_count is 0, this test will catch it.
+      //
+      // beforeEach already issues `DELETE FROM prune_alert_log` inside the
+      // open transaction, so the table is guaranteed empty here.
+      const RETENTION_DAYS = 7;
+
+      const sanity = await client.query<{ count: string }>(
+        'SELECT COUNT(*)::text AS count FROM prune_alert_log',
+      );
+      expect(parseInt(sanity.rows[0].count, 10)).toBe(0);
+
+      // Must not throw, and must report exactly 0 (not just >= 0).
+      const deletedCount = await callPrune(RETENTION_DAYS);
+      expect(deletedCount).toBe(0);
+
+      // Table is still empty afterwards.
+      const after = await client.query<{ count: string }>(
+        'SELECT COUNT(*)::text AS count FROM prune_alert_log',
+      );
+      expect(parseInt(after.rows[0].count, 10)).toBe(0);
+    });
+
     it('reports deleted_count = 0 when no rows fall outside the retention window', async () => {
       const RETENTION_DAYS = 90;
       const now = Date.now();
