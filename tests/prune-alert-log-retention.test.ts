@@ -82,6 +82,26 @@ integrationDescribe(
             'psql "$DATABASE_URL" -f migrations/0049_prune_alert_log_cleanup_history.sql).',
         );
       }
+
+      // The `prune_alert_log_cleanup_history logging` describe block below
+      // depends on migration 0049 having created the audit table. Treat a
+      // missing table as a hard failure so CI cannot pass silently while
+      // the new logging coverage goes untested.
+      const historyTblCheck = await pgPool.query<{ exists: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1 FROM information_schema.tables
+           WHERE table_schema = 'public'
+             AND table_name = 'prune_alert_log_cleanup_history'
+         ) AS exists`,
+      );
+      if (!historyTblCheck.rows[0].exists) {
+        throw new Error(
+          'Integration test prerequisite missing: ' +
+            'prune_alert_log_cleanup_history table not found. Apply ' +
+            'migration 0049 before running integration tests ' +
+            '(e.g. psql "$DATABASE_URL" -f migrations/0049_prune_alert_log_cleanup_history.sql).',
+        );
+      }
     });
 
     beforeEach(async () => {
@@ -216,6 +236,116 @@ integrationDescribe(
       expect(stillThere.rows.map((r) => Number(r.id)).sort()).toEqual(
         [r1, r2].sort(),
       );
+    });
+
+    // ── prune_alert_log_cleanup_history logging ────────────────────────────
+    //
+    // Migration 0049 made prune_prune_alert_log() write one audit row to the
+    // new prune_alert_log_cleanup_history table on every invocation. The
+    // admin dashboard reads from that table to show cleanup cadence — so a
+    // missing INSERT silently breaks the dashboard. These tests prove the
+    // INSERT actually fires with the right deleted_count, retention_days,
+    // and triggered_by values.
+    //
+    // Style mirrors the `oracle_fallback_prune_history logging` block in
+    // tests/prune-oracle-fallback.test.ts: capture MAX(id) on the history
+    // table BEFORE the prune call, then assert exactly one row exists with
+    // id > prevMaxId. We cannot rely on the outer BEGIN/ROLLBACK to "hide"
+    // pre-existing committed history rows — under READ COMMITTED isolation
+    // those rows are still visible to our transaction. The id-watermark
+    // makes the assertions deterministic regardless of ambient data.
+    //
+    // The call uses triggered_by='http' to mirror the production call site
+    // in lib/admin/prune-alert.ts (`pruneAlertLogRetention`) — the only
+    // application-layer caller of this function.
+    describe('prune_alert_log_cleanup_history logging', () => {
+      async function callPruneViaHttp(
+        retentionDays: number,
+      ): Promise<{ deletedCount: number; historyRow: {
+        deleted_count: string;
+        retention_days: number;
+        triggered_by: string;
+      } }> {
+        const maxBefore = await client.query<{ max_id: string | null }>(
+          'SELECT MAX(id) AS max_id FROM prune_alert_log_cleanup_history',
+        );
+        const prevMaxId = maxBefore.rows[0].max_id ?? '0';
+
+        const pruneResult = await client.query<{ deleted_count: string }>(
+          `SELECT deleted_count FROM prune_prune_alert_log($1, 'http')`,
+          [retentionDays],
+        );
+        const deletedCount = parseInt(pruneResult.rows[0].deleted_count, 10);
+
+        // Exactly one new history row must have been inserted.
+        const newRows = await client.query<{
+          deleted_count: string;
+          retention_days: number;
+          triggered_by: string;
+        }>(
+          `SELECT deleted_count, retention_days, triggered_by
+           FROM prune_alert_log_cleanup_history
+           WHERE id > $1::bigint`,
+          [prevMaxId],
+        );
+        expect(newRows.rows).toHaveLength(1);
+
+        return { deletedCount, historyRow: newRows.rows[0] };
+      }
+
+      it('writes exactly one history row whose deleted_count and triggered_by match the call', async () => {
+        const RETENTION_DAYS = 7;
+        const now = Date.now();
+        const dayMs = 24 * 60 * 60 * 1000;
+
+        // Seed two old rows (both outside the 7-day window) and one recent
+        // row (inside the window) so we have a non-zero, deterministic
+        // delete count to assert against the history row.
+        const old1 = await insertAlertRow(new Date(now - 30 * dayMs));
+        const old2 = await insertAlertRow(new Date(now - 10 * dayMs));
+        const recent = await insertAlertRow(new Date(now - 1 * dayMs));
+
+        const { deletedCount, historyRow } =
+          await callPruneViaHttp(RETENTION_DAYS);
+
+        // Transaction isolation on prune_alert_log → exactly the two old
+        // rows we seeded are pruned.
+        expect(deletedCount).toBe(2);
+
+        // The old rows are gone, the recent row survives.
+        const survivors = await client.query<{ id: string }>(
+          `SELECT id FROM prune_alert_log ORDER BY id`,
+        );
+        const survivorIds = survivors.rows.map((r) => Number(r.id));
+        expect(survivorIds).toEqual([recent]);
+        expect(survivorIds).not.toContain(old1);
+        expect(survivorIds).not.toContain(old2);
+
+        // History row matches the call: deleted_count, retention_days,
+        // triggered_by.
+        expect(parseInt(historyRow.deleted_count, 10)).toBe(deletedCount);
+        expect(historyRow.retention_days).toBe(RETENTION_DAYS);
+        expect(historyRow.triggered_by).toBe('http');
+      });
+
+      it('records deleted_count = 0 in the history row when nothing is pruned', async () => {
+        const RETENTION_DAYS = 90;
+        const now = Date.now();
+        const dayMs = 24 * 60 * 60 * 1000;
+
+        // One row well inside the 90-day window — nothing to delete.
+        await insertAlertRow(new Date(now - 1 * dayMs));
+
+        const { deletedCount, historyRow } =
+          await callPruneViaHttp(RETENTION_DAYS);
+
+        expect(deletedCount).toBe(0);
+        // The history row must still be written (the cleanup ran, it just
+        // had nothing to do) and must record deleted_count = 0.
+        expect(parseInt(historyRow.deleted_count, 10)).toBe(0);
+        expect(historyRow.retention_days).toBe(RETENTION_DAYS);
+        expect(historyRow.triggered_by).toBe('http');
+      });
     });
   },
 );
