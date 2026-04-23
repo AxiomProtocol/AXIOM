@@ -281,15 +281,18 @@ export async function pruneAlertLogRetention(): Promise<{
   }
 }
 
+export interface PruneAlertLogCleanupRun {
+  ranAt: string;
+  deletedCount: number;
+  retentionDays: number;
+  triggeredBy: string;
+}
+
 export interface PruneAlertLogStatus {
   rowCount: number;
   retentionDays: number;
-  lastCleanup: {
-    ranAt: string;
-    deletedCount: number;
-    retentionDays: number;
-    triggeredBy: string;
-  } | null;
+  lastCleanup: PruneAlertLogCleanupRun | null;
+  cleanupHistory: PruneAlertLogCleanupRun[];
 }
 
 /**
@@ -302,7 +305,7 @@ export interface PruneAlertLogStatus {
  */
 export async function getPruneAlertLogStatus(): Promise<PruneAlertLogStatus> {
   const retentionDays = getPruneAlertLogRetentionDays();
-  const [countResult, lastCleanupResult] = await Promise.all([
+  const [countResult, historyResult] = await Promise.all([
     pool.query<{ row_count: string }>(
       'SELECT COUNT(*)::TEXT AS row_count FROM prune_alert_log',
     ),
@@ -315,24 +318,25 @@ export async function getPruneAlertLogStatus(): Promise<PruneAlertLogStatus> {
       `SELECT ran_at, deleted_count, retention_days, triggered_by
        FROM prune_alert_log_cleanup_history
        ORDER BY ran_at DESC
-       LIMIT 1`,
+       LIMIT 30`,
     ),
   ]);
 
   const rowCount = parseInt(countResult.rows[0]?.row_count ?? '0', 10);
-  const lastRow = lastCleanupResult.rows[0] ?? null;
+  const cleanupHistory: PruneAlertLogCleanupRun[] = historyResult.rows.map(
+    (row) => ({
+      ranAt: row.ran_at,
+      deletedCount: Number(row.deleted_count),
+      retentionDays: row.retention_days,
+      triggeredBy: row.triggered_by,
+    }),
+  );
 
   return {
     rowCount,
     retentionDays,
-    lastCleanup: lastRow
-      ? {
-          ranAt: lastRow.ran_at,
-          deletedCount: Number(lastRow.deleted_count),
-          retentionDays: lastRow.retention_days,
-          triggeredBy: lastRow.triggered_by,
-        }
-      : null,
+    lastCleanup: cleanupHistory[0] ?? null,
+    cleanupHistory,
   };
 }
 

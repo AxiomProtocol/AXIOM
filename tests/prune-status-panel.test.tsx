@@ -424,6 +424,116 @@ describe('AlertLogRetentionPanel', () => {
     expect(screen.getByText(/pg_cron/)).toBeTruthy();
   });
 
+  it('shows the empty-state message when cleanupHistory is empty', () => {
+    render(
+      <AlertLogRetentionPanel
+        status={{
+          rowCount: 5,
+          retentionDays: 90,
+          lastCleanup: null,
+          cleanupHistory: [],
+        }}
+      />,
+    );
+    expect(
+      screen.getByText('No alert-log cleanup runs recorded yet.'),
+    ).toBeTruthy();
+  });
+
+  it('renders one history-table row per entry in cleanupHistory', () => {
+    const now = Date.now();
+    const history = [
+      {
+        ranAt: new Date(now - 1 * 60 * 60 * 1000).toISOString(),
+        deletedCount: 3,
+        retentionDays: 90,
+        triggeredBy: 'cron',
+      },
+      {
+        ranAt: new Date(now - 25 * 60 * 60 * 1000).toISOString(),
+        deletedCount: 0,
+        retentionDays: 90,
+        triggeredBy: 'http',
+      },
+      {
+        ranAt: new Date(now - 50 * 60 * 60 * 1000).toISOString(),
+        deletedCount: 4,
+        retentionDays: 90,
+        triggeredBy: 'cron',
+      },
+    ];
+    render(
+      <AlertLogRetentionPanel
+        status={{
+          rowCount: 12,
+          retentionDays: 90,
+          lastCleanup: history[0],
+          cleanupHistory: history,
+        }}
+      />,
+    );
+    const rows = document.querySelectorAll('tbody tr');
+    expect(rows.length).toBe(history.length);
+  });
+
+  it('shows the ⚠ gap warning when consecutive cleanup runs exceed PRUNE_GAP_WARN_HOURS', () => {
+    const now = Date.now();
+    const newer = {
+      ranAt: new Date(now - 1 * 60 * 60 * 1000).toISOString(),
+      deletedCount: 1,
+      retentionDays: 90,
+      triggeredBy: 'cron',
+    };
+    const older = {
+      ranAt: new Date(
+        now - (1 + PRUNE_GAP_WARN_HOURS + 5) * 60 * 60 * 1000,
+      ).toISOString(),
+      deletedCount: 2,
+      retentionDays: 90,
+      triggeredBy: 'cron',
+    };
+    render(
+      <AlertLogRetentionPanel
+        status={{
+          rowCount: 9,
+          retentionDays: 90,
+          lastCleanup: newer,
+          cleanupHistory: [newer, older],
+        }}
+      />,
+    );
+    expect(screen.getByText('⚠')).toBeTruthy();
+  });
+
+  it('does NOT show the ⚠ gap warning when consecutive runs are within PRUNE_GAP_WARN_HOURS', () => {
+    const now = Date.now();
+    const newer = {
+      ranAt: new Date(now - 1 * 60 * 60 * 1000).toISOString(),
+      deletedCount: 1,
+      retentionDays: 90,
+      triggeredBy: 'cron',
+    };
+    const older = {
+      ranAt: new Date(
+        now - (1 + PRUNE_GAP_WARN_HOURS - 1) * 60 * 60 * 1000,
+      ).toISOString(),
+      deletedCount: 2,
+      retentionDays: 90,
+      triggeredBy: 'cron',
+    };
+    render(
+      <AlertLogRetentionPanel
+        status={{
+          rowCount: 9,
+          retentionDays: 90,
+          lastCleanup: newer,
+          cleanupHistory: [newer, older],
+        }}
+      />,
+    );
+    expect(screen.queryByText('⚠')).toBeNull();
+  });
+
   it('uses singular "row" when exactly one row was removed', () => {
     render(
       <AlertLogRetentionPanel

@@ -56,6 +56,7 @@ interface AlertLogStatus {
   rowCount: number;
   retentionDays: number;
   lastCleanup: AlertLogCleanup | null;
+  cleanupHistory?: AlertLogCleanup[];
 }
 
 interface OracleFallbackData {
@@ -423,6 +424,16 @@ export function AlertLogRetentionPanel({
   }
 
   const { rowCount, retentionDays, lastCleanup } = status;
+  const cleanupHistory = status.cleanupHistory ?? [];
+
+  const abnormalGapCount = cleanupHistory.filter((run, i) => {
+    const prevRun = cleanupHistory[i + 1];
+    if (!prevRun) return false;
+    const gapHours =
+      (new Date(run.ranAt).getTime() - new Date(prevRun.ranAt).getTime()) /
+      (1000 * 60 * 60);
+    return gapHours > PRUNE_GAP_WARN_HOURS;
+  }).length;
 
   return (
     <div className="mb-10">
@@ -430,9 +441,21 @@ export function AlertLogRetentionPanel({
         <h2 className="font-dl-serif text-xl text-dl-navy">
           Alert Log Retention
         </h2>
-        <span className="font-dl-mono text-xs text-dl-gray">
-          prune_alert_log
-        </span>
+        <div className="flex items-center gap-3 flex-wrap">
+          {cleanupHistory.length > 0 && (
+            <span className="font-dl-mono text-xs text-dl-gray">
+              {cleanupHistory.length} run{cleanupHistory.length !== 1 ? 's' : ''} recorded
+            </span>
+          )}
+          {abnormalGapCount > 0 && (
+            <span className="font-dl-mono text-xs font-bold px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-300">
+              {abnormalGapCount} gap{abnormalGapCount !== 1 ? 's' : ''} &gt; {PRUNE_GAP_WARN_HOURS}h
+            </span>
+          )}
+          <span className="font-dl-mono text-xs text-dl-gray">
+            prune_alert_log
+          </span>
+        </div>
       </div>
 
       <div className="border border-dl-border bg-dl-bg">
@@ -486,6 +509,85 @@ export function AlertLogRetentionPanel({
           </div>
         </div>
       </div>
+
+      {cleanupHistory.length === 0 ? (
+        <div className="mt-4 border border-dl-border bg-dl-bg p-8 text-sm text-dl-gray font-dl-mono text-center">
+          No alert-log cleanup runs recorded yet.
+        </div>
+      ) : (
+        <div className="mt-4 border border-dl-border overflow-x-auto">
+          <table className="w-full font-dl-mono text-xs">
+            <thead className="bg-dl-bg-alt border-b border-dl-border">
+              <tr>
+                <th className="px-4 py-3 text-left uppercase tracking-wider text-dl-gray whitespace-nowrap">
+                  Ran At (UTC)
+                </th>
+                <th className="px-4 py-3 text-right uppercase tracking-wider text-dl-gray whitespace-nowrap">
+                  Gap Since Prev
+                </th>
+                <th className="px-4 py-3 text-right uppercase tracking-wider text-dl-gray whitespace-nowrap">
+                  Rows Deleted
+                </th>
+                <th className="px-4 py-3 text-right uppercase tracking-wider text-dl-gray whitespace-nowrap">
+                  Retention (days)
+                </th>
+                <th className="px-4 py-3 text-left uppercase tracking-wider text-dl-gray whitespace-nowrap">
+                  Trigger
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {cleanupHistory.map((run, i) => {
+                const prevRun = cleanupHistory[i + 1];
+                const gapHours = prevRun
+                  ? (new Date(run.ranAt).getTime() - new Date(prevRun.ranAt).getTime()) /
+                    (1000 * 60 * 60)
+                  : null;
+                const gapLabel =
+                  gapHours === null
+                    ? '—'
+                    : gapHours >= 48
+                      ? `${(gapHours / 24).toFixed(1)}d`
+                      : `${gapHours.toFixed(1)}h`;
+                const isGapOverdue = gapHours !== null && gapHours > PRUNE_GAP_WARN_HOURS;
+                const rowBg = isGapOverdue
+                  ? 'bg-amber-50'
+                  : i % 2 === 0
+                    ? 'bg-dl-bg'
+                    : 'bg-dl-bg-alt';
+                return (
+                  <tr key={`${run.ranAt}-${i}`} className={rowBg}>
+                    <td className="px-4 py-2 text-dl-navy whitespace-nowrap">
+                      {formatTs(run.ranAt)}
+                    </td>
+                    <td
+                      className={`px-4 py-2 text-right whitespace-nowrap font-bold ${
+                        isGapOverdue ? 'text-amber-700' : 'text-dl-gray'
+                      }`}
+                    >
+                      {gapLabel}
+                      {isGapOverdue && (
+                        <span className="ml-1 text-amber-600" title={`Gap exceeds ${PRUNE_GAP_WARN_HOURS}h — possible missed run`}>
+                          ⚠
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-right text-dl-navy font-bold">
+                      {run.deletedCount.toLocaleString('en-US')}
+                    </td>
+                    <td className="px-4 py-2 text-right text-dl-navy">
+                      {run.retentionDays}
+                    </td>
+                    <td className="px-4 py-2 text-dl-gray">
+                      {run.triggeredBy}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
