@@ -59,19 +59,19 @@ type Destination = 'USDC' | 'AXUSD' | 'AXAU';
 
 const DESTINATIONS: { id: Destination; label: string; desc: string }[] = [
   {
-    id: 'USDC',
-    label: 'USDC',
-    desc: 'Receive stable dollars on Arbitrum One. No further steps required.',
-  },
-  {
     id: 'AXUSD',
-    label: 'AXUSD',
-    desc: 'Axiom Protocol stablecoin. Converted 1:1 from USDC via the Peg Stability Module.',
+    label: 'AXUSD (recommended)',
+    desc: 'Axiom Dollars. Card → USDC via Coinbase → 1:1 PSM swap into AXUSD on Arbitrum One.',
   },
   {
     id: 'AXAU',
     label: 'AXAU',
-    desc: 'Reserve instrument backed by gold and land NAV. Requires identity verification.',
+    desc: 'Reserve instrument backed by gold and land NAV. Card → USDC → AXUSD → operational queue. Requires identity verification.',
+  },
+  {
+    id: 'USDC',
+    label: 'USDC only',
+    desc: 'Stop at digital dollars on Arbitrum One. No further conversion.',
   },
 ];
 
@@ -151,7 +151,7 @@ function StepBadge({ n, done, active }: { n: number; done: boolean; active: bool
 export default function OnrampPage() {
   const { address, isConnected, chain } = useAccount();
 
-  const [destination, setDestination] = useState<Destination>('USDC');
+  const [destination, setDestination] = useState<Destination>('AXUSD');
   const [fiatAmount, setFiatAmount] = useState('100');
   const [onrampConfig, setOnrampConfig] = useState<OnrampConfig | null>(null);
 
@@ -462,8 +462,8 @@ export default function OnrampPage() {
       </Head>
 
       <SectionHeading
-        title="Start With Dollars"
-        subtitle="The easiest public entry into Axiom — buy digital dollars, move into Axiom Dollars, and choose your path"
+        title="Buy AXUSD With a Card"
+        subtitle="The canonical consumer entry into Axiom — card → USDC via Coinbase → 1:1 PSM swap into AXUSD on Arbitrum One. AXAU and USDC-only paths are also supported."
       />
 
       {/* ── Cinematic Hero Banner ────────────────────────────────────────────── */}
@@ -480,17 +480,17 @@ export default function OnrampPage() {
         >
           <p className="text-xs font-dl-mono text-blue-200 uppercase tracking-widest mb-2">Powered by Coinbase Infrastructure</p>
           <p className="text-2xl md:text-3xl font-bold text-white font-dl-serif leading-tight">
-            Turn Dollars Into<br />Opportunity in Minutes.
+            Buy Axiom Dollars<br />With a Card in Minutes.
           </p>
           <p className="text-sm text-blue-100 font-dl-mono mt-3 max-w-2xl leading-relaxed">
-            Start with cash, move into Axiom Dollars, and choose your path — income, reserve access, or capital participation.
+            Card → USDC via Coinbase → 1:1 PSM swap into AXUSD on Arbitrum One. AXAU reserve access available after identity verification. USDC-only also supported.
           </p>
           <div className="flex flex-wrap gap-3 mt-5">
             <a
               href="#how-it-works"
               className="inline-block bg-dl-gold text-dl-navy px-6 py-3 text-xs font-bold hover:opacity-90 font-dl-mono uppercase tracking-wider"
             >
-              Start With Dollars →
+              Buy AXUSD With a Card →
             </a>
             <a
               href="#how-it-works"
