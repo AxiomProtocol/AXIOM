@@ -1991,6 +1991,44 @@ async function main() {
         auditRow.rows[0]?.reason_code === 'COLLATERAL_INTEGRITY_FAILED',
         `77: audit event reasonCode=COLLATERAL_INTEGRITY_FAILED (got ${auditRow.rows[0]?.reason_code ?? 'none'})`,
       );
+
+      // Verify a corresponding HIGH-severity operator notification row
+      // was created so on-call operators get a proactive signal instead
+      // of having to scan audit logs (task #222).
+      const notifRow = await _pool.query<{
+        severity: string;
+        channel: string;
+        kind: string | null;
+        reason_code: string | null;
+      }>(
+        `SELECT severity,
+                channel,
+                body_json->>'kind' AS kind,
+                body_json->>'reasonCode' AS reason_code
+           FROM cap_notifications
+          WHERE topic = 'collateral.integrity_failed'
+            AND body_json->>'assetId' = $1
+            AND created_at >= $2
+          ORDER BY created_at DESC
+          LIMIT 1`,
+        [axau.id, beforeTs],
+      );
+      assert(
+        notifRow.rows[0]?.severity === 'HIGH',
+        `77: operator notification severity=HIGH (got ${notifRow.rows[0]?.severity ?? 'none'})`,
+      );
+      assert(
+        notifRow.rows[0]?.channel === 'operator',
+        `77: operator notification channel=operator (got ${notifRow.rows[0]?.channel ?? 'none'})`,
+      );
+      assert(
+        notifRow.rows[0]?.kind === 'oracle_stale',
+        `77: operator notification body kind=oracle_stale (got ${notifRow.rows[0]?.kind ?? 'none'})`,
+      );
+      assert(
+        notifRow.rows[0]?.reason_code === 'COLLATERAL_INTEGRITY_FAILED',
+        `77: operator notification body reasonCode=COLLATERAL_INTEGRITY_FAILED (got ${notifRow.rows[0]?.reason_code ?? 'none'})`,
+      );
       console.log('  77. Stale oracle ingest → RED via integrity hook ✓');
 
       // Restore AXAU to GREEN again for re-runs.

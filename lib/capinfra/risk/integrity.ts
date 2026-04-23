@@ -29,6 +29,7 @@ import { eq } from 'drizzle-orm';
 import { emitAuditEventStrict } from '../audit';
 import { NotFoundError } from '../errors';
 import { generateId } from '../ids';
+import { emitNotification } from '../notifications';
 import { POLICY_VERSION } from '../policy';
 
 export type IntegrityFailureKind =
@@ -61,6 +62,50 @@ const KIND_PREFIX: Record<IntegrityFailureKind, string> = {
   issuer_event: 'Issuer freeze / pause event observed',
   bridge_event: 'Bridge incident observed',
 };
+
+/**
+ * In-process dedup window for operator notifications. A high-frequency
+ * monitor (e.g. an oracle that ticks every few seconds against a stale
+ * upstream) can call `recordIntegrityFailure` repeatedly between the
+ * moment the asset flips RED and the moment an operator restores it.
+ * The audit-event side is already edge-triggered (skipped when the
+ * asset is already RED), but a re-trip after manual restoration could
+ * still produce back-to-back rows. Dedup keys are `${assetId}:${kind}`
+ * so distinct failure modes on the same asset still notify once each.
+ *
+ * The window intentionally lives in-process (not in the DB): correctness
+ * does not depend on it — duplicates would be at worst noisy, never
+ * incorrect — and a process restart MUST re-emit so a freshly-promoted
+ * leader doesn't silently swallow the next failure.
+ */
+const NOTIFY_DEDUP_WINDOW_MS = 5 * 60 * 1000;
+const recentNotifications = new Map<string, number>();
+
+function dedupKey(assetId: string, kind: IntegrityFailureKind): string {
+  return `${assetId}:${kind}`;
+}
+
+function isWithinDedupWindow(assetId: string, kind: IntegrityFailureKind): boolean {
+  const last = recentNotifications.get(dedupKey(assetId, kind));
+  return last !== undefined && Date.now() - last < NOTIFY_DEDUP_WINDOW_MS;
+}
+
+function markNotified(assetId: string, kind: IntegrityFailureKind): void {
+  const now = Date.now();
+  recentNotifications.set(dedupKey(assetId, kind), now);
+  // Opportunistic GC so the map can't grow unboundedly across long-lived
+  // processes that touch many distinct (asset, kind) pairs.
+  if (recentNotifications.size > 1000) {
+    for (const [k, ts] of recentNotifications) {
+      if (now - ts >= NOTIFY_DEDUP_WINDOW_MS) recentNotifications.delete(k);
+    }
+  }
+}
+
+/** Test-only: clear the dedup window. Not exported from the public surface. */
+export function __resetIntegrityNotificationDedupForTests(): void {
+  recentNotifications.clear();
+}
 
 export async function recordIntegrityFailure(
   input: RecordIntegrityFailureInput,
@@ -143,8 +188,51 @@ export async function recordIntegrityFailure(
       tx,
     );
 
-    return { previousClass, alreadyRed: false, rationale };
+    return {
+      previousClass,
+      alreadyRed: false,
+      rationale,
+      symbol: existing.symbol,
+      assetType: existing.assetType,
+    };
   });
+
+  // Best-effort operator notification, fired only on real edge-triggered
+  // transitions and deduplicated per (asset, kind) within a short window
+  // so a high-frequency stale-feed cannot spam the operator channel.
+  // Mirrors the pattern used by ACH emergency-disable notifications:
+  // channel='operator', high severity, body carries the structured
+  // rationale so operators can react without opening the audit log.
+  if (!result.alreadyRed && !isWithinDedupWindow(assetId, kind)) {
+    const notificationId = await emitNotification({
+      userId: null,
+      channel: 'operator',
+      topic: 'collateral.integrity_failed',
+      severity: 'HIGH',
+      subject: `[op] Asset auto-frozen to RED: ${result.symbol ?? assetId} (${kind})`,
+      bodyJson: {
+        assetId,
+        symbol: result.symbol ?? null,
+        assetType: result.assetType ?? null,
+        kind,
+        detail,
+        previousClass: result.previousClass,
+        newClass: 'RED',
+        rationale: result.rationale,
+        actor,
+        reasonCode: 'COLLATERAL_INTEGRITY_FAILED',
+      },
+      correlationId: correlationId ?? null,
+    });
+    // Only suppress future notifications within the dedup window if the
+    // row was actually persisted. `emitNotification` is best-effort and
+    // returns null on failure; in that case we deliberately leave the
+    // dedup map untouched so the next integrity event re-tries the
+    // notification instead of silently swallowing it for 5 minutes.
+    if (notificationId !== null) {
+      markNotified(assetId, kind);
+    }
+  }
 
   return {
     assetId,
