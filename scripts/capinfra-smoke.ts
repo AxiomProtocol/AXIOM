@@ -57,12 +57,13 @@
  *    66. Daily aggregate cap denial (DB override cap=$1 → ACH_DAILY_CAP_EXCEEDED)
  *    67. Concentration cap denial (DB override pct=0.001 → ACH_CONCENTRATION_CAP_EXCEEDED)
  *
- *   Collateral Risk Policy (73–77): Integrity-failure auto-downgrade
+ *   Collateral Risk Policy (73–78): Integrity-failure auto-downgrade
  *    73. Guardian disable pre-state (AXAU GREEN)
  *    74. Disable AXAU via integrity chokepoint → RED
  *    75. Post-disable BORROW denied with COLLATERAL_CLASS_RED
  *    76. Reserve-attestation breach → RED via integrity hook
  *    77. Stale oracle ingest → RED + collateral.integrity_failed (kind=oracle_stale)
+ *    78. Redemption over-draws reserve → RED + collateral.integrity_failed (kind=redemption_failed)
  *
  *   GAP-001 (68–72): ACH Settlement Confirmation Proof
  *    68. SUBMITTED remains uncredited before webhook/recon confirmation
@@ -2007,11 +2008,111 @@ async function main() {
       console.log('  ✓ AXAU restored to GREEN (direct DB; harness only)');
     }
 
-    console.log('  [Collateral Risk Policy] Checks 73–77 complete');
+    // 78. Redemption integrity trigger: writing a REDEMPTION DEBIT
+    //     against AXAU that exceeds gross headroom must drive the
+    //     post-commit integrity hook in adjustReserve, which calls
+    //     recordIntegrityFailure(kind='redemption_failed') and
+    //     downgrades the asset to RED with a `collateral.integrity_failed`
+    //     audit event. Mirrors the structure of check #76 but exercises
+    //     the redemption_failed branch in adjustReserve's post-commit
+    //     hook (lib/capinfra/reserve/service.ts).
+    if (_pool && axau) {
+      // Confirm pre-state is GREEN (the previous block restored it).
+      const preRow = await _pool.query<{ collateral_class: string }>(
+        `SELECT collateral_class FROM cap_assets WHERE id = $1`,
+        [axau.id],
+      );
+      assert(preRow.rows[0]?.collateral_class === 'GREEN', `78 pre: AXAU is GREEN`);
+
+      // Capture DB clock for scoped audit-event lookup (see check #77
+      // for the rationale on using DB now() over JS Date.now()).
+      const beforeAudit = await _pool.query<{ ts: Date }>(`SELECT now() AS ts`);
+      const beforeTs = beforeAudit.rows[0].ts;
+
+      // Drain gross to negative via a REDEMPTION DEBIT. As with
+      // check #76, no matching CREDIT is required — the integrity
+      // hook fires whenever available < 0 after the write. Invoke
+      // the service directly (same code path internal callers use).
+      const idemKey = `smoke-redemption-failed-${Date.now()}`;
+      try {
+        await adjustReserve({
+          assetId: axau.id,
+          amount: '0.0000000001',
+          direction: 'DEBIT',
+          source: 'REDEMPTION',
+          reasonCode: 'SMOKE_REDEMPTION_OVERDRAW',
+          actor: 'capinfra-smoke',
+          idempotencyKey: idemKey,
+          referenceId: `smoke-redemption-${Date.now()}`,
+        });
+      } catch (err) {
+        console.warn(
+          '  78. adjustReserve threw (continuing to assert post-state):',
+          (err as Error).message,
+        );
+      }
+      // Allow the post-commit hook to settle.
+      await new Promise((r) => setTimeout(r, 250));
+      const postRow = await _pool.query<{
+        collateral_class: string;
+        collateral_classification_rationale: string;
+      }>(
+        `SELECT collateral_class, collateral_classification_rationale
+           FROM cap_assets WHERE id = $1`,
+        [axau.id],
+      );
+      assert(
+        postRow.rows[0]?.collateral_class === 'RED',
+        `78: AXAU downgraded to RED after redemption over-draw (got ${postRow.rows[0]?.collateral_class})`,
+      );
+      assert(
+        /Redemption/i.test(postRow.rows[0]?.collateral_classification_rationale ?? ''),
+        `78: rationale mentions redemption`,
+      );
+
+      // Verify a new collateral.integrity_failed audit event with
+      // payloadJson.kind = 'redemption_failed' was emitted for this asset.
+      const auditRow = await _pool.query<{ kind: string | null; reason_code: string | null }>(
+        `SELECT payload_json->>'kind' AS kind,
+                payload_json->>'reasonCode' AS reason_code
+           FROM cap_audit_events
+          WHERE event_type = 'collateral.integrity_failed'
+            AND asset_id = $1
+            AND created_at >= $2
+          ORDER BY created_at DESC
+          LIMIT 1`,
+        [axau.id, beforeTs],
+      );
+      assert(
+        auditRow.rows[0]?.kind === 'redemption_failed',
+        `78: audit event kind=redemption_failed (got ${auditRow.rows[0]?.kind ?? 'none'})`,
+      );
+      assert(
+        auditRow.rows[0]?.reason_code === 'COLLATERAL_INTEGRITY_FAILED',
+        `78: audit event reasonCode=COLLATERAL_INTEGRITY_FAILED (got ${auditRow.rows[0]?.reason_code ?? 'none'})`,
+      );
+      console.log('  78. Redemption over-draws reserve → RED via integrity hook ✓');
+
+      // Restore AXAU to GREEN again for re-runs.
+      await _pool.query(
+        `UPDATE cap_assets
+           SET collateral_class = 'GREEN',
+               collateral_classification_rationale = $2,
+               updated_at = now()
+         WHERE id = $1`,
+        [
+          axau.id,
+          'smoke harness: restored to GREEN after redemption-failure integrity test',
+        ],
+      );
+      console.log('  ✓ AXAU restored to GREEN (direct DB; harness only)');
+    }
+
+    console.log('  [Collateral Risk Policy] Checks 73–78 complete');
   }
 
   if (_pool) await _pool.end();
-  console.log('[capinfra-smoke] OK (77/77)');
+  console.log('[capinfra-smoke] OK (78/78)');
   process.exit(0);
 }
 
