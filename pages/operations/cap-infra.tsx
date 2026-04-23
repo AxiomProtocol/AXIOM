@@ -851,6 +851,11 @@ function AuditSearchSection({ operatorKey }: { operatorKey: string }) {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [csvLoading, setCsvLoading] = useState(false);
+  const [exportStatus, setExportStatus] = useState<
+    | { kind: 'success'; rowCount: number; filename: string }
+    | { kind: 'empty'; hasFilters: boolean }
+    | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -903,6 +908,7 @@ function AuditSearchSection({ operatorKey }: { operatorKey: string }) {
     setItems([]);
     setNextCursor(null);
     setExpanded({});
+    setExportStatus(null);
     search(null);
   }
 
@@ -913,11 +919,16 @@ function AuditSearchSection({ operatorKey }: { operatorKey: string }) {
     setError(null);
     setHasSearched(false);
     setExpanded({});
+    setExportStatus(null);
   }
 
   const downloadCsv = useCallback(async () => {
     setCsvLoading(true);
     setError(null);
+    setExportStatus(null);
+    const hasFilters = (Object.keys(filters) as Array<keyof AuditFilters>).some(
+      (k) => k !== 'limit' && filters[k].trim() !== '',
+    );
     try {
       const rows: AuditEvent[] = [];
       let cursor: string | null = null;
@@ -931,17 +942,24 @@ function AuditSearchSection({ operatorKey }: { operatorKey: string }) {
         cursor = data.nextCursor ?? null;
       } while (cursor);
 
+      if (rows.length === 0) {
+        setExportStatus({ kind: 'empty', hasFilters });
+        return;
+      }
+
       const csv = [CSV_HEADER, ...rows.map(buildCsvRow)].join('\r\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-      a.download = `audit-export-${ts}.csv`;
+      const filename = `audit-export-${ts}.csv`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      setExportStatus({ kind: 'success', rowCount: rows.length, filename });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -1059,6 +1077,30 @@ function AuditSearchSection({ operatorKey }: { operatorKey: string }) {
       {error && (
         <div className="mb-4 border-l-4 border-l-red-500 border border-dl-border bg-red-50 p-3">
           <p className="font-dl-mono text-xs text-red-700">Error: {error}</p>
+        </div>
+      )}
+
+      {exportStatus?.kind === 'success' && (
+        <div
+          role="status"
+          className="mb-4 border-l-4 border-l-emerald-500 border border-emerald-200 bg-emerald-50 p-3"
+        >
+          <p className="font-dl-mono text-xs text-emerald-800">
+            Exported {exportStatus.rowCount.toLocaleString('en-US')} audit event
+            {exportStatus.rowCount === 1 ? '' : 's'} to {exportStatus.filename}.
+          </p>
+        </div>
+      )}
+      {exportStatus?.kind === 'empty' && (
+        <div
+          role="status"
+          className="mb-4 border-l-4 border-l-amber-500 border border-amber-200 bg-amber-50 p-3"
+        >
+          <p className="font-dl-mono text-xs text-amber-800">
+            {exportStatus.hasFilters
+              ? 'No audit events match the current filters — nothing was exported. Adjust the filters and try again.'
+              : 'No audit events to export — the audit log is empty.'}
+          </p>
         </div>
       )}
 
