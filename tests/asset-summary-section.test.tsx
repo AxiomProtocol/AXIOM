@@ -315,3 +315,146 @@ describe('AssetSummarySection — CSV download filename includes filter segments
     expect(capturedDownloadName).toBe(`asset-registry-${EXPECTED_DATE}.csv`);
   });
 });
+
+describe('AssetSummarySection — CSV download confirmation banners', () => {
+  const FROZEN_NOW = new Date('2026-04-19T12:34:56.000Z').getTime();
+  const EXPECTED_DATE = '2026-04-19';
+
+  let capturedDownloadName: string | null = null;
+  let anchorClickCount = 0;
+  let originalCreateElement: typeof document.createElement;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(FROZEN_NOW);
+
+    capturedDownloadName = null;
+    anchorClickCount = 0;
+
+    (URL as unknown as { createObjectURL: (b: Blob) => string }).createObjectURL = () =>
+      'blob:mock';
+    (URL as unknown as { revokeObjectURL: (u: string) => void }).revokeObjectURL = () => {};
+
+    originalCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      const el = originalCreateElement(tag);
+      if (tag.toLowerCase() === 'a') {
+        const anchor = el as HTMLAnchorElement;
+        anchor.click = () => {
+          capturedDownloadName = anchor.download;
+          anchorClickCount += 1;
+        };
+      }
+      return el;
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    restoreFetch();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  async function clickDownload() {
+    const section = screen.getByRole('heading', { name: 'Asset Registry' }).closest('section');
+    if (!section) throw new Error('Asset Registry section not found');
+    const downloadBtn = within(section as HTMLElement).getByRole('button', {
+      name: /Download CSV/i,
+    });
+    fireEvent.click(downloadBtn);
+  }
+
+  it('shows the success banner with the exported row count after clicking Download CSV', async () => {
+    mockFetchRows(TEST_ROWS);
+    await renderAndWaitForRows();
+    await clickDownload();
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          new RegExp(`Exported 5 assets to asset-registry-${EXPECTED_DATE}\\.csv\\.`),
+        ),
+      ).toBeTruthy();
+    });
+    expect(anchorClickCount).toBe(1);
+  });
+
+  it('uses singular "asset" in the success banner when exactly one row is exported', async () => {
+    mockFetchRows([makeRow('a1', 'AXUSD', 'STABLE_ASSET', 'ACTIVE')]);
+    await renderAndWaitForRows();
+    await clickDownload();
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          new RegExp(`Exported 1 asset to asset-registry-${EXPECTED_DATE}\\.csv\\.`),
+        ),
+      ).toBeTruthy();
+    });
+    expect(anchorClickCount).toBe(1);
+  });
+
+  it('shows the empty-result warning (and produces no file) when filters narrow rows to zero', async () => {
+    // Server-side filtering: when a Status filter is set, the API returns zero rows.
+    // Until then, return the full dataset so the row table mounts and Download CSV renders.
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      const rows = url.includes('status=') ? [] : TEST_ROWS;
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ items: rows }),
+      } as unknown as Response;
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await renderAndWaitForRows();
+
+    const statusSelect = screen.getAllByRole('combobox')[1];
+    fireEvent.change(statusSelect, { target: { value: 'SUSPENDED' } });
+
+    // Wait for the re-fetch with the status filter to settle to zero rows.
+    await waitFor(() => {
+      const tbody = document.querySelector('table tbody');
+      expect(tbody?.querySelectorAll('tr').length ?? 0).toBe(0);
+    });
+
+    await clickDownload();
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          /No assets match the current filters — nothing was exported\. Adjust the filters and try again\./,
+        ),
+      ).toBeTruthy();
+    });
+    // Empty result must not trigger an actual download.
+    expect(anchorClickCount).toBe(0);
+    expect(capturedDownloadName).toBeNull();
+    // And the success banner must not appear.
+    expect(screen.queryByText(/^Exported /)).toBeNull();
+  });
+
+  it('shows the empty-registry warning (and produces no file) when the registry itself is empty', async () => {
+    mockFetchRows([]);
+    render(<AssetSummarySection operatorKey="test-key" />);
+    // With zero rows, the Download CSV button still renders, but the table is empty.
+    await waitFor(
+      () => {
+        expect(screen.getByRole('button', { name: /Download CSV/i })).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+
+    await clickDownload();
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/No assets to export — the asset registry is empty\./),
+      ).toBeTruthy();
+    });
+    expect(anchorClickCount).toBe(0);
+    expect(capturedDownloadName).toBeNull();
+  });
+});
