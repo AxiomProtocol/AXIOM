@@ -7,12 +7,19 @@ import type { NextApiRequest, NextApiResponse } from 'next';
  * (Card -> USDC -> PSM -> AXUSD/AXAU). Treasury funding moved to direct
  * ACH/wire to the Increase Nexus account documented at /treasury/fund.
  *
- * This endpoint returns 410 Gone so any lingering client cannot create
- * new Stripe Checkout sessions. The webhook receiver is intentionally
- * left online to drain in-flight events for already-paid sessions.
+ * The webhook receiver at /api/capinfra/treasury/card-deposit/webhook
+ * is intentionally left online to drain in-flight events for already
+ * paid Checkout sessions.
+ *
+ * Semantics:
+ *   - POST  -> 410 Gone (the rail itself is retired)
+ *   - other -> 405 Method Not Allowed with Allow: POST
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.setHeader('Allow', '');
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'method_not_allowed' });
+  }
   return res.status(410).json({
     error: 'endpoint_deprecated',
     message:
