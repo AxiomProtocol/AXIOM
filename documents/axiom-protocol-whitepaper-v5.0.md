@@ -50,7 +50,7 @@ The protocol stack today comprises:
 - **AXUSD** — ERC-3643 compliant settlement stablecoin with on-chain identity, automated KYC, and an ERC-7726 oracle perspective for use as Euler V2 vault collateral.
 - **AXAU** — Live mainnet reserve instrument minted and redeemed against PAXG (gold) and a LandNAVOracle, with conservative loan-to-value and a dedicated MintRedeemController.
 - **Capital Infrastructure Backend (capinfra)** — Modular monolith spine that holds the canonical asset registry, unified identity projection, deterministic version-stamped policy evaluator, market-data ingestion with built-in staleness chokepoints, append-only audit event ledger, and operator console foundation.
-- **Banking layer** — Increase.com (FDIC-insured ACH/wire rails) for primary banking, BitGo CaaS for institutional Arbitrum custody, Stripe Checkout for card onramp.
+- **Banking layer** — Increase.com (FDIC-insured ACH/wire rails) for primary banking and treasury funding, BitGo CaaS for institutional Arbitrum custody, Coinbase Onramp for consumer card payments (card → USDC → PSM → AXUSD/AXAU).
 - **Real-asset pipeline** — Property Analysis Tool, Distressed Property Feed, Multi-Exit Strategy Engine, Due Diligence Checklist, Craftsman Cost Database, Capital Readiness Card, AI Acquisition Memo Builder, Field Capture System, Syndication Module, and LP Investor Portal.
 - **Trust Stack** — A public-facing surface (`/trust` and five sub-pages) that maps every common DeFi failure mode to the specific Axiom protection that prevents it, each backed by a verifiable artifact.
 
@@ -175,12 +175,12 @@ The land-acquisition lifecycle is the longest workflow in the system. It starts 
 ## 8. Banking, Custody, and Payment Rails
 
 ### 8.1 Primary Banking — Increase.com
-Increase provides the FDIC-insured operating account, ACH origination, and wire rails. The Nexus operating account is the destination for treasury card-onramp payouts. Routing 074920909 / account 7192752995 is the documented external account for the Stripe payout pipeline (Section 13).
+Increase provides the FDIC-insured operating account, ACH origination, and wire rails. The Nexus operating account (routing 074920909 / account 7192752995) is the documented destination for direct treasury contributions via wire or ACH (see Section 13).
 
 ### 8.2 Institutional Custody — BitGo CaaS
 Institutional crypto custody on Arbitrum One uses BitGo CaaS. Withdrawals from the custodied wallet require multi-party authorization and are reflected on the solvency snapshot.
 
-### 8.3 Card Funding — Stripe Checkout
+### 8.3 Card Funding — Coinbase Onramp
 See Section 13 for the full architecture.
 
 ### 8.4 Payment Anchor — Axiom Rail (Stellar)
@@ -248,24 +248,20 @@ Key components:
 
 ## 13. Card Onramp and User Funding Paths
 
-Axiom supports three card-funding intents through one consistent architecture:
+Axiom uses two separate, purpose-built rails for inbound funding. Card-based merchant processing was retired after evaluating fit for a sovereign protocol; consumer card payments now route through regulated crypto onramp infrastructure, and institutional treasury funding moves through bank rails directly.
 
-| Intent | Outcome | Status |
-| --- | --- | --- |
-| `TREASURY_FUND` | Card → USD in Stripe → ACH payout to Increase Nexus account | Live |
-| `AXUSD_MINT` | Card → USD → on-chain AXUSD 1:1 mint to connected wallet | Live for amounts < $10k via deployer EOA path |
-| `AXAU_MINT` | Card → USD → AXAU mint via operational queue | Operational queue path |
+| Path | Outcome | Rail | Status |
+| --- | --- | --- | --- |
+| Consumer card → AXUSD | Card → USDC → PSM swap → AXUSD on Arbitrum | Coinbase Onramp + PSM `0x5db5…4922` | Live |
+| Consumer card → AXAU | Card → USDC → PSM → AXUSD → operational queue → AXAU | Coinbase Onramp + AXAU operational queue | Live |
+| Consumer card → USDC | Card → USDC on Arbitrum (no further conversion) | Coinbase Onramp | Live |
+| Treasury funding (any size) | ACH or wire direct into the Increase Nexus operating account | Increase (Grasshopper Bank, N.A.) | Live |
 
 Architecture:
 
-- **Schema.** `cap_card_deposits` table on `shared/capInfraSchema.ts` with `intent` enum, status enum (`PENDING|PAID|PAYOUT_INITIATED|SETTLED|FAILED|REFUNDED`), Stripe session/intent/payout ids, optional `targetWalletAddress`, idempotency key, and metadata.
-- **Service.** `lib/capinfra/cardDeposits/service.ts` exposes `createCheckoutSession`, `handleStripeWebhookEvent`, `recordPayout`, `listDeposits`. Webhook handlers are idempotent on Stripe event id.
-- **Endpoints.** `POST /api/capinfra/treasury/card-deposit/checkout`, `POST /api/capinfra/treasury/card-deposit/webhook` (signature-verified), `GET /api/capinfra/treasury/card-deposits` (admin-gated).
-- **Pages.** `/treasury/fund` (public), `/treasury/fund/success`, `/treasury/fund/cancel`, `/operator/treasury/card-deposits`.
-- **Reserve update.** On `checkout.session.completed`, the service emits an audit event and calls `adjustReserve(CREDIT)` against the USD treasury asset.
-- **AXUSD mint trigger.** When intent is `AXUSD_MINT` and `targetWalletAddress` is set, the webhook handler routes to the internal `/api/erc3643/admin/mint` path and records the resulting `mintTxHash` on the deposit row.
-
-The unified `/onramp` landing page exposes Fund Treasury (USD), Buy AXUSD (Card), and Buy USDC (Coinbase CDP) as three side-by-side tiles with consistent Design Law styling.
+- **Consumer card path.** `/onramp` orchestrates the Coinbase Onramp widget through `pages/api/onramp/intent.ts` and the CDP integration in `lib/cdp/`. Once USDC lands in the connected wallet, the user signs a single PSM transaction (`swapCollateralForAXUSD` on `0x5db58d9c21369d1532a48Bdd658E4Fe415404922`) to mint AXUSD 1:1, or routes through the AXAU operational queue at `/api/axau/purchase-request` for the gold-and-land-NAV reserve instrument.
+- **Treasury funding path.** `/treasury/fund` is a public Design Law page that publishes the Nexus account wire/ACH instructions (beneficiary, routing 074920909, account 7192752995, bank details, memo guidance). No card form, no third-party processor in the path — funds settle directly into the operating account at Increase and are reflected in the daily solvency snapshot.
+- **Deprecated Stripe rail.** The `cap_card_deposits` schema (`shared/capInfraSchema.ts`) and webhook receiver at `POST /api/capinfra/treasury/card-deposit/webhook` are retained to drain in-flight events for Checkout sessions issued before the cutover. The session-creation endpoint `POST /api/capinfra/treasury/card-deposit/checkout` returns `410 Gone`. The operator console at `/operator/treasury/card-deposits` carries a deprecation banner and continues to render historical rows for audit only.
 
 ---
 
@@ -294,7 +290,7 @@ The Active Contract Verification System checks AXUSD and PSM bytecode and storag
 - AXUSD migration to ERC-3643 unified issuance complete.
 - Lending Fund operating under SEC Reg D 506(c), integrated with Euler V2 AXUSD lending markets.
 - Banking layer live: Increase Nexus account funded; BitGo CaaS custody operational on Arbitrum One.
-- Card onramp (Stripe → Increase) live; AXUSD mint path live for sub-$10k amounts via deployer EOA.
+- Consumer card onramp live via Coinbase (Card → USDC → PSM → AXUSD/AXAU); treasury funding via direct wire/ACH to the Increase Nexus account.
 - Capital Infrastructure Backend smoke harness at 77/77 OK including the new oracle-staleness auto-freeze coverage.
 - Trust Stack public surface live at `/trust` with five verifiable sub-pages.
 - Bridge allow-list governance and Loss Coverage Reserve claim adjudication live.

@@ -61,12 +61,28 @@ export default function CardDepositsOperatorPage({ rows, status, intent }: Props
         <div className="mb-4">
           <Link href="/operator" className="text-sm underline">← Back to console</Link>
         </div>
-        <h1 className="text-2xl font-serif mb-2">Card Deposits</h1>
-        <p className="text-sm text-dl-muted font-mono mb-6">
-          Stripe Checkout card payments. TREASURY_FUND deposits payout to the
-          Axiom Nexus account at Increase. AXUSD_MINT deposits trigger an on-chain
-          mint to the buyer wallet.
+        <h1 className="text-2xl font-serif mb-2">Card Deposits (Deprecated)</h1>
+        <p className="text-sm text-dl-muted font-mono mb-4">
+          Historical Stripe Checkout card payments. Retained for audit only.
+          TREASURY_FUND deposits previously paid out to the Axiom Nexus account
+          at Increase; AXUSD_MINT deposits triggered an on-chain mint to the
+          buyer wallet.
         </p>
+
+        <div className="border border-yellow-700 bg-yellow-50 text-yellow-900 p-4 mb-6 text-xs font-mono">
+          <div className="font-bold uppercase tracking-wide mb-1">Rail Deprecated</div>
+          <div>
+            New card-deposit creation via Stripe is disabled
+            (POST /api/capinfra/treasury/card-deposit/checkout returns 410).
+            Consumer card payments now route through{' '}
+            <Link href="/onramp" className="underline">/onramp</Link>{' '}
+            (Coinbase &rarr; USDC &rarr; PSM &rarr; AXUSD/AXAU). Treasury
+            funding moved to direct ACH/wire instructions at{' '}
+            <Link href="/treasury/fund" className="underline">/treasury/fund</Link>.
+            The webhook receiver remains online to drain in-flight events.
+            The {`cap_card_deposits`} schema is preserved unchanged.
+          </div>
+        </div>
 
         <div className="mb-4 flex flex-wrap gap-4 text-xs uppercase tracking-wide">
           <div>
@@ -107,13 +123,6 @@ export default function CardDepositsOperatorPage({ rows, status, intent }: Props
           </div>
         </div>
 
-        <div className="border border-dl-line p-4 mb-4 text-xs font-mono">
-          <strong>One-time setup required:</strong> in the Stripe dashboard,
-          add the Increase Nexus account (routing 074920909, account 7192752995)
-          as an external bank account. Once verified, payouts auto-flow to
-          Increase on Stripe&apos;s standard schedule (typically T+2). Without
-          this, funds remain in the Stripe balance.
-        </div>
 
         <table className="w-full text-xs font-mono border border-dl-line">
           <thead className="bg-dl-surface">

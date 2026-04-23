@@ -1,55 +1,25 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createCheckoutSession, type CardDepositIntent } from '../../../../../lib/capinfra/cardDeposits/service';
-import { randomUUID } from 'crypto';
 
+/**
+ * DEPRECATED — Stripe card-deposit checkout.
+ *
+ * Consumer card payments now route through Coinbase Onramp at /onramp
+ * (Card -> USDC -> PSM -> AXUSD/AXAU). Treasury funding moved to direct
+ * ACH/wire to the Increase Nexus account documented at /treasury/fund.
+ *
+ * This endpoint returns 410 Gone so any lingering client cannot create
+ * new Stripe Checkout sessions. The webhook receiver is intentionally
+ * left online to drain in-flight events for already-paid sessions.
+ */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return res.status(503).json({
-      error: 'card_onramp_not_configured',
-      message: 'Card onramp is not yet configured. STRIPE_SECRET_KEY is missing.',
-    });
-  }
-
-  try {
-    const body = (req.body ?? {}) as Record<string, unknown>;
-    const amountCents = Number(body.amountCents);
-    const intent = (body.intent ?? 'TREASURY_FUND') as CardDepositIntent;
-    const userId = typeof body.userId === 'string' ? body.userId : null;
-    const buyerEmail = typeof body.buyerEmail === 'string' ? body.buyerEmail : null;
-    const targetWalletAddress = typeof body.targetWalletAddress === 'string' ? body.targetWalletAddress : null;
-    const idempotencyKey = typeof body.idempotencyKey === 'string' && body.idempotencyKey.length >= 8
-      ? body.idempotencyKey
-      : `cd-${randomUUID()}`;
-
-    const host = req.headers.host || 'localhost:5000';
-    const protocol = host.includes('localhost') || host.startsWith('127.') ? 'http' : 'https';
-    const baseUrl = `${protocol}://${host}`;
-
-    const result = await createCheckoutSession({
-      amountCents,
-      intent,
-      userId,
-      buyerEmail,
-      targetWalletAddress,
-      idempotencyKey,
-      baseUrl,
-    });
-
-    return res.status(201).json({
-      depositId: result.deposit.id,
-      sessionId: result.sessionId,
-      checkoutUrl: result.checkoutUrl,
-      status: result.deposit.status,
-      idempotencyKey,
-    });
-  } catch (err: any) {
-    const msg = err?.message ?? 'unknown error';
-    const isClient = /required|must be|invalid|reused/i.test(msg);
-    return res.status(isClient ? 400 : 500).json({
-      error: isClient ? 'invalid_request' : 'checkout_create_failed',
-      message: msg,
-    });
-  }
+  res.setHeader('Allow', '');
+  return res.status(410).json({
+    error: 'endpoint_deprecated',
+    message:
+      'Card checkout via this endpoint is no longer available. Use /onramp for consumer card payments (Coinbase) or /treasury/fund for treasury wire/ACH instructions.',
+    replacements: {
+      consumer_card: '/onramp',
+      treasury_funding: '/treasury/fund',
+    },
+  });
 }
