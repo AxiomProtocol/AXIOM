@@ -2,7 +2,7 @@
 
 **Effective date:** April 23, 2026
 **Owner:** Clarence Fuqua, Founder, Akili Group, LLC
-**Contact:** info@axiomprotocol.app
+**Contact:** security@axiomprotocol.app (monitored group address) · info@axiomprotocol.app (general)
 **Review cadence:** Annually, or upon any material change to the data scope, third-party processor list, or applicable law.
 **Status:** Canonical. This document is the source of truth for the Akili Group information security program.
 
@@ -94,7 +94,7 @@ Current processors with access to Restricted or Confidential data:
 
 ## 9. Incident response
 
-- **Detection.** Anomalies are surfaced through (a) automated monitoring of error rates and webhook reconciliation drift, (b) the runtime integrity checks built into the capital-infrastructure layer (`collateral.integrity_failed` audit events), and (c) reports from personnel, users, or third parties received at info@axiomprotocol.app.
+- **Detection.** Anomalies are surfaced through (a) automated monitoring of error rates and webhook reconciliation drift, (b) the runtime integrity checks built into the capital-infrastructure layer (`collateral.integrity_failed` audit events), and (c) reports from personnel, users, or third parties received at security@axiomprotocol.app (monitored group address).
 - **Triage.** A suspected incident is escalated to the Information Security Lead within four hours of detection.
 - **Containment.** Affected credentials are rotated. Affected accounts have access suspended. The emergency-disable controls on the Increase adapter and the guardian-disable path on capital infrastructure may be invoked to halt rail movement.
 - **Investigation.** The Information Security Lead reconstructs the event timeline from `cap_audit_events`, application logs, and processor-side logs.
@@ -115,4 +115,4 @@ Exceptions to this policy may only be granted in writing by the Information Secu
 
 ---
 
-*Akili Group, LLC operates the Axiom Protocol platform. Questions, security disclosures, and access requests should be sent to info@axiomprotocol.app.*
+*Akili Group, LLC operates the Axiom Protocol platform. Security disclosures should be sent to security@axiomprotocol.app (monitored group address). General questions and access requests may be sent to info@axiomprotocol.app.*

@@ -113,7 +113,7 @@ We protect your information using a combination of administrative, technical, an
 
 The full Information Security Policy is published at `/disclosure/information-security-policy`.
 
-No system can be made perfectly secure. If you become aware of a security issue, please contact us at **info@axiomprotocol.app**.
+No system can be made perfectly secure. If you become aware of a security issue, please contact us at **security@axiomprotocol.app** (monitored group address).
 
 ## 10. International users
 
