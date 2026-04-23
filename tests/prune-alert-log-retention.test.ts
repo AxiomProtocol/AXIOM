@@ -374,5 +374,89 @@ integrationDescribe(
         expect(historyRow.triggered_by).toBe('http');
       });
     });
+
+    // ── retention-window clamp guardrail ───────────────────────────────────
+    //
+    // The plpgsql body in migrations 0048/0049 defends against a destructive
+    // misconfiguration in two layers:
+    //
+    //   1. `COALESCE(retention_days, 90)` — an explicit NULL falls back to
+    //      the 90-day default rather than producing NULL interval arithmetic.
+    //   2. `IF v_window < 1 THEN v_window := 1` — any zero or negative value
+    //      is clamped to 1 day so the table can never be wiped.
+    //
+    // The application-level validator (`getPruneAlertLogRetentionDays`) is
+    // unit-tested elsewhere, but nothing proves the in-database defence
+    // works. These tests bypass the app validator entirely by invoking the
+    // SQL function with `retention_days = 0` and `retention_days = NULL`
+    // and assert that:
+    //   - A ~12-hour-old row survives (the table is not wiped).
+    //   - A row well outside the resolved window is still pruned (the
+    //     function actually ran and is not a silent no-op).
+    //
+    // 12 hours / 10 days / 120 days were chosen to leave generous slack on
+    // either side of each resolved window (1 day for the zero case, 90
+    // days for the NULL case) so the tests are not flaky under DST
+    // transitions or clock skew.
+    describe('retention-window clamp guardrail', () => {
+      it('clamps retention_days = 0 to 1 day: ~12h-old row survives, 10d-old row is pruned', async () => {
+        const now = Date.now();
+        const dayMs = 24 * 60 * 60 * 1000;
+
+        const oldId = await insertAlertRow(new Date(now - 10 * dayMs));
+        const recentId = await insertAlertRow(new Date(now - 12 * 60 * 60 * 1000));
+
+        const deletedCount = await callPrune(0);
+
+        // Exactly one row (the 10-day-old one) must have been deleted.
+        // If the clamp is missing, retention_days=0 would have deleted
+        // BOTH rows because every sent_at is < NOW() - INTERVAL '0 days'.
+        expect(deletedCount).toBe(1);
+
+        const survivors = await client.query<{ id: string }>(
+          `SELECT id FROM prune_alert_log ORDER BY id`,
+        );
+        const survivorIds = survivors.rows.map((r) => Number(r.id));
+        expect(survivorIds).toEqual([recentId]);
+        expect(survivorIds).not.toContain(oldId);
+      });
+
+      it('handles retention_days = NULL safely: ~12h-old row survives, very-old row is still pruned', async () => {
+        const now = Date.now();
+        const dayMs = 24 * 60 * 60 * 1000;
+
+        // The plpgsql body uses COALESCE(retention_days, 90) before the
+        // < 1 clamp, so an explicit NULL falls back to the 90-day default
+        // rather than to the 1-day floor. Either resolution satisfies
+        // the guardrail's purpose (no table wipe), so this test pins
+        // both halves of that intent:
+        //   - A ~12-hour-old row MUST survive (the table is not wiped).
+        //   - A 120-day-old row, comfortably past both the 1-day floor
+        //     and the 90-day fallback, MUST still be pruned (the
+        //     function actually ran and is not a silent no-op).
+        const oldId = await insertAlertRow(new Date(now - 120 * dayMs));
+        const recentId = await insertAlertRow(new Date(now - 12 * 60 * 60 * 1000));
+
+        const result = await client.query<{ deleted_count: string }>(
+          `SELECT deleted_count FROM prune_prune_alert_log(NULL::INT, 'integration-test')`,
+        );
+        const deletedCount = parseInt(result.rows[0].deleted_count, 10);
+
+        // Without any guardrail at all the DELETE expression
+        // `NOW() - (NULL || ' days')::INTERVAL` evaluates to NULL and
+        // matches no rows (deletedCount = 0), so the very-old row would
+        // never be pruned. Asserting deletedCount === 1 catches both
+        // that failure mode and any regression that flips the COALESCE
+        // fallback to a window so large the very-old row survives.
+        expect(deletedCount).toBe(1);
+
+        const survivors = await client.query<{ id: string }>(
+          `SELECT id FROM prune_alert_log ORDER BY id`,
+        );
+        const survivorIds = survivors.rows.map((r) => Number(r.id));
+        expect(survivorIds).toEqual([recentId]);
+        expect(survivorIds).not.toContain(oldId);
+      });
+    });
   },
 );
