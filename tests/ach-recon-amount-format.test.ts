@@ -92,4 +92,22 @@ describe('ACH reconciliation observedAmount format consistency', () => {
     expect(source).not.toMatch(/observedAmount:\s*String\(Math\.abs\(tx\.amount\)\)/);
     expect(source).toMatch(/from\s+'\.\.\/webhooks\/achMapping'/);
   });
+
+  it('reconciliation MISSING_LOCAL remediation path uses centsToDecimalString for createInstruction amount', () => {
+    // Source-level guard for task #214: the sibling MISSING_LOCAL remediation
+    // path (where the reconciler auto-creates a local instruction for an
+    // unmatched remote Increase transaction) must also serialize tx.amount via
+    // centsToDecimalString so the persisted amount matches the decimal USD
+    // format the webhook mapper produces. If this regresses, the auto-created
+    // instruction will be persisted with an amount 100x too large (raw cents
+    // like "50000" instead of "500.00") and downstream comparisons via
+    // decimalStringToCents will misread it.
+    const source = readFileSync(
+      join(__dirname, '..', 'lib', 'capinfra', 'reconciliation', 'increaseDiff.ts'),
+      'utf8',
+    );
+
+    expect(source).toMatch(/const amountStr = centsToDecimalString\(tx\.amount\);/);
+    expect(source).not.toMatch(/const amountStr = String\(Math\.abs\(tx\.amount\)\);/);
+  });
 });

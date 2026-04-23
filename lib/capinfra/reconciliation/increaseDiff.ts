@@ -208,7 +208,7 @@ async function _runDiff(
     }
 
     if (localMatches.length === 0) {
-      const amountStr = String(Math.abs(tx.amount));
+      const amountStr = centsToDecimalString(tx.amount);
       let remediationRef: string | undefined;
       let remediationFailureJson: Record<string, unknown> | undefined;
 
