@@ -81,11 +81,25 @@ const TEST_ROWS: AssetRow[] = [
 const ORIGINAL_FETCH = globalThis.fetch;
 
 function mockFetchRows(rows: AssetRow[]) {
-  const fetchMock = vi.fn(async () => {
+  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input.toString();
+    const qIndex = url.indexOf('?');
+    const params = new URLSearchParams(qIndex >= 0 ? url.slice(qIndex + 1) : '');
+    const typeParam = params.get('type');
+    const statusParam = params.get('status');
+    const symbolParam = params.get('symbol');
+    const filtered = rows.filter((row) => {
+      if (typeParam && row.asset.assetType !== typeParam) return false;
+      if (statusParam && row.asset.status !== statusParam) return false;
+      if (symbolParam && !row.asset.symbol.toLowerCase().includes(symbolParam.toLowerCase())) {
+        return false;
+      }
+      return true;
+    });
     return {
       ok: true,
       status: 200,
-      text: async () => JSON.stringify({ items: rows }),
+      text: async () => JSON.stringify({ items: filtered }),
     } as unknown as Response;
   });
   globalThis.fetch = fetchMock as unknown as typeof fetch;
@@ -139,8 +153,10 @@ describe('AssetSummarySection — filter dropdowns narrow rows', () => {
     const typeSelect = screen.getAllByRole('combobox')[0];
     fireEvent.change(typeSelect, { target: { value: 'STABLE_ASSET' } });
 
+    await waitFor(() => {
+      expect(getDataRowSymbols().sort()).toEqual(['AXEUR', 'AXUSD']);
+    });
     const symbols = getDataRowSymbols();
-    expect(symbols.sort()).toEqual(['AXEUR', 'AXUSD']);
     expect(symbols).not.toContain('GOLD');
     expect(symbols).not.toContain('PLOT1');
   });
@@ -150,8 +166,10 @@ describe('AssetSummarySection — filter dropdowns narrow rows', () => {
     const statusSelect = screen.getAllByRole('combobox')[1];
     fireEvent.change(statusSelect, { target: { value: 'ACTIVE' } });
 
+    await waitFor(() => {
+      expect(getDataRowSymbols().sort()).toEqual(['AXUSD', 'GOLD', 'PLOT1']);
+    });
     const symbols = getDataRowSymbols();
-    expect(symbols.sort()).toEqual(['AXUSD', 'GOLD', 'PLOT1']);
     expect(symbols).not.toContain('AXEUR');
     expect(symbols).not.toContain('SILVER');
   });
@@ -162,16 +180,24 @@ describe('AssetSummarySection — filter dropdowns narrow rows', () => {
     fireEvent.change(typeSelect, { target: { value: 'STABLE_ASSET' } });
     fireEvent.change(statusSelect, { target: { value: 'ACTIVE' } });
 
-    const symbols = getDataRowSymbols();
-    expect(symbols).toEqual(['AXUSD']);
+    await waitFor(() => {
+      expect(getDataRowSymbols()).toEqual(['AXUSD']);
+    });
   });
 
-  it('shows the "N of M shown" indicator when filters narrow the rows', async () => {
+  it('does not show the "N of M shown" indicator under server-side filtering (N always equals M)', async () => {
+    // The component now re-fetches with the active filters, so `rows` and
+    // `filteredRows` share the same length and the "N of M shown" indicator
+    // never renders. This test pins that contract so the indicator's
+    // (intentional) absence is part of the regression suite.
     await renderAndWaitForRows();
     const [typeSelect] = screen.getAllByRole('combobox');
     fireEvent.change(typeSelect, { target: { value: 'STABLE_ASSET' } });
 
-    expect(screen.getByText(/2 of 5 shown/)).toBeTruthy();
+    await waitFor(() => {
+      expect(getDataRowSymbols().sort()).toEqual(['AXEUR', 'AXUSD']);
+    });
+    expect(screen.queryByText(/of \d+ shown/)).toBeNull();
   });
 });
 
@@ -195,7 +221,9 @@ describe('AssetSummarySection — Clear button resets both filters', () => {
     await renderAndWaitForRows();
     const [typeSelect] = screen.getAllByRole('combobox');
     fireEvent.change(typeSelect, { target: { value: 'STABLE_ASSET' } });
-    expect(screen.getByRole('button', { name: 'Clear' })).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Clear' })).toBeTruthy();
+    });
   });
 
   it('clicking Clear resets both filters back to "All" and shows every row', async () => {
@@ -204,19 +232,23 @@ describe('AssetSummarySection — Clear button resets both filters', () => {
 
     fireEvent.change(typeSelect, { target: { value: 'STABLE_ASSET' } });
     fireEvent.change(statusSelect, { target: { value: 'ACTIVE' } });
-    expect(getDataRowSymbols()).toEqual(['AXUSD']);
+    await waitFor(() => {
+      expect(getDataRowSymbols()).toEqual(['AXUSD']);
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
 
     expect(typeSelect.value).toBe('');
     expect(statusSelect.value).toBe('');
-    expect(getDataRowSymbols().sort()).toEqual([
-      'AXEUR',
-      'AXUSD',
-      'GOLD',
-      'PLOT1',
-      'SILVER',
-    ]);
+    await waitFor(() => {
+      expect(getDataRowSymbols().sort()).toEqual([
+        'AXEUR',
+        'AXUSD',
+        'GOLD',
+        'PLOT1',
+        'SILVER',
+      ]);
+    });
     // Clear button itself disappears once both filters are reset.
     expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull();
   });
@@ -278,10 +310,17 @@ describe('AssetSummarySection — CSV download filename includes filter segments
     expect(capturedDownloadName).toBe(`asset-registry-${EXPECTED_DATE}.csv`);
   });
 
+  async function waitForRowSymbols(expected: string[]) {
+    await waitFor(() => {
+      expect(getDataRowSymbols().sort()).toEqual([...expected].sort());
+    });
+  }
+
   it('includes the Status segment when only Status is filtered', async () => {
     await renderAndWaitForRows();
     const statusSelect = screen.getAllByRole('combobox')[1];
     fireEvent.change(statusSelect, { target: { value: 'ACTIVE' } });
+    await waitForRowSymbols(['AXUSD', 'GOLD', 'PLOT1']);
     await clickDownload();
     expect(capturedDownloadName).toBe(`asset-registry-ACTIVE-${EXPECTED_DATE}.csv`);
   });
@@ -290,6 +329,7 @@ describe('AssetSummarySection — CSV download filename includes filter segments
     await renderAndWaitForRows();
     const typeSelect = screen.getAllByRole('combobox')[0];
     fireEvent.change(typeSelect, { target: { value: 'STABLE_ASSET' } });
+    await waitForRowSymbols(['AXEUR', 'AXUSD']);
     await clickDownload();
     expect(capturedDownloadName).toBe(`asset-registry-STABLE_ASSET-${EXPECTED_DATE}.csv`);
   });
@@ -299,6 +339,7 @@ describe('AssetSummarySection — CSV download filename includes filter segments
     const [typeSelect, statusSelect] = screen.getAllByRole('combobox');
     fireEvent.change(typeSelect, { target: { value: 'STABLE_ASSET' } });
     fireEvent.change(statusSelect, { target: { value: 'ACTIVE' } });
+    await waitForRowSymbols(['AXUSD']);
     await clickDownload();
     expect(capturedDownloadName).toBe(
       `asset-registry-ACTIVE-STABLE_ASSET-${EXPECTED_DATE}.csv`,
@@ -310,7 +351,9 @@ describe('AssetSummarySection — CSV download filename includes filter segments
     const [typeSelect, statusSelect] = screen.getAllByRole('combobox');
     fireEvent.change(typeSelect, { target: { value: 'STABLE_ASSET' } });
     fireEvent.change(statusSelect, { target: { value: 'ACTIVE' } });
+    await waitForRowSymbols(['AXUSD']);
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    await waitForRowSymbols(['AXEUR', 'AXUSD', 'GOLD', 'PLOT1', 'SILVER']);
     await clickDownload();
     expect(capturedDownloadName).toBe(`asset-registry-${EXPECTED_DATE}.csv`);
   });
