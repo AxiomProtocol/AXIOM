@@ -32,6 +32,7 @@ import type { CapReconciliationRun } from '../../../shared/capInfraSchema';
 import { and, eq, gte, lte, isNotNull } from 'drizzle-orm';
 import { fetchHorizonPaymentsPage, type HorizonPaymentOp, type StellarNetwork } from '../adapters/stellar/sdk';
 import { createInstruction } from '../settlement';
+import { usdDecimalString } from '../money';
 import { emitAuditEvent } from '../audit';
 import { ConflictError, PolicyDeniedError } from '../errors';
 import {
@@ -152,7 +153,11 @@ async function remediateMissingLocal(
         assetId: input.remediationAssetId,
         actionType: 'TRANSFER',
         settlementType: 'STELLAR',
-        amount: op.amount,
+        // Horizon returns a USD decimal string (e.g. "12.3456"). Brand it
+        // explicitly so the settlement layer accepts it. Throws on any
+        // value that isn't a well-formed decimal string, which surfaces
+        // upstream Horizon corruption rather than silently persisting it.
+        amount: usdDecimalString(op.amount),
         idempotencyKey: idemKey,
         externalRef: op.txHash,
         payloadJson: {

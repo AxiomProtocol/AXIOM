@@ -8,6 +8,8 @@
  * No database I/O. No imports beyond types.
  */
 
+import { tryUsdDecimalString, type UsdDecimalString } from '../money';
+
 export type StellarEventType =
   | 'payment.received'
   | 'payment.failed'
@@ -18,7 +20,7 @@ export interface SettlementTransitionIntent {
   eventType: StellarEventType;
   txHash: string;
   opId: string | null;
-  observedAmount: string | null;
+  observedAmount: UsdDecimalString | null;
   observedAsset: string | null;
   observedAssetIssuer: string | null;
   sourceAccount: string | null;
@@ -63,7 +65,7 @@ export function mapStellarEvent(
       : null;
 
   const amount = typeof rawPayloadJson['amount'] === 'string'
-    ? rawPayloadJson['amount']
+    ? tryUsdDecimalString(rawPayloadJson['amount'])
     : null;
   const assetCode = typeof rawPayloadJson['asset_code'] === 'string'
     ? rawPayloadJson['asset_code']

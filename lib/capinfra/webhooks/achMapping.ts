@@ -33,6 +33,15 @@
  */
 
 import type { SettlementTransitionIntent } from './stellarMapping';
+import { centsToDecimalString as _centsToDecimalString } from '../money';
+
+/**
+ * Re-export of the canonical helper. Kept here for backward
+ * compatibility — the implementation lives in `../money` so that every
+ * settlement-layer call site is funneled through the same branded
+ * `UsdDecimalString` type guard.
+ */
+export const centsToDecimalString = _centsToDecimalString;
 
 export type IncreaseEventCategory =
   | 'transaction.created'
@@ -61,17 +70,6 @@ function parseOccurredAt(raw: unknown): Date {
     if (!isNaN(d.getTime())) return d;
   }
   return new Date();
-}
-
-/**
- * Convert a signed integer cents value into an absolute USD decimal string.
- * Example: -1234 -> "12.34", 500 -> "5.00".
- */
-export function centsToDecimalString(cents: number): string {
-  const abs = Math.abs(cents);
-  const whole = Math.floor(abs / 100);
-  const frac = String(abs % 100).padStart(2, '0');
-  return `${whole}.${frac}`;
 }
 
 /**

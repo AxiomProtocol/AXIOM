@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { usdDecimalString, type UsdDecimalString } from './money';
 
 // ─── Enum mirrors (as zod) ──────────────────────────────────────────
 
@@ -81,6 +82,19 @@ const decimalString = z
   .string()
   .regex(/^-?\d+(\.\d+)?$/, 'must be a numeric string');
 export const ZDecimalString = decimalString;
+
+/**
+ * USD amount as a fixed-point decimal string at the API boundary, with
+ * a brand attached so any value parsed through this schema satisfies
+ * `UsdDecimalString` from `./money` and is accepted by settlement-layer
+ * consumers (`createInstruction`, `externallySettleInstruction`, drift
+ * rows). Plain `string` values cannot be passed to those consumers
+ * without going through `centsToDecimalString` or `usdDecimalString`.
+ */
+export const ZUsdDecimalString: z.ZodType<UsdDecimalString, z.ZodTypeDef, unknown> = z
+  .string()
+  .regex(/^-?\d+(\.\d+)?$/, 'must be a numeric decimal string')
+  .transform((s) => usdDecimalString(s));
 
 // ─── Asset registry ────────────────────────────────────────────────
 
@@ -175,7 +189,7 @@ export const ZSettlementCreate = z.object({
   actionType: ZActionType,
   routeType: ZRouteType.optional(),
   settlementType: ZSettlementType,
-  amount: ZDecimalString,
+  amount: ZUsdDecimalString,
   quoteCurrency: z.string().max(16).optional(),
   counterpartyId: z.string().max(40).optional(),
   adapterId: z.string().max(40).optional(),

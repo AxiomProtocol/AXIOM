@@ -54,6 +54,7 @@ import { applySettlement, reloadInstruction } from './portfolio';
 import { dispatchNotifications as _dispatchNotifications } from './notifications';
 import type { NotificationContext } from './notifications/subscriptions';
 import type { SettlementCreateInput } from './types';
+import type { UsdDecimalString } from './money';
 import { loadAchConfig } from './adapters/ach/config';
 import { recordSingleActorAction } from './adminActions';
 
@@ -927,7 +928,7 @@ export interface ExternalSettleInput {
   externalRef: string;
   settledAt: Date;
   webhookEventId: string;
-  observedAmount?: string;
+  observedAmount?: UsdDecimalString;
   observedAsset?: string;
   actor: string;
   correlationId?: string;
