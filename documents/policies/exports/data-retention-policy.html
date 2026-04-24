@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Data Retention and Disposal Policy — Axiom Nexus, LLC</title>
+<style>
+  @page { size: Letter; margin: 0.75in; }
+  html, body {
+    font-family: Georgia, "Times New Roman", serif;
+    color: #0f172a;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+  body { margin: 0; }
+  .doc-meta {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 8pt;
+    color: #475569;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 6pt;
+    margin-bottom: 12pt;
+  }
+  h1 {
+    font-size: 18pt;
+    margin: 14pt 0 6pt;
+    color: #0b1e3f;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 4pt;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-size: 13pt;
+    margin: 16pt 0 4pt;
+    color: #0b1e3f;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 11pt;
+    margin: 12pt 0 3pt;
+    color: #0b1e3f;
+    page-break-after: avoid;
+  }
+  p { margin: 4pt 0; }
+  ul, ol { margin: 4pt 0 4pt 18pt; padding: 0; }
+  li { margin: 2pt 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8pt 0;
+    font-size: 9pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 4pt 6pt;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f1f5f9; font-weight: 600; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: #f1f5f9;
+    padding: 1pt 3pt;
+    font-size: 9pt;
+  }
+  blockquote {
+    border-left: 3px solid #cbd5e1;
+    margin: 8pt 0;
+    padding: 2pt 10pt;
+    color: #334155;
+    font-style: italic;
+  }
+  hr { border: none; border-top: 1px solid #cbd5e1; margin: 14pt 0; }
+  a { color: #0b1e3f; }
+</style>
+</head>
+<body>
+<div class="doc-meta">
+  Source: documents/policies/data-retention-policy.md · Exported 2026-04-24T00:08:23.551Z · Data Retention and Disposal Policy — Axiom Nexus, LLC
+</div>
+<h1>Axiom Nexus, LLC — Data Retention and Disposal Policy</h1>
+<p><strong>Effective date:</strong> April 23, 2026
+<strong>Owner:</strong> Clarence Fuqua, Founder, Axiom Nexus, LLC
+<strong>Contact:</strong> <a href="mailto:security@axiomprotocol.app">security@axiomprotocol.app</a> (monitored group address) · <a href="mailto:info@axiomprotocol.app">info@axiomprotocol.app</a> (general)
+<strong>Review cadence:</strong> Annually, or upon any material change to the data scope, third-party processor list, or applicable law.
+<strong>Status:</strong> Canonical. This document is the source of truth for retention and disposal of consumer and operational data on the Axiom Protocol platform.</p>
+<p>This policy is rendered verbatim at <code>/disclosure/data-retention-policy</code>. The file at <code>documents/policies/data-retention-policy.md</code> is the canonical text. Any change to the policy must change this file; the disclosure page reads it at request time so the document and the page can never drift.</p>
+<p>This policy operationalises §8 of the <a href="/privacy">Privacy Policy</a> and §8 of the <a href="/disclosure/information-security-policy">Information Security Policy</a>. Where they overlap, this document is the authoritative specification for retention windows, disposal mechanisms, and the data subject deletion path.</p>
+<hr>
+<h2>1. Purpose and scope</h2>
+<p>This policy defines, for every category of data the Platform handles:</p>
+<ul>
+<li>The <strong>retention window</strong> — how long the data is kept.</li>
+<li>The <strong>legal or operational basis</strong> — why it is kept that long.</li>
+<li>The <strong>disposal mechanism</strong> — how it is removed when retention expires or when a data subject requests deletion.</li>
+<li>The <strong>storage tier</strong> — where it lives while it is retained.</li>
+</ul>
+<p>It applies to all production data stores (Neon Postgres, MongoDB Atlas analytics, Google Cloud Storage / Storacha object storage), all server logs, and all backups derived from those stores.</p>
+<h2>2. Data categories and retention windows</h2>
+<p>The Platform classifies retained data into the following categories. The window is the <strong>maximum</strong> retention; data may be deleted earlier upon a valid data-subject deletion request, subject to the legal-hold exceptions in §6.</p>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Storage tier</th>
+<th>Retention window</th>
+<th>Basis</th>
+<th>Disposal mechanism</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Plaid <code>access_token</code>, <code>item_id</code></td>
+<td>Postgres <code>cap_*</code> tables, application-layer envelope encrypted</td>
+<td>Active life of the linked relationship; <strong>revoked through Plaid <code>/item/remove</code></strong> within 30 days of deletion request, account disconnection, or end of the funding relationship</td>
+<td>Operating Plaid Auth + Balance integration on user instruction</td>
+<td>Call Plaid <code>/item/remove</code>; row-level delete in Postgres; envelope key for the encrypted token rotated out of active use</td>
+</tr>
+<tr>
+<td>Bank account number, routing number (from Plaid Auth)</td>
+<td>Postgres <code>cap_*</code> tables, encrypted at rest</td>
+<td>Until the resulting ACH transfer reaches a terminal state (<code>SETTLED</code>, <code>FAILED</code>, <code>RETURNED</code>); then removed from active store</td>
+<td>Originating and reconciling the ACH debit the user authorised</td>
+<td>Row-level delete in Postgres; masked reference (last four only) retained on the audit trail per §3</td>
+</tr>
+<tr>
+<td>Account balances (from Plaid Balance)</td>
+<td>Postgres <code>cap_*</code> tables, ephemeral</td>
+<td>Not persisted beyond the request that needed them, except as a balance-check decision recorded as an audit event with the value redacted to a sufficiency flag</td>
+<td>Confirming the requested debit is feasible before submission</td>
+<td>No persistent storage of the balance value itself</td>
+</tr>
+<tr>
+<td>Wallet address, on-chain transaction history</td>
+<td>Postgres + on-chain</td>
+<td>While the user maintains a relationship with the Platform; on-chain data is publicly visible regardless of the Platform&#39;s involvement</td>
+<td>Operating the Platform features the user requested</td>
+<td>Row-level delete in Postgres; on-chain data cannot be removed (disclosed in the Privacy Policy)</td>
+</tr>
+<tr>
+<td>Audit events (<code>cap_audit_events</code>)</td>
+<td>Postgres, append-only</td>
+<td><strong>Seven years</strong> (84 months) from event timestamp; then automatically purged</td>
+<td>Bank Secrecy Act and applicable financial-records retention</td>
+<td>Scheduled purge of rows older than the window; cryptographic chain of audit events preserved up to the purge boundary</td>
+</tr>
+<tr>
+<td>Server logs (request, response status, IP, user-agent)</td>
+<td>Replit-managed log store</td>
+<td><strong>Thirty days</strong> rolling</td>
+<td>Security and abuse prevention</td>
+<td>Automatic rotation by the platform</td>
+</tr>
+<tr>
+<td>Reserve and solvency snapshots</td>
+<td>Postgres</td>
+<td>Seven years</td>
+<td>Disclosure, regulatory record</td>
+<td>Scheduled purge of rows older than the window</td>
+</tr>
+<tr>
+<td>Operator action records (<code>cap_admin_actions</code>)</td>
+<td>Postgres</td>
+<td>Seven years</td>
+<td>Operator accountability, dual-actor record</td>
+<td>Scheduled purge of rows older than the window</td>
+</tr>
+<tr>
+<td>Email contents (transactional, via Resend)</td>
+<td>Resend retention per their terms</td>
+<td>Per Resend&#39;s published retention</td>
+<td>Operating notifications the user requested</td>
+<td>Resend handles disposal under their published policy</td>
+</tr>
+<tr>
+<td>Analytics events (MongoDB)</td>
+<td>MongoDB Atlas</td>
+<td><strong>Thirteen months</strong> rolling, aggregated and de-identified after thirty days</td>
+<td>Operating, securing, and improving the Platform</td>
+<td>Time-to-live index on the events collection</td>
+</tr>
+<tr>
+<td>Object storage (uploaded documents, e.g. signed subscription agreements)</td>
+<td>Google Cloud Storage / Storacha</td>
+<td>While the underlying contractual relationship is active, plus seven years for records subject to financial-records retention</td>
+<td>Operating the relationship the user established; tax and securities record-keeping</td>
+<td>Object-level delete; tombstone written to the audit trail</td>
+</tr>
+</tbody></table>
+<h2>3. Audit-trail records of deleted data</h2>
+<p>When a record is deleted from the active store under §2, the corresponding audit event is <strong>not</strong> deleted on the same schedule. The audit event records that the action took place, the actor, and the timestamp, with the substantive payload reduced to:</p>
+<ul>
+<li>A masked reference (e.g. last four digits of an account number) where a financial-records obligation requires it.</li>
+<li>A categorical flag (e.g. &quot;balance sufficient&quot; / &quot;balance insufficient&quot;) where the underlying value is not required.</li>
+<li>The hash of any document whose retention has expired, where retention of the hash supports later integrity verification without retaining the content.</li>
+</ul>
+<p>This preserves the audit trail required by financial-records law without retaining the underlying personal or financial data beyond its retention window.</p>
+<h2>4. Data subject request SLA</h2>
+<p>The Platform processes data subject requests (access, correction, deletion, withdrawal of consent) within <strong>thirty days</strong> of receipt at <a href="mailto:info@axiomprotocol.app">info@axiomprotocol.app</a>. The thirty-day SLA covers:</p>
+<ol>
+<li>Acknowledgement to the requester within five business days.</li>
+<li>Authentication of the requester (typically by signature from the wallet associated with the account).</li>
+<li>Execution of the request:<ul>
+<li><strong>Deletion of Plaid-derived data</strong> is performed by calling Plaid <code>/item/remove</code> and deleting the corresponding rows from the active store.</li>
+<li><strong>Deletion of other personal data</strong> is performed by row-level delete from Postgres and object-level delete from object storage, subject to the legal-hold exceptions in §6.</li>
+<li><strong>Access</strong> is fulfilled by producing a structured export of the records held, excluding records to which the requester has no entitlement.</li>
+<li><strong>Correction</strong> is fulfilled by updating the record and writing an audit event recording the prior value.</li>
+</ul>
+</li>
+<li>Confirmation to the requester that the request has been completed.</li>
+</ol>
+<p>If a request cannot be completed within thirty days (for example, because of a legal hold), the requester is informed in writing of the reason and the expected disposition.</p>
+<h2>5. Disposal mechanisms by storage tier</h2>
+<ul>
+<li><strong>Postgres (Neon).</strong> Row-level <code>DELETE</code> against the active store. Rows older than the retention window are removed by a scheduled job that runs against <code>cap_audit_events</code>, <code>cap_admin_actions</code>, and other long-retention tables. Logical deletes are not used for retention disposal; the row is physically removed. Backups inherit the retention window of the live row through Neon&#39;s point-in-time backup posture.</li>
+<li><strong>MongoDB Atlas (analytics).</strong> Time-to-live indexes enforce the thirteen-month rolling window. Aggregation jobs strip personal identifiers after thirty days.</li>
+<li><strong>Object storage (GCS, Storacha).</strong> Object-level <code>DELETE</code> removes the active object. A tombstone audit event records the disposal. Where a versioned bucket retains prior generations, the prior generations are removed on the same schedule.</li>
+<li><strong>Server logs.</strong> Automatic rotation by the hosting platform; no manual intervention required for routine retention.</li>
+<li><strong>Application-layer envelope-encrypted tokens</strong> (Plaid <code>access_token</code>). The encrypted blob is removed from Postgres on the same schedule as the parent row; the envelope key for tokens past their retention window is rotated out of active use so that a future copy of the historical encrypted blob cannot be decrypted.</li>
+</ul>
+<h2>6. Legal holds and retention extensions</h2>
+<p>A category-specific retention window is overridden in either of the following cases:</p>
+<ol>
+<li><strong>Legal hold.</strong> A documented legal, regulatory, or contractual obligation (subpoena, regulatory inquiry, ongoing litigation, audit) requires the data to be retained beyond the window. The hold is recorded by the Information Security Lead with the basis and the expected duration. The hold is released as soon as the obligation is satisfied.</li>
+<li><strong>Active dispute.</strong> A reconciliation dispute, chargeback, or fraud investigation involving the underlying transaction. Retention extends until the dispute reaches a terminal state.</li>
+</ol>
+<p>A legal hold suspends the retention window for the affected records but does not extend it for unaffected records.</p>
+<h2>7. Plaid <code>/item/remove</code> revocation path</h2>
+<p>The Platform exposes a user-facing control to disconnect any linked bank account. Activating that control:</p>
+<ol>
+<li>Calls Plaid <code>/item/remove</code> with the corresponding <code>item_id</code>, terminating Plaid&#39;s authority to access the underlying institution on the user&#39;s behalf.</li>
+<li>Marks the corresponding row in the active store for deletion.</li>
+<li>Removes the row, the encrypted <code>access_token</code>, and any cached account-and-routing numbers from the active store within thirty days, subject to the legal-hold exceptions in §6.</li>
+<li>Writes an audit event recording the disconnection, with the substantive payload reduced per §3.</li>
+</ol>
+<p>The same path is invoked when a deletion request is received under §4 and when the funding relationship ends.</p>
+<h2>8. Annual review</h2>
+<p>This policy is reviewed at least annually by the Information Security Lead. Changes are recorded by editing this file in source control; the rendered disclosure page reflects the current text on every load. The annual review verifies that:</p>
+<ul>
+<li>Each retention window remains aligned with the underlying legal or operational basis.</li>
+<li>Each disposal mechanism is functioning (verified by sampling).</li>
+<li>The data subject request SLA is being met (verified against the request register).</li>
+<li>The processor inventory in the Information Security Policy and the Privacy Policy is consistent with the retention windows in §2.</li>
+</ul>
+<hr>
+<p><em>Axiom Nexus, LLC operates the Axiom Protocol platform. Privacy and access requests should be sent to <a href="mailto:info@axiomprotocol.app">info@axiomprotocol.app</a>. Security disclosures should be sent to <a href="mailto:security@axiomprotocol.app">security@axiomprotocol.app</a> (monitored group address).</em></p>
+
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Privacy Policy — Axiom Protocol</title>
+<style>
+  @page { size: Letter; margin: 0.75in; }
+  html, body {
+    font-family: Georgia, "Times New Roman", serif;
+    color: #0f172a;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+  body { margin: 0; }
+  .doc-meta {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 8pt;
+    color: #475569;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 6pt;
+    margin-bottom: 12pt;
+  }
+  h1 {
+    font-size: 18pt;
+    margin: 14pt 0 6pt;
+    color: #0b1e3f;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 4pt;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-size: 13pt;
+    margin: 16pt 0 4pt;
+    color: #0b1e3f;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 11pt;
+    margin: 12pt 0 3pt;
+    color: #0b1e3f;
+    page-break-after: avoid;
+  }
+  p { margin: 4pt 0; }
+  ul, ol { margin: 4pt 0 4pt 18pt; padding: 0; }
+  li { margin: 2pt 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8pt 0;
+    font-size: 9pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 4pt 6pt;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f1f5f9; font-weight: 600; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: #f1f5f9;
+    padding: 1pt 3pt;
+    font-size: 9pt;
+  }
+  blockquote {
+    border-left: 3px solid #cbd5e1;
+    margin: 8pt 0;
+    padding: 2pt 10pt;
+    color: #334155;
+    font-style: italic;
+  }
+  hr { border: none; border-top: 1px solid #cbd5e1; margin: 14pt 0; }
+  a { color: #0b1e3f; }
+</style>
+</head>
+<body>
+<div class="doc-meta">
+  Source: documents/policies/privacy-policy.md · Exported 2026-04-24T00:08:23.551Z · Privacy Policy — Axiom Protocol
+</div>
+<h1>Axiom Protocol — Privacy Policy</h1>
+<p><strong>Effective date:</strong> April 23, 2026
+<strong>Operator:</strong> Axiom Nexus, LLC (&quot;Axiom Nexus&quot;, &quot;we&quot;, &quot;our&quot;, &quot;us&quot;)
+<strong>Contact:</strong> <a href="mailto:info@axiomprotocol.app">info@axiomprotocol.app</a>
+<strong>Status:</strong> Canonical. This document is the source of truth for how Axiom Nexus handles personal and financial data on the Axiom Protocol platform.</p>
+<p>This policy is rendered verbatim at <code>/privacy</code>. The file at <code>documents/policies/privacy-policy.md</code> is the canonical text. Any change to the policy must change this file; the published page reads it at request time so the document and the page can never drift.</p>
+<hr>
+<h2>1. Who we are</h2>
+<p>Axiom Nexus, LLC operates the Axiom Protocol platform (&quot;the Platform&quot;), a governance-first wealth infrastructure focused on land acquisition and on-chain capital tooling. Axiom Nexus is the data controller for personal and financial information collected through the Platform.</p>
+<p>If you have questions about this policy, or wish to exercise any of your rights described below, contact us at <strong><a href="mailto:info@axiomprotocol.app">info@axiomprotocol.app</a></strong>.</p>
+<h2>2. Scope</h2>
+<p>This policy applies to information we collect from you when you visit the Platform, connect a self-custodied wallet, link an external bank account, fund a treasury position, participate in The Wealth Practice, or otherwise interact with any feature of the Platform. It does not cover third-party websites or services you may reach through links from the Platform; those are governed by the privacy policies of their respective operators.</p>
+<h2>3. Information we collect</h2>
+<p>We collect only the information needed to operate the features you use. Specifically:</p>
+<h3>3.1 Information you provide directly</h3>
+<ul>
+<li>Your wallet address and the cryptographic signature you produce to authenticate (Sign-In With Ethereum).</li>
+<li>Your email address, if you elect to receive notifications or contact us.</li>
+<li>Information you submit through forms (for example, an investor questionnaire, a property analysis request, or a syndication application).</li>
+<li>Any documents you upload (for example, accreditation evidence, signed subscription agreements).</li>
+</ul>
+<h3>3.2 Information collected through Plaid</h3>
+<p>When you choose to link an external bank account in order to fund a treasury position via ACH, you do so through <strong>Plaid Inc.</strong> (&quot;Plaid&quot;), a third-party service that provides regulated bank-account verification. Plaid presents its own consent screen during the link flow.</p>
+<p>Through Plaid we receive:</p>
+<ul>
+<li>The verified routing number and account number of the bank account you link, used to originate the corresponding ACH debit through our banking processor.</li>
+<li>The account holder name on the linked account, used to confirm that the originator and the destination are consistent.</li>
+<li>The available and current balance of the linked account at the moment of linking, used solely to confirm that the requested debit is feasible before submission.</li>
+<li>A Plaid <code>access_token</code> and <code>item_id</code>, which are credentials Plaid issues to us so that we can refresh the above information on your behalf.</li>
+</ul>
+<p>We do not request, and we do not retain, your bank login credentials. Those are entered into Plaid&#39;s interface and are never seen by Axiom Nexus.</p>
+<p>We do not collect transaction history, identity verification documents, investments, liabilities, or income data through Plaid unless you have separately and explicitly consented to a feature that requires it.</p>
+<h3>3.3 Information collected through other regulated processors</h3>
+<p>When you use the Platform&#39;s banking features, we share necessary information with <strong>Increase</strong> (our primary banking rail) and may receive transaction status, settlement timestamps, and identifiers in return. When you use the institutional crypto custody features, we share necessary information with <strong>BitGo</strong>.</p>
+<h3>3.4 Information collected automatically</h3>
+<ul>
+<li>Standard server logs (IP address, user agent, request path, response status, timestamp). These are retained for a limited period for security and abuse-prevention purposes.</li>
+<li>Application telemetry necessary to operate the Platform (for example, the version of a policy decision applied to one of your actions). This is recorded in our append-only audit log and is associated with your wallet address.</li>
+<li>On-chain data associated with your wallet, such as token balances and transactions involving Axiom-issued contracts. This information is publicly visible on the underlying blockchain regardless of our involvement.</li>
+</ul>
+<h2>4. How we use your information</h2>
+<p>We use the information described above only for the following purposes:</p>
+<ul>
+<li><strong>To provide the features you request.</strong> This includes authenticating you, displaying your positions, executing your requested transactions, originating ACH debits to fund your treasury balance, and generating reports.</li>
+<li><strong>To verify your bank account.</strong> When you link a bank account through Plaid, we use the routing number, account number, and account holder name returned by Plaid only to originate the corresponding ACH debit through our banking processor.</li>
+<li><strong>To meet legal and regulatory obligations.</strong> This includes compliance with the Bank Secrecy Act, anti-money-laundering rules, sanctions screening, and applicable securities laws.</li>
+<li><strong>To operate, secure, and improve the Platform.</strong> This includes monitoring for fraud, abuse, and security incidents; reconciling our records with the records of our banking and custody processors; and improving the reliability and performance of the system.</li>
+<li><strong>To communicate with you.</strong> Only when you have opted in or when the communication is necessary to operate a feature you have used (for example, a settlement notification).</li>
+</ul>
+<p>We do not sell your information. We do not use Plaid-derived information for advertising. We do not share Plaid-derived information with any party other than the processors strictly required to complete the transaction you have requested.</p>
+<h2>5. How we share your information</h2>
+<p>We share information only as follows:</p>
+<ul>
+<li><strong>With service providers who process information on our behalf.</strong> These include Plaid (account verification), Increase (banking), Neon (managed database), Replit (application hosting and secret storage), BitGo (institutional crypto custody), Auth0 (identity provider for operators), Resend (transactional email), and Alchemy (blockchain RPC). Each is contractually bound to use the information only for the services they provide to us.</li>
+<li><strong>With legal authorities.</strong> When required by valid legal process, when necessary to comply with applicable law, or when necessary to protect the safety, rights, or property of Axiom Nexus, our users, or the public.</li>
+<li><strong>In connection with a corporate transaction.</strong> If Axiom Nexus is involved in a merger, acquisition, financing, or sale of assets, information may be transferred to the successor entity, subject to the protections of this policy.</li>
+</ul>
+<p>We do not share Plaid-derived information with any party other than those identified above.</p>
+<h2>6. Plaid end-user disclosures</h2>
+<p>Axiom Nexus uses Plaid Inc. to provide bank account verification. By electing to link a bank account through Plaid on the Platform, you authorise Plaid to collect the information described in §3.2 above and to share it with Axiom Nexus for the purpose stated. Plaid&#39;s own privacy practices are governed by the <strong>Plaid End User Privacy Policy</strong>, available at <a href="https://plaid.com/legal/#end-user-privacy-policy">https://plaid.com/legal/#end-user-privacy-policy</a>. We encourage you to review it.</p>
+<p>You may revoke Plaid&#39;s authorisation at any time by disconnecting the linked account in the Platform. When you do so, we will call Plaid&#39;s <code>/item/remove</code> endpoint to revoke the access token and we will delete the corresponding stored credentials within thirty days, subject to any retention required by law (see §8).</p>
+<h2>7. Your choices and rights</h2>
+<p>You have the following rights with respect to information we hold about you:</p>
+<ul>
+<li><strong>Access.</strong> Request a copy of the information we hold about you.</li>
+<li><strong>Correction.</strong> Request that we correct information that is inaccurate.</li>
+<li><strong>Deletion.</strong> Request that we delete information we hold about you, subject to any retention required by law.</li>
+<li><strong>Withdrawal of consent.</strong> Withdraw consent for any processing that depends on your consent (for example, by disconnecting a Plaid-linked account).</li>
+<li><strong>Objection.</strong> Object to processing that is based on our legitimate interests.</li>
+</ul>
+<p>To exercise any of these rights, contact us at <strong><a href="mailto:info@axiomprotocol.app">info@axiomprotocol.app</a></strong>. We will respond within thirty days.</p>
+<p>You retain control over your self-custodied wallet and the on-chain data associated with it. We cannot reverse on-chain transactions or delete information that has been recorded on a public blockchain.</p>
+<h2>8. Retention</h2>
+<p>We retain information only as long as needed to provide the features you use and to meet our legal obligations:</p>
+<ul>
+<li><strong>Plaid <code>access_token</code> and <code>item_id</code>:</strong> retained for the active life of the linked relationship; revoked through Plaid&#39;s <code>/item/remove</code> endpoint and removed from our store within thirty days of (a) your deletion request, (b) your disconnection of the linked account, or (c) the end of the funding relationship.</li>
+<li><strong>Account and routing numbers obtained through Plaid Auth:</strong> retained only as long as needed to originate and reconcile the corresponding ACH debit, and removed from the active store after the resulting Increase transfer reaches a terminal state. Masked references (last four digits only) may be retained on the audit trail to satisfy financial record-keeping obligations.</li>
+<li><strong>Audit events:</strong> retained for seven years to satisfy financial record-keeping obligations under the Bank Secrecy Act and applicable tax law, then automatically purged.</li>
+<li><strong>Server logs:</strong> retained for a limited period and then automatically purged.</li>
+<li><strong>Other information you submit:</strong> retained for the period reasonably necessary for the purpose for which it was collected, then deleted on request or on a defined schedule.</li>
+</ul>
+<h2>9. Security</h2>
+<p>We protect your information using a combination of administrative, technical, and physical safeguards. These include TLS 1.2 or higher for data in transit, AES-256 encryption at rest, application-layer envelope encryption for high-sensitivity tokens, multi-factor authentication on every system that processes consumer financial data, role-based access control, append-only audit logging of every privileged action, code review on every change merged to production, automated dependency vulnerability scanning, and an annual review of our information security program.</p>
+<p>The full Information Security Policy is published at <code>/disclosure/information-security-policy</code>.</p>
+<p>No system can be made perfectly secure. If you become aware of a security issue, please contact us at <strong><a href="mailto:security@axiomprotocol.app">security@axiomprotocol.app</a></strong> (monitored group address).</p>
+<h2>10. International users</h2>
+<p>The Platform is operated from the United States. Information you submit will be processed in the United States and in any other jurisdiction in which our service providers operate. By using the Platform you consent to this processing.</p>
+<h2>11. Children</h2>
+<p>The Platform is not directed to children under the age of eighteen and we do not knowingly collect information from children under eighteen. If you believe a child has provided information to us, please contact us at <strong><a href="mailto:info@axiomprotocol.app">info@axiomprotocol.app</a></strong> so we can delete it.</p>
+<h2>12. Changes to this policy</h2>
+<p>We may update this policy from time to time. The current version is always available at <code>/privacy</code>. The effective date at the top of this document reflects the date of the most recent update. Material changes will be communicated through the Platform or by email where we have an address for you.</p>
+<h2>13. Contact</h2>
+<p>For any question about this policy, to exercise any of the rights in §7, or to report a security concern, contact:</p>
+<blockquote>
+<p>Axiom Nexus, LLC
+Attn: Privacy
+<a href="mailto:info@axiomprotocol.app">info@axiomprotocol.app</a></p>
+</blockquote>
+
+</body>
+</html>

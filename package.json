@@ -110,7 +110,8 @@
     "test:e2e:prune-staleness": "playwright test e2e/prune-staleness-warning.spec.ts",
     "test:e2e:prune-history-csv": "playwright test e2e/prune-history-csv.spec.ts",
     "test:user-search-index": "vitest run tests/cap-identity-profiles-trgm-index.test.ts",
-    "test:prune-status-panel": "vitest run tests/prune-status-panel.test.tsx --reporter=verbose"
+    "test:prune-status-panel": "vitest run tests/prune-status-panel.test.tsx --reporter=verbose",
+    "export:policy-pdfs": "tsx scripts/export-policy-pdfs.ts"
   },
   "keywords": [],
   "author": "",
@@ -305,5 +306,10 @@
     "tar": "^6.2.1",
     "node-forge": "^1.3.1",
     "parse-duration": "^1.1.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "inngest": "^3.54.0"
+    }
   }
 }

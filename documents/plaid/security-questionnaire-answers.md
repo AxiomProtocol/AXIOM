@@ -1,0 +1,213 @@
+# Plaid Production Access — Security Questionnaire Answer Sheet
+
+**Applicant entity (Q1):** Axiom Nexus, LLC
+**Product:** Axiom Protocol
+**Plaid products requested:** Auth, Balance
+**Use case:** Verify the bank account a user designates for ACH-debit funding of an Axiom treasury position, then confirm the requested debit is feasible against current available balance.
+**Primary contact email:** info@axiomprotocol.app
+**Security disclosure email:** security@axiomprotocol.app (monitored group address)
+**Owner of this submission:** Clarence Fuqua, Founder, Axiom Nexus, LLC
+
+> Use this sheet as the single source of truth when filling the Plaid form. Every free-text field, every dropdown selection, every URL, every file upload, and every screenshot path is listed below by question. Do not paraphrase the policy text in the form — copy verbatim or link to the published page.
+
+---
+
+## Cross-walk: where every uploaded artefact goes
+
+| Plaid upload field | Public URL (preferred) | File backup |
+|---|---|---|
+| Information Security Policy (Q2) | https://axiomprotocol.app/disclosure/information-security-policy | `documents/policies/exports/information-security-policy.html` (or `.pdf` once generated) |
+| Access Controls Policy (Q3) | https://axiomprotocol.app/disclosure/access-controls-policy | `documents/policies/exports/access-controls-policy.html` |
+| Privacy Policy (Q9) | https://axiomprotocol.app/privacy | `documents/policies/exports/privacy-policy.html` |
+| Data Retention and Disposal Policy (Q11) | https://axiomprotocol.app/disclosure/data-retention-policy | `documents/policies/exports/data-retention-policy.html` |
+| Consumer MFA screenshot (Q4) | n/a | `screenshots/plaid/q4-consumer-siwe.jpg` |
+| Internal-systems MFA screenshots (Q5) | n/a | `screenshots/plaid/q5-mfa-*.png` (per system; capture manually) |
+
+> **PDF generation note.** `npm run export:policy-pdfs` always emits self-contained styled `.html` files. It additionally emits `.pdf` files only when headless Chromium can launch in the runtime (this requires `libglib-2.0` and friends, which are present on most Linux desktops and on the Replit deployment image but not on every minimal CI image). When PDFs are not produced automatically, open each `.html` file in any modern browser and use **File → Print → Save as PDF** to produce the corresponding `.pdf`. Plaid's upload field accepts either format.
+
+> **Operational note on screenshots.** The internal-systems MFA screenshots (Q5) must be captured manually from the live admin dashboards while signed in as the Information Security Lead. They cannot be generated programmatically because they show real account email plus the active second factor on each vendor's UI. Save each as `screenshots/plaid/q5-mfa-<vendor>.png`. Required vendors: replit, neon, increase, plaid, bitgo, auth0, github. Each screenshot must clearly show (a) the account identifier and (b) the enabled MFA method.
+
+---
+
+## Q1 — Applicant identity and contact
+
+**Free-text answer (verbatim):**
+
+> Axiom Nexus, LLC operates the Axiom Protocol platform. Primary contact for this application is info@axiomprotocol.app. Security disclosures are routed to security@axiomprotocol.app (monitored group address). The Information Security Lead and signatory for this submission is Clarence Fuqua, Founder.
+
+**Rationale:** Single legal entity is Axiom Nexus, LLC across the white paper, both canonical policy documents, and the treasury funding page. The two contact emails are split intentionally: `info@` for general and privacy correspondence, `security@` (monitored group address) for security disclosures, both documented in the published Privacy and Information Security policies.
+
+---
+
+## Q2 — Information Security Policy
+
+**Dropdown selection:** Yes — we have a documented Information Security Policy.
+
+**URL to attach:** https://axiomprotocol.app/disclosure/information-security-policy
+
+**File to upload:** `documents/policies/exports/information-security-policy.pdf`
+
+**Free-text supporting answer (verbatim):**
+
+> The Axiom Nexus, LLC Information Security Policy is published at https://axiomprotocol.app/disclosure/information-security-policy. The published page renders the canonical markdown source verbatim on every load so the document and the page can never drift. Owner: Clarence Fuqua, Founder. Review cadence: annually. The policy covers governance, data classification, identity and access management, infrastructure controls (TLS 1.2+ in transit, AES-256 at rest, application-layer envelope encryption for Plaid `access_token`), third-party processor inventory and review, secure development and vulnerability management (including end-of-life software monitoring), privacy and data subject rights, incident response, business continuity, and the exception process.
+
+**Rationale:** Plaid asks for proof of a real, current InfoSec program. Linking to a hosted, source-controlled, verbatim-rendered document satisfies that and gives Plaid a stable URL they can re-check between submission and approval.
+
+---
+
+## Q3 — Access Controls Policy
+
+**Dropdown selections (check every box that applies):**
+
+- Periodic access reviews
+- Defined and documented access control policy
+- OAuth tokens / TLS certificates for non-human authentication
+- Zero trust access architecture
+- Automated de-provisioning on termination or role change
+
+**URL to attach:** https://axiomprotocol.app/disclosure/access-controls-policy
+
+**File to upload:** `documents/policies/exports/access-controls-policy.pdf`
+
+**Free-text supporting answer (verbatim):**
+
+> The Axiom Nexus, LLC Access Controls Policy is published at https://axiomprotocol.app/disclosure/access-controls-policy. It defines four identity classes (end user, operator, personnel, service), enforces MFA on every system in the Restricted-data path (Replit, Neon, Increase Dashboard, Plaid Dashboard, BitGo Dashboard, Auth0 Dashboard, GitHub), partitions operator authority into deterministic RBAC roles enforced at the API layer, mandates quarterly access reviews of personnel-bound and non-human credentials, mandates de-provisioning within five business days of departure or role change, requires non-human authentication via short-lived OAuth tokens or signed JWTs over TLS 1.2+, and applies a zero-trust model where every Restricted-data request is authenticated, authorised through the policy evaluator, and audited regardless of origin.
+
+**Rationale:** Each selection in the dropdown is restated word-for-word in the linked policy so Plaid's reviewer can match the form selection to the underlying control without a paraphrase gap.
+
+---
+
+## Q4 — Consumer-side multi-factor authentication
+
+**Dropdown selection:** Yes — multi-factor authentication is required of the end user before they can initiate a Plaid Link session on the Platform.
+
+**Screenshot to upload:** `screenshots/plaid/q4-consumer-siwe.jpg` (captured from `/treasury/fund` showing the Sign In / Connect Wallet entry points in the navigation; if Plaid asks for the actual signature challenge UI itself, click Sign In on a fresh session and capture the wallet's signature-prompt modal as `screenshots/plaid/q4-consumer-siwe-challenge.jpg`)
+
+**Free-text supporting answer (verbatim):**
+
+> The Axiom Protocol Platform authenticates end users via Sign-In With Ethereum (SIWE) backed by a self-custodied wallet. The user must produce a cryptographic signature from the wallet that owns their account in order to establish a session. Plaid Link is only surfaced inside an authenticated session, so possession of the wallet (and any device-level controls the user maintains on it, including hardware-key signing for users on hardware wallets) is the second factor on top of any platform-level controls. Operator-side surfaces additionally require Auth0 MFA before any Plaid-derived data can be inspected.
+
+**Rationale:** Plaid asks specifically about MFA on the consumer flow. SIWE with a self-custodied wallet is a stronger second factor than SMS or TOTP because the user's signing key is not held by the Platform and cannot be phished from the Platform side.
+
+---
+
+## Q5 — Internal-systems multi-factor authentication
+
+**Dropdown selection:** Yes — MFA is enforced on every internal system that stores or processes consumer financial data.
+
+**Screenshots to upload (one per vendor):**
+
+| Vendor | Screenshot path | What it must show |
+|---|---|---|
+| Replit | `screenshots/plaid/q5-mfa-replit.png` | Account email and enabled MFA method on the Replit account that owns this workspace |
+| Neon | `screenshots/plaid/q5-mfa-neon.png` | Account email and enabled MFA on the Neon org that owns the production database |
+| Increase Dashboard | `screenshots/plaid/q5-mfa-increase.png` | Account email and enabled MFA on the Increase dashboard owner |
+| Plaid Dashboard | `screenshots/plaid/q5-mfa-plaid.png` | Account email and enabled MFA on the Plaid dashboard owner |
+| BitGo Dashboard | `screenshots/plaid/q5-mfa-bitgo.png` | Account email and enabled MFA on the BitGo dashboard owner |
+| Auth0 Dashboard | `screenshots/plaid/q5-mfa-auth0.png` | Account email and enabled MFA on the Auth0 tenant owner |
+| GitHub | `screenshots/plaid/q5-mfa-github.png` | Account name and enabled MFA on the GitHub account that owns the source repository |
+
+**Free-text supporting answer (verbatim):**
+
+> MFA is enforced on every internal system in the Restricted-data path: Replit (application hosting and secret store), Neon (managed Postgres), Increase Dashboard (banking rail), Plaid Dashboard (account-verification rail), BitGo Dashboard (institutional crypto custody), Auth0 Dashboard (operator identity provider), and GitHub (source control). Personnel without MFA on a covered system have their access revoked. The policy is documented in §3 of the Access Controls Policy at https://axiomprotocol.app/disclosure/access-controls-policy and §4 of the Information Security Policy at https://axiomprotocol.app/disclosure/information-security-policy.
+
+**Rationale:** Plaid will look for explicit per-system MFA evidence. Listing the seven vendors and providing one screenshot each closes the most common follow-up question.
+
+---
+
+## Q6 — Encryption in transit
+
+**Dropdown selection:** Yes — TLS 1.2 or higher.
+
+**Free-text supporting answer (verbatim):**
+
+> All client-server traffic terminates on TLS 1.2 or higher. The Platform is hosted on Replit Autoscale, which provides managed TLS certificates and enforces TLS 1.2+ on all inbound HTTPS traffic. The internal preview proxy uses mutual TLS. All outbound calls to Plaid, Increase, Neon Postgres, BitGo, Alchemy, and other third-party APIs are made over TLS 1.2+. Documented in §5 of the Information Security Policy.
+
+---
+
+## Q7 — Encryption at rest
+
+**Dropdown selection:** Yes — AES-256.
+
+**Free-text supporting answer (verbatim):**
+
+> Production data is stored in Neon-hosted Postgres, which encrypts all data at rest using AES-256. Analytics data is stored in MongoDB Atlas, also AES-256 at rest. Object storage is encrypted at rest by the underlying provider (Google Cloud Storage, Storacha/IPFS as applicable). Plaid `access_token` values, in addition to database-level encryption at rest, are envelope-encrypted at the application layer using a key derived from the secret store and rotated on a defined schedule; they are never logged, never returned in API responses, never written to error messages, and never exposed to the browser. Documented in §5 of the Information Security Policy.
+
+---
+
+## Q8 — Vulnerability management
+
+**Dropdown selections (check every box that applies):**
+
+- End-of-life software monitoring
+- Code review on every change merged to production
+- Automated dependency vulnerability scanning with SLA-bound remediation
+- Static application security testing
+- Endpoint security on contributor machines (full-disk encryption, automatic OS patching, automatic screen lock, EDR/AV)
+
+**Free-text supporting answer (verbatim):**
+
+> The Platform applies SLA-bound vulnerability management documented in §7 of the Information Security Policy at https://axiomprotocol.app/disclosure/information-security-policy. Every change is code-reviewed before merge, with deeper security review on changes that touch authentication, payments, secret handling, or external API integrations. Dependency vulnerabilities are surfaced continuously; critical and high-severity findings are remediated within seven days, medium-severity within thirty days. Static application security testing scans the codebase for injection, broken access control, IDOR, and hard-coded secrets on a continuous schedule. End-of-life software monitoring tracks the runtime, the Node.js LTS line, and material direct dependencies against published support lifecycles, with a ninety-day pre-EOL remediation trigger and the seven-day SLA for any EOL dependency on the Restricted-data path. Contributor machines run with full-disk encryption, automatic OS patching, automatic screen lock, and an actively maintained antivirus or EDR solution.
+
+**Rationale:** Plaid's prior selection only ticked "EOL software monitoring", which is weak. Adding code review, SLA-bound dependency scanning, SAST, and endpoint security accurately reflects what is in place today and is described in §7 of the InfoSec policy.
+
+---
+
+## Q9 — Privacy Policy with Plaid disclosures
+
+**Dropdown selection:** Yes — published Privacy Policy that includes the required Plaid end-user disclosures.
+
+**URL to attach:** https://axiomprotocol.app/privacy
+
+**File to upload:** `documents/policies/exports/privacy-policy.pdf`
+
+**Free-text supporting answer (verbatim):**
+
+> The Axiom Protocol Privacy Policy is published at https://axiomprotocol.app/privacy. The Plaid-specific disclosures appear in §3.2 (categories of data collected via Plaid Auth and Balance, what is and is not collected, the role of the `access_token` and `item_id`, and the affirmation that bank login credentials are entered into Plaid's interface and never seen by the Platform), §5 (the processors with whom Plaid-derived data is shared and the affirmation that it is not shared with anyone else), §6 (Plaid end-user disclosures, the link to Plaid's End User Privacy Policy, and the user's right to revoke Plaid's authorisation through the Platform's disconnect control which calls Plaid's `/item/remove` endpoint), §7 (the user's rights of access, correction, deletion, and withdrawal of consent), and §8 (per-category retention windows, including the thirty-day deletion window for the `access_token` and `item_id` after disconnection or deletion request, subject to the legal-hold exceptions in the Data Retention and Disposal Policy).
+
+---
+
+## Q10 — Consent before Plaid Link
+
+**Dropdown selection:** Yes — explicit consent screen displayed before Plaid Link is surfaced.
+
+**Free-text supporting answer (verbatim):**
+
+> The Platform displays an explicit consent screen before Plaid Link is initiated. The screen names the categories of data that will be collected through Plaid (account number, routing number, account holder name, account balance), names the third party that will collect them (Plaid Inc.), names the purpose for which they will be used (verification of the bank account designated for ACH-debit funding of an Axiom treasury position, and confirmation that the requested debit is feasible against current available balance), names the parties with whom the data will be shared (Plaid as collector, Increase as the banking processor that will originate the resulting ACH debit), names the user's right to revoke through the Platform's disconnect control, and links to both the Axiom Protocol Privacy Policy at https://axiomprotocol.app/privacy and the Plaid End User Privacy Policy. The user must affirmatively click "I consent" before Plaid Link will be initialised. The text version, the timestamp, and the user identifier are recorded as an audit event in the append-only `cap_audit_events` table.
+
+**Rationale:** Plaid requires that consent be informed and recorded. Auditing the consent action with the version of the consent text closes Plaid's typical follow-up about how consent is evidenced after the fact.
+
+---
+
+## Q11 — Data Retention and Disposal Policy
+
+**Dropdown selection:** Yes — documented retention and disposal policy with a defined revocation path for Plaid-derived data.
+
+**URL to attach:** https://axiomprotocol.app/disclosure/data-retention-policy
+
+**File to upload:** `documents/policies/exports/data-retention-policy.pdf`
+
+**Free-text supporting answer (verbatim):**
+
+> The Axiom Nexus, LLC Data Retention and Disposal Policy is published at https://axiomprotocol.app/disclosure/data-retention-policy. The policy defines, per data category, the maximum retention window, the operational or legal basis for that window, and the disposal mechanism by storage tier (Postgres row-level delete, MongoDB TTL index, object-storage delete with tombstone audit event, application-layer envelope-key rotation for high-sensitivity tokens). Plaid `access_token` and `item_id` are retained for the active life of the linked relationship and revoked through Plaid's `/item/remove` endpoint within thirty days of a deletion request, account disconnection, or end of the funding relationship. Account and routing numbers obtained through Plaid Auth are retained only until the resulting ACH transfer reaches a terminal state, then removed from the active store with a masked reference (last four only) retained on the audit trail to satisfy financial-records obligations. Audit events are retained for seven years and then automatically purged. Server logs are retained for thirty days rolling. Data subject requests (access, correction, deletion, withdrawal of consent) are processed within thirty days. The policy is reviewed annually by the Information Security Lead.
+
+**Rationale:** Q11 is the highest-stakes question in the questionnaire because it asserts the deletion path. Naming `/item/remove` explicitly, naming the thirty-day window, and naming the seven-year audit retention separately from the thirty-day Plaid-data retention prevents the most common Plaid follow-up.
+
+---
+
+## Submission checklist
+
+Before clicking submit on the Plaid form:
+
+- [ ] Q1 free-text contains "Axiom Nexus, LLC" (NOT "Akili Group, LLC").
+- [ ] Q2 URL resolves and renders "Axiom Nexus, LLC — Information Security Policy".
+- [ ] Q3 URL resolves and renders "Axiom Nexus, LLC — Access Controls Policy".
+- [ ] Q4 SIWE screenshot saved at `screenshots/plaid/q4-consumer-siwe.jpg`.
+- [ ] Q5 seven vendor MFA screenshots saved at `screenshots/plaid/q5-mfa-<vendor>.png`.
+- [ ] Q9 URL resolves and renders the Plaid disclosures in §3.2, §5, §6, §7, §8.
+- [ ] Q11 URL resolves and renders the Plaid `/item/remove` revocation path in §7.
+- [ ] All four `.html` (or `.pdf`) exports exist in `documents/policies/exports/` and open without error.
+- [ ] Treasury beneficiary on `/treasury/fund` reads "Axiom Nexus, LLC" (NOT "Akili Group, LLC").
+- [ ] White paper issuer line reads "Axiom Nexus, LLC (Axiom Protocol)".
+
+When all rows are checked, the questionnaire is ready to submit.

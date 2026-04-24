@@ -1,9 +1,9 @@
 # Axiom Protocol — Privacy Policy
 
 **Effective date:** April 23, 2026
-**Operator:** Akili Group, LLC ("Akili Group", "we", "our", "us")
+**Operator:** Axiom Nexus, LLC ("Axiom Nexus", "we", "our", "us")
 **Contact:** info@axiomprotocol.app
-**Status:** Canonical. This document is the source of truth for how Akili Group handles personal and financial data on the Axiom Protocol platform.
+**Status:** Canonical. This document is the source of truth for how Axiom Nexus handles personal and financial data on the Axiom Protocol platform.
 
 This policy is rendered verbatim at `/privacy`. The file at `documents/policies/privacy-policy.md` is the canonical text. Any change to the policy must change this file; the published page reads it at request time so the document and the page can never drift.
 
@@ -11,7 +11,7 @@ This policy is rendered verbatim at `/privacy`. The file at `documents/policies/
 
 ## 1. Who we are
 
-Akili Group, LLC operates the Axiom Protocol platform ("the Platform"), a governance-first wealth infrastructure focused on land acquisition and on-chain capital tooling. Akili Group is the data controller for personal and financial information collected through the Platform.
+Axiom Nexus, LLC operates the Axiom Protocol platform ("the Platform"), a governance-first wealth infrastructure focused on land acquisition and on-chain capital tooling. Axiom Nexus is the data controller for personal and financial information collected through the Platform.
 
 If you have questions about this policy, or wish to exercise any of your rights described below, contact us at **info@axiomprotocol.app**.
 
@@ -41,7 +41,7 @@ Through Plaid we receive:
 - The available and current balance of the linked account at the moment of linking, used solely to confirm that the requested debit is feasible before submission.
 - A Plaid `access_token` and `item_id`, which are credentials Plaid issues to us so that we can refresh the above information on your behalf.
 
-We do not request, and we do not retain, your bank login credentials. Those are entered into Plaid's interface and are never seen by Akili Group.
+We do not request, and we do not retain, your bank login credentials. Those are entered into Plaid's interface and are never seen by Axiom Nexus.
 
 We do not collect transaction history, identity verification documents, investments, liabilities, or income data through Plaid unless you have separately and explicitly consented to a feature that requires it.
 
@@ -72,14 +72,14 @@ We do not sell your information. We do not use Plaid-derived information for adv
 We share information only as follows:
 
 - **With service providers who process information on our behalf.** These include Plaid (account verification), Increase (banking), Neon (managed database), Replit (application hosting and secret storage), BitGo (institutional crypto custody), Auth0 (identity provider for operators), Resend (transactional email), and Alchemy (blockchain RPC). Each is contractually bound to use the information only for the services they provide to us.
-- **With legal authorities.** When required by valid legal process, when necessary to comply with applicable law, or when necessary to protect the safety, rights, or property of Akili Group, our users, or the public.
-- **In connection with a corporate transaction.** If Akili Group is involved in a merger, acquisition, financing, or sale of assets, information may be transferred to the successor entity, subject to the protections of this policy.
+- **With legal authorities.** When required by valid legal process, when necessary to comply with applicable law, or when necessary to protect the safety, rights, or property of Axiom Nexus, our users, or the public.
+- **In connection with a corporate transaction.** If Axiom Nexus is involved in a merger, acquisition, financing, or sale of assets, information may be transferred to the successor entity, subject to the protections of this policy.
 
 We do not share Plaid-derived information with any party other than those identified above.
 
 ## 6. Plaid end-user disclosures
 
-Akili Group uses Plaid Inc. to provide bank account verification. By electing to link a bank account through Plaid on the Platform, you authorise Plaid to collect the information described in §3.2 above and to share it with Akili Group for the purpose stated. Plaid's own privacy practices are governed by the **Plaid End User Privacy Policy**, available at https://plaid.com/legal/#end-user-privacy-policy. We encourage you to review it.
+Axiom Nexus uses Plaid Inc. to provide bank account verification. By electing to link a bank account through Plaid on the Platform, you authorise Plaid to collect the information described in §3.2 above and to share it with Axiom Nexus for the purpose stated. Plaid's own privacy practices are governed by the **Plaid End User Privacy Policy**, available at https://plaid.com/legal/#end-user-privacy-policy. We encourage you to review it.
 
 You may revoke Plaid's authorisation at any time by disconnecting the linked account in the Platform. When you do so, we will call Plaid's `/item/remove` endpoint to revoke the access token and we will delete the corresponding stored credentials within thirty days, subject to any retention required by law (see §8).
 
@@ -131,6 +131,6 @@ We may update this policy from time to time. The current version is always avail
 
 For any question about this policy, to exercise any of the rights in §7, or to report a security concern, contact:
 
-> Akili Group, LLC
+> Axiom Nexus, LLC
 > Attn: Privacy
 > info@axiomprotocol.app

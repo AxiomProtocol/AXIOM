@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Access Controls Policy — Axiom Nexus, LLC</title>
+<style>
+  @page { size: Letter; margin: 0.75in; }
+  html, body {
+    font-family: Georgia, "Times New Roman", serif;
+    color: #0f172a;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+  body { margin: 0; }
+  .doc-meta {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 8pt;
+    color: #475569;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 6pt;
+    margin-bottom: 12pt;
+  }
+  h1 {
+    font-size: 18pt;
+    margin: 14pt 0 6pt;
+    color: #0b1e3f;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 4pt;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-size: 13pt;
+    margin: 16pt 0 4pt;
+    color: #0b1e3f;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 11pt;
+    margin: 12pt 0 3pt;
+    color: #0b1e3f;
+    page-break-after: avoid;
+  }
+  p { margin: 4pt 0; }
+  ul, ol { margin: 4pt 0 4pt 18pt; padding: 0; }
+  li { margin: 2pt 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8pt 0;
+    font-size: 9pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 4pt 6pt;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f1f5f9; font-weight: 600; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: #f1f5f9;
+    padding: 1pt 3pt;
+    font-size: 9pt;
+  }
+  blockquote {
+    border-left: 3px solid #cbd5e1;
+    margin: 8pt 0;
+    padding: 2pt 10pt;
+    color: #334155;
+    font-style: italic;
+  }
+  hr { border: none; border-top: 1px solid #cbd5e1; margin: 14pt 0; }
+  a { color: #0b1e3f; }
+</style>
+</head>
+<body>
+<div class="doc-meta">
+  Source: documents/policies/access-controls-policy.md · Exported 2026-04-24T00:08:23.551Z · Access Controls Policy — Axiom Nexus, LLC
+</div>
+<h1>Axiom Nexus, LLC — Access Controls Policy</h1>
+<p><strong>Effective date:</strong> April 23, 2026
+<strong>Owner:</strong> Clarence Fuqua, Founder, Axiom Nexus, LLC
+<strong>Contact:</strong> <a href="mailto:security@axiomprotocol.app">security@axiomprotocol.app</a> (monitored group address) · <a href="mailto:info@axiomprotocol.app">info@axiomprotocol.app</a> (general)
+<strong>Review cadence:</strong> Annually, or upon any material change to personnel, processor inventory, or applicable law.
+<strong>Status:</strong> Canonical. This document is the source of truth for the Axiom Nexus access-control program.</p>
+<p>This policy is rendered verbatim at <code>/disclosure/access-controls-policy</code>. The file at <code>documents/policies/access-controls-policy.md</code> is the canonical text. Any change to the policy must change this file; the disclosure page reads it at request time so the document and the page can never drift.</p>
+<p>This policy is the operational companion to the <a href="/disclosure/information-security-policy">Information Security Policy</a>. Where the two overlap, the Information Security Policy is the higher-level statement; this document is the operational specification.</p>
+<hr>
+<h2>1. Purpose and scope</h2>
+<p>Access control is the primary control surface for protecting consumer financial data. This policy defines:</p>
+<ul>
+<li>Who is allowed to access what.</li>
+<li>How that access is granted, reviewed, and revoked.</li>
+<li>How non-human identities (services, integrations, automated jobs) authenticate.</li>
+<li>The architectural rule that no request is trusted by virtue of network position.</li>
+</ul>
+<p>It applies to every system in the Restricted or Confidential data path: production Postgres (Neon), production runtime (Replit Autoscale), production object stores, regulated-rail dashboards (Plaid, Increase, BitGo, Auth0), source control (GitHub), and the operator console of the Platform itself.</p>
+<h2>2. Identity classes</h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Examples</th>
+<th>Authentication</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>End user</strong> (consumer of the Platform)</td>
+<td>Wallet holder, prospective LP, Wealth Practice member</td>
+<td>Sign-In With Ethereum (SIWE) backed by a self-custodied wallet. No password is held by the Platform.</td>
+</tr>
+<tr>
+<td><strong>Operator</strong> (Axiom Nexus personnel with elevated rights inside the Platform)</td>
+<td>Compliance reviewer, treasury reviewer, risk operator, super admin</td>
+<td>Auth0 session with MFA enforced on the Auth0 tenant. Operator role is authorised at the API layer through <code>requireOperator(...)</code> and the policy evaluator.</td>
+</tr>
+<tr>
+<td><strong>Personnel</strong> (Axiom Nexus personnel with rights to vendor dashboards)</td>
+<td>Information Security Lead, Founder</td>
+<td>Per-vendor account credentials with MFA enforced on every covered vendor (see §3).</td>
+</tr>
+<tr>
+<td><strong>Service</strong> (non-human identity invoking an API)</td>
+<td>Webhook receiver, scheduled reconciliation job, deployer EOA</td>
+<td>Short-lived OAuth tokens, signed JWTs, or signature-verified webhooks over TLS 1.2+. Long-lived shared API keys are prohibited where OAuth or signed-JWT alternatives exist.</td>
+</tr>
+</tbody></table>
+<h2>3. Multi-factor authentication</h2>
+<p>MFA is required on every system that stores or processes Restricted or Confidential data and is enforced today on:</p>
+<ul>
+<li><strong>Replit</strong> (application hosting, secret store, deployment)</li>
+<li><strong>Neon</strong> (managed Postgres)</li>
+<li><strong>Increase Dashboard</strong> (banking rail)</li>
+<li><strong>Plaid Dashboard</strong> (account-verification rail)</li>
+<li><strong>BitGo Dashboard</strong> (institutional crypto custody)</li>
+<li><strong>Auth0 Dashboard</strong> (operator identity provider; MFA also enforced on the operator-facing tenant for Platform sign-in)</li>
+<li><strong>GitHub</strong> (source control)</li>
+</ul>
+<p>Personnel without MFA enabled on any covered system have their access to that system revoked.</p>
+<p>End users authenticate to the Platform via SIWE; the cryptographic possession of the self-custodied wallet is the second factor on top of any device-level controls the user maintains.</p>
+<h2>4. Role-based access control</h2>
+<p>Operator authority is partitioned into deterministic roles enforced at the API layer:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Authority</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SUPER_ADMIN</code></td>
+<td>Full operator authority, including dual-actor emergency disables. Held only by the Information Security Lead.</td>
+</tr>
+<tr>
+<td><code>COMPLIANCE_ADMIN</code></td>
+<td>Eligibility approvals, KYC inspection, sanctions overrides.</td>
+</tr>
+<tr>
+<td><code>RISK_OPERATOR</code></td>
+<td>Collateral guardian disable, policy publication.</td>
+</tr>
+<tr>
+<td><code>AUDITOR_READ_ONLY</code></td>
+<td>Read-only access to operator data surfaces (asset registry summaries, audit search, user search). No write authority.</td>
+</tr>
+<tr>
+<td><code>SUPPORT_READ_ONLY</code></td>
+<td>Limited read-only access for support workflows. Cannot read auditor-only surfaces.</td>
+</tr>
+</tbody></table>
+<p>Every state-changing endpoint calls <code>requireOperator(req, role)</code> and every decision is funnelled through the deterministic, version-stamped policy evaluator (<code>lib/capinfra/policy</code>) so that authorisation is reproducible and auditable. The auditor-only assertion is regression-tested at the endpoint level (see <code>tests/asset-summary-auth</code>, <code>tests/audit-search-auth</code>, <code>tests/users-search-auth</code>).</p>
+<h2>5. Periodic access reviews</h2>
+<p>The Information Security Lead conducts a documented access review <strong>quarterly</strong> that covers:</p>
+<ol>
+<li>Every personnel account on every system in §3.</li>
+<li>Every operator role assignment in the Platform.</li>
+<li>Every non-human credential issued from a vendor dashboard (API key, OAuth client, service-account token, signed-JWT issuer).</li>
+<li>Every secret in the Replit-managed secret store.</li>
+</ol>
+<p>Each entry is either reaffirmed (with the business reason recorded) or revoked. The completed review is filed with the Information Security Lead and is producible on request.</p>
+<h2>6. De-provisioning</h2>
+<p>When a contributor leaves Axiom Nexus or moves off the Restricted-data path:</p>
+<ul>
+<li>Their access to every system in §3 is revoked within <strong>five business days</strong>.</li>
+<li>Any non-human credential they personally hold (deploy keys, signing keys, machine tokens) is rotated.</li>
+<li>Their operator role assignment in the Platform is removed.</li>
+<li>The action is recorded in the access-review register.</li>
+</ul>
+<p>Where a vendor supports SCIM or programmatic de-provisioning the revocation is automated. Where it is not, the revocation is performed manually from the vendor dashboard and the Information Security Lead confirms removal in the next access review.</p>
+<h2>7. Zero-trust access architecture</h2>
+<p>The Platform does not maintain a &quot;trusted network&quot; that bypasses authentication or authorisation. Specifically:</p>
+<ul>
+<li>Every request to a Restricted-data endpoint is authenticated regardless of origin.</li>
+<li>Every state-changing financial action is authorised by the policy evaluator regardless of which operator surface invoked it.</li>
+<li>Inbound traffic from regulated processors (Plaid, Increase, Stripe webhook receiver in drain mode, BitGo) is signature-verified before any side effect is taken; the absence of a valid signature causes the request to be rejected without further processing.</li>
+<li>The production runtime does not accept lateral connections from non-production environments; production secrets are never present in non-production environments.</li>
+</ul>
+<p>There is no IP allow-list, network position, or shared internal credential that is treated as proof of identity. Identity is always proven cryptographically per request.</p>
+<h2>8. Non-human authentication</h2>
+<p>Service-to-service calls in the Restricted-data path authenticate using one of the following:</p>
+<ul>
+<li><strong>Short-lived OAuth tokens</strong> issued to the service by the calling identity provider.</li>
+<li><strong>Signed JWTs</strong> with bounded <code>exp</code> and audience scoping.</li>
+<li><strong>Signature-verified webhooks</strong> (HMAC for Stripe-style senders, JWT for Plaid <code>Plaid-Verification</code>, Increase-style headers for Increase).</li>
+<li><strong>Mutual TLS</strong> for the internal preview proxy on Replit Autoscale.</li>
+</ul>
+<p>Long-lived shared API keys are restricted to vendors that do not yet support OAuth or signed-JWT authentication. Where they are used, they are scoped to the minimum function, stored only in the Replit-managed secret store, never exposed to the browser, never logged, and rotated on a documented schedule. The current inventory of long-lived keys and the next rotation date for each is maintained by the Information Security Lead.</p>
+<h2>9. Audit logging</h2>
+<p>Every privileged action against Restricted or Confidential data is recorded in the append-only <code>cap_audit_events</code> table. Each event records the actor (operator id, end-user identity, or service principal), the subject, the timestamp, a correlation identifier, and where applicable the policy decision id and the policy version. Audit events are retained for seven years to satisfy financial record-keeping obligations (see the Data Retention and Disposal Policy).</p>
+<h2>10. Exceptions and policy review</h2>
+<p>Exceptions to this policy may only be granted in writing by the Information Security Lead, must be time-bound, and must be accompanied by a compensating control. This policy is reviewed at least annually by the Information Security Lead. Changes are recorded by editing this file in source control; the rendered disclosure page reflects the current text on every load.</p>
+<hr>
+<p><em>Axiom Nexus, LLC operates the Axiom Protocol platform. Security disclosures should be sent to <a href="mailto:security@axiomprotocol.app">security@axiomprotocol.app</a> (monitored group address). General questions and access requests may be sent to <a href="mailto:info@axiomprotocol.app">info@axiomprotocol.app</a>.</em></p>
+
+</body>
+</html>

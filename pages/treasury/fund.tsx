@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 
 const NEXUS = {
-  beneficiary: 'Akili Group, LLC',
+  beneficiary: 'Axiom Nexus, LLC',
   bankName: 'Grasshopper Bank, N.A. (via Increase)',
   routing: '074920909',
   account: '7192752995',

@@ -5,7 +5,7 @@
 **Version:** 5.0
 **Publication date:** April 22, 2026
 **Network of record:** Arbitrum One (Chain ID 42161)
-**Issuer entity:** Akili Group (Axiom Protocol)
+**Issuer entity:** Axiom Nexus, LLC (Axiom Protocol)
 **Document scope:** Capital infrastructure architecture, reserve and solvency framework, real-asset onboarding pipeline, banking and custody rails, governance, and risk controls as currently deployed and verifiable on chain and in operator systems.
 
 ---

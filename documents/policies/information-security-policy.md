@@ -1,10 +1,10 @@
-# Akili Group, LLC — Information Security Policy
+# Axiom Nexus, LLC — Information Security Policy
 
 **Effective date:** April 23, 2026
-**Owner:** Clarence Fuqua, Founder, Akili Group, LLC
+**Owner:** Clarence Fuqua, Founder, Axiom Nexus, LLC
 **Contact:** security@axiomprotocol.app (monitored group address) · info@axiomprotocol.app (general)
 **Review cadence:** Annually, or upon any material change to the data scope, third-party processor list, or applicable law.
-**Status:** Canonical. This document is the source of truth for the Akili Group information security program.
+**Status:** Canonical. This document is the source of truth for the Axiom Nexus information security program.
 
 This policy is rendered verbatim at `/disclosure/information-security-policy`. The file at `documents/policies/information-security-policy.md` is the canonical text. Any change to the policy must change this file; the disclosure page reads it at request time so the document and the page can never drift.
 
@@ -12,7 +12,7 @@ This policy is rendered verbatim at `/disclosure/information-security-policy`. T
 
 ## 1. Purpose and scope
 
-This policy defines the controls that Akili Group, LLC ("Akili Group", "we") applies to identify, mitigate, and monitor information security risks across the Axiom Protocol platform ("the Platform").
+This policy defines the controls that Axiom Nexus, LLC ("Axiom Nexus", "we") applies to identify, mitigate, and monitor information security risks across the Axiom Protocol platform ("the Platform").
 
 It applies to:
 
@@ -30,7 +30,7 @@ The policy is operationalised through (a) the controls enumerated in this docume
 | Information Security Lead | Clarence Fuqua | Owns this policy, approves exceptions, signs off on third-party processors, and is the primary point of contact for security disclosures. |
 | Engineering | All contributors with write access to the Axiom Protocol repository | Implement controls in code, follow the secure development practices in §7, escalate suspected incidents within 4 hours of detection. |
 | Operators | Personnel with operator role access | Follow least-privilege principles, complete access reviews, never share credentials, never store secrets outside the secret management system. |
-| Third-party processors | Plaid, Increase, Neon, Replit, BitGo, Resend, Auth0, GitHub, Alchemy, and other vendors enumerated in `replit.md` | Bound by their own published security commitments and by contractual terms; Akili Group performs initial diligence and re-evaluates annually. |
+| Third-party processors | Plaid, Increase, Neon, Replit, BitGo, Resend, Auth0, GitHub, Alchemy, and other vendors enumerated in `replit.md` | Bound by their own published security commitments and by contractual terms; Axiom Nexus performs initial diligence and re-evaluates annually. |
 
 ## 3. Data classification
 
@@ -48,7 +48,10 @@ Restricted data is never transmitted via email, chat, or any unencrypted channel
 - **End-user authentication** is performed via Sign-In With Ethereum (SIWE) backed by a self-custodied wallet, supplemented by Auth0 sessions for operator surfaces. Plaid Link is only surfaced to a user who has already established an authenticated session.
 - **Role-based access control (RBAC)** is enforced at the API layer. Users, operators, and administrators see disjoint surfaces. The policy evaluator (`lib/capinfra/policy`) gates every state-changing financial action against a versioned, deterministic policy.
 - **Principle of least privilege.** Production database credentials are scoped to the schemas the application requires. Personal access tokens are short-lived. Long-lived shared credentials are prohibited.
-- **Access reviews** are conducted quarterly. Personnel who have left or whose role has changed have their credentials revoked within five business days.
+- **Periodic access reviews** are conducted quarterly by the Information Security Lead. The review covers every personnel-bound credential on every covered system and every non-human credential (API keys, OAuth client credentials, service-account tokens, signed-JWT issuers).
+- **Automated de-provisioning on termination or role change.** When a contributor leaves or moves off the production-data path, their credentials are revoked within five business days through the centralised access list maintained by the Information Security Lead. Production-system access is single-sourced through MFA-protected dashboards so revocation in those dashboards is sufficient to terminate access.
+- **Non-human authentication.** Service-to-service calls authenticate using short-lived OAuth tokens or signed JWTs delivered over TLS 1.2+. Inbound webhook traffic from regulated processors is verified by signature (Stripe-style HMAC, Plaid `Plaid-Verification` JWT, Increase-style headers) before any side effect is taken. Long-lived shared API keys are prohibited where the underlying system supports OAuth or signed-JWT alternatives, and where they are unavoidable they are scoped to a single function and rotated.
+- **Zero-trust access architecture.** No request is trusted by virtue of network position. Every request to a Restricted-data endpoint is authenticated, authorised against the policy evaluator (`lib/capinfra/policy`), and audited regardless of whether it originated inside the production runtime, from the operator console, or from a third-party processor webhook. There is no internal "trusted network" that bypasses these checks.
 - **Audit logging.** Every privileged action against Restricted or Confidential data is recorded in the append-only `cap_audit_events` table with the actor, the subject, the timestamp, the correlation identifier, and the policy decision identifier where applicable. Audit events are retained for seven years.
 
 ## 5. Infrastructure and network security
@@ -62,7 +65,7 @@ Restricted data is never transmitted via email, chat, or any unencrypted channel
 
 ## 6. Third-party risk management
 
-Before a new processor is added to the Restricted or Confidential data path, Akili Group reviews the processor's published security posture (SOC 2, ISO 27001, or equivalent), data processing terms, breach-notification commitments, and sub-processor list. The processor is added to the inventory in `replit.md` and is reviewed annually against the same criteria. A processor that materially weakens its security posture is removed.
+Before a new processor is added to the Restricted or Confidential data path, Axiom Nexus reviews the processor's published security posture (SOC 2, ISO 27001, or equivalent), data processing terms, breach-notification commitments, and sub-processor list. The processor is added to the inventory in `replit.md` and is reviewed annually against the same criteria. A processor that materially weakens its security posture is removed.
 
 Current processors with access to Restricted or Confidential data:
 
@@ -84,6 +87,7 @@ Current processors with access to Restricted or Confidential data:
 - **Endpoint security on contributor machines.** Contributors operate on machines with full-disk encryption, automatic OS patching, automatic screen lock, and an actively maintained antivirus or endpoint detection solution. Contractors who require access to Restricted data are required to operate on managed devices.
 - **No persistent contributor access to production hosts.** The production runtime is ephemeral; deploys are immutable from source. Centralised secret management eliminates long-lived credentials on developer machines.
 - **Continuous integration controls.** Build pipelines enforce that test, type-check, and lint stages pass before any merge. Smoke harness coverage (`npm run test:capinfra-smoke`) exercises the capital-infrastructure path end-to-end on every release.
+- **End-of-life software monitoring.** The runtime, language version (Node.js LTS), and material direct dependencies are tracked against their published support lifecycles. A package or runtime that has reached or is within ninety days of end-of-life triggers a remediation ticket owned by the Information Security Lead; an end-of-life dependency on the Restricted-data path is treated as a critical-severity finding subject to the seven-day remediation SLA.
 
 ## 8. Privacy and data subject rights
 
@@ -104,7 +108,7 @@ Current processors with access to Restricted or Confidential data:
 ## 10. Business continuity
 
 - Source code and infrastructure-as-code are version-controlled and mirrored on GitHub.
-- Production data is backed up by Neon according to its published backup posture; backups are encrypted at rest and Akili Group periodically validates point-in-time recovery.
+- Production data is backed up by Neon according to its published backup posture; backups are encrypted at rest and Axiom Nexus periodically validates point-in-time recovery.
 - The Platform runtime is hosted on managed infrastructure that supports automatic recovery from instance failure.
 
 ## 11. Policy review and exceptions
@@ -115,4 +119,4 @@ Exceptions to this policy may only be granted in writing by the Information Secu
 
 ---
 
-*Akili Group, LLC operates the Axiom Protocol platform. Security disclosures should be sent to security@axiomprotocol.app (monitored group address). General questions and access requests may be sent to info@axiomprotocol.app.*
+*Axiom Nexus, LLC operates the Axiom Protocol platform. Security disclosures should be sent to security@axiomprotocol.app (monitored group address). General questions and access requests may be sent to info@axiomprotocol.app.*

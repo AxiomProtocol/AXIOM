@@ -1,9 +1,9 @@
 /**
- * /disclosure/information-security-policy — Canonical Axiom Nexus, LLC infosec policy.
+ * /disclosure/access-controls-policy — Canonical Axiom Nexus access controls policy.
  *
- * Renders documents/policies/information-security-policy.md verbatim at request
- * time so the published document and the public page can never drift. No
- * paraphrasing is permitted. To change the policy, edit the markdown file.
+ * Renders documents/policies/access-controls-policy.md verbatim at request
+ * time so the published document and the public page can never drift.
+ * No paraphrasing is permitted. To change the policy, edit the markdown file.
  */
 
 import Head from 'next/head';
@@ -24,7 +24,7 @@ const POLICY_PATH = path.join(
   process.cwd(),
   'documents',
   'policies',
-  'information-security-policy.md',
+  'access-controls-policy.md',
 );
 
 export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => {
@@ -40,28 +40,34 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
   };
 };
 
-export default function InformationSecurityPolicyPage({ markdown, loadedAtIso }: PageProps) {
+export default function AccessControlsPolicyPage({ markdown, loadedAtIso }: PageProps) {
   return (
     <>
       <Head>
-        <title>Information Security Policy — Axiom Protocol</title>
+        <title>Access Controls Policy — Axiom Protocol</title>
         <meta
           name="description"
-          content="Axiom Nexus, LLC information security policy: governance, access management, infrastructure controls, vendor risk, vulnerability management, incident response."
+          content="Axiom Nexus, LLC access controls policy: identity classes, MFA, RBAC, periodic access reviews, automated de-provisioning, zero-trust architecture, non-human authentication."
         />
       </Head>
       <DesignLawLayout>
         <div className="mb-6">
           <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide">
-            Disclosure / Information Security Policy
+            Disclosure / Access Controls Policy
           </p>
-          <SectionHeading>Information Security Policy</SectionHeading>
+          <SectionHeading>Access Controls Policy</SectionHeading>
           <p className="font-dl-mono text-xs text-dl-gray mt-2">
-            Source: documents/policies/information-security-policy.md · Loaded {loadedAtIso}
+            Source: documents/policies/access-controls-policy.md · Loaded {loadedAtIso}
           </p>
           <p className="text-sm text-dl-gray mt-1">
             See also:{' '}
-            <Link href="/privacy" className="underline">Privacy Policy</Link>
+            <Link href="/disclosure/information-security-policy" className="underline">
+              Information Security Policy
+            </Link>
+            {' · '}
+            <Link href="/disclosure/data-retention-policy" className="underline">
+              Data Retention and Disposal Policy
+            </Link>
             {' · '}
             <Link href="/disclosure" className="underline">← Back to Disclosure</Link>
           </p>

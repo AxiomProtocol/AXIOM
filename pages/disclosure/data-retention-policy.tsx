@@ -1,9 +1,9 @@
 /**
- * /disclosure/information-security-policy — Canonical Axiom Nexus, LLC infosec policy.
+ * /disclosure/data-retention-policy — Canonical data retention and disposal policy.
  *
- * Renders documents/policies/information-security-policy.md verbatim at request
- * time so the published document and the public page can never drift. No
- * paraphrasing is permitted. To change the policy, edit the markdown file.
+ * Renders documents/policies/data-retention-policy.md verbatim at request
+ * time so the published document and the public page can never drift.
+ * No paraphrasing is permitted. To change the policy, edit the markdown file.
  */
 
 import Head from 'next/head';
@@ -24,7 +24,7 @@ const POLICY_PATH = path.join(
   process.cwd(),
   'documents',
   'policies',
-  'information-security-policy.md',
+  'data-retention-policy.md',
 );
 
 export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => {
@@ -40,28 +40,36 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
   };
 };
 
-export default function InformationSecurityPolicyPage({ markdown, loadedAtIso }: PageProps) {
+export default function DataRetentionPolicyPage({ markdown, loadedAtIso }: PageProps) {
   return (
     <>
       <Head>
-        <title>Information Security Policy — Axiom Protocol</title>
+        <title>Data Retention and Disposal Policy — Axiom Protocol</title>
         <meta
           name="description"
-          content="Axiom Nexus, LLC information security policy: governance, access management, infrastructure controls, vendor risk, vulnerability management, incident response."
+          content="Axiom Nexus, LLC data retention and disposal policy: per-category retention windows, disposal mechanisms by storage tier, Plaid /item/remove revocation path, 30-day data subject request SLA, 7-year audit retention."
         />
       </Head>
       <DesignLawLayout>
         <div className="mb-6">
           <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide">
-            Disclosure / Information Security Policy
+            Disclosure / Data Retention and Disposal Policy
           </p>
-          <SectionHeading>Information Security Policy</SectionHeading>
+          <SectionHeading>Data Retention and Disposal Policy</SectionHeading>
           <p className="font-dl-mono text-xs text-dl-gray mt-2">
-            Source: documents/policies/information-security-policy.md · Loaded {loadedAtIso}
+            Source: documents/policies/data-retention-policy.md · Loaded {loadedAtIso}
           </p>
           <p className="text-sm text-dl-gray mt-1">
             See also:{' '}
             <Link href="/privacy" className="underline">Privacy Policy</Link>
+            {' · '}
+            <Link href="/disclosure/information-security-policy" className="underline">
+              Information Security Policy
+            </Link>
+            {' · '}
+            <Link href="/disclosure/access-controls-policy" className="underline">
+              Access Controls Policy
+            </Link>
             {' · '}
             <Link href="/disclosure" className="underline">← Back to Disclosure</Link>
           </p>
