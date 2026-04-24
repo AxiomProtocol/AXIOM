@@ -13,6 +13,11 @@ import {
 } from '../../shared/capInfraSchema';
 import { desc, eq, and, inArray, sql } from 'drizzle-orm';
 import { getActiveSolvencyMode } from '../../lib/capinfra/reserve/solvencyMode';
+import {
+  listRecentUnreadIntegrityAlerts,
+  type IntegrityAlertView,
+} from '../../lib/capinfra/risk/integrityAlerts';
+import { AssetIntegrityAlertsPanel } from '../../components/operator/AssetIntegrityAlertsPanel';
 
 interface DashboardProps {
   counts: {
@@ -24,6 +29,7 @@ interface DashboardProps {
   };
   mode: { mode: string; version: string; isBootstrap: boolean };
   lastSnapshot: { id: string; checksum: string; asOf: string } | null;
+  integrityAlerts: IntegrityAlertView[];
 }
 
 export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx) => {
@@ -59,6 +65,16 @@ export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx
 
   const mode = await getActiveSolvencyMode();
 
+  // Best-effort: a bad notifications row must not blank the entire
+  // operator console. Fall back to an empty list and log so operators
+  // still get the rest of the dashboard.
+  let integrityAlerts: IntegrityAlertView[] = [];
+  try {
+    integrityAlerts = await listRecentUnreadIntegrityAlerts({ limit: 10 });
+  } catch (err) {
+    console.error('[operator.dashboard] failed to load integrity alerts', err);
+  }
+
   return {
     props: {
       counts: {
@@ -72,6 +88,7 @@ export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx
       lastSnapshot: snaps[0]
         ? { id: snaps[0].id, checksum: snaps[0].checksum, asOf: snaps[0].asOf.toISOString() }
         : null,
+      integrityAlerts,
     },
   };
 };
@@ -120,6 +137,8 @@ export default function OperatorDashboard(props: DashboardProps) {
             </div>
           </div>
         ) : null}
+
+        <AssetIntegrityAlertsPanel alerts={props.integrityAlerts} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {cards.map((c) => (

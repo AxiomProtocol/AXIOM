@@ -373,7 +373,20 @@ export function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
   const [error, setError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [filterSymbol, setFilterSymbol] = useState('');
+  // Hydrate the symbol filter from the URL so deep links from other
+  // operator surfaces (e.g. the dashboard's "Asset integrity alerts"
+  // panel) land with the affected asset already filtered. Reading
+  // window inside the initializer keeps SSR rendering an empty filter
+  // and lets the client immediately re-render with the URL value.
+  const [filterSymbol, setFilterSymbol] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      return sp.get('symbol') ?? '';
+    } catch {
+      return '';
+    }
+  });
   const [disableState, setDisableState] = useState<{
     asset: Asset;
     primaryActor: string;
