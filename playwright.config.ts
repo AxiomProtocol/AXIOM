@@ -2,7 +2,13 @@ import { defineConfig, devices } from '@playwright/test';
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+// The dev server port is hardcoded in `package.json` ("next dev ... -p 5000").
+// Do NOT derive this from process.env.PORT — if PORT is set to something else,
+// Playwright would poll the wrong URL while `npm run dev` still binds 5000,
+// recreating the ERR_CONNECTION_REFUSED that task #261 fixed.
+// Override only via PLAYWRIGHT_BASE_URL (used to point at remote environments).
+const DEV_SERVER_PORT = 5000;
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${DEV_SERVER_PORT}`;
 
 /**
  * Resolve a chromium binary that actually has its shared libraries on this
@@ -66,4 +72,28 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
+  /**
+   * Auto-start the Next dev server for e2e runs.
+   *
+   * - `command` matches the AXIOM Dev Server workflow (`next dev -H 0.0.0.0 -p 5000`).
+   * - `url` is what Playwright polls until it responds 2xx/3xx/4xx; using the
+   *   shared `baseURL` keeps the port aligned with the spec files.
+   * - `reuseExistingServer: true` means devs who already have the dev workflow
+   *   running don't get a port conflict — Playwright just connects to it.
+   * - `timeout` is generous because cold Next.js dev startup (compile + DB
+   *   migration check) can take 30–90s on first run.
+   *
+   * Skip auto-start by setting `PLAYWRIGHT_SKIP_WEBSERVER=1` (e.g. when
+   * pointing PLAYWRIGHT_BASE_URL at a remote environment).
+   */
+  webServer: process.env.PLAYWRIGHT_SKIP_WEBSERVER
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: baseURL,
+        reuseExistingServer: true,
+        timeout: 120_000,
+        stdout: 'pipe',
+        stderr: 'pipe',
+      },
 });

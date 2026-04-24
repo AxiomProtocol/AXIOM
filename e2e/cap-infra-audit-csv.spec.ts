@@ -25,7 +25,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { test, expect, Page, Locator } from '@playwright/test';
 
-const BASE = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+const BASE = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5000';
 
 const EXPECTED_CSV_HEADER = 'When (UTC),Aggregate,Event,Actor,User,Asset,Payload';
 

@@ -23,7 +23,7 @@
 import { test, expect, Page } from '@playwright/test';
 import { PRUNE_STALE_HOURS } from '../lib/admin/config';
 
-const BASE = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+const BASE = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5000';
 const ADMIN_KEY = process.env.ADMIN_SOLVENCY_KEY ?? '';
 
 interface MockLastPrune {
