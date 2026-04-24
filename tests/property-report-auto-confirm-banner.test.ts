@@ -17,6 +17,7 @@ import {
   wasAutoConfirmedAfterDelay,
   AUTO_CONFIRM_BANNER_THRESHOLD_MS,
   formatWaitDuration,
+  isValidEvmTxHash,
 } from '../pages/property/reports/[id]';
 
 const baseCreatedAt = new Date('2026-04-24T12:00:00Z');
@@ -134,5 +135,56 @@ describe('formatWaitDuration (task #281)', () => {
         plus((6 * 60 + 30) * 60_000).toISOString(),
       ),
     ).toBe('6h 30m');
+  });
+});
+
+describe('isValidEvmTxHash (task #281 — guards the Arbiscan link)', () => {
+  // Base of a real-shape 32-byte tx hash (66 chars total: 0x + 64 hex).
+  const VALID_HASH =
+    '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
+
+  it('accepts a well-formed 0x + 64 hex char tx hash (lowercase)', () => {
+    expect(isValidEvmTxHash(VALID_HASH)).toBe(true);
+  });
+
+  it('accepts mixed/upper-case hex (Arbiscan accepts either)', () => {
+    expect(isValidEvmTxHash('0x' + 'A'.repeat(64))).toBe(true);
+    expect(isValidEvmTxHash('0x' + 'aBcDeF'.repeat(10) + 'aBcD')).toBe(true);
+  });
+
+  it('rejects an empty string, null, or undefined', () => {
+    expect(isValidEvmTxHash('')).toBe(false);
+    expect(isValidEvmTxHash(null)).toBe(false);
+    expect(isValidEvmTxHash(undefined)).toBe(false);
+  });
+
+  it('rejects non-string inputs (numbers, objects, booleans)', () => {
+    expect(isValidEvmTxHash(0xdeadbeef)).toBe(false);
+    expect(isValidEvmTxHash({ hash: VALID_HASH })).toBe(false);
+    expect(isValidEvmTxHash(true)).toBe(false);
+  });
+
+  it('rejects a hash missing the 0x prefix', () => {
+    expect(isValidEvmTxHash(VALID_HASH.slice(2))).toBe(false);
+  });
+
+  it('rejects a truncated hash (the actual prod failure mode)', () => {
+    expect(isValidEvmTxHash('0xabc123')).toBe(false);
+  });
+
+  it('rejects an over-length hash', () => {
+    expect(isValidEvmTxHash(VALID_HASH + '00')).toBe(false);
+  });
+
+  it('rejects a hash containing non-hex characters', () => {
+    expect(isValidEvmTxHash('0x' + 'g'.repeat(64))).toBe(false);
+    expect(isValidEvmTxHash('0x' + 'z'.repeat(64))).toBe(false);
+    // Whitespace must also be rejected — Arbiscan would 404.
+    expect(isValidEvmTxHash(`  ${VALID_HASH}  `)).toBe(false);
+  });
+
+  it('rejects a hash with the wrong prefix (0X uppercase, no 0)', () => {
+    expect(isValidEvmTxHash('0X' + 'a'.repeat(64))).toBe(false);
+    expect(isValidEvmTxHash('x' + 'a'.repeat(64))).toBe(false);
   });
 });
