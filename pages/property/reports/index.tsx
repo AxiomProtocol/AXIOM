@@ -59,6 +59,18 @@ type LookupMode = 'email' | 'wallet';
 
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TX_HASH_RE = /^0x[a-fA-F0-9]{64}$/;
+
+interface RecoverResult {
+  kind: 'success';
+  reportId: string;
+  status: string;
+}
+interface RecoverError {
+  kind: 'error';
+  message: string;
+}
+type RecoverState = null | RecoverResult | RecoverError;
 
 export default function ReportHistory() {
   const [mode, setMode] = useState<LookupMode>('email');
@@ -70,6 +82,62 @@ export default function ReportHistory() {
   const [error, setError] = useState('');
   const [pagination, setPagination] = useState({ page: 1, totalPages: 0, total: 0 });
   const [searched, setSearched] = useState(false);
+
+  // ── Self-recover form state (task #280) ────────────────────────────────
+  // The /property/reports/expired email tells buyers to come here and paste
+  // their tx hash. We POST to /api/property/recover-payment which wraps
+  // resolveSingleByTxHash with the same sender-wallet check operators get.
+  const [recoverOpen, setRecoverOpen] = useState(false);
+  const [recoverReportId, setRecoverReportId] = useState('');
+  const [recoverTxHash, setRecoverTxHash] = useState('');
+  const [recoverLoading, setRecoverLoading] = useState(false);
+  const [recoverState, setRecoverState] = useState<RecoverState>(null);
+
+  const submitRecover = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRecoverState(null);
+    const reportId = recoverReportId.trim();
+    const txHash = recoverTxHash.trim();
+    if (!reportId) {
+      setRecoverState({ kind: 'error', message: 'Report ID is required.' });
+      return;
+    }
+    if (!TX_HASH_RE.test(txHash)) {
+      setRecoverState({
+        kind: 'error',
+        message: 'Transaction hash must start with 0x and be 66 characters long.',
+      });
+      return;
+    }
+    setRecoverLoading(true);
+    try {
+      const res = await fetch('/api/property/recover-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportId, txHash }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setRecoverState({
+          kind: 'error',
+          message: data.error || `Recovery failed (HTTP ${res.status}).`,
+        });
+      } else {
+        setRecoverState({
+          kind: 'success',
+          reportId: data.reportId || reportId,
+          status: data.status || 'paid',
+        });
+      }
+    } catch {
+      setRecoverState({
+        kind: 'error',
+        message: 'Could not reach the recovery endpoint. Check your connection and try again.',
+      });
+    } finally {
+      setRecoverLoading(false);
+    }
+  };
 
   const fetchReports = async (lookup: LookupMode, value: string, page: number = 1) => {
     const trimmed = value.trim();
@@ -194,6 +262,122 @@ export default function ReportHistory() {
             {error}
           </div>
         )}
+
+        {/* Self-recover form (task #280). Collapsed by default — most
+            visitors are here to look up an existing receipt, not to rescue
+            a stuck pending row. The "your report request expired" email
+            (#275) deep-links here. */}
+        <section className="border border-dl-border mb-8" data-testid="recover-section">
+          <button
+            type="button"
+            onClick={() => {
+              setRecoverOpen((v) => !v);
+              if (recoverOpen) setRecoverState(null);
+            }}
+            data-testid="recover-toggle"
+            aria-expanded={recoverOpen}
+            className="w-full text-left px-4 sm:px-6 py-4 flex items-center justify-between font-dl-mono text-sm text-dl-navy hover:bg-dl-border/20"
+          >
+            <span>Already paid? Recover your report</span>
+            <span className="text-xs text-dl-gray">{recoverOpen ? '−' : '+'}</span>
+          </button>
+
+          {recoverOpen && (
+            <form
+              onSubmit={submitRecover}
+              data-testid="recover-form"
+              className="border-t border-dl-border px-4 sm:px-6 py-5 space-y-4"
+            >
+              <p className="text-xs text-dl-gray">
+                If your AXUSD payment landed on Arbitrum One but the report stayed pending, paste your
+                report ID and the on-chain transaction hash below. We will verify the transfer and
+                generate the report — no support ticket needed.
+              </p>
+
+              <div>
+                <label htmlFor="recover-report-id" className="block text-xs font-dl-mono text-dl-gray mb-1 uppercase">
+                  Report ID
+                </label>
+                <input
+                  id="recover-report-id"
+                  type="text"
+                  value={recoverReportId}
+                  onChange={(e) => setRecoverReportId(e.target.value)}
+                  placeholder="e.g. rep_01H..."
+                  data-testid="recover-report-id"
+                  className="w-full border border-dl-border px-4 py-3 min-h-[44px] text-sm font-dl-mono bg-white text-dl-navy focus:outline-none focus:border-dl-navy"
+                />
+                <p className="text-[10px] text-dl-gray font-dl-mono mt-1">
+                  Found in the report URL (/property/reports/&lt;id&gt;) or in the expiration email.
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="recover-tx-hash" className="block text-xs font-dl-mono text-dl-gray mb-1 uppercase">
+                  Transaction Hash
+                </label>
+                <input
+                  id="recover-tx-hash"
+                  type="text"
+                  value={recoverTxHash}
+                  onChange={(e) => setRecoverTxHash(e.target.value)}
+                  placeholder="0x… (66 characters)"
+                  data-testid="recover-tx-hash"
+                  className="w-full border border-dl-border px-4 py-3 min-h-[44px] text-sm font-dl-mono bg-white text-dl-navy focus:outline-none focus:border-dl-navy"
+                />
+                <p className="text-[10px] text-dl-gray font-dl-mono mt-1">
+                  The AXUSD Transfer must come from the wallet recorded on the report.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={recoverLoading}
+                  data-testid="recover-submit"
+                  className="px-6 py-3 min-h-[44px] text-sm font-dl-mono bg-dl-navy text-white border border-dl-navy hover:bg-opacity-90 disabled:opacity-60"
+                >
+                  {recoverLoading ? 'Verifying…' : 'Recover Report'}
+                </button>
+              </div>
+
+              {recoverState?.kind === 'error' && (
+                <div
+                  data-testid="recover-error"
+                  className="border border-red-300 bg-red-50 p-3 text-sm text-red-800"
+                  role="alert"
+                >
+                  {recoverState.message}
+                </div>
+              )}
+
+              {recoverState?.kind === 'success' && (
+                <div
+                  data-testid="recover-success"
+                  className="border border-green-300 bg-green-50 p-3 text-sm text-green-900"
+                  role="status"
+                >
+                  <p className="font-dl-mono">
+                    Recovery accepted. Report status:{' '}
+                    <span data-testid="recover-success-status" className="uppercase">
+                      {recoverState.status}
+                    </span>
+                    .
+                  </p>
+                  <p className="mt-2">
+                    <a
+                      href={`/property/reports/${recoverState.reportId}`}
+                      data-testid="recover-success-link"
+                      className="font-dl-mono text-xs text-dl-navy underline"
+                    >
+                      Open report →
+                    </a>
+                  </p>
+                </div>
+              )}
+            </form>
+          )}
+        </section>
 
         {searched && !loading && reports.length === 0 && !error && (
           <div className="border border-dl-border p-8 text-center" data-testid="lookup-empty">
