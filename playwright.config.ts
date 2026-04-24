@@ -2,13 +2,30 @@ import { defineConfig, devices } from '@playwright/test';
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
-// The dev server port is hardcoded in `package.json` ("next dev ... -p 5000").
-// Do NOT derive this from process.env.PORT — if PORT is set to something else,
-// Playwright would poll the wrong URL while `npm run dev` still binds 5000,
-// recreating the ERR_CONNECTION_REFUSED that task #261 fixed.
-// Override only via PLAYWRIGHT_BASE_URL (used to point at remote environments).
-const DEV_SERVER_PORT = 5000;
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${DEV_SERVER_PORT}`;
+// Playwright runs against its OWN dev server on port 5001 (separate from the
+// AXIOM Dev Server workflow on port 5000). This split exists because the e2e
+// suite needs `NEXT_PUBLIC_E2E_WAGMI=1` to drive the wagmi mock-connector
+// path, while day-to-day dev preview must keep using the real wagmi/Reown
+// stack so devs can actually plug their own wallets in. Before this split,
+// the env var was set in `webServer.env` with `reuseExistingServer: true`,
+// which silently failed for any dev with the workflow already running on
+// 5000 — Playwright reused the env-less server and the mock wallet never
+// engaged. Two ports = two unambiguous modes.
+//
+// Override `PLAYWRIGHT_BASE_URL` to point at a remote environment.
+const E2E_DEV_SERVER_PORT = 5001;
+const baseURL =
+  process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${E2E_DEV_SERVER_PORT}`;
+
+// Many specs build absolute URLs from `process.env.PLAYWRIGHT_BASE_URL`
+// (with a 'http://localhost:5000' fallback). Now that Playwright's own
+// dev server lives on 5001, we publish the resolved baseURL into the
+// process env BEFORE any spec module is imported, so those specs hit
+// the e2e server (with mock wallet) instead of accidentally reaching
+// the dev workflow on 5000.
+if (!process.env.PLAYWRIGHT_BASE_URL) {
+  process.env.PLAYWRIGHT_BASE_URL = baseURL;
+}
 
 /**
  * Resolve a chromium binary that actually has its shared libraries on this
@@ -73,34 +90,37 @@ export default defineConfig({
     },
   ],
   /**
-   * Auto-start the Next dev server for e2e runs.
+   * Auto-start a dedicated Next dev server for e2e runs on port 5001.
    *
-   * - `command` matches the AXIOM Dev Server workflow (`next dev -H 0.0.0.0 -p 5000`).
-   * - `url` is what Playwright polls until it responds 2xx/3xx/4xx; using the
-   *   shared `baseURL` keeps the port aligned with the spec files.
-   * - `reuseExistingServer: true` means devs who already have the dev workflow
-   *   running don't get a port conflict — Playwright just connects to it.
-   * - `timeout` is generous because cold Next.js dev startup (compile + DB
-   *   migration check) can take 30–90s on first run.
+   * - `command` is `npm run dev:e2e`, which sets `NEXT_PUBLIC_E2E_WAGMI=1`
+   *   inline so the wagmi mock-connector path activates (hard-gated to
+   *   non-production in `lib/web3/wagmiConfig.ts`). The env var is in the
+   *   script — NOT here in `webServer.env` — because that field only
+   *   applies when Playwright spawns a fresh server, and we want the env
+   *   guarantee to hold even if a previous Playwright run left a server
+   *   on 5001 that gets reused.
+   * - `url` polls baseURL (port 5001) until it responds.
+   * - `reuseExistingServer: true` means a leftover Playwright server on
+   *   5001 from a prior run is reused — but the AXIOM Dev Server (5000)
+   *   never collides with this, so devs can keep their wallet preview
+   *   running while iterating on tests.
+   * - `timeout` is generous because cold Next.js dev startup (compile +
+   *   DB migration check) can take 30–90s on first run.
    *
-   * Skip auto-start by setting `PLAYWRIGHT_SKIP_WEBSERVER=1` (e.g. when
-   * pointing PLAYWRIGHT_BASE_URL at a remote environment).
+   * Skip auto-start with `PLAYWRIGHT_SKIP_WEBSERVER=1` (e.g. when
+   * pointing `PLAYWRIGHT_BASE_URL` at a remote environment).
    */
   webServer: process.env.PLAYWRIGHT_SKIP_WEBSERVER
     ? undefined
     : {
-        command: 'npm run dev',
+        command: 'npm run dev:e2e',
         url: baseURL,
-        reuseExistingServer: true,
+        // Reuse a leftover dev:e2e server only in local interactive runs.
+        // In CI, always spawn a fresh server so we can never inherit a
+        // stale process from a different test run with different env.
+        reuseExistingServer: !process.env.CI,
         timeout: 120_000,
         stdout: 'pipe',
         stderr: 'pipe',
-        // Task #249: enable the wagmi mock-connector path so the Property
-        // Analysis AXUSD modal e2e test can drive a fake wallet without a
-        // real WalletConnect project id. Hard-gated to non-production in
-        // `lib/web3/wagmiConfig.ts`.
-        env: {
-          NEXT_PUBLIC_E2E_WAGMI: '1',
-        },
       },
 });

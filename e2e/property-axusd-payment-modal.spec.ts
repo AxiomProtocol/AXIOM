@@ -18,7 +18,11 @@
  *
  * Wallet mocking:
  *   - lib/web3/wagmiConfig.ts swaps to a `mock` connector when
- *     NEXT_PUBLIC_E2E_WAGMI=1 (set by playwright.config.ts webServer.env).
+ *     NEXT_PUBLIC_E2E_WAGMI=1, which is baked into the `npm run dev:e2e`
+ *     script that Playwright auto-spawns on port 5001 (see
+ *     playwright.config.ts:webServer). The env is in the script — not in
+ *     webServer.env — so it cannot be silently dropped if a previous
+ *     Playwright run's server gets reused.
  *   - The mock connector forwards eth_sendTransaction to the chain's default
  *     HTTP RPC (https://arb1.arbitrum.io/rpc), which is intercepted below.
  */
