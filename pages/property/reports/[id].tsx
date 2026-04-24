@@ -53,6 +53,29 @@ function severityColor(sev: string): string {
   return 'border-blue-200 bg-blue-50 text-blue-800';
 }
 
+// Task #278: when the stuck-payment resolver auto-confirms an abandoned
+// AXUSD transfer, paymentConfirmedAt lands materially later than createdAt
+// (the buyer never POSTed /api/property/confirm-payment from the modal). A
+// short banner explains the gap so buyers don't open a support ticket asking
+// "why did this take a day to confirm?".
+//
+// Threshold is 5 minutes — the prompt-confirm path (modal → API right after
+// the wagmi transfer succeeds) reliably finishes well inside that window
+// even with a slow Arbitrum block, so anything beyond it indicates the
+// resolver caught an abandoned flow.
+export const AUTO_CONFIRM_BANNER_THRESHOLD_MS = 5 * 60 * 1000;
+
+export function wasAutoConfirmedAfterDelay(
+  createdAt: string | Date | null | undefined,
+  paymentConfirmedAt: string | Date | null | undefined,
+): boolean {
+  if (!createdAt || !paymentConfirmedAt) return false;
+  const createdMs = new Date(createdAt).getTime();
+  const confirmedMs = new Date(paymentConfirmedAt).getTime();
+  if (!Number.isFinite(createdMs) || !Number.isFinite(confirmedMs)) return false;
+  return confirmedMs - createdMs >= AUTO_CONFIRM_BANNER_THRESHOLD_MS;
+}
+
 export default function ReportDetail() {
   const router = useRouter();
   const { id } = router.query;
@@ -170,6 +193,25 @@ export default function ReportDetail() {
             <p className="font-dl-mono text-xs text-dl-gray mt-1">ID: {report.id?.substring(0, 8)}</p>
           </div>
         </div>
+
+        {wasAutoConfirmedAfterDelay(report.createdAt, report.paymentConfirmedAt) && (
+          <div
+            className="border border-[#8b6914] bg-[#fdf8e8] px-4 py-3 mb-6"
+            data-testid="auto-confirm-banner"
+          >
+            <p className="font-dl-mono text-xs text-[#8b6914] uppercase tracking-wider mb-1">
+              Payment Confirmed After Delay
+            </p>
+            <p className="text-sm text-dl-navy">
+              We detected your AXUSD payment after a delay and finished generating
+              this report for you. Your payment was confirmed on-chain at{' '}
+              <span className="font-dl-mono">
+                {new Date(report.paymentConfirmedAt).toLocaleString()}
+              </span>
+              .
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <MetricCard label="Estimated Value" primary={formatCurrency(report.valueMid)} range={`${formatCurrency(report.valueLow)} - ${formatCurrency(report.valueHigh)}`} sub={`${value.ppsf ? `$${value.ppsf}/sqft` : ''}`} />
