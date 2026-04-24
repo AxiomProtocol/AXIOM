@@ -303,12 +303,8 @@ async function upsertSandboxRow(accountId: string): Promise<AchRow> {
 }
 
 async function setActiveByName(activeName: string): Promise<void> {
-  // CRITICAL: pin a single client for the whole transaction. Calling
-  // `pool().query('BEGIN')` then `pool().query(...)` in series would
-  // hand each statement a DIFFERENT pooled connection and silently
-  // break transaction semantics. Using a single CASE expression in one
-  // UPDATE statement is even better — it's atomic at the row level
-  // with no possible inter-statement window where zero rows are active.
+  // Pin a single client; pool().query('BEGIN') would not bind subsequent
+  // statements to the same connection.
   const client = await pool().connect();
   try {
     await client.query('BEGIN');
@@ -319,7 +315,6 @@ async function setActiveByName(activeName: string): Promise<void> {
        WHERE kind = 'ACH'`,
       [activeName],
     );
-    // Sanity guard: the named row must exist and end up active.
     const check = await client.query<{ active_count: string }>(
       `SELECT COUNT(*)::text AS active_count
        FROM cap_adapters
@@ -328,51 +323,30 @@ async function setActiveByName(activeName: string): Promise<void> {
     );
     if (check.rows[0]?.active_count !== '1') {
       throw new Error(
-        `setActiveByName: expected exactly one active ACH row named "${activeName}" after flip, found ${check.rows[0]?.active_count ?? '0'}`,
+        `setActiveByName: expected one active row named "${activeName}", found ${check.rows[0]?.active_count ?? '0'}`,
       );
     }
     await client.query('COMMIT');
   } catch (err) {
-    try {
-      await client.query('ROLLBACK');
-    } catch {
-      // ROLLBACK failure on a poisoned transaction is best-effort.
-    }
+    try { await client.query('ROLLBACK'); } catch { /* best effort */ }
     throw err;
   } finally {
     client.release();
   }
 }
 
-/**
- * Snapshot of the production ACH row that was active at the moment the
- * orchestrator started. We restore EXACTLY this row at the end — not
- * "the first production row sorted by something" — so multi-prod-row
- * setups (e.g. an old smoke row plus a new canary row) are safe.
- */
 let cachedActiveProductionRowName: string | null = null;
 
 async function snapshotActiveProductionRowName(): Promise<string> {
   if (cachedActiveProductionRowName) return cachedActiveProductionRowName;
   const rows = await listAchRows();
-  const activeProd = rows.find(
-    (r) => r.environment === 'production' && r.isActive === true,
-  );
-  if (activeProd) {
-    cachedActiveProductionRowName = activeProd.name;
-    return activeProd.name;
-  }
-  // Fallback for the first-time-run case (no prod row currently active,
-  // e.g. a clean dev DB). Pick any production row deterministically by
-  // name so re-runs always pick the same one.
+  const activeProd = rows.find((r) => r.environment === 'production' && r.isActive);
+  if (activeProd) return (cachedActiveProductionRowName = activeProd.name);
   const anyProd = rows
     .filter((r) => r.environment === 'production')
     .sort((a, b) => a.name.localeCompare(b.name))[0];
-  if (!anyProd) {
-    throw new Error('no production ACH row found in cap_adapters — refusing to flip');
-  }
-  cachedActiveProductionRowName = anyProd.name;
-  return anyProd.name;
+  if (!anyProd) throw new Error('no production ACH row found in cap_adapters');
+  return (cachedActiveProductionRowName = anyProd.name);
 }
 
 async function findProductionRowName(): Promise<string> {
@@ -447,23 +421,10 @@ async function runSmoke(): Promise<SmokeResult> {
 
 // ─────────────────────── #57-scoped no-credit proof ───────────────────────
 
-/**
- * Deterministic proof for criterion #3: query cap_audit_events scoped
- * to check 57's exact instruction_id and verify that ONLY SUBMITTED-
- * lifecycle events were emitted (no settlement.settled, no credit
- * event). The smoke harness's later GAP-001 #69 check intentionally
- * credits the SAME (user, asset) via a different instruction — so a
- * row-level cap_positions.updated_at check is unreliable, but
- * filtering by instruction_id is byte-deterministic.
- *
- * Expected SUBMITTED-only events:
- *   settlement.created → settlement.authorized →
- *   settlement.pending_operator_approval → settlement.submitted
- *
- * Forbidden events for SUBMITTED-uncredited proof:
- *   settlement.settled, reserve.credit, position.credit, anything
- *   matching /\b(settled|credit)\b/.
- */
+// Filters cap_audit_events by instruction_id (indexed) and asserts no
+// event matches /\b(settled|credit)\b/i. Instruction-scoped so later
+// harness phases that credit the same (user, asset) via a different
+// instruction don't pollute the proof.
 async function readNoCreditProof(externalRef: string): Promise<{
   instructionId: string | null;
   userId: string | null;
@@ -567,13 +528,11 @@ async function cmdRestoreProduction(): Promise<void> {
 }
 
 async function cmdRun(): Promise<void> {
-  // 1. Provision (idempotent). Runs before activate so a provision
-  //    failure can't leave the row flipped.
-  await cmdProvision();
+  // Snapshot the active production row BEFORE any flips so restore
+  // targets the exact row we deactivated.
+  await snapshotActiveProductionRowName();
 
-  // 2. Activate sandbox. Everything from here until restore-production
-  //    is wrapped in try/finally so the production row is ALWAYS
-  //    restored, even on snapshot/report errors.
+  await cmdProvision();
   await cmdActivateSandbox();
 
   let smoke: SmokeResult | null = null;
@@ -587,11 +546,6 @@ async function cmdRun(): Promise<void> {
     } catch (err) {
       smokeError = err as Error;
     }
-
-    // #57-specific no-credit proof: query cap_positions for the exact
-    // (user, asset) of #57's instruction and verify the position row
-    // was NOT updated by the SUBMITTED transition. This is the binding
-    // proof for criterion #3 — independent of any later harness phase.
     if (smoke?.externalRef) {
       try {
         noCreditProof = await readNoCreditProof(smoke.externalRef);
@@ -600,9 +554,8 @@ async function cmdRun(): Promise<void> {
       }
     }
   } finally {
-    // ALWAYS restore. This is the only safety net — a sandbox row left
-    // active would silently divert any subsequent production approval
-    // through sandbox.increase.com.
+    // Always restore — a sandbox row left active would divert subsequent
+    // production approvals through sandbox.increase.com.
     try {
       await cmdRestoreProduction();
     } catch (err) {
@@ -610,9 +563,8 @@ async function cmdRun(): Promise<void> {
         `[run] CRITICAL: failed to restore production row: ${(err as Error).message}`,
       );
       console.error(
-        '[run] CRITICAL: run "npx tsx scripts/sandbox-check-57.ts restore-production" manually before any production ACH operation.',
+        '[run] CRITICAL: run "npx tsx scripts/sandbox-check-57.ts restore-production" before any production ACH operation.',
       );
-      // Don't swallow — escalate via process.exitCode.
       process.exitCode = 3;
     }
   }

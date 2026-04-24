@@ -1,10 +1,10 @@
 # Smoke Check 57 — Sandbox Validation Report
 
-- **Run timestamp (UTC):** 2026-04-24T14:26:56.761Z
+- **Run timestamp (UTC):** 2026-04-24T14:31:53.121Z
 - **Result:** ✅ PASS
-- **Sandbox transfer id (externalRef):** `sandbox_ach_transfer_l1pk5zwbv1oca6r634pc`
+- **Sandbox transfer id (externalRef):** `sandbox_ach_transfer_kft1aqvbzk82nfevz7aj`
 - **Smoke harness exit code:** 1
-- **Full smoke log:** `tmp/sandbox-smoke-2026-04-24T14-26-47-927Z.log`
+- **Full smoke log:** `tmp/sandbox-smoke-2026-04-24T14-31-44-814Z.log`
 
 ## What this proves
 
@@ -26,7 +26,7 @@ MANUAL_APPROVAL holding mode, and NOT a `DRYRUN-ACH-*` hash — is
 satisfied. When this same path runs against production Increase the
 id will be `ach_transfer_*` (no `sandbox_` prefix).
 
-Captured id: `sandbox_ach_transfer_l1pk5zwbv1oca6r634pc` → sandbox real id ✅
+Captured id: `sandbox_ach_transfer_kft1aqvbzk82nfevz7aj` → sandbox real id ✅
 
 Explicit placeholder rejection (audit-friendly):
 
@@ -35,17 +35,17 @@ Explicit placeholder rejection (audit-friendly):
 
 ## #57-scoped no-credit proof (criterion #3)
 
-- **Instruction id:** `si_awvzcQEzvM1bgQjVs8yi6S`
+- **Instruction id:** `si_L5Ra490XUh9jW3Kd4AVNNM`
 - **userId / assetId:** `usr_capinfra_smoke` / `ast_RNFXYI2CtfmKxCIqZZ0ZGv`
 - **cap_audit_events filtered by instruction_id (count):** 4
 
 Event sequence emitted for this instruction:
 
 ```
-Fri Apr 24 2026 14:26:53 GMT+0000 (Coordinated Universal Time)  settlement.created
-Fri Apr 24 2026 14:26:54 GMT+0000 (Coordinated Universal Time)  settlement.authorized
-Fri Apr 24 2026 14:26:54 GMT+0000 (Coordinated Universal Time)  settlement.pending_operator_approval
-Fri Apr 24 2026 14:26:54 GMT+0000 (Coordinated Universal Time)  settlement.submitted
+Fri Apr 24 2026 14:31:50 GMT+0000 (Coordinated Universal Time)  settlement.created
+Fri Apr 24 2026 14:31:50 GMT+0000 (Coordinated Universal Time)  settlement.authorized
+Fri Apr 24 2026 14:31:50 GMT+0000 (Coordinated Universal Time)  settlement.pending_operator_approval
+Fri Apr 24 2026 14:31:50 GMT+0000 (Coordinated Universal Time)  settlement.submitted
 ```
 
 - **Forbidden events present (`/\b(settled|credit)\b/i`):** NONE ✅
