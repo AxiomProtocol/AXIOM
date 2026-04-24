@@ -1,56 +1,29 @@
-/**
- * tests/property-onchain-payment-helpers.test.ts
- *
- * Task #286 — backend coverage for the lib/property/onchainPayment helpers
- * that the AXUSD payment endpoints delegate to. The companion file
- * tests/property-axusd-payment-endpoints.test.ts covers handler control
- * flow (validation, idempotency, etc.) with the helpers stubbed; this file
- * exercises the REAL helpers with the RPC layer mocked, so regressions in
- *   - cents → AXUSD base-units math
- *   - the canonical payment recipient / token / chainId
- *   - the on-chain receipt parser (status, recipient match, token match,
- *     underpayment detection, sender extraction, tx-hash format guard)
- * cannot slip past the unit suite even though the endpoint tests stub
- * `verifyOnchainPayment` for speed.
- *
- * RPC isolation strategy:
- *   - `vi.spyOn(ethers.JsonRpcProvider.prototype, 'send')` makes any
- *     general JSON-RPC call throw. That forces `getPaymentTokenDecimals`
- *     down its documented fallback to 6 (canonical AXUSD GENIUS decimals)
- *     without ever touching the network.
- *   - `vi.spyOn(ethers.JsonRpcProvider.prototype, 'getTransactionReceipt')`
- *     is overridden per-test to return crafted receipts.
- *
- * The tests load the helpers via dynamic import so the shared module-level
- * `cachedDecimals` value is reset between groups via `vi.resetModules()`,
- * keeping each scenario hermetic.
- */
+// Real-helper coverage for lib/property/onchainPayment. The endpoint test
+// file stubs these helpers for handler control-flow speed; this file
+// exercises the production buildPaymentInstruction and verifyOnchainPayment
+// against crafted ethers TransactionReceipt objects with the RPC layer
+// neutralized via prototype spies.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ethers } from 'ethers';
-
-// ── Provider isolation ─────────────────────────────────────────────────────
 
 let sendSpy: ReturnType<typeof vi.spyOn>;
 let getReceiptSpy: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
-  // Default: every JSON-RPC `send` (which underlies provider.call(),
-  // contract.decimals(), etc.) fails fast. This pushes
-  // getPaymentTokenDecimals onto its 6-decimal fallback path.
+  // Make every JSON-RPC call fail. This drives getPaymentTokenDecimals
+  // onto its documented 6-decimal fallback without touching the network.
   sendSpy = vi
     .spyOn(ethers.JsonRpcProvider.prototype, 'send')
     .mockRejectedValue(new Error('RPC blocked in unit test'));
 
-  // Default: no receipt found. Tests that need a receipt override per-call.
+  // Default: no receipt. Tests that need one override per-call.
   getReceiptSpy = vi
     .spyOn(ethers.JsonRpcProvider.prototype, 'getTransactionReceipt')
     .mockResolvedValue(null);
 
-  // Drop the helpers' module-level decimal cache between tests so the
-  // first `getPaymentTokenDecimals` call in each test re-runs the
-  // (mocked) fallback path. Drizzle and DB modules are not loaded by
-  // onchainPayment, so this reset is cheap.
+  // Reset module-level cachedDecimals between tests so each scenario
+  // independently exercises the decimals fallback path.
   vi.resetModules();
 });
 
@@ -59,30 +32,23 @@ afterEach(() => {
   getReceiptSpy.mockRestore();
 });
 
-// ── Receipt builder ─────────────────────────────────────────────────────────
-
 const TRANSFER_TOPIC = ethers.id('Transfer(address,address,uint256)');
 
 interface TransferLogSpec {
-  /** Token contract address that emitted the Transfer log. */
   address: string;
   from: string;
   to: string;
-  /** Amount in token base units (6 decimals for AXUSD). */
   amount: bigint;
 }
 
 interface ReceiptSpec {
   status?: 0 | 1;
-  /** receipt.from — only used when no Transfer log yields a from topic. */
   from?: string;
-  /** Optional extra non-Transfer logs to confirm they're skipped. */
   logs?: TransferLogSpec[];
-  extraLogs?: Array<{ address: string; topics: string[]; data: string }>;
 }
 
 function makeReceipt(spec: ReceiptSpec): ethers.TransactionReceipt {
-  const transferLogs = (spec.logs ?? []).map((log) => ({
+  const logs = (spec.logs ?? []).map((log) => ({
     address: log.address,
     topics: [
       TRANSFER_TOPIC,
@@ -91,14 +57,12 @@ function makeReceipt(spec: ReceiptSpec): ethers.TransactionReceipt {
     ],
     data: ethers.toBeHex(log.amount, 32),
   }));
-  return {
-    status: spec.status ?? 1,
-    from: spec.from ?? '0x' + 'd'.repeat(40),
-    logs: [...transferLogs, ...(spec.extraLogs ?? [])],
-  } as unknown as ethers.TransactionReceipt;
+  // ethers.TransactionReceipt is a class with private state; tests only
+  // need the fields the helper reads (status, from, logs[].address,
+  // logs[].topics, logs[].data), so a structural cast is sufficient.
+  return { status: spec.status ?? 1, from: spec.from ?? '0x' + 'd'.repeat(40), logs } as
+    ethers.TransactionReceipt;
 }
-
-// ── buildPaymentInstruction ────────────────────────────────────────────────
 
 describe('buildPaymentInstruction (real helper, mocked RPC)', () => {
   it('produces 4_990_000 base units for the 499¢ base tier at AXUSD canonical 6 decimals', async () => {
@@ -122,14 +86,11 @@ describe('buildPaymentInstruction (real helper, mocked RPC)', () => {
 
   it('round-trips arbitrary cent amounts through ethers.parseUnits at 6 decimals', async () => {
     const mod = await import('../lib/property/onchainPayment');
-    // 1¢ → 10000 base units, $1.00 → 1_000_000, $123.45 → 123_450_000
     expect((await mod.buildPaymentInstruction(1)).amountTokenUnits).toBe('10000');
     expect((await mod.buildPaymentInstruction(100)).amountTokenUnits).toBe('1000000');
     expect((await mod.buildPaymentInstruction(12345)).amountTokenUnits).toBe('123450000');
   });
 });
-
-// ── verifyOnchainPayment ───────────────────────────────────────────────────
 
 describe('verifyOnchainPayment (real helper, mocked RPC)', () => {
   it('rejects malformed transaction hashes before touching the provider', async () => {
@@ -137,7 +98,6 @@ describe('verifyOnchainPayment (real helper, mocked RPC)', () => {
     const r = await mod.verifyOnchainPayment('not-a-hash', 499);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toMatch(/invalid transaction hash/i);
-    // We should not have called getTransactionReceipt at all.
     expect(getReceiptSpy).not.toHaveBeenCalled();
   });
 
@@ -171,15 +131,14 @@ describe('verifyOnchainPayment (real helper, mocked RPC)', () => {
 
   it('rejects when the Transfer log is for the WRONG token contract', async () => {
     const mod = await import('../lib/property/onchainPayment');
-    const wrongToken = '0xDeAdBeefdeadbeefDEADBEEFdeadbeefDEADBEEF';
     getReceiptSpy.mockResolvedValueOnce(
       makeReceipt({
         logs: [
           {
-            address: wrongToken,
+            address: '0xDeAdBeefdeadbeefDEADBEEFdeadbeefDEADBEEF',
             from: '0x' + '1'.repeat(40),
-            to: mod.PROPERTY_PAYMENT_RECIPIENT, // correct recipient
-            amount: 4_990_000n, // correct amount
+            to: mod.PROPERTY_PAYMENT_RECIPIENT,
+            amount: 4_990_000n,
           },
         ],
       }),
@@ -191,14 +150,13 @@ describe('verifyOnchainPayment (real helper, mocked RPC)', () => {
 
   it('rejects when the Transfer goes to the WRONG recipient', async () => {
     const mod = await import('../lib/property/onchainPayment');
-    const wrongRecipient = '0xCaFeBabecafeBABEcAFEBABEcaFEBabEcaFEbAbE';
     getReceiptSpy.mockResolvedValueOnce(
       makeReceipt({
         logs: [
           {
-            address: mod.PROPERTY_PAYMENT_TOKEN, // correct token
+            address: mod.PROPERTY_PAYMENT_TOKEN,
             from: '0x' + '1'.repeat(40),
-            to: wrongRecipient, // wrong destination
+            to: '0xCaFeBabecafeBABEcAFEBABEcaFEBabEcaFEbAbE',
             amount: 4_990_000n,
           },
         ],
@@ -218,7 +176,7 @@ describe('verifyOnchainPayment (real helper, mocked RPC)', () => {
             address: mod.PROPERTY_PAYMENT_TOKEN,
             from: '0x' + '1'.repeat(40),
             to: mod.PROPERTY_PAYMENT_RECIPIENT,
-            amount: 4_989_999n, // one base-unit short of $4.99
+            amount: 4_989_999n,
           },
         ],
       }),
@@ -246,7 +204,6 @@ describe('verifyOnchainPayment (real helper, mocked RPC)', () => {
     const r = await mod.verifyOnchainPayment('0x' + 'a'.repeat(64), 499);
     expect(r.ok).toBe(true);
     if (r.ok) {
-      // ethers.getAddress checksums the sender we extracted from topic[1].
       expect(r.from.toLowerCase()).toBe(buyer.toLowerCase());
       expect(r.to).toBe(mod.PROPERTY_PAYMENT_RECIPIENT.toLowerCase());
       expect(r.token).toBe(mod.PROPERTY_PAYMENT_TOKEN.toLowerCase());
@@ -273,7 +230,7 @@ describe('verifyOnchainPayment (real helper, mocked RPC)', () => {
             address: mod.PROPERTY_PAYMENT_TOKEN,
             from: buyer,
             to: mod.PROPERTY_PAYMENT_RECIPIENT,
-            amount: 2_000_000n, // total = 5_000_000 ($5.00 > $4.99)
+            amount: 2_000_000n,
           },
         ],
       }),
@@ -290,16 +247,16 @@ describe('verifyOnchainPayment (real helper, mocked RPC)', () => {
       makeReceipt({
         logs: [
           {
-            address: '0xfeedfeedfeedfeedfeedfeedfeedfeedfeedfeed', // unrelated token
+            address: '0xfeedfeedfeedfeedfeedfeedfeedfeedfeedfeed',
             from: buyer,
             to: mod.PROPERTY_PAYMENT_RECIPIENT,
-            amount: 999_000_000n, // huge but wrong token: must be ignored
+            amount: 999_000_000n,
           },
           {
-            address: mod.PROPERTY_PAYMENT_TOKEN, // correct token + recipient
+            address: mod.PROPERTY_PAYMENT_TOKEN,
             from: buyer,
             to: mod.PROPERTY_PAYMENT_RECIPIENT,
-            amount: 14_990_000n, // exact premium price
+            amount: 14_990_000n,
           },
         ],
       }),
