@@ -128,14 +128,34 @@ export async function assertMockWalletMode(page: Page): Promise<void> {
 }
 
 /**
- * One-line `test.beforeAll` helper. Spins up its own context so it doesn't
- * pollute the test's `page` fixture, navigates to `/`, asserts the marker,
- * then tears the context down. Runs once per worker.
+ * Resolve the base URL the same way `playwright.config.ts` does, so this
+ * helper works whether it is called from a `beforeAll` hook (where the
+ * `use.baseURL` from the project config is not automatically inherited by
+ * a manually-created `browser.newContext()`) or from a remote-target run
+ * where `PLAYWRIGHT_BASE_URL` overrides the local default.
+ *
+ * `playwright.config.ts` re-publishes its resolved baseURL into
+ * `process.env.PLAYWRIGHT_BASE_URL` at module load, so by the time any
+ * Playwright hook runs, this env var is always populated. We fall back
+ * to the canonical e2e dev server port (5001) just in case this helper
+ * is reused from a script that bypasses playwright.config.ts.
+ */
+function resolveBaseURL(): string {
+  return process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5001';
+}
+
+/**
+ * One-line `test.beforeAll` helper. Spins up its own context (with an
+ * explicit `baseURL` so relative `goto('/')` works without depending on
+ * `use.baseURL` propagation) so it doesn't pollute the test's `page`
+ * fixture, navigates to `/`, asserts the marker, then tears the context
+ * down. Runs once per worker.
  *
  * Cost after server warmup: ~150ms total.
  */
 export async function assertMockWalletModeOnce(browser: Browser): Promise<void> {
-  const context = await browser.newContext();
+  const baseURL = resolveBaseURL();
+  const context = await browser.newContext({ baseURL });
   try {
     const page = await context.newPage();
     await page.goto('/', { waitUntil: 'domcontentloaded' });
