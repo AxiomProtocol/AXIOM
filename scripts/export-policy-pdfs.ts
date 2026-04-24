@@ -811,8 +811,16 @@ async function main() {
   console.log(`[export-policy-pdfs] done. files in ${path.relative(ROOT, EXPORT_DIR)}/`);
 }
 
-main().catch((err) => {
-  // eslint-disable-next-line no-console
-  console.error('[export-policy-pdfs] failed:', err);
-  process.exit(1);
-});
+// Only run the CLI when this file is invoked directly. Importing the module
+// (e.g. from a test that exercises `renderPdf` against fixture markdown) must
+// not trigger a full export run against the canonical policies.
+if (require.main === module) {
+  main().catch((err) => {
+    // eslint-disable-next-line no-console
+    console.error('[export-policy-pdfs] failed:', err);
+    process.exit(1);
+  });
+}
+
+export { renderPdf, renderHtml, POLICIES };
+export type { PolicySpec };

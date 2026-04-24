@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import zlib from 'node:zlib';
+import { extractTextFromPdf } from './helpers/pdf-text';
 
 const ROOT = process.cwd();
 const SCRIPT = path.join(ROOT, 'scripts', 'export-policy-pdfs.ts');
@@ -40,49 +40,6 @@ const POLICIES: PolicyExpectation[] = [
 
 const MIN_PDF_SIZE_BYTES = 5_000;
 const PDF_HEADER = '%PDF-';
-
-function extractTextFromPdf(buf: Buffer): string {
-  // PDF stream/endstream markers may be terminated by LF, CRLF, or CR per the
-  // PDF 1.7 spec. Walk all `stream`/`endstream` pairs, peeling whichever EOL
-  // form is present, then try to inflate. Fall back to the raw bytes if the
-  // stream is not deflated, so the extractor still surfaces text from
-  // future tweaks that disable compression.
-  const text = buf.toString('latin1');
-  const startRe = /stream(\r\n|\r|\n)/g;
-  const endRe = /(\r\n|\r|\n)endstream/g;
-  let combined = '';
-  let m: RegExpExecArray | null;
-  while ((m = startRe.exec(text)) !== null) {
-    const sEnd = m.index + m[0].length;
-    endRe.lastIndex = sEnd;
-    const e = endRe.exec(text);
-    if (!e) break;
-    const slice = buf.subarray(sEnd, e.index);
-    let inflated: Buffer | null = null;
-    try {
-      inflated = zlib.inflateSync(slice);
-    } catch {
-      inflated = null;
-    }
-    combined += (inflated ? inflated.toString('latin1') : slice.toString('latin1')) + '\n';
-    startRe.lastIndex = e.index + e[0].length;
-  }
-  // pdfkit emits text via [<HEXBYTES>] TJ kerning operators; decode every
-  // hex literal in the combined content streams to recover readable text.
-  const hexRe = /<([0-9a-fA-F\s]+)>/g;
-  let extracted = '';
-  let h: RegExpExecArray | null;
-  while ((h = hexRe.exec(combined)) !== null) {
-    const hex = h[1].replace(/\s+/g, '');
-    if (hex.length === 0 || hex.length % 2 !== 0) continue;
-    try {
-      extracted += Buffer.from(hex, 'hex').toString('latin1');
-    } catch {
-      // ignore malformed hex literal
-    }
-  }
-  return extracted;
-}
 
 describe('scripts/export-policy-pdfs.ts smoke test', () => {
   beforeAll(async () => {
