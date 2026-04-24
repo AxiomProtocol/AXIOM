@@ -552,3 +552,94 @@ describe('AlertLogRetentionPanel', () => {
     expect(screen.getByText(/row via http/i)).toBeTruthy();
   });
 });
+
+describe('AlertLogRetentionPanel – CSV export', () => {
+  const originalFetch = global.fetch;
+  const originalCreateObjectURL = global.URL.createObjectURL;
+  const originalRevokeObjectURL = global.URL.revokeObjectURL;
+
+  const BASE_STATUS = {
+    rowCount: 0,
+    retentionDays: 90,
+    lastCleanup: null,
+    cleanupHistory: [],
+  };
+
+  beforeEach(() => {
+    global.URL.createObjectURL = vi.fn(() => 'blob:mock');
+    global.URL.revokeObjectURL = vi.fn();
+  });
+
+  afterEach(() => {
+    cleanup();
+    global.fetch = originalFetch;
+    global.URL.createObjectURL = originalCreateObjectURL;
+    global.URL.revokeObjectURL = originalRevokeObjectURL;
+    vi.restoreAllMocks();
+  });
+
+  function mockCsvFetch(rowCount: number) {
+    global.fetch = vi.fn(async () =>
+      new Response('ran_at,deleted_count,retention_days,triggered_by\r\n', {
+        status: 200,
+        headers: { 'Content-Type': 'text/csv', 'X-Row-Count': String(rowCount) },
+      }),
+    ) as unknown as typeof fetch;
+  }
+
+  it('shows "Exported N runs" message after a successful download with rows', async () => {
+    mockCsvFetch(7);
+    render(<AlertLogRetentionPanel adminKey={ADMIN_KEY} status={BASE_STATUS} />);
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/Exported 7 runs/i)).toBeTruthy();
+    });
+  });
+
+  it('uses singular "run" when exactly 1 row is exported', async () => {
+    mockCsvFetch(1);
+    render(<AlertLogRetentionPanel adminKey={ADMIN_KEY} status={BASE_STATUS} />);
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/Exported 1 run\b/i)).toBeTruthy();
+    });
+  });
+
+  it('shows a generic empty-result warning when 0 rows are returned with no date filter set', async () => {
+    mockCsvFetch(0);
+    render(<AlertLogRetentionPanel adminKey={ADMIN_KEY} status={BASE_STATUS} />);
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(
+        screen.getByText(/the cleanup history table is empty/i),
+      ).toBeTruthy();
+    });
+  });
+
+  it('shows a date-range-specific warning when 0 rows match a filtered query', async () => {
+    mockCsvFetch(0);
+    render(<AlertLogRetentionPanel adminKey={ADMIN_KEY} status={BASE_STATUS} />);
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    fireEvent.change(dateInputs[0], { target: { value: '2026-01-01' } });
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          /No alert-log cleanup runs match the selected date range/i,
+        ),
+      ).toBeTruthy();
+    });
+  });
+
+  it('does not trigger a file download when 0 rows match', async () => {
+    mockCsvFetch(0);
+    render(<AlertLogRetentionPanel adminKey={ADMIN_KEY} status={BASE_STATUS} />);
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(
+        screen.getByText(/the cleanup history table is empty/i),
+      ).toBeTruthy();
+    });
+    expect(global.URL.createObjectURL).not.toHaveBeenCalled();
+  });
+});
