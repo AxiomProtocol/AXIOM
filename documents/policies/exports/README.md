@@ -6,10 +6,12 @@ Source of truth lives in `documents/policies/*.md`. Do not edit files here direc
 
 ## What gets generated
 
-For each of the four policies, the script emits:
+For each of the four policies, the script always emits both of:
 
-- `*.pdf` — Letter-format PDF rendered via headless Chromium (uses the system Chromium installed at the path in `scripts/export-policy-pdfs.ts`; override with the `CHROMIUM_PATH` env var). This is the file to upload to Plaid.
-- `*.html` — self-contained styled HTML with embedded CSS, kept alongside the PDF as a human-readable reference and as a fallback that can be opened in any browser and re-printed to PDF if needed.
+- `*.pdf` — Letter-format PDF generated entirely in Node.js via `pdfkit`. No headless browser is involved, so the script produces identical output in any environment (production, CI, the Replit dev container, your laptop) without depending on Chromium or any system shared libraries. This is the file to upload to Plaid.
+- `*.html` — self-contained styled HTML with embedded CSS, kept alongside the PDF as a human-readable reference.
+
+`npm run export:policy-pdfs` is the only thing you need to run; it overwrites the eight files below from the markdown sources every time.
 
 ## Files
 
