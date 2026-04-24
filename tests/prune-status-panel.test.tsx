@@ -373,13 +373,13 @@ describe('AlertLogRetentionPanel', () => {
   });
 
   it('renders the unavailable fallback when status is null', () => {
-    render(<AlertLogRetentionPanel status={null} />);
+    render(<AlertLogRetentionPanel adminKey="test-key" status={null} />);
     expect(screen.getByText(/Alert-log status unavailable/i)).toBeTruthy();
   });
 
   it('renders the current row count formatted with thousands separators', () => {
     render(
-      <AlertLogRetentionPanel
+      <AlertLogRetentionPanel adminKey="test-key"
         status={{ rowCount: 1234, retentionDays: 90, lastCleanup: null }}
       />,
     );
@@ -388,7 +388,7 @@ describe('AlertLogRetentionPanel', () => {
 
   it('renders the configured retention window in days', () => {
     render(
-      <AlertLogRetentionPanel
+      <AlertLogRetentionPanel adminKey="test-key"
         status={{ rowCount: 0, retentionDays: 30, lastCleanup: null }}
       />,
     );
@@ -397,7 +397,7 @@ describe('AlertLogRetentionPanel', () => {
 
   it('shows the "no cleanup yet" message when lastCleanup is null', () => {
     render(
-      <AlertLogRetentionPanel
+      <AlertLogRetentionPanel adminKey="test-key"
         status={{ rowCount: 5, retentionDays: 90, lastCleanup: null }}
       />,
     );
@@ -406,7 +406,7 @@ describe('AlertLogRetentionPanel', () => {
 
   it('renders the last cleanup deletedCount and triggeredBy when present', () => {
     render(
-      <AlertLogRetentionPanel
+      <AlertLogRetentionPanel adminKey="test-key"
         status={{
           rowCount: 12,
           retentionDays: 90,
@@ -426,7 +426,7 @@ describe('AlertLogRetentionPanel', () => {
 
   it('shows the empty-state message when cleanupHistory is empty', () => {
     render(
-      <AlertLogRetentionPanel
+      <AlertLogRetentionPanel adminKey="test-key"
         status={{
           rowCount: 5,
           retentionDays: 90,
@@ -463,7 +463,7 @@ describe('AlertLogRetentionPanel', () => {
       },
     ];
     render(
-      <AlertLogRetentionPanel
+      <AlertLogRetentionPanel adminKey="test-key"
         status={{
           rowCount: 12,
           retentionDays: 90,
@@ -493,7 +493,7 @@ describe('AlertLogRetentionPanel', () => {
       triggeredBy: 'cron',
     };
     render(
-      <AlertLogRetentionPanel
+      <AlertLogRetentionPanel adminKey="test-key"
         status={{
           rowCount: 9,
           retentionDays: 90,
@@ -522,7 +522,7 @@ describe('AlertLogRetentionPanel', () => {
       triggeredBy: 'cron',
     };
     render(
-      <AlertLogRetentionPanel
+      <AlertLogRetentionPanel adminKey="test-key"
         status={{
           rowCount: 9,
           retentionDays: 90,
@@ -536,7 +536,7 @@ describe('AlertLogRetentionPanel', () => {
 
   it('uses singular "row" when exactly one row was removed', () => {
     render(
-      <AlertLogRetentionPanel
+      <AlertLogRetentionPanel adminKey="test-key"
         status={{
           rowCount: 4,
           retentionDays: 90,

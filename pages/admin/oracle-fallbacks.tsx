@@ -407,9 +407,68 @@ export function PruneStatusPanel({
 
 export function AlertLogRetentionPanel({
   status,
+  adminKey,
 }: {
   status: AlertLogStatus | null;
+  adminKey: string;
 }) {
+  const [csvLoading, setCsvLoading] = useState(false);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [exportStatus, setExportStatus] = useState<
+    | { kind: 'success'; rowCount: number }
+    | { kind: 'empty' }
+    | null
+  >(null);
+
+  async function handleDownloadCsv() {
+    setCsvLoading(true);
+    setExportStatus(null);
+    try {
+      const params = new URLSearchParams();
+      if (dateFrom) params.set('from', new Date(dateFrom).toISOString());
+      if (dateTo) {
+        const end = new Date(dateTo);
+        end.setUTCHours(23, 59, 59, 999);
+        params.set('to', end.toISOString());
+      }
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      const r = await fetch(`/api/admin/oracle-fallbacks-alert-cleanup-csv${qs}`, {
+        headers: { 'x-admin-key': adminKey },
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        alert(`CSV export failed: ${(j as { error?: string }).error ?? r.statusText}`);
+        return;
+      }
+      const rowCountHeader = r.headers.get('X-Row-Count');
+      const rowCount = rowCountHeader === null ? NaN : parseInt(rowCountHeader, 10);
+      const blob = await r.blob();
+
+      if (Number.isFinite(rowCount) && rowCount === 0) {
+        setExportStatus({ kind: 'empty' });
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'prune-alert-log-cleanup-history.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      if (Number.isFinite(rowCount)) {
+        setExportStatus({ kind: 'success', rowCount });
+      }
+    } catch (e: unknown) {
+      alert(`CSV export failed: ${e instanceof Error ? e.message : 'network_error'}`);
+    } finally {
+      setCsvLoading(false);
+    }
+  }
+
   if (!status) {
     return (
       <div className="mb-10">
@@ -455,8 +514,62 @@ export function AlertLogRetentionPanel({
           <span className="font-dl-mono text-xs text-dl-gray">
             prune_alert_log
           </span>
+          <label className="flex items-center gap-1">
+            <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">From</span>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={e => setDateFrom(e.target.value)}
+              className="font-dl-mono text-xs border border-dl-border bg-dl-bg text-dl-navy px-2 py-1 focus:outline-none"
+            />
+          </label>
+          <label className="flex items-center gap-1">
+            <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">To</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={e => setDateTo(e.target.value)}
+              className="font-dl-mono text-xs border border-dl-border bg-dl-bg text-dl-navy px-2 py-1 focus:outline-none"
+            />
+          </label>
+          <button
+            onClick={handleDownloadCsv}
+            disabled={csvLoading}
+            className={`px-3 py-1.5 font-dl-mono text-xs uppercase tracking-wider border ${
+              csvLoading
+                ? 'bg-dl-bg-alt text-dl-gray border-dl-border cursor-not-allowed opacity-50'
+                : 'bg-dl-bg text-dl-navy border-dl-border hover:bg-dl-bg-alt cursor-pointer'
+            }`}
+          >
+            {csvLoading ? 'Exporting…' : 'Download CSV'}
+          </button>
         </div>
       </div>
+
+      {/* CSV export status */}
+      {exportStatus?.kind === 'success' && (
+        <div
+          role="status"
+          className="mb-4 border-l-4 border-l-emerald-500 border border-emerald-200 bg-emerald-50 p-3"
+        >
+          <p className="font-dl-mono text-xs text-emerald-800">
+            Exported {exportStatus.rowCount.toLocaleString('en-US')} run
+            {exportStatus.rowCount === 1 ? '' : 's'} to prune-alert-log-cleanup-history.csv.
+          </p>
+        </div>
+      )}
+      {exportStatus?.kind === 'empty' && (
+        <div
+          role="status"
+          className="mb-4 border-l-4 border-l-amber-500 border border-amber-200 bg-amber-50 p-3"
+        >
+          <p className="font-dl-mono text-xs text-amber-800">
+            {dateFrom || dateTo
+              ? 'No alert-log cleanup runs match the selected date range — nothing was exported. Adjust the From/To dates and try again.'
+              : 'No alert-log cleanup runs to export — the cleanup history table is empty.'}
+          </p>
+        </div>
+      )}
 
       <div className="border border-dl-border bg-dl-bg">
         <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-dl-border">
@@ -692,7 +805,7 @@ export default function OracleFallbacksDashboard({ adminKey }: PageProps) {
             <PruneStatusPanel lastPrune={data.lastPrune} pruneHistory={data.pruneHistory ?? []} adminKey={adminKey} />
 
             {/* ALERT LOG RETENTION */}
-            <AlertLogRetentionPanel status={data.alertLogStatus} />
+            <AlertLogRetentionPanel status={data.alertLogStatus} adminKey={adminKey} />
 
             {/* TOP CALLERS (7d) */}
             {data.topCallers.length > 0 && (
