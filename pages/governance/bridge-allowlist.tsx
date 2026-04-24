@@ -45,6 +45,7 @@ interface PageProps {
   proposals: ProposalRow[];
   executedCount: number;
   isOperator: boolean;
+  loadError: string | null;
 }
 
 function toRow(r: Awaited<ReturnType<typeof listProposals>>[number]): ProposalRow {
@@ -68,18 +69,33 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
   if (ctx.res) ctx.res.setHeader('Cache-Control', 'no-store, max-age=0');
   const cookie = readOperatorCookie(ctx.req);
   const isOperator = isValidOperatorKey(cookie);
-  const [proposals, executed] = await Promise.all([
-    listProposals({}),
-    listExecutedAllowlistEntries(),
-  ]);
-  return {
-    props: {
-      loadedAtIso: new Date().toISOString(),
-      proposals: proposals.map(toRow),
-      executedCount: executed.length,
-      isOperator,
-    },
-  };
+  try {
+    const [proposals, executed] = await Promise.all([
+      listProposals({}),
+      listExecutedAllowlistEntries(),
+    ]);
+    return {
+      props: {
+        loadedAtIso: new Date().toISOString(),
+        proposals: proposals.map(toRow),
+        executedCount: executed.length,
+        isOperator,
+        loadError: null,
+      },
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown error';
+    console.error('[bridge-allowlist] getServerSideProps failed:', msg, err);
+    return {
+      props: {
+        loadedAtIso: new Date().toISOString(),
+        proposals: [],
+        executedCount: 0,
+        isOperator,
+        loadError: msg,
+      },
+    };
+  }
 };
 
 function StatusBadge({ status }: { status: ProposalStatus }) {
@@ -162,6 +178,22 @@ export default function BridgeAllowlistPage(props: PageProps) {
             </Link>
           </p>
         </div>
+
+        {props.loadError && (
+          <div className="border border-dl-gold p-4 mb-6 bg-dl-bg-alt">
+            <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-1">
+              Operational notice
+            </p>
+            <p className="text-sm text-dl-ink leading-relaxed">
+              Proposal data is temporarily unavailable. The page is being served
+              with an empty list while operators investigate. The on-chain
+              CollateralRiskConfig remains the canonical state.
+            </p>
+            <p className="font-dl-mono text-xs text-dl-gray mt-2 break-all">
+              ref: {props.loadError}
+            </p>
+          </div>
+        )}
 
         <div className="border border-dl-border p-6 mb-8">
           <h2 className="font-dl-serif text-xl text-dl-navy mb-3">How this works</h2>
