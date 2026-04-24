@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DePIN Integration Example</title>
+  <style>
+    body { margin: 0; padding: 0; }
+    #depin-root { min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="depin-root"></div>
+  
+  <script>
+    window.depinProps = {
+      walletAddress: new URLSearchParams(window.location.search).get('wallet') || undefined,
+      isConnected: new URLSearchParams(window.location.search).get('connected') === 'true',
+      chainId: new URLSearchParams(window.location.search).get('chainId') || undefined
+    };
+  </script>
+  
+  <script type="module" src="/dist/depin-bundle.js"></script>
+</body>
+</html>

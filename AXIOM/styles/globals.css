@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.design-law-root {
+  background-color: #ffffff;
+  color: #1e3a5f;
+  -webkit-font-smoothing: antialiased;
+}
+
+.design-law-root * {
+  animation: none !important;
+  transition: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  background-image: none !important;
+}
+
+.design-law-root button,
+.design-law-root a {
+  border-radius: 0 !important;
+}
+
+@media print {
+  .design-law-root {
+    font-size: 10pt;
+    color: #000000;
+    background: #ffffff;
+  }
+
+  .design-law-root .no-print {
+    display: none !important;
+  }
+
+  .design-law-root table {
+    page-break-inside: auto;
+  }
+
+  .design-law-root tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  .design-law-root thead {
+    display: table-header-group;
+  }
+}

@@ -1,0 +1,543 @@
+{
+  "deposits": [
+    {
+      "date": "2025-04-03T00:00:00.000Z",
+      "amount": 50,
+      "txHash": "0x123456789abcdef"
+    },
+    {
+      "date": "2025-04-10T00:00:00.000Z",
+      "amount": 50,
+      "txHash": "0x123456789abcdef"
+    },
+    {
+      "date": "2025-04-17T00:00:00.000Z",
+      "amount": 50,
+      "txHash": "0x123456789abcdef"
+    },
+    {
+      "date": "2025-04-24T00:00:00.000Z",
+      "amount": 50,
+      "txHash": "0x123456789abcdef"
+    },
+    {
+      "date": "2025-05-01T00:00:00.000Z",
+      "amount": 50,
+      "txHash": "0x123456789abcdef"
+    },
+    {
+      "date": "2025-05-08T00:00:00.000Z",
+      "amount": 50,
+      "txHash": "0x123456789abcdef"
+    }
+  ],
+  "poolData": [
+    {
+      "timestamp": 1746710087432,
+      "pools": [
+        {
+          "address": "0x4dfb9909a36580e8e6f126acf189a965740f7b35",
+          "poolValueUSD": 11.46111571351017,
+          "adminSharePercentage": 0,
+          "adminPositionUSD": 0,
+          "dailyIncomeUSD": 0,
+          "weeklyIncomeUSD": 0,
+          "monthlyIncomeUSD": 0,
+          "bnbPriceUSD": 614.18,
+          "timestamp": 1746710087254,
+          "pairName": "SWF/BNB"
+        },
+        {
+          "address": "0x5Ac30825dA8fCEEFCC8AC1e29df82eC866050e94",
+          "poolValueUSD": 0.00009984753877660893,
+          "adminSharePercentage": 0,
+          "adminPositionUSD": 0,
+          "dailyIncomeUSD": 0,
+          "weeklyIncomeUSD": 0,
+          "monthlyIncomeUSD": 0,
+          "bnbPriceUSD": 614.18,
+          "timestamp": 1746710087432,
+          "pairName": "SWF/ETH"
+        }
+      ]
+    },
+    {
+      "timestamp": 1747267201086,
+      "pools": [
+        {
+          "address": "0x4dfb9909a36580e8e6f126acf189a965740f7b35",
+          "poolValueUSD": 13.124528143233361,
+          "adminSharePercentage": 0,
+          "adminPositionUSD": 0,
+          "dailyIncomeUSD": 0,
+          "weeklyIncomeUSD": 0,
+          "monthlyIncomeUSD": 0,
+          "bnbPriceUSD": 651.69,
+          "timestamp": 1747267200904,
+          "pairName": "SWF/BNB"
+        },
+        {
+          "address": "0x5Ac30825dA8fCEEFCC8AC1e29df82eC866050e94",
+          "poolValueUSD": 0.00009570747311186689,
+          "adminSharePercentage": 0,
+          "adminPositionUSD": 0,
+          "dailyIncomeUSD": 0,
+          "weeklyIncomeUSD": 0,
+          "monthlyIncomeUSD": 0,
+          "bnbPriceUSD": 651.69,
+          "timestamp": 1747267201085,
+          "pairName": "SWF/ETH"
+        }
+      ]
+    },
+    {
+      "timestamp": 1749340815792,
+      "pools": [
+        {
+          "address": "0x4dfb9909a36580e8e6f126acf189a965740f7b35",
+          "poolValueUSD": 12.995136050689128,
+          "adminSharePercentage": 0,
+          "adminPositionUSD": 0,
+          "dailyIncomeUSD": 0,
+          "weeklyIncomeUSD": 0,
+          "monthlyIncomeUSD": 0,
+          "bnbPriceUSD": 651.26,
+          "timestamp": 1749340801262,
+          "pairName": "SWF/BNB"
+        },
+        {
+          "address": "0x5Ac30825dA8fCEEFCC8AC1e29df82eC866050e94",
+          "poolValueUSD": 0.000222729115368381,
+          "adminSharePercentage": 0,
+          "adminPositionUSD": 0,
+          "dailyIncomeUSD": 0,
+          "weeklyIncomeUSD": 0,
+          "monthlyIncomeUSD": 0,
+          "bnbPriceUSD": 651.24,
+          "timestamp": 1749340815792,
+          "pairName": "SWF/ETH"
+        }
+      ]
+    },
+    {
+      "timestamp": 1749427201036,
+      "pools": [
+        {
+          "address": "0x4dfb9909a36580e8e6f126acf189a965740f7b35",
+          "poolValueUSD": 13.014690811199024,
+          "adminSharePercentage": 0,
+          "adminPositionUSD": 0,
+          "dailyIncomeUSD": 0,
+          "weeklyIncomeUSD": 0,
+          "monthlyIncomeUSD": 0,
+          "bnbPriceUSD": 652.24,
+          "timestamp": 1749427200863,
+          "pairName": "SWF/BNB"
+        },
+        {
+          "address": "0x5Ac30825dA8fCEEFCC8AC1e29df82eC866050e94",
+          "poolValueUSD": 0.000222729115368381,
+          "adminSharePercentage": 0,
+          "adminPositionUSD": 0,
+          "dailyIncomeUSD": 0,
+          "weeklyIncomeUSD": 0,
+          "monthlyIncomeUSD": 0,
+          "bnbPriceUSD": 652.24,
+          "timestamp": 1749427201036,
+          "pairName": "SWF/ETH"
+        }
+      ]
+    },
+    {
+      "timestamp": 1749600001395,
+      "pools": [
+        {
+          "address": "0x4dfb9909a36580e8e6f126acf189a965740f7b35",
+          "poolValueUSD": 13.78671371598233,
+          "adminSharePercentage": 0,
+          "adminPositionUSD": 0,
+          "dailyIncomeUSD": 0,
+          "weeklyIncomeUSD": 0,
+          "monthlyIncomeUSD": 0,
+          "bnbPriceUSD": 673.53,
+          "timestamp": 1749600001219,
+          "pairName": "SWF/BNB"
+        },
+        {
+          "address": "0x5Ac30825dA8fCEEFCC8AC1e29df82eC866050e94",
+          "poolValueUSD": 0.0002214458224511434,
+          "adminSharePercentage": 0,
+          "adminPositionUSD": 0,
+          "dailyIncomeUSD": 0,
+          "weeklyIncomeUSD": 0,
+          "monthlyIncomeUSD": 0,
+          "bnbPriceUSD": 673.53,
+          "timestamp": 1749600001394,
+          "pairName": "SWF/ETH"
+        }
+      ]
+    },
+    {
+      "timestamp": 1750204800418,
+      "pools": [
+        {
+          "pairName": "SWF/BNB",
+          "address": "0x4dfb9909a36580e8e6f126acf189a965740f7b35",
+          "poolValueUSD": 125.5,
+          "adminSharePercentage": 15.2,
+          "adminPositionUSD": 19.07,
+          "dailyIncomeUSD": 0.32,
+          "weeklyIncomeUSD": 2.24,
+          "monthlyIncomeUSD": 9.73,
+          "bnbPriceUSD": 597,
+          "timestamp": 1750204800342
+        },
+        {
+          "pairName": "SWF/ETH",
+          "address": "0x5Ac30825dA8fCEEFCC8AC1e29df82eC866050e94",
+          "poolValueUSD": 93.25,
+          "adminSharePercentage": 11.8,
+          "adminPositionUSD": 11,
+          "dailyIncomeUSD": 0.18,
+          "weeklyIncomeUSD": 1.26,
+          "monthlyIncomeUSD": 5.47,
+          "bnbPriceUSD": 3820,
+          "timestamp": 1750204800409
+        }
+      ]
+    }
+  ],
+  "weeklyReports": [],
+  "incomeProjections": [
+    {
+      "timestamp": 1746878328941,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746878465882,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746878838935,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746878889623,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746879063257,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746879408128,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746885057995,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746930201807,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746930203293,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746930688085,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746930696862,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746931146618,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746931332495,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746931380702,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1746931471931,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1747062052086,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1747062096598,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1747062369264,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1747062708103,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1747063208565,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1747063482224,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1747063642112,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1747063767836,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1747064430223,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1747267201086,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1748530536474,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1749340815805,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1749427201040,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1749600001397,
+      "currentMonthlyIncome": 0,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 0,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 26050
+    },
+    {
+      "timestamp": 1750204800427,
+      "currentMonthlyIncome": 15.2,
+      "targetMonthlyIncome": 800,
+      "percentComplete": 1.9,
+      "weeksToTarget": 521,
+      "monthsToTarget": 121,
+      "projectedTotalInvestment": 39551.510037306805
+    }
+  ],
+  "updated": "2025-05-08T12:00:00.000Z",
+  "weeklyHistory": [
+    {
+      "date": "2025-04-03T00:00:00.000Z",
+      "totalValue": 50
+    },
+    {
+      "date": "2025-04-10T00:00:00.000Z",
+      "totalValue": 75.5
+    },
+    {
+      "date": "2025-04-17T00:00:00.000Z",
+      "totalValue": 90.2
+    },
+    {
+      "date": "2025-04-24T00:00:00.000Z",
+      "totalValue": 130.8
+    },
+    {
+      "date": "2025-05-01T00:00:00.000Z",
+      "totalValue": 175
+    },
+    {
+      "date": "2025-05-08T00:00:00.000Z",
+      "totalValue": 240
+    }
+  ],
+  "totalDeposited": 300,
+  "weeklyIncome": [
+    {
+      "date": "2025-04-03T00:00:00.000Z",
+      "amount": 0
+    },
+    {
+      "date": "2025-04-10T00:00:00.000Z",
+      "amount": 1.25
+    },
+    {
+      "date": "2025-04-17T00:00:00.000Z",
+      "amount": 2.35
+    },
+    {
+      "date": "2025-04-24T00:00:00.000Z",
+      "amount": 3.5
+    },
+    {
+      "date": "2025-05-01T00:00:00.000Z",
+      "amount": 5.25
+    },
+    {
+      "date": "2025-05-08T00:00:00.000Z",
+      "amount": 8
+    }
+  ],
+  "currentIncome": 20.35,
+  "targetIncome": 800,
+  "poolIncome": {
+    "swfBnb": 15.21,
+    "swfEth": 5.14
+  }
+}

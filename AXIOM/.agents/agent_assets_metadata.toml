@@ -1,0 +1,769 @@
+uploads = []
+
+[[generated]]
+id = "AKUswxlhtBn7CbqYxHsuo"
+uri = "file://public/images/banking/hero-overview.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "K2U-uQyEcLw0Od2eIvltd"
+uri = "file://public/images/banking/hero-ramp.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Ve3hlQ38wvfoo3vlNfpoz"
+uri = "file://public/images/banking/hero-transactions.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "y8ByPKjQFmqu5HsgdkOAR"
+uri = "file://public/images/banking/hero-routing.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "WJpaGH8w4D3IKlxZv0ahm"
+uri = "file://public/images/banking/hero-transfer.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "N3prYrLKWq0_K0RMpv2cj"
+uri = "file://public/wealth-practice/hero-banner.png"
+type = "image"
+title = "wealth practice hero banner"
+
+[[generated]]
+id = "_kQnyI_seqDEhBPef3MmG"
+uri = "file://public/wealth-practice/hub-atlanta.png"
+type = "image"
+title = "atlanta hub city"
+
+[[generated]]
+id = "TQVCrqjkYYTXtfNv74Bcf"
+uri = "file://public/wealth-practice/hub-houston.png"
+type = "image"
+title = "houston hub city"
+
+[[generated]]
+id = "KSyPXmVHsqDjdOdo2el4Q"
+uri = "file://public/wealth-practice/hub-charlotte.png"
+type = "image"
+title = "charlotte hub city"
+
+[[generated]]
+id = "HkPfer2rvUmasK8GcZPYp"
+uri = "file://public/wealth-practice/stage-hub.png"
+type = "image"
+title = "interest hub trust"
+
+[[generated]]
+id = "Puji4feEyVRp0zkGTCcOd"
+uri = "file://public/wealth-practice/stage-group.png"
+type = "image"
+title = "purpose group meeting"
+
+[[generated]]
+id = "8mQpWvPcgUkwaAycAtD8b"
+uri = "file://public/wealth-practice/stage-onchain.png"
+type = "image"
+title = "onchain pool visualization"
+
+[[generated]]
+id = "jl6-ZOTcR8gkNXI43X6nI"
+uri = "file://public/wealth-practice/bridge-land.png"
+type = "image"
+title = "land bridge community"
+
+[[generated]]
+id = "q7q3Z2UkU8OSg22Db4eWK"
+uri = "file://public/wealth-practice/tab-discover.png"
+type = "image"
+title = "discover tab community aerial"
+
+[[generated]]
+id = "iBLx4LAi0XqmofIm2xNRG"
+uri = "file://public/wealth-practice/tab-practice.png"
+type = "image"
+title = "my practice personal finance"
+
+[[generated]]
+id = "gAvC8rVO2xcQY_-Qus7Ae"
+uri = "file://public/wealth-practice/tab-create.png"
+type = "image"
+title = "create group charter signing"
+
+[[generated]]
+id = "UW9Tz8vthBJp6TXsua09Y"
+uri = "file://public/wealth-practice/group-card-bg.png"
+type = "image"
+title = "group contribution visual"
+
+[[generated]]
+id = "qAezKkFagianLEhvXrm54"
+uri = "file://public/axau/hero-gold-vault.png"
+type = "image"
+title = "gold vault hero"
+
+[[generated]]
+id = "gUTBBjDyqEWc4h5oaiGtR"
+uri = "file://public/axau/gold-coin-3d.png"
+type = "image"
+title = "3d gold coin"
+
+[[generated]]
+id = "7KXmDjAlamy4K3M8qWmeQ"
+uri = "file://public/axau/network-3d.png"
+type = "image"
+title = "gold network nodes"
+
+[[generated]]
+id = "G10Z3rGVaBy_9OaAAXwEN"
+uri = "file://public/axau-early-access/icon-apply.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "A9R5mReRphKVCZ0TAqTGy"
+uri = "file://public/axau-early-access/icon-mint.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "5r9iYvz6BpIpU2HV-UC_n"
+uri = "file://public/axau-early-access/icon-approved.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "0FD6dx8KRZuRH_giD81TB"
+uri = "file://public/axau-early-access/hero-vault.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "1yex9n-tV1JWQAmLofPNT"
+uri = "file://public/axau-early-access/gold-bar-aerial.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "5IoRRDuGN9ouTs_hN8B3-"
+uri = "file://public/images/realestate/land_bridge_hero.png"
+type = "image"
+title = "land acquisition hero"
+
+[[generated]]
+id = "aydGHws7__IbuZgaJ9Rf-"
+uri = "file://public/images/realestate/re_property_search_hero.png"
+type = "image"
+title = "RE intelligence hero"
+
+[[generated]]
+id = "gjLTX0VTszGIcBaJSOEli"
+uri = "file://public/images/realestate/deal_intelligence_hero.png"
+type = "image"
+title = "deal intelligence hero"
+
+[[generated]]
+id = "7ADCu8Ml2yQZg5bkql2lW"
+uri = "file://public/images/realestate/distressed_feed_hero.png"
+type = "image"
+title = "distressed feed hero"
+
+[[generated]]
+id = "hUq-CngHfCiq6WRkTuoJh"
+uri = "file://public/images/realestate/property_analysis_hero.png"
+type = "image"
+title = "property analysis hero"
+
+[[generated]]
+id = "1sYvx4KJEnwmQog6oR2rZ"
+uri = "file://public/visuals/sysmap-hero.png"
+type = "image"
+title = "system map layered architecture hero"
+
+[[generated]]
+id = "Y_Q1qNcYir8LUgmxhD_UB"
+uri = "file://public/visuals/gold-reserve.png"
+type = "image"
+title = "gold reserve vault cinematic"
+
+[[generated]]
+id = "HxWfwBX5e_MOyLaGUtYGk"
+uri = "file://public/visuals/infra-hero.png"
+type = "image"
+title = "infrastructure cinematic hero"
+
+[[generated]]
+id = "pS7k_pHyBT1HsY_6kXxQ1"
+uri = "file://public/visuals/capital-deploy.png"
+type = "image"
+title = "capital deployment institutional boardroom"
+
+[[generated]]
+id = "bZpPVFHGZ4XcI3Ku6206n"
+uri = "file://public/visuals/icon-banking.png"
+type = "image"
+title = "banking vault 3D icon"
+
+[[generated]]
+id = "GJ9LG8Q__QOHe3dv_SYXI"
+uri = "file://public/visuals/icon-settlement.png"
+type = "image"
+title = "AXUSD settlement 3D icon"
+
+[[generated]]
+id = "vK2jG7aCqqSMfasDx-k7V"
+uri = "file://public/visuals/icon-exchange.png"
+type = "image"
+title = "exchange DEX 3D icon"
+
+[[generated]]
+id = "ySBQtBdgGb26RjRjWcGYb"
+uri = "file://public/visuals/icon-reserve.png"
+type = "image"
+title = "gold reserve AXAU 3D icon"
+
+[[generated]]
+id = "p2MpCWEKoS7VEPWiMY5-g"
+uri = "file://public/visuals/icon-capital.png"
+type = "image"
+title = "capital deployment 3D icon"
+
+[[generated]]
+id = "q6iItxN-PwWguF1o4Nu_p"
+uri = "file://public/visuals/icon-intelligence.png"
+type = "image"
+title = "intelligence MIRDT 3D icon"
+
+[[generated]]
+id = "SZdKcgjAnhCJHZUjuaUyL"
+uri = "file://public/visuals/icon-trust.png"
+type = "image"
+title = "trust solvency proof 3D icon"
+
+[[generated]]
+id = "CQmD2ORnohFUHutLl_GO9"
+uri = "file://public/visuals/axusd-hero.png"
+type = "image"
+title = "AXUSD settlement hero cinematic"
+
+[[generated]]
+id = "jHHlC6Pz054PxryHD0AwW"
+uri = "file://public/visuals/axusd-identity.png"
+type = "image"
+title = "ERC-3643 identity credential 3D"
+
+[[generated]]
+id = "cJfoCsBTH5HkH5vKdwOGS"
+uri = "file://public/visuals/axusd-psm.png"
+type = "image"
+title = "PSM peg stability balance scale"
+
+[[generated]]
+id = "mNJTvbDCsNl0lmxYNCzpf"
+uri = "file://public/visuals/axusd-oracle.png"
+type = "image"
+title = "price oracle data streams 3D"
+
+[[generated]]
+id = "oeaRZhJkETZadI5IV85-F"
+uri = "file://public/visuals/dex-hero.png"
+type = "image"
+title = "DEX protocol exchange cinematic hero"
+
+[[generated]]
+id = "mE_9Gh5CYf-uIBoPmxkL9"
+uri = "file://public/visuals/dex-liquidity.png"
+type = "image"
+title = "EulerSwap liquidity depth 3D"
+
+[[generated]]
+id = "kNFRadyksQwGbB4867jRq"
+uri = "file://public/visuals/dex-rewards.png"
+type = "image"
+title = "yield rewards accumulation 3D"
+
+[[generated]]
+id = "i_NPVDGlLlQ56UhUx0U_x"
+uri = "file://public/logos/axiom-logo-option-a.png"
+type = "image"
+title = "axiom logo geometric A navy"
+
+[[generated]]
+id = "mC2jVJeATB1AJPIIAd9AW"
+uri = "file://public/logos/axiom-logo-option-b.png"
+type = "image"
+title = "axiom logo hexagon gold network"
+
+[[generated]]
+id = "aeWl_V8Bu9YbFv47Q5TL_"
+uri = "file://public/logos/axiom-logo-option-c.png"
+type = "image"
+title = "axiom logo seal converging triangles navy"
+
+[[generated]]
+id = "q3U0uBT0HHB5ukhkotjeM"
+uri = "file://public/logos/axiom-premium-a.png"
+type = "image"
+title = "axiom premium A navy gold embossed"
+
+[[generated]]
+id = "LC0AVruLGl55clX43Adrm"
+uri = "file://public/logos/axiom-premium-cartouche.png"
+type = "image"
+title = "axiom premium cartouche chevron gold"
+
+[[generated]]
+id = "JdfyyUKISZknNyMunvFDv"
+uri = "file://public/logos/axiom-premium-compass.png"
+type = "image"
+title = "axiom premium compass rose navy gold"
+
+[[generated]]
+id = "3DOliAB49FGEbjJz3PokH"
+uri = "file://public/logos/axiom-premium-gateway.png"
+type = "image"
+title = "axiom premium gateway pillars arch gold"
+
+[[generated]]
+id = "CBXthBlTVMsA_tNB8xrRn"
+uri = "file://public/images/products/card-hero.png"
+type = "image"
+title = "luxury-card-hero"
+
+[[generated]]
+id = "ivdSu3jKmf9N42WepeJ93"
+uri = "file://public/images/products/direct-deposit-hero.png"
+type = "image"
+title = "direct-deposit-lifestyle"
+
+[[generated]]
+id = "qq9AZIHadOjdxYn8w1S3i"
+uri = "file://public/images/products/credit-hero.png"
+type = "image"
+title = "crypto-credit-vault"
+
+[[generated]]
+id = "Ka63cFa2Vl1K-BW8wEhGO"
+uri = "file://public/images/products/card-closeup.png"
+type = "image"
+title = "card-closeup-leather"
+
+[[generated]]
+id = "vVLpjkwyxOTe4EOukQiSv"
+uri = "file://public/images/products/deposit-setup.png"
+type = "image"
+title = "paycheck-arrival-setup"
+
+[[generated]]
+id = "I7baxED1id_q5pwJESqLc"
+uri = "file://public/images/products/collateral-visual.png"
+type = "image"
+title = "crypto-collateral-scale"
+
+[[generated]]
+id = "YCbGA0Te4kQ70XP4XubIB"
+uri = "file://public/images/coinbase/onramp-hero.png"
+type = "image"
+title = "onramp hero cinematic"
+
+[[generated]]
+id = "YfRQ9QqxKX5_Dbf8k-Jyf"
+uri = "file://public/images/coinbase/icon-usdc.png"
+type = "image"
+title = "USDC 3D coin icon"
+
+[[generated]]
+id = "FjtRrMXMmoemavTZWIfmV"
+uri = "file://public/images/coinbase/icon-axusd.png"
+type = "image"
+title = "AXUSD 3D stablecoin icon"
+
+[[generated]]
+id = "wSgHqsum-Q46cYbhNAwxV"
+uri = "file://public/images/coinbase/icon-axau.png"
+type = "image"
+title = "AXAU 3D gold reserve coin"
+
+[[generated]]
+id = "Eeww-hgbNjctdeEU0JGm8"
+uri = "file://public/images/coinbase/cdp-hero.png"
+type = "image"
+title = "CDP data center hero"
+
+[[generated]]
+id = "-txVND61mbuyA3EVDWU0G"
+uri = "file://public/images/coinbase/security-shield.png"
+type = "image"
+title = "security shield 3D icon"
+
+[[generated]]
+id = "tC2GGAHsSdXTvUknG1ai9"
+uri = "file://public/images/coinbase/coinbase-pay-card.png"
+type = "image"
+title = "Coinbase pay card lifestyle"
+
+[[generated]]
+id = "WpdDhl8uil6fGnyipK5i_"
+uri = "file://public/images/coinbase/blockchain-network.png"
+type = "image"
+title = "blockchain network visualization"
+
+[[generated]]
+id = "gdGkuHi3pzCD_qmmNWwtK"
+uri = "file://attached_assets/generated_images/axiom_flyer_square.png"
+type = "image"
+title = "axiom flyer square"
+
+[[generated]]
+id = "D6DeWFJ9aMwq4EmF4vJS2"
+uri = "file://attached_assets/generated_images/axiom_flyer_story.png"
+type = "image"
+title = "axiom flyer story"
+
+[[generated]]
+id = "raMgwZLtBTgCdWMZPNaqC"
+uri = "file://attached_assets/generated_images/axiom_flyer_wide.png"
+type = "image"
+title = "axiom flyer wide"
+
+[[generated]]
+id = "DPeYFKhP-dCkPxcaUdIvf"
+uri = "file://attached_assets/generated_images/product_axau_early_access_story.png"
+type = "image"
+title = "axau early access story"
+
+[[generated]]
+id = "A5XvCggzyZ2m2XEqh14Nm"
+uri = "file://attached_assets/generated_images/product_axau_early_access_square.png"
+type = "image"
+title = "axau early access square"
+
+[[generated]]
+id = "9OkYeGx0JP_DsJvDv_sJ-"
+uri = "file://attached_assets/generated_images/product_wealth_practice_square.png"
+type = "image"
+title = "wealth practice square"
+
+[[generated]]
+id = "EUS4F_6pHj4MgRrl6Hc2x"
+uri = "file://attached_assets/generated_images/product_lending_fund_wide.png"
+type = "image"
+title = "lending fund wide"
+
+[[generated]]
+id = "_E4xGJpolp4QYaUOf_DIr"
+uri = "file://attached_assets/generated_images/product_land_pipeline_story.png"
+type = "image"
+title = "land pipeline story"
+
+[[generated]]
+id = "AXzImpihoTGBogZSzFgPd"
+uri = "file://attached_assets/generated_images/fin_axau_reserve.png"
+type = "image"
+title = "axau reserve"
+
+[[generated]]
+id = "IWdooisnZXL_BtquCtc6k"
+uri = "file://attached_assets/generated_images/fin_axusd_rail.png"
+type = "image"
+title = "axusd settlement rail"
+
+[[generated]]
+id = "XgTEO8qUc9Uanm2A97kkm"
+uri = "file://attached_assets/generated_images/fin_earn_axusd.png"
+type = "image"
+title = "earn axusd vault"
+
+[[generated]]
+id = "1-iSIGAAZDiebfxM2wYKf"
+uri = "file://attached_assets/generated_images/fin_dex_exchange.png"
+type = "image"
+title = "protocol exchange dex"
+
+[[generated]]
+id = "RHdchoCYkTeYMc-GCITFz"
+uri = "file://attached_assets/generated_images/fin_capital_program.png"
+type = "image"
+title = "capital program"
+
+[[generated]]
+id = "T4z79vfwUtubTmgRYlZMa"
+uri = "file://attached_assets/generated_images/fin_syndication.png"
+type = "image"
+title = "syndication private capital"
+
+[[generated]]
+id = "bG3g7e9VazMbF4mc-kOd_"
+uri = "file://attached_assets/generated_images/fin_savings.png"
+type = "image"
+title = "axusd savings"
+
+[[generated]]
+id = "ELm6D1NtGTuXw8pFu1uwl"
+uri = "file://attached_assets/generated_images/fin_community_credit.png"
+type = "image"
+title = "community credit"
+
+[[generated]]
+id = "-_8qokhpbrMfarNoU7bbq"
+uri = "file://attached_assets/generated_images/fin_nexus_card.png"
+type = "image"
+title = "nexus card"
+
+[[generated]]
+id = "Jxinc_H9aw11qFoTpm8RS"
+uri = "file://attached_assets/generated_images/fin_onramp.png"
+type = "image"
+title = "on off ramp"
+
+[[outputs]]
+id = "tL1EpEhSaHtM21rjEYEfD"
+uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
+type = "text"
+title = "Axiom Protocol — Master Brand & Communications Document"
+
+[[outputs]]
+id = "mqgxNkzWNeQNj9y6L3_AJ"
+uri = "file://documents/Axiom_Banking_RealEstate_Podcast_Script.md"
+type = "text"
+title = "Podcast Script - Your Bank, Your Deals, Your Land"
+
+[[outputs]]
+id = "bseXYKc_c_4F_Q4SE9g7w"
+uri = "file://documents/Axiom_Banking_RealEstate_Podcast.mp3"
+type = "audio"
+title = "Podcast Audio (10.8 min - partial, 70% complete)"
+
+[[outputs]]
+id = "sPq0RwOjMRLNDaxE4pCR4"
+uri = "file://documents/Construction_Cost_Database_Research_Report.md"
+type = "text"
+title = "Construction Cost Database — Research Report & Build Roadmap"
+
+[[outputs]]
+id = "cZ48CzGA7o-92xxyj64_H"
+uri = "file://documents/Axiom_Protocol_Institutional_Pitch_Deck.md"
+type = "text"
+title = "Axiom Protocol — Institutional Pitch Deck"
+
+[[outputs]]
+id = "1hgO3EK8VG0r3Eba0mFpz"
+uri = "file://documents/Axiom_Protocol_White_Paper_v3.docx"
+type = "word_document"
+title = "Axiom Protocol — White Paper v3.0 (March 23, 2026)"
+
+[[outputs]]
+id = "3SB3oX7uowPTxHViht5D_"
+uri = "file://documents/Axiom_Protocol_White_Paper_v3.md"
+type = "text"
+title = "Axiom Protocol — White Paper v3.0 (Markdown)"
+
+[[outputs]]
+id = "p3ubS0_r8XCo94WRfVuKP"
+uri = "file://documents/axiom-protocol-whitepaper-v1.1.md"
+type = "text"
+title = "Axiom Protocol — Institutional Whitepaper v1.1"
+
+[[outputs]]
+id = "VDnCj7_q8HguqRCtIpiWW"
+uri = "file://attached_assets/stock_images/banking-institutional_1.jpg"
+type = "image"
+title = "institutional banking FDIC federal reserve digital finance professional"
+
+[[outputs]]
+id = "7Hn4cVFBTxTo_NZg70IHp"
+uri = "file://attached_assets/stock_images/banking-institutional_2.jpg"
+type = "image"
+title = "institutional banking FDIC federal reserve digital finance professional"
+
+[[outputs]]
+id = "HFYz5Zn0Myazo5cJmG_Y3"
+uri = "file://documents/Axiom_Platform_Content_Package.md"
+type = "text"
+title = "Axiom Platform Content Package"
+
+[[outputs]]
+id = "-D-BfT2XPvlBimmS57yJi"
+uri = "file://attached_assets/stock_images/community_finance_meeting_1.jpg"
+type = "image"
+title = "diverse community members reviewing financial documents together around a table"
+
+[[outputs]]
+id = "br-2Gbh9NTVZk6KtM37jI"
+uri = "file://attached_assets/stock_images/community_finance_meeting_2.jpg"
+type = "image"
+title = "diverse community members reviewing financial documents together around a table"
+
+[[outputs]]
+id = "4pC5yeKymKZ3Lh9r8RNtM"
+uri = "file://documents/axau-whitepaper.md"
+type = "text"
+title = "AXAU Reserve Instrument — Institutional White Paper v1.0.0"
+
+[[outputs]]
+id = "YgMTEYDInJHmC19ljunJ8"
+uri = "file://attached_assets/stock_images/institutional-investor.jpg"
+type = "image"
+title = "institutional investor in suit at modern glass skyscraper financial district"
+
+[[outputs]]
+id = "k_vP68rGTa_1fX_9sSUSw"
+uri = "file://attached_assets/stock_images/real-estate-land.jpg"
+type = "image"
+title = "aerial view of real estate land development parcels with infrastructure"
+
+[[outputs]]
+id = "krqW51eZ807mPf0W4CPUU"
+uri = "file://documents/Axiom_Protocol_Product_Suite_Whitepaper_v1.0.md"
+type = "text"
+title = "Axiom Protocol — Product Suite White Paper v1.0"
+
+[[outputs]]
+id = "zkwQJTqddTztBIio7CaEZ"
+uri = "file://attached_assets/stock_images/fintech_payment_mobile_1.jpg"
+type = "image"
+title = "person using smartphone for digital payment fintech modern dark background"
+
+[[outputs]]
+id = "9Z38NIkDMXXkxHLo_E67m"
+uri = "file://attached_assets/stock_images/fintech_payment_mobile_2.jpg"
+type = "image"
+title = "person using smartphone for digital payment fintech modern dark background"
+
+[[outputs]]
+id = "cXaUiaD54WtPhew7vw6xJ"
+uri = "file://attached_assets/stock_images/data_center_servers_1.jpg"
+type = "image"
+title = "secure server data center blue lighting institutional finance technology"
+
+[[outputs]]
+id = "Id-6qoZM69xPW6Jcczc60"
+uri = "file://attached_assets/stock_images/data_center_servers_2.jpg"
+type = "image"
+title = "secure server data center blue lighting institutional finance technology"
+
+[[outputs]]
+id = "5o6DO7NMpyyg1skt0miDH"
+uri = "file://attached_assets/stock_images/gold_crypto_coins.jpg"
+type = "image"
+title = "gold coins cryptocurrency investment luxury dark background"
+
+[[outputs]]
+id = "EJfKzRFPGGZDd9cSOdlET"
+uri = "file://attached_assets/generated_images/axiom_flyer_square.png"
+type = "image"
+title = "Square Flyer — Instagram / Twitter Feed (1:1)"
+
+[[outputs]]
+id = "M6gzXQUYdG-rkfVkQB5FL"
+uri = "file://attached_assets/generated_images/axiom_flyer_story.png"
+type = "image"
+title = "Vertical Flyer — Stories / TikTok / Reels (9:16)"
+
+[[outputs]]
+id = "uXCfqaNnoASF-Xdi5jtR1"
+uri = "file://attached_assets/generated_images/axiom_flyer_wide.png"
+type = "image"
+title = "Widescreen Flyer — LinkedIn / Twitter Banner (16:9)"
+
+[[outputs]]
+id = "Enh0DySGrx9R9BX7nORjU"
+uri = "file://attached_assets/generated_images/product_axau_early_access_story.png"
+type = "image"
+title = "AXAU Early Access — Story / Reels (9:16)"
+
+[[outputs]]
+id = "BIcy94WOUNk2L1L52J3EV"
+uri = "file://attached_assets/generated_images/product_axau_early_access_square.png"
+type = "image"
+title = "AXAU Early Access — Feed Post (1:1)"
+
+[[outputs]]
+id = "iH2Ubk_L9EOuI2th-_v4o"
+uri = "file://attached_assets/generated_images/product_wealth_practice_square.png"
+type = "image"
+title = "The Wealth Practice — Feed Post (1:1)"
+
+[[outputs]]
+id = "uOqylVE7uJ8HpQgAgiQGg"
+uri = "file://attached_assets/generated_images/product_lending_fund_wide.png"
+type = "image"
+title = "Lending Fund — LinkedIn / Twitter Banner (16:9)"
+
+[[outputs]]
+id = "UpXi8uo7-3oqXFxXCPGWq"
+uri = "file://attached_assets/generated_images/product_land_pipeline_story.png"
+type = "image"
+title = "Land Pipeline — Story / Reels (9:16)"
+
+[[outputs]]
+id = "96Q3tKsSGziw5aZdZh9da"
+uri = "file://attached_assets/generated_images/fin_axau_reserve.png"
+type = "image"
+title = "AXAU Reserve Instrument (1:1)"
+
+[[outputs]]
+id = "dH0rlJ_ZjIhCM-c2vcmn5"
+uri = "file://attached_assets/generated_images/fin_axusd_rail.png"
+type = "image"
+title = "AXUSD Settlement Rail (9:16)"
+
+[[outputs]]
+id = "zNGJG0JpCZ7KButQS6Sqy"
+uri = "file://attached_assets/generated_images/fin_earn_axusd.png"
+type = "image"
+title = "Earn AXUSD Vault (1:1)"
+
+[[outputs]]
+id = "QiJyocO2d3eDZ2KfPwyhM"
+uri = "file://attached_assets/generated_images/fin_dex_exchange.png"
+type = "image"
+title = "Protocol Exchange / DEX (16:9)"
+
+[[outputs]]
+id = "ne_TLn2AM3jRC_5bzEYzj"
+uri = "file://attached_assets/generated_images/fin_capital_program.png"
+type = "image"
+title = "Capital Program — Reg D (9:16)"
+
+[[outputs]]
+id = "-vgzq0EWx7it8HPCNBx6t"
+uri = "file://attached_assets/generated_images/fin_syndication.png"
+type = "image"
+title = "Private Capital Formation / Syndication (1:1)"
+
+[[outputs]]
+id = "MY7KhzM1rK7omYybIhpuY"
+uri = "file://attached_assets/generated_images/fin_savings.png"
+type = "image"
+title = "AXUSD Yield Savings (9:16)"
+
+[[outputs]]
+id = "b2hI1TppWNBga_IXqOAXP"
+uri = "file://attached_assets/generated_images/fin_community_credit.png"
+type = "image"
+title = "Community Entry Credit (1:1)"
+
+[[outputs]]
+id = "qafkSi9EXI1T1wJzwdr7K"
+uri = "file://attached_assets/generated_images/fin_nexus_card.png"
+type = "image"
+title = "Nexus Card — FDIC Banking (9:16)"
+
+[[outputs]]
+id = "h_Gbty591Y15DGTrdxXUP"
+uri = "file://attached_assets/generated_images/fin_onramp.png"
+type = "image"
+title = "On / Off Ramp — Capital Stack Entry (1:1)"
+
+[[outputs]]
+id = "b7vW9AJNUDPNdLxTz-7uh"
+uri = "file://documents/marketing/axiom-social-media-marketing-playbook.md"
+type = "text"
+title = "Axiom Protocol — Social Media & Marketing Playbook"

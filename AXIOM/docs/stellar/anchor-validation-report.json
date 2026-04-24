@@ -1,0 +1,193 @@
+{
+  "generated": "2026-04-05",
+  "validationMethod": "Direct stellar.toml fetch + TRANSFER_SERVER_SEP0024 + WEB_AUTH_ENDPOINT presence check",
+  "latencyMeasurement": "3-round average (seconds)",
+  "results": [
+    {
+      "anchorKey": "moneygram",
+      "homeDomain": "stellar.moneygram.com",
+      "tomlUrl": "https://stellar.moneygram.com/.well-known/stellar.toml",
+      "httpStatus": 200,
+      "valid": true,
+      "networkPassphrase": "Public Global Stellar Network ; September 2015",
+      "transferServerSep24": "https://stellar.moneygram.com/stellaradapterservice/sep24",
+      "webAuthEndpoint": "https://stellar.moneygram.com/stellaradapterservice/auth",
+      "supportedAssets": [
+        {
+          "code": "USDC",
+          "issuer": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+          "isAssetAnchored": true,
+          "anchorAssetType": "fiat",
+          "anchorAsset": "USD"
+        }
+      ],
+      "latencyAvgSeconds": 0.095,
+      "latencyRounds": [0.099, 0.102, 0.085],
+      "invalidReason": null,
+      "notes": "USDC issuer matches Circle mainnet issuer exactly. Mainnet passphrase confirmed. Fastest latency of all candidates. Dedicated Stellar integration domain."
+    },
+    {
+      "anchorKey": "testanchor",
+      "homeDomain": "testanchor.stellar.org",
+      "tomlUrl": "https://testanchor.stellar.org/.well-known/stellar.toml",
+      "httpStatus": 200,
+      "valid": true,
+      "networkPassphrase": "Test SDF Network ; September 2015",
+      "transferServerSep24": "https://testanchor.stellar.org/sep24",
+      "webAuthEndpoint": "https://testanchor.stellar.org/auth",
+      "supportedAssets": [
+        {
+          "code": "USDC",
+          "issuer": "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+          "isAssetAnchored": false
+        },
+        { "code": "SRT", "issuer": "GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B", "isAssetAnchored": false },
+        { "code": "native", "isNative": true }
+      ],
+      "latencyAvgSeconds": 0.261,
+      "latencyRounds": [0.493, 0.146, 0.143],
+      "invalidReason": null,
+      "notes": "TESTNET ONLY — network passphrase is Test SDF Network, not mainnet. Cannot be used for real payments. USDC issuer is testnet-only (GBBD47...). Use only for staging/integration testing."
+    },
+    {
+      "anchorKey": "anclap",
+      "homeDomain": "anclap.com",
+      "tomlUrl": "https://anclap.com/.well-known/stellar.toml",
+      "httpStatus": 200,
+      "valid": true,
+      "networkPassphrase": "Public Global Stellar Network ; September 2015",
+      "transferServerSep24": "https://api.anclap.com/transfer24",
+      "webAuthEndpoint": "https://api.anclap.com/auth",
+      "supportedAssets": [
+        { "code": "PEN", "issuer": "GA4TDPNUCZPTOHB3TKUYMDCRVATXKEADH7ZEYEBWJKQKE2UBFCYNBPEN", "isAssetAnchored": true },
+        { "code": "ARS", "issuer": "GCYE7C77EB5AWAA25R5XMWNI2EDOKTTFTTPZKM2SR5DI4B4WFD52DARS", "isAssetAnchored": true }
+      ],
+      "latencyAvgSeconds": 0.178,
+      "latencyRounds": [0.178, 0.178, 0.178],
+      "invalidReason": null,
+      "notes": "LATAM corridor only. No USD or USDC support. PEN (Peru) and ARS (Argentina) corridors. Would require converting USDC to ARS/PEN on Stellar DEX before anchoring."
+    },
+    {
+      "anchorKey": "mykobo",
+      "homeDomain": "mykobo.co",
+      "tomlUrl": "https://mykobo.co/.well-known/stellar.toml",
+      "httpStatus": 200,
+      "valid": true,
+      "networkPassphrase": "Public Global Stellar Network ; September 2015",
+      "transferServerSep24": "https://stellar.mykobo.co/sep24",
+      "webAuthEndpoint": "https://stellar.mykobo.co/auth",
+      "supportedAssets": [
+        { "code": "EURC", "issuer": "GAQRF3UGHBT6JYQZ7YSUYCIYWAF4T2SAA5237Q5LIQYJOHHFAWDXZ7NM", "isAssetAnchored": true }
+      ],
+      "latencyAvgSeconds": 0.448,
+      "latencyRounds": [1.120, 0.111, 0.113],
+      "invalidReason": null,
+      "notes": "European corridor only. Anchors EURC (Euro). High cold-start latency (1.12s first round), then fast. No USD or USDC support."
+    },
+    {
+      "anchorKey": "ultrastellar",
+      "homeDomain": "ultrastellar.com",
+      "tomlUrl": "https://ultrastellar.com/.well-known/stellar.toml",
+      "httpStatus": 200,
+      "valid": true,
+      "networkPassphrase": "Public Global Stellar Network ; September 2015",
+      "transferServerSep24": "https://ultracapital.xyz/sep24",
+      "webAuthEndpoint": "https://ultracapital.xyz/auth",
+      "supportedAssets": [],
+      "latencyAvgSeconds": 0.584,
+      "latencyRounds": [0.572, 0.625, 0.557],
+      "invalidReason": null,
+      "notes": "Transfer server on different domain (ultracapital.xyz) than home domain (ultrastellar.com). No asset list in toml. Limited public documentation. Unknown corridor support."
+    },
+    {
+      "anchorKey": "bitso",
+      "homeDomain": "bitso.com",
+      "tomlUrl": "https://bitso.com/.well-known/stellar.toml",
+      "httpStatus": 302,
+      "valid": false,
+      "networkPassphrase": null,
+      "transferServerSep24": null,
+      "webAuthEndpoint": null,
+      "supportedAssets": [],
+      "latencyAvgSeconds": 7.917,
+      "latencyRounds": [7.917],
+      "invalidReason": "stellar.toml returns HTTP 302 redirect with 7.9s timeout. No SEP-24 or WEB_AUTH endpoints discoverable at base domain.",
+      "notes": "Bitso likely requires direct business partnership to access Stellar SEP endpoints. Not publicly discoverable."
+    },
+    {
+      "anchorKey": "tempo",
+      "homeDomain": "tempo.eu.com",
+      "tomlUrl": "https://tempo.eu.com/.well-known/stellar.toml",
+      "httpStatus": 0,
+      "valid": false,
+      "networkPassphrase": null,
+      "transferServerSep24": null,
+      "webAuthEndpoint": null,
+      "supportedAssets": [],
+      "latencyAvgSeconds": null,
+      "latencyRounds": [],
+      "invalidReason": "Connection timeout (HTTP 000). Domain unreachable.",
+      "notes": "tempo.eu.com is not responding. Service may have been discontinued or domain moved."
+    },
+    {
+      "anchorKey": "cowrie",
+      "homeDomain": "cowrie.exchange",
+      "tomlUrl": "https://cowrie.exchange/.well-known/stellar.toml",
+      "httpStatus": 200,
+      "valid": false,
+      "networkPassphrase": null,
+      "transferServerSep24": null,
+      "webAuthEndpoint": "https://api.cowrie.exchange/web_auth",
+      "supportedAssets": [],
+      "latencyAvgSeconds": 0.394,
+      "latencyRounds": [0.394],
+      "invalidReason": "WEB_AUTH_ENDPOINT present but TRANSFER_SERVER_SEP0024 missing. Cannot initiate SEP-24 interactive withdrawals.",
+      "notes": "Partial SEP-10 support only. Missing SEP-24 transfer server endpoint."
+    },
+    {
+      "anchorKey": "stronghold",
+      "homeDomain": "stronghold.co",
+      "tomlUrl": "https://stronghold.co/.well-known/stellar.toml",
+      "httpStatus": 200,
+      "valid": false,
+      "networkPassphrase": null,
+      "transferServerSep24": null,
+      "webAuthEndpoint": null,
+      "supportedAssets": [],
+      "latencyAvgSeconds": 0.276,
+      "latencyRounds": [0.276],
+      "invalidReason": "No TRANSFER_SERVER_SEP0024 or WEB_AUTH_ENDPOINT in stellar.toml. Stronghold no longer operates a public Stellar SEP-24 anchor.",
+      "notes": "stellar.toml file exists but contains no SEP anchor endpoints."
+    },
+    {
+      "anchorKey": "circle",
+      "homeDomain": "centre.io",
+      "tomlUrl": "https://centre.io/.well-known/stellar.toml",
+      "httpStatus": 200,
+      "valid": false,
+      "networkPassphrase": null,
+      "transferServerSep24": null,
+      "webAuthEndpoint": null,
+      "supportedAssets": [
+        {
+          "code": "USDC",
+          "issuer": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+          "isAssetAnchored": true,
+          "anchorAssetType": "fiat",
+          "anchorAsset": "USD"
+        }
+      ],
+      "latencyAvgSeconds": null,
+      "latencyRounds": [],
+      "invalidReason": "centre.io is the USDC ISSUER, not a SEP-24 anchor. No TRANSFER_SERVER_SEP0024 or WEB_AUTH_ENDPOINT in stellar.toml. Interactive withdrawal via SEP-24 is not offered by Circle/Centre directly.",
+      "notes": "This was the original v1 adapter configuration. Circle issues USDC on Stellar but delegates SEP-24 withdrawal to partners like MoneyGram. The issuer address GA5ZSEJ... remains correct and is used for USDC asset identification."
+    }
+  ],
+  "summary": {
+    "totalProbed": 10,
+    "valid": 5,
+    "invalid": 5,
+    "validAnchors": ["moneygram", "testanchor", "anclap", "mykobo", "ultrastellar"],
+    "invalidAnchors": ["bitso", "tempo", "cowrie", "stronghold", "circle"]
+  }
+}

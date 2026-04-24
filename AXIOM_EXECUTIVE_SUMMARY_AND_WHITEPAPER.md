@@ -73,7 +73,7 @@ The core thesis: disciplined savings behavior, transparent treasury operations, 
 ├──────────────────────────────────────────────────────────────────┤
 │  EXTERNAL INTEGRATIONS                                           │
 │  Google Gemini AI · Alpha Vantage · CoinGecko · ATTOM Data      │
-│  Stripe · Resend · Discord · Supabase · Google Cloud Storage    │
+│  Resend · Discord · Supabase · Google Cloud Storage             │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -827,7 +827,7 @@ The Axiom Protocol Design Law mandates:
 | Web3 | ethers.js, viem, MetaMask SDK |
 | AI | Google Gemini (via Replit Integrations) |
 | Email | Resend |
-| Payments | Stripe |
+| Consumer Payments | On-chain AXUSD on Arbitrum One (Stripe removed — task #230) |
 | Storage | Google Cloud Storage, Storacha (IPFS) |
 | Charts | Recharts, Chart.js, Lightweight Charts |
 | Auth | SIWE, Supabase |

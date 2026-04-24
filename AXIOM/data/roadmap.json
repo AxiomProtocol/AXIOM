@@ -1,0 +1,573 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-01-15T00:00:00.000Z",
+  "phases": [
+    {
+      "id": "phase-1",
+      "order": 1,
+      "name": "Build the Balance Sheet",
+      "summary": "Establish foundational capital products that generate yield from real-world assets and create the core balance sheet for the Axiom ecosystem.",
+      "status": "Published",
+      "products": [
+        {
+          "id": "product-1",
+          "order": 1,
+          "name": "Axiom High Yield Savings",
+          "tagline": "Earn competitive yields backed by real estate cash flows",
+          "strategicValue": "Creates the first on-ramp for capital into the Axiom ecosystem. Establishes trust through transparent, yield-generating accounts backed by real assets.",
+          "targetUsers": "Retail investors, crypto-native savers, community members seeking stable yields",
+          "revenueModel": "Spread between lending rates and deposit yields, management fees on AUM",
+          "legalNotes": "Structured as participation in lending pool returns under SEC Reg D 506(c)",
+          "onchainModules": "AXUSD VaultEngine, Yield Distribution Router, Balance Tracking SBT",
+          "offchainModules": "KYC verification, investor onboarding, reporting portal",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-1-1",
+              "order": 1,
+              "name": "Smart Contract Development",
+              "description": "Deploy savings vault contracts with yield distribution logic",
+              "targetDate": "2026-Q1",
+              "owner": "Engineering",
+              "status": "Done"
+            },
+            {
+              "id": "m-1-2",
+              "order": 2,
+              "name": "Investor Portal Launch",
+              "description": "Launch web interface for deposits, withdrawals, and yield tracking",
+              "targetDate": "2026-Q2",
+              "owner": "Product",
+              "status": "Done"
+            }
+          ]
+        },
+        {
+          "id": "product-2",
+          "order": 2,
+          "name": "Axiom Mortgage Notes",
+          "tagline": "Fractional ownership in performing real estate loans",
+          "strategicValue": "Enables community participation in private credit markets previously reserved for institutions. Diversifies protocol revenue through loan origination fees.",
+          "targetUsers": "Accredited investors, family offices, crypto funds seeking real-world yield",
+          "revenueModel": "Origination fees (1-2%), servicing fees (0.25-0.5% annually), spread on interest",
+          "legalNotes": "SEC Reg D 506(c) compliant offering, accredited investor verification required",
+          "onchainModules": "LoanReceiptNFT (ERC-721), RepaymentRouter, FixFlipPoolVault (ERC-4626)",
+          "offchainModules": "Loan origination system, borrower underwriting, payment servicing",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-2-1",
+              "order": 1,
+              "name": "Fix-and-Flip Pool Launch",
+              "description": "Deploy first lending pool for bridge loans",
+              "targetDate": "2026-Q1",
+              "owner": "Axiom Nexus",
+              "status": "Done"
+            },
+            {
+              "id": "m-2-2",
+              "order": 2,
+              "name": "DSCR Rental Loans",
+              "description": "Expand to long-term rental property financing",
+              "targetDate": "2026-Q2",
+              "owner": "Axiom Nexus",
+              "status": "Done"
+            }
+          ]
+        },
+        {
+          "id": "product-3",
+          "order": 3,
+          "name": "Axiom Rent Streams",
+          "tagline": "Tokenized rental income from real properties",
+          "strategicValue": "Creates predictable cash flow streams that back AXUSD minting. Connects physical property performance to on-chain settlement.",
+          "targetUsers": "Yield-focused investors, protocol treasury, liquidity providers",
+          "revenueModel": "Property management fees, rent collection fees, protocol revenue share",
+          "legalNotes": "Structured as revenue participation agreements with property SPVs",
+          "onchainModules": "RentStreamNFT, AXUSDRevenueRouter, PropertyRegistry",
+          "offchainModules": "Property management integration, rent collection, tenant screening",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-3-1",
+              "order": 1,
+              "name": "Pilot Properties",
+              "description": "Onboard first 5 rental properties to the platform",
+              "targetDate": "2026-Q2",
+              "owner": "Operations",
+              "status": "Done"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "order": 2,
+      "name": "Turn Capital Into Infrastructure",
+      "summary": "Deploy accumulated capital into land acquisition and community development projects that create long-term value and infrastructure.",
+      "status": "Published",
+      "products": [
+        {
+          "id": "product-4",
+          "order": 1,
+          "name": "Community Land Funds",
+          "tagline": "Collective ownership of strategic land parcels",
+          "strategicValue": "Enables community-scale land acquisition that individuals cannot achieve alone. Creates physical infrastructure for the Axiom ecosystem.",
+          "targetUsers": "Community members, stewards, land-focused investors",
+          "revenueModel": "Land appreciation, development fees, lease income, token value accrual",
+          "legalNotes": "SEC Reg CF compliant crowdfunding with tokenized land options",
+          "onchainModules": "LandOptionNFT, CommunityPoolVault, GovernanceVoting",
+          "offchainModules": "Property sourcing, due diligence, title verification, steward coordination",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-4-1",
+              "order": 1,
+              "name": "Land Acquisition Pipeline",
+              "description": "Establish property sourcing and evaluation workflow",
+              "targetDate": "2026-Q1",
+              "owner": "Land Team",
+              "status": "Done"
+            },
+            {
+              "id": "m-4-2",
+              "order": 2,
+              "name": "First Community Purchase",
+              "description": "Complete first community-funded land acquisition",
+              "targetDate": "2026-Q3",
+              "owner": "Land Team",
+              "status": "Planned"
+            }
+          ]
+        },
+        {
+          "id": "product-5",
+          "order": 2,
+          "name": "Builder and Farmer Credit",
+          "tagline": "Working capital for land development and agriculture",
+          "strategicValue": "Finances productive use of community land. Creates circular economy where development generates returns that fund more development.",
+          "targetUsers": "Builders, farmers, contractors, community developers",
+          "revenueModel": "Interest on working capital loans, equipment financing fees, harvest revenue share",
+          "legalNotes": "Commercial lending under state regulations, collateralized by equipment and crops",
+          "onchainModules": "WorkingCapitalPool, CollateralRegistry, RepaymentScheduler",
+          "offchainModules": "Borrower underwriting, equipment appraisal, crop monitoring",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-5-1",
+              "order": 1,
+              "name": "Credit Framework Design",
+              "description": "Define underwriting criteria and loan structures",
+              "targetDate": "2026-Q3",
+              "owner": "Credit Team",
+              "status": "Planned"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "order": 3,
+      "name": "Turn Axiom Into a Financial State",
+      "summary": "Establish Axiom as a self-sustaining financial ecosystem with its own credit creation, insurance, and treasury management capabilities.",
+      "status": "Published",
+      "products": [
+        {
+          "id": "product-6",
+          "order": 1,
+          "name": "AXUSD Credit Lines",
+          "tagline": "Borrow against your Axiom assets without selling",
+          "strategicValue": "Enables community members to access liquidity without exiting positions. Creates demand for AXUSD and deepens ecosystem engagement.",
+          "targetUsers": "AXM holders, property owners, protocol participants",
+          "revenueModel": "Interest on credit lines, origination fees, liquidation penalties",
+          "legalNotes": "Collateralized lending with automated liquidation, no securities involved",
+          "onchainModules": "CreditLineVault, CollateralManager, LiquidationEngine, AxiomScoreSBT",
+          "offchainModules": "Credit scoring integration, notification system, position monitoring",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-6-1",
+              "order": 1,
+              "name": "Collateral Framework",
+              "description": "Define acceptable collateral types and LTV ratios",
+              "targetDate": "2026-Q4",
+              "owner": "Risk Team",
+              "status": "Done"
+            },
+            {
+              "id": "m-6-2",
+              "order": 2,
+              "name": "Investor Portal Launch",
+              "description": "Launch web interface for borrowing, repayment, and position tracking",
+              "targetDate": "2026-Q4",
+              "owner": "Product",
+              "status": "Done"
+            }
+          ]
+        },
+        {
+          "id": "product-7",
+          "order": 2,
+          "name": "Insurance Pools",
+          "tagline": "Community-backed protection for protocol participants",
+          "strategicValue": "Reduces systemic risk and increases confidence in protocol participation. Creates additional yield opportunities for capital providers.",
+          "targetUsers": "Risk-averse participants, capital providers seeking premium income",
+          "revenueModel": "Insurance premiums, investment returns on reserves, reinsurance fees",
+          "legalNotes": "Structured as risk-sharing pool, not licensed insurance product",
+          "onchainModules": "InsurancePool, ClaimsProcessor, PremiumDistributor, SusuInsuranceFund",
+          "offchainModules": "Claims assessment, actuarial modeling, reserve management",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-7-1",
+              "order": 1,
+              "name": "Risk Model Development",
+              "description": "Build actuarial models for protocol risks",
+              "targetDate": "2026-Q4",
+              "owner": "Risk Team",
+              "status": "Done"
+            },
+            {
+              "id": "m-7-2",
+              "order": 2,
+              "name": "Coverage Portal Launch",
+              "description": "Launch web interface for purchasing coverage and filing claims",
+              "targetDate": "2026-Q4",
+              "owner": "Product",
+              "status": "Done"
+            }
+          ]
+        },
+        {
+          "id": "product-8",
+          "order": 3,
+          "name": "Axiom Treasury Notes",
+          "tagline": "Fixed-income instruments backed by protocol revenue",
+          "strategicValue": "Creates institutional-grade fixed income product. Establishes Axiom as issuer of sovereign-like debt instruments.",
+          "targetUsers": "Institutional investors, treasuries, conservative allocators",
+          "revenueModel": "Spread between note yields and treasury investment returns",
+          "legalNotes": "SEC Reg D 506(c) offering, fixed maturity and coupon structure",
+          "onchainModules": "TreasuryNote (ERC-1155), CouponDistributor, MaturityProcessor",
+          "offchainModules": "Investor relations, quarterly reporting, rating agency liaison",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-8-1",
+              "order": 1,
+              "name": "Structure Design",
+              "description": "Define note terms, maturities, and coupon structures",
+              "targetDate": "2026-Q4",
+              "owner": "Treasury",
+              "status": "Done"
+            },
+            {
+              "id": "m-8-2",
+              "order": 2,
+              "name": "Investment Portal Launch",
+              "description": "Launch web interface for note purchases and coupon tracking",
+              "targetDate": "2026-Q4",
+              "owner": "Product",
+              "status": "Done"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "order": 4,
+      "name": "Arbitrum Infrastructure Evolution",
+      "summary": "Leverage Arbitrum's latest infrastructure upgrades including Stylus smart contracts, Orbit L3, gasless transactions, and institutional protocol integrations to enhance performance, reduce costs, and prepare for Universe Blockchain migration.",
+      "status": "Published",
+      "products": [
+        {
+          "id": "product-9",
+          "order": 1,
+          "name": "Stylus Smart Contracts",
+          "tagline": "30%+ gas savings with Rust/WASM contracts",
+          "strategicValue": "Migrate compute-intensive contracts to Stylus for major gas cost reduction. Enables complex operations like credit scoring and liquidations at lower cost while maintaining EVM interoperability.",
+          "targetUsers": "All protocol users benefit from reduced transaction costs",
+          "revenueModel": "Cost reduction increases protocol competitiveness and user retention",
+          "legalNotes": "Technical upgrade, no regulatory changes required",
+          "onchainModules": "AxiomScoreSBT (Rust), SEEDLock (Rust), Liquidator (Rust), TradingRewards (Rust)",
+          "offchainModules": "Rust toolchain, Cargo Stylus CLI, Motsu testing framework",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-9-1",
+              "order": 1,
+              "name": "Development Environment Setup",
+              "description": "Configure Rust toolchain, Stylus SDK, and testnet deployment pipeline",
+              "targetDate": "2026-Q2",
+              "owner": "Engineering",
+              "status": "Pending"
+            },
+            {
+              "id": "m-9-2",
+              "order": 2,
+              "name": "AxiomScoreSBT Migration",
+              "description": "Port credit score calculation logic to Rust and deploy to testnet",
+              "targetDate": "2026-Q2",
+              "owner": "Engineering",
+              "status": "Pending"
+            },
+            {
+              "id": "m-9-3",
+              "order": 3,
+              "name": "Stylus Sprint Grant Application",
+              "description": "Submit proposal for 5M ARB Stylus Sprint grant program",
+              "targetDate": "2026-Q2",
+              "owner": "Operations",
+              "status": "Pending"
+            },
+            {
+              "id": "m-9-4",
+              "order": 4,
+              "name": "Production Deployment",
+              "description": "Deploy audited Stylus contracts to Arbitrum One mainnet",
+              "targetDate": "2026-Q3",
+              "owner": "Engineering",
+              "status": "Pending"
+            }
+          ]
+        },
+        {
+          "id": "product-10",
+          "order": 2,
+          "name": "RWA Infrastructure Integration",
+          "tagline": "Connect to $1.1B+ tokenized asset ecosystem",
+          "strategicValue": "Position Axiom's real estate products within Arbitrum's institutional RWA ecosystem. Access STEP 2.0 grants and partnerships with BlackRock BUIDL, Franklin Templeton BENJI, and other institutional players.",
+          "targetUsers": "Institutional investors, accredited investors, protocol treasury",
+          "revenueModel": "Enhanced liquidity, institutional capital access, grant funding",
+          "legalNotes": "Maintain SEC Reg D 506(c) compliance for institutional integrations",
+          "onchainModules": "Cross-collateral adapters, BUIDL integration, treasury diversification",
+          "offchainModules": "Institutional partnerships, STEP 2.0 grant coordination",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-10-1",
+              "order": 1,
+              "name": "STEP 2.0 Grant Application",
+              "description": "Submit proposal to ArbitrumDAO for RWA lending infrastructure funding",
+              "targetDate": "2026-Q2",
+              "owner": "Operations",
+              "status": "Pending"
+            },
+            {
+              "id": "m-10-2",
+              "order": 2,
+              "name": "BlackRock BUIDL Assessment",
+              "description": "Technical and legal assessment of BUIDL integration for treasury backing",
+              "targetDate": "2026-Q3",
+              "owner": "Treasury",
+              "status": "Pending"
+            },
+            {
+              "id": "m-10-3",
+              "order": 3,
+              "name": "Institutional Partner Onboarding",
+              "description": "Establish relationships with 2+ institutional RWA protocols on Arbitrum",
+              "targetDate": "2026-Q4",
+              "owner": "Business Development",
+              "status": "Pending"
+            }
+          ]
+        },
+        {
+          "id": "product-11",
+          "order": 3,
+          "name": "Timeboost MEV Protection",
+          "tagline": "Fair transaction ordering for DEX and liquidations",
+          "strategicValue": "Protect users from front-running and sandwich attacks on DEX trades and liquidations. Timeboost has generated $5M+ in protocol revenue on Arbitrum.",
+          "targetUsers": "DEX traders, liquidation participants, all swap users",
+          "revenueModel": "Reduced slippage improves user retention and trading volume",
+          "legalNotes": "Technical infrastructure upgrade",
+          "onchainModules": "DEX V2 Router integration, Liquidator priority settings",
+          "offchainModules": "MEV analytics dashboard, protection monitoring",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-11-1",
+              "order": 1,
+              "name": "Timeboost Integration",
+              "description": "Enable Timeboost for DEX V2 and liquidation transactions",
+              "targetDate": "2026-Q3",
+              "owner": "Engineering",
+              "status": "Pending"
+            },
+            {
+              "id": "m-11-2",
+              "order": 2,
+              "name": "MEV Analytics Dashboard",
+              "description": "Build monitoring dashboard for MEV protection effectiveness",
+              "targetDate": "2026-Q3",
+              "owner": "Product",
+              "status": "Pending"
+            }
+          ]
+        },
+        {
+          "id": "product-12",
+          "order": 4,
+          "name": "Universe Blockchain L3",
+          "tagline": "Axiom's sovereign Layer 3 on Arbitrum Orbit",
+          "strategicValue": "Launch dedicated L3 with custom gas tokens (AXM/AXUSD), near-instant finality, and full ecosystem control. L3s settling to Arbitrum One are exempt from 10% revenue sharing.",
+          "targetUsers": "All Axiom ecosystem participants",
+          "revenueModel": "Full sequencer revenue capture, custom tokenomics",
+          "legalNotes": "Requires legal review of sovereign chain implications",
+          "onchainModules": "Orbit deployment, custom precompiles, bridge contracts",
+          "offchainModules": "RaaS partnership (Zeeve/Ankr), block explorer, L3 infrastructure",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-12-1",
+              "order": 1,
+              "name": "L3 Architecture Design",
+              "description": "Define gas token, DA layer, block time, and custom precompiles",
+              "targetDate": "2026-Q3",
+              "owner": "Engineering",
+              "status": "Pending"
+            },
+            {
+              "id": "m-12-2",
+              "order": 2,
+              "name": "RaaS Partner Selection",
+              "description": "Evaluate and select Zeeve, Ankr, or Alchemy for deployment support",
+              "targetDate": "2026-Q3",
+              "owner": "Operations",
+              "status": "Pending"
+            },
+            {
+              "id": "m-12-3",
+              "order": 3,
+              "name": "Testnet Launch",
+              "description": "Deploy Universe Blockchain testnet with full contract suite",
+              "targetDate": "2026-Q4",
+              "owner": "Engineering",
+              "status": "Pending"
+            },
+            {
+              "id": "m-12-4",
+              "order": 4,
+              "name": "Mainnet Migration",
+              "description": "Production launch with liquidity incentives and user migration",
+              "targetDate": "2027-Q1",
+              "owner": "Engineering",
+              "status": "Pending"
+            }
+          ]
+        },
+        {
+          "id": "product-13",
+          "order": 5,
+          "name": "ArbOS Dia Upgrade Adoption",
+          "tagline": "Predictable fees and native account abstraction",
+          "strategicValue": "Adopt ArbOS Dia features for better UX including predictable gas pricing, EIP-7702 account abstraction, and Ethereum Fusaka compatibility.",
+          "targetUsers": "New users (gasless onboarding), all protocol participants",
+          "revenueModel": "Improved onboarding increases user acquisition and retention",
+          "legalNotes": "Technical upgrade, follows Arbitrum network timeline",
+          "onchainModules": "Account abstraction wallets, fee prediction modules",
+          "offchainModules": "Gasless transaction relayer, social recovery infrastructure",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-13-1",
+              "order": 1,
+              "name": "ArbOS Dia Compatibility",
+              "description": "Test and update contracts for ArbOS Dia compatibility",
+              "targetDate": "2026-Q2",
+              "owner": "Engineering",
+              "status": "Pending"
+            },
+            {
+              "id": "m-13-2",
+              "order": 2,
+              "name": "Account Abstraction Wallets",
+              "description": "Enable gasless transactions and social recovery for new users",
+              "targetDate": "2026-Q3",
+              "owner": "Product",
+              "status": "Pending"
+            }
+          ]
+        },
+        {
+          "id": "product-14",
+          "order": 6,
+          "name": "1inch Gasless Swaps",
+          "tagline": "Trade without holding ETH for gas",
+          "strategicValue": "Integrate 1inch gasless swap functionality allowing users to trade without ETH. Supports AXUSD-only ecosystem experience.",
+          "targetUsers": "New users without ETH, AXUSD-native participants",
+          "revenueModel": "Reduced friction increases swap volume and protocol fees",
+          "legalNotes": "Third-party integration, standard API terms",
+          "onchainModules": "1inch Fusion+ integration, DEX V2 gasless router",
+          "offchainModules": "Gasless transaction signing, fee token configuration",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-14-1",
+              "order": 1,
+              "name": "1inch API Integration",
+              "description": "Integrate 1inch Fusion+ API for gasless swaps",
+              "targetDate": "2026-Q3",
+              "owner": "Engineering",
+              "status": "Pending"
+            },
+            {
+              "id": "m-14-2",
+              "order": 2,
+              "name": "AXUSD Gas Payment",
+              "description": "Enable AXUSD as gas payment token for ecosystem transactions",
+              "targetDate": "2026-Q4",
+              "owner": "Engineering",
+              "status": "Pending"
+            }
+          ]
+        },
+        {
+          "id": "product-15",
+          "order": 7,
+          "name": "Institutional Protocol Partnerships",
+          "tagline": "Morpho, Euler, and Maple Finance integrations",
+          "strategicValue": "Partner with leading institutional lending protocols on Arbitrum to create AXUSD lending markets, access institutional liquidity, and enable loan syndication.",
+          "targetUsers": "Institutional investors, yield optimizers, large borrowers",
+          "revenueModel": "Yield optimization fees, partnership revenue share",
+          "legalNotes": "Each integration requires legal review of structure",
+          "onchainModules": "Morpho market adapter, Euler vault integration, Maple pool participation",
+          "offchainModules": "Institutional relationship management, risk monitoring",
+          "status": "Published",
+          "milestones": [
+            {
+              "id": "m-15-1",
+              "order": 1,
+              "name": "Morpho AXUSD Market",
+              "description": "Deploy AXUSD lending market on Morpho with optimized risk parameters",
+              "targetDate": "2026-Q3",
+              "owner": "DeFi Team",
+              "status": "Pending"
+            },
+            {
+              "id": "m-15-2",
+              "order": 2,
+              "name": "Euler Integration Assessment",
+              "description": "Technical and risk assessment for Euler protocol integration",
+              "targetDate": "2026-Q4",
+              "owner": "Engineering",
+              "status": "Pending"
+            },
+            {
+              "id": "m-15-3",
+              "order": 3,
+              "name": "Maple Finance Partnership",
+              "description": "Establish DSCR loan syndication pipeline with Maple Finance",
+              "targetDate": "2027-Q1",
+              "owner": "Business Development",
+              "status": "Pending"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

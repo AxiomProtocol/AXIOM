@@ -1,0 +1,88 @@
+{
+  "name": "Universe Blockchain - Phase 1 (Private)",
+  "description": "Developer-only permissioned testnet for Axiom Smart City internal testing",
+  "mode": "private",
+  "network": "testnet",
+  
+  "chain": {
+    "chainId": 888777,
+    "chainName": "Universe Testnet (Private)",
+    "nativeCurrency": {
+      "name": "Axiom",
+      "symbol": "AXM",
+      "decimals": 18
+    },
+    "blockTime": 250,
+    "gasLimit": 64000000
+  },
+
+  "deployment": {
+    "parentChain": "arbitrum-sepolia",
+    "rollupType": "rollup",
+    "dataAvailability": "onchain",
+    "useCustomGasToken": true
+  },
+
+  "access": {
+    "mode": "permissioned",
+    "description": "Only whitelisted addresses can submit transactions",
+    "publicLaunchDate": "TBD - After 3-6 months of successful private operation"
+  },
+
+  "addresses": {
+    "owner": "REQUIRED - Your multi-sig address that controls the chain",
+    "validators": ["REQUIRED - Validator addresses (can be same as owner for Phase 1)"],
+    "batchPosters": ["REQUIRED - Batch poster addresses (can be same as owner for Phase 1)"],
+    "allowedSenders": [
+      "REQUIRED - Your development wallet #1",
+      "REQUIRED - Your development wallet #2",
+      "REQUIRED - Any other addresses that need access"
+    ],
+    "axmToken": "REQUIRED - AXM ERC20 address on Arbitrum Sepolia"
+  },
+
+  "costs": {
+    "raasSetup": "$25,000 - $30,000",
+    "monthlyOperations": "$5,000 - $10,000 (lower volume, private use)",
+    "testnetEthRequired": "1.5 ETH on Arbitrum Sepolia",
+    "totalPhase1": "$30,000 - $40,000"
+  },
+
+  "timeline": {
+    "preparation": "1-2 weeks",
+    "deployment": "1 week",
+    "testing": "3-6 months",
+    "publicAudits": "After proven stable",
+    "publicLaunch": "6-9 months from start"
+  },
+
+  "features": {
+    "enabled": [
+      "AXM as native gas token",
+      "Developer wallet whitelisting",
+      "Full smart contract deployment",
+      "Real estate tokenization testing",
+      "Banking product testing",
+      "DePIN infrastructure testing",
+      "Treasury auto-swap validation"
+    ],
+    "disabled": [
+      "Public transaction submission",
+      "Public block explorer (optional)",
+      "Marketing/publicity"
+    ]
+  },
+
+  "exitStrategy": {
+    "ifSuccessful": "Remove whitelist, complete audits, go public",
+    "ifUnsuccessful": "Gracefully shutdown, migrate back to Arbitrum One",
+    "dataBackup": "All transaction data posted to Arbitrum Sepolia (permanent record)"
+  },
+
+  "metrics": {
+    "targetTPS": "100-500 (private use)",
+    "targetCostPerTx": "$0.01 - $0.05",
+    "uptimeTarget": "99%+ (internal use, less critical than public)",
+    "testTransactions": "100,000+ before public launch"
+  }
+}

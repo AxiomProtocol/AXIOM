@@ -1,0 +1,45 @@
+{
+  "title": "Tribevest | Contact",
+  "headings": [
+    {
+      "level": "h1",
+      "text": "Contact us."
+    },
+    {
+      "level": "h3",
+      "text": "General Inquiries & Support"
+    },
+    {
+      "level": "h3",
+      "text": "Address"
+    }
+  ],
+  "features": [],
+  "buttons": [
+    {
+      "type": "login",
+      "text": "login",
+      "url": "https://app.tribevest.com/login"
+    },
+    {
+      "type": "login",
+      "text": "login",
+      "url": "https://app.tribevest.com/login"
+    },
+    {
+      "type": "signup",
+      "text": "get started",
+      "url": "https://6mwuftnqt4v.typeform.com/to/xZk799cA?utm_source=xxxxx&utm_medium=xxxxx"
+    },
+    {
+      "type": "login",
+      "text": "login",
+      "url": "https://app.tribevest.com/login"
+    },
+    {
+      "type": "signup",
+      "text": "get started",
+      "url": "https://6mwuftnqt4v.typeform.com/to/xZk799cA"
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+[
+  {
+    "role": "Main Distributor",
+    "originalAddress": "0xCe36333A88c2EA01f28f63131fA7dfa80AD021F6",
+    "testAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "amount": "1500.0",
+    "share": "15%",
+    "timestamp": "2025-04-23T11:01:19.658Z"
+  },
+  {
+    "role": "Treasury",
+    "originalAddress": "0x26A8401287cE33CC4aeb5a106cd6D282a9C2f51d",
+    "testAddress": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    "amount": "2000.0",
+    "share": "20%",
+    "timestamp": "2025-04-23T11:01:19.676Z"
+  },
+  {
+    "role": "Service Wallet",
+    "originalAddress": "0x7456BB1ab2FBb40B67807563595Cb6c9698d9aA1",
+    "testAddress": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+    "amount": "500.0",
+    "share": "5%",
+    "timestamp": "2025-04-23T11:01:19.695Z"
+  },
+  {
+    "role": "OTC Buyer 1",
+    "originalAddress": "0x7E9A4698788d582F3B99364071f539841693201",
+    "testAddress": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+    "amount": "500.0",
+    "share": "5%",
+    "timestamp": "2025-04-23T11:01:19.714Z"
+  },
+  {
+    "role": "Dividend Holder 1",
+    "originalAddress": "0x50f7022033Ce4b1c025D7bFE56d0C27020Ae2Fe3",
+    "testAddress": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+    "amount": "500.0",
+    "share": "5%",
+    "timestamp": "2025-04-23T11:01:19.733Z"
+  },
+  {
+    "role": "Dividend Holder 2",
+    "originalAddress": "0xEb02b2bC1CEb07F0B9bb78A8467CeB090A4643Fc",
+    "testAddress": "0x976EA74026E726554dB657fA54763abd0C3a0aa9",
+    "amount": "500.0",
+    "share": "5%",
+    "timestamp": "2025-04-23T11:01:19.755Z"
+  },
+  {
+    "role": "Dividend Holder 3",
+    "originalAddress": "0x3cCC9DEB6121aB5733a9F5715Dc92f4a40ED872A",
+    "testAddress": "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955",
+    "amount": "500.0",
+    "share": "5%",
+    "timestamp": "2025-04-23T11:01:19.774Z"
+  },
+  {
+    "role": "Dividend Holder 4",
+    "originalAddress": "0x750a4dbc335D9de258D9d8297C002c4E002FdE34",
+    "testAddress": "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f",
+    "amount": "500.0",
+    "share": "5%",
+    "timestamp": "2025-04-23T11:01:19.793Z"
+  },
+  {
+    "role": "OTC Buyer 2",
+    "originalAddress": "0x613afBE121004958cE6000CB2B14D1c8B0CbbB9",
+    "testAddress": "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720",
+    "amount": "500.0",
+    "share": "5%",
+    "timestamp": "2025-04-23T11:01:19.811Z"
+  },
+  {
+    "role": "Liquidity Manager",
+    "originalAddress": "0x2A5269E92C48829fdF21D8892c23E894B11D15e3",
+    "testAddress": "0xBcd4042DE499D14e55001CcbB24a551F3b954096",
+    "amount": "500.0",
+    "share": "5%",
+    "timestamp": "2025-04-23T11:01:19.828Z"
+  },
+  {
+    "role": "OTC Buyer 3",
+    "originalAddress": "0xE6a77F0B7Fe41fe01661b8BD82aaDF95DBAA5E79",
+    "testAddress": "0x71bE63f3384f5fb98995898A86B02Fb2426c5788",
+    "amount": "500.0",
+    "share": "5%",
+    "timestamp": "2025-04-23T11:01:19.843Z"
+  },
+  {
+    "role": "OTC Buyer 4",
+    "originalAddress": "0xCeDdb7dF2F6f1e1caC7AC767337A38Ab1D85e1eD",
+    "testAddress": "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a",
+    "amount": "500.0",
+    "share": "5%",
+    "timestamp": "2025-04-23T11:01:19.859Z"
+  },
+  {
+    "role": "LP Wallet 1",
+    "originalAddress": "0x62c62b5Bc31cA7F04910d6Be28d74E07D82b4A5",
+    "testAddress": "0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec",
+    "amount": "300.0",
+    "share": "3%",
+    "timestamp": "2025-04-23T11:01:19.876Z"
+  },
+  {
+    "role": "LP Wallet 2",
+    "originalAddress": "0x5013Ae54fBaEC83106afA6cD26C06Ba64D2f718d",
+    "testAddress": "0xdF3e18d64BC6A983f673Ab319CCaE4f1a57C7097",
+    "amount": "300.0",
+    "share": "3%",
+    "timestamp": "2025-04-23T11:01:19.892Z"
+  },
+  {
+    "role": "LP Wallet 3",
+    "originalAddress": "0x62850718f02f8f5874c0ADf156876eF01Ae8bE8C",
+    "testAddress": "0xcd3B766CCDd6AE721141F452C550Ca635964ce71",
+    "amount": "300.0",
+    "share": "3%",
+    "timestamp": "2025-04-23T11:01:19.909Z"
+  },
+  {
+    "role": "Governance Wallet",
+    "originalAddress": "0x8Af139af51Fc53DD7575e331Fbb039Cf029e2DF",
+    "testAddress": "0x2546BcD3c84621e976D8185a91A922aE77ECEc30",
+    "amount": "300.0",
+    "share": "3%",
+    "timestamp": "2025-04-23T11:01:19.925Z"
+  },
+  {
+    "role": "Reward Collector",
+    "originalAddress": "0xFE60C780Ba081a03F211d7eadD4ABcd34B60f78F",
+    "testAddress": "0xbDA5747bFD65F08deb54cb465eB87D40e51B197E",
+    "amount": "300.0",
+    "share": "3%",
+    "timestamp": "2025-04-23T11:01:19.942Z"
+  }
+]

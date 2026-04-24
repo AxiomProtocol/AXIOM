@@ -1,0 +1,83 @@
+{
+  "packetId": "PKT-A-2026-689",
+  "trackType": "PERFORMING",
+  "createdAt": "2026-02-01T00:08:11.288Z",
+  "createdBy": "0x0000000000000000000000000000000000000000",
+  "propertyAddress": "123 Main Street, Atlanta, GA 30301",
+  "propertyType": "SFR",
+  "unpaidPrincipalBalance": 185000,
+  "interestRate": 7.25,
+  "originalLoanAmount": 200000,
+  "originationDate": "2022-06-15",
+  "maturityDate": "2052-06-15",
+  "monthlyPayment": 1364.89,
+  "lienPosition": 1,
+  "servicerName": "ABC Servicing LLC",
+  "status": "ARTIFACTS_PENDING",
+  "paymentHistoryMonths": 18,
+  "lastPaymentDate": "2026-01-15",
+  "propertyValue": 216000,
+  "ltv": 85.6,
+  "artifactIndex": {
+    "paymentHistoryProof": {
+      "cid": "PLACEHOLDER_CID_payment_history",
+      "sha256": "PLACEHOLDER_HASH_payment_history",
+      "filename": "payment-history-18mo.pdf",
+      "uploadedAt": "2026-02-01T00:08:11.288Z"
+    },
+    "servicerStatement": {
+      "cid": "PLACEHOLDER_CID_servicer_statement",
+      "sha256": "PLACEHOLDER_HASH_servicer_statement",
+      "filename": "servicer-statement-jan2026.pdf",
+      "uploadedAt": "2026-02-01T00:08:11.288Z"
+    },
+    "lienPositionVerification": {
+      "cid": "PLACEHOLDER_CID_lien_verification",
+      "sha256": "PLACEHOLDER_HASH_lien_verification",
+      "filename": "title-search-report.pdf",
+      "uploadedAt": "2026-02-01T00:08:11.288Z"
+    },
+    "participationAgreement": {
+      "cid": "PLACEHOLDER_CID_participation_agreement",
+      "sha256": "ea28b05b4a98c5f6f98a6a9aeabbd48ba089e49d387bff9dd9ba1f88d5a306b6",
+      "filename": "track-a-performing.participation-clauses.md",
+      "uploadedAt": "2026-02-01T00:08:11.288Z"
+    },
+    "cashflowSchedule": {
+      "cid": "PLACEHOLDER_CID_cashflow_schedule",
+      "sha256": "PLACEHOLDER_HASH_cashflow_schedule",
+      "filename": "cashflow-schedule.json",
+      "uploadedAt": "2026-02-01T00:08:11.288Z"
+    }
+  },
+  "riskFlags": [],
+  "attestations": [],
+  "underwriting": {
+    "purchasePrice": 170200,
+    "participationAmount": 51060,
+    "impliedYieldRange": "8.2% - 9.1%",
+    "collateralValueEstimate": 216000,
+    "collateralConfidence": "HIGH",
+    "ltvProxy": 85.6,
+    "dscrProxy": null,
+    "riskTier": "LOW",
+    "riskReasonCodes": [],
+    "underwritingHash": "sha256:b0f63f5d66b185b89739ee394a4436c685c3949e71333da074dac6c20295e6b8",
+    "finalizedAt": "2026-02-01T00:08:15.536Z",
+    "finalizedBy": "0x0000000000000000000000000000000000000000",
+    "inputs": {
+      "upb": 185000,
+      "interestRate": 7.25,
+      "monthlyPayment": 1364.89,
+      "propertyValue": 216000,
+      "paymentHistoryMonths": 18
+    },
+    "assumptions": {
+      "purchaseDiscount": 0.08,
+      "participationRatio": 0.3,
+      "cashflowHaircut": 0.05,
+      "vacancyRate": 0,
+      "managementFee": 0
+    }
+  }
+}

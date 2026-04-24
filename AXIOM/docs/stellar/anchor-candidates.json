@@ -1,0 +1,97 @@
+{
+  "generated": "2026-04-05",
+  "purpose": "Candidate SEP-24 anchors evaluated for Axiom Stellar Payments Rail",
+  "sources": ["Stellar ecosystem knowledge", "Direct stellar.toml probing", "Public anchor directories"],
+  "candidates": [
+    {
+      "name": "MoneyGram (Stellar Access)",
+      "anchorKey": "moneygram",
+      "homeDomain": "stellar.moneygram.com",
+      "corridors": ["USDC → USD (US payout)", "USDC → Global fiat"],
+      "region": "Global / US primary",
+      "assetSupport": ["USDC", "USD"],
+      "notes": "MoneyGram's dedicated Stellar anchor via their 'MoneyGram Access' program. Largest remittance network on Stellar. USDC issuer matches Circle's mainnet issuer exactly. Highest institutional credibility."
+    },
+    {
+      "name": "SDF Test Anchor",
+      "anchorKey": "testanchor",
+      "homeDomain": "testanchor.stellar.org",
+      "corridors": ["USDC (testnet) → Test USD", "SRT → Test fiat"],
+      "region": "Global (testnet only)",
+      "assetSupport": ["USDC (testnet)", "SRT", "XLM (native)"],
+      "notes": "Official Stellar Development Foundation test anchor. Runs on Stellar testnet (not mainnet). Perfect for integration testing without real funds. Not suitable for production."
+    },
+    {
+      "name": "Anclap",
+      "anchorKey": "anclap",
+      "homeDomain": "anclap.com",
+      "corridors": ["USDC → ARS (Argentine Peso)", "USDC → PEN (Peruvian Sol)"],
+      "region": "LATAM (Argentina, Peru)",
+      "assetSupport": ["USDC", "ARS", "PEN"],
+      "notes": "Established LATAM Stellar anchor. SEP-6 and SEP-24 both present. No USD payout corridor — focused on South American local currencies."
+    },
+    {
+      "name": "MyKobo",
+      "anchorKey": "mykobo",
+      "homeDomain": "mykobo.co",
+      "corridors": ["EURC → EUR"],
+      "region": "Europe",
+      "assetSupport": ["EURC", "EUR"],
+      "notes": "European Stellar anchor specializing in EURC (Euro stablecoin). SEP-24 and SEP-6 present. Not suitable for USD corridor. Cold-start latency observed."
+    },
+    {
+      "name": "Ultra Stellar",
+      "anchorKey": "ultrastellar",
+      "homeDomain": "ultrastellar.com",
+      "corridors": ["Unknown — no currency metadata in toml"],
+      "region": "Unknown",
+      "assetSupport": ["Unknown"],
+      "notes": "SEP-24 and WEB_AUTH present at ultracapital.xyz subdomain. Transfer server on different domain than home domain. Asset list not publicly disclosed in toml."
+    },
+    {
+      "name": "Bitso",
+      "anchorKey": "bitso",
+      "homeDomain": "bitso.com",
+      "corridors": ["USDC → MXN", "USDC → BRL"],
+      "region": "Mexico, Brazil",
+      "assetSupport": ["USDC", "MXN", "BRL"],
+      "notes": "VALIDATION FAILED — bitso.com stellar.toml returns 302 redirect and does not expose TRANSFER_SERVER_SEP0024 or WEB_AUTH_ENDPOINT at base domain. Likely requires direct API partnership to access Stellar endpoints."
+    },
+    {
+      "name": "Tempo",
+      "anchorKey": "tempo",
+      "homeDomain": "tempo.eu.com",
+      "corridors": ["EUR remittance", "West Africa"],
+      "region": "Europe, West Africa",
+      "assetSupport": ["EUR", "USD"],
+      "notes": "VALIDATION FAILED — tempo.eu.com stellar.toml is unreachable (connection timeout). Domain may have changed or service discontinued."
+    },
+    {
+      "name": "Cowrie Exchange",
+      "anchorKey": "cowrie",
+      "homeDomain": "cowrie.exchange",
+      "corridors": ["XLM → NGN (Nigerian Naira)"],
+      "region": "Nigeria / West Africa",
+      "assetSupport": ["XLM", "NGN"],
+      "notes": "PARTIALLY VALID — WEB_AUTH_ENDPOINT present but no TRANSFER_SERVER_SEP0024. Has SEP-10 auth but does not support interactive SEP-24 withdrawal flow."
+    },
+    {
+      "name": "Stronghold",
+      "anchorKey": "stronghold",
+      "homeDomain": "stronghold.co",
+      "corridors": ["USD stablecoin"],
+      "region": "US",
+      "assetSupport": ["SHx", "USDC"],
+      "notes": "VALIDATION FAILED — stronghold.co stellar.toml has no TRANSFER_SERVER_SEP0024 or WEB_AUTH_ENDPOINT. Stronghold no longer operates a public Stellar SEP-24 anchor."
+    },
+    {
+      "name": "Centre Consortium (Circle USDC issuer)",
+      "anchorKey": "circle",
+      "homeDomain": "centre.io",
+      "corridors": ["USDC issuance only — no SEP-24 withdrawal"],
+      "region": "Global",
+      "assetSupport": ["USDC (issuer only)"],
+      "notes": "INVALID for SEP-24 — centre.io stellar.toml has no TRANSFER_SERVER_SEP0024 or WEB_AUTH_ENDPOINT. Circle is the USDC issuer, not a SEP-24 interactive anchor. This was the original incorrect assumption in v1 of the adapter."
+    }
+  ]
+}

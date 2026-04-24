@@ -1,0 +1,36 @@
+{
+  "name": "sovran-access-bot",
+  "version": "1.0.0",
+  "description": "Telegram Referral Bot for Sovran Vault Network",
+  "main": "sovran-referral-bot.js",
+  "scripts": {
+    "start": "node replit-bot-runner.js",
+    "test": "node test-bot.js",
+    "dev": "nodemon replit-bot-runner.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "mongoose": "^8.0.3",
+    "telegraf": "^4.15.2",
+    "crypto": "^1.0.1",
+    "canvas": "^2.11.2",
+    "node-fetch": "^2.7.0",
+    "moment": "^2.29.4",
+    "lodash": "^4.17.21",
+    "d3-node": "^3.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "referral",
+    "sovran",
+    "crypto"
+  ],
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "private": true
+}

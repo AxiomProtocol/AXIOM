@@ -53,8 +53,17 @@ export const propertyReports = pgTable("property_reports", {
   compsUsed: jsonb("comps_used"),
   dataSources: jsonb("data_sources"),
   fullReport: jsonb("full_report"),
+  // Legacy Stripe columns (kept for historical reads only — task #230 moved
+  // consumer payments fully on-chain; new rows do not populate these).
   stripeSessionId: varchar("stripe_session_id", { length: 255 }),
   stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
+  // On-chain AXUSD payment fields (task #230).
+  paymentTxHash: varchar("payment_tx_hash", { length: 80 }),
+  paymentChainId: integer("payment_chain_id"),
+  paymentToken: varchar("payment_token", { length: 42 }),
+  paymentFromAddress: varchar("payment_from_address", { length: 42 }),
+  paymentToAddress: varchar("payment_to_address", { length: 42 }),
+  paymentConfirmedAt: timestamp("payment_confirmed_at"),
   amountPaidCents: integer("amount_paid_cents"),
   buyerEmail: varchar("buyer_email", { length: 255 }),
   buyerWallet: varchar("buyer_wallet", { length: 42 }),
@@ -67,6 +76,7 @@ export const propertyReports = pgTable("property_reports", {
   emailIdx: index("prop_report_email_idx").on(table.buyerEmail),
   createdIdx: index("prop_report_created_idx").on(table.createdAt),
   stripeIdx: index("prop_report_stripe_idx").on(table.stripeSessionId),
+  paymentTxIdx: index("prop_report_payment_tx_idx").on(table.paymentTxHash),
 }));
 
 export type PropertyReport = typeof propertyReports.$inferSelect;

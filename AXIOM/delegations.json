@@ -1,0 +1,19 @@
+[
+  {
+    "delegatorAddress": "0xce36333a88c2ea01f28f63131fa7dfa80ad021f6",
+    "delegateAddress": "0xE6a77F089F2F74fe01661b8DB2aaDf95DBA3A7E9",
+    "delegation": {
+      "from": "0xce36333a88c2ea01f28f63131fa7dfa80ad021f6",
+      "to": "0xE6a77F089F2F74fe01661b8DB2aaDf95DBA3A7E9",
+      "caveats": []
+    },
+    "status": "signed",
+    "timestamp": "2025-04-26T03:14:58.981Z",
+    "signedDelegation": {
+      "from": "0xce36333a88c2ea01f28f63131fa7dfa80ad021f6",
+      "to": "0xE6a77F089F2F74fe01661b8DB2aaDf95DBA3A7E9",
+      "caveats": [],
+      "signature": "0xe899351d4e80cf1cbc486768e7ad217dd8a1b55334fec14e8753da2710f1ac763b55b886877f24ad7250d41fefce636b2453c173b68b3bbda742e8a3659f94411b"
+    }
+  }
+]

@@ -55,40 +55,26 @@ function severityColor(sev: string): string {
 
 export default function ReportDetail() {
   const router = useRouter();
-  const { id, session_id } = router.query;
+  const { id } = router.query;
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [polling, setPolling] = useState(false);
 
+  // Task #230: payment is now confirmed by /api/property/confirm-payment from
+  // the wagmi-driven modal, so this page just polls the report read endpoint
+  // until generation finishes.
   useEffect(() => {
     if (!id) return;
 
     async function load() {
       try {
-        if (session_id) {
-          const statusRes = await fetch(`/api/property/checkout-status?session_id=${session_id}&report_id=${id}`);
-          const statusData = await statusRes.json();
-          if (statusData.status === 'generating') {
-            setPolling(true);
-            setTimeout(load, 3000);
-            return;
-          }
-        }
-
         const res = await fetch(`/api/property/reports/${id}`);
         const data = await res.json();
         if (!res.ok) {
           setError(data.error || 'Report not found');
-        } else if (data.status === 'generating') {
+        } else if (data.status === 'generating' || data.status === 'pending' || data.status === 'paid') {
           setPolling(true);
-          setTimeout(load, 3000);
-          return;
-        } else if (data.status === 'pending' || data.status === 'paid') {
-          setPolling(true);
-          if (session_id) {
-            await fetch(`/api/property/checkout-status?session_id=${session_id}&report_id=${id}`);
-          }
           setTimeout(load, 3000);
           return;
         } else {
@@ -103,7 +89,7 @@ export default function ReportDetail() {
     }
 
     load();
-  }, [id, session_id]);
+  }, [id]);
 
 
   if (loading || polling) {

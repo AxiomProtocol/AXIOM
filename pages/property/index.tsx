@@ -1,7 +1,25 @@
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
 import Image from 'next/image';
+
+// Wagmi-based payment modal — browser only.
+const PropertyPaymentModal = dynamic(
+  () => import('../../components/property/PropertyPaymentModal'),
+  { ssr: false },
+);
+
+interface PaidPayload {
+  address: string;
+  tier: 'base' | 'premium';
+  sqft?: string;
+  bedrooms?: string;
+  bathrooms?: string;
+  yearBuilt?: string;
+  propertyType?: string;
+  email?: string;
+}
 
 const TIERS: Array<{ id: string; label: string; price: string; priceNote: string; features: string[]; sources: string; cta: string; highlight?: boolean }> = [
   {
@@ -89,6 +107,7 @@ export default function PropertyAnalysis() {
   const [result, setResult] = useState<any>(null);
   const [freeUsage, setFreeUsage] = useState<{ used: number; limit: number } | null>(null);
   const [cancelled, setCancelled] = useState(false);
+  const [paidPayload, setPaidPayload] = useState<PaidPayload | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -145,26 +164,18 @@ export default function PropertyAnalysis() {
           window.location.href = `/property/reports/${data.reportId}`;
         }
       } else {
-        const res = await fetch('/api/property/create-checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            address: address.trim(),
-            tier,
-            sqft: sqft || undefined,
-            bedrooms: bedrooms || undefined,
-            bathrooms: bathrooms || undefined,
-            yearBuilt: yearBuilt || undefined,
-            propertyType,
-            email: email || undefined,
-          }),
+        // Paid tiers settle on-chain in AXUSD via the payment modal.
+        // The modal handles wallet signing and server verification.
+        setPaidPayload({
+          address: address.trim(),
+          tier: tier as 'base' | 'premium',
+          sqft: sqft || undefined,
+          bedrooms: bedrooms || undefined,
+          bathrooms: bathrooms || undefined,
+          yearBuilt: yearBuilt || undefined,
+          propertyType,
+          email: email || undefined,
         });
-        const data = await res.json();
-        if (!res.ok) {
-          setError(data.error || 'Checkout failed');
-        } else if (data.checkoutUrl) {
-          window.location.href = data.checkoutUrl;
-        }
       }
     } catch {
       setError('Something went wrong. Please try again.');
@@ -362,16 +373,18 @@ export default function PropertyAnalysis() {
 
             <div className="mt-5 border border-dl-border bg-dl-bg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest mb-1">Prefer to pay with crypto?</p>
+                <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest mb-1">Pay with AXUSD on Arbitrum One</p>
                 <p className="text-xs text-dl-gray leading-relaxed">
-                  On-chain USDC report payments are in development. In the meantime, acquire USDC via Coinbase Pay and convert to AXUSD — your purchase history will integrate with the Deal Intelligence suite.
+                  Paid reports settle 1:1 in AXUSD from your connected wallet on Arbitrum One —
+                  no card processor, no Stripe redirect. Need AXUSD? Buy USDC with a card via
+                  Coinbase Onramp and convert 1:1 to AXUSD in the Onramp panel.
                 </p>
               </div>
               <a
                 href="/onramp"
                 className="shrink-0 font-dl-mono text-xs text-dl-navy border border-dl-navy px-4 py-2 hover:bg-dl-navy hover:text-white transition-colors"
               >
-                Get USDC
+                Get AXUSD
               </a>
             </div>
 
@@ -541,6 +554,13 @@ export default function PropertyAnalysis() {
           {loading === 'free' ? 'Processing...' : 'Run Analysis'}
         </button>
       </div>
+
+      {paidPayload && (
+        <PropertyPaymentModal
+          payload={paidPayload}
+          onClose={() => setPaidPayload(null)}
+        />
+      )}
     </DesignLawLayout>
   );
 }

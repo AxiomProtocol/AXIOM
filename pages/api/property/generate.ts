@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (validTier !== 'free') {
       return res.status(400).json({
-        error: 'Paid reports require checkout first. Use /api/property/create-checkout.',
+        error: 'Paid reports require an on-chain AXUSD payment. Use /api/property/create-payment-intent then /api/property/confirm-payment.',
         requiresCheckout: true,
       });
     }
