@@ -7575,6 +7575,74 @@ END $seed$`, 'seed dp_listings');
       await exec(`CREATE INDEX IF NOT EXISTS cap_reconciliation_drift_run_idx ON cap_reconciliation_drift(run_id)`, 'index cap_reconciliation_drift_run_idx');
       await exec(`CREATE INDEX IF NOT EXISTS cap_reconciliation_drift_adapter_severity_idx ON cap_reconciliation_drift(adapter_key, severity, created_at)`, 'index cap_reconciliation_drift_adapter_severity_idx');
 
+      // ── capinfra: Trust Differentiator follow-ups ──
+      // Bridge allow-list governance proposals (consumed by
+      // /governance/bridge-allowlist) and per-proposal public comment threads.
+      await exec(`CREATE TABLE IF NOT EXISTS cap_bridge_allowlist_proposals (
+        id VARCHAR(40) PRIMARY KEY,
+        asset_symbol VARCHAR(32) NOT NULL,
+        bridge_provenance TEXT NOT NULL,
+        validity_adapter_address VARCHAR(80),
+        per_asset_cap NUMERIC(30,10),
+        comment_window_ends_at TIMESTAMP NOT NULL,
+        status VARCHAR(32) NOT NULL,
+        yes_votes INTEGER NOT NULL DEFAULT 0,
+        no_votes INTEGER NOT NULL DEFAULT 0,
+        created_by VARCHAR(40),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        executed_at TIMESTAMP,
+        executed_tx_hash VARCHAR(80),
+        metadata_json JSONB
+      )`, 'table cap_bridge_allowlist_proposals');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_bridge_allowlist_status_idx ON cap_bridge_allowlist_proposals(status, created_at)`, 'index cap_bridge_allowlist_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_bridge_allowlist_symbol_idx ON cap_bridge_allowlist_proposals(asset_symbol)`, 'index cap_bridge_allowlist_symbol_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_bridge_allowlist_proposal_comments (
+        id VARCHAR(40) PRIMARY KEY,
+        proposal_id VARCHAR(40) NOT NULL,
+        commenter VARCHAR(200) NOT NULL,
+        body TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_bridge_allowlist_proposal_comments');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_bridge_allowlist_comments_proposal_idx ON cap_bridge_allowlist_proposal_comments(proposal_id, created_at)`, 'index cap_bridge_allowlist_comments_proposal_idx');
+
+      // Loss Coverage Reserve claims and per-claim audit events
+      // (consumed by /trust/loss-coverage-reserve and operator review queue).
+      await exec(`CREATE TABLE IF NOT EXISTS cap_loss_coverage_claims (
+        id VARCHAR(40) PRIMARY KEY,
+        claimant_wallet VARCHAR(80) NOT NULL,
+        contact_email VARCHAR(200),
+        position_ref TEXT,
+        tx_hashes_json JSONB,
+        description TEXT NOT NULL,
+        amount_requested_cents INTEGER NOT NULL,
+        eligibility_category VARCHAR(64) NOT NULL,
+        status VARCHAR(32) NOT NULL,
+        reviewer_notes TEXT,
+        evidence_urls_json JSONB,
+        decided_at TIMESTAMP,
+        decided_by VARCHAR(200),
+        paid_amount_cents INTEGER,
+        paid_tx_hash VARCHAR(80),
+        paid_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_loss_coverage_claims');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_lcc_status_idx ON cap_loss_coverage_claims(status, created_at)`, 'index cap_lcc_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_lcc_wallet_idx ON cap_loss_coverage_claims(claimant_wallet)`, 'index cap_lcc_wallet_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS cap_loss_coverage_claim_events (
+        id VARCHAR(40) PRIMARY KEY,
+        claim_id VARCHAR(40) NOT NULL,
+        event_type VARCHAR(64) NOT NULL,
+        actor VARCHAR(200),
+        from_status VARCHAR(32),
+        to_status VARCHAR(32),
+        note TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table cap_loss_coverage_claim_events');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_lcc_events_claim_idx ON cap_loss_coverage_claim_events(claim_id, created_at)`, 'index cap_lcc_events_claim_idx');
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
