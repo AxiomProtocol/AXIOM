@@ -452,4 +452,100 @@ describe('recordIntegrityFailure → pager dispatch wiring', () => {
     expect(mockPager).toHaveBeenCalledTimes(1);
     expect(mockEmitNotification).toHaveBeenCalledTimes(1);
   });
+
+  // ── Regression coverage for task #236 ──────────────────────────────
+  //
+  // The (asset, kind) dedup window inside `recordIntegrityFailure` lives
+  // in process memory by design: it must NOT silently swallow alerts
+  // across restarts (or after a manual GREEN re-listing), and it must
+  // continue to dedup distinct callers within a single window. The
+  // existing smoke check (capinfra-smoke.ts #77) only proves the first
+  // emission, so the three tests below pin the dedup behaviour itself
+  // so a regression — e.g. moving the map to a long-lived global with
+  // no TTL, or extending the window to dedup across distinct kinds —
+  // fails CI here instead of going silent in production.
+
+  it('emits exactly one operator notification row when called twice for the same (asset, kind) inside the dedup window', async () => {
+    const { recordIntegrityFailure } = await loadIntegrityWithMocks();
+
+    await recordIntegrityFailure({
+      assetId: 'ast_green',
+      kind: 'oracle_stale',
+      detail: 'stale tick #1',
+      actor: 'monitor:test',
+    });
+    await recordIntegrityFailure({
+      assetId: 'ast_green',
+      kind: 'oracle_stale',
+      detail: 'stale tick #2',
+      actor: 'monitor:test',
+    });
+
+    expect(mockEmitNotification).toHaveBeenCalledTimes(1);
+    const notifyArg = mockEmitNotification.mock.calls[0][0] as {
+      topic: string;
+      bodyJson: { assetId: string; kind: string };
+    };
+    expect(notifyArg.topic).toBe('collateral.integrity_failed');
+    expect(notifyArg.bodyJson.assetId).toBe('ast_green');
+    expect(notifyArg.bodyJson.kind).toBe('oracle_stale');
+  });
+
+  it('re-emits an operator notification row after the dedup window is reset (simulating process restart / manual restoration)', async () => {
+    const { recordIntegrityFailure, __resetIntegrityNotificationDedupForTests } =
+      await loadIntegrityWithMocks();
+
+    await recordIntegrityFailure({
+      assetId: 'ast_green',
+      kind: 'oracle_stale',
+      detail: 'first trip',
+      actor: 'monitor:test',
+    });
+    expect(mockEmitNotification).toHaveBeenCalledTimes(1);
+
+    // Simulate either a process restart or manual GREEN re-listing
+    // followed by a new failure: the dedup window must NOT silently
+    // swallow the next notification.
+    __resetIntegrityNotificationDedupForTests();
+
+    await recordIntegrityFailure({
+      assetId: 'ast_green',
+      kind: 'oracle_stale',
+      detail: 'second trip after restore',
+      actor: 'monitor:test',
+    });
+
+    expect(mockEmitNotification).toHaveBeenCalledTimes(2);
+    const secondNotifyArg = mockEmitNotification.mock.calls[1][0] as {
+      bodyJson: { kind: string; detail: string };
+    };
+    expect(secondNotifyArg.bodyJson.kind).toBe('oracle_stale');
+    expect(secondNotifyArg.bodyJson.detail).toBe('second trip after restore');
+  });
+
+  it('emits a separate operator notification row for each distinct kind on the same asset', async () => {
+    const { recordIntegrityFailure } = await loadIntegrityWithMocks();
+
+    await recordIntegrityFailure({
+      assetId: 'ast_green',
+      kind: 'oracle_stale',
+      detail: 'oracle stale',
+      actor: 'monitor:test',
+    });
+    await recordIntegrityFailure({
+      assetId: 'ast_green',
+      kind: 'reserve_attestation_failed',
+      detail: 'reserves negative',
+      actor: 'monitor:test',
+    });
+
+    expect(mockEmitNotification).toHaveBeenCalledTimes(2);
+    const kinds = mockEmitNotification.mock.calls.map(
+      (c) => (c[0] as { bodyJson: { kind: string } }).bodyJson.kind,
+    );
+    expect(kinds).toEqual([
+      'oracle_stale',
+      'reserve_attestation_failed',
+    ]);
+  });
 });
