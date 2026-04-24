@@ -14,6 +14,7 @@ import {
   LENDING_PLATFORM_MODULE_ABI,
 } from '../../shared/contracts-3643';
 import { GOVERNANCE_SAFE, SAFE_MINT_THRESHOLD_AXUSD, DEPLOYER_EOA } from '../../src/config/adminRoles';
+import type { UsdDecimalString } from '../capinfra/money';
 
 type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -681,7 +682,14 @@ export class ERC3643Service {
    */
   static async mintAXUSD(params: {
     toAddress: string;
-    amountAxusd: string;
+    // Branded amount: callers MUST construct this via the canonical
+    // money helpers (`centsToDecimalString` for cents-derived values,
+    // `usdDecimalString` for already-validated decimal strings, or via
+    // a zod schema with `.brand<'UsdDecimalString'>()`). Plain `string`
+    // — including `String(cents)` or `(cents/100).toFixed(2)` — will
+    // not type-check, eliminating the #202/#214/#244 regression class
+    // at compile time.
+    amountAxusd: UsdDecimalString;
     callerAddress: string;
     reason?: string;
   }) {

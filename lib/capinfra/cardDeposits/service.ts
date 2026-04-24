@@ -27,6 +27,7 @@ import {
 } from '../../../shared/capInfraSchema';
 import { eq, desc, and, sql, type SQL } from 'drizzle-orm';
 import { generateId } from '../ids';
+import { centsToDecimalString, type UsdDecimalString } from '../money';
 
 export type CardDepositIntent = 'TREASURY_FUND' | 'AXUSD_MINT' | 'AXAU_MINT';
 export type CardDepositStatus =
@@ -472,7 +473,11 @@ async function tryMintAxusd(
     // because the mint route enforces its own auth and validation.
     const port = process.env.PORT ?? '5000';
     const url = `http://127.0.0.1:${port}/api/erc3643/admin/mint`;
-    const amountAxusd = (amountCents / 100).toFixed(2);
+    // Route the cents->decimal conversion through the canonical, branded
+    // helper. This is the same fix shape as #202/#214/#226: keep raw
+    // integer cents from being hand-formatted into a string that the
+    // mint endpoint then interprets as a USD decimal amount.
+    const amountAxusd: UsdDecimalString = centsToDecimalString(amountCents);
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },

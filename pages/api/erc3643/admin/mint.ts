@@ -22,6 +22,7 @@ import { ethers } from 'ethers';
 import { ERC3643Service } from '../../../../lib/services/ERC3643Service';
 import { AdminRoleService } from '../../../../lib/services/AdminRoleService';
 import { validateAdminKey } from '../../../../src/config/adminRoles';
+import { usdDecimalString, type UsdDecimalString } from '../../../../lib/capinfra/money';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -35,8 +36,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!toAddress || typeof toAddress !== 'string' || !/^0x[a-fA-F0-9]{40}$/.test(toAddress)) {
     return res.status(400).json({ error: 'Valid toAddress required' });
   }
-  if (!amountAxusd || isNaN(parseFloat(amountAxusd)) || parseFloat(amountAxusd) <= 0) {
-    return res.status(400).json({ error: 'amountAxusd must be a positive number string' });
+  // Runtime guard: brand the incoming amount via the canonical money
+  // helper so callers cannot smuggle malformed strings (e.g. raw cents
+  // hand-formatted, scientific notation, NaN) into the mint pipeline.
+  // The branded type is then enforced at the type level by
+  // ERC3643Service.mintAXUSD's signature. See lib/capinfra/money.ts and
+  // tasks #202/#214/#226 for the rationale.
+  let brandedAmount: UsdDecimalString;
+  try {
+    if (typeof amountAxusd !== 'string') {
+      throw new TypeError('amountAxusd must be a decimal string');
+    }
+    brandedAmount = usdDecimalString(amountAxusd);
+    if (parseFloat(brandedAmount) <= 0) {
+      throw new RangeError('amountAxusd must be > 0');
+    }
+  } catch (err: unknown) {
+    const e = err as { message?: string };
+    return res.status(400).json({
+      error: `amountAxusd must be a positive USD decimal string: ${e?.message ?? 'invalid'}`,
+    });
   }
 
   const pk = process.env.DEPLOYER_PRIVATE_KEY;
@@ -56,7 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const result = await ERC3643Service.mintAXUSD({
       toAddress,
-      amountAxusd,
+      amountAxusd: brandedAmount,
       callerAddress,
       reason,
     });
