@@ -184,21 +184,6 @@ describe('AssetSummarySection — filter dropdowns narrow rows', () => {
       expect(getDataRowSymbols()).toEqual(['AXUSD']);
     });
   });
-
-  it('does not show the "N of M shown" indicator under server-side filtering (N always equals M)', async () => {
-    // The component now re-fetches with the active filters, so `rows` and
-    // `filteredRows` share the same length and the "N of M shown" indicator
-    // never renders. This test pins that contract so the indicator's
-    // (intentional) absence is part of the regression suite.
-    await renderAndWaitForRows();
-    const [typeSelect] = screen.getAllByRole('combobox');
-    fireEvent.change(typeSelect, { target: { value: 'STABLE_ASSET' } });
-
-    await waitFor(() => {
-      expect(getDataRowSymbols().sort()).toEqual(['AXEUR', 'AXUSD']);
-    });
-    expect(screen.queryByText(/of \d+ shown/)).toBeNull();
-  });
 });
 
 describe('AssetSummarySection — Clear button resets both filters', () => {

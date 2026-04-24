@@ -468,15 +468,13 @@ export function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
     return () => window.removeEventListener('capinfra:reload-assets', onReload);
   }, [load]);
 
-  const filteredRows = rows;
-
   const hasFilters = filterType !== '' || filterStatus !== '' || filterSymbol.trim() !== '';
 
   const downloadAssetCsv = useCallback(() => {
     setCsvLoading(true);
     setExportStatus(null);
     try {
-      const rowsToExport = filteredRows ?? [];
+      const rowsToExport = rows ?? [];
       if (rowsToExport.length === 0) {
         setExportStatus({ kind: 'empty', hasFilters });
         return;
@@ -501,7 +499,7 @@ export function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
     } finally {
       setCsvLoading(false);
     }
-  }, [filteredRows, filterStatus, filterType, hasFilters]);
+  }, [rows, filterStatus, filterType, hasFilters]);
 
   return (
     <section className="mb-12">
@@ -595,7 +593,7 @@ export function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-dl-serif text-xl text-dl-navy">Asset Registry</h2>
         <div className="flex items-center gap-2">
-          {filteredRows && (
+          {rows && (
             <button
               onClick={downloadAssetCsv}
               disabled={csvLoading || loading}
@@ -666,11 +664,6 @@ export function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
               Clear
             </button>
           )}
-          {filteredRows && rows && filteredRows.length !== rows.length && (
-            <span className="font-dl-mono text-[10px] text-dl-gray pb-1.5">
-              {filteredRows.length} of {rows.length} shown
-            </span>
-          )}
         </div>
       )}
 
@@ -704,13 +697,13 @@ export function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
         </div>
       )}
 
-      {!error && filteredRows && filteredRows.length === 0 && (
+      {!error && rows && rows.length === 0 && (
         <div className="border border-dl-border bg-dl-bg-alt p-6 text-sm text-dl-gray font-dl-mono text-center">
           {hasFilters ? 'No assets match the current filters.' : 'No active assets registered.'}
         </div>
       )}
 
-      {filteredRows && filteredRows.length > 0 && (
+      {rows && rows.length > 0 && (
         <div className="border border-dl-border overflow-x-auto">
           <table className="w-full font-dl-mono text-xs">
             <thead className="bg-dl-bg-alt border-b border-dl-border">
@@ -730,7 +723,7 @@ export function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
               </tr>
             </thead>
             <tbody>
-              {filteredRows.map((row, i) => (
+              {rows.map((row, i) => (
                 <tr key={row.asset.id} className={i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}>
                   <td className="px-3 py-2 text-dl-navy font-bold">{row.asset.symbol}</td>
                   <td className="px-3 py-2 text-dl-navy">{row.asset.displayName}</td>
@@ -782,7 +775,7 @@ export function AssetSummarySection({ operatorKey }: { operatorKey: string }) {
         </div>
       )}
 
-      {filteredRows && filteredRows.length > 0 && (
+      {rows && rows.length > 0 && (
         <div className="mt-6">
           <h3 className="font-dl-serif text-base text-dl-navy mb-2">
             Live Collateral Classification
