@@ -31,7 +31,21 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
   if (ctx.res) {
     ctx.res.setHeader('Cache-Control', 'no-store, max-age=0');
   }
-  const markdown = await fs.readFile(POLICY_PATH, 'utf8');
+  let markdown: string;
+  try {
+    markdown = await fs.readFile(POLICY_PATH, 'utf8');
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown error';
+    console.error('[information-security-policy] failed to read policy file:', msg, err);
+    markdown = [
+      '# Document temporarily unavailable',
+      '',
+      'This page renders the canonical policy document from the source repository.',
+      'The file could not be read at request time. Please retry shortly.',
+      '',
+      `ref: ${msg}`,
+    ].join('\n');
+  }
   return {
     props: {
       markdown,

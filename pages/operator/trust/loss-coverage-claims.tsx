@@ -36,37 +36,52 @@ interface PageProps {
   loadedAtIso: string;
   rows: ClaimRow[];
   adminKeyForClient: string;
+  loadError: string | null;
 }
 
 export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => {
   if (ctx.res) ctx.res.setHeader('Cache-Control', 'no-store, max-age=0');
   const redirect = requireOperatorCookie(ctx);
   if (redirect) return redirect;
-  const claims = await listClaims({});
   // The operator already authenticated via cookie; we hand the cookie
   // value back to the client so XHR can send x-admin-key.
   const adminKey = getOperatorAdminKey();
-  return {
-    props: {
-      loadedAtIso: new Date().toISOString(),
-      adminKeyForClient: adminKey,
-      rows: claims.map((c) => ({
-        id: c.id,
-        claimantWallet: c.claimantWallet,
-        contactEmail: c.contactEmail ?? null,
-        positionRef: c.positionRef ?? null,
-        description: c.description,
-        amountRequestedCents: c.amountRequestedCents,
-        eligibilityCategory: c.eligibilityCategory,
-        status: c.status as ClaimStatus,
-        reviewerNotes: c.reviewerNotes ?? null,
-        paidAmountCents: c.paidAmountCents ?? null,
-        paidTxHash: c.paidTxHash ?? null,
-        paidAt: c.paidAt ? (c.paidAt as Date).toISOString() : null,
-        createdAt: (c.createdAt as Date).toISOString(),
-      })),
-    },
-  };
+  try {
+    const claims = await listClaims({});
+    return {
+      props: {
+        loadedAtIso: new Date().toISOString(),
+        adminKeyForClient: adminKey,
+        loadError: null,
+        rows: claims.map((c) => ({
+          id: c.id,
+          claimantWallet: c.claimantWallet,
+          contactEmail: c.contactEmail ?? null,
+          positionRef: c.positionRef ?? null,
+          description: c.description,
+          amountRequestedCents: c.amountRequestedCents,
+          eligibilityCategory: c.eligibilityCategory,
+          status: c.status as ClaimStatus,
+          reviewerNotes: c.reviewerNotes ?? null,
+          paidAmountCents: c.paidAmountCents ?? null,
+          paidTxHash: c.paidTxHash ?? null,
+          paidAt: c.paidAt ? (c.paidAt as Date).toISOString() : null,
+          createdAt: (c.createdAt as Date).toISOString(),
+        })),
+      },
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown error';
+    console.error('[operator/trust/loss-coverage-claims] failed to list claims:', msg, err);
+    return {
+      props: {
+        loadedAtIso: new Date().toISOString(),
+        adminKeyForClient: adminKey,
+        rows: [],
+        loadError: msg,
+      },
+    };
+  }
 };
 
 function fmtUsd(cents: number) {
@@ -139,6 +154,16 @@ export default function OperatorLossCoverageClaimsPage(props: PageProps) {
           </p>
           {msg && <p className="font-dl-mono text-xs text-dl-forest mt-1">{msg}</p>}
         </div>
+
+        {props.loadError && (
+          <div className="border border-dl-gold bg-dl-bg-alt p-4 mb-6 font-dl-mono text-xs">
+            <div className="font-dl-serif text-sm text-dl-navy mb-1">Operational notice</div>
+            <div className="text-dl-ink">
+              Live claim data could not be loaded. Showing empty result. Operations has been notified.
+              <div className="text-dl-gray mt-1 break-all">ref: {props.loadError}</div>
+            </div>
+          </div>
+        )}
 
         <div className="border border-dl-border overflow-x-auto">
           <table className="w-full text-sm">

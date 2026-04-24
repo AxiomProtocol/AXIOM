@@ -41,79 +41,95 @@ interface DriftRow {
 }
 
 interface Props {
-  health: AdapterHealth;
+  health: AdapterHealth | null;
   recent: WebhookRow[];
   reconRuns: ReconRun[];
   latestDrift: DriftRow[];
+  loadError: string | null;
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const redirect = requireOperatorCookie(ctx);
   if (redirect) return redirect;
 
-  const [health, rows, runRows] = await Promise.all([
-    achHealth(),
-    db
-      .select()
-      .from(capWebhookEvents)
-      .where(eq(capWebhookEvents.adapterKey, 'ACH'))
-      .orderBy(desc(capWebhookEvents.receivedAt))
-      .limit(20),
-    db
-      .select()
-      .from(capReconciliationRuns)
-      .where(eq(capReconciliationRuns.adapterKey, 'ACH'))
-      .orderBy(desc(capReconciliationRuns.createdAt))
-      .limit(10),
-  ]);
-
-  const latestRun = runRows[0];
-  const driftRows = latestRun
-    ? await db
+  try {
+    const [health, rows, runRows] = await Promise.all([
+      achHealth(),
+      db
         .select()
-        .from(capReconciliationDrift)
-        .where(eq(capReconciliationDrift.runId, latestRun.id))
-        .limit(50)
-    : [];
+        .from(capWebhookEvents)
+        .where(eq(capWebhookEvents.adapterKey, 'ACH'))
+        .orderBy(desc(capWebhookEvents.receivedAt))
+        .limit(20),
+      db
+        .select()
+        .from(capReconciliationRuns)
+        .where(eq(capReconciliationRuns.adapterKey, 'ACH'))
+        .orderBy(desc(capReconciliationRuns.createdAt))
+        .limit(10),
+    ]);
 
-  return {
-    props: {
-      health: {
-        ...health,
-        lastDispatchAt: health.lastDispatchAt ? health.lastDispatchAt.toISOString() as unknown as Date : null,
-        lastWebhookAt: health.lastWebhookAt ? health.lastWebhookAt.toISOString() as unknown as Date : null,
-        lastWebhookVerifiedAt: health.lastWebhookVerifiedAt ? health.lastWebhookVerifiedAt.toISOString() as unknown as Date : null,
+    const latestRun = runRows[0];
+    const driftRows = latestRun
+      ? await db
+          .select()
+          .from(capReconciliationDrift)
+          .where(eq(capReconciliationDrift.runId, latestRun.id))
+          .limit(50)
+      : [];
+
+    return {
+      props: {
+        health: {
+          ...health,
+          lastDispatchAt: health.lastDispatchAt ? health.lastDispatchAt.toISOString() as unknown as Date : null,
+          lastWebhookAt: health.lastWebhookAt ? health.lastWebhookAt.toISOString() as unknown as Date : null,
+          lastWebhookVerifiedAt: health.lastWebhookVerifiedAt ? health.lastWebhookVerifiedAt.toISOString() as unknown as Date : null,
+        },
+        recent: rows.map((r) => ({
+          id: r.id,
+          externalEventId: r.externalEventId,
+          status: r.status,
+          signatureVerified: r.signatureVerified,
+          attempts: r.attempts,
+          receivedAt: r.receivedAt.toISOString(),
+          lastError: r.lastError,
+        })),
+        reconRuns: runRows.map((r) => ({
+          id: r.id,
+          status: r.status,
+          comparedCount: r.comparedCount,
+          driftCount: r.driftCount,
+          triggeredBy: r.triggeredBy,
+          startedAt: r.startedAt ? r.startedAt.toISOString() : null,
+          finishedAt: r.finishedAt ? r.finishedAt.toISOString() : null,
+        })),
+        latestDrift: driftRows.map((d) => ({
+          id: d.id,
+          kind: d.kind,
+          severity: d.severity,
+          externalRef: d.externalRef,
+          instructionId: d.instructionId,
+          remediation: d.remediation,
+          remediationRef: d.remediationRef,
+          remediationFailureJson: (d.remediationFailureJson as Record<string, unknown> | null) ?? null,
+        })),
+        loadError: null,
       },
-      recent: rows.map((r) => ({
-        id: r.id,
-        externalEventId: r.externalEventId,
-        status: r.status,
-        signatureVerified: r.signatureVerified,
-        attempts: r.attempts,
-        receivedAt: r.receivedAt.toISOString(),
-        lastError: r.lastError,
-      })),
-      reconRuns: runRows.map((r) => ({
-        id: r.id,
-        status: r.status,
-        comparedCount: r.comparedCount,
-        driftCount: r.driftCount,
-        triggeredBy: r.triggeredBy,
-        startedAt: r.startedAt ? r.startedAt.toISOString() : null,
-        finishedAt: r.finishedAt ? r.finishedAt.toISOString() : null,
-      })),
-      latestDrift: driftRows.map((d) => ({
-        id: d.id,
-        kind: d.kind,
-        severity: d.severity,
-        externalRef: d.externalRef,
-        instructionId: d.instructionId,
-        remediation: d.remediation,
-        remediationRef: d.remediationRef,
-        remediationFailureJson: (d.remediationFailureJson as Record<string, unknown> | null) ?? null,
-      })),
-    },
-  };
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown error';
+    console.error('[operator/adapters/increase] failed to load adapter data:', msg, err);
+    return {
+      props: {
+        health: null,
+        recent: [],
+        reconRuns: [],
+        latestDrift: [],
+        loadError: msg,
+      },
+    };
+  }
 };
 
 const severityBadge: Record<string, string> = {

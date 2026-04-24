@@ -14,6 +14,7 @@ interface Props {
   instruction: Record<string, unknown> | null;
   audits: Array<{ id: string; eventType: string; createdAt: string; payloadJson: unknown }>;
   decision: Record<string, unknown> | null;
+  loadError: string | null;
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
@@ -22,45 +23,70 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const id = ctx.params?.id;
   if (typeof id !== 'string') return { notFound: true };
 
-  const [[instr], audits] = await Promise.all([
-    db.select().from(capSettlementInstructions).where(eq(capSettlementInstructions.id, id)).limit(1),
-    db
-      .select()
-      .from(capAuditEvents)
-      .where(eq(capAuditEvents.instructionId, id))
-      .orderBy(desc(capAuditEvents.createdAt))
-      .limit(200),
-  ]);
+  try {
+    const [[instr], audits] = await Promise.all([
+      db.select().from(capSettlementInstructions).where(eq(capSettlementInstructions.id, id)).limit(1),
+      db
+        .select()
+        .from(capAuditEvents)
+        .where(eq(capAuditEvents.instructionId, id))
+        .orderBy(desc(capAuditEvents.createdAt))
+        .limit(200),
+    ]);
 
-  let decision: Record<string, unknown> | null = null;
-  if (instr?.policyDecisionId) {
-    const [d] = await db
-      .select()
-      .from(capPolicyDecisions)
-      .where(eq(capPolicyDecisions.id, instr.policyDecisionId))
-      .limit(1);
-    decision = d ? (JSON.parse(JSON.stringify(d)) as Record<string, unknown>) : null;
+    let decision: Record<string, unknown> | null = null;
+    if (instr?.policyDecisionId) {
+      const [d] = await db
+        .select()
+        .from(capPolicyDecisions)
+        .where(eq(capPolicyDecisions.id, instr.policyDecisionId))
+        .limit(1);
+      decision = d ? (JSON.parse(JSON.stringify(d)) as Record<string, unknown>) : null;
+    }
+
+    return {
+      props: {
+        instruction: instr ? (JSON.parse(JSON.stringify(instr)) as Record<string, unknown>) : null,
+        audits: audits.map((a) => ({
+          id: a.id,
+          eventType: a.eventType,
+          createdAt: a.createdAt.toISOString(),
+          payloadJson: a.payloadJson,
+        })),
+        decision,
+        loadError: null,
+      },
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown error';
+    console.error('[operator/instructions/[id]] failed to load instruction data:', msg, err);
+    return {
+      props: {
+        instruction: null,
+        audits: [],
+        decision: null,
+        loadError: msg,
+      },
+    };
   }
-
-  return {
-    props: {
-      instruction: instr ? (JSON.parse(JSON.stringify(instr)) as Record<string, unknown>) : null,
-      audits: audits.map((a) => ({
-        id: a.id,
-        eventType: a.eventType,
-        createdAt: a.createdAt.toISOString(),
-        payloadJson: a.payloadJson,
-      })),
-      decision,
-    },
-  };
 };
 
-export default function InstructionInspector({ instruction, audits, decision }: Props) {
+export default function InstructionInspector({ instruction, audits, decision, loadError }: Props) {
   if (!instruction) {
     return (
       <DesignLawLayout>
-        <div className="py-8">Instruction not found.</div>
+        <div className="py-8">
+          {loadError && (
+            <div className="border border-dl-gold bg-dl-bg-alt p-4 mb-4 font-mono text-xs">
+              <div className="font-serif text-sm text-dl-navy mb-1">Operational notice</div>
+              <div className="text-dl-ink">
+                Instruction data could not be loaded. Operations has been notified.
+                <div className="text-dl-muted mt-1 break-all">ref: {loadError}</div>
+              </div>
+            </div>
+          )}
+          {!loadError && 'Instruction not found.'}
+        </div>
       </DesignLawLayout>
     );
   }

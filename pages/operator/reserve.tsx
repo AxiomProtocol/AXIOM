@@ -16,71 +16,95 @@ interface Props {
   mode: { mode: string; version: string; isBootstrap: boolean };
   headrooms: Headroom[];
   recentSnapshots: Array<{ id: string; checksum: string; asOf: string; lineCount: number; mode: string }>;
+  loadError: string | null;
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const redirect = requireOperatorCookie(ctx);
   if (redirect) return redirect;
 
-  const [mode, assets, hRows, snaps] = await Promise.all([
-    getActiveSolvencyMode(),
-    db.select().from(capAssets).limit(200),
-    db
-      .select({
-        assetId: capReserveHoldings.assetId,
-        direction: capReserveHoldings.direction,
-        total: sql<string>`COALESCE(SUM(${capReserveHoldings.amount}), 0)::text`,
-      })
-      .from(capReserveHoldings)
-      .groupBy(capReserveHoldings.assetId, capReserveHoldings.direction),
-    db
-      .select()
-      .from(capReserveHoldingsSnapshots)
-      .orderBy(desc(capReserveHoldingsSnapshots.asOf))
-      .limit(20),
-  ]);
+  try {
+    const [mode, assets, hRows, snaps] = await Promise.all([
+      getActiveSolvencyMode(),
+      db.select().from(capAssets).limit(200),
+      db
+        .select({
+          assetId: capReserveHoldings.assetId,
+          direction: capReserveHoldings.direction,
+          total: sql<string>`COALESCE(SUM(${capReserveHoldings.amount}), 0)::text`,
+        })
+        .from(capReserveHoldings)
+        .groupBy(capReserveHoldings.assetId, capReserveHoldings.direction),
+      db
+        .select()
+        .from(capReserveHoldingsSnapshots)
+        .orderBy(desc(capReserveHoldingsSnapshots.asOf))
+        .limit(20),
+    ]);
 
-  const symByAsset = new Map(assets.map((a) => [a.id, a.symbol ?? null] as const));
-  const acc = new Map<string, { gross: number; debited: number }>();
-  for (const r of hRows) {
-    const cur = acc.get(r.assetId) ?? { gross: 0, debited: 0 };
-    if (r.direction === 'CREDIT') cur.gross += Number(r.total);
-    else if (r.direction === 'DEBIT') cur.debited += Number(r.total);
-    acc.set(r.assetId, cur);
-  }
-  const headrooms: Headroom[] = [];
-  for (const [assetId, v] of acc.entries()) {
-    headrooms.push({
-      assetId,
-      symbol: symByAsset.get(assetId) ?? null,
-      gross: v.gross.toString(),
-      debited: v.debited.toString(),
-      available: (v.gross - v.debited).toString(),
-    });
-  }
-  headrooms.sort((a, b) => a.assetId < b.assetId ? -1 : 1);
+    const symByAsset = new Map(assets.map((a) => [a.id, a.symbol ?? null] as const));
+    const acc = new Map<string, { gross: number; debited: number }>();
+    for (const r of hRows) {
+      const cur = acc.get(r.assetId) ?? { gross: 0, debited: 0 };
+      if (r.direction === 'CREDIT') cur.gross += Number(r.total);
+      else if (r.direction === 'DEBIT') cur.debited += Number(r.total);
+      acc.set(r.assetId, cur);
+    }
+    const headrooms: Headroom[] = [];
+    for (const [assetId, v] of acc.entries()) {
+      headrooms.push({
+        assetId,
+        symbol: symByAsset.get(assetId) ?? null,
+        gross: v.gross.toString(),
+        debited: v.debited.toString(),
+        available: (v.gross - v.debited).toString(),
+      });
+    }
+    headrooms.sort((a, b) => a.assetId < b.assetId ? -1 : 1);
 
-  return {
-    props: {
-      mode: { mode: mode.mode, version: mode.version, isBootstrap: mode.isBootstrap },
-      headrooms,
-      recentSnapshots: snaps.map((s) => ({
-        id: s.id,
-        checksum: s.checksum,
-        asOf: s.asOf.toISOString(),
-        lineCount: s.lineCount,
-        mode: s.mode,
-      })),
-    },
-  };
+    return {
+      props: {
+        mode: { mode: mode.mode, version: mode.version, isBootstrap: mode.isBootstrap },
+        headrooms,
+        recentSnapshots: snaps.map((s) => ({
+          id: s.id,
+          checksum: s.checksum,
+          asOf: s.asOf.toISOString(),
+          lineCount: s.lineCount,
+          mode: s.mode,
+        })),
+        loadError: null,
+      },
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown error';
+    console.error('[operator/reserve] failed to load reserve dashboard data:', msg, err);
+    return {
+      props: {
+        mode: { mode: 'UNKNOWN', version: 'unknown', isBootstrap: false },
+        headrooms: [],
+        recentSnapshots: [],
+        loadError: msg,
+      },
+    };
+  }
 };
 
-export default function ReserveDashboard({ mode, headrooms, recentSnapshots }: Props) {
+export default function ReserveDashboard({ mode, headrooms, recentSnapshots, loadError }: Props) {
   return (
     <DesignLawLayout>
       <div className="py-8">
         <div className="mb-4"><Link href="/operator" className="text-sm underline">← Back to console</Link></div>
         <h1 className="text-2xl font-serif mb-4">Reserve Dashboard</h1>
+        {loadError && (
+          <div className="border border-dl-gold bg-dl-bg-alt p-4 mb-6 font-mono text-xs">
+            <div className="font-serif text-sm text-dl-navy mb-1">Operational notice</div>
+            <div className="text-dl-ink">
+              Reserve data could not be loaded. Showing safe defaults. Operations has been notified.
+              <div className="text-dl-muted mt-1 break-all">ref: {loadError}</div>
+            </div>
+          </div>
+        )}
 
         <section className="border border-dl-border p-4 mb-6">
           <h2 className="font-serif mb-2">Solvency Mode</h2>

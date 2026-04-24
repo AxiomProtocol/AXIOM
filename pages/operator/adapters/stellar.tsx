@@ -41,80 +41,96 @@ interface DriftRow {
 }
 
 interface Props {
-  health: AdapterHealth;
+  health: AdapterHealth | null;
   recent: WebhookRow[];
   reconRuns: ReconRun[];
   latestDrift: DriftRow[];
+  loadError: string | null;
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const redirect = requireOperatorCookie(ctx);
   if (redirect) return redirect;
 
-  const [health, rows, runRows] = await Promise.all([
-    stellarHealth(),
-    db
-      .select()
-      .from(capWebhookEvents)
-      .where(eq(capWebhookEvents.adapterKey, 'STELLAR'))
-      .orderBy(desc(capWebhookEvents.receivedAt))
-      .limit(20),
-    db
-      .select()
-      .from(capReconciliationRuns)
-      .where(eq(capReconciliationRuns.adapterKey, 'STELLAR'))
-      .orderBy(desc(capReconciliationRuns.createdAt))
-      .limit(10),
-  ]);
-
-  // Fetch drift for the most recent run if any.
-  const latestRun = runRows[0];
-  const driftRows = latestRun
-    ? await db
+  try {
+    const [health, rows, runRows] = await Promise.all([
+      stellarHealth(),
+      db
         .select()
-        .from(capReconciliationDrift)
-        .where(eq(capReconciliationDrift.runId, latestRun.id))
-        .limit(50)
-    : [];
+        .from(capWebhookEvents)
+        .where(eq(capWebhookEvents.adapterKey, 'STELLAR'))
+        .orderBy(desc(capWebhookEvents.receivedAt))
+        .limit(20),
+      db
+        .select()
+        .from(capReconciliationRuns)
+        .where(eq(capReconciliationRuns.adapterKey, 'STELLAR'))
+        .orderBy(desc(capReconciliationRuns.createdAt))
+        .limit(10),
+    ]);
 
-  return {
-    props: {
-      health: {
-        ...health,
-        lastDispatchAt: health.lastDispatchAt ? health.lastDispatchAt.toISOString() as unknown as Date : null,
-        lastWebhookAt: health.lastWebhookAt ? health.lastWebhookAt.toISOString() as unknown as Date : null,
-        lastWebhookVerifiedAt: health.lastWebhookVerifiedAt ? health.lastWebhookVerifiedAt.toISOString() as unknown as Date : null,
+    // Fetch drift for the most recent run if any.
+    const latestRun = runRows[0];
+    const driftRows = latestRun
+      ? await db
+          .select()
+          .from(capReconciliationDrift)
+          .where(eq(capReconciliationDrift.runId, latestRun.id))
+          .limit(50)
+      : [];
+
+    return {
+      props: {
+        health: {
+          ...health,
+          lastDispatchAt: health.lastDispatchAt ? health.lastDispatchAt.toISOString() as unknown as Date : null,
+          lastWebhookAt: health.lastWebhookAt ? health.lastWebhookAt.toISOString() as unknown as Date : null,
+          lastWebhookVerifiedAt: health.lastWebhookVerifiedAt ? health.lastWebhookVerifiedAt.toISOString() as unknown as Date : null,
+        },
+        recent: rows.map((r) => ({
+          id: r.id,
+          externalEventId: r.externalEventId,
+          status: r.status,
+          signatureVerified: r.signatureVerified,
+          attempts: r.attempts,
+          receivedAt: r.receivedAt.toISOString(),
+          lastError: r.lastError,
+        })),
+        reconRuns: runRows.map((r) => ({
+          id: r.id,
+          status: r.status,
+          comparedCount: r.comparedCount,
+          driftCount: r.driftCount,
+          triggeredBy: r.triggeredBy,
+          startedAt: r.startedAt ? r.startedAt.toISOString() : null,
+          finishedAt: r.finishedAt ? r.finishedAt.toISOString() : null,
+        })),
+        latestDrift: driftRows.map((d) => ({
+          id: d.id,
+          kind: d.kind,
+          severity: d.severity,
+          externalRef: d.externalRef,
+          instructionId: d.instructionId,
+          remediation: d.remediation,
+          remediationRef: d.remediationRef,
+          remediationFailureJson: (d.remediationFailureJson as Record<string, unknown> | null) ?? null,
+        })),
+        loadError: null,
       },
-      recent: rows.map((r) => ({
-        id: r.id,
-        externalEventId: r.externalEventId,
-        status: r.status,
-        signatureVerified: r.signatureVerified,
-        attempts: r.attempts,
-        receivedAt: r.receivedAt.toISOString(),
-        lastError: r.lastError,
-      })),
-      reconRuns: runRows.map((r) => ({
-        id: r.id,
-        status: r.status,
-        comparedCount: r.comparedCount,
-        driftCount: r.driftCount,
-        triggeredBy: r.triggeredBy,
-        startedAt: r.startedAt ? r.startedAt.toISOString() : null,
-        finishedAt: r.finishedAt ? r.finishedAt.toISOString() : null,
-      })),
-      latestDrift: driftRows.map((d) => ({
-        id: d.id,
-        kind: d.kind,
-        severity: d.severity,
-        externalRef: d.externalRef,
-        instructionId: d.instructionId,
-        remediation: d.remediation,
-        remediationRef: d.remediationRef,
-        remediationFailureJson: (d.remediationFailureJson as Record<string, unknown> | null) ?? null,
-      })),
-    },
-  };
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown error';
+    console.error('[operator/adapters/stellar] failed to load adapter data:', msg, err);
+    return {
+      props: {
+        health: null,
+        recent: [],
+        reconRuns: [],
+        latestDrift: [],
+        loadError: msg,
+      },
+    };
+  }
 };
 
 const severityBadge: Record<string, string> = {
@@ -124,7 +140,7 @@ const severityBadge: Record<string, string> = {
   MANUAL_INTERVENTION: 'bg-purple-50 text-purple-800 border-purple-300',
 };
 
-export default function StellarAdapterPage({ health, recent, reconRuns, latestDrift }: Props) {
+export default function StellarAdapterPage({ health, recent, reconRuns, latestDrift, loadError }: Props) {
   const [recon, setRecon] = useState<{ runId: string; status: string; comparedCount: number; driftCount: number } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -142,7 +158,7 @@ export default function StellarAdapterPage({ health, recent, reconRuns, latestDr
     }
   }
 
-  const modeBadge = health.mode === 'LIVE'
+  const modeBadge = health?.mode === 'LIVE'
     ? 'bg-red-100 text-red-800 border-red-300'
     : 'bg-amber-100 text-amber-900 border-amber-300';
 
@@ -154,9 +170,22 @@ export default function StellarAdapterPage({ health, recent, reconRuns, latestDr
         </div>
         <div className="flex items-baseline gap-3 mb-1">
           <h1 className="text-2xl font-serif">Stellar adapter</h1>
-          <span className={`text-xs uppercase tracking-wide border px-2 py-0.5 ${modeBadge}`}>{health.mode}</span>
-          <span className="text-xs text-dl-muted font-mono">configVersion={health.configVersion}</span>
+          {health && (
+            <>
+              <span className={`text-xs uppercase tracking-wide border px-2 py-0.5 ${modeBadge}`}>{health.mode}</span>
+              <span className="text-xs text-dl-muted font-mono">configVersion={health.configVersion}</span>
+            </>
+          )}
         </div>
+        {loadError && (
+          <div className="border border-dl-gold bg-dl-bg-alt p-4 mb-4 mt-2 font-mono text-xs">
+            <div className="font-serif text-sm text-dl-navy mb-1">Operational notice</div>
+            <div className="text-dl-ink">
+              Adapter data could not be loaded. Showing safe defaults. Operations has been notified.
+              <div className="text-dl-muted mt-1 break-all">ref: {loadError}</div>
+            </div>
+          </div>
+        )}
         <p className="text-sm text-dl-muted mb-6">
           Phase 3B.1b: verified webhooks advance settlement state via canonical path.
           Reconciliation diff runs against Horizon. Stellar remains DRY_RUN only.
@@ -165,12 +194,16 @@ export default function StellarAdapterPage({ health, recent, reconRuns, latestDr
         {/* Health */}
         <section className="border border-dl-border p-4 mb-6">
           <h2 className="font-serif text-lg mb-3">Health detail</h2>
-          <dl className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-            <div><dt className="text-xs uppercase text-dl-muted">Reachable</dt><dd className="font-mono">{health.reachable ? 'YES' : 'NO'}</dd></div>
-            <div><dt className="text-xs uppercase text-dl-muted">Quarantined (24h)</dt><dd className="font-mono">{health.quarantinedCount24h}</dd></div>
-            <div><dt className="text-xs uppercase text-dl-muted">Last webhook</dt><dd className="font-mono text-xs break-all">{health.lastWebhookAt ? String(health.lastWebhookAt) : '—'}</dd></div>
-            <div><dt className="text-xs uppercase text-dl-muted">Last verified</dt><dd className="font-mono text-xs break-all">{health.lastWebhookVerifiedAt ? String(health.lastWebhookVerifiedAt) : '—'}</dd></div>
-          </dl>
+          {health ? (
+            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+              <div><dt className="text-xs uppercase text-dl-muted">Reachable</dt><dd className="font-mono">{health.reachable ? 'YES' : 'NO'}</dd></div>
+              <div><dt className="text-xs uppercase text-dl-muted">Quarantined (24h)</dt><dd className="font-mono">{health.quarantinedCount24h}</dd></div>
+              <div><dt className="text-xs uppercase text-dl-muted">Last webhook</dt><dd className="font-mono text-xs break-all">{health.lastWebhookAt ? String(health.lastWebhookAt) : '—'}</dd></div>
+              <div><dt className="text-xs uppercase text-dl-muted">Last verified</dt><dd className="font-mono text-xs break-all">{health.lastWebhookVerifiedAt ? String(health.lastWebhookVerifiedAt) : '—'}</dd></div>
+            </dl>
+          ) : (
+            <p className="text-sm text-dl-muted italic">Adapter health unavailable.</p>
+          )}
         </section>
 
         {/* Reconciliation runs + trigger */}

@@ -21,6 +21,7 @@ interface Props {
   rows: Row[];
   status: string | null;
   intent: string | null;
+  loadError: string | null;
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
@@ -29,32 +30,46 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 
   const status = typeof ctx.query.status === 'string' ? ctx.query.status as CardDepositStatus : null;
   const intent = typeof ctx.query.intent === 'string' ? ctx.query.intent as CardDepositIntent : null;
-  const deposits = await listDeposits({ status, intent, limit: 200 });
 
-  return {
-    props: {
-      status: status ?? null,
-      intent: intent ?? null,
-      rows: deposits.map((d) => ({
-        id: d.id,
-        intent: d.intent,
-        status: d.status,
-        amountCents: d.amountCents,
-        currency: d.currency,
-        stripeSessionId: d.stripeSessionId ?? null,
-        stripePayoutId: d.stripePayoutId ?? null,
-        targetWalletAddress: d.targetWalletAddress ?? null,
-        buyerEmail: d.buyerEmail ?? null,
-        createdAt: d.createdAt.toISOString(),
-      })),
-    },
-  };
+  try {
+    const deposits = await listDeposits({ status, intent, limit: 200 });
+    return {
+      props: {
+        status: status ?? null,
+        intent: intent ?? null,
+        loadError: null,
+        rows: deposits.map((d) => ({
+          id: d.id,
+          intent: d.intent,
+          status: d.status,
+          amountCents: d.amountCents,
+          currency: d.currency,
+          stripeSessionId: d.stripeSessionId ?? null,
+          stripePayoutId: d.stripePayoutId ?? null,
+          targetWalletAddress: d.targetWalletAddress ?? null,
+          buyerEmail: d.buyerEmail ?? null,
+          createdAt: d.createdAt.toISOString(),
+        })),
+      },
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown error';
+    console.error('[operator/treasury/card-deposits] failed to list deposits:', msg, err);
+    return {
+      props: {
+        status: status ?? null,
+        intent: intent ?? null,
+        rows: [],
+        loadError: msg,
+      },
+    };
+  }
 };
 
 const STATUSES = ['', 'PENDING', 'PAID', 'PAYOUT_INITIATED', 'SETTLED', 'FAILED'];
 const INTENTS = ['', 'TREASURY_FUND', 'AXUSD_MINT', 'AXAU_MINT'];
 
-export default function CardDepositsOperatorPage({ rows, status, intent }: Props) {
+export default function CardDepositsOperatorPage({ rows, status, intent, loadError }: Props) {
   return (
     <DesignLawLayout>
       <div className="py-8">
@@ -62,6 +77,15 @@ export default function CardDepositsOperatorPage({ rows, status, intent }: Props
           <Link href="/operator" className="text-sm underline">← Back to console</Link>
         </div>
         <h1 className="text-2xl font-serif mb-2">Card Deposits (Deprecated)</h1>
+        {loadError && (
+          <div className="border border-dl-gold bg-dl-bg-alt p-4 mb-4 font-mono text-xs">
+            <div className="font-serif text-sm text-dl-navy mb-1">Operational notice</div>
+            <div className="text-dl-ink">
+              Card deposit data could not be loaded. Showing empty result. Operations has been notified.
+              <div className="text-dl-muted mt-1 break-all">ref: {loadError}</div>
+            </div>
+          </div>
+        )}
         <p className="text-sm text-dl-muted font-mono mb-4">
           Historical Stripe Checkout card payments. Retained for audit only.
           TREASURY_FUND deposits previously paid out to the Axiom Nexus account

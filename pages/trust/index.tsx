@@ -32,11 +32,18 @@ const MAPPING_PATH = path.join(
 
 export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => {
   if (ctx.res) ctx.res.setHeader('Cache-Control', 'no-store, max-age=0');
-  const stat = await fs.stat(MAPPING_PATH);
+  let mappingDocLastModifiedIso: string;
+  try {
+    const stat = await fs.stat(MAPPING_PATH);
+    mappingDocLastModifiedIso = stat.mtime.toISOString();
+  } catch (err) {
+    console.error('[trust] failed to stat mapping file:', err);
+    mappingDocLastModifiedIso = 'unavailable';
+  }
   return {
     props: {
       loadedAtIso: new Date().toISOString(),
-      mappingDocLastModifiedIso: stat.mtime.toISOString(),
+      mappingDocLastModifiedIso,
     },
   };
 };
