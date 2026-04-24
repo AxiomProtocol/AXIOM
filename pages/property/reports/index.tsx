@@ -1,11 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
+import { getArbiscanTxUrl, getArbiscanAddressUrl } from '../../../lib/property/explorerLinks';
 
 function formatCurrency(val: number | string | null | undefined): string {
   if (!val) return '$0';
   const num = typeof val === 'string' ? parseFloat(val) : val;
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(num);
+}
+
+function formatAxusd(amountCents: number | null | undefined): string | null {
+  if (amountCents == null) return null;
+  return `${(amountCents / 100).toFixed(2)} AXUSD`;
+}
+
+function shortHash(hash: string): string {
+  if (hash.length <= 14) return hash;
+  return `${hash.slice(0, 8)}…${hash.slice(-6)}`;
 }
 
 function gradeColor(grade: string): string {
@@ -15,32 +26,59 @@ function gradeColor(grade: string): string {
   return 'text-red-800 bg-red-50 border-red-200';
 }
 
+function statusColor(status: string): string {
+  if (status === 'ready') return 'text-green-800 bg-green-50 border-green-200';
+  if (status === 'paid' || status === 'generating') return 'text-blue-800 bg-blue-50 border-blue-200';
+  if (status === 'failed') return 'text-red-800 bg-red-50 border-red-200';
+  return 'text-dl-gray bg-white border-dl-border';
+}
+
 interface ReportSummary {
   id: string;
   createdAt: string;
   tier: string;
   status: string;
   addressRaw: string;
+  addressNormalized: string | null;
   city: string | null;
   state: string | null;
   valueMid: string | null;
   rentMid: string | null;
   confidenceScore: number | null;
   dealGrade: string | null;
+  paymentTxHash: string | null;
+  paymentChainId: number | null;
+  paymentFromAddress: string | null;
+  paymentConfirmedAt: string | null;
+  amountPaidCents: number | null;
+  buyerWallet: string | null;
+  isRepeatPurchase?: boolean;
 }
 
+type LookupMode = 'email' | 'wallet';
+
+const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function ReportHistory() {
-  const [email, setEmail] = useState('');
-  const [searchEmail, setSearchEmail] = useState('');
+  const [mode, setMode] = useState<LookupMode>('email');
+  const [query, setQuery] = useState('');
+  const [activeQuery, setActiveQuery] = useState('');
+  const [activeMode, setActiveMode] = useState<LookupMode>('email');
   const [reports, setReports] = useState<ReportSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [pagination, setPagination] = useState({ page: 1, totalPages: 0, total: 0 });
   const [searched, setSearched] = useState(false);
 
-  const fetchReports = async (emailAddr: string, page: number = 1) => {
-    if (!emailAddr.trim() || !emailAddr.includes('@')) {
+  const fetchReports = async (lookup: LookupMode, value: string, page: number = 1) => {
+    const trimmed = value.trim();
+    if (lookup === 'email' && !EMAIL_RE.test(trimmed)) {
       setError('Please enter a valid email address.');
+      return;
+    }
+    if (lookup === 'wallet' && !WALLET_RE.test(trimmed)) {
+      setError('Please enter a valid wallet address (0x followed by 40 hex characters).');
       return;
     }
     setLoading(true);
@@ -48,10 +86,14 @@ export default function ReportHistory() {
     setSearched(true);
 
     try {
-      const res = await fetch(`/api/property/reports?email=${encodeURIComponent(emailAddr.trim())}&page=${page}&limit=10`);
+      const param = lookup === 'email'
+        ? `email=${encodeURIComponent(trimmed)}`
+        : `wallet=${encodeURIComponent(trimmed)}`;
+      const res = await fetch(`/api/property/reports?${param}&page=${page}&limit=10`);
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Could not fetch reports');
+        setReports([]);
       } else {
         setReports(data.reports || []);
         setPagination(data.pagination || { page: 1, totalPages: 0, total: 0 });
@@ -65,9 +107,13 @@ export default function ReportHistory() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setSearchEmail(email);
-    fetchReports(email, 1);
+    setActiveMode(mode);
+    setActiveQuery(query);
+    fetchReports(mode, query, 1);
   };
+
+  const inputType = mode === 'email' ? 'email' : 'text';
+  const placeholder = mode === 'email' ? 'Enter your email address' : '0x… (your wallet address)';
 
   return (
     <DesignLawLayout>
@@ -78,41 +124,83 @@ export default function ReportHistory() {
         <div className="border-b border-dl-border pb-6 mb-8">
           <h1 className="font-dl-serif text-2xl text-dl-navy">Report History</h1>
           <p className="text-sm text-dl-gray mt-2">
-            View all past property analysis reports associated with your email address.
+            Look up every property report you have paid for. Each row links to the report and to the on-chain AXUSD
+            payment receipt on Arbitrum One.
           </p>
         </div>
 
         <form onSubmit={handleSearch} className="border border-dl-border p-4 sm:p-6 mb-8">
           <h2 className="font-dl-serif text-lg text-dl-navy mb-4">Find Your Reports</h2>
+
+          <div className="flex gap-2 mb-4" role="tablist" aria-label="Lookup method">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'email'}
+              onClick={() => { setMode('email'); setError(''); }}
+              data-testid="mode-email"
+              className={`px-4 py-2 min-h-[44px] text-xs font-dl-mono border ${
+                mode === 'email'
+                  ? 'bg-dl-navy text-white border-dl-navy'
+                  : 'bg-white text-dl-navy border-dl-border hover:border-dl-navy'
+              }`}
+            >
+              By Email
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'wallet'}
+              onClick={() => { setMode('wallet'); setError(''); }}
+              data-testid="mode-wallet"
+              className={`px-4 py-2 min-h-[44px] text-xs font-dl-mono border ${
+                mode === 'wallet'
+                  ? 'bg-dl-navy text-white border-dl-navy'
+                  : 'bg-white text-dl-navy border-dl-border hover:border-dl-navy'
+              }`}
+            >
+              By Wallet
+            </button>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-3">
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email address"
+              type={inputType}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={placeholder}
+              data-testid="lookup-input"
               className="flex-1 border border-dl-border px-4 py-3 min-h-[44px] text-sm font-dl-mono bg-white text-dl-navy focus:outline-none focus:border-dl-navy"
             />
             <button
               type="submit"
               disabled={loading}
+              data-testid="lookup-search"
               className="px-6 py-3 min-h-[44px] text-sm font-dl-mono bg-dl-navy text-white border border-dl-navy hover:bg-opacity-90 disabled:opacity-60"
             >
               {loading ? 'Searching...' : 'Search'}
             </button>
           </div>
+
+          <p className="text-xs text-dl-gray font-dl-mono mt-3">
+            {mode === 'email'
+              ? 'We match against the email used at checkout.'
+              : 'We match the wallet that signed the AXUSD transfer.'}
+          </p>
         </form>
 
         {error && (
-          <div className="border border-red-300 bg-red-50 p-4 mb-6 text-sm text-red-800">
+          <div className="border border-red-300 bg-red-50 p-4 mb-6 text-sm text-red-800" data-testid="lookup-error">
             {error}
           </div>
         )}
 
         {searched && !loading && reports.length === 0 && !error && (
-          <div className="border border-dl-border p-8 text-center">
+          <div className="border border-dl-border p-8 text-center" data-testid="lookup-empty">
             <h3 className="font-dl-serif text-lg text-dl-navy mb-2">No Reports Found</h3>
             <p className="text-sm text-dl-gray mb-4">
-              No reports were found for this email address. Reports are linked to the email provided during generation.
+              No paid reports were found for this {activeMode === 'email' ? 'email' : 'wallet'}. Receipts appear here
+              once your AXUSD payment is confirmed on Arbitrum One.
             </p>
             <a href="/property" className="font-dl-mono text-sm text-dl-navy border border-dl-navy px-6 py-2 hover:bg-dl-navy hover:text-white inline-block">
               Generate a Report
@@ -121,7 +209,7 @@ export default function ReportHistory() {
         )}
 
         {reports.length > 0 && (
-          <div>
+          <div data-testid="reports-list">
             <div className="flex justify-between items-center mb-4">
               <p className="text-xs text-dl-gray font-dl-mono">
                 {pagination.total} report{pagination.total !== 1 ? 's' : ''} found
@@ -130,31 +218,51 @@ export default function ReportHistory() {
 
             <div className="space-y-3">
               {reports.map((report) => (
-                <a
+                <div
                   key={report.id}
-                  href={`/property/reports/${report.id}`}
-                  className="block border border-dl-border p-4 hover:border-dl-navy transition-colors group"
+                  data-testid="report-row"
+                  data-repeat={report.isRepeatPurchase ? 'true' : 'false'}
+                  className={`border p-4 transition-colors ${
+                    report.isRepeatPurchase
+                      ? 'border-amber-300 bg-amber-50/40'
+                      : 'border-dl-border hover:border-dl-navy'
+                  }`}
                 >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                    <div className="flex-1">
-                      <p className="text-sm text-dl-navy font-dl-mono group-hover:underline">
-                        {report.addressRaw}
-                      </p>
-                      <div className="flex gap-3 mt-1">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <a
+                        href={`/property/reports/${report.id}`}
+                        className="text-sm text-dl-navy font-dl-mono hover:underline break-words"
+                      >
+                        {report.addressNormalized || report.addressRaw}
+                      </a>
+                      <div className="flex flex-wrap gap-2 mt-2">
                         <span className="text-xs text-dl-gray font-dl-mono">
                           {new Date(report.createdAt).toLocaleDateString()}
                         </span>
                         <span className="text-xs font-dl-mono border border-dl-border px-2 py-0 text-dl-gray uppercase">
                           {report.tier}
                         </span>
+                        <span className={`text-xs font-dl-mono border px-2 py-0 uppercase ${statusColor(report.status)}`}>
+                          {report.status}
+                        </span>
                         {report.dealGrade && (
                           <span className={`text-xs font-dl-mono border px-2 py-0 ${gradeColor(report.dealGrade)}`}>
                             {report.dealGrade}
                           </span>
                         )}
+                        {report.isRepeatPurchase && (
+                          <span
+                            data-testid="repeat-badge"
+                            title="You already paid for a report on this address. Open the earlier receipt instead of paying again."
+                            className="text-xs font-dl-mono border border-amber-300 bg-amber-100 text-amber-900 px-2 py-0 uppercase"
+                          >
+                            Repeat purchase
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <div className="flex gap-6 text-right">
+                    <div className="flex gap-6 text-right shrink-0">
                       {report.valueMid && (
                         <div>
                           <p className="text-xs text-dl-gray">Value</p>
@@ -175,7 +283,58 @@ export default function ReportHistory() {
                       )}
                     </div>
                   </div>
-                </a>
+
+                  {report.paymentTxHash && (
+                    <div
+                      className="mt-3 pt-3 border-t border-dl-border/60 flex flex-col md:flex-row md:items-center gap-2 md:gap-6"
+                      data-testid="receipt-block"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-wide text-dl-gray font-dl-mono">
+                          AXUSD Tx
+                        </span>
+                        <a
+                          href={getArbiscanTxUrl(report.paymentChainId, report.paymentTxHash)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          data-testid="arbiscan-tx-link"
+                          className="text-xs font-dl-mono text-dl-navy underline hover:no-underline break-all"
+                          title={report.paymentTxHash}
+                        >
+                          {shortHash(report.paymentTxHash)}
+                        </a>
+                      </div>
+                      {report.amountPaidCents != null && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] uppercase tracking-wide text-dl-gray font-dl-mono">Paid</span>
+                          <span className="text-xs font-dl-mono text-dl-navy">{formatAxusd(report.amountPaidCents)}</span>
+                        </div>
+                      )}
+                      {report.paymentFromAddress && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] uppercase tracking-wide text-dl-gray font-dl-mono">From</span>
+                          <a
+                            href={getArbiscanAddressUrl(report.paymentChainId, report.paymentFromAddress)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-dl-mono text-dl-navy underline hover:no-underline"
+                            title={report.paymentFromAddress}
+                          >
+                            {shortHash(report.paymentFromAddress)}
+                          </a>
+                        </div>
+                      )}
+                      {report.paymentConfirmedAt && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] uppercase tracking-wide text-dl-gray font-dl-mono">Confirmed</span>
+                          <span className="text-xs font-dl-mono text-dl-gray">
+                            {new Date(report.paymentConfirmedAt).toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
 
@@ -184,7 +343,7 @@ export default function ReportHistory() {
                 {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
                   <button
                     key={p}
-                    onClick={() => fetchReports(searchEmail, p)}
+                    onClick={() => fetchReports(activeMode, activeQuery, p)}
                     className={`w-10 h-10 min-h-[44px] text-xs font-dl-mono border ${
                       p === pagination.page
                         ? 'bg-dl-navy text-white border-dl-navy'

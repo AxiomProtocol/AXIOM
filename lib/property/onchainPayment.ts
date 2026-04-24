@@ -49,6 +49,11 @@ export async function getPaymentTokenDecimals(): Promise<number> {
   return 6;
 }
 
+// Block-explorer link builders live in `./explorerLinks` so client bundles
+// can pull them in without dragging ethers/contracts. Re-exported here so
+// server callers can keep the single onchainPayment import surface.
+export { getArbiscanTxUrl, getArbiscanAddressUrl } from './explorerLinks';
+
 export interface PaymentInstruction {
   chainId: number;
   token: string;
