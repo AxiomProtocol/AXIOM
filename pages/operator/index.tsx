@@ -11,7 +11,8 @@ import {
   capReserveHoldingsSnapshots,
   capCardDeposits,
 } from '../../shared/capInfraSchema';
-import { desc, eq, and, inArray, sql } from 'drizzle-orm';
+import { propertyReports } from '../../shared/propertySchema';
+import { desc, eq, and, inArray, isNotNull, lt, sql } from 'drizzle-orm';
 import { getActiveSolvencyMode } from '../../lib/capinfra/reserve/solvencyMode';
 import {
   listRecentUnreadIntegrityAlerts,
@@ -26,17 +27,26 @@ interface DashboardProps {
     quarantinedWebhooks: number;
     unreadNotifications: number;
     cardDepositsInFlight: number;
+    stuckPropertyPayments: number;
   };
   mode: { mode: string; version: string; isBootstrap: boolean };
   lastSnapshot: { id: string; checksum: string; asOf: string } | null;
   integrityAlerts: IntegrityAlertView[];
 }
 
+const STUCK_PAYMENT_MIN_AGE_MIN = (() => {
+  const raw = process.env.STUCK_PAYMENT_MIN_AGE_MINUTES;
+  const n = raw ? parseInt(raw, 10) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : 15;
+})();
+
 export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx) => {
   const redirect = requireOperatorCookie(ctx);
   if (redirect) return redirect;
 
-  const [[instr], [denied], [quar], [unread], [cardDepInFlight], snaps] = await Promise.all([
+  const stuckCutoff = new Date(Date.now() - STUCK_PAYMENT_MIN_AGE_MIN * 60_000);
+
+  const [[instr], [denied], [quar], [unread], [cardDepInFlight], [stuckProp], snaps] = await Promise.all([
     db
       .select({ n: sql<number>`count(*)::int` })
       .from(capSettlementInstructions),
@@ -56,6 +66,16 @@ export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx
       .select({ n: sql<number>`count(*)::int` })
       .from(capCardDeposits)
       .where(inArray(capCardDeposits.status, ['PENDING', 'PAYOUT_INITIATED'])),
+    db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(propertyReports)
+      .where(
+        and(
+          eq(propertyReports.status, 'pending'),
+          isNotNull(propertyReports.buyerWallet),
+          lt(propertyReports.createdAt, stuckCutoff),
+        ),
+      ),
     db
       .select()
       .from(capReserveHoldingsSnapshots)
@@ -83,6 +103,7 @@ export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx
         quarantinedWebhooks: Number(quar?.n ?? 0),
         unreadNotifications: Number(unread?.n ?? 0),
         cardDepositsInFlight: Number(cardDepInFlight?.n ?? 0),
+        stuckPropertyPayments: Number(stuckProp?.n ?? 0),
       },
       mode: { mode: mode.mode, version: mode.version, isBootstrap: mode.isBootstrap },
       lastSnapshot: snaps[0]
@@ -187,6 +208,21 @@ export default function OperatorDashboard(props: DashboardProps) {
             <Link href="/operator/reserve" className="text-sm underline">Open reserve dashboard →</Link>
           </div>
         </section>
+
+        {props.counts.stuckPropertyPayments > 0 ? (
+          <section className="border border-yellow-700 bg-yellow-50 text-yellow-900 p-4 mb-6">
+            <h2 className="font-serif text-lg mb-2">Property reports — stuck pending payments</h2>
+            <p className="text-xs font-mono mb-3">
+              {props.counts.stuckPropertyPayments} property-report row(s) are
+              stuck in <code>pending</code> with a recorded buyer wallet. The
+              scheduled resolver will attempt to auto-confirm matching on-chain
+              transfers; older rows with no transfer are auto-expired.
+            </p>
+            <Link href="/operator/property-reports/stuck" className="text-sm underline">
+              Open stuck-payments console →
+            </Link>
+          </section>
+        ) : null}
 
         {props.counts.cardDepositsInFlight > 0 ? (
           <section className="border border-yellow-700 bg-yellow-50 text-yellow-900 p-4 mb-6">
