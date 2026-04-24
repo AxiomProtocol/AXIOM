@@ -28,6 +28,7 @@ import {
 import { eq, desc, and, sql, type SQL } from 'drizzle-orm';
 import { generateId } from '../ids';
 import { centsToDecimalString, type UsdDecimalString } from '../money';
+import { maybeEmitDrainArchiveEmail } from './drainArchive';
 
 export type CardDepositIntent = 'TREASURY_FUND' | 'AXUSD_MINT' | 'AXAU_MINT';
 export type CardDepositStatus =
@@ -423,6 +424,13 @@ export async function handleStripeWebhookEvent(
       .where(eq(capCardDepositWebhookEvents.stripeEventId, event.id));
   } catch (err: any) {
     console.error('[cardDeposits] gateway backfill failed:', err?.message);
+  }
+
+  // Drain-completion archive (task #250). Only run on real status
+  // transitions; the emitter is non-throwing and self-gates on
+  // in-flight > 0 / marker-present.
+  if (newStatus !== null) {
+    await maybeEmitDrainArchiveEmail();
   }
 
   return { duplicate: false, depositId, newStatus, message };
