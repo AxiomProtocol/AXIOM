@@ -139,7 +139,7 @@ const severityBadge: Record<string, string> = {
   MANUAL_INTERVENTION: 'bg-purple-50 text-purple-800 border-purple-300',
 };
 
-export default function IncreaseAdapterPage({ health, recent, reconRuns, latestDrift }: Props) {
+export default function IncreaseAdapterPage({ health, recent, reconRuns, latestDrift, loadError }: Props) {
   const [recon, setRecon] = useState<{ runId: string; status: string; comparedCount: number; driftCount: number } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -158,7 +158,7 @@ export default function IncreaseAdapterPage({ health, recent, reconRuns, latestD
   }
 
   const modeBadge =
-    health.mode === 'LIVE'
+    health?.mode === 'LIVE'
       ? 'bg-red-100 text-red-800 border-red-300'
       : 'bg-amber-100 text-amber-900 border-amber-300';
 
@@ -170,9 +170,22 @@ export default function IncreaseAdapterPage({ health, recent, reconRuns, latestD
         </div>
         <div className="flex items-baseline gap-3 mb-1">
           <h1 className="text-2xl font-serif">Increase (ACH) adapter</h1>
-          <span className={`text-xs uppercase tracking-wide border px-2 py-0.5 ${modeBadge}`}>{health.mode}</span>
-          <span className="text-xs text-dl-muted font-mono">configVersion={health.configVersion}</span>
+          {health && (
+            <>
+              <span className={`text-xs uppercase tracking-wide border px-2 py-0.5 ${modeBadge}`}>{health.mode}</span>
+              <span className="text-xs text-dl-muted font-mono">configVersion={health.configVersion}</span>
+            </>
+          )}
         </div>
+        {loadError && (
+          <div className="border border-dl-gold bg-dl-bg-alt p-4 mb-4 mt-2 font-mono text-xs">
+            <div className="font-serif text-sm text-dl-navy mb-1">Operational notice</div>
+            <div className="text-dl-ink">
+              Adapter data could not be loaded. Showing safe defaults. Operations has been notified.
+              <div className="text-dl-muted mt-1 break-all">ref: {loadError}</div>
+            </div>
+          </div>
+        )}
         <p className="text-sm text-dl-muted mb-6">
           Phase 3B.2: ACH/wire DRY_RUN only. Verified webhooks advance settlement state via
           canonical path. Reconciliation diff runs against Increase API.
@@ -181,37 +194,43 @@ export default function IncreaseAdapterPage({ health, recent, reconRuns, latestD
 
         <section className="border border-dl-border p-4 mb-6">
           <h2 className="font-serif text-lg mb-3">Health detail</h2>
-          <dl className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-            <div>
-              <dt className="text-xs uppercase text-dl-muted">Reachable</dt>
-              <dd className="font-mono">{health.reachable ? 'YES' : 'NO'}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase text-dl-muted">Quarantined (24h)</dt>
-              <dd className="font-mono">{health.quarantinedCount24h}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase text-dl-muted">Environment</dt>
-              <dd className="font-mono">{String((health.details as Record<string, unknown>)?.environment ?? '—')}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase text-dl-muted">Account ID</dt>
-              <dd className="font-mono">{String((health.details as Record<string, unknown>)?.accountId ?? '—')}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase text-dl-muted">Last webhook</dt>
-              <dd className="font-mono text-xs break-all">{health.lastWebhookAt ? String(health.lastWebhookAt) : '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase text-dl-muted">Last verified</dt>
-              <dd className="font-mono text-xs break-all">{health.lastWebhookVerifiedAt ? String(health.lastWebhookVerifiedAt) : '—'}</dd>
-            </div>
-          </dl>
-          {!health.reachable && (
-            <p className="mt-3 text-xs text-amber-700 border border-amber-300 bg-amber-50 px-2 py-1">
-              reachable=false is expected in DRY_RUN with a synthetic sandbox account ID.
-              This does not affect the public health endpoint.
-            </p>
+          {health ? (
+            <>
+              <dl className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                <div>
+                  <dt className="text-xs uppercase text-dl-muted">Reachable</dt>
+                  <dd className="font-mono">{health.reachable ? 'YES' : 'NO'}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase text-dl-muted">Quarantined (24h)</dt>
+                  <dd className="font-mono">{health.quarantinedCount24h}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase text-dl-muted">Environment</dt>
+                  <dd className="font-mono">{String((health.details as Record<string, unknown>)?.environment ?? '—')}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase text-dl-muted">Account ID</dt>
+                  <dd className="font-mono">{String((health.details as Record<string, unknown>)?.accountId ?? '—')}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase text-dl-muted">Last webhook</dt>
+                  <dd className="font-mono text-xs break-all">{health.lastWebhookAt ? String(health.lastWebhookAt) : '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase text-dl-muted">Last verified</dt>
+                  <dd className="font-mono text-xs break-all">{health.lastWebhookVerifiedAt ? String(health.lastWebhookVerifiedAt) : '—'}</dd>
+                </div>
+              </dl>
+              {!health.reachable && (
+                <p className="mt-3 text-xs text-amber-700 border border-amber-300 bg-amber-50 px-2 py-1">
+                  reachable=false is expected in DRY_RUN with a synthetic sandbox account ID.
+                  This does not affect the public health endpoint.
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-dl-muted italic">Adapter health unavailable.</p>
           )}
         </section>
 

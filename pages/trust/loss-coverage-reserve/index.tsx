@@ -31,6 +31,7 @@ interface PageProps {
     paid: number;
     paidCents: number;
   };
+  loadError: string | null;
 }
 
 const POLICY_PATH = path.join(
@@ -40,35 +41,60 @@ const POLICY_PATH = path.join(
   'loss-coverage-reserve-policy.md',
 );
 
+const EMPTY_TOTALS = {
+  submitted: 0,
+  underReview: 0,
+  approved: 0,
+  denied: 0,
+  paid: 0,
+  paidCents: 0,
+};
+
 export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => {
   if (ctx.res) ctx.res.setHeader('Cache-Control', 'no-store, max-age=0');
-  const [stat, policyText, claims] = await Promise.all([
-    fs.stat(POLICY_PATH),
-    fs.readFile(POLICY_PATH, 'utf8'),
-    listClaims({}),
-  ]);
-  const versionMatch = policyText.match(/\*\*Version:\*\*\s+`([^`]+)`/);
-  const policyVersion = versionMatch ? versionMatch[1] : 'unknown';
-  const rows = claims.map(toPublicRow);
-  const totals = {
-    submitted: rows.filter((r) => r.status === 'SUBMITTED').length,
-    underReview: rows.filter((r) => r.status === 'UNDER_REVIEW').length,
-    approved: rows.filter((r) => r.status === 'APPROVED').length,
-    denied: rows.filter((r) => r.status === 'DENIED').length,
-    paid: rows.filter((r) => r.status === 'PAID').length,
-    paidCents: rows
-      .filter((r) => r.status === 'PAID')
-      .reduce((acc, r) => acc + (r.paidAmountCents ?? 0), 0),
-  };
-  return {
-    props: {
-      loadedAtIso: new Date().toISOString(),
-      policyMtimeIso: stat.mtime.toISOString(),
-      policyVersion,
-      rows,
-      totals,
-    },
-  };
+  try {
+    const [stat, policyText, claims] = await Promise.all([
+      fs.stat(POLICY_PATH),
+      fs.readFile(POLICY_PATH, 'utf8'),
+      listClaims({}),
+    ]);
+    const versionMatch = policyText.match(/\*\*Version:\*\*\s+`([^`]+)`/);
+    const policyVersion = versionMatch ? versionMatch[1] : 'unknown';
+    const rows = claims.map(toPublicRow);
+    const totals = {
+      submitted: rows.filter((r) => r.status === 'SUBMITTED').length,
+      underReview: rows.filter((r) => r.status === 'UNDER_REVIEW').length,
+      approved: rows.filter((r) => r.status === 'APPROVED').length,
+      denied: rows.filter((r) => r.status === 'DENIED').length,
+      paid: rows.filter((r) => r.status === 'PAID').length,
+      paidCents: rows
+        .filter((r) => r.status === 'PAID')
+        .reduce((acc, r) => acc + (r.paidAmountCents ?? 0), 0),
+    };
+    return {
+      props: {
+        loadedAtIso: new Date().toISOString(),
+        policyMtimeIso: stat.mtime.toISOString(),
+        policyVersion,
+        rows,
+        totals,
+        loadError: null,
+      },
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown error';
+    console.error('[trust/loss-coverage-reserve] failed to load page data:', msg, err);
+    return {
+      props: {
+        loadedAtIso: new Date().toISOString(),
+        policyMtimeIso: 'unavailable',
+        policyVersion: 'unavailable',
+        rows: [],
+        totals: EMPTY_TOTALS,
+        loadError: msg,
+      },
+    };
+  }
 };
 
 function fmtUsd(cents: number) {
@@ -121,6 +147,16 @@ export default function LossCoverageReservePage(props: PageProps) {
             </Link>
           </p>
         </div>
+
+        {props.loadError && (
+          <div className="border border-dl-gold bg-dl-bg-alt p-4 mb-6 font-dl-mono text-xs">
+            <div className="font-dl-serif text-sm text-dl-navy mb-1">Operational notice</div>
+            <div className="text-dl-ink">
+              Live claim data could not be loaded. Showing safe defaults. Operations has been notified.
+              <div className="text-dl-gray mt-1 break-all">ref: {props.loadError}</div>
+            </div>
+          </div>
+        )}
 
         <div className="border border-dl-border p-6 mb-8">
           <h2 className="font-dl-serif text-xl text-dl-navy mb-3">What this is</h2>
