@@ -357,6 +357,23 @@ describe('POST /api/property/confirm-payment', () => {
     expect(verifyOnchainPaymentMock).toHaveBeenCalledWith(VALID_TX_HASH, 1499);
   });
 
+  it('402s and surfaces the verifier reason when the on-chain transfer went to the wrong recipient', async () => {
+    nextSelectResults.push([
+      { id: 'rep_wrongto', tier: 'base', status: 'pending', buyerWallet: null },
+    ]);
+    nextSelectResults.push([]);
+    verifyOnchainPaymentMock.mockResolvedValueOnce({
+      ok: false,
+      reason: `No AXUSD transfer to ${PROPERTY_PAYMENT_RECIPIENT.toLowerCase()} found in the receipt logs.`,
+    });
+    const { statusCode, body } = await runHandler(confirmPaymentHandler, {
+      body: { reportId: 'rep_wrongto', txHash: VALID_TX_HASH },
+    });
+    expect(statusCode()).toBe(402);
+    expect(body().error).toMatch(/no AXUSD transfer to/i);
+    expect(recordedUpdateSets).toHaveLength(0);
+  });
+
   it('passes the base-tier price (499¢) to the verifier for base reports', async () => {
     nextSelectResults.push([
       { id: 'rep_base_v', tier: 'base', status: 'pending', buyerWallet: null },
