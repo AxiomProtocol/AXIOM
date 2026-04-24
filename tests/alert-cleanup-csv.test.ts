@@ -14,8 +14,9 @@
  *  6. Error handling — returns 500 when the database throws
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { Pool } from 'pg';
 
 // ─── Mock helpers ──────────────────────────────────────────────────────────────
 
@@ -515,3 +516,213 @@ describe('/api/admin/oracle-fallbacks-alert-cleanup-csv handler', () => {
     });
   });
 });
+
+// ─── Integration tests (real DB) ──────────────────────────────────────────────
+//
+// These exercise the live HTTP endpoint against a real Postgres instance so
+// schema drift in `prune_alert_log_cleanup_history` (column renames, type
+// changes, removed indexes) is caught before it can break the CSV download
+// in production. The unit tests above mock the pg pool and therefore cannot
+// detect any of those failure modes.
+//
+// Skipped unless both TEST_DATABASE_URL and ADMIN_SOLVENCY_KEY are set so CI
+// environments without a test DB or running Next.js server do not produce
+// false failures. Mirrors the integration block in
+// tests/prune-history-csv.test.ts.
+
+const INTEGRATION_DB_URL = process.env.TEST_DATABASE_URL;
+const INTEGRATION_ADMIN_KEY = process.env.ADMIN_SOLVENCY_KEY;
+const integrationDescribe =
+  INTEGRATION_DB_URL && INTEGRATION_ADMIN_KEY ? describe : describe.skip;
+
+integrationDescribe(
+  '/api/admin/oracle-fallbacks-alert-cleanup-csv integration (real DB)',
+  () => {
+    let pgPool: Pool;
+    const insertedIds: number[] = [];
+
+    beforeAll(async () => {
+      pgPool = new Pool({
+        connectionString: INTEGRATION_DB_URL ?? '',
+        ssl: INTEGRATION_DB_URL?.includes('neon.tech')
+          ? { rejectUnauthorized: false }
+          : undefined,
+        max: 2,
+      });
+
+      const check = await pgPool.query<{ exists: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1 FROM information_schema.tables
+           WHERE table_schema = 'public'
+             AND table_name = 'prune_alert_log_cleanup_history'
+         ) AS exists`,
+      );
+      if (check.rows[0].exists !== true) {
+        throw new Error(
+          'Integration test prerequisite missing: ' +
+            'prune_alert_log_cleanup_history table not found. ' +
+            'Apply migration 0049 before running integration tests.',
+        );
+      }
+    });
+
+    afterEach(async () => {
+      if (insertedIds.length > 0) {
+        await pgPool.query(
+          `DELETE FROM prune_alert_log_cleanup_history WHERE id = ANY($1::bigint[])`,
+          [insertedIds],
+        );
+        insertedIds.length = 0;
+      }
+    });
+
+    afterAll(async () => {
+      await pgPool.end().catch(() => {});
+    });
+
+    interface SeedRow {
+      ranAt: Date;
+      deletedCount: number;
+      retentionDays: number;
+      triggeredBy: string;
+    }
+
+    async function seedAlertCleanupHistory(row: SeedRow): Promise<number> {
+      const result = await pgPool.query<{ id: number }>(
+        `INSERT INTO prune_alert_log_cleanup_history
+           (ran_at, deleted_count, retention_days, triggered_by)
+         VALUES ($1::timestamptz, $2, $3, $4)
+         RETURNING id`,
+        [row.ranAt.toISOString(), row.deletedCount, row.retentionDays, row.triggeredBy],
+      );
+      const id = result.rows[0].id;
+      insertedIds.push(id);
+      return id;
+    }
+
+    function parseCsv(csv: string): { header: string[]; rows: string[][] } {
+      const lines = csv.split(/\r\n|\r|\n/).filter(Boolean);
+      const header = lines[0].split(',');
+      const rows = lines.slice(1).map((line) => {
+        // Simple CSV parser sufficient for the values we seed (no embedded
+        // commas/quotes/newlines in our test data).
+        return line.split(',');
+      });
+      return { header, rows };
+    }
+
+    it('returns seeded rows in the CSV with the expected four-column header and ordering', async () => {
+      // Use a unique triggered_by tag so we can locate our seeded rows even
+      // if other history rows exist in the test database.
+      const tag = `alert-csv-integ-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+
+      const olderAt = new Date(Date.now() - 2 * 60 * 60 * 1000);
+      const newerAt = new Date(Date.now() - 1 * 60 * 60 * 1000);
+
+      await seedAlertCleanupHistory({
+        ranAt: olderAt,
+        deletedCount: 7,
+        retentionDays: 90,
+        triggeredBy: `${tag}-older`,
+      });
+      await seedAlertCleanupHistory({
+        ranAt: newerAt,
+        deletedCount: 13,
+        retentionDays: 90,
+        triggeredBy: `${tag}-newer`,
+      });
+
+      const resp = await fetch(
+        `http://localhost:${process.env.PORT ?? 3000}/api/admin/oracle-fallbacks-alert-cleanup-csv`,
+        { headers: { 'x-admin-key': INTEGRATION_ADMIN_KEY ?? '' } },
+      );
+
+      expect(resp.status).toBe(200);
+      expect(resp.headers.get('content-type') ?? '').toMatch(/text\/csv/);
+
+      const csv = await resp.text();
+      const { header, rows } = parseCsv(csv);
+
+      expect(header).toEqual([
+        'ran_at',
+        'deleted_count',
+        'retention_days',
+        'triggered_by',
+      ]);
+
+      const ourRows = rows.filter(
+        (r) => r[3] === `${tag}-older` || r[3] === `${tag}-newer`,
+      );
+      expect(ourRows).toHaveLength(2);
+
+      const newerRow = ourRows.find((r) => r[3] === `${tag}-newer`)!;
+      const olderRow = ourRows.find((r) => r[3] === `${tag}-older`)!;
+
+      expect(newerRow[1]).toBe('13');
+      expect(newerRow[2]).toBe('90');
+      expect(olderRow[1]).toBe('7');
+      expect(olderRow[2]).toBe('90');
+
+      // ran_at column should be a parseable timestamp matching what we seeded.
+      expect(new Date(newerRow[0]).getTime()).toBeCloseTo(newerAt.getTime(), -3);
+      expect(new Date(olderRow[0]).getTime()).toBeCloseTo(olderAt.getTime(), -3);
+
+      // The endpoint orders by ran_at DESC, so within our two rows the newer
+      // one must appear before the older one in the CSV output.
+      const newerIdx = rows.findIndex((r) => r[3] === `${tag}-newer`);
+      const olderIdx = rows.findIndex((r) => r[3] === `${tag}-older`);
+      expect(newerIdx).toBeGreaterThanOrEqual(0);
+      expect(olderIdx).toBeGreaterThan(newerIdx);
+    });
+
+    it('date-range filter: only rows inside [from, to] appear in the CSV', async () => {
+      // Seed three rows: one before the window, one inside, one after. Then
+      // query with from/to set to the window and verify only the in-window
+      // row is present in the returned CSV.
+      const tag = `alert-csv-range-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+
+      const beforeAt = new Date(Date.now() - 5 * 60 * 60 * 1000);
+      const insideAt = new Date(Date.now() - 3 * 60 * 60 * 1000);
+      const afterAt = new Date(Date.now() - 1 * 60 * 60 * 1000);
+
+      const fromAt = new Date(Date.now() - 4 * 60 * 60 * 1000);
+      const toAt = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+      await seedAlertCleanupHistory({
+        ranAt: beforeAt,
+        deletedCount: 1,
+        retentionDays: 90,
+        triggeredBy: `${tag}-before`,
+      });
+      await seedAlertCleanupHistory({
+        ranAt: insideAt,
+        deletedCount: 2,
+        retentionDays: 90,
+        triggeredBy: `${tag}-inside`,
+      });
+      await seedAlertCleanupHistory({
+        ranAt: afterAt,
+        deletedCount: 3,
+        retentionDays: 90,
+        triggeredBy: `${tag}-after`,
+      });
+
+      const url =
+        `http://localhost:${process.env.PORT ?? 3000}/api/admin/oracle-fallbacks-alert-cleanup-csv` +
+        `?from=${encodeURIComponent(fromAt.toISOString())}` +
+        `&to=${encodeURIComponent(toAt.toISOString())}`;
+
+      const resp = await fetch(url, {
+        headers: { 'x-admin-key': INTEGRATION_ADMIN_KEY ?? '' },
+      });
+      expect(resp.status).toBe(200);
+
+      const csv = await resp.text();
+      const { rows } = parseCsv(csv);
+
+      const ourRows = rows.filter((r) => r[3]?.startsWith(tag));
+      const triggers = ourRows.map((r) => r[3]).sort();
+      expect(triggers).toEqual([`${tag}-inside`]);
+    });
+  },
+);
