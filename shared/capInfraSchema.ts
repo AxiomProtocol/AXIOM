@@ -854,6 +854,78 @@ export const capCardDepositWebhookEvents = pgTable('cap_card_deposit_webhook_eve
 }));
 
 // ────────────────────────────────────────────────────────────────────
+// Plaid Auth + Balance integration (task #242)
+//
+// Two tables, mirroring the on-the-wire Plaid model:
+//
+//   cap_plaid_items     — one row per linked institution (one Plaid
+//                         "item"). Holds the envelope-encrypted
+//                         access_token and the public-ish institution
+//                         identifiers. Subject to the §7
+//                         /item/remove revocation path: row is
+//                         deleted within 30 days of disconnect.
+//
+//   cap_plaid_accounts  — one row per bank account exposed by an
+//                         item. Holds the routing + account numbers
+//                         returned by Plaid Auth, application-layer
+//                         envelope-encrypted at rest. The dispatcher
+//                         resolves these in-memory at ACH submit time
+//                         and never persists the cleartext.
+// ────────────────────────────────────────────────────────────────────
+
+export const capPlaidItems = pgTable('cap_plaid_items', {
+  id: varchar('id', { length: 40 }).primaryKey(),
+  // Wallet address or capUsers.id of the user who linked this item.
+  // Lower-cased for SIWE wallet addresses (0x…). Required.
+  userRef: varchar('user_ref', { length: 80 }).notNull(),
+  // Plaid's own opaque item identifier — used for /item/remove.
+  plaidItemId: varchar('plaid_item_id', { length: 200 }).notNull(),
+  // Application-layer envelope-encrypted Plaid access_token.
+  // Format: <iv_hex>:<authTag_hex>:<ciphertext_hex>. Never logged,
+  // never returned in API responses, never exposed to the browser.
+  accessTokenEncrypted: text('access_token_encrypted').notNull(),
+  // Plaid institution identifiers (public-ish; OK to store cleartext).
+  institutionId: varchar('institution_id', { length: 80 }),
+  institutionName: varchar('institution_name', { length: 200 }),
+  // Plaid environment this item was linked in (sandbox|production).
+  environment: varchar('environment', { length: 16 }).notNull(),
+  // Soft-delete marker so audit replay can see the disconnection
+  // event even after the row contents are wiped. Cleared rows have
+  // accessTokenEncrypted='' and userRef preserved as a tombstone.
+  removedAt: timestamp('removed_at'),
+  createdAt: timestamp('created_at').notNull().default(sql`now()`),
+  updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+}, (t) => ({
+  userIdx: index('cap_plaid_items_user_idx').on(t.userRef, t.removedAt),
+  plaidItemUq: uniqueIndex('cap_plaid_items_plaid_item_uq').on(t.plaidItemId),
+}));
+
+export const capPlaidAccounts = pgTable('cap_plaid_accounts', {
+  id: varchar('id', { length: 40 }).primaryKey(),
+  itemId: varchar('item_id', { length: 40 }).notNull(),
+  // Plaid's own opaque per-account identifier.
+  plaidAccountId: varchar('plaid_account_id', { length: 200 }).notNull(),
+  accountName: varchar('account_name', { length: 200 }),
+  // Last 4 digits of the account, safe to display.
+  mask: varchar('mask', { length: 8 }),
+  accountType: varchar('account_type', { length: 32 }),
+  accountSubtype: varchar('account_subtype', { length: 32 }),
+  // Application-layer envelope-encrypted ACH routing + account numbers
+  // returned by Plaid Auth. Cleartext only ever held in process memory
+  // at ACH submit time. Format matches accessTokenEncrypted.
+  routingNumberEncrypted: text('routing_number_encrypted'),
+  accountNumberEncrypted: text('account_number_encrypted'),
+  // Last 4 of the routing number, safe to display in operator console.
+  routingMask: varchar('routing_mask', { length: 8 }),
+  removedAt: timestamp('removed_at'),
+  createdAt: timestamp('created_at').notNull().default(sql`now()`),
+  updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
+}, (t) => ({
+  itemIdx: index('cap_plaid_accounts_item_idx').on(t.itemId, t.removedAt),
+  plaidAccountUq: uniqueIndex('cap_plaid_accounts_plaid_account_uq').on(t.plaidAccountId),
+}));
+
+// ────────────────────────────────────────────────────────────────────
 // Trust Differentiator follow-ups
 //   - cap_bridge_allowlist_proposals
 //   - cap_bridge_allowlist_proposal_comments
@@ -1006,6 +1078,12 @@ export type CapCardDeposit = typeof capCardDeposits.$inferSelect;
 export type NewCapCardDeposit = typeof capCardDeposits.$inferInsert;
 export type CapCardDepositWebhookEvent = typeof capCardDepositWebhookEvents.$inferSelect;
 export type NewCapCardDepositWebhookEvent = typeof capCardDepositWebhookEvents.$inferInsert;
+
+// Plaid Auth + Balance integration (task #242)
+export type CapPlaidItem = typeof capPlaidItems.$inferSelect;
+export type NewCapPlaidItem = typeof capPlaidItems.$inferInsert;
+export type CapPlaidAccount = typeof capPlaidAccounts.$inferSelect;
+export type NewCapPlaidAccount = typeof capPlaidAccounts.$inferInsert;
 
 // Trust Differentiator follow-ups
 export type CapBridgeAllowlistProposal = typeof capBridgeAllowlistProposals.$inferSelect;

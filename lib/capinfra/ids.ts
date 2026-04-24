@@ -48,7 +48,10 @@ export type CapInfraIdPrefix =
   | 'bap'   // bridge allowlist proposal
   | 'bac'   // bridge allowlist proposal comment
   | 'lcc'   // loss coverage claim
-  | 'lce';  // loss coverage claim event (status change / note)
+  | 'lce'   // loss coverage claim event (status change / note)
+  // Plaid Auth + Balance integration (task #242)
+  | 'pi'    // plaid item (linked institution + encrypted access_token)
+  | 'pa';   // plaid account (per-item bank account with encrypted routing/account)
 
 export function generateId(prefix: CapInfraIdPrefix): string {
   return `${prefix}_${nano()}`;

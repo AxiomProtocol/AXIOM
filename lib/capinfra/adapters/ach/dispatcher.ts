@@ -161,13 +161,51 @@ async function submitAchDispatch(
 ): Promise<AdapterDispatchResult> {
   const { instruction } = input;
   const payloadJson = instruction.payloadJson as Record<string, unknown> | null;
-  const routingNumber = String(payloadJson?.routingNumber ?? '');
-  const accountNumber = String(payloadJson?.accountNumber ?? '');
+
+  // Wiring contract (task #242):
+  //
+  // The verified routing/account numbers come from Plaid Auth and are
+  // resolved at submit time from the encrypted store keyed by
+  // `payloadJson.plaidItemId`. The cleartext is held in process memory
+  // only — it is NEVER written back to instruction.payloadJson, audit
+  // payload, or the Increase response receiptJson.
+  //
+  // For continuity with pre-Plaid integration tests and for the case
+  // where a treasury operator submits an internal-account transfer,
+  // explicit `payloadJson.routingNumber` / `payloadJson.accountNumber`
+  // are still accepted as a fallback. End-user funding flows MUST go
+  // through Plaid; explicit routing/account is operator-only.
+  let routingNumber: string;
+  let accountNumber: string;
+  let plaidItemId: string | null = null;
+  let plaidAccountResolution: { routingMask: string; accountMask: string } | null = null;
+
+  const plaidItemRef = payloadJson?.plaidItemId;
+  const plaidAccountRef = payloadJson?.plaidAccountId;
+  if (typeof plaidItemRef === 'string' && plaidItemRef.length > 0) {
+    // Lazy import — keeps the ACH dispatcher independent of Plaid in
+    // test environments that don't load the Plaid module graph.
+    const { resolvePlaidAchNumbers } = await import('../plaid');
+    const resolved = await resolvePlaidAchNumbers({
+      itemId: plaidItemRef,
+      plaidAccountId: typeof plaidAccountRef === 'string' ? plaidAccountRef : undefined,
+    });
+    routingNumber = resolved.routingNumber;
+    accountNumber = resolved.accountNumber;
+    plaidItemId = resolved.plaidItemId;
+    plaidAccountResolution = {
+      routingMask: resolved.routingMask,
+      accountMask: resolved.accountMask,
+    };
+  } else {
+    routingNumber = String(payloadJson?.routingNumber ?? '');
+    accountNumber = String(payloadJson?.accountNumber ?? '');
+  }
 
   if (!routingNumber || !accountNumber) {
     throw new AdapterValidationError(
       'ROUTING_OR_ACCOUNT_MISSING',
-      'ACH dispatch requires payloadJson.routingNumber and payloadJson.accountNumber',
+      'ACH dispatch requires either payloadJson.plaidItemId (verified via Plaid Auth) or payloadJson.routingNumber + payloadJson.accountNumber',
     );
   }
 
@@ -200,6 +238,10 @@ async function submitAchDispatch(
   // submitted=true signals settlement.ts to transition to SUBMITTED, NOT SETTLED.
   // No portfolio writes. No reserve credit.
   // SUBMITTED means Increase accepted. Not bank-final.
+  //
+  // receiptJson never carries the cleartext routing/account — only
+  // the masked references and (when applicable) the plaidItemId for
+  // operator traceability.
   return {
     externalRef: transfer.id,
     settledAt: new Date(),
@@ -213,6 +255,10 @@ async function submitAchDispatch(
       increaseStatus: transfer.status,
       configVersion: cfg.configVersion,
       submittedAt: new Date().toISOString(),
+      fundingSource: plaidItemId ? 'plaid_auth' : 'manual',
+      plaidItemId,
+      routingMask: plaidAccountResolution?.routingMask ?? null,
+      accountMask: plaidAccountResolution?.accountMask ?? null,
       note: 'SUBMITTED means Increase API accepted. Clearing confirmed by reconciliation only.',
     },
   };
