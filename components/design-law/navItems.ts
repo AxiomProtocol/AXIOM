@@ -39,6 +39,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/banking', label: 'Banking Infrastructure' },
       { href: '/onramp', label: 'Card Onramp (Buy AXUSD / AXAU)' },
       { href: '/treasury/fund', label: 'Fund Treasury (Wire / ACH)' },
+      { href: '/treasury/fund/card', label: 'Fund Treasury (Card → On-Chain)' },
       { href: '/axiom-payment-rails', label: 'Axiom Payment Rails' },
       { href: '/dao-payroll', label: 'DAO Payroll' },
       { href: '/rent-collection', label: 'Rent Collection' },

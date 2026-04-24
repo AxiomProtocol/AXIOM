@@ -34,9 +34,14 @@ export default function FundTreasuryPage() {
       <div className="max-w-3xl">
         <h1 className="text-3xl font-serif mb-2">Fund the Treasury</h1>
         <p className="text-sm text-dl-muted font-mono mb-6">
-          Treasury funding is accepted via ACH or domestic wire to the Axiom
-          Nexus operating account at Increase. Card payments for treasury are no
-          longer supported.
+          The Axiom Treasury can be funded two ways. Wire or ACH lands USD in
+          the Axiom Nexus operating account at Increase (this page). Card
+          funding lands USDC at the on-chain Treasury wallet on Arbitrum One —
+          see the{' '}
+          <Link href="/treasury/fund/card" className="underline">
+            card funding page
+          </Link>
+          . Stripe-based card-to-bank payments are no longer supported.
         </p>
 
         <div className="border border-dl-line p-6 mb-6">
@@ -69,10 +74,26 @@ export default function FundTreasuryPage() {
         </div>
 
         <div className="border border-dl-line p-6 mb-6">
+          <h2 className="text-lg font-serif mb-2">Card Funding (On-Chain Treasury)</h2>
+          <p className="text-sm font-mono mb-4">
+            Fund the on-chain Treasury wallet directly with a credit or debit
+            card. Coinbase Onramp converts the card payment into USDC and
+            delivers it to the Treasury address on Arbitrum One. This does not
+            land in the Increase bank account.
+          </p>
+          <Link
+            href="/treasury/fund/card"
+            className="inline-block px-5 py-3 bg-dl-ink text-dl-surface font-mono text-sm uppercase tracking-wide hover:opacity-90"
+          >
+            Fund Treasury With a Card &rarr;
+          </Link>
+        </div>
+
+        <div className="border border-dl-line p-6 mb-6">
           <h2 className="text-lg font-serif mb-2">Looking to Buy AXUSD or AXAU?</h2>
           <p className="text-sm font-mono mb-4">
-            Consumer card payments are processed through Coinbase. Card &rarr;
-            USDC &rarr; AXUSD (or AXAU) flows are available on the public onramp:
+            That&apos;s a different flow. Consumer card purchases of AXUSD or
+            AXAU into your own wallet are on the public onramp:
           </p>
           <Link
             href="/onramp"
