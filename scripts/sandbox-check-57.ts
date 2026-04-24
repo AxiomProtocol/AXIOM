@@ -741,12 +741,12 @@ async function cmdRun(): Promise<void> {
 
   if (smokeError) {
     console.error(`[run] smoke harness orchestration error: ${smokeError.message}`);
-    if (process.exitCode === 0 || process.exitCode === undefined) process.exitCode = 2;
+    if (!process.exitCode) process.exitCode = 2;
     return;
   }
   if (!passed) {
     console.error(`[run] check 57 did NOT pass — see ${smoke?.logPath}`);
-    if (process.exitCode === 0 || process.exitCode === undefined) process.exitCode = 1;
+    if (!process.exitCode) process.exitCode = 1;
     return;
   }
   console.log(`[run] ✓ check 57 passed against sandbox: externalRef=${smoke!.externalRef}`);
@@ -785,7 +785,11 @@ main()
   .catch((err) => {
     console.error(`[sandbox-check-57] FATAL: ${err.message}`);
     if (err.stack) console.error(err.stack);
-    process.exitCode = process.exitCode === 0 ? 1 : process.exitCode;
+    // process.exitCode defaults to undefined (treated as success). Always
+    // promote to a non-zero value on a fatal/unhandled error so operators
+    // never see a green exit on this safety-critical script. cmdRun's
+    // try/finally already escalates restore failures with exitCode=3.
+    if (!process.exitCode) process.exitCode = 1;
   })
   .finally(async () => {
     await endPool();
