@@ -558,3 +558,190 @@ export async function sendEscrowCounterpartyInvitation(
     html,
   });
 }
+
+// ─── Property Report — auto-resolved stuck-payment notifications (task #275) ──
+//
+// The stuck-payment resolver (task #248) silently auto-confirms or auto-expires
+// pending property_reports rows when a buyer abandons the on-chain payment
+// flow. These two emails close the loop so the buyer hears about it.
+
+function appBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_APP_URL ?? 'https://axiomprotocol.app';
+}
+
+function shortenTxHash(txHash: string): string {
+  const clean = txHash.startsWith('0x') ? txHash : `0x${txHash}`;
+  return `${clean.slice(0, 10)}…${clean.slice(-8)}`;
+}
+
+export async function sendPropertyReportReadyEmail(params: {
+  to: string;
+  reportId: string;
+  address: string;
+  txHash: string;
+  arbiscanUrl: string;
+  amountAxusd: string;
+}) {
+  const { client, fromEmail } = await getResendClient();
+  const { to, reportId, address, txHash, arbiscanUrl, amountAxusd } = params;
+  const reportUrl = `${appBaseUrl()}/property/reports/${reportId}`;
+  const shortId = reportId.slice(0, 8).toUpperCase();
+  const shortTx = shortenTxHash(txHash);
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:Georgia,serif;background:#f5f5f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f0;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #d1d5db;">
+        <tr>
+          <td style="background:#1e3a5f;padding:32px 36px;">
+            <p style="color:#b8860b;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 8px 0;">AXIOM PROTOCOL — PROPERTY ANALYSIS</p>
+            <h1 style="color:#ffffff;font-family:Georgia,serif;font-size:26px;font-weight:700;margin:0;line-height:1.2;">Your Report Is Ready</h1>
+            <p style="color:#94a3b8;font-family:'Courier New',monospace;font-size:11px;margin:8px 0 0 0;letter-spacing:0.1em;">PAYMENT AUTO-CONFIRMED</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px;">
+            <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 20px 0;">
+              We confirmed your AXUSD payment on Arbitrum One and generated your property report. You can read it at the link below.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;margin:0 0 24px 0;">
+              <tr><td style="padding:20px 24px;">
+                <p style="font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.12em;color:#6b7280;text-transform:uppercase;margin:0 0 14px 0;">Receipt</p>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Report ID</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">#${shortId}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Property</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">${address}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Amount Paid</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#b8860b;font-weight:700;text-align:right;padding:5px 0;">${amountAxusd} AXUSD</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Tx Hash</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">
+                      <a href="${arbiscanUrl}" style="color:#1e3a5f;text-decoration:none;">${shortTx} ↗</a>
+                    </td>
+                  </tr>
+                </table>
+              </td></tr>
+            </table>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+              <tr><td align="center">
+                <a href="${reportUrl}" style="display:inline-block;background:#1e3a5f;color:#ffffff;text-decoration:none;padding:14px 36px;font-family:'Courier New',monospace;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;font-weight:700;">
+                  View Report →
+                </a>
+              </td></tr>
+            </table>
+            <p style="color:#9ca3af;font-size:13px;line-height:1.5;margin:0;">
+              You're receiving this because we detected your on-chain AXUSD payment for a report you started but didn't return to confirm. The on-chain receipt above is also viewable on Arbiscan.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:20px 36px;">
+            <p style="font-family:'Courier New',monospace;font-size:10px;color:#9ca3af;letter-spacing:0.1em;margin:0;">AXIOM PROTOCOL — ARBITRUM ONE — axiomprotocol.app</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  return client.emails.send({
+    from: fromEmail,
+    to: [to],
+    subject: `Your AXIOM property report is ready (#${shortId})`,
+    html,
+  });
+}
+
+export async function sendPropertyReportExpiredEmail(params: {
+  to: string;
+  reportId: string;
+  address: string;
+}) {
+  const { client, fromEmail } = await getResendClient();
+  const { to, reportId, address } = params;
+  const retryUrl = `${appBaseUrl()}/property`;
+  const supportUrl = `${appBaseUrl()}/contact`;
+  const shortId = reportId.slice(0, 8).toUpperCase();
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:Georgia,serif;background:#f5f5f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f0;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #d1d5db;">
+        <tr>
+          <td style="background:#1e3a5f;padding:32px 36px;">
+            <p style="color:#b8860b;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 8px 0;">AXIOM PROTOCOL — PROPERTY ANALYSIS</p>
+            <h1 style="color:#ffffff;font-family:Georgia,serif;font-size:26px;font-weight:700;margin:0;line-height:1.2;">Report Request Expired</h1>
+            <p style="color:#94a3b8;font-family:'Courier New',monospace;font-size:11px;margin:8px 0 0 0;letter-spacing:0.1em;">NO ON-CHAIN PAYMENT RECEIVED</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px;">
+            <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 20px 0;">
+              We didn't receive an on-chain AXUSD payment for your property report request. The pending request has been closed.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;margin:0 0 24px 0;">
+              <tr><td style="padding:20px 24px;">
+                <p style="font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.12em;color:#6b7280;text-transform:uppercase;margin:0 0 14px 0;">Request Details</p>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Reference ID</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">#${shortId}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Property</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">${address}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Status</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#b8860b;font-weight:700;text-align:right;padding:5px 0;">EXPIRED</td>
+                  </tr>
+                </table>
+              </td></tr>
+            </table>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+              <tr><td align="center">
+                <a href="${retryUrl}" style="display:inline-block;background:#1e3a5f;color:#ffffff;text-decoration:none;padding:14px 36px;font-family:'Courier New',monospace;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;font-weight:700;">
+                  Request a New Report →
+                </a>
+              </td></tr>
+            </table>
+            <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
+              <strong>Did you actually pay?</strong> If you sent AXUSD on Arbitrum One but the request still expired, your transaction may have landed outside the auto-detection window. Reach out at <a href="${supportUrl}" style="color:#1e3a5f;font-weight:600;">${supportUrl.replace(/^https?:\/\//, '')}</a> with your tx hash and we can manually confirm it.
+            </p>
+            <p style="color:#9ca3af;font-size:13px;line-height:1.5;margin:0;">
+              You're receiving this because you started a property report request but no on-chain AXUSD transfer was detected within the expiry window.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:20px 36px;">
+            <p style="font-family:'Courier New',monospace;font-size:10px;color:#9ca3af;letter-spacing:0.1em;margin:0;">AXIOM PROTOCOL — ARBITRUM ONE — axiomprotocol.app</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  return client.emails.send({
+    from: fromEmail,
+    to: [to],
+    subject: `Your AXIOM property report request expired (#${shortId})`,
+    html,
+  });
+}

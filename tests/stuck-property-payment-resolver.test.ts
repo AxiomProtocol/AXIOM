@@ -45,6 +45,16 @@ vi.mock('../server/services/property/pipeline', () => ({
   },
 }));
 
+// Mock the buyer-notification emails (task #275). The resolver imports these
+// directly; we verify they are called best-effort and that resolver writes
+// still complete even if a mail send throws.
+const sendReadyEmailMock = vi.fn();
+const sendExpiredEmailMock = vi.fn();
+vi.mock('../lib/email/resend', () => ({
+  sendPropertyReportReadyEmail: (args: unknown) => sendReadyEmailMock(args),
+  sendPropertyReportExpiredEmail: (args: unknown) => sendExpiredEmailMock(args),
+}));
+
 // ─── DB mock: query-by-query queues for select() and update() ────────────────
 //
 // Drizzle uses fluent chains; we model both .select()...await chains and
@@ -52,9 +62,18 @@ vi.mock('../server/services/property/pipeline', () => ({
 
 const selectQueue: unknown[][] = [];
 const updateCalls: Array<{ values: unknown; whereDescribed: boolean }> = [];
+// One entry per `.update().set().where().returning()` call. Tests can push
+// `[]` to simulate a no-op update (e.g. row already moved out of pending);
+// otherwise the mock defaults to a single-row "row was updated" response so
+// callers that gate side-effects on `updated.length > 0` see a write happen.
+const updateReturningQueue: unknown[][] = [];
 
 function pushSelect(rows: unknown[]) {
   selectQueue.push(rows);
+}
+
+function pushUpdateReturning(rows: unknown[]) {
+  updateReturningQueue.push(rows);
 }
 
 vi.mock('../server/db', () => {
@@ -87,7 +106,13 @@ vi.mock('../server/db', () => {
       if (last) last.whereDescribed = true;
       return updateChain;
     },
-    returning() { return Promise.resolve([]); },
+    returning() {
+      // Default to "one row was updated" so call sites that gate side-effects
+      // on `updated.length > 0` see a write happen. Tests can preload an
+      // empty array to simulate a no-op (race) update.
+      const next = updateReturningQueue.shift() ?? [{ id: 'mock-updated' }];
+      return Promise.resolve(next);
+    },
     then(resolve: (v: unknown) => unknown) {
       return Promise.resolve(resolve(undefined));
     },
@@ -150,8 +175,14 @@ function makePendingRow(overrides: Partial<{ id: string; createdAt: Date; tier: 
 beforeEach(() => {
   selectQueue.length = 0;
   updateCalls.length = 0;
+  updateReturningQueue.length = 0;
   verifyMock.mockReset();
   generateReportMock.mockReset();
+  sendReadyEmailMock.mockReset();
+  sendExpiredEmailMock.mockReset();
+  // Default: emails resolve so they don't accidentally swallow real failures.
+  sendReadyEmailMock.mockResolvedValue({ id: 'email-ready' });
+  sendExpiredEmailMock.mockResolvedValue({ id: 'email-expired' });
   __setStuckPaymentProvider(null);
 });
 
@@ -305,6 +336,163 @@ describe('resolveSingleByTxHash — operator manual path', () => {
       (c) => (c.values as Record<string, unknown>).status === 'paid',
     );
     expect(paidUpdate).toBeUndefined();
+  });
+});
+
+describe('resolveStuckPayments — buyer notification emails (task #275)', () => {
+  it('emails the buyer with a report link + Arbiscan tx URL when an auto-confirm succeeds', async () => {
+    pushSelect([makePendingRow()]);
+    pushSelect([]); // re-use check inside promoteToPaid
+
+    verifyMock.mockResolvedValueOnce({
+      ok: true,
+      txHash: TX,
+      from: BUYER,
+      to: RECIPIENT,
+      token: TOKEN,
+      chainId: 42161,
+      amountTokenUnits: 499n * 10000n,
+      amountUsd: '4.99',
+      decimals: 6,
+    });
+    generateReportMock.mockResolvedValueOnce({});
+    __setStuckPaymentProvider(
+      fakeProvider([{ blockNumber: 999_500, index: 0, transactionHash: TX }]),
+    );
+
+    const summary = await resolveStuckPayments();
+
+    expect(summary.resolved).toEqual([{ reportId: 'rep-1', txHash: TX, status: 'ready' }]);
+    expect(sendReadyEmailMock).toHaveBeenCalledTimes(1);
+    expect(sendExpiredEmailMock).not.toHaveBeenCalled();
+
+    const emailArgs = sendReadyEmailMock.mock.calls[0][0] as Record<string, unknown>;
+    expect(emailArgs.to).toBe('buyer@example.com');
+    expect(emailArgs.reportId).toBe('rep-1');
+    expect(emailArgs.address).toBe('123 Main St');
+    expect(emailArgs.txHash).toBe(TX);
+    expect(emailArgs.amountAxusd).toBe('4.99');
+    // Arbiscan link must be on Arbitrum One (chainId 42161 → arbiscan.io).
+    expect(String(emailArgs.arbiscanUrl)).toMatch(/^https:\/\/arbiscan\.io\/tx\/0x[0-9a-f]+$/i);
+    expect(String(emailArgs.arbiscanUrl)).toContain(TX);
+  });
+
+  it('emails the buyer when a stuck pending row is expired', async () => {
+    pushSelect([
+      makePendingRow({ id: 'rep-old', createdAt: new Date(Date.now() - 100 * 60 * 60_000) }),
+    ]);
+    __setStuckPaymentProvider(fakeProvider([]));
+
+    const summary = await resolveStuckPayments();
+
+    expect(summary.expired).toEqual(['rep-old']);
+    expect(sendExpiredEmailMock).toHaveBeenCalledTimes(1);
+    expect(sendReadyEmailMock).not.toHaveBeenCalled();
+
+    const emailArgs = sendExpiredEmailMock.mock.calls[0][0] as Record<string, unknown>;
+    expect(emailArgs.to).toBe('buyer@example.com');
+    expect(emailArgs.reportId).toBe('rep-old');
+    expect(emailArgs.address).toBe('123 Main St');
+  });
+
+  it('skips email send when the buyer never provided an email (no Resend call attempted)', async () => {
+    const noEmailRow = { ...makePendingRow({ id: 'rep-anon' }), buyerEmail: null };
+    pushSelect([noEmailRow]);
+    pushSelect([]); // re-use check
+
+    verifyMock.mockResolvedValueOnce({
+      ok: true,
+      txHash: TX,
+      from: BUYER,
+      to: RECIPIENT,
+      token: TOKEN,
+      chainId: 42161,
+      amountTokenUnits: 499n * 10000n,
+      amountUsd: '4.99',
+      decimals: 6,
+    });
+    generateReportMock.mockResolvedValueOnce({});
+    __setStuckPaymentProvider(
+      fakeProvider([{ blockNumber: 999_500, index: 0, transactionHash: TX }]),
+    );
+
+    const summary = await resolveStuckPayments();
+
+    expect(summary.resolved).toEqual([{ reportId: 'rep-anon', txHash: TX, status: 'ready' }]);
+    expect(sendReadyEmailMock).not.toHaveBeenCalled();
+    expect(sendExpiredEmailMock).not.toHaveBeenCalled();
+  });
+
+  it('still completes the resolver write when the email send throws (best-effort)', async () => {
+    pushSelect([makePendingRow({ id: 'rep-mailfail' })]);
+    pushSelect([]); // re-use check
+
+    verifyMock.mockResolvedValueOnce({
+      ok: true,
+      txHash: TX,
+      from: BUYER,
+      to: RECIPIENT,
+      token: TOKEN,
+      chainId: 42161,
+      amountTokenUnits: 499n * 10000n,
+      amountUsd: '4.99',
+      decimals: 6,
+    });
+    generateReportMock.mockResolvedValueOnce({});
+    sendReadyEmailMock.mockRejectedValueOnce(new Error('Resend down'));
+    __setStuckPaymentProvider(
+      fakeProvider([{ blockNumber: 999_500, index: 0, transactionHash: TX }]),
+    );
+
+    const summary = await resolveStuckPayments();
+
+    // Resolver still reports success — the email is best-effort.
+    expect(summary.resolved).toEqual([
+      { reportId: 'rep-mailfail', txHash: TX, status: 'ready' },
+    ]);
+    expect(summary.errors).toEqual([]);
+    expect(sendReadyEmailMock).toHaveBeenCalledTimes(1);
+    // The DB update to paid must still have been written.
+    const paidUpdate = updateCalls.find(
+      (c) => (c.values as Record<string, unknown>).status === 'paid',
+    );
+    expect(paidUpdate).toBeTruthy();
+  });
+
+  it('does not send the expired email when the expiry update is a no-op (row already moved out of pending by another path)', async () => {
+    pushSelect([
+      makePendingRow({ id: 'rep-race', createdAt: new Date(Date.now() - 100 * 60 * 60_000) }),
+    ]);
+    __setStuckPaymentProvider(fakeProvider([]));
+    // Simulate the race: another path already promoted the row out of
+    // pending before our update fires, so .returning() yields zero rows.
+    pushUpdateReturning([]);
+
+    const summary = await resolveStuckPayments();
+
+    // The resolver still records it as "expired" because it asked for the
+    // transition; the no-op guard is purely a notification safety net.
+    expect(summary.expired).toEqual(['rep-race']);
+    expect(sendExpiredEmailMock).not.toHaveBeenCalled();
+    expect(sendReadyEmailMock).not.toHaveBeenCalled();
+  });
+
+  it('still completes the expiry write when the expired-email send throws', async () => {
+    pushSelect([
+      makePendingRow({ id: 'rep-old-mailfail', createdAt: new Date(Date.now() - 100 * 60 * 60_000) }),
+    ]);
+    __setStuckPaymentProvider(fakeProvider([]));
+    sendExpiredEmailMock.mockRejectedValueOnce(new Error('Resend down'));
+
+    const summary = await resolveStuckPayments();
+
+    expect(summary.expired).toEqual(['rep-old-mailfail']);
+    expect(summary.errors).toEqual([]);
+    expect(sendExpiredEmailMock).toHaveBeenCalledTimes(1);
+    const expiredUpdate = updateCalls.find(
+      (c) => (c.values as Record<string, unknown>).status === 'expired',
+    );
+    expect(expiredUpdate).toBeTruthy();
   });
 });
 

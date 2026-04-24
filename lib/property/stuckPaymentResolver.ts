@@ -37,6 +37,11 @@ import {
   verifyOnchainPayment,
 } from './onchainPayment';
 import { generateReport, TIER_CONFIG } from '../../server/services/property/pipeline';
+import { getArbiscanTxUrl } from './explorerLinks';
+import {
+  sendPropertyReportReadyEmail,
+  sendPropertyReportExpiredEmail,
+} from '../email/resend';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -223,7 +228,14 @@ export async function resolveStuckPayments(opts: ResolveOptions = {}): Promise<R
       );
 
       if (txHash) {
-        const promoted = await promoteToPaid(row.id, row.tier, txHash, row.buyerWallet);
+        const promoted = await promoteToPaid(
+          row.id,
+          row.tier,
+          txHash,
+          row.buyerWallet,
+          row.buyerEmail,
+          row.addressRaw,
+        );
         if (promoted.ok) {
           summary.resolved.push({ reportId: row.id, txHash, status: promoted.status });
         } else {
@@ -234,7 +246,7 @@ export async function resolveStuckPayments(opts: ResolveOptions = {}): Promise<R
 
       // No matching transfer. Expire if old enough; otherwise leave alone.
       if (row.createdAt < expiryCutoff) {
-        await expirePending(row.id);
+        await expirePending(row.id, row.buyerEmail, row.addressRaw);
         summary.expired.push(row.id);
       } else {
         summary.unresolvedReportIds.push(row.id);
@@ -276,7 +288,14 @@ export async function resolveSingleByTxHash(
     return { ok: false, reason: 'Free reports do not require payment.' };
   }
 
-  return promoteToPaid(report.id, report.tier, txHash, report.buyerWallet);
+  return promoteToPaid(
+    report.id,
+    report.tier,
+    txHash,
+    report.buyerWallet,
+    report.buyerEmail,
+    report.addressRaw,
+  );
 }
 
 // ─── Internals ────────────────────────────────────────────────────────────────
@@ -286,6 +305,8 @@ async function promoteToPaid(
   tier: string,
   txHash: string,
   expectedBuyerWallet: string | null | undefined,
+  buyerEmail: string | null | undefined,
+  addressRaw: string,
 ): Promise<{ ok: true; status: ResolvedRow['status'] } | { ok: false; reason: string }> {
   const cfg = TIER_CONFIG[tier as 'base' | 'premium'];
   if (!cfg) return { ok: false, reason: `Unknown tier ${tier}` };
@@ -338,6 +359,17 @@ async function promoteToPaid(
 
   try {
     await generateReport(reportId);
+    // Best-effort buyer notification — never block the resolver write on a
+    // mail failure (Resend outage, missing connector creds, bounced address,
+    // etc). The report is paid + generated regardless.
+    await notifyBuyerReportReady({
+      buyerEmail,
+      reportId,
+      addressRaw,
+      txHash,
+      chainId: verification.chainId,
+      amountUsd: verification.amountUsd,
+    });
     return { ok: true, status: 'ready' };
   } catch (err) {
     // generateReport already wrote status=failed/errorMessage on its own
@@ -351,15 +383,82 @@ async function promoteToPaid(
   }
 }
 
-async function expirePending(reportId: string): Promise<void> {
-  await db
+async function expirePending(
+  reportId: string,
+  buyerEmail: string | null | undefined,
+  addressRaw: string,
+): Promise<void> {
+  // The status='pending' guard means this update may be a no-op if another
+  // path (operator manual confirm, parallel resolver run) already moved the
+  // row out of pending. Use .returning() so we only fire the buyer email
+  // when this call actually transitioned the row to expired — otherwise we'd
+  // risk emailing a buyer that their report expired right after they got a
+  // "ready" email.
+  const updated = await db
     .update(propertyReports)
     .set({
       status: 'expired',
       errorMessage: 'No on-chain payment received within the expiry window.',
       updatedAt: new Date(),
     })
-    .where(and(eq(propertyReports.id, reportId), eq(propertyReports.status, 'pending')));
+    .where(and(eq(propertyReports.id, reportId), eq(propertyReports.status, 'pending')))
+    .returning({ id: propertyReports.id });
+
+  if (updated.length === 0) return;
+
+  // Best-effort buyer notification — never block the expiry write on mail
+  // delivery failure.
+  await notifyBuyerReportExpired({ buyerEmail, reportId, addressRaw });
+}
+
+// ─── Buyer notifications (best-effort, never throw) ──────────────────────────
+
+async function notifyBuyerReportReady(args: {
+  buyerEmail: string | null | undefined;
+  reportId: string;
+  addressRaw: string;
+  txHash: string;
+  chainId: number;
+  amountUsd: string;
+}): Promise<void> {
+  if (!args.buyerEmail) return;
+  try {
+    await sendPropertyReportReadyEmail({
+      to: args.buyerEmail,
+      reportId: args.reportId,
+      address: args.addressRaw,
+      txHash: args.txHash,
+      arbiscanUrl: getArbiscanTxUrl(args.chainId, args.txHash),
+      amountAxusd: args.amountUsd,
+    });
+  } catch (err) {
+    console.error(
+      '[stuckPaymentResolver] failed to send report-ready email',
+      args.reportId,
+      err instanceof Error ? err.message : err,
+    );
+  }
+}
+
+async function notifyBuyerReportExpired(args: {
+  buyerEmail: string | null | undefined;
+  reportId: string;
+  addressRaw: string;
+}): Promise<void> {
+  if (!args.buyerEmail) return;
+  try {
+    await sendPropertyReportExpiredEmail({
+      to: args.buyerEmail,
+      reportId: args.reportId,
+      address: args.addressRaw,
+    });
+  } catch (err) {
+    console.error(
+      '[stuckPaymentResolver] failed to send report-expired email',
+      args.reportId,
+      err instanceof Error ? err.message : err,
+    );
+  }
 }
 
 /**
