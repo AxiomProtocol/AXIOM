@@ -50,6 +50,14 @@ export interface IntegrityPagerPayload {
   correlationId?: string | null;
   /** Asset type (e.g. 'STABLE', 'TBILL', …); informational only. */
   assetType?: string | null;
+  /**
+   * When `true` this is a synthetic on-call wiring verification page
+   * triggered by an operator (see `/api/capinfra/risk/integrity/test-page`).
+   * Recipients see a `[TEST PAGE]` subject prefix, a distinct banner in
+   * the email body, and a clearly-labelled Discord embed so on-call can
+   * unambiguously distinguish a wiring test from a real auto-freeze.
+   */
+  testPage?: boolean;
 }
 
 export interface IntegrityPagerResult {
@@ -90,11 +98,21 @@ function buildDashboardUrl(): string {
 
 function buildSubject(p: IntegrityPagerPayload): string {
   const label = p.symbol ?? p.assetId;
+  if (p.testPage) {
+    return `[TEST PAGE] Integrity pager wiring check: ${label} (${p.kind})`;
+  }
   return `[PAGE] Asset auto-frozen to RED: ${label} (${p.kind})`;
 }
 
 function buildPlainSummary(p: IntegrityPagerPayload): string {
   const label = p.symbol ? `${p.symbol} (${p.assetId})` : p.assetId;
+  if (p.testPage) {
+    return (
+      `TEST PAGE — synthetic on-call wiring verification triggered by ${p.actor}. ` +
+      `No real asset was frozen; if you received this, the channel is healthy. ` +
+      `Synthetic asset: ${label}. Reason: ${p.kind}. Detail: ${p.detail}`
+    );
+  }
   return (
     `Asset ${label} was automatically downgraded from ${p.previousClass} to RED ` +
     `by ${p.actor}. Reason: ${p.kind}. Detail: ${p.detail}`
@@ -121,6 +139,25 @@ function buildEmailHtml(p: IntegrityPagerPayload): string {
   const actor = escapeHtml(p.actor);
   const correlationId = escapeHtml(p.correlationId ?? '—');
 
+  const isTest = p.testPage === true;
+  const headerBg = isTest ? '#1e3a5f' : '#7f1d1d';
+  const headerLabelColor = isTest ? '#bfdbfe' : '#fecaca';
+  const headerEyebrow = isTest
+    ? 'AXIOM PROTOCOL — TEST PAGE (NO ACTION REQUIRED)'
+    : 'AXIOM PROTOCOL — COLLATERAL EMERGENCY';
+  const headerTitle = isTest
+    ? 'TEST PAGE — Integrity pager wiring check'
+    : 'Asset Auto-Frozen to RED';
+  const testBanner = isTest
+    ? `<table width="100%" cellpadding="0" cellspacing="0" style="background:#eff6ff;border:1px solid #93c5fd;border-radius:6px;margin:0 0 20px 0;">
+            <tr><td style="padding:14px 18px;">
+              <p style="color:#1e3a5f;font-size:13px;line-height:1.5;margin:0;font-weight:600;">
+                Synthetic on-call wiring verification — no asset is frozen and no operator action is required.
+              </p>
+            </td></tr>
+          </table>`
+    : '';
+
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
@@ -129,13 +166,14 @@ function buildEmailHtml(p: IntegrityPagerPayload): string {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12);">
         <tr>
-          <td style="background:#7f1d1d;padding:28px 32px;">
-            <p style="color:#fecaca;font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 6px 0;">AXIOM PROTOCOL — COLLATERAL EMERGENCY</p>
-            <h1 style="color:#ffffff;font-size:22px;font-weight:700;margin:0;line-height:1.3;">Asset Auto-Frozen to RED</h1>
+          <td style="background:${headerBg};padding:28px 32px;">
+            <p style="color:${headerLabelColor};font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 6px 0;">${headerEyebrow}</p>
+            <h1 style="color:#ffffff;font-size:22px;font-weight:700;margin:0;line-height:1.3;">${headerTitle}</h1>
           </td>
         </tr>
         <tr>
           <td style="padding:32px;">
+            ${testBanner}
             <p style="color:#111827;font-size:15px;line-height:1.6;margin:0 0 20px 0;">${summary}</p>
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;margin:0 0 24px 0;">
               <tr><td style="padding:18px 22px;">
@@ -185,10 +223,11 @@ function buildEmailHtml(p: IntegrityPagerPayload): string {
               </tr>
             </table>
             <p style="color:#9ca3af;font-size:12px;line-height:1.5;margin:0;">
-              The asset is already RED in the policy evaluator; new BORROW
-              authorizations against it deny with COLLATERAL_CLASS_RED.
-              Re-admission must go through the audited policy publication
-              flow.
+              ${
+                isTest
+                  ? 'No collateral state was changed by this message. The synthetic asset id is not a real asset; nothing was frozen and no policy state needs to be reverted.'
+                  : 'The asset is already RED in the policy evaluator; new BORROW authorizations against it deny with COLLATERAL_CLASS_RED. Re-admission must go through the audited policy publication flow.'
+              }
             </p>
           </td>
         </tr>
@@ -244,16 +283,25 @@ async function pageDiscord(p: IntegrityPagerPayload): Promise<void> {
     },
   ];
 
+  const isTest = p.testPage === true;
+  const embedTitle = isTest
+    ? 'TEST PAGE — Integrity pager wiring check'
+    : 'Asset auto-frozen to RED';
+  const embedColor = isTest ? 0x1e3a5f : 0x7f1d1d;
+  const embedFooter = isTest
+    ? 'Axiom Protocol — Synthetic on-call wiring verification (no action required)'
+    : 'Axiom Protocol — Collateral Integrity Monitor';
+
   const payload = {
     username: 'Axiom Protocol',
     embeds: [
       {
-        title: 'Asset auto-frozen to RED',
+        title: embedTitle,
         description: buildPlainSummary(p).slice(0, 2048),
-        color: 0x7f1d1d,
+        color: embedColor,
         fields,
         url: dashboardUrl,
-        footer: { text: 'Axiom Protocol — Collateral Integrity Monitor' },
+        footer: { text: embedFooter },
         timestamp: new Date().toISOString(),
       },
     ],

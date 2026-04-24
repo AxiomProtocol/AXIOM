@@ -269,6 +269,80 @@ describe('pageOnCallForIntegrityFailure', () => {
       pageOnCallForIntegrityFailure(basePayload()),
     ).resolves.toBeDefined();
   });
+
+  // ── testPage marker (task #257) ─────────────────────────────────────
+  //
+  // The test-page endpoint passes `testPage: true` so on-call can tell
+  // a wiring verification apart from a real auto-freeze. Pin the visible
+  // markers here so a regression that strips the marker (and revives the
+  // "is this a real freeze?!" 3am page) fails CI.
+
+  it('email subject is prefixed [TEST PAGE] when testPage is true', async () => {
+    process.env.INTEGRITY_ALERT_EMAIL = 'oncall@example.com';
+
+    await pageOnCallForIntegrityFailure(
+      basePayload({ testPage: true, symbol: 'TEST-PAGE', kind: 'test_page' }),
+    );
+
+    const call = mockEmailSend.mock.calls[0][0] as {
+      subject: string;
+      html: string;
+    };
+    expect(call.subject.startsWith('[TEST PAGE]')).toBe(true);
+    expect(call.subject).not.toMatch(/\[PAGE\]/);
+    expect(call.subject).toMatch(/wiring check/i);
+    // The email body must also call the test out so a forwarded copy is
+    // unambiguous outside the subject line.
+    expect(call.html).toMatch(/TEST PAGE/);
+    expect(call.html).toMatch(/no operator action is required/i);
+    // The static "asset is already RED" footer must NOT appear on a
+    // test page — it would tell on-call to look at policy state for
+    // an asset that does not exist.
+    expect(call.html).not.toMatch(/already RED in the policy evaluator/);
+    expect(call.html).toMatch(/No collateral state was changed/);
+  });
+
+  it('Discord embed title + footer mark the message as a TEST PAGE', async () => {
+    process.env.INTEGRITY_ALERT_DISCORD_WEBHOOK =
+      'https://discord.com/api/webhooks/123/abc';
+    fetchSpy.mockResolvedValue({ ok: true, status: 204 } as Response);
+
+    await pageOnCallForIntegrityFailure(
+      basePayload({ testPage: true, symbol: 'TEST-PAGE', kind: 'test_page' }),
+    );
+
+    const [, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    const payload = JSON.parse(options.body as string);
+    expect(payload.embeds[0].title).toMatch(/TEST PAGE/);
+    expect(payload.embeds[0].title).not.toMatch(/auto-frozen/i);
+    expect(payload.embeds[0].footer.text).toMatch(/no action required/i);
+    expect(payload.embeds[0].description).toMatch(/TEST PAGE/);
+  });
+
+  it('omits the [TEST PAGE] markers when testPage is undefined (real freeze path)', async () => {
+    process.env.INTEGRITY_ALERT_EMAIL = 'oncall@example.com';
+    process.env.INTEGRITY_ALERT_DISCORD_WEBHOOK =
+      'https://discord.com/api/webhooks/123/abc';
+    fetchSpy.mockResolvedValue({ ok: true, status: 204 } as Response);
+
+    await pageOnCallForIntegrityFailure(basePayload());
+
+    const emailCall = mockEmailSend.mock.calls[0][0] as {
+      subject: string;
+      html: string;
+    };
+    expect(emailCall.subject.startsWith('[PAGE]')).toBe(true);
+    expect(emailCall.subject).not.toMatch(/TEST PAGE/);
+    expect(emailCall.html).not.toMatch(/TEST PAGE/);
+    // The production "asset is already RED" guidance must still
+    // appear on real freezes — operators rely on it for runbook
+    // disambiguation.
+    expect(emailCall.html).toMatch(/already RED in the policy evaluator/);
+
+    const [, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    const payload = JSON.parse(options.body as string);
+    expect(payload.embeds[0].title).not.toMatch(/TEST PAGE/);
+  });
 });
 
 // ── Integration: recordIntegrityFailure → pager wiring ────────────────

@@ -62,6 +62,14 @@ interface BatchResponse {
   failed: { id: string; error: string }[];
 }
 
+interface TestPageResponse {
+  result: {
+    channelsPaged: string[];
+    errors: string[];
+    skipped: boolean;
+  };
+}
+
 export function AssetIntegrityAlertsPanel({
   alerts,
   nowMs,
@@ -71,6 +79,50 @@ export function AssetIntegrityAlertsPanel({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [batchPending, setBatchPending] = useState(false);
+  const [testPagePending, setTestPagePending] = useState(false);
+
+  const onSendTestPage = useCallback(async () => {
+    setError(null);
+    setNotice(null);
+    setTestPagePending(true);
+    try {
+      const res = await fetch('/api/capinfra/risk/integrity/test-page', {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        throw new Error(
+          `sendTestPage failed: ${res.status} ${body || ''}`.trim(),
+        );
+      }
+      const data = (await res.json().catch(() => null)) as TestPageResponse | null;
+      const result = data?.result;
+      if (!result) {
+        throw new Error('sendTestPage failed: malformed response');
+      }
+      if (result.skipped) {
+        setError(
+          'Test page not sent — no paging channels are configured. Set INTEGRITY_ALERT_EMAIL and/or INTEGRITY_ALERT_DISCORD_WEBHOOK in production.',
+        );
+      } else if (result.errors.length > 0) {
+        const channelsTxt =
+          result.channelsPaged.length > 0
+            ? ` (sent on: ${result.channelsPaged.join(', ')})`
+            : '';
+        setError(
+          `Test page reported channel errors: ${result.errors.join('; ')}${channelsTxt}.`,
+        );
+      } else {
+        setNotice(
+          `Test page sent on: ${result.channelsPaged.join(', ')}. Confirm on-call received it before clearing this notice.`,
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send test page');
+    } finally {
+      setTestPagePending(false);
+    }
+  }, []);
 
   const onMarkRead = useCallback(async (id: string) => {
     setError(null);
@@ -166,6 +218,16 @@ export function AssetIntegrityAlertsPanel({
       <div className="flex items-baseline justify-between mb-3">
         <h2 className="font-serif text-lg">Asset integrity alerts</h2>
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onSendTestPage}
+            disabled={testPagePending}
+            className="text-xs uppercase tracking-wide border border-dl-border px-3 py-1 hover:bg-dl-muted/10 disabled:opacity-50"
+            data-testid="asset-integrity-alerts-send-test-page"
+            title="Send a clearly-labelled synthetic page to verify the on-call email + Discord wiring is healthy."
+          >
+            {testPagePending ? 'Sending…' : 'Send test page'}
+          </button>
           {visible.length > 0 ? (
             <button
               type="button"

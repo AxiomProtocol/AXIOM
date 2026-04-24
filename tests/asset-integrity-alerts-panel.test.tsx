@@ -384,6 +384,137 @@ describe('AssetIntegrityAlertsPanel — mark all read', () => {
   });
 });
 
+describe('AssetIntegrityAlertsPanel — send test page', () => {
+  it('always renders the "Send test page" button (even with zero alerts)', () => {
+    render(<AssetIntegrityAlertsPanel alerts={[]} nowMs={NOW_MS} />);
+    expect(
+      screen.getByTestId('asset-integrity-alerts-send-test-page'),
+    ).toBeTruthy();
+  });
+
+  it('POSTs to the test-page endpoint and surfaces a success notice listing the channels paged', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '',
+      json: async () => ({
+        result: {
+          channelsPaged: ['email', 'discord'],
+          errors: [],
+          skipped: false,
+        },
+      }),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<AssetIntegrityAlertsPanel alerts={[]} nowMs={NOW_MS} />);
+
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-send-test-page'),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('asset-integrity-alerts-notice').textContent,
+      ).toMatch(/Test page sent/);
+    });
+    expect(
+      screen.getByTestId('asset-integrity-alerts-notice').textContent,
+    ).toMatch(/email/);
+    expect(
+      screen.getByTestId('asset-integrity-alerts-notice').textContent,
+    ).toMatch(/discord/);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
+    expect(calledUrl).toBe('/api/capinfra/risk/integrity/test-page');
+    expect(calledInit.method).toBe('POST');
+  });
+
+  it('surfaces a clear "no channels configured" error when the pager skips', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '',
+      json: async () => ({
+        result: { channelsPaged: [], errors: [], skipped: true },
+      }),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<AssetIntegrityAlertsPanel alerts={[]} nowMs={NOW_MS} />);
+
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-send-test-page'),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toMatch(
+        /no paging channels are configured/i,
+      );
+    });
+    expect(screen.getByRole('alert').textContent).toMatch(
+      /INTEGRITY_ALERT_EMAIL/,
+    );
+  });
+
+  it('surfaces partial channel failures from the pager envelope', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '',
+      json: async () => ({
+        result: {
+          channelsPaged: ['email'],
+          errors: ['discord: HTTP 429: rate limited'],
+          skipped: false,
+        },
+      }),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<AssetIntegrityAlertsPanel alerts={[]} nowMs={NOW_MS} />);
+
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-send-test-page'),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toMatch(
+        /channel errors/i,
+      );
+    });
+    const banner = screen.getByRole('alert').textContent ?? '';
+    expect(banner).toMatch(/discord: HTTP 429/);
+    expect(banner).toMatch(/email/);
+  });
+
+  it('surfaces an error banner when the endpoint itself fails', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: false,
+      status: 500,
+      text: async () => 'boom',
+      json: async () => ({}),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<AssetIntegrityAlertsPanel alerts={[]} nowMs={NOW_MS} />);
+
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-send-test-page'),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toMatch(
+        /sendTestPage failed/i,
+      );
+    });
+  });
+});
+
 describe('formatAge / buildAssetLink helpers', () => {
   it('formats sub-minute, minute, hour and day ages', () => {
     expect(formatAge(0)).toBe('0s ago');
