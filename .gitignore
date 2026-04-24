@@ -125,3 +125,40 @@ storage/
 wallet-private-keys.txt
 wallet-private-keys-env.txt
 new-wallet-env-values.txt
+
+# === Repo-bloat fences (added during 5GB cleanup) ===
+# Embedded duplicate of the project that was accidentally committed
+AXIOM/
+
+# All Hardhat artifact directories (cache/ and artifacts/ already above)
+artifacts-axusd/
+artifacts-dex/
+artifacts-land/
+artifacts-realestate/
+artifacts-realestate-isolated/
+archive/contracts-dev/artifacts-axusd/
+archive/contracts-dev/artifacts-dex/
+archive/contracts-dev/artifacts-land/
+archive/contracts-dev/artifacts-realestate/
+archive/contracts-dev/artifacts-phase3/
+archive/contracts-dev/cache/
+
+# Slither security audit JSON output (regenerate on demand, do not commit)
+slither-*.json
+slither-report.json
+
+# Large binary media — host on GCS / Storacha and reference by URL instead
+public/videos/*.mp4
+public/videos/*.mov
+public/keygrow-proof/*.mp4
+public/keygrow-proof/*.mov
+documents/*.mp3
+documents/*.wav
+documents/*.m4a
+
+# Random / accidental dump files
+zitDykih
+*.zitDykih
+
+# Saved-from-browser artefacts (the " - Google Drive" suffix is a tell)
+*"- Google Drive"*
