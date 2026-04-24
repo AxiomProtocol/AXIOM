@@ -8,8 +8,8 @@ Source of truth lives in `documents/policies/*.md`. Do not edit files here direc
 
 For each of the four policies, the script emits:
 
-- `*.html` — self-contained styled HTML with embedded CSS. Always emitted. Uploadable to Plaid as-is, or open in any modern browser and use **File → Print → Save as PDF** to produce the `.pdf` file.
-- `*.pdf` — emitted only when headless Chromium can launch in the runtime environment. In environments missing the Chromium system dependencies (e.g. a minimal Linux image without `libglib-2.0`) the script logs a warning and skips PDF generation; use the HTML-to-PDF browser path above to fill the gap.
+- `*.pdf` — Letter-format PDF rendered via headless Chromium (uses the system Chromium installed at the path in `scripts/export-policy-pdfs.ts`; override with the `CHROMIUM_PATH` env var). This is the file to upload to Plaid.
+- `*.html` — self-contained styled HTML with embedded CSS, kept alongside the PDF as a human-readable reference and as a fallback that can be opened in any browser and re-printed to PDF if needed.
 
 ## Files
 
