@@ -95,5 +95,12 @@ export default defineConfig({
         timeout: 120_000,
         stdout: 'pipe',
         stderr: 'pipe',
+        // Task #249: enable the wagmi mock-connector path so the Property
+        // Analysis AXUSD modal e2e test can drive a fake wallet without a
+        // real WalletConnect project id. Hard-gated to non-production in
+        // `lib/web3/wagmiConfig.ts`.
+        env: {
+          NEXT_PUBLIC_E2E_WAGMI: '1',
+        },
       },
 });
