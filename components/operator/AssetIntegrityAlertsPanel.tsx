@@ -13,7 +13,10 @@
 
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
-import type { IntegrityAlertView } from '../../lib/capinfra/risk/integrityAlerts';
+import type {
+  IntegrityAlertPaging,
+  IntegrityAlertView,
+} from '../../lib/capinfra/risk/integrityAlerts';
 
 export interface AssetIntegrityAlertsPanelProps {
   alerts: IntegrityAlertView[];
@@ -44,6 +47,47 @@ export function formatAge(ageMs: number): string {
   if (h < 24) return `${h}h ago`;
   const d = Math.floor(h / 24);
   return `${d}d ago`;
+}
+
+interface PagedChannelDisplay {
+  /** Channel name (e.g. 'email', 'discord', 'pager'). */
+  channel: string;
+  /** True when the channel was successfully paged. */
+  ok: boolean;
+  /** First-line error reason for failed channels; null on success. */
+  reason: string | null;
+}
+
+/**
+ * Flatten an `IntegrityAlertPaging` blob into a stable list of
+ * "channel + ✓/✗" rows for display. Successes come first (matching
+ * the dispatcher's natural order), failures last with their reason
+ * extracted from the `'<channel>: <reason>'` string format. Exported
+ * so the test suite can pin the parser without mounting the panel.
+ */
+export function shapePagedChannelDisplay(
+  paged: IntegrityAlertPaging,
+): PagedChannelDisplay[] {
+  const out: PagedChannelDisplay[] = [];
+  for (const channel of paged.channels) {
+    out.push({ channel, ok: true, reason: null });
+  }
+  for (const raw of paged.errors) {
+    const idx = raw.indexOf(':');
+    if (idx > 0) {
+      out.push({
+        channel: raw.slice(0, idx).trim(),
+        ok: false,
+        reason: raw.slice(idx + 1).trim(),
+      });
+    } else {
+      // Malformed error string (no `:` separator). Surface the whole
+      // string under a generic 'channel' name so the operator still
+      // sees the error rather than the row silently swallowing it.
+      out.push({ channel: 'channel', ok: false, reason: raw });
+    }
+  }
+  return out;
 }
 
 export function buildAssetLink(symbol: string | null, assetId: string): string {
@@ -297,6 +341,43 @@ export function AssetIntegrityAlertsPanel({
                   <p className="mt-1 text-xs font-mono text-dl-muted break-words">
                     {a.rationale}
                   </p>
+                  {a.paged ? (
+                    <div
+                      className="mt-1 text-[11px] font-mono text-dl-muted flex flex-wrap items-baseline gap-x-2 gap-y-0.5"
+                      data-testid={`asset-integrity-alert-${a.id}-paged`}
+                    >
+                      <span className="text-[10px] uppercase tracking-wider text-dl-muted">
+                        Paged:
+                      </span>
+                      {a.paged.skipped ? (
+                        <span
+                          className="text-amber-700"
+                          data-testid={`asset-integrity-alert-${a.id}-paged-skipped`}
+                          title="No paging channels are configured. Set INTEGRITY_ALERT_EMAIL and/or INTEGRITY_ALERT_DISCORD_WEBHOOK so on-call is woken on the next auto-freeze."
+                        >
+                          not configured
+                        </span>
+                      ) : (
+                        shapePagedChannelDisplay(a.paged).map((c, i) => (
+                          <span
+                            key={`${a.id}-paged-${i}-${c.channel}`}
+                            className={
+                              c.ok ? 'text-green-700' : 'text-red-700'
+                            }
+                            data-testid={`asset-integrity-alert-${a.id}-paged-${c.channel}`}
+                            title={
+                              c.ok
+                                ? `${c.channel} channel paged successfully`
+                                : `${c.channel} channel failed: ${c.reason ?? 'unknown error'}`
+                            }
+                          >
+                            {c.channel} {c.ok ? '✓' : '✗'}
+                            {!c.ok && c.reason ? ` (${c.reason})` : ''}
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="flex items-start gap-2 shrink-0">
                   <Link

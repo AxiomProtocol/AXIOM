@@ -61,6 +61,11 @@ interface AlertOverrides {
   rationale?: string;
   subject?: string;
   ageMs?: number;
+  paged?: {
+    channels: string[];
+    errors: string[];
+    skipped: boolean;
+  } | null;
 }
 
 function makeAlert(overrides: AlertOverrides = {}) {
@@ -79,6 +84,8 @@ function makeAlert(overrides: AlertOverrides = {}) {
       '[2026-04-24T11:59:00.000Z] Oracle staleness exceeded budget: feed quiet 900s',
     subject: overrides.subject ?? '[op] Asset auto-frozen to RED: AXAU (oracle_stale)',
     createdAtMs: NOW_MS - ageMs,
+    readAtMs: null,
+    paged: 'paged' in overrides ? overrides.paged ?? null : null,
   };
 }
 
@@ -536,6 +543,254 @@ describe('formatAge / buildAssetLink helpers', () => {
     expect(buildAssetLink(null, 'asset_x')).toBe(
       '/operations/cap-infra?symbol=asset_x',
     );
+  });
+});
+
+describe('AssetIntegrityAlertsPanel — paged-channels indicator (task #258)', () => {
+  it('renders nothing when the alert has no paged metadata (legacy rows)', () => {
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[makeAlert({ id: 'ntf_legacy', paged: null })]}
+        nowMs={NOW_MS}
+      />,
+    );
+    expect(
+      screen.queryByTestId('asset-integrity-alert-ntf_legacy-paged'),
+    ).toBeNull();
+  });
+
+  it('renders successful channels with a ✓ marker', () => {
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[
+          makeAlert({
+            id: 'ntf_ok',
+            paged: {
+              channels: ['email', 'discord'],
+              errors: [],
+              skipped: false,
+            },
+          }),
+        ]}
+        nowMs={NOW_MS}
+      />,
+    );
+    const block = screen.getByTestId('asset-integrity-alert-ntf_ok-paged');
+    expect(block.textContent).toMatch(/Paged:/);
+    const emailBadge = screen.getByTestId(
+      'asset-integrity-alert-ntf_ok-paged-email',
+    );
+    expect(emailBadge.textContent).toMatch(/email/);
+    expect(emailBadge.textContent).toMatch(/✓/);
+    const discordBadge = screen.getByTestId(
+      'asset-integrity-alert-ntf_ok-paged-discord',
+    );
+    expect(discordBadge.textContent).toMatch(/discord/);
+    expect(discordBadge.textContent).toMatch(/✓/);
+  });
+
+  it('renders failed channels with a ✗ marker AND the reason in parentheses (e.g. 429)', () => {
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[
+          makeAlert({
+            id: 'ntf_partial',
+            paged: {
+              channels: ['email'],
+              errors: ['discord: HTTP 429: rate limited'],
+              skipped: false,
+            },
+          }),
+        ]}
+        nowMs={NOW_MS}
+      />,
+    );
+    const block = screen.getByTestId(
+      'asset-integrity-alert-ntf_partial-paged',
+    );
+    expect(block.textContent).toMatch(/email/);
+    expect(block.textContent).toMatch(/✓/);
+    expect(block.textContent).toMatch(/discord/);
+    expect(block.textContent).toMatch(/✗/);
+    expect(block.textContent).toMatch(/429/);
+    const discordBadge = screen.getByTestId(
+      'asset-integrity-alert-ntf_partial-paged-discord',
+    );
+    // The full error message is mirrored into the title attribute so
+    // operators can hover to see the long version.
+    expect(discordBadge.getAttribute('title')).toMatch(/HTTP 429/);
+  });
+
+  it('renders a "not configured" badge when the pager skipped (no channels set)', () => {
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[
+          makeAlert({
+            id: 'ntf_noenv',
+            paged: { channels: [], errors: [], skipped: true },
+          }),
+        ]}
+        nowMs={NOW_MS}
+      />,
+    );
+    const skipped = screen.getByTestId(
+      'asset-integrity-alert-ntf_noenv-paged-skipped',
+    );
+    expect(skipped.textContent).toMatch(/not configured/i);
+    // No per-channel badges should appear in the skipped state.
+    expect(
+      screen.queryByTestId('asset-integrity-alert-ntf_noenv-paged-email'),
+    ).toBeNull();
+  });
+});
+
+describe('shapeIntegrityAlertPaging — paging-blob defensive shaping (task #258)', () => {
+  it('returns null when the blob is missing', async () => {
+    const { shapeIntegrityAlertPaging } = await import(
+      '../lib/capinfra/risk/integrityAlerts'
+    );
+    expect(shapeIntegrityAlertPaging(undefined)).toBeNull();
+    expect(shapeIntegrityAlertPaging(null)).toBeNull();
+  });
+
+  it('returns null when channels/errors/skipped are all empty/false', async () => {
+    const { shapeIntegrityAlertPaging } = await import(
+      '../lib/capinfra/risk/integrityAlerts'
+    );
+    expect(
+      shapeIntegrityAlertPaging({ channels: [], errors: [], skipped: false }),
+    ).toBeNull();
+  });
+
+  it('preserves channels, errors and skipped on a well-formed blob', async () => {
+    const { shapeIntegrityAlertPaging } = await import(
+      '../lib/capinfra/risk/integrityAlerts'
+    );
+    expect(
+      shapeIntegrityAlertPaging({
+        channels: ['email'],
+        errors: ['discord: HTTP 429'],
+        skipped: false,
+      }),
+    ).toEqual({
+      channels: ['email'],
+      errors: ['discord: HTTP 429'],
+      skipped: false,
+    });
+  });
+
+  it('drops non-string entries inside channels and errors arrays', async () => {
+    const { shapeIntegrityAlertPaging } = await import(
+      '../lib/capinfra/risk/integrityAlerts'
+    );
+    expect(
+      shapeIntegrityAlertPaging({
+        channels: ['email', 42, null, 'discord'],
+        errors: [{ msg: 'nope' }, 'pager: boom'],
+        skipped: false,
+      }),
+    ).toEqual({
+      channels: ['email', 'discord'],
+      errors: ['pager: boom'],
+      skipped: false,
+    });
+  });
+});
+
+describe('shapeIntegrityAlert — paged round-trip (task #258)', () => {
+  it('round-trips the paged blob from bodyJson into the view-model', () => {
+    const view = shapeIntegrityAlert({
+      id: 'ntf_with_paged',
+      subject: 's',
+      bodyJson: {
+        assetId: 'asset_1',
+        symbol: 'AXAU',
+        kind: 'oracle_stale',
+        rationale: 'Oracle staleness exceeded budget',
+        paged: {
+          channels: ['email'],
+          errors: ['discord: HTTP 429: rate limited'],
+          skipped: false,
+        },
+      },
+      createdAt: new Date(NOW_MS),
+    });
+    expect(view).not.toBeNull();
+    expect(view?.paged).toEqual({
+      channels: ['email'],
+      errors: ['discord: HTTP 429: rate limited'],
+      skipped: false,
+    });
+  });
+
+  it('leaves paged null on legacy bodyJson with no paged field', () => {
+    const view = shapeIntegrityAlert({
+      id: 'ntf_legacy',
+      subject: 's',
+      bodyJson: { assetId: 'asset_1', symbol: 'AXAU', kind: 'oracle_stale' },
+      createdAt: new Date(NOW_MS),
+    });
+    expect(view).not.toBeNull();
+    expect(view?.paged).toBeNull();
+  });
+
+  it('round-trips skipped=true even when channels/errors are empty', () => {
+    const view = shapeIntegrityAlert({
+      id: 'ntf_noenv',
+      subject: 's',
+      bodyJson: {
+        assetId: 'asset_1',
+        paged: { channels: [], errors: [], skipped: true },
+      },
+      createdAt: new Date(NOW_MS),
+    });
+    expect(view?.paged).toEqual({ channels: [], errors: [], skipped: true });
+  });
+});
+
+describe('shapePagedChannelDisplay — error-string parser (task #258)', () => {
+  it('emits ok=true rows for successful channels in order', async () => {
+    const { shapePagedChannelDisplay } = await import(
+      '../components/operator/AssetIntegrityAlertsPanel'
+    );
+    const out = shapePagedChannelDisplay({
+      channels: ['email', 'discord'],
+      errors: [],
+      skipped: false,
+    });
+    expect(out).toEqual([
+      { channel: 'email', ok: true, reason: null },
+      { channel: 'discord', ok: true, reason: null },
+    ]);
+  });
+
+  it('splits "<channel>: <reason>" error strings on the first colon', async () => {
+    const { shapePagedChannelDisplay } = await import(
+      '../components/operator/AssetIntegrityAlertsPanel'
+    );
+    const out = shapePagedChannelDisplay({
+      channels: ['email'],
+      errors: ['discord: HTTP 429: rate limited'],
+      skipped: false,
+    });
+    expect(out).toEqual([
+      { channel: 'email', ok: true, reason: null },
+      { channel: 'discord', ok: false, reason: 'HTTP 429: rate limited' },
+    ]);
+  });
+
+  it('falls back to a generic channel name when the error has no colon', async () => {
+    const { shapePagedChannelDisplay } = await import(
+      '../components/operator/AssetIntegrityAlertsPanel'
+    );
+    const out = shapePagedChannelDisplay({
+      channels: [],
+      errors: ['something blew up'],
+      skipped: false,
+    });
+    expect(out).toEqual([
+      { channel: 'channel', ok: false, reason: 'something blew up' },
+    ]);
   });
 });
 

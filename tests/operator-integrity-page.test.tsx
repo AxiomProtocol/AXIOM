@@ -102,6 +102,7 @@ function makeAlertView(o: AlertOverrides = {}) {
     subject: '[op] Asset auto-frozen to RED: AXAU (oracle_stale)',
     createdAtMs: NOW_MS - ageMs,
     readAtMs: o.readAtMs === undefined ? null : o.readAtMs,
+    paged: null,
   };
 }
 

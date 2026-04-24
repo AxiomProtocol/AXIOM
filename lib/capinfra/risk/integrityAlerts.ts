@@ -36,6 +36,33 @@ export type IntegrityAlertKind =
   | 'bridge_event'
   | 'unknown';
 
+/**
+ * On-call paging summary persisted alongside the operator-channel
+ * notification row by `recordIntegrityFailure`. Mirrors the
+ * `IntegrityPagerResult` shape from `notifications/integrityPager`
+ * but is intentionally re-declared here so the UI does not transit
+ * the producer module just to read its own view-model.
+ */
+export interface IntegrityAlertPaging {
+  /** Channels that successfully woke on-call (e.g. ['email']). */
+  channels: string[];
+  /**
+   * Per-channel error strings from the dispatcher, formatted as
+   * `'<channel>: <message>'` (e.g. 'discord: HTTP 429: rate limited').
+   * The synthetic `pager: <msg>` channel is used when the dispatcher
+   * itself threw unexpectedly.
+   */
+  errors: string[];
+  /**
+   * `true` when no paging channels were configured at the moment the
+   * auto-freeze fired (neither `INTEGRITY_ALERT_EMAIL` nor
+   * `INTEGRITY_ALERT_DISCORD_WEBHOOK`). Surfaces as a distinct
+   * "not configured" badge so operators don't conflate "no channels
+   * set up" with "every channel failed".
+   */
+  skipped: boolean;
+}
+
 export interface IntegrityAlertView {
   /** Notification row id; the mark-read endpoint takes this. */
   id: string;
@@ -57,6 +84,13 @@ export interface IntegrityAlertView {
    * uses this to distinguish acknowledged rows from active alerts.
    */
   readAtMs: number | null;
+  /**
+   * Summary of which on-call paging channels actually fired (or failed)
+   * for this auto-freeze. Null on legacy rows written before the pager
+   * result was persisted (task #258); the UI renders nothing in that
+   * case rather than misrepresenting old data as "0 channels paged".
+   */
+  paged: IntegrityAlertPaging | null;
 }
 
 interface CollateralIntegrityBody {
@@ -65,6 +99,7 @@ interface CollateralIntegrityBody {
   kind?: unknown;
   rationale?: unknown;
   detail?: unknown;
+  paged?: unknown;
 }
 
 const KNOWN_KINDS = new Set<IntegrityAlertKind>([
@@ -86,6 +121,37 @@ function coerceString(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;
   const trimmed = raw.trim();
   return trimmed.length === 0 ? null : trimmed;
+}
+
+function coerceStringArray(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  for (const item of raw) {
+    if (typeof item === 'string' && item.length > 0) out.push(item);
+  }
+  return out;
+}
+
+/**
+ * Shape the optional `paged` blob from the notification's bodyJson into
+ * the panel's view-model. Returns null when the field is missing or
+ * structurally unrecognisable so legacy rows (written before task #258)
+ * render the same way they always did. We deliberately accept partial
+ * shapes (e.g. `channels` present but `errors` missing) so a malformed
+ * dispatch result never blanks the rest of the row.
+ */
+export function shapeIntegrityAlertPaging(raw: unknown): IntegrityAlertPaging | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const obj = raw as { channels?: unknown; errors?: unknown; skipped?: unknown };
+  const channels = coerceStringArray(obj.channels);
+  const errors = coerceStringArray(obj.errors);
+  const skipped = obj.skipped === true;
+  // If the blob carried nothing recognisable at all, treat it as
+  // missing so the UI doesn't render an empty "Paged:" row.
+  if (channels.length === 0 && errors.length === 0 && !skipped) {
+    return null;
+  }
+  return { channels, errors, skipped };
 }
 
 /**
@@ -121,6 +187,7 @@ export function shapeIntegrityAlert(row: {
     subject: row.subject,
     createdAtMs: row.createdAt.getTime(),
     readAtMs: row.readAt ? row.readAt.getTime() : null,
+    paged: shapeIntegrityAlertPaging(body.paged),
   };
 }
 

@@ -30,7 +30,10 @@ import { emitAuditEventStrict } from '../audit';
 import { NotFoundError } from '../errors';
 import { generateId } from '../ids';
 import { emitNotification } from '../notifications';
-import { pageOnCallForIntegrityFailure } from '../notifications/integrityPager';
+import {
+  pageOnCallForIntegrityFailure,
+  type IntegrityPagerResult,
+} from '../notifications/integrityPager';
 import { POLICY_VERSION } from '../policy';
 
 export type IntegrityFailureKind =
@@ -205,6 +208,43 @@ export async function recordIntegrityFailure(
   // channel='operator', high severity, body carries the structured
   // rationale so operators can react without opening the audit log.
   if (!result.alreadyRed && !isWithinDedupWindow(assetId, kind)) {
+    // Page on-call FIRST so the paging result can be persisted alongside
+    // the operator-channel notification row. The in-app/operator-console
+    // row only wakes someone if they happen to be logged in;
+    // `pageOnCallForIntegrityFailure` fans the same event out to email
+    // (Resend) and Discord webhook so a real responder is paged on every
+    // auto-freeze. The dispatcher is best-effort by contract — it never
+    // throws, returning per-channel errors in its result — but we still
+    // wrap it in try/catch as belt-and-braces so a defect in the pager
+    // itself can never bubble back to the asset downgrade path. Any
+    // unexpected throw is captured as a synthetic `pager:` error so the
+    // operator console still surfaces "we did NOT actually wake on-call".
+    let pagerResult: IntegrityPagerResult;
+    try {
+      pagerResult = await pageOnCallForIntegrityFailure({
+        assetId,
+        symbol: result.symbol ?? null,
+        assetType: result.assetType ?? null,
+        kind,
+        detail,
+        rationale: result.rationale,
+        previousClass: result.previousClass,
+        actor,
+        correlationId: correlationId ?? null,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(
+        '[capinfra.risk.integrity] pager dispatch threw unexpectedly',
+        err,
+      );
+      pagerResult = {
+        channelsPaged: [],
+        errors: [`pager: ${msg}`],
+        skipped: false,
+      };
+    }
+
     const notificationId = await emitNotification({
       userId: null,
       channel: 'operator',
@@ -222,6 +262,16 @@ export async function recordIntegrityFailure(
         rationale: result.rationale,
         actor,
         reasonCode: 'COLLATERAL_INTEGRITY_FAILED',
+        // Paper trail of the on-call dispatch: which channels actually
+        // woke a human, which 429'd, and whether nothing was configured
+        // at all. Read by `lib/capinfra/risk/integrityAlerts.ts`'s
+        // `shapeIntegrityAlert` and rendered as the per-row "paged:
+        // email ✓, discord ✗ (429)" indicator on the operator panel.
+        paged: {
+          channels: pagerResult.channelsPaged,
+          errors: pagerResult.errors,
+          skipped: pagerResult.skipped,
+        },
       },
       correlationId: correlationId ?? null,
     });
@@ -232,33 +282,6 @@ export async function recordIntegrityFailure(
     // notification instead of silently swallowing it for 5 minutes.
     if (notificationId !== null) {
       markNotified(assetId, kind);
-    }
-
-    // Page on-call. The in-app/operator-console row above only wakes
-    // someone if they happen to be logged in; `pageOnCallForIntegrityFailure`
-    // fans the same event out to email (Resend) and Discord webhook
-    // so a real responder is paged on every auto-freeze. The dispatcher
-    // is best-effort by contract — it never throws, returning per-channel
-    // errors in its result — but we still wrap it in try/catch as
-    // belt-and-braces so a defect in the pager itself can never bubble
-    // back to the asset downgrade path.
-    try {
-      await pageOnCallForIntegrityFailure({
-        assetId,
-        symbol: result.symbol ?? null,
-        assetType: result.assetType ?? null,
-        kind,
-        detail,
-        rationale: result.rationale,
-        previousClass: result.previousClass,
-        actor,
-        correlationId: correlationId ?? null,
-      });
-    } catch (err) {
-      console.error(
-        '[capinfra.risk.integrity] pager dispatch threw unexpectedly',
-        err,
-      );
     }
   }
 
