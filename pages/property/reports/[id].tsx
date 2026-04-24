@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
 import Head from 'next/head';
+import { getArbiscanTxUrl } from '../../../lib/property/explorerLinks';
 
 interface RepliersAvmSnapshot {
   price: number | null;
@@ -74,6 +75,54 @@ export function wasAutoConfirmedAfterDelay(
   const confirmedMs = new Date(paymentConfirmedAt).getTime();
   if (!Number.isFinite(createdMs) || !Number.isFinite(confirmedMs)) return false;
   return confirmedMs - createdMs >= AUTO_CONFIRM_BANNER_THRESHOLD_MS;
+}
+
+// Task #281: standard 32-byte EVM transaction hash (0x + 64 hex chars).
+// Used to gate the "View on Arbiscan" link so a malformed paymentTxHash row
+// can't render a deep-link that 404s on Arbiscan and erodes trust in the
+// banner. The DB column is varchar(80) and is normally a clean tx hash,
+// but the resolver+manual-confirm paths both write whatever the operator
+// supplies, so a defensive client-side check is cheap insurance.
+const EVM_TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
+
+export function isValidEvmTxHash(value: unknown): value is string {
+  return typeof value === 'string' && EVM_TX_HASH_RE.test(value);
+}
+
+// Task #281: humanize the wait between checkout and on-chain confirmation
+// for the auto-confirm banner. Returns null when inputs are missing or the
+// gap is non-positive — callers must suppress the duration string in those
+// cases rather than render "0 minutes after checkout".
+//
+// Format follows the magnitude of the gap so the line stays short:
+//   < 1h    → "8 minutes" / "1 minute"
+//   < 24h   → "3h 12m" / "5h" (minutes elided when zero)
+//   ≥ 24h   → "2d 4h" / "1d" (hours elided when zero)
+export function formatWaitDuration(
+  createdAt: string | Date | null | undefined,
+  paymentConfirmedAt: string | Date | null | undefined,
+): string | null {
+  if (!createdAt || !paymentConfirmedAt) return null;
+  const createdMs = new Date(createdAt).getTime();
+  const confirmedMs = new Date(paymentConfirmedAt).getTime();
+  if (!Number.isFinite(createdMs) || !Number.isFinite(confirmedMs)) return null;
+  const deltaMs = confirmedMs - createdMs;
+  if (deltaMs <= 0) return null;
+
+  const totalMinutes = Math.floor(deltaMs / 60_000);
+  if (totalMinutes < 60) {
+    return `${totalMinutes} ${totalMinutes === 1 ? 'minute' : 'minutes'}`;
+  }
+
+  const totalHours = Math.floor(totalMinutes / 60);
+  if (totalHours < 24) {
+    const remMinutes = totalMinutes % 60;
+    return remMinutes === 0 ? `${totalHours}h` : `${totalHours}h ${remMinutes}m`;
+  }
+
+  const totalDays = Math.floor(totalHours / 24);
+  const remHours = totalHours % 24;
+  return remHours === 0 ? `${totalDays}d` : `${totalDays}d ${remHours}h`;
 }
 
 export default function ReportDetail() {
@@ -210,6 +259,31 @@ export default function ReportDetail() {
               </span>
               .
             </p>
+            {(() => {
+              const wait = formatWaitDuration(report.createdAt, report.paymentConfirmedAt);
+              if (!wait) return null;
+              return (
+                <p
+                  className="font-dl-mono text-xs text-dl-gray mt-2"
+                  data-testid="auto-confirm-wait-duration"
+                >
+                  Confirmed {wait} after checkout.
+                </p>
+              );
+            })()}
+            {isValidEvmTxHash(report.paymentTxHash) && (
+              <p className="mt-2">
+                <a
+                  href={getArbiscanTxUrl(report.chainId, report.paymentTxHash)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-dl-mono text-xs text-dl-navy underline hover:text-[#8b6914]"
+                  data-testid="auto-confirm-arbiscan-link"
+                >
+                  View on Arbiscan →
+                </a>
+              </p>
+            )}
           </div>
         )}
 

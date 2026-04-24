@@ -79,7 +79,11 @@ function makeReadyReportPayload({
     createdAt,
     paymentConfirmedAt,
     chainId: 42161,
-    paymentTxHash: '0xabc123',
+    // Real-shape EVM tx hash (0x + 64 hex chars). Validated client-side
+    // before the Arbiscan link renders (#281), so a malformed value would
+    // suppress the link entirely.
+    paymentTxHash:
+      '0xabc1230000000000000000000000000000000000000000000000000000000000',
     valueLow: 250_000,
     valueMid: 285_000,
     valueHigh: 320_000,
@@ -156,7 +160,8 @@ describe('ReportDetail — auto-confirm banner render coverage (task #278/#282)'
 
   it('renders the banner when paymentConfirmedAt is 6 hours after createdAt (resolver-rescued flow)', async () => {
     const createdAt = new Date('2026-04-24T06:00:00Z').toISOString();
-    const paymentConfirmedAt = new Date('2026-04-24T12:00:00Z').toISOString();
+    // 6h 12m after createdAt → exercises the "Xh Ym" duration branch.
+    const paymentConfirmedAt = new Date('2026-04-24T12:12:00Z').toISOString();
     mockFetchOnce(makeReadyReportPayload({ createdAt, paymentConfirmedAt }));
 
     await renderAndWaitForReport();
@@ -171,6 +176,53 @@ describe('ReportDetail — auto-confirm banner render coverage (task #278/#282)'
     // the exact format is locale-dependent so we just assert the year is
     // present, which is enough to prove the timestamp made it through.
     expect(banner.textContent).toMatch(/2026/);
+
+    // Task #281: humanized wait line + Arbiscan link must render together.
+    const waitLine = screen.getByTestId('auto-confirm-wait-duration');
+    expect(waitLine.textContent).toBe('Confirmed 6h 12m after checkout.');
+
+    const arbiscanLink = screen.getByTestId('auto-confirm-arbiscan-link') as HTMLAnchorElement;
+    // chainId 42161 (Arbitrum One) → arbiscan.io.
+    expect(arbiscanLink.getAttribute('href')).toBe(
+      'https://arbiscan.io/tx/0xabc1230000000000000000000000000000000000000000000000000000000000',
+    );
+    // External link hardening (no opener leak).
+    expect(arbiscanLink.getAttribute('target')).toBe('_blank');
+    expect(arbiscanLink.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('suppresses the Arbiscan link when paymentTxHash is missing (defensive)', async () => {
+    const createdAt = new Date('2026-04-24T06:00:00Z').toISOString();
+    const paymentConfirmedAt = new Date('2026-04-24T12:00:00Z').toISOString();
+    const payload = makeReadyReportPayload({ createdAt, paymentConfirmedAt });
+    payload.paymentTxHash = null as unknown as string;
+    mockFetchOnce(payload);
+
+    await renderAndWaitForReport();
+
+    // Banner itself still renders (the duration is what matters to the
+    // buyer), but the link must NOT — building an /tx/null Arbiscan URL
+    // would 404.
+    expect(screen.getByTestId('auto-confirm-banner')).toBeTruthy();
+    expect(screen.queryByTestId('auto-confirm-arbiscan-link')).toBeNull();
+    // Wait-duration line is still expected (it doesn't depend on the tx hash).
+    expect(screen.getByTestId('auto-confirm-wait-duration')).toBeTruthy();
+  });
+
+  it('suppresses the Arbiscan link when paymentTxHash is malformed (would 404 on Arbiscan)', async () => {
+    const createdAt = new Date('2026-04-24T06:00:00Z').toISOString();
+    const paymentConfirmedAt = new Date('2026-04-24T12:00:00Z').toISOString();
+    const payload = makeReadyReportPayload({ createdAt, paymentConfirmedAt });
+    // Truncated tx hash — has 0x prefix but not 64 hex chars. The
+    // /^0x[0-9a-fA-F]{64}$/ guard must reject it so the link doesn't
+    // render and 404 on Arbiscan.
+    payload.paymentTxHash = '0xabc123';
+    mockFetchOnce(payload);
+
+    await renderAndWaitForReport();
+
+    expect(screen.getByTestId('auto-confirm-banner')).toBeTruthy();
+    expect(screen.queryByTestId('auto-confirm-arbiscan-link')).toBeNull();
   });
 
   it('does NOT render the banner when paymentConfirmedAt is 30 seconds after createdAt (prompt-confirm flow)', async () => {
