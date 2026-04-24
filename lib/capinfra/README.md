@@ -251,6 +251,10 @@ Pages (all wrapped in `<DesignLawLayout>`):
 - `/operator/reserve` — per-asset headroom, mode, recent snapshots
 - `/operator/policy/decisions` — denials filter
 - `/operator/notifications`
+- `/operator/integrity` — recent `collateral.integrity_failed`
+  (auto-freeze) notifications from the last 24 h with a "show
+  acknowledged" toggle; complements the dashboard panel which only
+  surfaces unread rows
 - `/operator/webhooks/quarantine` — viewer for `cap_webhook_events`
   (rows arrive in 3B; surface is wired now)
 

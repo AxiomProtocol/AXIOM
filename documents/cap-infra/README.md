@@ -370,7 +370,13 @@ HTTP endpoints:
 
 Cookie-gated operator portal (cookie validated against `ADMIN_SOLVENCY_KEY`). All pages use `<DesignLawLayout>`.
 
-Pages: `/operator`, `/operator/login`, `/operator/instructions`, `/operator/instructions/[id]`, `/operator/reserve`, `/operator/policy/decisions`, `/operator/notifications`, `/operator/webhooks/quarantine`.
+Pages: `/operator`, `/operator/login`, `/operator/instructions`, `/operator/instructions/[id]`, `/operator/reserve`, `/operator/policy/decisions`, `/operator/notifications`, `/operator/integrity`, `/operator/webhooks/quarantine`.
+
+The dedicated `/operator/integrity` console lists recent
+`collateral.integrity_failed` (auto-freeze) notifications from the
+last 24 h with a "show acknowledged" toggle so operators can find
+rows that were already cleared via the dashboard panel's "Mark read"
+button. The dashboard panel's header link points at this console.
 
 Webhook reclassification (`POST /api/capinfra/webhooks/events/[id]/reclassify`) requires dual-actor (distinct identities, persisted to `cap_admin_actions`).
 

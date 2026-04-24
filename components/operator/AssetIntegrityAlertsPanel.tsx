@@ -106,10 +106,11 @@ export function AssetIntegrityAlertsPanel({
       <div className="flex items-baseline justify-between mb-3">
         <h2 className="font-serif text-lg">Asset integrity alerts</h2>
         <Link
-          href="/operator/notifications"
+          href="/operator/integrity"
           className="text-xs underline text-dl-muted"
+          data-testid="asset-integrity-alerts-all-link"
         >
-          All notifications →
+          All integrity alerts →
         </Link>
       </div>
 
