@@ -719,6 +719,12 @@ with five `kind`s: `oracle_stale`, `reserve_attestation_failed`,
 
 1. Flips `cap_assets.collateral_class` → `RED` with rationale.
 2. Emits a `collateral.integrity_failed` audit event keyed by asset and kind.
+3. Best-effort fans the same event out to the operator console (HIGH-severity
+   `cap_notifications` row) and to the on-call paging channels via
+   `lib/capinfra/notifications/integrityPager.ts`. The pager forwards to email
+   (`INTEGRITY_ALERT_EMAIL`, comma-separated) and/or a Discord webhook
+   (`INTEGRITY_ALERT_DISCORD_WEBHOOK`). Channel failures are caught, logged
+   and never bubble back into the asset downgrade transaction.
 
 Wire callers (oracle stalls in `marketData.ts`, reserve attestations,
 redemption failures) into this single chokepoint so the policy file in

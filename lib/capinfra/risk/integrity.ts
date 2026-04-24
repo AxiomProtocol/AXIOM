@@ -30,6 +30,7 @@ import { emitAuditEventStrict } from '../audit';
 import { NotFoundError } from '../errors';
 import { generateId } from '../ids';
 import { emitNotification } from '../notifications';
+import { pageOnCallForIntegrityFailure } from '../notifications/integrityPager';
 import { POLICY_VERSION } from '../policy';
 
 export type IntegrityFailureKind =
@@ -231,6 +232,33 @@ export async function recordIntegrityFailure(
     // notification instead of silently swallowing it for 5 minutes.
     if (notificationId !== null) {
       markNotified(assetId, kind);
+    }
+
+    // Page on-call. The in-app/operator-console row above only wakes
+    // someone if they happen to be logged in; `pageOnCallForIntegrityFailure`
+    // fans the same event out to email (Resend) and Discord webhook
+    // so a real responder is paged on every auto-freeze. The dispatcher
+    // is best-effort by contract — it never throws, returning per-channel
+    // errors in its result — but we still wrap it in try/catch as
+    // belt-and-braces so a defect in the pager itself can never bubble
+    // back to the asset downgrade path.
+    try {
+      await pageOnCallForIntegrityFailure({
+        assetId,
+        symbol: result.symbol ?? null,
+        assetType: result.assetType ?? null,
+        kind,
+        detail,
+        rationale: result.rationale,
+        previousClass: result.previousClass,
+        actor,
+        correlationId: correlationId ?? null,
+      });
+    } catch (err) {
+      console.error(
+        '[capinfra.risk.integrity] pager dispatch threw unexpectedly',
+        err,
+      );
     }
   }
 
