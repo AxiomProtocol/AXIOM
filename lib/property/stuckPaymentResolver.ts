@@ -246,8 +246,15 @@ export async function resolveStuckPayments(opts: ResolveOptions = {}): Promise<R
 
       // No matching transfer. Expire if old enough; otherwise leave alone.
       if (row.createdAt < expiryCutoff) {
-        await expirePending(row.id, row.buyerEmail, row.addressRaw);
-        summary.expired.push(row.id);
+        const transitioned = await expirePending(row.id, row.buyerEmail, row.addressRaw);
+        if (transitioned) {
+          summary.expired.push(row.id);
+        } else {
+          // Another path (operator manual confirm, parallel resolver) moved
+          // the row out of pending before our update fired. Surface it as
+          // unresolved so the summary reflects actual DB transitions.
+          summary.unresolvedReportIds.push(row.id);
+        }
       } else {
         summary.unresolvedReportIds.push(row.id);
       }
@@ -269,6 +276,12 @@ export async function resolveStuckPayments(opts: ResolveOptions = {}): Promise<R
  *
  * Mirrors the write path in `pages/api/property/confirm-payment.ts` so the
  * two surfaces stay in lockstep.
+ *
+ * NOTE: this path also triggers the buyer "report ready" email (task #275)
+ * because the buyer experience is identical to the auto-resolve path —
+ * they had abandoned the flow and now their report is ready. If you ever
+ * need a silent operator-only confirm, branch via a new function rather
+ * than adding a flag here.
  */
 export async function resolveSingleByTxHash(
   reportId: string,
@@ -383,16 +396,20 @@ async function promoteToPaid(
   }
 }
 
+/**
+ * @returns true when this call actually transitioned the row from pending to
+ * expired; false if another path beat us to it (operator manual confirm,
+ * parallel resolver run). Callers use the boolean to gate buyer notification
+ * and resolver summary metrics so both reflect real DB state.
+ */
 async function expirePending(
   reportId: string,
   buyerEmail: string | null | undefined,
   addressRaw: string,
-): Promise<void> {
+): Promise<boolean> {
   // The status='pending' guard means this update may be a no-op if another
-  // path (operator manual confirm, parallel resolver run) already moved the
-  // row out of pending. Use .returning() so we only fire the buyer email
-  // when this call actually transitioned the row to expired — otherwise we'd
-  // risk emailing a buyer that their report expired right after they got a
+  // path already moved the row. .returning() lets us tell the difference so
+  // we don't email a buyer "your report expired" right after they got a
   // "ready" email.
   const updated = await db
     .update(propertyReports)
@@ -404,11 +421,12 @@ async function expirePending(
     .where(and(eq(propertyReports.id, reportId), eq(propertyReports.status, 'pending')))
     .returning({ id: propertyReports.id });
 
-  if (updated.length === 0) return;
+  if (updated.length === 0) return false;
 
   // Best-effort buyer notification — never block the expiry write on mail
   // delivery failure.
   await notifyBuyerReportExpired({ buyerEmail, reportId, addressRaw });
+  return true;
 }
 
 // ─── Buyer notifications (best-effort, never throw) ──────────────────────────

@@ -470,9 +470,10 @@ describe('resolveStuckPayments — buyer notification emails (task #275)', () =>
 
     const summary = await resolveStuckPayments();
 
-    // The resolver still records it as "expired" because it asked for the
-    // transition; the no-op guard is purely a notification safety net.
-    expect(summary.expired).toEqual(['rep-race']);
+    // No DB transition happened on this call → summary should NOT report it
+    // as expired (and the no-op guard prevents the buyer email from firing).
+    expect(summary.expired).toEqual([]);
+    expect(summary.unresolvedReportIds).toEqual(['rep-race']);
     expect(sendExpiredEmailMock).not.toHaveBeenCalled();
     expect(sendReadyEmailMock).not.toHaveBeenCalled();
   });
