@@ -48,12 +48,9 @@ function mapResolverError(reason: string): { status: number; error: string } {
   if (/already used by another report/i.test(reason)) {
     return { status: 409, error: reason };
   }
-  // "Report is already <status>, refusing to overwrite." → idempotent.
-  // The buyer already has a non-pending row; pretend success and let the
-  // client redirect them to the report.
-  if (/already (paid|ready|generating|failed|expired)/i.test(reason)) {
-    return { status: 409, error: reason };
-  }
+  // NOTE: the "Report is already <status>" reason is handled by the
+  // caller — it returns 200 with the current status to mirror the
+  // idempotent behavior of confirm-payment.ts. We do NOT match it here.
   if (/free reports do not require payment/i.test(reason)) {
     return { status: 400, error: reason };
   }
@@ -117,6 +114,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const result = await resolveSingleByTxHash(reportId, txHash);
     if (result.ok) {
       return res.status(200).json({ reportId, status: result.status });
+    }
+    // Idempotency: if the row has already moved past pending (paid,
+    // ready, generating, failed, or expired-then-recovered), don't
+    // surface an error — return 200 with the current status so the
+    // client can redirect the buyer to their report. Mirrors the same
+    // pattern in pages/api/property/confirm-payment.ts so polling /
+    // retries from the buyer or the email link don't show a spurious
+    // failure UI.
+    const idempotentMatch = result.reason.match(
+      /already (paid|ready|generating|failed|expired)/i,
+    );
+    if (idempotentMatch) {
+      return res
+        .status(200)
+        .json({ reportId, status: idempotentMatch[1].toLowerCase() });
     }
     const { status, error } = mapResolverError(result.reason);
     return res.status(status).json({ error });

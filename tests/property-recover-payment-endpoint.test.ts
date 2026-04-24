@@ -217,15 +217,32 @@ describe('POST /api/property/recover-payment — resolver result mapping', () =>
     expect(body().error).toMatch(/sent from the wallet/i);
   });
 
-  it('returns 409 when the resolver refuses to overwrite a non-pending report (idempotency)', async () => {
-    resolveSingleByTxHashMock.mockResolvedValueOnce({
-      ok: false,
-      reason: 'Report is already paid, refusing to overwrite.',
-    });
-    const { res, statusCode, body } = makeRes();
-    await handler(makeReq({ body: { reportId: VALID_REPORT_ID, txHash: VALID_TX_HASH } }), res);
-    expect(statusCode()).toBe(409);
-    expect(body().error).toMatch(/already paid/i);
+  it('returns 200 + current status (idempotent) when the resolver reports the row has already moved past pending', async () => {
+    // Mirrors confirm-payment.ts: a non-pending row on a "did my payment
+    // go through?" retry must NOT surface as an error — return 200 with
+    // the current status so the client can navigate the buyer to their
+    // report. The resolver phrases this as "Report is already <status>,
+    // refusing to overwrite." for paid/ready/generating/failed.
+    for (const status of ['paid', 'ready', 'generating', 'failed'] as const) {
+      resolveSingleByTxHashMock.mockResolvedValueOnce({
+        ok: false,
+        reason: `Report is already ${status}, refusing to overwrite.`,
+      });
+      const { res, statusCode, body } = makeRes();
+      await handler(
+        makeReq({
+          // Vary IP+reportId so neither rate-limit axis interferes.
+          ip: `192.0.2.${50 + status.length}`,
+          body: { reportId: `${VALID_REPORT_ID}-idem-${status}`, txHash: VALID_TX_HASH },
+        }),
+        res,
+      );
+      expect(statusCode()).toBe(200);
+      expect(body()).toEqual({
+        reportId: `${VALID_REPORT_ID}-idem-${status}`,
+        status,
+      });
+    }
   });
 
   it('returns 409 when the tx hash has already been claimed by another report', async () => {
