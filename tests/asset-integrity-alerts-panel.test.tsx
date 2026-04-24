@@ -235,6 +235,155 @@ describe('AssetIntegrityAlertsPanel — mark read', () => {
   });
 });
 
+describe('AssetIntegrityAlertsPanel — mark all read', () => {
+  it('does not render the "Mark all read" button when there are no visible alerts', () => {
+    render(<AssetIntegrityAlertsPanel alerts={[]} nowMs={NOW_MS} />);
+    expect(
+      screen.queryByTestId('asset-integrity-alerts-mark-all-read'),
+    ).toBeNull();
+  });
+
+  it('renders the "Mark all read" button when at least one alert is visible', () => {
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[makeAlert({ id: 'ntf_a', symbol: 'AXAU' })]}
+        nowMs={NOW_MS}
+      />,
+    );
+    expect(
+      screen.getByTestId('asset-integrity-alerts-mark-all-read'),
+    ).toBeTruthy();
+  });
+
+  it('POSTs all visible ids to the batch endpoint and removes every marked row on full success', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '',
+      json: async () => ({
+        attempted: 2,
+        marked: ['ntf_a', 'ntf_b'],
+        notFound: [],
+        failed: [],
+      }),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[
+          makeAlert({ id: 'ntf_a', symbol: 'AXAU' }),
+          makeAlert({ id: 'ntf_b', symbol: 'AXAG' }),
+        ]}
+        nowMs={NOW_MS}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-mark-all-read'),
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('asset-integrity-alert-ntf_a')).toBeNull();
+      expect(screen.queryByTestId('asset-integrity-alert-ntf_b')).toBeNull();
+    });
+
+    // Empty state is now shown, and the success notice is surfaced.
+    expect(screen.getByTestId('asset-integrity-alerts-empty')).toBeTruthy();
+    expect(
+      screen.getByTestId('asset-integrity-alerts-notice').textContent,
+    ).toMatch(/Marked 2 of 2 read/);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
+    expect(calledUrl).toBe(
+      '/api/capinfra/operator/notifications/mark-read-batch',
+    );
+    expect(calledInit.method).toBe('POST');
+    expect(JSON.parse(calledInit.body as string)).toEqual({
+      ids: ['ntf_a', 'ntf_b'],
+    });
+  });
+
+  it('surfaces partial failures and keeps the unmarked rows visible ("marked X of Y")', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '',
+      json: async () => ({
+        attempted: 3,
+        marked: ['ntf_a'],
+        notFound: ['ntf_b'],
+        failed: [{ id: 'ntf_c', error: 'boom' }],
+      }),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[
+          makeAlert({ id: 'ntf_a', symbol: 'AXAU' }),
+          makeAlert({ id: 'ntf_b', symbol: 'AXAG' }),
+          makeAlert({ id: 'ntf_c', symbol: 'AXPT' }),
+        ]}
+        nowMs={NOW_MS}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-mark-all-read'),
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('asset-integrity-alert-ntf_a')).toBeNull();
+    });
+
+    // The unmarked rows are still visible and the partial-failure
+    // banner spells out the count so the operator knows the panel
+    // isn't actually clean yet.
+    expect(screen.getByTestId('asset-integrity-alert-ntf_b')).toBeTruthy();
+    expect(screen.getByTestId('asset-integrity-alert-ntf_c')).toBeTruthy();
+    const banner = screen.getByRole('alert');
+    expect(banner.textContent).toMatch(/Marked 1 of 3/);
+    expect(banner.textContent).toMatch(/2 could not be marked read/);
+  });
+
+  it('keeps every row and shows an error banner when the batch endpoint itself fails', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: false,
+      status: 500,
+      text: async () => 'boom',
+      json: async () => ({}),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[
+          makeAlert({ id: 'ntf_a', symbol: 'AXAU' }),
+          makeAlert({ id: 'ntf_b', symbol: 'AXAG' }),
+        ]}
+        nowMs={NOW_MS}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-mark-all-read'),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toMatch(
+        /markAllRead failed/i,
+      );
+    });
+    expect(screen.getByTestId('asset-integrity-alert-ntf_a')).toBeTruthy();
+    expect(screen.getByTestId('asset-integrity-alert-ntf_b')).toBeTruthy();
+  });
+});
+
 describe('formatAge / buildAssetLink helpers', () => {
   it('formats sub-minute, minute, hour and day ages', () => {
     expect(formatAge(0)).toBe('0s ago');

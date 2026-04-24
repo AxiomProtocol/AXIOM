@@ -55,6 +55,13 @@ export function buildAssetLink(symbol: string | null, assetId: string): string {
   return `/operations/cap-infra?symbol=${encodeURIComponent(q)}`;
 }
 
+interface BatchResponse {
+  attempted: number;
+  marked: string[];
+  notFound: string[];
+  failed: { id: string; error: string }[];
+}
+
 export function AssetIntegrityAlertsPanel({
   alerts,
   nowMs,
@@ -62,9 +69,12 @@ export function AssetIntegrityAlertsPanel({
   const [pending, setPending] = useState<Set<string>>(new Set());
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [batchPending, setBatchPending] = useState(false);
 
   const onMarkRead = useCallback(async (id: string) => {
     setError(null);
+    setNotice(null);
     setPending((prev) => {
       const next = new Set(prev);
       next.add(id);
@@ -98,6 +108,56 @@ export function AssetIntegrityAlertsPanel({
   const visible = alerts.filter((a) => !dismissed.has(a.id));
   const now = nowMs ?? Date.now();
 
+  const onMarkAllRead = useCallback(async () => {
+    setError(null);
+    setNotice(null);
+    const ids = visible.map((a) => a.id);
+    if (ids.length === 0) return;
+    setBatchPending(true);
+    try {
+      const res = await fetch(
+        '/api/capinfra/operator/notifications/mark-read-batch',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids }),
+        },
+      );
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        throw new Error(
+          `markAllRead failed: ${res.status} ${body || ''}`.trim(),
+        );
+      }
+      const data = (await res.json().catch(() => null)) as BatchResponse | null;
+      if (!data || !Array.isArray(data.marked)) {
+        throw new Error('markAllRead failed: malformed response');
+      }
+      if (data.marked.length > 0) {
+        setDismissed((prev) => {
+          const next = new Set(prev);
+          for (const mid of data.marked) next.add(mid);
+          return next;
+        });
+      }
+      // Surface partial failures explicitly so the operator knows
+      // some rows are still open and need attention.
+      const failedCount =
+        (data.failed?.length ?? 0) + (data.notFound?.length ?? 0);
+      if (failedCount > 0) {
+        setError(
+          `Marked ${data.marked.length} of ${data.attempted} — ${failedCount} could not be marked read.`,
+        );
+      } else {
+        setNotice(`Marked ${data.marked.length} of ${data.attempted} read.`);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to mark all read');
+    } finally {
+      setBatchPending(false);
+    }
+  }, [visible]);
+
   return (
     <section
       className="border border-dl-border p-4 mb-6"
@@ -105,13 +165,26 @@ export function AssetIntegrityAlertsPanel({
     >
       <div className="flex items-baseline justify-between mb-3">
         <h2 className="font-serif text-lg">Asset integrity alerts</h2>
-        <Link
-          href="/operator/integrity"
-          className="text-xs underline text-dl-muted"
-          data-testid="asset-integrity-alerts-all-link"
-        >
-          All integrity alerts →
-        </Link>
+        <div className="flex items-center gap-3">
+          {visible.length > 0 ? (
+            <button
+              type="button"
+              onClick={onMarkAllRead}
+              disabled={batchPending}
+              className="text-xs uppercase tracking-wide border border-dl-border px-3 py-1 hover:bg-dl-muted/10 disabled:opacity-50"
+              data-testid="asset-integrity-alerts-mark-all-read"
+            >
+              {batchPending ? 'Marking all…' : 'Mark all read'}
+            </button>
+          ) : null}
+          <Link
+            href="/operator/integrity"
+            className="text-xs underline text-dl-muted"
+            data-testid="asset-integrity-alerts-all-link"
+          >
+            All integrity alerts →
+          </Link>
+        </div>
       </div>
 
       {error ? (
@@ -120,6 +193,16 @@ export function AssetIntegrityAlertsPanel({
           className="mb-3 border-l-4 border-l-red-500 border border-dl-border bg-red-50 p-2 text-xs font-mono text-red-800"
         >
           {error}
+        </div>
+      ) : null}
+
+      {notice ? (
+        <div
+          role="status"
+          className="mb-3 border-l-4 border-l-green-500 border border-dl-border bg-green-50 p-2 text-xs font-mono text-green-800"
+          data-testid="asset-integrity-alerts-notice"
+        >
+          {notice}
         </div>
       ) : null}
 
