@@ -9,8 +9,9 @@ import {
   capWebhookEvents,
   capNotifications,
   capReserveHoldingsSnapshots,
+  capCardDeposits,
 } from '../../shared/capInfraSchema';
-import { desc, eq, and, sql } from 'drizzle-orm';
+import { desc, eq, and, inArray, sql } from 'drizzle-orm';
 import { getActiveSolvencyMode } from '../../lib/capinfra/reserve/solvencyMode';
 
 interface DashboardProps {
@@ -19,6 +20,7 @@ interface DashboardProps {
     deniedDecisions: number;
     quarantinedWebhooks: number;
     unreadNotifications: number;
+    cardDepositsInFlight: number;
   };
   mode: { mode: string; version: string; isBootstrap: boolean };
   lastSnapshot: { id: string; checksum: string; asOf: string } | null;
@@ -28,7 +30,7 @@ export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx
   const redirect = requireOperatorCookie(ctx);
   if (redirect) return redirect;
 
-  const [[instr], [denied], [quar], [unread], snaps] = await Promise.all([
+  const [[instr], [denied], [quar], [unread], [cardDepInFlight], snaps] = await Promise.all([
     db
       .select({ n: sql<number>`count(*)::int` })
       .from(capSettlementInstructions),
@@ -45,6 +47,10 @@ export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx
       .from(capNotifications)
       .where(sql`${capNotifications.readAt} IS NULL`),
     db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(capCardDeposits)
+      .where(inArray(capCardDeposits.status, ['PENDING', 'PAYOUT_INITIATED'])),
+    db
       .select()
       .from(capReserveHoldingsSnapshots)
       .orderBy(desc(capReserveHoldingsSnapshots.asOf))
@@ -60,6 +66,7 @@ export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx
         deniedDecisions: Number(denied?.n ?? 0),
         quarantinedWebhooks: Number(quar?.n ?? 0),
         unreadNotifications: Number(unread?.n ?? 0),
+        cardDepositsInFlight: Number(cardDepInFlight?.n ?? 0),
       },
       mode: { mode: mode.mode, version: mode.version, isBootstrap: mode.isBootstrap },
       lastSnapshot: snaps[0]
@@ -161,6 +168,21 @@ export default function OperatorDashboard(props: DashboardProps) {
             <Link href="/operator/reserve" className="text-sm underline">Open reserve dashboard →</Link>
           </div>
         </section>
+
+        {props.counts.cardDepositsInFlight > 0 ? (
+          <section className="border border-yellow-700 bg-yellow-50 text-yellow-900 p-4 mb-6">
+            <h2 className="font-serif text-lg mb-2">Treasury — drain in progress</h2>
+            <p className="text-xs font-mono mb-3">
+              {props.counts.cardDepositsInFlight} deprecated Stripe card-deposit
+              row(s) still in PENDING or PAYOUT_INITIATED. The page is hidden
+              from console navigation once all rows reach terminal status; the
+              direct URL remains available for forensic lookup.
+            </p>
+            <Link href="/operator/treasury/card-deposits" className="text-sm underline">
+              Open card deposits drain console →
+            </Link>
+          </section>
+        ) : null}
 
         <section className="border border-dl-border p-4 mb-6">
           <h2 className="font-serif text-lg mb-3">Oracles</h2>

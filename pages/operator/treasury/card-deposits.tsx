@@ -84,6 +84,22 @@ export default function CardDepositsOperatorPage({ rows, status, intent }: Props
           </div>
         </div>
 
+        <div className="mb-4">
+          <a
+            href={(() => {
+              const params = new URLSearchParams();
+              if (status) params.set('status', status);
+              if (intent) params.set('intent', intent);
+              const qs = params.toString();
+              return `/api/capinfra/operator/treasury/card-deposits/export.csv${qs ? `?${qs}` : ''}`;
+            })()}
+            className="inline-block text-xs uppercase tracking-wide border border-dl-border px-3 py-1 hover:bg-dl-muted/10"
+            data-testid="download-card-deposits-csv"
+          >
+            Download CSV (archive)
+          </a>
+        </div>
+
         <div className="mb-4 flex flex-wrap gap-4 text-xs uppercase tracking-wide">
           <div>
             <span className="text-dl-muted mr-2">Status:</span>
