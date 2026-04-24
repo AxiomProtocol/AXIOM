@@ -80,7 +80,10 @@ case is out of scope for the Stripe rail.
   exports, prune CSVs, the ATTOM preforeclosure feed, asset-registry
   exports, and audit / assurance document subscriptions.
 - **Surfaces:** capinfra operator console surfaces; data-export endpoints
-  under `lib/capinfra/`; `.local/tasks/attom-preforeclosure-feed.md`;
+  under `lib/capinfra/` (e.g. `lib/capinfra/assetCsv.ts`,
+  `lib/capinfra/audit.ts`); ATTOM preforeclosure adapters
+  (`lib/distressed-feed/sources/attom.ts`, `lib/re/attom.ts`);
+  `.local/tasks/attom-preforeclosure-feed.md`;
   `.local/tasks/axusd-audit-assurance-readiness.md`.
 - **Stripe product type:** Stripe Billing, recurring subscription.
 - **Why approvable:** SaaS subscription to software and data Axiom hosts
@@ -94,7 +97,9 @@ case is out of scope for the Stripe rail.
   Operations, Capital Accounting, IVCEE, RE Intelligence, and MIRDT
   workspaces.
 - **Surfaces:** capinfra operator console surfaces (Founder Ops, Capital
-  Accounting, Solvency, IVCEE, MIRDT terminals).
+  Accounting, Solvency, IVCEE, MIRDT terminals); operator authentication
+  in `lib/capinfra/operatorAuth.ts`; operator-action audit in
+  `lib/capinfra/adminActions.ts`.
 - **Stripe product type:** Stripe Billing, recurring subscription with
   per-seat or per-org quantity pricing.
 - **Why approvable:** Software seat licensing of dashboards Axiom hosts.
@@ -125,8 +130,10 @@ case is out of scope for the Stripe rail.
   charges; the KYC vendor runs the check), custom report generation,
   one-time API access activation, document-ingestion batch fees, and
   one-off advisory engagements.
-- **Surfaces:** capinfra service endpoints; document-ingestion pipelines;
-  premium KYC review surfaces inside the operator console.
+- **Surfaces:** capinfra service endpoints (`lib/capinfra/handler.ts`);
+  identity / KYC review in `lib/capinfra/identity.ts`; document-ingestion
+  pipelines under `lib/capinfra/`; premium KYC review surfaces inside the
+  operator console.
 - **Stripe product type:** Stripe Checkout, one-time payment, or Stripe
   Invoicing for negotiated engagements.
 - **Why approvable:** Service-fee invoicing by Axiom for work Axiom
