@@ -269,13 +269,64 @@ describe('resolveStuckPayments — no-transfer paths', () => {
 });
 
 describe('resolveSingleByTxHash — operator manual path', () => {
-  it('refuses to overwrite a row that is no longer pending (idempotency)', async () => {
-    pushSelect([{ id: 'rep-x', tier: 'base', status: 'paid', buyerWallet: BUYER }]);
-
-    const result = await resolveSingleByTxHash('rep-x', TX);
-    expect(result).toEqual({ ok: false, reason: expect.stringMatching(/already paid/i) });
+  it('refuses to overwrite a row whose status is past the recoverable window (paid/ready/failed)', async () => {
+    // Rows in any "we already wrote a payment for this" state must be
+    // immutable — recovering them would double-charge or clobber a
+    // generated report.
+    for (const status of ['paid', 'ready', 'generating', 'failed'] as const) {
+      pushSelect([{ id: `rep-${status}`, tier: 'base', status, buyerWallet: BUYER }]);
+      const result = await resolveSingleByTxHash(`rep-${status}`, TX);
+      expect(result).toEqual({
+        ok: false,
+        reason: expect.stringMatching(new RegExp(`already ${status}`, 'i')),
+      });
+    }
     expect(verifyMock).not.toHaveBeenCalled();
     expect(updateCalls).toEqual([]);
+  });
+
+  it('rescues an expired report when the buyer pastes a valid tx hash (task #280 self-recover path)', async () => {
+    // The auto-resolver expires rows it could not match an on-chain
+    // transfer for within the 72-hour window. The buyer's email tells
+    // them to paste their tx hash on /property/reports — which calls
+    // this code path. Expired must be a recoverable starting state.
+    pushSelect([
+      {
+        id: 'rep-expired',
+        tier: 'base',
+        status: 'expired',
+        buyerWallet: BUYER,
+        buyerEmail: 'buyer@example.com',
+        addressRaw: '123 Main St',
+      },
+    ]);
+    // promoteToPaid then runs its own "tx hash already used by another
+    // report?" check — return empty (not reused).
+    pushSelect([]);
+
+    verifyMock.mockResolvedValueOnce({
+      ok: true,
+      txHash: TX,
+      from: BUYER,
+      to: RECIPIENT,
+      token: TOKEN,
+      chainId: 42161,
+      amountTokenUnits: 499n * 10000n,
+      amountUsd: '4.99',
+      decimals: 6,
+    });
+    generateReportMock.mockResolvedValueOnce({});
+
+    const result = await resolveSingleByTxHash('rep-expired', TX);
+
+    expect(result).toEqual({ ok: true, status: 'ready' });
+    expect(verifyMock).toHaveBeenCalledWith(TX, 499);
+    expect(generateReportMock).toHaveBeenCalledWith('rep-expired');
+    // Update must have moved the row to paid (not left it as expired).
+    const paidUpdate = updateCalls.find(
+      (c) => (c.values as Record<string, unknown>).status === 'paid',
+    );
+    expect(paidUpdate).toBeTruthy();
   });
 
   it('refuses to confirm with a tx hash already bound to another report', async () => {

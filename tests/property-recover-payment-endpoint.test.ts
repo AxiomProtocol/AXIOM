@@ -34,6 +34,10 @@ vi.mock('../lib/property/stuckPaymentResolver', () => ({
 
 // Import the handler AFTER the mocks are registered.
 const { default: handler } = await import('../pages/api/property/recover-payment');
+// We also need the in-memory rate-limit store to be cleared between
+// tests so the per-reportId limiter (5/min, keyed on the canonical
+// reportId) doesn't bleed across cases that all share VALID_REPORT_ID.
+const rateLimitModule = await import('../lib/rateLimit');
 
 // ── Test helpers ─────────────────────────────────────────────────────────────
 
@@ -89,6 +93,9 @@ function makeRes() {
 
 beforeEach(() => {
   resolveSingleByTxHashMock.mockReset();
+  // Wipe the in-memory rate-limit buckets so each test starts with a
+  // clean per-IP and per-reportId quota.
+  rateLimitModule.__resetRateLimitStoreForTests();
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -185,6 +192,19 @@ describe('POST /api/property/recover-payment — resolver result mapping', () =>
     expect(body().status).toBe('failed');
   });
 
+  it('returns 200 when the resolver successfully rescues an EXPIRED report (the headline self-recover path)', async () => {
+    // The whole point of task #280: a buyer whose row was auto-expired
+    // (no transfer matched in the resolver's lookback window) pastes
+    // their tx hash here and unstuck their own report. The resolver
+    // accepts both 'pending' and 'expired' as recoverable starting
+    // states, and the endpoint surfaces the success identically.
+    resolveSingleByTxHashMock.mockResolvedValueOnce({ ok: true, status: 'ready' });
+    const { res, statusCode, body } = makeRes();
+    await handler(makeReq({ body: { reportId: VALID_REPORT_ID, txHash: VALID_TX_HASH } }), res);
+    expect(statusCode()).toBe(200);
+    expect(body()).toEqual({ reportId: VALID_REPORT_ID, status: 'ready' });
+  });
+
   it('returns 403 when the resolver flags a sender-wallet mismatch (someone-elses-report defense)', async () => {
     resolveSingleByTxHashMock.mockResolvedValueOnce({
       ok: false,
@@ -270,14 +290,19 @@ describe('POST /api/property/recover-payment — rate limiting (brute-force defe
 
     // rateLimitStrict is keyed by (prefix, ip). Use a fresh, unique IP so
     // no other test in this file (which uses random IPs) can have already
-    // used quota for this key.
+    // used quota for this key. Vary the reportId per-attempt so the
+    // per-reportId limiter (5/min) does NOT trip first and mask the
+    // per-IP behavior we want to assert here.
     const ip = '198.51.100.42';
     let lastStatus = 0;
     let firstLimitedStatus = 0;
     for (let i = 0; i < 11; i++) {
       const { res, statusCode } = makeRes();
       await handler(
-        makeReq({ ip, body: { reportId: VALID_REPORT_ID, txHash: VALID_TX_HASH } }),
+        makeReq({
+          ip,
+          body: { reportId: `${VALID_REPORT_ID}-ip-${i}`, txHash: VALID_TX_HASH },
+        }),
         res,
       );
       lastStatus = statusCode();
@@ -286,6 +311,69 @@ describe('POST /api/property/recover-payment — rate limiting (brute-force defe
 
     // The first 10 requests must succeed; the 11th must be limited.
     expect(firstLimitedStatus).toBe(11);
+    expect(lastStatus).toBe(429);
+  });
+
+  it('returns 429 on the 6th attempt against the same reportId — even from different IPs (distributed-attack defense)', async () => {
+    // Per-reportId limiter is the second axis the task spec requires.
+    // 5 attempts/minute against one report is the cap; the 6th must
+    // 429 even if every request came from a fresh IP, because the
+    // per-IP limiter (10/min/IP) would otherwise let a botnet brute
+    // force one report unmolested.
+    resolveSingleByTxHashMock.mockResolvedValue({
+      ok: false,
+      reason: 'Verification failed: insufficient amount',
+    });
+
+    // Use a unique reportId for this test so we don't collide with
+    // other tests in this file (which use VALID_REPORT_ID).
+    const targetReport = 'rep_per_id_limit_target_xyz';
+    let lastStatus = 0;
+    let firstLimitedAttempt = 0;
+    for (let i = 0; i < 6; i++) {
+      const { res, statusCode } = makeRes();
+      await handler(
+        makeReq({
+          // Fresh IP each time → per-IP limiter is irrelevant here.
+          ip: `203.0.113.${i + 1}`,
+          body: { reportId: targetReport, txHash: VALID_TX_HASH },
+        }),
+        res,
+      );
+      lastStatus = statusCode();
+      if (lastStatus === 429 && firstLimitedAttempt === 0) firstLimitedAttempt = i + 1;
+    }
+
+    expect(firstLimitedAttempt).toBe(6);
+    expect(lastStatus).toBe(429);
+  });
+
+  it('treats reportId case-insensitively for per-report rate-limit bucketing (no trivial bypass)', async () => {
+    // An attacker who could vary capitalization to dodge the per-report
+    // limit would defeat its purpose. We canonicalize to lowercase
+    // before keying the limiter.
+    resolveSingleByTxHashMock.mockResolvedValue({ ok: false, reason: 'verify fail' });
+    const targetReport = 'rep_case_bypass_target_aaa';
+    const variants = [
+      targetReport,
+      targetReport.toUpperCase(),
+      targetReport.replace('rep', 'REP'),
+      targetReport.replace('target', 'TARGET'),
+      targetReport,
+      targetReport.toUpperCase(), // attempt #6 — must 429 regardless of case
+    ];
+    let lastStatus = 0;
+    for (let i = 0; i < variants.length; i++) {
+      const { res, statusCode } = makeRes();
+      await handler(
+        makeReq({
+          ip: `192.0.2.${100 + i}`,
+          body: { reportId: variants[i], txHash: VALID_TX_HASH },
+        }),
+        res,
+      );
+      lastStatus = statusCode();
+    }
     expect(lastStatus).toBe(429);
   });
 

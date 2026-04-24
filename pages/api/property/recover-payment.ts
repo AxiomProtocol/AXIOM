@@ -28,7 +28,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { resolveSingleByTxHash } from '../../../lib/property/stuckPaymentResolver';
-import { rateLimitStrict } from '../../../lib/rateLimit';
+import { rateLimitStrict, rateLimitByKey } from '../../../lib/rateLimit';
 
 const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
 // `report_id` is varchar(40) in propertySchema and resolver only does a
@@ -75,8 +75,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Rate limit BEFORE any DB / RPC work. rateLimitStrict writes the 429
-  // response itself when exhausted.
+  // First rate-limit axis: per IP. rateLimitStrict writes the 429
+  // response itself when exhausted. Catches one attacker hitting many
+  // reports.
   if (!rateLimitStrict(req, res)) return;
 
   const body = (req.body ?? {}) as Record<string, unknown>;
@@ -100,6 +101,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({
       error: 'txHash must be a 0x-prefixed 32-byte hex string (66 characters total).',
     });
+  }
+
+  // Second rate-limit axis: per-reportId. Catches a distributed attacker
+  // (many IPs, one report) trying to brute-force tx hashes against a
+  // single victim row. We use the canonicalized (lower-cased) reportId
+  // so case variants share the same bucket. 5 attempts/min is generous
+  // for an honest buyer (their email gives them the exact tx hash to
+  // paste) but ruinous for a probe.
+  if (!rateLimitByKey(res, 'recover-pay-report', reportId.toLowerCase(), 5, 60_000)) {
+    return;
   }
 
   try {

@@ -294,7 +294,16 @@ export async function resolveSingleByTxHash(
     .limit(1);
 
   if (!report) return { ok: false, reason: 'Report not found' };
-  if (report.status !== 'pending') {
+  // Recoverable statuses:
+  //   - 'pending' → operator manually rescues a stuck row before the
+  //     auto-expiry sweep gets to it.
+  //   - 'expired' → buyer (task #280) self-rescues a row that the
+  //     resolver expired because it couldn't find a matching transfer
+  //     in the lookback window. The buyer's tx hash bypasses the log
+  //     scan and re-runs verification end-to-end.
+  // Anything else (paid, generating, ready, failed) is a no-op — the
+  // row already has a payment recorded and we must not overwrite it.
+  if (report.status !== 'pending' && report.status !== 'expired') {
     return { ok: false, reason: `Report is already ${report.status}, refusing to overwrite.` };
   }
   if (report.tier === 'free') {
