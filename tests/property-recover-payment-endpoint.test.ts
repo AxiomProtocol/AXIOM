@@ -9,17 +9,24 @@
  *   1. Method gating (405)
  *   2. Input validation (400 on missing/malformed reportId + txHash)
  *   3. Tx-hash format guard rejects junk before any resolver call
- *   4. Happy path: 200 + status from resolver
+ *   4. Happy path: 200 + status from resolver (incl. EXPIRED → ready
+ *      recovery — the headline self-recover path for task #280)
  *   5. Sender-wallet enforcement reachable: 403 when resolver returns the
  *      "must be sent from the wallet recorded on the report" reason
- *   6. Idempotency: 409 when resolver refuses to overwrite a non-pending row
+ *   6. Idempotency: 200 + current status when the resolver reports the
+ *      row has already moved past pending (paid/ready/generating/failed),
+ *      mirroring confirm-payment.ts so polling/retries don't show a
+ *      spurious failure
  *   7. Tx-hash reuse: 409 when resolver flags the hash as belonging to
  *      another report
  *   8. Verification failure (insufficient amount, etc): 402
  *   9. Free tier: 400
  *  10. Report not found: 404
  *  11. Resolver crash: 500 (no leak of internal error message)
- *  12. Rate limiting: after 10 requests in 60s, the 11th gets 429
+ *  12. Rate limiting (per-IP): 11th request from same IP in 60s → 429
+ *  13. Rate limiting (per-reportId): 6th attempt against the same report
+ *      in 60s → 429, even when each request comes from a fresh IP
+ *  14. Per-reportId limit is case-insensitive (no trivial bypass)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -229,19 +236,18 @@ describe('POST /api/property/recover-payment — resolver result mapping', () =>
         reason: `Report is already ${status}, refusing to overwrite.`,
       });
       const { res, statusCode, body } = makeRes();
+      // Use a short unique reportId per status so neither rate-limit
+      // axis interferes AND we stay under the 40-char schema cap.
+      const reportId = `rep_idem_${status}`;
       await handler(
         makeReq({
-          // Vary IP+reportId so neither rate-limit axis interferes.
           ip: `192.0.2.${50 + status.length}`,
-          body: { reportId: `${VALID_REPORT_ID}-idem-${status}`, txHash: VALID_TX_HASH },
+          body: { reportId, txHash: VALID_TX_HASH },
         }),
         res,
       );
       expect(statusCode()).toBe(200);
-      expect(body()).toEqual({
-        reportId: `${VALID_REPORT_ID}-idem-${status}`,
-        status,
-      });
+      expect(body()).toEqual({ reportId, status });
     }
   });
 

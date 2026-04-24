@@ -31,10 +31,12 @@ import { resolveSingleByTxHash } from '../../../lib/property/stuckPaymentResolve
 import { rateLimitStrict, rateLimitByKey } from '../../../lib/rateLimit';
 
 const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
-// `report_id` is varchar(40) in propertySchema and resolver only does a
-// direct equality lookup, so a permissive shape guard here (length cap)
-// is enough — no need to mirror the exact UUID format.
-const REPORT_ID_MAX_LEN = 80;
+// `id` on property_reports is `varchar(40)` in propertySchema. Cap input
+// at the same length so oversize values are rejected at the edge instead
+// of generating an unnecessary DB round-trip (and on Postgres a varchar
+// length-limit insert/where on a too-long string is a noisy failure
+// surface we'd rather avoid).
+const REPORT_ID_MAX_LEN = 40;
 
 /** Reasons emitted by `promoteToPaid` that mean "the buyer cannot rescue this with this tx hash". */
 function mapResolverError(reason: string): { status: number; error: string } {
