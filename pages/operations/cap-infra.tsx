@@ -875,7 +875,7 @@ function buildCsvRow(ev: AuditEvent): string {
 
 const CSV_HEADER = 'When (UTC),Aggregate,Event,Actor,User,Legal Name,Asset,Payload';
 
-function AuditSearchSection({ operatorKey }: { operatorKey: string }) {
+export function AuditSearchSection({ operatorKey }: { operatorKey: string }) {
   const [filters, setFilters] = useState<AuditFilters>(EMPTY_AUDIT);
   const [items, setItems] = useState<AuditEvent[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
