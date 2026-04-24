@@ -77,9 +77,11 @@ integrationDescribe(
         throw new Error(
           'Integration test prerequisite missing: prune_alert_log table or ' +
             'prune_prune_alert_log SQL function not found. Apply migration 0048 ' +
-            '(and 0049 for the two-arg signature) before running integration tests ' +
+            '(and 0049 for the two-arg signature, and 0051 for the NULL→1-day ' +
+            'clamp fix) before running integration tests ' +
             '(e.g. psql "$DATABASE_URL" -f migrations/0048_prune_alert_log_retention.sql && ' +
-            'psql "$DATABASE_URL" -f migrations/0049_prune_alert_log_cleanup_history.sql).',
+            'psql "$DATABASE_URL" -f migrations/0049_prune_alert_log_cleanup_history.sql && ' +
+            'psql "$DATABASE_URL" -f migrations/0051_prune_alert_log_null_retention_clamp.sql).',
         );
       }
 
@@ -377,27 +379,33 @@ integrationDescribe(
 
     // ── retention-window clamp guardrail ───────────────────────────────────
     //
-    // The plpgsql body in migrations 0048/0049 defends against a destructive
-    // misconfiguration in two layers:
+    // The plpgsql body in migration 0051 (which supersedes the original
+    // implementation in 0048/0049) defends against a destructive
+    // misconfiguration with a single rule:
     //
-    //   1. `COALESCE(retention_days, 90)` — an explicit NULL falls back to
-    //      the 90-day default rather than producing NULL interval arithmetic.
-    //   2. `IF v_window < 1 THEN v_window := 1` — any zero or negative value
-    //      is clamped to 1 day so the table can never be wiped.
+    //   IF retention_days IS NULL OR retention_days < 1 THEN v_window := 1
+    //
+    // i.e. NULL is treated identically to a non-positive value and clamped
+    // to a 1-day floor. The earlier implementation evaluated
+    // `COALESCE(retention_days, 90)` first, which silently turned an
+    // explicit NULL into a 90-day window — contradicting the inline comment
+    // and surprising operators who set the GUC to an empty value expecting
+    // an aggressive cleanup. Task #233 aligned the code with the comment.
     //
     // The application-level validator (`getPruneAlertLogRetentionDays`) is
     // unit-tested elsewhere, but nothing proves the in-database defence
     // works. These tests bypass the app validator entirely by invoking the
     // SQL function with `retention_days = 0` and `retention_days = NULL`
     // and assert that:
-    //   - A ~12-hour-old row survives (the table is not wiped).
-    //   - A row well outside the resolved window is still pruned (the
-    //     function actually ran and is not a silent no-op).
+    //   - A ~12-hour-old row survives (the 1-day floor protects it).
+    //   - A 2-day-old row is pruned (proving the resolved window really is
+    //     1 day for both inputs — under the old 90-day NULL fallback this
+    //     row would have survived).
     //
-    // 12 hours / 10 days / 120 days were chosen to leave generous slack on
-    // either side of each resolved window (1 day for the zero case, 90
-    // days for the NULL case) so the tests are not flaky under DST
-    // transitions or clock skew.
+    // 12 hours / 2 days / 10 days were chosen to leave generous slack on
+    // either side of the 1-day window so the tests are not flaky under
+    // DST transitions or clock skew, while still being small enough to
+    // distinguish a 1-day window from a 90-day one.
     describe('retention-window clamp guardrail', () => {
       it('clamps retention_days = 0 to 1 day: ~12h-old row survives, 10d-old row is pruned', async () => {
         const now = Date.now();
@@ -421,20 +429,24 @@ integrationDescribe(
         expect(survivorIds).not.toContain(oldId);
       });
 
-      it('handles retention_days = NULL safely: ~12h-old row survives, very-old row is still pruned', async () => {
+      it('clamps retention_days = NULL to 1 day: ~12h-old row survives, 2d-old row is pruned', async () => {
         const now = Date.now();
         const dayMs = 24 * 60 * 60 * 1000;
 
-        // The plpgsql body uses COALESCE(retention_days, 90) before the
-        // < 1 clamp, so an explicit NULL falls back to the 90-day default
-        // rather than to the 1-day floor. Either resolution satisfies
-        // the guardrail's purpose (no table wipe), so this test pins
-        // both halves of that intent:
-        //   - A ~12-hour-old row MUST survive (the table is not wiped).
-        //   - A 120-day-old row, comfortably past both the 1-day floor
-        //     and the 90-day fallback, MUST still be pruned (the
-        //     function actually ran and is not a silent no-op).
-        const oldId = await insertAlertRow(new Date(now - 120 * dayMs));
+        // Migration 0051 makes NULL fall back to the 1-day floor (matching
+        // the inline guardrail comment), NOT to the historical 90-day
+        // default. This test pins that behaviour by choosing seed ages
+        // that distinguish the two:
+        //
+        //   - A ~12-hour-old row MUST survive (inside the 1-day window
+        //     and inside the old 90-day fallback — passes either way, but
+        //     proves the table is not wiped).
+        //   - A 2-day-old row MUST be pruned. Under the new NULL→1-day
+        //     clamp this row is outside the window and gets deleted.
+        //     Under the OLD NULL→90-day fallback this row would have
+        //     comfortably survived, so this assertion is what locks in
+        //     the new behaviour.
+        const oldId = await insertAlertRow(new Date(now - 2 * dayMs));
         const recentId = await insertAlertRow(new Date(now - 12 * 60 * 60 * 1000));
 
         const result = await client.query<{ deleted_count: string }>(
@@ -444,10 +456,11 @@ integrationDescribe(
 
         // Without any guardrail at all the DELETE expression
         // `NOW() - (NULL || ' days')::INTERVAL` evaluates to NULL and
-        // matches no rows (deletedCount = 0), so the very-old row would
+        // matches no rows (deletedCount = 0), so the 2-day-old row would
         // never be pruned. Asserting deletedCount === 1 catches both
-        // that failure mode and any regression that flips the COALESCE
-        // fallback to a window so large the very-old row survives.
+        // that failure mode AND a regression that re-introduces the
+        // NULL→90-day fallback (which would also leave the 2-day-old
+        // row alone).
         expect(deletedCount).toBe(1);
 
         const survivors = await client.query<{ id: string }>(
