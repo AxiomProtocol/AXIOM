@@ -303,35 +303,80 @@ async function upsertSandboxRow(accountId: string): Promise<AchRow> {
 }
 
 async function setActiveByName(activeName: string): Promise<void> {
-  // Wrap in a single statement so there is no window where two rows are
-  // active. loadAchConfig() picks `is_active=true ORDER BY updated_at DESC`,
-  // so we also bump the active row's updated_at to keep selection stable.
-  await pool().query('BEGIN');
+  // CRITICAL: pin a single client for the whole transaction. Calling
+  // `pool().query('BEGIN')` then `pool().query(...)` in series would
+  // hand each statement a DIFFERENT pooled connection and silently
+  // break transaction semantics. Using a single CASE expression in one
+  // UPDATE statement is even better — it's atomic at the row level
+  // with no possible inter-statement window where zero rows are active.
+  const client = await pool().connect();
   try {
-    await pool().query(
-      `UPDATE cap_adapters SET is_active = false, updated_at = now()
-       WHERE kind = 'ACH' AND name <> $1`,
+    await client.query('BEGIN');
+    await client.query(
+      `UPDATE cap_adapters
+       SET is_active = (name = $1),
+           updated_at = now()
+       WHERE kind = 'ACH'`,
       [activeName],
     );
-    await pool().query(
-      `UPDATE cap_adapters SET is_active = true, updated_at = now()
-       WHERE kind = 'ACH' AND name = $1`,
+    // Sanity guard: the named row must exist and end up active.
+    const check = await client.query<{ active_count: string }>(
+      `SELECT COUNT(*)::text AS active_count
+       FROM cap_adapters
+       WHERE kind = 'ACH' AND is_active = true AND name = $1`,
       [activeName],
     );
-    await pool().query('COMMIT');
+    if (check.rows[0]?.active_count !== '1') {
+      throw new Error(
+        `setActiveByName: expected exactly one active ACH row named "${activeName}" after flip, found ${check.rows[0]?.active_count ?? '0'}`,
+      );
+    }
+    await client.query('COMMIT');
   } catch (err) {
-    await pool().query('ROLLBACK');
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      // ROLLBACK failure on a poisoned transaction is best-effort.
+    }
     throw err;
+  } finally {
+    client.release();
   }
 }
 
-async function findProductionRowName(): Promise<string> {
+/**
+ * Snapshot of the production ACH row that was active at the moment the
+ * orchestrator started. We restore EXACTLY this row at the end — not
+ * "the first production row sorted by something" — so multi-prod-row
+ * setups (e.g. an old smoke row plus a new canary row) are safe.
+ */
+let cachedActiveProductionRowName: string | null = null;
+
+async function snapshotActiveProductionRowName(): Promise<string> {
+  if (cachedActiveProductionRowName) return cachedActiveProductionRowName;
   const rows = await listAchRows();
-  const prod = rows.find((r) => r.environment === 'production');
-  if (!prod) {
+  const activeProd = rows.find(
+    (r) => r.environment === 'production' && r.isActive === true,
+  );
+  if (activeProd) {
+    cachedActiveProductionRowName = activeProd.name;
+    return activeProd.name;
+  }
+  // Fallback for the first-time-run case (no prod row currently active,
+  // e.g. a clean dev DB). Pick any production row deterministically by
+  // name so re-runs always pick the same one.
+  const anyProd = rows
+    .filter((r) => r.environment === 'production')
+    .sort((a, b) => a.name.localeCompare(b.name))[0];
+  if (!anyProd) {
     throw new Error('no production ACH row found in cap_adapters — refusing to flip');
   }
-  return prod.name;
+  cachedActiveProductionRowName = anyProd.name;
+  return anyProd.name;
+}
+
+async function findProductionRowName(): Promise<string> {
+  return snapshotActiveProductionRowName();
 }
 
 // ─────────────────────── Smoke harness wrapper ───────────────────────
