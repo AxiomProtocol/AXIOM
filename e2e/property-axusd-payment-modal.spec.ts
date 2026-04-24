@@ -28,6 +28,7 @@
  */
 
 import { test, expect, Page, Route } from '@playwright/test';
+import { assertMockWalletModeOnce } from './helpers/assertMockWalletMode';
 
 const E2E_BUYER = '0xE2E1234567890123456789012345678901234567';
 const FAKE_TX_HASH = `0x${'ab'.repeat(32)}` as const;
@@ -233,6 +234,16 @@ test.describe('Property Analysis — AXUSD payment modal e2e', () => {
   // Cold Next.js dev compilation of /property + the dynamic-imported wagmi
   // bundle can easily blow past the default 30s test timeout on the first run.
   test.setTimeout(120_000);
+
+  // Task #289 — fail fast and clearly if Playwright is somehow pointed at
+  // the real-wallet dev preview (port 5000) instead of the dedicated e2e
+  // server (port 5001 via `npm run dev:e2e`). Without this, a misrouted
+  // run would surface as a confusing connector picker mid-modal or
+  // useAccount() returning undefined; with it, the suite halts on the
+  // very first hook with an actionable explanation.
+  test.beforeAll(async ({ browser }) => {
+    await assertMockWalletModeOnce(browser);
+  });
 
   test('drives every modal phase and lands on the generated report page', async ({ page }) => {
     const observed: { intentBody?: unknown; confirmBody?: unknown } = {};

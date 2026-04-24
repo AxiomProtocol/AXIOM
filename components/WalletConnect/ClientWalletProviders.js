@@ -38,14 +38,27 @@ const queryClient = new QueryClient();
 // connector as "ready"; wagmi still needs an explicit `connect()` call before
 // `useAccount().address` is populated. This invisible component fires that
 // connect once on mount so playwright tests don't have to drive a wallet UI.
+//
+// Side effect (task #289): exposes `window.__AXIOM_E2E_WAGMI__ = true` and
+// `window.__AXIOM_E2E_WAGMI_ADDRESS__ = <connected address|null>` so the
+// shared `assertMockWalletMode` helper in `e2e/helpers/` can fail fast with
+// a clear message if Playwright is accidentally pointed at the real-wallet
+// dev preview (port 5000) instead of the e2e server (port 5001). This
+// component only mounts when `isE2EWagmi` is true (which is hard-gated to
+// non-production in `lib/web3/wagmiConfig.ts`), so the marker can never
+// appear in a real production build.
 function E2EAutoConnect() {
   const { connect, connectors } = useConnect();
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__AXIOM_E2E_WAGMI__ = true;
+      window.__AXIOM_E2E_WAGMI_ADDRESS__ = address ?? null;
+    }
     if (isConnected) return;
     const mockConnector = connectors.find((c) => c.id === 'mock');
     if (mockConnector) connect({ connector: mockConnector });
-  }, [connect, connectors, isConnected]);
+  }, [connect, connectors, isConnected, address]);
   return null;
 }
 
