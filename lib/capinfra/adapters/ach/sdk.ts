@@ -24,6 +24,34 @@ const BASE_URLS: Record<IncreaseEnvironment, string> = {
   production: 'https://api.increase.com',
 };
 
+/**
+ * Per-environment API key resolver.
+ *
+ * Sandbox calls prefer INCREASE_SANDBOX_API_KEY (issued from sandbox.increase.com)
+ * and fall back to INCREASE_API_KEY only if the sandbox key is unset, so
+ * a misconfigured sandbox row can never silently authenticate against
+ * production. Production calls always read INCREASE_API_KEY.
+ *
+ * The cap_adapters row's environment field drives this — INCREASE_ENVIRONMENT
+ * is read by legacy services only and is not consulted here.
+ */
+function apiKeyForEnvironment(environment: IncreaseEnvironment): string {
+  if (environment === 'sandbox') {
+    const sandboxKey = process.env.INCREASE_SANDBOX_API_KEY;
+    if (sandboxKey) return sandboxKey;
+    const prodKey = process.env.INCREASE_API_KEY;
+    if (!prodKey) {
+      throw new Error(
+        'Increase sandbox lane requires INCREASE_SANDBOX_API_KEY (or INCREASE_API_KEY as fallback) but neither is set',
+      );
+    }
+    return prodKey;
+  }
+  const prodKey = process.env.INCREASE_API_KEY;
+  if (!prodKey) throw new Error('INCREASE_API_KEY environment variable is not set');
+  return prodKey;
+}
+
 export interface IncreaseTransaction {
   id: string;
   account_id: string;
@@ -77,8 +105,7 @@ export async function fetchIncreaseTransactionsPage(opts: {
   });
   if (opts.cursor) params.set('cursor', opts.cursor);
 
-  const apiKey = process.env.INCREASE_API_KEY;
-  if (!apiKey) throw new Error('INCREASE_API_KEY environment variable is not set');
+  const apiKey = apiKeyForEnvironment(opts.environment);
   const res = await fetch(`${base}/transactions?${params.toString()}`, {
     method: 'GET',
     headers: {
@@ -122,8 +149,7 @@ export async function validateIncreaseCredentials(opts: {
   signal?: AbortSignal;
 }): Promise<CredentialProbeResult> {
   const base = BASE_URLS[opts.environment];
-  const apiKey = process.env.INCREASE_API_KEY;
-  if (!apiKey) throw new Error('INCREASE_API_KEY environment variable is not set');
+  const apiKey = apiKeyForEnvironment(opts.environment);
   const started = Date.now();
   try {
     const res = await fetch(`${base}/accounts/${opts.accountId}`, {
@@ -218,8 +244,7 @@ export interface AchTransferResult {
  */
 export async function submitAchTransfer(input: AchTransferInput): Promise<AchTransferResult> {
   const base = BASE_URLS[input.environment];
-  const apiKey = process.env.INCREASE_API_KEY;
-  if (!apiKey) throw new Error('INCREASE_API_KEY environment variable is not set');
+  const apiKey = apiKeyForEnvironment(input.environment);
   const body = {
     account_id: input.accountId,
     amount: input.amountCents,
