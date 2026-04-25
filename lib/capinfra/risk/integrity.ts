@@ -111,6 +111,17 @@ export function __resetIntegrityNotificationDedupForTests(): void {
   recentNotifications.clear();
 }
 
+/**
+ * Test-only: report the current size of the in-process dedup map. Used by
+ * unit tests that pin the opportunistic GC path in `markNotified` so a
+ * regression that drops the size threshold or the TTL-based eviction
+ * (and re-introduces an unbounded growth bug across long-lived processes)
+ * fails CI.
+ */
+export function __getIntegrityNotificationDedupSizeForTests(): number {
+  return recentNotifications.size;
+}
+
 export async function recordIntegrityFailure(
   input: RecordIntegrityFailureInput,
 ): Promise<RecordIntegrityFailureResult> {

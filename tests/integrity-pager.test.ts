@@ -597,6 +597,109 @@ describe('recordIntegrityFailure → pager dispatch wiring', () => {
     expect(secondNotifyArg.bodyJson.detail).toBe('second trip after restore');
   });
 
+  // ── Regression coverage for task #260 ──────────────────────────────
+  //
+  // `markNotified` runs an opportunistic GC pass that prunes expired
+  // entries from `recentNotifications` once the map exceeds 1000 keys.
+  // Without coverage, a future change that drops the size threshold
+  // (so GC never runs) or the timestamp comparison (so nothing is
+  // actually deleted) would let the in-process map grow unboundedly
+  // across long-lived servers touching many distinct (asset, kind)
+  // pairs — the classic slow memory leak. The two tests below pin
+  // the GC path so either regression fails CI here.
+
+  it('prunes expired dedup entries once the map crosses the 1000-key size threshold', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-25T00:00:00Z'));
+    try {
+      const {
+        recordIntegrityFailure,
+        __resetIntegrityNotificationDedupForTests,
+        __getIntegrityNotificationDedupSizeForTests,
+      } = await loadIntegrityWithMocks();
+      __resetIntegrityNotificationDedupForTests();
+
+      // Fill the dedup map with 1001 distinct (asset, kind) pairs at T0.
+      // The mocked DB returns the same fixture row regardless of the
+      // queried assetId, but `markNotified` keys off the *input*
+      // assetId, so each call adds a new entry to `recentNotifications`.
+      for (let i = 0; i < 1001; i++) {
+        await recordIntegrityFailure({
+          assetId: `ast_fill_${i}`,
+          kind: 'oracle_stale',
+          detail: `fill ${i}`,
+          actor: 'monitor:test',
+        });
+      }
+      expect(__getIntegrityNotificationDedupSizeForTests()).toBe(1001);
+
+      // Advance well past the 5-minute dedup window so every existing
+      // entry's timestamp is now strictly older than NOTIFY_DEDUP_WINDOW_MS.
+      vi.advanceTimersByTime(6 * 60 * 1000);
+
+      // One more notification trips the `size > 1000` GC path inside
+      // `markNotified`, which must evict every expired entry.
+      await recordIntegrityFailure({
+        assetId: 'ast_trigger',
+        kind: 'oracle_stale',
+        detail: 'post-gc',
+        actor: 'monitor:test',
+      });
+
+      // All 1001 stale fillers should have been pruned; only the new
+      // `ast_trigger` entry remains. If the timestamp comparison is
+      // dropped (or `delete()` is no-op'd), every entry would still be
+      // present and the map would be at 1002.
+      expect(__getIntegrityNotificationDedupSizeForTests()).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does NOT prune dedup entries while the map stays below the size threshold', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-25T00:00:00Z'));
+    try {
+      const {
+        recordIntegrityFailure,
+        __resetIntegrityNotificationDedupForTests,
+        __getIntegrityNotificationDedupSizeForTests,
+      } = await loadIntegrityWithMocks();
+      __resetIntegrityNotificationDedupForTests();
+
+      // Add a small handful of entries (well below the 1000-key gate).
+      for (let i = 0; i < 5; i++) {
+        await recordIntegrityFailure({
+          assetId: `ast_small_${i}`,
+          kind: 'oracle_stale',
+          detail: `small ${i}`,
+          actor: 'monitor:test',
+        });
+      }
+      expect(__getIntegrityNotificationDedupSizeForTests()).toBe(5);
+
+      // Age them past the dedup window so they would be eligible for
+      // pruning *if* GC ran...
+      vi.advanceTimersByTime(6 * 60 * 1000);
+
+      // ...but a fresh notification under the size threshold must NOT
+      // trigger a GC pass — the threshold exists precisely to amortise
+      // the O(n) sweep across many writes.
+      await recordIntegrityFailure({
+        assetId: 'ast_small_trigger',
+        kind: 'oracle_stale',
+        detail: 'post-window',
+        actor: 'monitor:test',
+      });
+
+      // All 5 stale entries plus the new one are still in the map: GC
+      // is gated on `size > 1000` and we are well below that.
+      expect(__getIntegrityNotificationDedupSizeForTests()).toBe(6);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('emits a separate operator notification row for each distinct kind on the same asset', async () => {
     const { recordIntegrityFailure } = await loadIntegrityWithMocks();
 
