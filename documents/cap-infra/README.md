@@ -608,3 +608,97 @@ The hook is best-effort and never blocks the underlying reserve write
 `marketData.getLatestPrice`, every trigger named in the Collateral Risk
 Policy has a live wired chokepoint. Smoke check 76 exercises this
 end-to-end against AXAU.
+
+### On-call paging configuration (REQUIRED in production)
+
+Whenever `recordIntegrityFailure` flips an asset to RED it persists a
+HIGH-severity `collateral.integrity_failed` notification on the
+`operator` channel **and** fans the same event out to the on-call
+pager (`lib/capinfra/notifications/integrityPager.ts`). The pager
+wakes a real human via email and/or Discord. Without configuration
+the pager logs a single warning per process
+(`[capinfra.integrity-pager] no paging channels configured; …`) and
+returns `skipped: true` — the only signal on-call would receive is
+the in-app dashboard panel, which is not enough for a collateral
+emergency.
+
+Two env vars gate the pager. **Both are optional individually but at
+least one MUST be set in every production environment.** Configure
+both for redundancy.
+
+| Env var | Format | Owner | Recommended value |
+|---|---|---|---|
+| `INTEGRITY_ALERT_EMAIL` | Comma-separated email recipients (no spaces required, trimmed) | Risk / SRE on-call lead | The current on-call rotation alias plus the risk lead's direct address (e.g. `oncall@axiomprotocol.app,risk-lead@axiomprotocol.app`). Send to a real human alias, not a shared inbox nobody watches. |
+| `INTEGRITY_ALERT_DISCORD_WEBHOOK` | Discord-compatible webhook URL (`https://discord.com/api/webhooks/...`) | Risk / SRE on-call lead | A webhook bound to the `#capinfra-pager` channel that pings the on-call role. |
+
+Configuration model is identical to the prune-overdue alert pipeline
+(`PRUNE_ALERT_EMAIL` / `PRUNE_ALERT_DISCORD_WEBHOOK` in
+`lib/admin/prune-alert.ts`) so operators only have to learn one
+shape. Both pagers also share the property that channel failures are
+caught and never re-thrown.
+
+#### Verifying configuration after rotation
+
+The pager exposes a synthetic test endpoint specifically so on-call
+can confirm wiring before a real auto-freeze fires. After **any**
+rotation of the email recipient list or Discord webhook, an on-call
+operator MUST run a wiring check:
+
+1. From the operator console (already logged in via the
+   `cap_operator_key` cookie) press **Send test page** on
+   `/operator/integrity`, OR
+2. Server-to-server, hit the endpoint directly:
+
+```bash
+curl -X POST "$BASE_URL/api/capinfra/risk/integrity/test-page" \
+  -H "x-admin-key: $ADMIN_SOLVENCY_KEY" \
+  -H "x-operator: oncall-rotation-check"
+```
+
+The response body is
+`{ result: { channelsPaged, errors, skipped } }` — `channelsPaged`
+must include every channel the env vars claim to configure
+(`["email"]`, `["discord"]`, or `["email","discord"]`). Synthetic
+pages are clearly labelled `[TEST PAGE]` in the email subject and
+Discord embed so on-call cannot mistake the verification for a real
+auto-freeze. If a channel is listed in `errors` it failed delivery —
+fix the env var (typo, expired webhook, Resend domain not verified,
+…) and re-run the test before considering the rotation complete.
+
+#### Production deployment checklist (paging gate)
+
+A new environment cannot be promoted to production-serving without
+satisfying every row below. This list is the canonical pre-promotion
+gate for the integrity pager and lives next to the Collateral Risk
+Policy because the pager is the only channel that wakes a human when
+a `collateral.integrity_failed` event fires.
+
+- [ ] At least one of `INTEGRITY_ALERT_EMAIL` or
+      `INTEGRITY_ALERT_DISCORD_WEBHOOK` is set in the production
+      environment. Setting **both** is strongly recommended for
+      redundancy; an email-only or Discord-only deployment satisfies
+      the gate but loses redundancy if that single channel is
+      degraded (Resend domain drift, expired webhook, …).
+- [ ] If `INTEGRITY_ALERT_EMAIL` is configured, every recipient
+      resolves to a monitored on-call alias (not a shared inbox
+      nobody watches).
+- [ ] If `INTEGRITY_ALERT_DISCORD_WEBHOOK` is configured, the
+      webhook is bound to a channel that pings the on-call role
+      (silent webhooks defeat the purpose).
+- [ ] If `INTEGRITY_ALERT_EMAIL` is configured, the Resend
+      integration is connected (`getResendClient()` in
+      `lib/email/resend.ts` returns without throwing) so the email
+      channel can actually deliver.
+- [ ] `ADMIN_SOLVENCY_KEY` is set so the wiring-check endpoint and
+      the operator console cookie both authenticate.
+- [ ] The on-call wiring check above has been run against the
+      production base URL and `result.channelsPaged` matches the
+      configured channels with `errors: []`.
+- [ ] The runbook owner (Risk / SRE on-call lead) is recorded in the
+      env-var ownership table above and knows they own rotation.
+
+Promotion sign-off should not be granted while any item is
+unchecked. The single per-process warning is intentionally quiet so
+it does not deafen log aggregation, which means absence of warnings
+in production logs is **not** evidence the pager is configured —
+only the wiring check is.
