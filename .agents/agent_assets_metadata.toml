@@ -785,3 +785,9 @@ id = "b7vW9AJNUDPNdLxTz-7uh"
 uri = "file://documents/marketing/axiom-social-media-marketing-playbook.md"
 type = "text"
 title = "Axiom Protocol — Social Media & Marketing Playbook"
+
+[[outputs]]
+id = "GughU1tIlOcVdV9N6BHg8"
+uri = "file://public/downloads/axau-early-access-notebooklm.md"
+type = "text"
+title = "AXAU Early Access — NotebookLM Source Brief"
