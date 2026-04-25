@@ -18,7 +18,7 @@
 
 import { test, expect, Page, Locator } from '@playwright/test';
 
-const BASE = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5000';
+import { BASE } from './helpers/baseURL';
 
 interface SeedResponse {
   correlationId: string;

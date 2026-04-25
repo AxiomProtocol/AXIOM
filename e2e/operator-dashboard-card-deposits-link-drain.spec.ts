@@ -25,7 +25,7 @@
 
 import { test, expect, type Page } from '@playwright/test';
 
-const BASE = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5000';
+import { BASE } from './helpers/baseURL';
 
 interface SeedResponse {
   id: string;
