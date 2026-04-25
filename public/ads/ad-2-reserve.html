@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>AXAU — Gold Reserve. On-Chain.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100vw;height:100vh;overflow:hidden}
+.ad{
+  width:100vw;height:100vh;
+  background:#0f1a0f;
+  display:flex;flex-direction:column;
+  justify-content:space-between;
+  padding:6vh 7vw;
+  position:relative;
+}
+.logo{display:flex;align-items:center;gap:1.2vw}
+.logo img{max-height:7vh;width:auto;object-fit:contain}
+.logo-word{
+  font-family:'Cormorant Garamond',serif;
+  font-size:3.2vw;font-weight:700;
+  color:#c8d8b0;letter-spacing:0.18em;
+  text-transform:uppercase;
+}
+.middle{display:flex;flex-direction:column;gap:2.8vh}
+.eyebrow{
+  font-family:'Source Code Pro',monospace;
+  font-size:1.6vw;font-weight:600;
+  color:#6aaa6a;letter-spacing:0.22em;
+  text-transform:uppercase;
+}
+.headline{
+  font-family:'Cormorant Garamond',serif;
+  font-size:8.5vw;font-weight:700;
+  line-height:1.0;
+  color:#c8d8b0;
+}
+.headline em{color:#6aaa6a;font-style:normal}
+.tags{display:flex;gap:2vw;flex-wrap:wrap;margin-top:1vh}
+.tag{
+  font-family:'Source Code Pro',monospace;
+  font-size:1.3vw;font-weight:600;
+  color:#6aaa6a;
+  border:1px solid rgba(106,170,106,0.4);
+  padding:0.5vh 1.5vw;
+  text-transform:uppercase;letter-spacing:0.14em;
+}
+.subtitle{
+  font-family:'Cormorant Garamond',serif;
+  font-size:2.3vw;font-style:italic;font-weight:400;
+  color:rgba(200,216,176,0.6);
+  line-height:1.4;max-width:60vw;
+}
+.rule{width:5vw;height:1px;background:#6aaa6a;opacity:0.6}
+.footer{
+  font-family:'Source Code Pro',monospace;
+  font-size:1.4vw;color:rgba(200,216,176,0.35);
+  letter-spacing:0.12em;
+}
+</style>
+</head>
+<body>
+<div class="ad">
+  <div class="logo">
+    <img src="/axiom-logo-transparent.png" alt="Axiom Protocol">
+    <span class="logo-word">Axiom</span>
+  </div>
+  <div class="middle">
+    <span class="eyebrow">AXAU Reserve Unit</span>
+    <div class="rule"></div>
+    <div class="headline">Gold reserve.<br><em>On-chain.</em></div>
+    <div class="tags">
+      <span class="tag">PAXG-backed</span>
+      <span class="tag">Identity-gated</span>
+      <span class="tag">Arbitrum One</span>
+    </div>
+    <div class="subtitle">Reserve-grade gold ownership,<br>verified on-chain.</div>
+  </div>
+  <span class="footer">axiomprotocol.app/axau-early-access</span>
+</div>
+</body>
+</html>

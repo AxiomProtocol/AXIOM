@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>AXAU Early Access — Infographic</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; background: #0a1628; }
+#container { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div id="container"></div>
+<script src="https://unpkg.com/@antv/infographic@latest/dist/infographic.min.js"></script>
+<script>
+const infographic = new AntVInfographic.Infographic({
+  container: '#container',
+  width: '100%',
+  height: '100%',
+});
+
+const syntax = `infographic compare-binary-card
+
+data
+  title AXAU vs Traditional Gold Ownership
+  desc 100 founding access slots — axiomprotocol.app/axau-early-access
+  compares
+    - label AXAU Reserve Unit
+      children
+        - label Identity-verified on Arbitrum One
+        - label PAXG reserve backing — auditable on-chain
+        - label Designed to align with GENIUS Act framework
+        - label Self-custody compatible
+        - label No geographic restrictions
+        - label Instant transfer via on-chain financial rails
+
+    - label Physical Gold / ETF
+      children
+        - label Requires custodian or brokerage account
+        - label Reserve audits depend on third-party disclosure
+        - label Regulatory posture varies by jurisdiction
+        - label Custody held by intermediaries
+        - label Settlement takes days
+        - label Transfer limited by broker hours
+
+theme
+  palette #b8860b #1a3d2b
+  dark true
+`;
+
+document.fonts?.ready.then(() => {
+  infographic.render(syntax);
+}).catch(() => {
+  infographic.render(syntax);
+});
+</script>
+</body>
+</html>
