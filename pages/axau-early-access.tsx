@@ -730,7 +730,7 @@ export default function AxauAccessPage() {
                   <label style={labelStyle}>Email Address *</label>
                   <input required type="email" placeholder="you@example.com" {...field('email')} style={inputStyle} />
                   <p style={{ fontFamily: body, fontSize: 11, color: C.muted, margin: '6px 0 0' }}>
-                    Used to notify you when your wallet is activated. We don&apos;t spam.
+                    Used only for application status updates.
                   </p>
                 </div>
 
@@ -898,7 +898,8 @@ export default function AxauAccessPage() {
                 </div>
 
                 <p style={{ fontFamily: body, fontSize: 11, color: C.muted, lineHeight: 1.6, margin: '14px 0 0', textAlign: 'center' }}>
-                  By submitting, you confirm the information is accurate and that you are at least 18 years old.
+                  By submitting, you confirm the information is accurate, that you are at least 18 years old, and that you have read our{' '}
+                  <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: C.navy, textDecoration: 'underline' }}>Privacy Policy</a>.
                 </p>
               </form>
             )}
