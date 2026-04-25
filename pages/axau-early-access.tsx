@@ -392,6 +392,60 @@ export default function AxauAccessPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Section visibility — fire once per section as it enters the viewport.
+  useEffect(() => {
+    const SECTIONS: Array<[string, string]> = [
+      ['section-why',     'why_axau'],
+      ['section-rewards', 'rewards'],
+      ['section-how',     'how_it_works'],
+      ['section-compare', 'compare'],
+      ['section-faq',     'faq'],
+      ['apply',           'apply_form'],
+    ];
+    const fired = new Set<string>();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && !fired.has(entry.target.id)) {
+          fired.add(entry.target.id);
+          const label = SECTIONS.find(([id]) => id === entry.target.id)?.[1];
+          if (label) trackAxauEvent('section_view', { section: label });
+        }
+      });
+    }, { threshold: 0.2 });
+    SECTIONS.forEach(([id]) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  // Scroll depth — fire once at 25 / 50 / 75 / 100 % milestones.
+  useEffect(() => {
+    const milestones = [25, 50, 75, 100];
+    const fired = new Set<number>();
+    function onScroll() {
+      const scrolled = window.scrollY + window.innerHeight;
+      const total    = document.documentElement.scrollHeight;
+      const pct      = Math.floor((scrolled / total) * 100);
+      milestones.forEach((m) => {
+        if (!fired.has(m) && pct >= m) {
+          fired.add(m);
+          trackAxauEvent('scroll_depth', { depth: String(m) });
+        }
+      });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Step 2 reached — fires once when the user advances past step 1.
+  useEffect(() => {
+    if (formStep === 'step2') {
+      trackAxauEvent('form_step2_reached', { walletChoice });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formStep]);
+
   // Fire a single form_start the first time the user touches any field.
   const [formStartFired, setFormStartFired] = useState(false);
   function field(key: keyof typeof form) {
@@ -503,7 +557,7 @@ export default function AxauAccessPage() {
         {step === 'form' && (
           <>
             <SectionLabel>WHY AXAU</SectionLabel>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 0, border: `1px solid ${C.border}`, marginBottom: 48 }}>
+            <div id="section-why" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 0, border: `1px solid ${C.border}`, marginBottom: 48 }}>
               {PILLARS.map((p, i) => (
                 <div key={p.title} style={{
                   padding: '24px 22px',
@@ -519,7 +573,7 @@ export default function AxauAccessPage() {
 
             {/* ── FOUNDING PARTICIPANT REWARDS ── */}
             <SectionLabel>FOUNDING PARTICIPANT REWARDS</SectionLabel>
-            <div style={{
+            <div id="section-rewards" style={{
               border: `1px solid ${C.gold}60`,
               borderTop: `3px solid ${C.gold}`,
               marginBottom: 48,
@@ -556,7 +610,7 @@ export default function AxauAccessPage() {
 
             {/* ── HOW IT WORKS ── */}
             <SectionLabel>HOW IT WORKS</SectionLabel>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 0, border: `1px solid ${C.border}`, marginBottom: 48 }}>
+            <div id="section-how" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 0, border: `1px solid ${C.border}`, marginBottom: 48 }}>
               {STEPS.map((s, i) => (
                 <div key={s.n} style={{ borderRight: i < STEPS.length - 1 ? `1px solid ${C.border}` : 'none' }}>
                   <div style={{ position: 'relative', width: '100%', paddingTop: '62%', overflow: 'hidden', borderBottom: `1px solid ${C.border}`, background: C.navyDeep }}>
@@ -575,7 +629,7 @@ export default function AxauAccessPage() {
 
             {/* ── COMPARISON TABLE ── */}
             <SectionLabel>HOW AXAU COMPARES</SectionLabel>
-            <div style={{ border: `1px solid ${C.border}`, marginBottom: 48, overflowX: 'auto' }}>
+            <div id="section-compare" style={{ border: `1px solid ${C.border}`, marginBottom: 48, overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 480 }}>
                 <thead>
                   <tr style={{ background: C.navy }}>
@@ -601,11 +655,15 @@ export default function AxauAccessPage() {
 
             {/* ── FAQ ── */}
             <SectionLabel>COMMON QUESTIONS</SectionLabel>
-            <div style={{ border: `1px solid ${C.border}`, marginBottom: 48 }}>
+            <div id="section-faq" style={{ border: `1px solid ${C.border}`, marginBottom: 48 }}>
               {FAQS.map((faq, i) => (
                 <div key={i} style={{ borderBottom: i < FAQS.length - 1 ? `1px solid ${C.border}` : 'none' }}>
                   <button
-                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    onClick={() => {
+                      const next = openFaq === i ? null : i;
+                      setOpenFaq(next);
+                      if (next !== null) trackAxauEvent('faq_open', { question: faq.q.slice(0, 60) });
+                    }}
                     style={{
                       width: '100%', padding: '18px 22px',
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',

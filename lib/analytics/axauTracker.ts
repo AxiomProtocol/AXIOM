@@ -8,7 +8,15 @@
 
 const STORAGE_KEY = 'axau_visitor_id';
 
-export type AxauEventType = 'page_view' | 'cta_click' | 'form_start' | 'form_complete';
+export type AxauEventType =
+  | 'page_view'
+  | 'cta_click'
+  | 'form_start'
+  | 'form_complete'
+  | 'section_view'
+  | 'scroll_depth'
+  | 'form_step2_reached'
+  | 'faq_open';
 
 function uuid(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
