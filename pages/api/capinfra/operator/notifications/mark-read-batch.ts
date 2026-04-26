@@ -23,14 +23,27 @@
  * rather than treating any single bad id as a total failure.
  */
 
+import { createHash } from 'node:crypto';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import {
   isValidOperatorKey,
   readOperatorCookie,
 } from '../../../../../lib/capinfra/operatorAuth';
 import { markRead } from '../../../../../lib/capinfra/notifications';
+import { emitAuditEvent } from '../../../../../lib/capinfra/audit';
+import { generateId } from '../../../../../lib/capinfra/ids';
 
 const MAX_BATCH = 200;
+
+/**
+ * Derive a stable, non-secret identifier for an operator cookie key.
+ * The operator cookie value is the shared admin key, so we never log
+ * it directly. A short sha256 prefix gives us a per-key fingerprint
+ * that's stable across requests and safe to write into the audit log.
+ */
+function operatorKeyId(key: string): string {
+  return 'opk_' + createHash('sha256').update(key).digest('hex').slice(0, 12);
+}
 
 interface BatchResult {
   attempted: number;
@@ -104,6 +117,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
   }
+
+  // Audit emission. Soft-guarantee writer: a failure here logs but does
+  // not roll back the marks above (the user's clicks already took
+  // effect on the underlying notifications). The event captures
+  // attempted vs marked vs failed so we can spot incidents like a
+  // single oracle outage flipping many feeds RED in one click.
+  await emitAuditEvent({
+    eventType: 'operator.notifications.batch_mark_read',
+    aggregateType: 'operator.notifications',
+    aggregateId: generateId('ae'),
+    actor: operatorKeyId(cookieKey as string),
+    payloadJson: {
+      operatorKeyId: operatorKeyId(cookieKey as string),
+      attempted: result.attempted,
+      markedCount: result.marked.length,
+      notFoundCount: result.notFound.length,
+      failedCount: result.failed.length,
+      markedIds: result.marked,
+      notFoundIds: result.notFound,
+      failedIds: result.failed.map((f) => f.id),
+    },
+  });
 
   return res.status(200).json(result);
 }
