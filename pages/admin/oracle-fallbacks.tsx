@@ -141,6 +141,7 @@ export function PruneStatusPanel({
   const [exportStatus, setExportStatus] = useState<
     | { kind: 'success'; rowCount: number }
     | { kind: 'empty' }
+    | { kind: 'error'; message: string }
     | null
   >(null);
 
@@ -161,7 +162,8 @@ export function PruneStatusPanel({
       });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
-        alert(`CSV export failed: ${(j as { error?: string }).error ?? r.statusText}`);
+        const message = (j as { error?: string }).error ?? r.statusText;
+        setExportStatus({ kind: 'error', message });
         return;
       }
       const rowCountHeader = r.headers.get('X-Row-Count');
@@ -186,7 +188,8 @@ export function PruneStatusPanel({
         setExportStatus({ kind: 'success', rowCount });
       }
     } catch (e: unknown) {
-      alert(`CSV export failed: ${e instanceof Error ? e.message : 'network_error'}`);
+      const message = e instanceof Error ? e.message : 'network_error';
+      setExportStatus({ kind: 'error', message });
     } finally {
       setCsvLoading(false);
     }
@@ -269,6 +272,16 @@ export function PruneStatusPanel({
             {dateFrom || dateTo
               ? 'No prune runs match the selected date range — nothing was exported. Adjust the From/To dates and try again.'
               : 'No prune runs to export — the prune history table is empty.'}
+          </p>
+        </div>
+      )}
+      {exportStatus?.kind === 'error' && (
+        <div
+          role="status"
+          className="mb-4 border-l-4 border-l-rose-500 border border-rose-200 bg-rose-50 p-3"
+        >
+          <p className="font-dl-mono text-xs text-rose-800">
+            CSV export failed: {exportStatus.message}
           </p>
         </div>
       )}
@@ -418,6 +431,7 @@ export function AlertLogRetentionPanel({
   const [exportStatus, setExportStatus] = useState<
     | { kind: 'success'; rowCount: number }
     | { kind: 'empty' }
+    | { kind: 'error'; message: string }
     | null
   >(null);
 
@@ -438,7 +452,8 @@ export function AlertLogRetentionPanel({
       });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
-        alert(`CSV export failed: ${(j as { error?: string }).error ?? r.statusText}`);
+        const message = (j as { error?: string }).error ?? r.statusText;
+        setExportStatus({ kind: 'error', message });
         return;
       }
       const rowCountHeader = r.headers.get('X-Row-Count');
@@ -463,7 +478,8 @@ export function AlertLogRetentionPanel({
         setExportStatus({ kind: 'success', rowCount });
       }
     } catch (e: unknown) {
-      alert(`CSV export failed: ${e instanceof Error ? e.message : 'network_error'}`);
+      const message = e instanceof Error ? e.message : 'network_error';
+      setExportStatus({ kind: 'error', message });
     } finally {
       setCsvLoading(false);
     }
@@ -567,6 +583,16 @@ export function AlertLogRetentionPanel({
             {dateFrom || dateTo
               ? 'No alert-log cleanup runs match the selected date range — nothing was exported. Adjust the From/To dates and try again.'
               : 'No alert-log cleanup runs to export — the cleanup history table is empty.'}
+          </p>
+        </div>
+      )}
+      {exportStatus?.kind === 'error' && (
+        <div
+          role="status"
+          className="mb-4 border-l-4 border-l-rose-500 border border-rose-200 bg-rose-50 p-3"
+        >
+          <p className="font-dl-mono text-xs text-rose-800">
+            CSV export failed: {exportStatus.message}
           </p>
         </div>
       )}

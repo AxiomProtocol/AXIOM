@@ -284,6 +284,71 @@ describe('PruneStatusPanel – CSV export status message', () => {
     });
     expect(global.URL.createObjectURL).not.toHaveBeenCalled();
   });
+
+  it('shows an inline error banner when the response is non-2xx with a JSON error body', async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: 'database_unavailable' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as unknown as typeof fetch;
+    render(
+      <PruneStatusPanel
+        lastPrune={null}
+        pruneHistory={EMPTY_HISTORY}
+        adminKey={ADMIN_KEY}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(
+        screen.getByText(/CSV export failed: database_unavailable/i),
+      ).toBeTruthy();
+    });
+    expect(global.URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('falls back to statusText when the non-2xx response has no JSON body', async () => {
+    global.fetch = vi.fn(async () =>
+      new Response('not json', {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: { 'Content-Type': 'text/plain' },
+      }),
+    ) as unknown as typeof fetch;
+    render(
+      <PruneStatusPanel
+        lastPrune={null}
+        pruneHistory={EMPTY_HISTORY}
+        adminKey={ADMIN_KEY}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(
+        screen.getByText(/CSV export failed: Service Unavailable/i),
+      ).toBeTruthy();
+    });
+  });
+
+  it('shows an inline error banner when fetch throws (network rejection)', async () => {
+    global.fetch = vi.fn(async () => {
+      throw new Error('connection_refused');
+    }) as unknown as typeof fetch;
+    render(
+      <PruneStatusPanel
+        lastPrune={null}
+        pruneHistory={EMPTY_HISTORY}
+        adminKey={ADMIN_KEY}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(
+        screen.getByText(/CSV export failed: connection_refused/i),
+      ).toBeTruthy();
+    });
+  });
 });
 
 function makeRun(hoursAgo: number, triggeredBy = 'http') {
@@ -641,5 +706,71 @@ describe('AlertLogRetentionPanel – CSV export', () => {
       ).toBeTruthy();
     });
     expect(global.URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('shows an inline error banner when the response is non-2xx with a JSON error body', async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: 'database_unavailable' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as unknown as typeof fetch;
+    render(<AlertLogRetentionPanel adminKey={ADMIN_KEY} status={BASE_STATUS} />);
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(
+        screen.getByText(/CSV export failed: database_unavailable/i),
+      ).toBeTruthy();
+    });
+    expect(global.URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('falls back to statusText when the non-2xx response has no JSON body', async () => {
+    global.fetch = vi.fn(async () =>
+      new Response('not json', {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: { 'Content-Type': 'text/plain' },
+      }),
+    ) as unknown as typeof fetch;
+    render(<AlertLogRetentionPanel adminKey={ADMIN_KEY} status={BASE_STATUS} />);
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(
+        screen.getByText(/CSV export failed: Service Unavailable/i),
+      ).toBeTruthy();
+    });
+  });
+
+  it('shows an inline error banner when fetch throws (network rejection)', async () => {
+    global.fetch = vi.fn(async () => {
+      throw new Error('connection_refused');
+    }) as unknown as typeof fetch;
+    render(<AlertLogRetentionPanel adminKey={ADMIN_KEY} status={BASE_STATUS} />);
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(
+        screen.getByText(/CSV export failed: connection_refused/i),
+      ).toBeTruthy();
+    });
+  });
+
+  it('clears a prior error banner on the next click when the next attempt succeeds', async () => {
+    global.fetch = vi.fn(async () => {
+      throw new Error('connection_refused');
+    }) as unknown as typeof fetch;
+    render(<AlertLogRetentionPanel adminKey={ADMIN_KEY} status={BASE_STATUS} />);
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(
+        screen.getByText(/CSV export failed: connection_refused/i),
+      ).toBeTruthy();
+    });
+    mockCsvFetch(3);
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/Exported 3 runs/i)).toBeTruthy();
+    });
+    expect(screen.queryByText(/CSV export failed/i)).toBeNull();
   });
 });
