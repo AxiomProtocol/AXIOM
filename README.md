@@ -163,6 +163,16 @@ export SKIP_MIGRATIONS=true
 
 The global setup will log `[migrate] SKIP_MIGRATIONS=true — skipping auto-migration` and proceed straight to the tests.
 
+#### Already-applied migrations are skipped automatically
+
+You should **not** need `SKIP_MIGRATIONS=true` just to get past a migration that has already been applied. The bootstrap is designed to be safely re-runnable on any local dev database:
+
+- Drizzle's auto-generated migrations under `migrations/` are tracked in the `drizzle.__drizzle_migrations` table; already-applied files are skipped on every subsequent run.
+- Handwritten SQL migrations under `drizzle/migrations/` are tracked in the `handwritten_migrations` table (filename + checksum). Once a file has been applied successfully it is recorded there and skipped next time.
+- Every handwritten migration is required to be **idempotent** — i.e. it must use `IF NOT EXISTS` / `IF EXISTS` guards (or `DO $$ ... EXCEPTION WHEN duplicate_object THEN null END $$` blocks for enums) so that it can run cleanly even on a database whose schema has already partially diverged. New handwritten migrations should follow the same pattern; if you need to drop or rename a column, guard the statement on `information_schema.columns` so the migration is still safe to re-run on a database that never had the legacy column.
+
+If a re-run of `npm run test:vitest` ever fails inside `[migrate] Applying handwritten migration …`, that is a bug in the migration itself (not something to paper over with `SKIP_MIGRATIONS=true`); fix the migration to be idempotent.
+
 ### Production Build
 ```bash
 npm run prebuild
