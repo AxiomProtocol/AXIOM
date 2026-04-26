@@ -13,7 +13,27 @@ export const TIER_CONFIG: Record<string, { label: string; priceCents: number; ma
   premium: { label: 'Premium Report', priceCents: 1499, maxPerMonth: 100, dataSources: ['census', 'fhfa', 'osm', 'rentcast-property', 'rentcast', 'walkscore', 'repliers-avm', 'repliers-comps'] },
 };
 
+// ─── Test seam (overridable for e2e) ──────────────────────────────────────────
+//
+// `generateReport` walks the full data-provider pipeline (Census, FHFA,
+// Repliers, RentCast, Walkscore, …). In e2e there are no API keys for any
+// of those services, so the recovery-form happy-path test installs an
+// override via the dev-only `pages/api/property/test-seed-recoverable.ts`
+// endpoint. The override flips the row to `ready` and returns a stub
+// EstimationResult so the resolver's `promoteToPaid` path returns
+// `{ ok: true, status: 'ready' }` deterministically.
+//
+// Mirrors the `__setStuckPaymentProvider` seam in
+// `lib/property/stuckPaymentResolver.ts` and the
+// `__setVerifyOnchainPaymentOverride` seam in `lib/property/onchainPayment.ts`.
+type GenerateReportFn = (reportId: string) => Promise<EstimationResult>;
+let generateReportOverride: GenerateReportFn | null = null;
+export function __setGenerateReportOverride(fn: GenerateReportFn | null): void {
+  generateReportOverride = fn;
+}
+
 export async function generateReport(reportId: string): Promise<EstimationResult> {
+  if (generateReportOverride) return generateReportOverride(reportId);
   const [report] = await db.select().from(propertyReports).where(eq(propertyReports.id, reportId)).limit(1);
   if (!report) throw new Error('Report not found');
 

@@ -102,6 +102,28 @@ export type PaymentVerificationResult = VerifiedPayment | PaymentVerificationErr
 
 const HEX64 = /^0x[0-9a-fA-F]{64}$/;
 
+// ─── Test seam (overridable for e2e) ──────────────────────────────────────────
+//
+// The receipt-lookup recovery form (task #280) and the operator stuck-payments
+// resolver both call `verifyOnchainPayment` to confirm an AXUSD transfer
+// landed on Arbitrum One. In e2e there is no real RPC + no real on-chain
+// transfer, so we expose a test-only override here that the dev-only
+// `pages/api/property/test-seed-recoverable.ts` endpoint installs to
+// short-circuit the verification with a deterministic VerifiedPayment.
+//
+// This mirrors the existing `__setStuckPaymentProvider` seam in
+// `lib/property/stuckPaymentResolver.ts`. The seed endpoint is the only
+// caller and it is itself gated on `NODE_ENV !== 'production'`, so this
+// override can never be active in prod even if the seam were imported.
+type VerifyFn = (
+  txHash: string,
+  requiredAmountCents: number,
+) => Promise<PaymentVerificationResult>;
+let verifyOverride: VerifyFn | null = null;
+export function __setVerifyOnchainPaymentOverride(fn: VerifyFn | null): void {
+  verifyOverride = fn;
+}
+
 /**
  * Verify that `txHash` is a successful AXUSD transfer to the property-report
  * payment recipient for at least the required price.
@@ -110,6 +132,7 @@ export async function verifyOnchainPayment(
   txHash: string,
   requiredAmountCents: number,
 ): Promise<PaymentVerificationResult> {
+  if (verifyOverride) return verifyOverride(txHash, requiredAmountCents);
   if (!txHash || typeof txHash !== 'string' || !HEX64.test(txHash)) {
     return { ok: false, reason: 'Invalid transaction hash format.' };
   }
