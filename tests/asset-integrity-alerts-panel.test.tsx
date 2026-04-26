@@ -39,6 +39,8 @@ const {
   AssetIntegrityAlertsPanel,
   formatAge,
   buildAssetLink,
+  summarizeAlertsForConfirm,
+  MARK_ALL_READ_CONFIRM_THRESHOLD,
 } = await import('../components/operator/AssetIntegrityAlertsPanel');
 
 const { shapeIntegrityAlert } = await import(
@@ -388,6 +390,215 @@ describe('AssetIntegrityAlertsPanel — mark all read', () => {
     });
     expect(screen.getByTestId('asset-integrity-alert-ntf_a')).toBeTruthy();
     expect(screen.getByTestId('asset-integrity-alert-ntf_b')).toBeTruthy();
+  });
+});
+
+describe('AssetIntegrityAlertsPanel — mark all read confirmation (task #300)', () => {
+  it('skips the confirm dialog and fires the batch immediately when the visible count is at or below the threshold', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '',
+      json: async () => ({
+        attempted: MARK_ALL_READ_CONFIRM_THRESHOLD,
+        marked: Array.from(
+          { length: MARK_ALL_READ_CONFIRM_THRESHOLD },
+          (_, i) => `ntf_${i}`,
+        ),
+        notFound: [],
+        failed: [],
+      }),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={Array.from(
+          { length: MARK_ALL_READ_CONFIRM_THRESHOLD },
+          (_, i) => makeAlert({ id: `ntf_${i}`, symbol: `AX${i}` }),
+        )}
+        nowMs={NOW_MS}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-mark-all-read'),
+    );
+
+    // No confirm dialog appears for the small-batch path.
+    expect(screen.queryByTestId('asset-integrity-alerts-confirm')).toBeNull();
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('opens the confirm dialog (and does NOT fire the batch) when the visible count exceeds the threshold', () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '',
+      json: async () => ({}),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const count = MARK_ALL_READ_CONFIRM_THRESHOLD + 3;
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={Array.from({ length: count }, (_, i) =>
+          makeAlert({ id: `ntf_${i}`, symbol: `AX${i}` }),
+        )}
+        nowMs={NOW_MS}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-mark-all-read'),
+    );
+
+    // Dialog visible, fetch NOT called, rows still present.
+    const dialog = screen.getByTestId('asset-integrity-alerts-confirm');
+    expect(dialog).toBeTruthy();
+    expect(dialog.textContent).toMatch(
+      new RegExp(`Mark all ${count} alerts as read\\?`),
+    );
+    // Summary names the affected symbols + kinds so the operator can
+    // sanity-check what they're about to clear.
+    const summary = screen.getByTestId(
+      'asset-integrity-alerts-confirm-summary',
+    );
+    expect(summary.textContent).toMatch(/AX0/);
+    expect(summary.textContent).toMatch(/Oracle stale/);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('asset-integrity-alert-ntf_0')).toBeTruthy();
+  });
+
+  it('cancelling the confirm dialog leaves every row in place and fires no fetch', () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '',
+      json: async () => ({}),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const count = MARK_ALL_READ_CONFIRM_THRESHOLD + 2;
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={Array.from({ length: count }, (_, i) =>
+          makeAlert({ id: `ntf_${i}`, symbol: `AX${i}` }),
+        )}
+        nowMs={NOW_MS}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-mark-all-read'),
+    );
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-confirm-cancel'),
+    );
+
+    // Dialog is gone, fetch was never called, every row still visible.
+    expect(screen.queryByTestId('asset-integrity-alerts-confirm')).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+    for (let i = 0; i < count; i++) {
+      expect(screen.getByTestId(`asset-integrity-alert-ntf_${i}`)).toBeTruthy();
+    }
+    // The notice/error banners remain unset — the panel is untouched.
+    expect(
+      screen.queryByTestId('asset-integrity-alerts-notice'),
+    ).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('confirming proceeds with the existing batch call and clears the marked rows', async () => {
+    const count = MARK_ALL_READ_CONFIRM_THRESHOLD + 2;
+    const ids = Array.from({ length: count }, (_, i) => `ntf_${i}`);
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '',
+      json: async () => ({
+        attempted: count,
+        marked: ids,
+        notFound: [],
+        failed: [],
+      }),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={ids.map((id, i) => makeAlert({ id, symbol: `AX${i}` }))}
+        nowMs={NOW_MS}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-mark-all-read'),
+    );
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-confirm-yes'),
+    );
+
+    await waitFor(() => {
+      // Every previously-visible row has been dismissed and the
+      // empty-state copy is rendered.
+      expect(screen.getByTestId('asset-integrity-alerts-empty')).toBeTruthy();
+    });
+
+    // Dialog dismissed, batch endpoint hit exactly once with all ids.
+    expect(screen.queryByTestId('asset-integrity-alerts-confirm')).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [calledUrl, calledInit] = fetchMock.mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
+    expect(calledUrl).toBe(
+      '/api/capinfra/operator/notifications/mark-read-batch',
+    );
+    expect(JSON.parse(calledInit.body as string)).toEqual({ ids });
+    expect(
+      screen.getByTestId('asset-integrity-alerts-notice').textContent,
+    ).toMatch(new RegExp(`Marked ${count} of ${count} read`));
+  });
+});
+
+describe('summarizeAlertsForConfirm helper (task #300)', () => {
+  it('formats short lists as "SYM (Kind label)" joined with commas', () => {
+    expect(
+      summarizeAlertsForConfirm([
+        { symbol: 'AXAU', assetId: 'asset_1', kind: 'oracle_stale' },
+        {
+          symbol: 'AXAG',
+          assetId: 'asset_2',
+          kind: 'reserve_attestation_failed',
+        },
+      ]),
+    ).toBe('AXAU (Oracle stale), AXAG (Reserve attestation)');
+  });
+
+  it('falls back to assetId when symbol is missing', () => {
+    expect(
+      summarizeAlertsForConfirm([
+        { symbol: null, assetId: 'asset_x', kind: 'redemption_failed' },
+      ]),
+    ).toBe('asset_x (Redemption)');
+  });
+
+  it('truncates beyond maxItems and appends "+N more"', () => {
+    const alerts = Array.from({ length: 8 }, (_, i) => ({
+      symbol: `AX${i}`,
+      assetId: `asset_${i}`,
+      kind: 'oracle_stale' as const,
+    }));
+    const out = summarizeAlertsForConfirm(alerts, 3);
+    expect(out).toMatch(/AX0 \(Oracle stale\)/);
+    expect(out).toMatch(/AX1 \(Oracle stale\)/);
+    expect(out).toMatch(/AX2 \(Oracle stale\)/);
+    expect(out).not.toMatch(/AX3/);
+    expect(out).toMatch(/\+5 more/);
   });
 });
 

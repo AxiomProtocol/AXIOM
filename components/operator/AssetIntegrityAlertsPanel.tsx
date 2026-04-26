@@ -106,6 +106,37 @@ interface BatchResponse {
   failed: { id: string; error: string }[];
 }
 
+/**
+ * Threshold above which "Mark all read" prompts the operator for
+ * confirmation before clearing the queue. The common case (a handful
+ * of alerts) stays a one-click action; a stray click during a busy
+ * incident with many open alerts opens a dialog so the on-call has a
+ * chance to back out before everything is dismissed.
+ */
+export const MARK_ALL_READ_CONFIRM_THRESHOLD = 5;
+
+/**
+ * Build the human-readable summary line shown on the confirm dialog,
+ * e.g. "AXAU (Oracle stale), AXAG (Reserve attestation), AXPT
+ * (Redemption), …+2 more". Exported so the test suite can pin it
+ * without mounting the full panel.
+ */
+export function summarizeAlertsForConfirm(
+  alerts: Pick<IntegrityAlertView, 'symbol' | 'assetId' | 'kind'>[],
+  maxItems = 5,
+): string {
+  const head = alerts.slice(0, maxItems).map((a) => {
+    const label = KIND_LABEL[a.kind] ?? a.kind;
+    const id = a.symbol && a.symbol.length > 0 ? a.symbol : a.assetId;
+    return `${id} (${label})`;
+  });
+  const remaining = alerts.length - head.length;
+  if (remaining > 0) {
+    head.push(`…+${remaining} more`);
+  }
+  return head.join(', ');
+}
+
 interface TestPageResponse {
   result: {
     channelsPaged: string[];
@@ -124,6 +155,7 @@ export function AssetIntegrityAlertsPanel({
   const [notice, setNotice] = useState<string | null>(null);
   const [batchPending, setBatchPending] = useState(false);
   const [testPagePending, setTestPagePending] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const onSendTestPage = useCallback(async () => {
     setError(null);
@@ -204,7 +236,7 @@ export function AssetIntegrityAlertsPanel({
   const visible = alerts.filter((a) => !dismissed.has(a.id));
   const now = nowMs ?? Date.now();
 
-  const onMarkAllRead = useCallback(async () => {
+  const runMarkAllRead = useCallback(async () => {
     setError(null);
     setNotice(null);
     const ids = visible.map((a) => a.id);
@@ -253,6 +285,28 @@ export function AssetIntegrityAlertsPanel({
       setBatchPending(false);
     }
   }, [visible]);
+
+  const onMarkAllRead = useCallback(() => {
+    if (visible.length === 0) return;
+    if (visible.length > MARK_ALL_READ_CONFIRM_THRESHOLD) {
+      // Big batch — pause and let the on-call confirm so a misclick
+      // during an incident can't silently clear the queue.
+      setError(null);
+      setNotice(null);
+      setConfirmOpen(true);
+      return;
+    }
+    void runMarkAllRead();
+  }, [visible.length, runMarkAllRead]);
+
+  const onConfirmMarkAllRead = useCallback(() => {
+    setConfirmOpen(false);
+    void runMarkAllRead();
+  }, [runMarkAllRead]);
+
+  const onCancelMarkAllRead = useCallback(() => {
+    setConfirmOpen(false);
+  }, []);
 
   return (
     <section
@@ -309,6 +363,49 @@ export function AssetIntegrityAlertsPanel({
           data-testid="asset-integrity-alerts-notice"
         >
           {notice}
+        </div>
+      ) : null}
+
+      {confirmOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="asset-integrity-alerts-confirm-title"
+          className="mb-3 border-l-4 border-l-amber-500 border border-dl-border bg-amber-50 p-3 text-xs font-mono text-amber-900"
+          data-testid="asset-integrity-alerts-confirm"
+        >
+          <p
+            id="asset-integrity-alerts-confirm-title"
+            className="font-bold mb-1"
+          >
+            Mark all {visible.length} alerts as read?
+          </p>
+          <p
+            className="mb-2 break-words"
+            data-testid="asset-integrity-alerts-confirm-summary"
+          >
+            About to clear: {summarizeAlertsForConfirm(visible)}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onConfirmMarkAllRead}
+              disabled={batchPending}
+              className="text-xs uppercase tracking-wide border border-dl-border bg-white px-3 py-1 hover:bg-dl-muted/10 disabled:opacity-50"
+              data-testid="asset-integrity-alerts-confirm-yes"
+            >
+              {batchPending ? 'Marking all…' : `Yes, mark ${visible.length} read`}
+            </button>
+            <button
+              type="button"
+              onClick={onCancelMarkAllRead}
+              disabled={batchPending}
+              className="text-xs uppercase tracking-wide border border-dl-border bg-white px-3 py-1 hover:bg-dl-muted/10 disabled:opacity-50"
+              data-testid="asset-integrity-alerts-confirm-cancel"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       ) : null}
 
