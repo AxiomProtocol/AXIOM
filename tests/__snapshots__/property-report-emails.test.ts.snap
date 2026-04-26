@@ -1,0 +1,205 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`sendPropertyReportExpiredEmail — snapshot > renders the all-params-present body with the retry CTA and support link > expired-email-html 1`] = `
+"<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:Georgia,serif;background:#f5f5f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f0;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #d1d5db;">
+        <tr>
+          <td style="background:#1e3a5f;padding:32px 36px;">
+            <p style="color:#b8860b;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 8px 0;">AXIOM PROTOCOL — PROPERTY ANALYSIS</p>
+            <h1 style="color:#ffffff;font-family:Georgia,serif;font-size:26px;font-weight:700;margin:0;line-height:1.2;">Report Request Expired</h1>
+            <p style="color:#94a3b8;font-family:'Courier New',monospace;font-size:11px;margin:8px 0 0 0;letter-spacing:0.1em;">NO ON-CHAIN PAYMENT RECEIVED</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px;">
+            <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 20px 0;">
+              We didn't receive an on-chain AXUSD payment for your property report request. The pending request has been closed.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;margin:0 0 24px 0;">
+              <tr><td style="padding:20px 24px;">
+                <p style="font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.12em;color:#6b7280;text-transform:uppercase;margin:0 0 14px 0;">Request Details</p>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Reference ID</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">#REP-ABCD</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Property</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">742 Evergreen Terrace, Springfield IL</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Status</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#b8860b;font-weight:700;text-align:right;padding:5px 0;">EXPIRED</td>
+                  </tr>
+                </table>
+              </td></tr>
+            </table>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+              <tr><td align="center">
+                <a href="https://axiomprotocol.app/property" style="display:inline-block;background:#1e3a5f;color:#ffffff;text-decoration:none;padding:14px 36px;font-family:'Courier New',monospace;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;font-weight:700;">
+                  Request a New Report →
+                </a>
+              </td></tr>
+            </table>
+            <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px 0;">
+              <strong>Did you actually pay?</strong> If you sent AXUSD on Arbitrum One but the request still expired, your transaction may have landed outside the auto-detection window. Reach out at <a href="https://axiomprotocol.app/contact" style="color:#1e3a5f;font-weight:600;">axiomprotocol.app/contact</a> with your tx hash and we can manually confirm it.
+            </p>
+            <p style="color:#9ca3af;font-size:13px;line-height:1.5;margin:0;">
+              You're receiving this because you started a property report request but no on-chain AXUSD transfer was detected within the expiry window.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:20px 36px;">
+            <p style="font-family:'Courier New',monospace;font-size:10px;color:#9ca3af;letter-spacing:0.1em;margin:0;">AXIOM PROTOCOL — ARBITRUM ONE — axiomprotocol.app</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`sendPropertyReportReadyEmail — snapshot > renders the Sepolia explorer link variant when the testnet chainId is used > ready-email-html-arbitrum-sepolia 1`] = `
+"<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:Georgia,serif;background:#f5f5f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f0;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #d1d5db;">
+        <tr>
+          <td style="background:#1e3a5f;padding:32px 36px;">
+            <p style="color:#b8860b;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 8px 0;">AXIOM PROTOCOL — PROPERTY ANALYSIS</p>
+            <h1 style="color:#ffffff;font-family:Georgia,serif;font-size:26px;font-weight:700;margin:0;line-height:1.2;">Your Report Is Ready</h1>
+            <p style="color:#94a3b8;font-family:'Courier New',monospace;font-size:11px;margin:8px 0 0 0;letter-spacing:0.1em;">PAYMENT AUTO-CONFIRMED</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px;">
+            <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 20px 0;">
+              We confirmed your AXUSD payment on Arbitrum One and generated your property report. You can read it at the link below.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;margin:0 0 24px 0;">
+              <tr><td style="padding:20px 24px;">
+                <p style="font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.12em;color:#6b7280;text-transform:uppercase;margin:0 0 14px 0;">Receipt</p>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Report ID</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">#REP-ABCD</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Property</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">742 Evergreen Terrace, Springfield IL</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Amount Paid</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#b8860b;font-weight:700;text-align:right;padding:5px 0;">4.99 AXUSD</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Tx Hash</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">
+                      <a href="https://sepolia.arbiscan.io/tx/0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" style="color:#1e3a5f;text-decoration:none;">0xaaaaaaaa…aaaaaaaa ↗</a>
+                    </td>
+                  </tr>
+                </table>
+              </td></tr>
+            </table>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+              <tr><td align="center">
+                <a href="https://axiomprotocol.app/property/reports/rep-abcdef1234567890" style="display:inline-block;background:#1e3a5f;color:#ffffff;text-decoration:none;padding:14px 36px;font-family:'Courier New',monospace;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;font-weight:700;">
+                  View Report →
+                </a>
+              </td></tr>
+            </table>
+            <p style="color:#9ca3af;font-size:13px;line-height:1.5;margin:0;">
+              You're receiving this because we detected your on-chain AXUSD payment for a report you started but didn't return to confirm. The on-chain receipt above is also viewable on Arbiscan.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:20px 36px;">
+            <p style="font-family:'Courier New',monospace;font-size:10px;color:#9ca3af;letter-spacing:0.1em;margin:0;">AXIOM PROTOCOL — ARBITRUM ONE — axiomprotocol.app</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"
+`;
+
+exports[`sendPropertyReportReadyEmail — snapshot > renders the all-params-present body with the Arbitrum One explorer link > ready-email-html-arbitrum-one 1`] = `
+"<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:Georgia,serif;background:#f5f5f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f0;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #d1d5db;">
+        <tr>
+          <td style="background:#1e3a5f;padding:32px 36px;">
+            <p style="color:#b8860b;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 8px 0;">AXIOM PROTOCOL — PROPERTY ANALYSIS</p>
+            <h1 style="color:#ffffff;font-family:Georgia,serif;font-size:26px;font-weight:700;margin:0;line-height:1.2;">Your Report Is Ready</h1>
+            <p style="color:#94a3b8;font-family:'Courier New',monospace;font-size:11px;margin:8px 0 0 0;letter-spacing:0.1em;">PAYMENT AUTO-CONFIRMED</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px;">
+            <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 20px 0;">
+              We confirmed your AXUSD payment on Arbitrum One and generated your property report. You can read it at the link below.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;margin:0 0 24px 0;">
+              <tr><td style="padding:20px 24px;">
+                <p style="font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.12em;color:#6b7280;text-transform:uppercase;margin:0 0 14px 0;">Receipt</p>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Report ID</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">#REP-ABCD</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Property</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">742 Evergreen Terrace, Springfield IL</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Amount Paid</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#b8860b;font-weight:700;text-align:right;padding:5px 0;">4.99 AXUSD</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#6b7280;padding:5px 0;">Tx Hash</td>
+                    <td style="font-family:'Courier New',monospace;font-size:12px;color:#1e3a5f;font-weight:700;text-align:right;padding:5px 0;">
+                      <a href="https://arbiscan.io/tx/0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" style="color:#1e3a5f;text-decoration:none;">0xaaaaaaaa…aaaaaaaa ↗</a>
+                    </td>
+                  </tr>
+                </table>
+              </td></tr>
+            </table>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+              <tr><td align="center">
+                <a href="https://axiomprotocol.app/property/reports/rep-abcdef1234567890" style="display:inline-block;background:#1e3a5f;color:#ffffff;text-decoration:none;padding:14px 36px;font-family:'Courier New',monospace;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;font-weight:700;">
+                  View Report →
+                </a>
+              </td></tr>
+            </table>
+            <p style="color:#9ca3af;font-size:13px;line-height:1.5;margin:0;">
+              You're receiving this because we detected your on-chain AXUSD payment for a report you started but didn't return to confirm. The on-chain receipt above is also viewable on Arbiscan.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:20px 36px;">
+            <p style="font-family:'Courier New',monospace;font-size:10px;color:#9ca3af;letter-spacing:0.1em;margin:0;">AXIOM PROTOCOL — ARBITRUM ONE — axiomprotocol.app</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"
+`;
