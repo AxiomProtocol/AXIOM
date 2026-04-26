@@ -110,11 +110,47 @@ const KNOWN_KINDS = new Set<IntegrityAlertKind>([
   'bridge_event',
 ]);
 
+/**
+ * All `IntegrityAlertKind` values that can appear in the integrity
+ * console — the structured failure modes plus the synthetic
+ * `'unknown'` bucket the shaper falls back to. Exposed so SSR query-
+ * param parsing can validate `?kind=…` against the same set the
+ * filter uses, without each caller having to re-enumerate them.
+ */
+export const INTEGRITY_ALERT_KINDS: readonly IntegrityAlertKind[] = [
+  'oracle_stale',
+  'reserve_attestation_failed',
+  'redemption_failed',
+  'issuer_event',
+  'bridge_event',
+  'unknown',
+];
+
 function coerceKind(raw: unknown): IntegrityAlertKind {
   if (typeof raw === 'string' && KNOWN_KINDS.has(raw as IntegrityAlertKind)) {
     return raw as IntegrityAlertKind;
   }
   return 'unknown';
+}
+
+/**
+ * Parse an arbitrary user-supplied string (e.g. from `?kind=…`) into
+ * an `IntegrityAlertKind`. Returns null when the value is missing or
+ * not a recognised kind, so the page can drop the filter rather than
+ * silently coerce to `'unknown'` (which would hide every structured
+ * row under an unrelated label).
+ */
+export function parseIntegrityAlertKind(
+  raw: string | undefined | null,
+): IntegrityAlertKind | null {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) return null;
+  if (trimmed === 'unknown') return 'unknown';
+  if (KNOWN_KINDS.has(trimmed as IntegrityAlertKind)) {
+    return trimmed as IntegrityAlertKind;
+  }
+  return null;
 }
 
 function coerceString(raw: unknown): string | null {
@@ -252,6 +288,21 @@ export interface ListRecentIntegrityAlertsOptions {
   sinceMs?: number;
   /** Override for "now" so tests can pin the default sinceMs window. */
   nowMs?: number;
+  /**
+   * When set, restrict results to rows whose shaped `symbol` matches
+   * (case-insensitive) the provided value. Filtering happens in
+   * memory after row shaping because `symbol` lives inside `bodyJson`
+   * and is not a first-class column. Rows with a null symbol are
+   * always excluded when this filter is active.
+   */
+  symbol?: string;
+  /**
+   * When set, restrict results to rows whose shaped `kind` equals the
+   * provided value (including the synthetic `'unknown'` bucket).
+   * Filtering happens in memory after row shaping for the same reason
+   * as `symbol` above.
+   */
+  kind?: IntegrityAlertKind;
 }
 
 /**
@@ -292,10 +343,22 @@ export async function listRecentIntegrityAlerts(
     .orderBy(desc(capNotifications.createdAt))
     .limit(limit);
 
+  const symbolFilter =
+    typeof opts.symbol === 'string' && opts.symbol.trim().length > 0
+      ? opts.symbol.trim().toUpperCase()
+      : null;
+  const kindFilter = opts.kind ?? null;
+
   const out: IntegrityAlertView[] = [];
   for (const row of rows) {
     const view = shapeIntegrityAlert(row);
-    if (view) out.push(view);
+    if (!view) continue;
+    if (symbolFilter !== null) {
+      if (!view.symbol) continue;
+      if (view.symbol.toUpperCase() !== symbolFilter) continue;
+    }
+    if (kindFilter !== null && view.kind !== kindFilter) continue;
+    out.push(view);
   }
   return out;
 }

@@ -70,10 +70,12 @@ vi.mock('../server/db', () => {
 const {
   shapeIntegrityAlert,
   listRecentIntegrityAlerts,
+  parseIntegrityAlertKind,
   INTEGRITY_ALERT_DEFAULT_WINDOW_MS,
+  INTEGRITY_ALERT_KINDS,
 } = await import('../lib/capinfra/risk/integrityAlerts');
 
-const { default: OperatorIntegrityPage } = await import(
+const { default: OperatorIntegrityPage, buildIntegrityHref } = await import(
   '../pages/operator/integrity'
 );
 
@@ -216,6 +218,8 @@ describe('OperatorIntegrityPage — default (unread-only) mode', () => {
         windowHours={24}
         loadError={null}
         generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
       />,
     );
     expect(screen.getByTestId('operator-integrity-mode').textContent).toMatch(
@@ -230,6 +234,10 @@ describe('OperatorIntegrityPage — default (unread-only) mode', () => {
     expect(
       screen.getByTestId('operator-integrity-empty').textContent,
     ).toMatch(/show acknowledged/i);
+    // No filter strip when no filters are active.
+    expect(
+      screen.queryByTestId('operator-integrity-filter-strip'),
+    ).toBeNull();
   });
 
   it('renders an "Unread" badge for rows with no readAtMs', () => {
@@ -240,6 +248,8 @@ describe('OperatorIntegrityPage — default (unread-only) mode', () => {
         windowHours={24}
         loadError={null}
         generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
       />,
     );
     const row = screen.getByTestId('operator-integrity-row-ntf_a');
@@ -267,6 +277,8 @@ describe('OperatorIntegrityPage — show-acknowledged mode', () => {
         windowHours={24}
         loadError={null}
         generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
       />,
     );
     expect(screen.getByTestId('operator-integrity-mode').textContent).toMatch(
@@ -294,6 +306,8 @@ describe('OperatorIntegrityPage — show-acknowledged mode', () => {
         windowHours={24}
         loadError={null}
         generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
       />,
     );
     const ackRow = screen.getByTestId('operator-integrity-row-ntf_ack');
@@ -319,6 +333,8 @@ describe('OperatorIntegrityPage — show-acknowledged mode', () => {
         windowHours={24}
         loadError={null}
         generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
       />,
     );
     expect(
@@ -336,6 +352,8 @@ describe('OperatorIntegrityPage — load error', () => {
         windowHours={24}
         loadError="db unreachable"
         generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
       />,
     );
     expect(screen.getByText(/operational notice/i)).toBeTruthy();
@@ -351,5 +369,369 @@ describe('AssetIntegrityAlertsPanel — link points at /operator/integrity', () 
     ) as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe('/operator/integrity');
     expect(link.textContent).toMatch(/all integrity alerts/i);
+  });
+});
+
+describe('parseIntegrityAlertKind — SSR query-param parsing', () => {
+  it('returns null for missing/empty/unknown-shaped strings', () => {
+    expect(parseIntegrityAlertKind(undefined)).toBeNull();
+    expect(parseIntegrityAlertKind(null)).toBeNull();
+    expect(parseIntegrityAlertKind('')).toBeNull();
+    expect(parseIntegrityAlertKind('   ')).toBeNull();
+    expect(parseIntegrityAlertKind('not_a_kind')).toBeNull();
+    // Bad values should DROP the filter, not silently coerce to
+    // 'unknown' — that would hide every structured row.
+    expect(parseIntegrityAlertKind('ORACLE_STALE')).toBeNull();
+  });
+
+  it('accepts every structured kind plus the synthetic "unknown" bucket', () => {
+    for (const k of INTEGRITY_ALERT_KINDS) {
+      expect(parseIntegrityAlertKind(k)).toBe(k);
+    }
+  });
+
+  it('trims surrounding whitespace before matching', () => {
+    expect(parseIntegrityAlertKind(' oracle_stale ')).toBe('oracle_stale');
+  });
+});
+
+describe('listRecentIntegrityAlerts — symbol/kind filtering', () => {
+  // Build a fixture with three rows of mixed symbol/kind so we can
+  // pin down filter behaviour without depending on drizzle internals.
+  function makeFilterDb() {
+    const chain: Record<string, unknown> = {};
+    chain.select = () => chain;
+    chain.from = () => chain;
+    chain.where = () => chain;
+    chain.orderBy = () => chain;
+    chain.limit = async () => [
+      {
+        id: 'ntf_axau_oracle',
+        subject: 's',
+        bodyJson: {
+          assetId: 'asset_axau',
+          symbol: 'AXAU',
+          kind: 'oracle_stale',
+        },
+        createdAt: new Date(NOW_MS - 60_000),
+        readAt: null,
+      },
+      {
+        id: 'ntf_axau_reserve',
+        subject: 's',
+        bodyJson: {
+          assetId: 'asset_axau',
+          symbol: 'AXAU',
+          kind: 'reserve_attestation_failed',
+        },
+        createdAt: new Date(NOW_MS - 120_000),
+        readAt: null,
+      },
+      {
+        id: 'ntf_axag_oracle',
+        subject: 's',
+        bodyJson: {
+          assetId: 'asset_axag',
+          symbol: 'AXAG',
+          kind: 'oracle_stale',
+        },
+        createdAt: new Date(NOW_MS - 180_000),
+        readAt: null,
+      },
+      {
+        id: 'ntf_nosymbol',
+        subject: 's',
+        bodyJson: {
+          assetId: 'asset_orphan',
+          // symbol intentionally missing — symbol filter must drop
+          // these rows rather than match them by accident.
+          kind: 'oracle_stale',
+        },
+        createdAt: new Date(NOW_MS - 240_000),
+        readAt: null,
+      },
+    ];
+    return { db: chain };
+  }
+
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it('returns every row when no filters are passed', async () => {
+    vi.doMock('../server/db', () => makeFilterDb());
+    const mod = await import('../lib/capinfra/risk/integrityAlerts');
+    const out = await mod.listRecentIntegrityAlerts({ nowMs: NOW_MS });
+    expect(out.map((a) => a.id)).toEqual([
+      'ntf_axau_oracle',
+      'ntf_axau_reserve',
+      'ntf_axag_oracle',
+      'ntf_nosymbol',
+    ]);
+  });
+
+  it('filters by symbol (case-insensitive, drops null-symbol rows)', async () => {
+    vi.doMock('../server/db', () => makeFilterDb());
+    const mod = await import('../lib/capinfra/risk/integrityAlerts');
+    const out = await mod.listRecentIntegrityAlerts({
+      nowMs: NOW_MS,
+      symbol: 'axau',
+    });
+    expect(out.map((a) => a.id)).toEqual([
+      'ntf_axau_oracle',
+      'ntf_axau_reserve',
+    ]);
+  });
+
+  it('filters by kind across all symbols', async () => {
+    vi.doMock('../server/db', () => makeFilterDb());
+    const mod = await import('../lib/capinfra/risk/integrityAlerts');
+    const out = await mod.listRecentIntegrityAlerts({
+      nowMs: NOW_MS,
+      kind: 'oracle_stale',
+    });
+    expect(out.map((a) => a.id)).toEqual([
+      'ntf_axau_oracle',
+      'ntf_axag_oracle',
+      'ntf_nosymbol',
+    ]);
+  });
+
+  it('combines symbol and kind filters as AND', async () => {
+    vi.doMock('../server/db', () => makeFilterDb());
+    const mod = await import('../lib/capinfra/risk/integrityAlerts');
+    const out = await mod.listRecentIntegrityAlerts({
+      nowMs: NOW_MS,
+      symbol: 'AXAU',
+      kind: 'reserve_attestation_failed',
+    });
+    expect(out.map((a) => a.id)).toEqual(['ntf_axau_reserve']);
+  });
+
+  it('treats blank/whitespace-only symbol filter as "no filter"', async () => {
+    vi.doMock('../server/db', () => makeFilterDb());
+    const mod = await import('../lib/capinfra/risk/integrityAlerts');
+    const out = await mod.listRecentIntegrityAlerts({
+      nowMs: NOW_MS,
+      symbol: '   ',
+    });
+    expect(out).toHaveLength(4);
+  });
+});
+
+describe('buildIntegrityHref — URL builder', () => {
+  it('returns the bare path when no params are set', () => {
+    expect(buildIntegrityHref({})).toBe('/operator/integrity');
+  });
+
+  it('preserves ack + symbol + kind together', () => {
+    expect(
+      buildIntegrityHref({ ack: true, symbol: 'AXAU', kind: 'oracle_stale' }),
+    ).toBe('/operator/integrity?ack=1&symbol=AXAU&kind=oracle_stale');
+  });
+
+  it('drops keys passed as null (per-filter clear)', () => {
+    expect(
+      buildIntegrityHref({ ack: true, symbol: null, kind: 'oracle_stale' }),
+    ).toBe('/operator/integrity?ack=1&kind=oracle_stale');
+  });
+});
+
+describe('OperatorIntegrityPage — filter strip', () => {
+  it('hides the strip and renders the unfiltered empty copy when no filters are set', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+      />,
+    );
+    expect(
+      screen.queryByTestId('operator-integrity-filter-strip'),
+    ).toBeNull();
+  });
+
+  it('renders symbol + kind chips with per-filter clears and a Clear filters link', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter="AXAU"
+        kindFilter="oracle_stale"
+      />,
+    );
+    const strip = screen.getByTestId('operator-integrity-filter-strip');
+    const symChip = within(strip).getByTestId(
+      'operator-integrity-filter-symbol',
+    );
+    expect(symChip.textContent).toMatch(/AXAU/);
+    const kindChip = within(strip).getByTestId(
+      'operator-integrity-filter-kind',
+    );
+    // KIND_LABEL maps oracle_stale → "Oracle stale"
+    expect(kindChip.textContent).toMatch(/Oracle stale/);
+
+    // Per-chip clear links drop only that key but preserve the other.
+    const clearSym = within(strip).getByTestId(
+      'operator-integrity-filter-symbol-clear',
+    ) as HTMLAnchorElement;
+    expect(clearSym.getAttribute('href')).toBe(
+      '/operator/integrity?kind=oracle_stale',
+    );
+    const clearKind = within(strip).getByTestId(
+      'operator-integrity-filter-kind-clear',
+    ) as HTMLAnchorElement;
+    expect(clearKind.getAttribute('href')).toBe(
+      '/operator/integrity?symbol=AXAU',
+    );
+
+    // Clear-all link drops both filters but keeps ack=… off (default
+    // mode in this test) — i.e. lands on the bare console.
+    const clearAll = within(strip).getByTestId(
+      'operator-integrity-filter-clear-all',
+    ) as HTMLAnchorElement;
+    expect(clearAll.getAttribute('href')).toBe('/operator/integrity');
+
+    // Empty-state copy switches to the filter-aware variant.
+    expect(
+      screen.getByTestId('operator-integrity-empty').textContent,
+    ).toMatch(/matching the current filters/i);
+  });
+
+  it('preserves the ack=1 mode across filter clears and the toggle link', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[]}
+        showAcknowledged={true}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter="AXAU"
+        kindFilter={null}
+      />,
+    );
+    // Toggle (currently "Hide acknowledged") drops ack but keeps symbol.
+    const toggle = screen.getByTestId(
+      'operator-integrity-toggle',
+    ) as HTMLAnchorElement;
+    expect(toggle.getAttribute('href')).toBe(
+      '/operator/integrity?symbol=AXAU',
+    );
+    // Per-symbol clear keeps ack=1 since we're still in ack mode.
+    const clearSym = screen.getByTestId(
+      'operator-integrity-filter-symbol-clear',
+    ) as HTMLAnchorElement;
+    expect(clearSym.getAttribute('href')).toBe('/operator/integrity?ack=1');
+    // Clear-all keeps ack=1 too.
+    const clearAll = screen.getByTestId(
+      'operator-integrity-filter-clear-all',
+    ) as HTMLAnchorElement;
+    expect(clearAll.getAttribute('href')).toBe('/operator/integrity?ack=1');
+  });
+
+  it('SSR getServerSideProps maps ?symbol/?kind/?ack into props and forwards filters to the listing helper', async () => {
+    // Lock the page boundary: a request with the three query params
+    // must (a) parse and uppercase symbol, (b) validate kind, (c)
+    // honour ack=1, and (d) forward symbol+kind+includeRead to
+    // listRecentIntegrityAlerts.
+    vi.resetModules();
+    const calls: { args: unknown }[] = [];
+    vi.doMock('../lib/capinfra/operatorAuth', () => ({
+      requireOperatorCookie: () => null,
+    }));
+    vi.doMock('../lib/capinfra/risk/integrityAlerts', async () => {
+      const actual = await vi.importActual<
+        typeof import('../lib/capinfra/risk/integrityAlerts')
+      >('../lib/capinfra/risk/integrityAlerts');
+      return {
+        ...actual,
+        listRecentIntegrityAlerts: async (args: unknown) => {
+          calls.push({ args });
+          return [];
+        },
+      };
+    });
+    const mod = await import('../pages/operator/integrity');
+    const result = await mod.getServerSideProps({
+      query: { symbol: 'axau', kind: 'oracle_stale', ack: '1' },
+      req: {} as unknown,
+      res: {} as unknown,
+      resolvedUrl: '/operator/integrity',
+    } as unknown as Parameters<typeof mod.getServerSideProps>[0]);
+    expect('props' in result).toBe(true);
+    const props = (result as { props: Record<string, unknown> }).props;
+    expect(props.symbolFilter).toBe('AXAU');
+    expect(props.kindFilter).toBe('oracle_stale');
+    expect(props.showAcknowledged).toBe(true);
+    expect(props.loadError).toBeNull();
+    expect(calls).toHaveLength(1);
+    expect(calls[0].args).toMatchObject({
+      includeRead: true,
+      symbol: 'AXAU',
+      kind: 'oracle_stale',
+    });
+  });
+
+  it('SSR drops invalid kind values rather than coercing to "unknown"', async () => {
+    vi.resetModules();
+    const calls: { args: { kind?: unknown; symbol?: unknown } }[] = [];
+    vi.doMock('../lib/capinfra/operatorAuth', () => ({
+      requireOperatorCookie: () => null,
+    }));
+    vi.doMock('../lib/capinfra/risk/integrityAlerts', async () => {
+      const actual = await vi.importActual<
+        typeof import('../lib/capinfra/risk/integrityAlerts')
+      >('../lib/capinfra/risk/integrityAlerts');
+      return {
+        ...actual,
+        listRecentIntegrityAlerts: async (args: {
+          kind?: unknown;
+          symbol?: unknown;
+        }) => {
+          calls.push({ args });
+          return [];
+        },
+      };
+    });
+    const mod = await import('../pages/operator/integrity');
+    const result = await mod.getServerSideProps({
+      query: { kind: 'NOT_A_KIND', symbol: '   ' },
+      req: {} as unknown,
+      res: {} as unknown,
+      resolvedUrl: '/operator/integrity',
+    } as unknown as Parameters<typeof mod.getServerSideProps>[0]);
+    const props = (result as { props: Record<string, unknown> }).props;
+    expect(props.kindFilter).toBeNull();
+    // Whitespace-only symbol must be dropped, not forwarded as ''.
+    expect(props.symbolFilter).toBeNull();
+    expect(calls[0].args.kind).toBeUndefined();
+    expect(calls[0].args.symbol).toBeUndefined();
+  });
+
+  it('only renders the kind chip when symbolFilter is null', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter="reserve_attestation_failed"
+      />,
+    );
+    expect(
+      screen.queryByTestId('operator-integrity-filter-symbol'),
+    ).toBeNull();
+    expect(
+      screen.getByTestId('operator-integrity-filter-kind').textContent,
+    ).toMatch(/Reserve attestation/);
   });
 });

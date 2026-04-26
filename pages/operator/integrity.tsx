@@ -14,6 +14,12 @@
  * The window is bounded by `INTEGRITY_ALERT_DEFAULT_WINDOW_MS` (24h)
  * via `listRecentIntegrityAlerts` so the page stays bounded even with
  * a large historical backlog.
+ *
+ * During multi-asset incidents (e.g. an oracle outage that flips
+ * several assets to RED at once) the page can grow long, so we also
+ * accept `?symbol=…` and `?kind=…` query params and surface the
+ * active filters as a strip with a "Clear filters" link. Deep-linking
+ * from elsewhere with `?symbol=AXAU` lands on the filtered view.
  */
 
 import type { GetServerSideProps } from 'next';
@@ -23,6 +29,8 @@ import { requireOperatorCookie } from '../../lib/capinfra/operatorAuth';
 import {
   INTEGRITY_ALERT_DEFAULT_WINDOW_MS,
   listRecentIntegrityAlerts,
+  parseIntegrityAlertKind,
+  type IntegrityAlertKind,
   type IntegrityAlertView,
 } from '../../lib/capinfra/risk/integrityAlerts';
 import {
@@ -45,12 +53,38 @@ interface Props {
   windowHours: number;
   loadError: string | null;
   generatedAtMs: number;
+  symbolFilter: string | null;
+  kindFilter: IntegrityAlertKind | null;
 }
 
 function readShowAcknowledged(value: string | string[] | undefined): boolean {
   if (!value) return false;
   const v = Array.isArray(value) ? value[0] : value;
   return v === '1' || v === 'true' || v === 'yes';
+}
+
+function readSingle(value: string | string[] | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  return Array.isArray(value) ? value[0] : value;
+}
+
+/**
+ * Build a `/operator/integrity?…` href that preserves the current
+ * filter set, optionally overriding individual params. Pass `null`
+ * for a key to drop it (used by per-filter "× clear" links and the
+ * "Clear filters" link).
+ */
+export function buildIntegrityHref(params: {
+  ack?: boolean;
+  symbol?: string | null;
+  kind?: IntegrityAlertKind | null;
+}): string {
+  const qs = new URLSearchParams();
+  if (params.ack) qs.set('ack', '1');
+  if (params.symbol) qs.set('symbol', params.symbol);
+  if (params.kind) qs.set('kind', params.kind);
+  const s = qs.toString();
+  return s ? `/operator/integrity?${s}` : '/operator/integrity';
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
@@ -63,6 +97,11 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   );
   const generatedAtMs = Date.now();
 
+  const rawSymbol = readSingle(ctx.query.symbol)?.trim() ?? '';
+  const symbolFilter =
+    rawSymbol.length > 0 ? rawSymbol.toUpperCase() : null;
+  const kindFilter = parseIntegrityAlertKind(readSingle(ctx.query.kind));
+
   // Best-effort: a malformed notification row must not blank the
   // entire console. Fall back to an empty list and surface the error.
   let alerts: IntegrityAlertView[] = [];
@@ -71,6 +110,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
     alerts = await listRecentIntegrityAlerts({
       includeRead: showAcknowledged,
       limit: 100,
+      symbol: symbolFilter ?? undefined,
+      kind: kindFilter ?? undefined,
     });
   } catch (err) {
     loadError = err instanceof Error ? err.message : 'unknown error';
@@ -84,6 +125,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       windowHours,
       loadError,
       generatedAtMs,
+      symbolFilter,
+      kindFilter,
     },
   };
 };
@@ -94,13 +137,34 @@ export default function OperatorIntegrityPage({
   windowHours,
   loadError,
   generatedAtMs,
+  symbolFilter,
+  kindFilter,
 }: Props) {
-  const toggleHref = showAcknowledged
-    ? '/operator/integrity'
-    : '/operator/integrity?ack=1';
+  const toggleHref = buildIntegrityHref({
+    ack: !showAcknowledged,
+    symbol: symbolFilter,
+    kind: kindFilter,
+  });
   const toggleLabel = showAcknowledged
     ? 'Hide acknowledged'
     : 'Show acknowledged';
+
+  const hasFilter = symbolFilter !== null || kindFilter !== null;
+  const clearAllHref = buildIntegrityHref({
+    ack: showAcknowledged,
+    symbol: null,
+    kind: null,
+  });
+  const clearSymbolHref = buildIntegrityHref({
+    ack: showAcknowledged,
+    symbol: null,
+    kind: kindFilter,
+  });
+  const clearKindHref = buildIntegrityHref({
+    ack: showAcknowledged,
+    symbol: symbolFilter,
+    kind: null,
+  });
 
   return (
     <DesignLawLayout>
@@ -150,14 +214,74 @@ export default function OperatorIntegrityPage({
           </span>
         </div>
 
+        {hasFilter && (
+          <div
+            className="flex flex-wrap items-center gap-2 mb-4 font-mono text-xs"
+            data-testid="operator-integrity-filter-strip"
+          >
+            <span className="text-[10px] uppercase tracking-wider text-dl-muted">
+              Filtered by:
+            </span>
+            {symbolFilter !== null && (
+              <span
+                className="inline-flex items-center gap-1 border border-dl-border bg-dl-muted/10 px-2 py-0.5"
+                data-testid="operator-integrity-filter-symbol"
+              >
+                <span className="text-[10px] uppercase tracking-wider text-dl-muted">
+                  symbol
+                </span>
+                <span className="font-bold text-dl-navy">{symbolFilter}</span>
+                <Link
+                  href={clearSymbolHref}
+                  className="text-dl-muted hover:text-dl-ink ml-1"
+                  data-testid="operator-integrity-filter-symbol-clear"
+                  aria-label={`Clear symbol filter ${symbolFilter}`}
+                >
+                  ×
+                </Link>
+              </span>
+            )}
+            {kindFilter !== null && (
+              <span
+                className="inline-flex items-center gap-1 border border-dl-border bg-dl-muted/10 px-2 py-0.5"
+                data-testid="operator-integrity-filter-kind"
+              >
+                <span className="text-[10px] uppercase tracking-wider text-dl-muted">
+                  kind
+                </span>
+                <span className="font-bold text-dl-navy">
+                  {KIND_LABEL[kindFilter] ?? kindFilter}
+                </span>
+                <Link
+                  href={clearKindHref}
+                  className="text-dl-muted hover:text-dl-ink ml-1"
+                  data-testid="operator-integrity-filter-kind-clear"
+                  aria-label={`Clear kind filter ${kindFilter}`}
+                >
+                  ×
+                </Link>
+              </span>
+            )}
+            <Link
+              href={clearAllHref}
+              className="underline text-dl-muted hover:text-dl-ink"
+              data-testid="operator-integrity-filter-clear-all"
+            >
+              Clear filters
+            </Link>
+          </div>
+        )}
+
         {alerts.length === 0 ? (
           <div
             className="border border-dl-border p-6 text-sm font-mono text-dl-muted"
             data-testid="operator-integrity-empty"
           >
-            {showAcknowledged
-              ? `No integrity alerts in the last ${windowHours}h.`
-              : `No active integrity alerts. Toggle "${toggleLabel}" to see recently cleared rows.`}
+            {hasFilter
+              ? `No integrity alerts in the last ${windowHours}h matching the current filters.`
+              : showAcknowledged
+                ? `No integrity alerts in the last ${windowHours}h.`
+                : `No active integrity alerts. Toggle "${toggleLabel}" to see recently cleared rows.`}
           </div>
         ) : (
           <div className="overflow-x-auto border border-dl-border">
