@@ -80,6 +80,7 @@ function ContractRow({ name, address, purpose, alt, status }: { name: string; ad
 export default function DisclosurePage() {
   const [snapshot, setSnapshot] = useState<SnapshotData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [axauHolderCount, setAxauHolderCount] = useState<number | null>(null);
 
   useEffect(() => {
     fetch('/api/solvency/latest')
@@ -100,6 +101,14 @@ export default function DisclosurePage() {
         console.error('[disclosure] Failed to fetch solvency snapshot:', err);
         setLoading(false);
       });
+
+    fetch('/api/axau/holders')
+      .then(res => res.json())
+      .then(data => {
+        if (typeof data.summary?.holderCount === 'number') setAxauHolderCount(data.summary.holderCount);
+        else if (typeof data.holderCount === 'number') setAxauHolderCount(data.holderCount);
+      })
+      .catch(() => {});
   }, []);
 
   const liveItems = [
@@ -338,27 +347,36 @@ export default function DisclosurePage() {
             <div className="border border-dl-border px-6 py-3 bg-dl-bg-alt">
               <p className="text-sm font-dl-mono text-dl-navy">Current State: Bootstrap Phase (Week 5 of 52-Week Operational Playbook)</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 border border-dl-border">
-              <div className="px-5 py-4 border-r border-b sm:border-b-0 border-dl-border border-t-4 border-t-dl-forest">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border border-dl-border">
+              <div className="px-5 py-4 border-r border-b lg:border-b-0 border-dl-border border-t-4 border-t-dl-forest">
                 <div className="flex items-center gap-2 mb-2">
                   <Landmark className="w-4 h-4 text-dl-forest" />
                   <p className="text-xs text-dl-gray">Treasury Capital (Snapshot)</p>
                 </div>
                 <p className="text-lg font-dl-mono text-dl-forest font-bold">{snapshot ? fmtUsd(snapshot.treasuryTotalUsd) : '--'}</p>
               </div>
-              <div className="px-5 py-4 sm:border-r border-b sm:border-b-0 border-dl-border border-t-4 border-t-dl-gold">
+              <div className="px-5 py-4 border-b sm:border-r lg:border-b-0 border-dl-border border-t-4 border-t-dl-gold">
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle className="w-4 h-4 text-dl-gold" />
                   <p className="text-xs text-dl-gray">AXUSD Outstanding (Protocol Liabilities)</p>
                 </div>
                 <p className="text-lg font-dl-mono text-dl-gold font-bold">{snapshot ? fmtUsd(snapshot.liabilitiesTotalUsd) : '--'}</p>
               </div>
-              <div className="px-5 py-4 border-t-4 border-t-dl-navy">
+              <div className="px-5 py-4 border-r border-b sm:border-b-0 border-dl-border border-t-4 border-t-dl-navy">
                 <div className="flex items-center gap-2 mb-2">
                   <ShieldCheck className="w-4 h-4 text-dl-navy" />
                   <p className="text-xs text-dl-gray">Coverage Ratio (Snapshot Basis)</p>
                 </div>
                 <p className="text-lg font-dl-mono text-dl-navy font-bold">{snapshot ? fmtPct(snapshot.coverageRatio) : '--'}</p>
+              </div>
+              <div className="px-5 py-4 border-t-4 border-t-yellow-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <Coins className="w-4 h-4 text-yellow-700" />
+                  <p className="text-xs text-dl-gray">AXAU Registered Holders</p>
+                </div>
+                <p className="text-lg font-dl-mono text-yellow-700 font-bold">
+                  {axauHolderCount !== null ? axauHolderCount.toLocaleString('en-US') : '--'}
+                </p>
               </div>
             </div>
 

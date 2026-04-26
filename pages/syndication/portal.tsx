@@ -294,6 +294,8 @@ export default function InvestorPortal() {
               portfolio={portfolio}
               portfolioLoading={portfolioLoading}
               walletAddress={address ?? null}
+              onRefresh={address ? () => loadPortfolio(address) : undefined}
+              refreshing={portfolioLoading}
             />
           )}
           {activeTab === 'capitalCalls' && <CapitalCallsTab capitalCalls={data.capitalCalls} nexusParticipant={nexusParticipant} />}
@@ -319,10 +321,12 @@ function fmtToken(formatted: string, decimals = 6): string {
   return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
-function OnChainBalancesSection({ portfolio, portfolioLoading, walletAddress }: {
+function OnChainBalancesSection({ portfolio, portfolioLoading, walletAddress, onRefresh, refreshing }: {
   portfolio: any | null;
   portfolioLoading: boolean;
   walletAddress: string | null;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }) {
   const arbscanBase = 'https://arbiscan.io';
 
@@ -360,9 +364,38 @@ function OnChainBalancesSection({ portfolio, portfolioLoading, walletAddress }: 
     <div>
       <div className="flex items-center justify-between mb-3 border-b border-dl-border pb-2">
         <h2 className="font-dl-serif text-lg text-dl-navy">On-Chain Wallet Balances</h2>
-        <div className="text-right">
-          <p className="font-dl-mono text-xs text-dl-muted">Arbitrum One · live</p>
-          <p className="font-dl-mono text-[10px] text-dl-muted">as of {fetchedAt}</p>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="font-dl-mono text-xs text-dl-muted">Arbitrum One · live</p>
+            <p className="font-dl-mono text-[10px] text-dl-muted">as of {fetchedAt}</p>
+          </div>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              disabled={refreshing}
+              className="border border-dl-border px-3 py-1.5 font-dl-mono text-xs text-dl-navy hover:bg-dl-bg-alt disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+              title="Refresh on-chain balances"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={refreshing ? 'animate-spin' : ''}
+              >
+                <path d="M21 2v6h-6" />
+                <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                <path d="M3 22v-6h6" />
+                <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+              </svg>
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -443,6 +476,8 @@ function HoldingsTab({
   portfolio,
   portfolioLoading,
   walletAddress,
+  onRefresh,
+  refreshing,
 }: {
   holdings: any[];
   subscriptions: any[];
@@ -450,10 +485,12 @@ function HoldingsTab({
   portfolio: any | null;
   portfolioLoading: boolean;
   walletAddress: string | null;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }) {
   return (
     <div className="space-y-8">
-      <OnChainBalancesSection portfolio={portfolio} portfolioLoading={portfolioLoading} walletAddress={walletAddress} />
+      <OnChainBalancesSection portfolio={portfolio} portfolioLoading={portfolioLoading} walletAddress={walletAddress} onRefresh={onRefresh} refreshing={refreshing} />
 
       {holdings.length > 0 && (
         <div>
