@@ -180,6 +180,18 @@ function SuccessScreen({ submissionId, emailQueued }: { submissionId: string; em
             </div>
           ))}
         </div>
+        {/* Cross-ecosystem CTAs — keep participant in the ecosystem while waiting */}
+        <div style={{ background: C.goldBg, border: `1px solid ${C.gold}40`, borderLeft: `3px solid ${C.gold}`, padding: '16px 20px', marginBottom: 28 }}>
+          <p style={{ fontFamily: mono, fontSize: 9, letterSpacing: '0.16em', color: C.gold, textTransform: 'uppercase', margin: '0 0 8px' }}>WHILE YOU WAIT — GET READY</p>
+          <p style={{ fontFamily: body, fontSize: 13, color: C.text, margin: '0 0 14px', lineHeight: 1.6 }}>
+            Approval takes up to 48 hours. In the meantime you can acquire AXUSD — the stablecoin used for the Assisted Mint path. Once verified, your wallet will be ready to convert AXUSD to AXAU immediately.
+          </p>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <a href="/axusd-3643" style={{ display: 'inline-block', padding: '10px 20px', background: C.navy, color: '#fff', fontFamily: mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>GET AXUSD →</a>
+            <a href="/axau-buy" style={{ display: 'inline-block', padding: '10px 20px', border: `1px solid ${C.border}`, color: C.navy, fontFamily: mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', background: C.bg }}>VIEW AXAU MINT TERMINAL</a>
+          </div>
+        </div>
+
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <a href="/axau" style={{ display: 'inline-block', padding: '12px 28px', background: C.navy, color: '#fff', fontFamily: mono, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>VIEW AXAU PAGE →</a>
           <a href="/" style={{ display: 'inline-block', padding: '12px 28px', border: `1px solid ${C.border}`, color: C.navy, fontFamily: mono, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', background: C.bg }}>GO TO DASHBOARD</a>
@@ -205,11 +217,21 @@ function FullScreen() {
 /* ─── ALREADY SUBMITTED ──────────────────────────────────── */
 function AlreadySubmittedScreen() {
   return (
-    <div style={{ border: `1px solid ${C.border}`, padding: '48px 40px', textAlign: 'center' }}>
+    <div style={{ border: `1px solid ${C.border}`, borderTop: `3px solid ${C.navy}`, padding: '40px' }}>
       <h2 style={{ fontFamily: serif, fontSize: 30, fontWeight: 700, color: C.navy, margin: '0 0 12px' }}>Application on File</h2>
-      <p style={{ fontFamily: body, fontSize: 15, color: C.muted, maxWidth: 420, margin: '0 auto 32px', lineHeight: 1.75 }}>
-        This wallet already has an active AXAU early access application on file. You will be notified by email once your wallet is activated.
+      <p style={{ fontFamily: body, fontSize: 15, color: C.muted, maxWidth: 500, margin: '0 0 24px', lineHeight: 1.75 }}>
+        This wallet already has an active AXAU early access application on file. You will be notified by email once your wallet is activated — typically within 48 hours of submission.
       </p>
+      <div style={{ background: C.goldBg, border: `1px solid ${C.gold}40`, borderLeft: `3px solid ${C.gold}`, padding: '16px 20px', marginBottom: 24 }}>
+        <p style={{ fontFamily: mono, fontSize: 9, letterSpacing: '0.16em', color: C.gold, textTransform: 'uppercase', margin: '0 0 8px' }}>WHILE YOU WAIT — GET READY</p>
+        <p style={{ fontFamily: body, fontSize: 13, color: C.text, margin: '0 0 12px', lineHeight: 1.6 }}>
+          Once approved, you can immediately use AXUSD to acquire AXAU through the Assisted Mint path. Get AXUSD now so you&apos;re ready the moment your wallet is activated.
+        </p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a href="/axusd-3643" style={{ display: 'inline-block', padding: '9px 18px', background: C.navy, color: '#fff', fontFamily: mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>GET AXUSD →</a>
+          <a href="/axau-buy" style={{ display: 'inline-block', padding: '9px 18px', border: `1px solid ${C.border}`, color: C.navy, fontFamily: mono, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', background: C.bg }}>PREVIEW MINT TERMINAL</a>
+        </div>
+      </div>
       <a href="/axau" style={{ display: 'inline-block', padding: '12px 28px', background: C.navy, color: '#fff', fontFamily: mono, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700 }}>VIEW AXAU PAGE →</a>
     </div>
   );

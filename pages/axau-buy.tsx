@@ -365,22 +365,45 @@ function DirectMintTab({ address, isConnected, state, execute, reset }: DirectMi
         Direct minting requires an identity-verified wallet on Arbitrum One. The quoted AXAU amount is fixed at time of execution and may differ from the displayed quote due to price movement. Fees apply — see the coverage ratio on the AXAU page. This interface is non-custodial.
       </p>
 
-      <button
-        type="button"
-        onClick={() => { if (canExecute) execute(paxgInput); }}
-        disabled={!canExecute}
-        style={{ width: '100%', padding: '15px', background: !canExecute ? '#94a3b8' : C.navy, color: '#fff', border: 'none', cursor: !canExecute ? 'not-allowed' : 'pointer', fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700 }}
-      >
-        {busy
-          ? (state.phase === 'approving' ? 'APPROVING PAXG...' : 'MINTING ON-CHAIN...')
-          : !isConnected
-          ? 'CONNECT WALLET TO MINT'
-          : identityStatus === 'loading'
-          ? 'CHECKING IDENTITY...'
-          : !identityVerified && address
-          ? 'IDENTITY VERIFICATION REQUIRED →'
-          : `MINT ${quote ? `${quote.axauOutFormatted} AXAU` : 'AXAU'} WITH PAXG →`}
-      </button>
+      {/* PAXG acquisition guide — shown when no PAXG balance */}
+      {isConnected && identityVerified && paxgBalance !== null && parseFloat(paxgBalance) === 0 && (
+        <div style={{ padding: '12px 16px', background: C.bgAlt, border: `1px solid ${C.border}`, marginBottom: 16 }}>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 6px' }}>No PAXG in wallet</p>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: C.text, margin: '0 0 8px', lineHeight: 1.6 }}>
+            PAXG (Paxos Gold) is required for direct mint. Each PAXG represents 1 troy oz of allocated gold. You can acquire PAXG on Camelot DEX on Arbitrum, or use the <strong>Assisted Mint</strong> tab to buy AXAU using AXUSD instead — no PAXG required.
+          </p>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <a href="https://app.camelot.exchange/?token2=0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429" target="_blank" rel="noopener noreferrer" style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.navy, textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: `1px solid ${C.navy}` }}>Get PAXG on Camelot ↗</a>
+            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.muted }}>or</span>
+            <button type="button" onClick={() => { const el = document.querySelector('[data-tab="assisted-mint"]') as HTMLButtonElement | null; if (el) el.click(); }} style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, background: 'none', border: 'none', padding: 0, cursor: 'pointer', letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: `1px solid ${C.gold}` }}>
+              Use Assisted Mint instead →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mint button — navigates to early access if unverified */}
+      {!identityVerified && address ? (
+        <a
+          href="/axau-early-access"
+          style={{ display: 'block', width: '100%', padding: '15px', background: C.gold, color: '#fff', textAlign: 'center', fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700, boxSizing: 'border-box' }}
+        >
+          {identityStatus === 'loading' ? 'CHECKING IDENTITY...' : 'APPLY FOR IDENTITY CREDENTIAL →'}
+        </a>
+      ) : (
+        <button
+          type="button"
+          onClick={() => { if (canExecute) execute(paxgInput); }}
+          disabled={!canExecute}
+          style={{ width: '100%', padding: '15px', background: !canExecute ? '#94a3b8' : C.navy, color: '#fff', border: 'none', cursor: !canExecute ? 'not-allowed' : 'pointer', fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700 }}
+        >
+          {busy
+            ? (state.phase === 'approving' ? 'APPROVING PAXG...' : 'MINTING ON-CHAIN...')
+            : !isConnected
+            ? 'CONNECT WALLET TO MINT'
+            : `MINT ${quote ? `${quote.axauOutFormatted} AXAU` : 'AXAU'} WITH PAXG →`}
+        </button>
+      )}
     </div>
   );
 }
@@ -841,7 +864,24 @@ function AssistedMintTab({ address, isConnected }: { address: string | null; isC
 export default function AxauBuyPage() {
   const { address, isConnected } = useAccount();
   const { data: walletClient }   = useWalletClient();
-  const [activeTab, setActiveTab] = useState<ActiveTab>('direct-mint');
+  const [identityVerified, setIdentityVerified] = useState<boolean | null>(null);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('assisted-mint');
+
+  useEffect(() => {
+    if (!address) { setIdentityVerified(null); return; }
+    let cancelled = false;
+    fetch(`/api/erc3643/identity/check?wallet=${address}`)
+      .then(r => r.json())
+      .then(d => {
+        if (!cancelled) {
+          const verified = d.verified === true;
+          setIdentityVerified(verified);
+          if (verified) setActiveTab('direct-mint');
+        }
+      })
+      .catch(() => { if (!cancelled) setIdentityVerified(null); });
+    return () => { cancelled = true; };
+  }, [address]);
 
   const getSigner = useCallback(async () => {
     if (!walletClient) throw new Error('Wallet not connected. Please connect your wallet first.');
@@ -856,9 +896,9 @@ export default function AxauBuyPage() {
   const anyBusy    = directBusy || redeemBusy;
 
   const tabs: { id: ActiveTab; label: string }[] = [
+    { id: 'assisted-mint', label: 'Assisted Mint (AXUSD)' },
     { id: 'direct-mint',   label: 'Direct Mint (PAXG)' },
     { id: 'redeem',        label: 'Redeem AXAU' },
-    { id: 'assisted-mint', label: 'Assisted Mint (AXUSD)' },
   ];
 
   return (
@@ -911,6 +951,7 @@ export default function AxauBuyPage() {
               <button
                 key={tab.id}
                 type="button"
+                data-tab={tab.id}
                 onClick={() => { if (!disabled) setActiveTab(tab.id); }}
                 disabled={disabled}
                 style={{
@@ -932,6 +973,21 @@ export default function AxauBuyPage() {
             );
           })}
         </div>
+
+        {/* Identity gate recovery banner — shown only when connected but unverified */}
+        {isConnected && identityVerified === false && (
+          <div style={{ padding: '14px 18px', background: C.goldBg, border: `1px solid ${C.gold}60`, borderLeft: `4px solid ${C.gold}`, marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 4px' }}>Identity Credential Required</p>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.text, margin: 0, lineHeight: 1.55 }}>
+                Your wallet is not yet identity-verified. All three paths require an on-chain ERC-3643 credential. Apply for the founding cohort — typically approved within 48 hours.
+              </p>
+            </div>
+            <a href="/axau-early-access" style={{ display: 'inline-block', padding: '10px 20px', background: C.navy, color: '#fff', fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700, flexShrink: 0 }}>
+              APPLY FOR ACCESS →
+            </a>
+          </div>
+        )}
 
         {anyBusy && (
           <div style={{ padding: '10px 14px', background: C.amberBg, border: '1px solid #fed7aa', marginBottom: 20 }}>

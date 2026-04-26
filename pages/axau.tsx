@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
+import { useAccount } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
 import { CollateralClassificationPanel } from '../components/disclosure/CollateralClassificationPanel';
 import { ChevronDown } from 'lucide-react';
@@ -29,11 +30,14 @@ const C = {
 // ─── Hero ────────────────────────────────────────────────────────────────────
 
 function Hero() {
+  const { address, isConnected }      = useAccount();
   const [xauPrice, setXauPrice]       = useState<string | null>(null);
   const [coveragePct, setCoveragePct] = useState<string | null>(null);
   const [coverageBps, setCoverageBps] = useState<number | null>(null);
   const [navPerToken, setNavPerToken] = useState<string | null>(null);
   const [totalSupply, setTotalSupply] = useState<string | null>(null);
+  const [slots, setSlots]             = useState<{ remaining: number; approved: number; cap: number; isFull: boolean } | null>(null);
+  const [identityVerified, setIdentityVerified] = useState<boolean | null>(null);
 
   useEffect(() => {
     function fetchNav() {
@@ -52,6 +56,23 @@ function Hero() {
     const id = setInterval(fetchNav, 60_000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    fetch('/api/axau/access-slots')
+      .then(r => r.json())
+      .then(d => setSlots(d))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!address) { setIdentityVerified(null); return; }
+    let cancelled = false;
+    fetch(`/api/erc3643/identity/check?wallet=${address}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setIdentityVerified(d.verified === true); })
+      .catch(() => { if (!cancelled) setIdentityVerified(null); });
+    return () => { cancelled = true; };
+  }, [address]);
 
   return (
     <section style={{ background: C.bgAlt, borderBottom: `1px solid ${C.border}`, padding: '0 0 0 0', overflow: 'hidden' }}>
@@ -112,24 +133,81 @@ function Hero() {
             <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color: C.navy, fontWeight: 700, margin: 0 }}>AXUSD → AXAU · Ops-Mediated · ~1 Business Day</p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <a href="/axau-buy" style={{
-            display: 'inline-block', padding: '12px 28px',
-            background: C.navy, color: '#fff',
-            fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
-            textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700,
-          }}>
-            MINT OR REDEEM AXAU →
-          </a>
-          <a href="/axau-early-access" style={{
-            display: 'inline-block', padding: '12px 28px',
-            border: `1px solid ${C.border}`, color: C.navy,
-            fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
-            textTransform: 'uppercase', textDecoration: 'none', background: C.bg,
-          }}>
-            APPLY FOR CREDENTIAL ACCESS
-          </a>
-        </div>
+
+        {/* Slot urgency strip — always visible when data loaded */}
+        {slots && !slots.isFull && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: C.bgGold, border: `1px solid ${C.gold}60`, borderLeft: `3px solid ${slots.remaining <= 20 ? '#b45309' : C.gold}`, padding: '8px 16px', marginBottom: 20 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#16a34a', flexShrink: 0, display: 'inline-block' }} />
+            <span style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: slots.remaining <= 20 ? '#b45309' : C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700 }}>
+              {slots.remaining <= 10
+                ? `Only ${slots.remaining} founding spot${slots.remaining === 1 ? '' : 's'} remaining`
+                : slots.remaining <= 20
+                ? `${slots.remaining} of 100 founding spots remaining — filling fast`
+                : `${slots.approved} of 100 founding spots claimed`}
+            </span>
+            <a href="/axau-early-access" style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.navy, textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: `1px solid ${C.navy}` }}>Apply →</a>
+          </div>
+        )}
+
+        {/* Wallet-aware CTAs — 3 states */}
+        {isConnected && identityVerified === true ? (
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <a href="/axau-buy" style={{
+              display: 'inline-block', padding: '12px 28px',
+              background: C.navy, color: '#fff',
+              fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
+              textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700,
+            }}>
+              MINT OR REDEEM AXAU →
+            </a>
+            <a href="/axau-buy" style={{
+              display: 'inline-block', padding: '12px 28px',
+              border: `1px solid ${C.border}`, color: C.navy,
+              fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
+              textTransform: 'uppercase', textDecoration: 'none', background: C.bg,
+            }}>
+              REDEEM AXAU
+            </a>
+          </div>
+        ) : isConnected && identityVerified === false ? (
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <a href="/axau-early-access" style={{
+              display: 'inline-block', padding: '12px 28px',
+              background: C.gold, color: '#fff',
+              fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
+              textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700,
+            }}>
+              APPLY FOR EARLY ACCESS →{slots && !slots.isFull ? ` (${slots.remaining} SPOTS LEFT)` : ''}
+            </a>
+            <a href="/axau-buy#assisted-mint" style={{
+              display: 'inline-block', padding: '12px 28px',
+              border: `1px solid ${C.border}`, color: C.navy,
+              fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
+              textTransform: 'uppercase', textDecoration: 'none', background: C.bg,
+            }}>
+              SUBMIT ASSISTED REQUEST
+            </a>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <a href="/axau-buy" style={{
+              display: 'inline-block', padding: '12px 28px',
+              background: C.navy, color: '#fff',
+              fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
+              textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700,
+            }}>
+              MINT OR REDEEM AXAU →
+            </a>
+            <a href="/axau-early-access" style={{
+              display: 'inline-block', padding: '12px 28px',
+              border: `1px solid ${C.border}`, color: C.navy,
+              fontFamily: '"Courier New", monospace', fontSize: 12, letterSpacing: '0.12em',
+              textTransform: 'uppercase', textDecoration: 'none', background: C.bg,
+            }}>
+              APPLY FOR CREDENTIAL ACCESS
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Token strip */}
