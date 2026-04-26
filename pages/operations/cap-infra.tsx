@@ -1103,6 +1103,33 @@ export function AuditSearchSection({ operatorKey }: { operatorKey: string }) {
             {csvLoading ? 'Exporting…' : 'Download CSV'}
           </button>
         </div>
+
+        {/*
+          Quick-filter row. Each pill pre-fills the Event Type filter
+          to a known canonical event-type string so operators don't
+          need to memorise the exact dotted name. The on-call drills
+          pill surfaces every successful POST to
+          `/api/capinfra/risk/integrity/test-page` (audit row written
+          by that endpoint, see task #301).
+        */}
+        <div
+          className="sm:col-span-2 lg:col-span-3 flex items-center gap-2 flex-wrap"
+          data-testid="audit-quick-filters"
+        >
+          <span className="font-dl-mono text-[10px] uppercase tracking-wider text-dl-gray">
+            Quick filters:
+          </span>
+          <button
+            type="button"
+            onClick={() => update('eventType', 'risk.integrity.test_page_sent')}
+            disabled={loading || csvLoading}
+            data-testid="audit-quick-filter-test-page"
+            title="Show on-call pager drills (risk.integrity.test_page_sent)"
+            className="font-dl-mono text-[11px] uppercase tracking-wider border border-dl-border px-3 py-1 hover:bg-dl-bg-alt disabled:opacity-50"
+          >
+            On-call drills
+          </button>
+        </div>
       </form>
 
       {error && (

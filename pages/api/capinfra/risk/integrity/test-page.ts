@@ -22,6 +22,13 @@
  *   The pager never throws — channel failures come back inside the
  *   result envelope so the operator console can show "email OK,
  *   Discord failed" rather than a flat 500.
+ *
+ * Audit trail: every successful POST also writes a single
+ * `risk.integrity.test_page_sent` audit event (best-effort) capturing
+ * the resolved actor, correlationId, channelsPaged and channel error
+ * strings — so on-call drills are searchable in the cap-infra audit
+ * search UI even when the synthetic email/Discord message is silently
+ * lost in transit.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -35,10 +42,12 @@ import {
   readOperatorCookie,
 } from '../../../../../lib/capinfra/operatorAuth';
 import { pageOnCallForIntegrityFailure } from '../../../../../lib/capinfra/notifications/integrityPager';
+import { emitAuditEvent } from '../../../../../lib/capinfra/audit';
 
 export const SYNTHETIC_TEST_PAGE_ASSET_ID = 'TEST-PAGE-SYNTHETIC';
 export const SYNTHETIC_TEST_PAGE_SYMBOL = 'TEST-PAGE';
 export const SYNTHETIC_TEST_PAGE_KIND = 'test_page';
+export const TEST_PAGE_AUDIT_EVENT_TYPE = 'risk.integrity.test_page_sent';
 
 function buildSyntheticPayload(actor: string) {
   const ts = new Date().toISOString();
@@ -86,10 +95,30 @@ export default async function handler(
     actor = getActor(req);
   }
 
+  const payload = buildSyntheticPayload(actor);
   try {
-    const result = await pageOnCallForIntegrityFailure(
-      buildSyntheticPayload(actor),
-    );
+    const result = await pageOnCallForIntegrityFailure(payload);
+    // Best-effort audit row so on-call drills are searchable. The pager
+    // has already fanned the synthetic message out — losing one audit
+    // row must not make the operator console think the page failed, so
+    // we use the soft-guarantee writer (logs and swallows). Operators
+    // can find these rows in the cap-infra audit search by filtering
+    // on Event Type = `risk.integrity.test_page_sent`.
+    await emitAuditEvent({
+      eventType: TEST_PAGE_AUDIT_EVENT_TYPE,
+      aggregateType: 'asset',
+      aggregateId: SYNTHETIC_TEST_PAGE_ASSET_ID,
+      assetId: SYNTHETIC_TEST_PAGE_ASSET_ID,
+      actor,
+      correlationId: payload.correlationId,
+      payloadJson: {
+        kind: SYNTHETIC_TEST_PAGE_KIND,
+        testPage: true,
+        channelsPaged: result.channelsPaged,
+        errors: result.errors,
+        skipped: result.skipped,
+      },
+    });
     return res.status(200).json({ result });
   } catch (err) {
     // Defense-in-depth: the pager already swallows channel errors, but

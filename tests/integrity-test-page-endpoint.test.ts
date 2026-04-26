@@ -27,14 +27,22 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const mockPager = vi.fn();
+const mockEmitAuditEvent = vi.fn();
 
 vi.mock('../lib/capinfra/notifications/integrityPager', () => ({
   pageOnCallForIntegrityFailure: (...args: unknown[]) => mockPager(...args),
 }));
 
-const { default: testPageHandler, SYNTHETIC_TEST_PAGE_ASSET_ID } = await import(
-  '../pages/api/capinfra/risk/integrity/test-page'
-);
+vi.mock('../lib/capinfra/audit', () => ({
+  emitAuditEvent: (...args: unknown[]) => mockEmitAuditEvent(...args),
+}));
+
+const {
+  default: testPageHandler,
+  SYNTHETIC_TEST_PAGE_ASSET_ID,
+  SYNTHETIC_TEST_PAGE_KIND,
+  TEST_PAGE_AUDIT_EVENT_TYPE,
+} = await import('../pages/api/capinfra/risk/integrity/test-page');
 
 interface MockReqOptions {
   method?: string;
@@ -106,6 +114,7 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
       errors: [],
       skipped: false,
     });
+    mockEmitAuditEvent.mockResolvedValue('ae_test');
   });
 
   afterEach(() => {
@@ -267,5 +276,160 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     );
     expect(statusCode()).toBe(500);
     expect(body()).toMatchObject({ error: 'INTERNAL', message: 'boom' });
+  });
+
+  it('writes a single audit event with the resolved actor, channels paged, and errors', async () => {
+    mockPager.mockResolvedValueOnce({
+      channelsPaged: ['email', 'discord'],
+      errors: [],
+      skipped: false,
+    });
+    const { res, statusCode } = makeRes();
+    await testPageHandler(
+      makeReq({
+        cookies: { cap_operator_key: OPERATOR_KEY },
+        headers: { 'x-operator': 'alice' },
+      }),
+      res,
+    );
+
+    expect(statusCode()).toBe(200);
+    expect(mockEmitAuditEvent).toHaveBeenCalledTimes(1);
+    const audit = mockEmitAuditEvent.mock.calls[0][0] as Record<string, unknown>;
+    expect(audit.eventType).toBe(TEST_PAGE_AUDIT_EVENT_TYPE);
+    expect(audit.eventType).toBe('risk.integrity.test_page_sent');
+    expect(audit.aggregateType).toBe('asset');
+    expect(audit.aggregateId).toBe(SYNTHETIC_TEST_PAGE_ASSET_ID);
+    expect(audit.assetId).toBe(SYNTHETIC_TEST_PAGE_ASSET_ID);
+    expect(typeof audit.actor).toBe('string');
+    expect(String(audit.actor)).toContain('alice');
+    expect(typeof audit.correlationId).toBe('string');
+    expect(String(audit.correlationId)).toMatch(/^test_page_/);
+
+    const payloadJson = audit.payloadJson as Record<string, unknown>;
+    expect(payloadJson.kind).toBe(SYNTHETIC_TEST_PAGE_KIND);
+    expect(payloadJson.testPage).toBe(true);
+    expect(payloadJson.channelsPaged).toEqual(['email', 'discord']);
+    expect(payloadJson.errors).toEqual([]);
+    expect(payloadJson.skipped).toBe(false);
+  });
+
+  it('records channel error strings in the audit payload (partial-failure)', async () => {
+    mockPager.mockResolvedValueOnce({
+      channelsPaged: ['email'],
+      errors: ['discord: HTTP 429'],
+      skipped: false,
+    });
+    const { res, statusCode } = makeRes();
+    await testPageHandler(
+      makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+      res,
+    );
+
+    expect(statusCode()).toBe(200);
+    expect(mockEmitAuditEvent).toHaveBeenCalledTimes(1);
+    const audit = mockEmitAuditEvent.mock.calls[0][0] as {
+      payloadJson: { channelsPaged: string[]; errors: string[]; skipped: boolean };
+    };
+    expect(audit.payloadJson.channelsPaged).toEqual(['email']);
+    expect(audit.payloadJson.errors).toEqual(['discord: HTTP 429']);
+    expect(audit.payloadJson.skipped).toBe(false);
+  });
+
+  it('records skipped=true in the audit payload when no channels are configured', async () => {
+    mockPager.mockResolvedValueOnce({
+      channelsPaged: [],
+      errors: [],
+      skipped: true,
+    });
+    const { res, statusCode } = makeRes();
+    await testPageHandler(
+      makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+      res,
+    );
+
+    expect(statusCode()).toBe(200);
+    expect(mockEmitAuditEvent).toHaveBeenCalledTimes(1);
+    const audit = mockEmitAuditEvent.mock.calls[0][0] as {
+      payloadJson: { channelsPaged: string[]; errors: string[]; skipped: boolean };
+    };
+    expect(audit.payloadJson.channelsPaged).toEqual([]);
+    expect(audit.payloadJson.skipped).toBe(true);
+  });
+
+  it('stamps the header-auth admin actor on the audit event', async () => {
+    const { res, statusCode } = makeRes();
+    await testPageHandler(
+      makeReq({ headers: { 'x-admin-key': RISK_KEY } }),
+      res,
+    );
+
+    expect(statusCode()).toBe(200);
+    expect(mockEmitAuditEvent).toHaveBeenCalledTimes(1);
+    const audit = mockEmitAuditEvent.mock.calls[0][0] as { actor: string };
+    expect(typeof audit.actor).toBe('string');
+    expect(audit.actor.length).toBeGreaterThan(0);
+  });
+
+  it('reuses the synthetic correlation id so the audit row joins to the pager call', async () => {
+    const { res } = makeRes();
+    await testPageHandler(
+      makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+      res,
+    );
+
+    const pagerPayload = mockPager.mock.calls[0][0] as { correlationId: string };
+    const audit = mockEmitAuditEvent.mock.calls[0][0] as { correlationId: string };
+    expect(audit.correlationId).toBe(pagerPayload.correlationId);
+  });
+
+  it('does not write an audit event when the pager throws unexpectedly', async () => {
+    mockPager.mockRejectedValueOnce(new Error('boom'));
+    const { res, statusCode } = makeRes();
+    await testPageHandler(
+      makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+      res,
+    );
+
+    expect(statusCode()).toBe(500);
+    expect(mockEmitAuditEvent).not.toHaveBeenCalled();
+  });
+
+  it('does not write an audit event for non-POST methods', async () => {
+    const { res, statusCode } = makeRes();
+    await testPageHandler(
+      makeReq({
+        method: 'GET',
+        cookies: { cap_operator_key: OPERATOR_KEY },
+      }),
+      res,
+    );
+
+    expect(statusCode()).toBe(405);
+    expect(mockEmitAuditEvent).not.toHaveBeenCalled();
+  });
+
+  it('does not write an audit event when auth fails', async () => {
+    const { res, statusCode } = makeRes();
+    await testPageHandler(makeReq(), res);
+
+    expect(statusCode()).toBe(403);
+    expect(mockEmitAuditEvent).not.toHaveBeenCalled();
+  });
+
+  it('still returns 200 with the pager envelope if the audit write fails', async () => {
+    // emitAuditEvent is best-effort by contract — losing one audit row
+    // must not make the operator console think the page failed.
+    mockEmitAuditEvent.mockResolvedValueOnce(null);
+    const { res, statusCode, body } = makeRes();
+    await testPageHandler(
+      makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+      res,
+    );
+
+    expect(statusCode()).toBe(200);
+    expect(body()).toEqual({
+      result: { channelsPaged: ['email'], errors: [], skipped: false },
+    });
   });
 });
