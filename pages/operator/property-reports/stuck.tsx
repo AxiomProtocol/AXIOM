@@ -119,6 +119,13 @@ export default function StuckPropertyPaymentsPage({
           Rows older than {maxPendingAgeHours} hours with no matching on-chain
           transfer are auto-expired.
         </p>
+        <p className="text-xs text-dl-muted font-mono mb-4">
+          Cadence, env-var tunables (<code>STUCK_PAYMENT_*</code>) and the
+          scheduler JSON-summary fields are documented in the operator
+          scheduler runbook:{' '}
+          <code>docs/operator/scheduler-runbook.md</code>{' '}
+          (section <em>resolve-stuck-property-payments</em>).
+        </p>
 
         {loadError && (
           <div className="border border-dl-gold bg-dl-bg-alt p-4 mb-4 font-mono text-xs">
