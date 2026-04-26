@@ -79,6 +79,8 @@ export default function InvestorPortal() {
   const [data, setData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<Tab>('holdings');
   const [nexusParticipant, setNexusParticipant] = useState<Record<string, any> | null>(null);
+  const [portfolio, setPortfolio] = useState<any | null>(null);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
 
   const loadPortal = useCallback(async () => {
     setLoading(true);
@@ -110,14 +112,30 @@ export default function InvestorPortal() {
     }
   }, []);
 
+  const loadPortfolio = useCallback(async (wallet: string) => {
+    setPortfolioLoading(true);
+    try {
+      const res = await fetch(`/api/alchemy/wallet-portfolio?wallet=${encodeURIComponent(wallet)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) setPortfolio(json.data);
+      }
+    } catch {
+      // Non-fatal — on-chain panel degrades gracefully
+    } finally {
+      setPortfolioLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (isConnected && address) {
       loadPortal();
       loadNexusParticipant(address);
+      loadPortfolio(address);
     } else {
       setLoading(false);
     }
-  }, [isConnected, address, loadPortal, loadNexusParticipant]);
+  }, [isConnected, address, loadPortal, loadNexusParticipant, loadPortfolio]);
 
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: 'holdings', label: 'My Holdings', count: data?.holdings?.length },
@@ -273,6 +291,9 @@ export default function InvestorPortal() {
               holdings={data.holdings}
               subscriptions={data.subscriptions}
               documents={data.documents}
+              portfolio={portfolio}
+              portfolioLoading={portfolioLoading}
+              walletAddress={address ?? null}
             />
           )}
           {activeTab === 'capitalCalls' && <CapitalCallsTab capitalCalls={data.capitalCalls} nexusParticipant={nexusParticipant} />}
@@ -283,9 +304,157 @@ export default function InvestorPortal() {
   );
 }
 
-function HoldingsTab({ holdings, subscriptions, documents }: { holdings: any[]; subscriptions: any[]; documents: any[] }) {
+const TOKEN_META: Record<string, { label: string; axiom: boolean; color: string }> = {
+  AXAU:  { label: 'Axiom Gold Unit',   axiom: true,  color: 'text-yellow-700' },
+  AXUSD: { label: 'Axiom USD',         axiom: true,  color: 'text-emerald-700' },
+  AXM:   { label: 'Axiom Governance',  axiom: true,  color: 'text-dl-navy' },
+  PAXG:  { label: 'PAX Gold',          axiom: false, color: 'text-yellow-600' },
+  USDC:  { label: 'USD Coin',          axiom: false, color: 'text-blue-700' },
+  WETH:  { label: 'Wrapped ETH',       axiom: false, color: 'text-dl-gray' },
+};
+
+function fmtToken(formatted: string, decimals = 6): string {
+  const n = parseFloat(formatted);
+  if (isNaN(n)) return '0.000000';
+  return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+function OnChainBalancesSection({ portfolio, portfolioLoading, walletAddress }: {
+  portfolio: any | null;
+  portfolioLoading: boolean;
+  walletAddress: string | null;
+}) {
+  const arbscanBase = 'https://arbiscan.io';
+
+  if (portfolioLoading) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-3 border-b border-dl-border pb-2">
+          <h2 className="font-dl-serif text-lg text-dl-navy">On-Chain Wallet Balances</h2>
+          <span className="font-dl-mono text-xs text-dl-muted">Arbitrum One · fetching...</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {[...Array(7)].map((_, i) => (
+            <div key={i} className="border border-dl-border p-3 animate-pulse">
+              <div className="h-3 bg-gray-200 mb-2 w-12" />
+              <div className="h-5 bg-gray-200 w-24" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!portfolio) return null;
+
+  const tokens = portfolio.tokens as Record<string, { symbol: string; address: string; formatted: string; hasBalance: boolean }>;
+  const eth = portfolio.eth as { symbol: string; formatted: string; hasBalance: boolean };
+  const fetchedAt = new Date(portfolio.fetchedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  const allEntries: Array<{ symbol: string; formatted: string; hasBalance: boolean; address?: string; isEth?: boolean }> = [
+    { symbol: 'ETH', formatted: eth.formatted, hasBalance: eth.hasBalance, isEth: true },
+    ...Object.values(tokens),
+  ];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3 border-b border-dl-border pb-2">
+        <h2 className="font-dl-serif text-lg text-dl-navy">On-Chain Wallet Balances</h2>
+        <div className="text-right">
+          <p className="font-dl-mono text-xs text-dl-muted">Arbitrum One · live</p>
+          <p className="font-dl-mono text-[10px] text-dl-muted">as of {fetchedAt}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">
+        {allEntries.map(entry => {
+          const meta = TOKEN_META[entry.symbol];
+          const isAxiom = meta?.axiom ?? false;
+          const labelColor = meta?.color ?? 'text-dl-gray';
+          const decimalsShown = entry.symbol === 'USDC' ? 2 : entry.symbol === 'ETH' ? 6 : 4;
+
+          return (
+            <div
+              key={entry.symbol}
+              className={`border p-3 ${isAxiom ? 'border-dl-navy bg-dl-bg-alt' : 'border-dl-border'} ${!entry.hasBalance ? 'opacity-50' : ''}`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className={`font-dl-mono text-xs font-semibold ${isAxiom ? 'text-dl-navy' : 'text-dl-gray'}`}>
+                  {entry.symbol}
+                </span>
+                {isAxiom && (
+                  <span className="text-[9px] font-dl-mono border border-dl-navy text-dl-navy px-1 py-0.5 leading-none">AXM</span>
+                )}
+              </div>
+              <p className={`font-dl-mono text-sm ${entry.hasBalance ? labelColor : 'text-dl-muted'}`}>
+                {fmtToken(entry.formatted, decimalsShown)}
+              </p>
+              {meta?.label && (
+                <p className="font-dl-mono text-[9px] text-dl-muted mt-1 truncate">{meta.label}</p>
+              )}
+              {entry.address && (
+                <a
+                  href={`${arbscanBase}/token/${entry.address}?a=${walletAddress ?? ''}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-dl-mono text-[9px] text-dl-muted hover:text-dl-navy mt-0.5 block truncate"
+                >
+                  {entry.address.slice(0, 8)}...{entry.address.slice(-6)}
+                </a>
+              )}
+              {entry.isEth && walletAddress && (
+                <a
+                  href={`${arbscanBase}/address/${walletAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-dl-mono text-[9px] text-dl-muted hover:text-dl-navy mt-0.5 block"
+                >
+                  View on Arbiscan
+                </a>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="border border-dl-border bg-dl-bg-alt px-4 py-2 flex flex-wrap items-center gap-4">
+        {(['AXAU', 'AXUSD', 'AXM'] as const).map(sym => {
+          const t = tokens[sym];
+          const hasAny = t?.hasBalance;
+          return (
+            <div key={sym} className="flex items-center gap-2">
+              <span className={`w-2 h-2 inline-block ${hasAny ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <span className="font-dl-mono text-xs text-dl-gray">{sym} {hasAny ? 'held' : 'none'}</span>
+            </div>
+          );
+        })}
+        <span className="font-dl-mono text-[10px] text-dl-muted ml-auto">
+          Balances are on-chain reads · not custody
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function HoldingsTab({
+  holdings,
+  subscriptions,
+  documents,
+  portfolio,
+  portfolioLoading,
+  walletAddress,
+}: {
+  holdings: any[];
+  subscriptions: any[];
+  documents: any[];
+  portfolio: any | null;
+  portfolioLoading: boolean;
+  walletAddress: string | null;
+}) {
   return (
     <div className="space-y-8">
+      <OnChainBalancesSection portfolio={portfolio} portfolioLoading={portfolioLoading} walletAddress={walletAddress} />
+
       {holdings.length > 0 && (
         <div>
           <h2 className="font-dl-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-2">Capital Table Positions</h2>

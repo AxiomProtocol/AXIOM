@@ -6,6 +6,7 @@ const ALCHEMY_URL = `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
 const PSM          = '0xDB669bb6cA07215C5B055B62072AAED2F821E53F';
 const AXUSD        = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
 const AXM          = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D';
+const AXAU         = '0xbcCA4D937d427829914498423aE6E04C846dB0Bb';
 const EVK_AXUSD    = '0xacdA87801f6409bB5157BA78aF1BD9631d6609B2';
 const EVK_AXM      = '0x8e28ffa89d168599156004db4f4d12c2af7c250e';
 const EULER_USDC   = '0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8';
@@ -57,6 +58,10 @@ function label(tx: AlchemyTransfer): string {
 
   if (from === ZERO_ADDR.toLowerCase() && asset === 'AXUSD') return 'AXUSD Mint';
   if (to   === ZERO_ADDR.toLowerCase() && asset === 'AXUSD') return 'AXUSD Burn';
+
+  if (from === ZERO_ADDR.toLowerCase() && asset === 'AXAU')  return 'AXAU Mint';
+  if (to   === ZERO_ADDR.toLowerCase() && asset === 'AXAU')  return 'AXAU Burn';
+  if (asset === 'AXAU')  return 'AXAU Transfer';
 
   if (asset === 'AXUSD') return 'AXUSD Transfer';
   if (asset === 'AXM')   return 'AXM Transfer';
@@ -134,6 +139,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       toEulerAxm,
       fromEulerAxm,
       axusdMints,
+      axauMints,
+      axauTransfers,
     ] = await Promise.all([
       fetchTo(PSM),
       fetchFrom(PSM),
@@ -146,6 +153,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fetchTo(EULER_AXM),
       fetchFrom(EULER_AXM),
       fetchTo(AXUSD, [AXUSD]),
+      fetchTo(AXAU, [AXAU]),
+      fetchFrom(AXAU, [AXAU]),
     ]);
 
     const merged: AlchemyTransfer[] = [
@@ -155,6 +164,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ...toEulerUsdc, ...fromEulerUsdc,
       ...toEulerAxm, ...fromEulerAxm,
       ...axusdMints,
+      ...axauMints, ...axauTransfers,
     ];
 
     const seen = new Set<string>();
