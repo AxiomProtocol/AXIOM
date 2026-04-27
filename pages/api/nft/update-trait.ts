@@ -3,16 +3,7 @@ import { ethers } from 'ethers';
 import { ensureNFTTables, getNFTToken, upsertNFTToken } from '../../../lib/nft/db';
 import { computeTraits } from '../../../lib/nft/traitEngine';
 
-const FOUNDER_BADGE_ABI = [
-  'function emitMetadataUpdate(uint256 tokenId) external',
-  'function ownerOf(uint256 tokenId) external view returns (address)',
-];
-
-const PARTICIPATION_ABI = [
-  'event MetadataUpdate(uint256 _tokenId)',
-];
-
-const LAND_RECEIPT_ABI = [
+const EMITTER_ABI = [
   'function emitMetadataUpdate(uint256 tokenId) external',
 ];
 
@@ -51,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       contractAddress,
       traitSeed:       effectiveSeed,
       rarityTier:      effectiveTier,
-      rarityScore:     computedTraits.rarityScore,
+      rarityScore:     computedTraits.rarityByte,
       traitsJson:      effectiveTraits,
     });
 
@@ -63,20 +54,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const provider = new ethers.JsonRpcProvider(rpcUrl);
       const signer   = new ethers.Wallet(deployerKey, provider);
 
-      const founderContract      = process.env.NFT_CONTRACT_FOUNDER;
-      const landContract         = process.env.NFT_CONTRACT_LAND;
-      const normalizedContract   = contractAddress.toLowerCase();
+      const founderContract       = process.env.NFT_CONTRACT_FOUNDER;
+      const participationContract = process.env.NFT_CONTRACT_PARTICIPATION;
+      const landContract          = process.env.NFT_CONTRACT_LAND;
+      const normalizedContract    = contractAddress.toLowerCase();
 
-      let nftContract: ethers.Contract | null = null;
+      const isKnownContract =
+        (founderContract      && normalizedContract === founderContract.toLowerCase()) ||
+        (participationContract && normalizedContract === participationContract.toLowerCase()) ||
+        (landContract         && normalizedContract === landContract.toLowerCase());
 
-      if (founderContract && normalizedContract === founderContract.toLowerCase()) {
-        nftContract = new ethers.Contract(founderContract, FOUNDER_BADGE_ABI, signer);
-      } else if (landContract && normalizedContract === landContract.toLowerCase()) {
-        nftContract = new ethers.Contract(landContract, LAND_RECEIPT_ABI, signer);
-      }
-
-      if (nftContract) {
+      if (isKnownContract) {
         try {
+          const nftContract = new ethers.Contract(contractAddress, EMITTER_ABI, signer);
           const tx = await nftContract.emitMetadataUpdate(parseInt(tokenId), { gasLimit: 80_000 });
           const receipt = await tx.wait();
           onChainEmitted = true;
@@ -84,6 +74,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } catch (chainErr) {
           console.warn('[api/nft/update-trait] On-chain MetadataUpdate emission failed:', chainErr);
         }
+      } else {
+        console.warn(`[api/nft/update-trait] Contract ${contractAddress} not found in known NFT contracts — skipping MetadataUpdate`);
       }
     }
 

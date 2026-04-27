@@ -71,12 +71,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const traits = computeTraits(seed);
     const attributes = traitsToAttributes(traits);
 
-    const imageCid   = tokenRow?.image_cid;
+    const imageCid     = tokenRow?.image_cid;
+    const hasImageData = !!tokenRow?.image_data;
     const animationCid = tokenRow?.animation_cid;
 
     const imageUrl = imageCid
       ? `https://w3s.link/ipfs/${imageCid}`
-      : `${SITE_URL}/api/nft/placeholder?tokenId=${tokenIdNum}&rarity=${traits.rarityTier}`;
+      : hasImageData
+        ? `${SITE_URL}/api/nft/image?tokenId=${tokenIdNum}&contractAddress=${encodeURIComponent(contractAddress)}`
+        : `${SITE_URL}/api/nft/animation?tokenId=${tokenIdNum}&contract=${contractAddress}`;
 
     const animationUrl = animationCid
       ? `https://w3s.link/ipfs/${animationCid}`
@@ -90,10 +93,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       external_url:  `${SITE_URL}/nft?token=${tokenIdNum}&contract=${contractAddress}`,
       attributes,
       properties: {
-        rarityTier:    traits.rarityTier,
-        rarityScore:   traits.rarityScore,
+        rarityTier:   traits.rarityTier,
+        rarityByte:   traits.rarityByte,
         collection,
-        contractType:  config.contractType,
+        contractType: config.contractType,
       },
     };
 

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { ensureNFTTables, upsertNFTToken } from '../../../lib/nft/db';
+import { ensureNFTTables, upsertNFTToken, upsertNFTBalance } from '../../../lib/nft/db';
 import { computeSeed, computeTraits } from '../../../lib/nft/traitEngine';
 
 const LAND_RECEIPT_ABI = [
@@ -79,20 +79,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const mintTx = await contract.mint(walletAddress, parcelIdNum, Number(amount), { gasLimit: 200_000 });
     const mintReceipt = await mintTx.wait();
 
-    const seed   = computeSeed(parcelIdNum, contractAddress, Number(deployBlock), walletAddress);
+    const seed   = computeSeed(parcelIdNum, contractAddress, Number(deployBlock));
     const traits = computeTraits(seed);
 
-    await upsertNFTToken({
-      tokenId:         parcelIdNum,
-      contractAddress,
-      contractType:    'ERC1155',
-      ownerAddress:    walletAddress,
-      traitSeed:       seed,
-      rarityTier:      traits.rarityTier,
-      rarityScore:     traits.rarityScore,
-      traitsJson:      { ...traits, propertyAddress: propertyAddress ?? parcelInfo?.propertyAddress },
-      mintedAt:        new Date(),
-    });
+    await Promise.all([
+      upsertNFTToken({
+        tokenId:         parcelIdNum,
+        contractAddress,
+        contractType:    'ERC1155',
+        traitSeed:       seed,
+        rarityTier:      traits.rarityTier,
+        rarityScore:     traits.rarityByte,
+        traitsJson:      { ...traits, propertyAddress: propertyAddress ?? parcelInfo?.propertyAddress },
+        mintedAt:        new Date(),
+      }),
+      upsertNFTBalance({
+        tokenId:      parcelIdNum,
+        contractAddress,
+        holderAddress: walletAddress,
+        balanceDelta:  Number(amount),
+      }),
+    ]);
 
     return res.status(200).json({
       success:          true,

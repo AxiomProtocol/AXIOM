@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { ensureNFTTables, upsertNFTToken, upsertEligibility, getEligibility } from '../../../lib/nft/db';
 import { computeSeed, computeTraits } from '../../../lib/nft/traitEngine';
+import { generateNFTMedia } from '../../../lib/nft/mediaPipeline';
 
 const FOUNDER_BADGE_ABI = [
   'function mint(address to, uint256 tokenId) external',
@@ -92,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const onChainSeed = await contract.traitSeed(nextTokenId);
       seed = onChainSeed as string;
     } catch {
-      seed = computeSeed(nextTokenId, contractAddress, Number(deployBlock), walletAddress);
+      seed = computeSeed(nextTokenId, contractAddress, Number(deployBlock));
     }
     const traits = computeTraits(seed);
 
@@ -103,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ownerAddress:    walletAddress,
       traitSeed:       seed,
       rarityTier:      traits.rarityTier,
-      rarityScore:     traits.rarityScore,
+      rarityScore:     traits.rarityByte,
       traitsJson:      traits,
       mintedAt:        new Date(),
     });
@@ -116,6 +117,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       mintedTokenId:  nextTokenId,
       mintedTxHash:   receipt.hash,
     });
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? `https://${req.headers.host}`;
+    generateNFTMedia({
+      tokenId:         nextTokenId,
+      contractAddress,
+      traits,
+      collectionName:  'Axiom Founder Badge',
+      baseUrl,
+    }).catch(e => console.warn('[mint-badge] media pipeline error:', e?.message));
 
     return res.status(200).json({
       success:    true,

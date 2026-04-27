@@ -1,15 +1,21 @@
-import { createHash } from 'crypto';
+import { ethers } from 'ethers';
 
 // ── Rarity tiers ─────────────────────────────────────────────────────────────
 
 export type RarityTier = 'Legendary' | 'Epic' | 'Rare' | 'Uncommon' | 'Common';
 
-export const RARITY_TIERS: { tier: RarityTier; threshold: number; weight: number }[] = [
-  { tier: 'Legendary', threshold: 99,  weight: 1  },
-  { tier: 'Epic',      threshold: 95,  weight: 4  },
-  { tier: 'Rare',      threshold: 85,  weight: 10 },
-  { tier: 'Uncommon',  threshold: 60,  weight: 25 },
-  { tier: 'Common',    threshold: 0,   weight: 60 },
+// Thresholds are raw byte values (0–255) for correct probability distribution:
+// Legendary: byte 0–2   → 3/256 ≈ 1.17%
+// Epic:      byte 3–12  → 10/256 ≈ 3.9%
+// Rare:      byte 13–38 → 26/256 ≈ 10.2%
+// Uncommon:  byte 39–102 → 64/256 = 25%
+// Common:    byte 103–255 → 153/256 ≈ 59.8%
+export const RARITY_TIERS: { tier: RarityTier; maxByte: number; weight: number }[] = [
+  { tier: 'Legendary', maxByte: 2,   weight: 1  },
+  { tier: 'Epic',      maxByte: 12,  weight: 4  },
+  { tier: 'Rare',      maxByte: 38,  weight: 10 },
+  { tier: 'Uncommon',  maxByte: 102, weight: 25 },
+  { tier: 'Common',    maxByte: 255, weight: 60 },
 ];
 
 // ── Trait category values ─────────────────────────────────────────────────────
@@ -25,7 +31,7 @@ const AURAS            = ['Auric Radiance', 'Sapphire Pulse', 'Emerald Current',
 
 export interface NFTTraits {
   rarityTier:    RarityTier;
-  rarityScore:   number;
+  rarityByte:    number;
   genesisTier:   string;
   protocolScore: string;
   assetClass:    string;
@@ -37,12 +43,10 @@ export interface NFTTraits {
 // ── Core engine ───────────────────────────────────────────────────────────────
 
 /**
- * Deterministically compute traits for a token from its seed.
- * On-chain seed: keccak256(abi.encodePacked(tokenId, contractAddress, deployBlock, owner)) — stored in traitSeed mapping.
- * Off-chain seed (this function's input): SHA-256 over colon-delimited inputs — used for metadata generation.
- * Both are deterministic from the same inputs, but use different hash algorithms.
- * The authoritative seed is the on-chain keccak256 value; the off-chain seed is the metadata server's parallel derivation.
- * After mint, the server reads the on-chain seed (via traitSeed[tokenId]) and stores it in nft_tokens.trait_seed.
+ * Deterministically compute traits for a token from its keccak256 seed.
+ * Seed is computed via computeSeed() which matches the on-chain formula:
+ *   keccak256(abi.encodePacked(tokenId, contractAddress, deployBlock))
+ * The seed is a 32-byte hex string (0x-prefixed).
  */
 export function computeTraits(seed: string): NFTTraits {
   const buf = Buffer.from(seed.replace(/^0x/, ''), 'hex');
@@ -55,12 +59,12 @@ export function computeTraits(seed: string): NFTTraits {
     return arr[byte(offset) % arr.length];
   }
 
-  const rarityScore = byte(0);
-  const rarityTier = scoreTier(rarityScore);
+  const rarityByte = byte(0);
+  const rarityTier = scoreTier(rarityByte);
 
   return {
     rarityTier,
-    rarityScore,
+    rarityByte,
     genesisTier:   pick(GENESIS_TIERS,   1),
     protocolScore: pick(PROTOCOL_SCORES,  2),
     assetClass:    pick(ASSET_CLASSES,    3),
@@ -70,19 +74,29 @@ export function computeTraits(seed: string): NFTTraits {
   };
 }
 
-export function scoreTier(score: number): RarityTier {
-  for (const { tier, threshold } of RARITY_TIERS) {
-    if (score >= threshold) return tier;
+/**
+ * Map a raw byte (0–255) to a rarity tier.
+ * Distribution: Legendary ~1%, Epic ~4%, Rare ~10%, Uncommon ~25%, Common ~60%.
+ */
+export function scoreTier(rarityByte: number): RarityTier {
+  for (const { tier, maxByte } of RARITY_TIERS) {
+    if (rarityByte <= maxByte) return tier;
   }
   return 'Common';
 }
 
 /**
- * Compute an off-chain seed for a token (mirrors on-chain keccak256 logic).
+ * Compute an off-chain seed that matches the on-chain keccak256 derivation:
+ *   keccak256(abi.encodePacked(uint256(tokenId), address(contractAddress), uint256(deployBlock)))
+ * The owner argument is NOT included — matching the contract's traitSeed formula.
  */
-export function computeSeed(tokenId: number | string, contractAddress: string, deployBlock: number | string, owner?: string): string {
-  const data = `${tokenId}:${contractAddress.toLowerCase()}:${deployBlock}:${owner ?? '0x0000000000000000000000000000000000000000'}`;
-  return '0x' + createHash('sha256').update(data).digest('hex');
+export function computeSeed(tokenId: number | string, contractAddress: string, deployBlock: number | string): string {
+  return ethers.keccak256(
+    ethers.solidityPacked(
+      ['uint256', 'address', 'uint256'],
+      [BigInt(tokenId), contractAddress, BigInt(deployBlock)]
+    )
+  );
 }
 
 /**
@@ -91,7 +105,7 @@ export function computeSeed(tokenId: number | string, contractAddress: string, d
 export function traitsToAttributes(traits: NFTTraits) {
   return [
     { trait_type: 'Rarity',         value: traits.rarityTier                    },
-    { trait_type: 'Rarity Score',   value: traits.rarityScore, display_type: 'number' },
+    { trait_type: 'Rarity Byte',    value: traits.rarityByte, display_type: 'number' },
     { trait_type: 'Genesis Tier',   value: traits.genesisTier                   },
     { trait_type: 'Protocol Score', value: traits.protocolScore                 },
     { trait_type: 'Asset Class',    value: traits.assetClass                    },
@@ -140,7 +154,7 @@ export function buildAnimationPrompt(tokenId: string | number, traits: NFTTraits
 }
 
 /**
- * Generate an SVG/HTML animation for a token (used as animation_url when video isn't available).
+ * Generate an SVG/HTML animation for a token (used as animation_url when video is not available).
  * Returns an HTML string that animates using CSS — no external dependencies.
  */
 export function generateAnimationHTML(tokenId: string | number, traits: NFTTraits): string {

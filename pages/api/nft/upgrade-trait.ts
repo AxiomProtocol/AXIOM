@@ -1,16 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { ensureNFTTables, getNFTToken, upsertNFTToken } from '../../../lib/nft/db';
+import { ensureNFTTables, getNFTToken, upsertNFTToken, getNFTBalance, checkBurnTxUsed, recordBurnTx } from '../../../lib/nft/db';
 import { computeTraits, scoreTier, type RarityTier } from '../../../lib/nft/traitEngine';
-import { createHash } from 'crypto';
 
 const AXM_ABI = [
   'event Transfer(address indexed from, address indexed to, uint256 value)',
-  'function balanceOf(address account) external view returns (uint256)',
 ];
 
-const FOUNDER_BADGE_ABI = [
+const NFT_ABI = [
   'function emitMetadataUpdate(uint256 tokenId) external',
+  'function ownerOf(uint256 tokenId) external view returns (address)',
+  'function balanceOf(address account, uint256 id) external view returns (uint256)',
 ];
 
 const AXM_CONTRACT     = '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D';
@@ -47,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (!burnTxHash || !/^0x[a-fA-F0-9]{64}$/.test(burnTxHash)) {
-    return res.status(400).json({ error: 'Missing burnTxHash — you must burn 50 AXM on-chain first and submit the transaction hash' });
+    return res.status(400).json({ error: 'Missing burnTxHash — burn 50 AXM on-chain first and submit the transaction hash' });
   }
 
   const ts = Number(timestamp);
@@ -76,8 +76,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     await ensureNFTTables();
 
+    const alreadyUsed = await checkBurnTxUsed(burnTxHash);
+    if (alreadyUsed) {
+      return res.status(409).json({ error: 'This burn transaction has already been used for a trait upgrade. Each burn may only be used once.' });
+    }
+
     const tokenRow = await getNFTToken(parseInt(tokenId), contractAddress);
     if (!tokenRow) return res.status(404).json({ error: 'Token not found in Axiom registry' });
+
+    const contractType = tokenRow.contract_type as string;
+    const isERC721     = contractType !== 'ERC1155';
+
+    if (isERC721) {
+      const founderContract = process.env.NFT_CONTRACT_FOUNDER;
+      if (founderContract && contractAddress.toLowerCase() === founderContract.toLowerCase()) {
+        const nftContract = new ethers.Contract(contractAddress, NFT_ABI, provider);
+        let onChainOwner: string;
+        try {
+          onChainOwner = (await nftContract.ownerOf(parseInt(tokenId))).toLowerCase();
+        } catch {
+          return res.status(400).json({ error: 'Unable to verify token ownership on-chain' });
+        }
+        if (onChainOwner !== walletAddress.toLowerCase()) {
+          return res.status(403).json({ error: 'You do not own this token. Trait upgrades require token ownership.' });
+        }
+      }
+    } else {
+      const balance = await getNFTBalance(parseInt(tokenId), contractAddress, walletAddress);
+      if (balance <= 0) {
+        return res.status(403).json({ error: 'You do not hold this token. Trait upgrades require token ownership.' });
+      }
+    }
 
     const currentTier = tokenRow.rarity_tier as RarityTier;
     if (currentTier === 'Legendary') {
@@ -115,25 +144,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!burnLog) {
       return res.status(400).json({
-        error: `Burn transaction does not include a 50 AXM Transfer from ${walletAddress} to the burn address on the AXM contract. Use the burn() function on the AXM contract.`,
+        error: `Burn transaction does not contain a ≥50 AXM Transfer from ${walletAddress} to the burn address on the AXM contract.`,
       });
     }
 
+    await recordBurnTx({
+      txHash:          burnTxHash,
+      usedBy:          walletAddress,
+      tokenId:         parseInt(tokenId),
+      contractAddress,
+    });
+
     const probability = UPGRADE_PROBABILITY[currentTier];
-    const entropyInput = `${tokenId}:${contractAddress}:${walletAddress}:${burnTxHash}`;
-    const hash = createHash('sha256').update(entropyInput).digest('hex');
-    const roll = parseInt(hash.slice(0, 8), 16) / 0xffffffff;
+    const seedInput   = ethers.keccak256(ethers.toUtf8Bytes(`${tokenId}:${contractAddress}:${walletAddress}:${burnTxHash}`));
+    const roll        = Number(BigInt(seedInput) % 10000n) / 10000;
 
     const upgraded = roll < probability;
-    let newTier = currentTier;
-    let newSeed = tokenRow.trait_seed;
+    let newTier    = currentTier;
+    let newSeed    = tokenRow.trait_seed;
 
     if (upgraded) {
       const currentIndex = TIER_ORDER.indexOf(currentTier);
       newTier = TIER_ORDER[Math.min(currentIndex + 1, TIER_ORDER.length - 1)];
 
-      const newSeedInput = `${tokenRow.trait_seed}:UPGRADE:${burnTxHash}`;
-      newSeed = '0x' + createHash('sha256').update(newSeedInput).digest('hex');
+      newSeed = ethers.keccak256(
+        ethers.solidityPacked(['bytes32', 'bytes32'], [tokenRow.trait_seed, burnTxHash])
+      );
 
       const newTraits = computeTraits(newSeed);
 
@@ -142,15 +178,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         contractAddress,
         traitSeed:       newSeed,
         rarityTier:      newTier,
-        rarityScore:     newTraits.rarityScore,
+        rarityScore:     newTraits.rarityByte,
         traitsJson:      newTraits,
       });
 
-      const founderContract = process.env.NFT_CONTRACT_FOUNDER;
-      if (founderContract && contractAddress.toLowerCase() === founderContract.toLowerCase()) {
+      const founderContract      = process.env.NFT_CONTRACT_FOUNDER;
+      const participationContract = process.env.NFT_CONTRACT_PARTICIPATION;
+      const landContract         = process.env.NFT_CONTRACT_LAND;
+      const normalizedAddr       = contractAddress.toLowerCase();
+
+      const isKnownContract =
+        (founderContract && normalizedAddr === founderContract.toLowerCase()) ||
+        (participationContract && normalizedAddr === participationContract.toLowerCase()) ||
+        (landContract && normalizedAddr === landContract.toLowerCase());
+
+      if (isKnownContract) {
         try {
           const adminSigner   = new ethers.Wallet(deployerKey, provider);
-          const nftContract   = new ethers.Contract(founderContract, FOUNDER_BADGE_ABI, adminSigner);
+          const nftContract   = new ethers.Contract(contractAddress, NFT_ABI, adminSigner);
           const metaTx = await nftContract.emitMetadataUpdate(parseInt(tokenId), { gasLimit: 80_000 });
           await metaTx.wait();
         } catch (metaErr) {
@@ -162,14 +207,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       success:      true,
       upgraded,
-      roll:         Math.round(roll * 100) / 100,
+      roll:         Math.round(roll * 10000) / 10000,
       probability:  Math.round(probability * 100),
       previousTier: currentTier,
       newTier,
       burnVerified: true,
+      burnConsumed: true,
       message:      upgraded
         ? `Upgrade successful. Trait advanced from ${currentTier} to ${newTier}. Metadata updated on-chain.`
-        : `Upgrade attempt failed. Roll: ${Math.round(roll * 100)}%, needed < ${Math.round(probability * 100)}%. 50 AXM consumed (verified on-chain). Try again.`,
+        : `Upgrade attempt failed. Roll: ${(roll * 100).toFixed(2)}%, needed < ${Math.round(probability * 100)}%. 50 AXM consumed (verified on-chain). Try again.`,
     });
   } catch (err: unknown) {
     console.error('[api/nft/upgrade-trait]', err);
