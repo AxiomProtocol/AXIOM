@@ -40,7 +40,8 @@ async function main() {
   );
   await founderBadge.waitForDeployment();
   const founderAddress = await founderBadge.getAddress();
-  console.log('AxiomFounderBadge:', founderAddress);
+  const founderDeployTx = founderBadge.deploymentTransaction()?.hash ?? '';
+  console.log('AxiomFounderBadge:', founderAddress, '| deployTx:', founderDeployTx);
   const founderDeployBlock = await ethers.provider.getBlockNumber();
 
   // ── AxiomParticipation ─────────────────────────────────────────────────────
@@ -56,7 +57,8 @@ async function main() {
   );
   await participation.waitForDeployment();
   const participationAddress = await participation.getAddress();
-  console.log('AxiomParticipation:', participationAddress);
+  const participationDeployTx = participation.deploymentTransaction()?.hash ?? '';
+  console.log('AxiomParticipation:', participationAddress, '| deployTx:', participationDeployTx);
   const participationDeployBlock = await ethers.provider.getBlockNumber();
 
   // ── AxiomLandReceipt ───────────────────────────────────────────────────────
@@ -72,7 +74,8 @@ async function main() {
   );
   await landReceipt.waitForDeployment();
   const landAddress = await landReceipt.getAddress();
-  console.log('AxiomLandReceipt:', landAddress);
+  const landDeployTx = landReceipt.deploymentTransaction()?.hash ?? '';
+  console.log('AxiomLandReceipt:', landAddress, '| deployTx:', landDeployTx);
   const landDeployBlock = await ethers.provider.getBlockNumber();
 
   // ── Update contract URIs with actual addresses ─────────────────────────────
@@ -111,6 +114,7 @@ async function main() {
       AxiomFounderBadge: {
         address:            founderAddress,
         deployBlock:        founderDeployBlock,
+        deployTx:           founderDeployTx,
         type:               'ERC-721 Soulbound',
         maxSupply:          100,
         contractURITx:      founderURITx?.hash ?? '',
@@ -119,6 +123,7 @@ async function main() {
       AxiomParticipation: {
         address:            participationAddress,
         deployBlock:        participationDeployBlock,
+        deployTx:           participationDeployTx,
         type:               'ERC-1155',
         tokenTypes:         6,
         contractURITx:      participationURITx?.hash ?? '',
@@ -127,6 +132,7 @@ async function main() {
       AxiomLandReceipt: {
         address:            landAddress,
         deployBlock:        landDeployBlock,
+        deployTx:           landDeployTx,
         type:               'ERC-1155 Per-Parcel',
         defaultCap:         1000,
         contractURITx:      landURITx?.hash ?? '',
