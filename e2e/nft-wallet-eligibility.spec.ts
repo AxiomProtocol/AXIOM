@@ -93,8 +93,12 @@ test('nft page renders Founder Badge card with a status pill', async ({ page }) 
 
   await expect(page.getByText(/axiom founder badge/i)).toBeVisible({ timeout: 10_000 });
 
-  // Accept any of the three valid status states
-  const statusPill = page.locator('text=/^(ELIGIBLE|NOT ELIGIBLE|✓ MINTED)$/i').first();
+  // Accept any of the three valid status states.
+  // Eligible renders as "● ELIGIBLE" (with a bullet), so match the substring
+  // rather than exact anchors so the bullet is not required in the pattern.
+  const statusPill = page.locator(
+    'text=/● ELIGIBLE|NOT ELIGIBLE|✓ MINTED/'
+  ).first();
   await expect(statusPill).toBeVisible({ timeout: 10_000 });
 });
 
@@ -164,8 +168,9 @@ test('clicking Claim Founder Badge triggers sign → POST with correct payload a
 
   await page.goto('/nft', { waitUntil: 'domcontentloaded' });
 
-  // 3. Wait for the Founder Badge section to switch to ELIGIBLE state
-  await expect(page.getByText(/^ELIGIBLE$/i)).toBeVisible({ timeout: 10_000 });
+  // 3. Wait for the Founder Badge section to switch to ELIGIBLE state.
+  // The UI renders "● ELIGIBLE" (with a leading bullet character).
+  await expect(page.getByText(/● ELIGIBLE/)).toBeVisible({ timeout: 10_000 });
 
   // 4. The claim button should now be visible and clickable
   const claimBtn = page.getByRole('button', { name: /claim founder badge/i });
@@ -193,9 +198,9 @@ test('clicking Claim Founder Badge triggers sign → POST with correct payload a
   // Timestamp must be within last 60s (covers network/test latency)
   expect(Date.now() - (capturedBody!.timestamp as number)).toBeLessThan(60_000);
 
-  // 8. Assert the success state renders in the UI
-  //    The section should show the minted token ID from the response
+  // 8. Assert the success state renders in the UI.
+  // pages/nft.tsx renders: "You hold Founder Badge #{tokenId}" (line 301).
   await expect(
-    page.getByText(/founder badge #7|badge #7|token #7/i).first()
+    page.getByText(/you hold founder badge #7/i).first()
   ).toBeVisible({ timeout: 10_000 });
 });
