@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { ensureNFTTables, getNFTToken, upsertNFTToken, checkBurnTxUsed, recordBurnTx } from '../../../lib/nft/db';
+import { ensureNFTTables, getNFTToken, upsertNFTToken, claimBurnTx, releaseBurnTx } from '../../../lib/nft/db';
 import { computeTraits, type RarityTier } from '../../../lib/nft/traitEngine';
 import { generateNFTMedia } from '../../../lib/nft/mediaPipeline';
 
@@ -77,11 +77,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     await ensureNFTTables();
 
-    const alreadyUsed = await checkBurnTxUsed(burnTxHash);
-    if (alreadyUsed) {
-      return res.status(409).json({ error: 'This burn transaction has already been used for a trait upgrade. Each burn may only be used once.' });
-    }
-
     const tokenRow = await getNFTToken(parseInt(tokenId), contractAddress);
     if (!tokenRow) return res.status(404).json({ error: 'Token not found in Axiom registry' });
 
@@ -155,12 +150,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    await recordBurnTx({
+    // Atomically claim the burn tx hash AFTER all validation — eliminates TOCTOU race.
+    // On upgrade failure, releaseBurnTx() allows the user to retry.
+    const burnClaimed = await claimBurnTx({
       txHash:          burnTxHash,
       usedBy:          walletAddress,
       tokenId:         parseInt(tokenId),
       contractAddress,
     });
+    if (!burnClaimed) {
+      return res.status(409).json({ error: 'This burn transaction has already been used for a trait upgrade. Each burn may only be used once.' });
+    }
 
     const probability = UPGRADE_PROBABILITY[currentTier];
     const seedInput   = ethers.keccak256(ethers.toUtf8Bytes(`${tokenId}:${contractAddress}:${walletAddress}:${burnTxHash}`));
@@ -183,6 +183,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // The seed-derived tier may differ; the explicit upgrade roll is authoritative.
       newTraits.rarityTier = newTier;
 
+      try {
       await upsertNFTToken({
         tokenId:         parseInt(tokenId),
         contractAddress,
@@ -233,6 +234,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } catch (metaErr) {
           console.warn('[api/nft/upgrade-trait] MetadataUpdate emission failed (non-fatal):', metaErr);
         }
+      }
+      } catch (upgradeErr) {
+        // Upgrade DB write failed — release claim so the user can retry with the same burn tx
+        await releaseBurnTx(burnTxHash).catch(() => undefined);
+        throw upgradeErr;
       }
     }
 

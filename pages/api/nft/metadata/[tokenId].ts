@@ -71,12 +71,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const traits = computeTraits(seed);
     const attributes = traitsToAttributes(traits);
 
-    const imageCid     = tokenRow?.image_cid;
+    // Only treat image_cid as IPFS if it does NOT start with 'sha256:' (which is the
+    // local DB-stored fallback pseudo-CID used when NFT.Storage upload is unavailable).
+    const rawImageCid  = tokenRow?.image_cid as string | undefined;
+    const imageCid     = rawImageCid && !rawImageCid.startsWith('sha256:') ? rawImageCid : undefined;
     const hasImageData = !!tokenRow?.image_data;
     const animationCid = tokenRow?.animation_cid;
 
     const imageUrl = imageCid
-      ? `https://w3s.link/ipfs/${imageCid}`
+      ? `https://nftstorage.link/ipfs/${imageCid}`
       : hasImageData
         ? `${SITE_URL}/api/nft/image?tokenId=${tokenIdNum}&contractAddress=${encodeURIComponent(contractAddress)}`
         : `${SITE_URL}/api/nft/animation?tokenId=${tokenIdNum}&contract=${contractAddress}`;

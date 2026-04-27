@@ -27,7 +27,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, s-maxage=86400');
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    // X-Frame-Options intentionally omitted — OpenSea and other marketplaces
+    // embed animation_url via iframe from a cross-origin domain. SAMEORIGIN
+    // would block that rendering entirely.
     return res.status(200).send(html);
   } catch (err) {
     console.error('[api/nft/animation]', err);

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { ensureNFTTables, upsertNFTToken, upsertNFTBalance, upsertEligibility, getEligibility, checkBurnTxUsed, recordBurnTx } from '../../../lib/nft/db';
+import { ensureNFTTables, upsertNFTToken, upsertNFTBalance, upsertEligibility, getEligibility, claimBurnTx, releaseBurnTx } from '../../../lib/nft/db';
 import { computeSeed, computeTraits } from '../../../lib/nft/traitEngine';
 import { generateNFTMedia } from '../../../lib/nft/mediaPipeline';
 
@@ -92,11 +92,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     await ensureNFTTables();
 
-    const feeAlreadyUsed = await checkBurnTxUsed(feeTxHash);
-    if (feeAlreadyUsed) {
-      return res.status(409).json({ error: 'This fee transaction has already been used for a mint. Each payment may only be used once.' });
-    }
-
+    // 1. Eligibility check (cheap, no side effects)
     const eligibility = await getEligibility(walletAddress, `participation_${tokenIdNum}`);
     if (!eligibility || eligibility.eligible !== true) {
       return res.status(403).json({
@@ -113,6 +109,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
+    // 2. Verify fee on-chain before claiming the tx hash
     const feeReceipt = await provider.getTransactionReceipt(feeTxHash);
     if (!feeReceipt) {
       return res.status(400).json({ error: 'Fee transaction not found on Arbitrum One — ensure it is confirmed' });
@@ -149,13 +146,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    await recordBurnTx({
+    // 3. Atomically claim the tx hash AFTER validation — prevents TOCTOU race condition.
+    //    If two concurrent requests both pass validation, only one will succeed here.
+    const claimed = await claimBurnTx({
       txHash:          feeTxHash,
       usedBy:          walletAddress,
       tokenId:         tokenIdNum,
       contractAddress,
     });
+    if (!claimed) {
+      return res.status(409).json({ error: 'This fee transaction has already been used for a mint. Each payment may only be used once.' });
+    }
 
+    // From this point, if the mint fails, release the claim so the user can retry.
     const signer   = new ethers.Wallet(deployerKey, provider);
     const contract = new ethers.Contract(contractAddress, PARTICIPATION_ABI, signer);
 
@@ -166,13 +169,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       contract.deployBlock(),
     ]);
 
-    if (!isActive) return res.status(409).json({ error: `Token type ${tokenIdNum} (${tokenTypeName}) is not active` });
+    if (!isActive) {
+      await releaseBurnTx(feeTxHash);
+      return res.status(409).json({ error: `Token type ${tokenIdNum} (${tokenTypeName}) is not active` });
+    }
     if (Number(max) > 0 && Number(supply) + amount > Number(max)) {
+      await releaseBurnTx(feeTxHash);
       return res.status(409).json({ error: `Token type ${tokenIdNum} max supply reached (${max})` });
     }
 
-    const tx = await contract.mint(walletAddress, tokenIdNum, amount, { gasLimit: 200_000 });
-    const receipt = await tx.wait();
+    let receipt: ethers.TransactionReceipt | null = null;
+    try {
+      const tx = await contract.mint(walletAddress, tokenIdNum, amount, { gasLimit: 200_000 });
+      receipt  = await tx.wait();
+    } catch (mintErr) {
+      // Release claim so the user can retry with the same fee tx hash
+      await releaseBurnTx(feeTxHash).catch(() => undefined);
+      throw mintErr;
+    }
+    if (!receipt) {
+      await releaseBurnTx(feeTxHash).catch(() => undefined);
+      return res.status(500).json({ error: 'Mint transaction returned null receipt' });
+    }
 
     const seed   = computeSeed(tokenIdNum, contractAddress, Number(deployBlock));
     const traits = computeTraits(seed);
@@ -199,7 +217,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         collection:      `participation_${tokenIdNum}`,
         minted:          true,
         mintedTokenId:   tokenIdNum,
-        mintedTxHash:    receipt.hash,
+        mintedTxHash:    receipt!.hash,
       }),
     ]);
 
@@ -217,7 +235,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       tokenId:       tokenIdNum,
       tokenTypeName,
       amount,
-      txHash:        receipt.hash,
+      txHash:        receipt!.hash,
       rarityTier:    traits.rarityTier,
       seed,
       feeVerified:   true,

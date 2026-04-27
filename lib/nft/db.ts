@@ -182,6 +182,41 @@ export async function checkBurnTxUsed(txHash: string): Promise<boolean> {
   return result.rows.length > 0;
 }
 
+/**
+ * Atomically claim a burn/fee tx hash.
+ * Returns true if the claim succeeded (this request owns the hash),
+ * or false if it was already claimed by a prior request.
+ * This replaces the non-atomic checkBurnTxUsed + recordBurnTx pattern
+ * and eliminates the TOCTOU race condition.
+ */
+export async function claimBurnTx(params: {
+  txHash: string;
+  usedBy: string;
+  tokenId?: number;
+  contractAddress?: string;
+}): Promise<boolean> {
+  const { txHash, usedBy, tokenId, contractAddress } = params;
+  const result = await pool.query(`
+    INSERT INTO nft_burned_txs (tx_hash, used_by, token_id, contract_address)
+    VALUES ($1, $2, $3, $4)
+    ON CONFLICT (tx_hash) DO NOTHING
+    RETURNING id
+  `, [txHash.toLowerCase(), usedBy.toLowerCase(), tokenId ?? null, contractAddress?.toLowerCase() ?? null]);
+  return result.rows.length > 0;
+}
+
+/**
+ * Release a previously claimed burn/fee tx hash.
+ * Called when the downstream operation (mint, upgrade) fails after claiming,
+ * so the user can retry with the same on-chain transaction hash.
+ */
+export async function releaseBurnTx(txHash: string): Promise<void> {
+  await pool.query(
+    'DELETE FROM nft_burned_txs WHERE tx_hash = $1',
+    [txHash.toLowerCase()]
+  );
+}
+
 export async function recordBurnTx(params: {
   txHash: string;
   usedBy: string;
