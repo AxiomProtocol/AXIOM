@@ -86,11 +86,33 @@ export function scoreTier(rarityByte: number): RarityTier {
 }
 
 /**
- * Compute an off-chain seed that matches the on-chain keccak256 derivation:
- *   keccak256(abi.encodePacked(uint256(tokenId), address(contractAddress), uint256(deployBlock)))
- * The owner argument is NOT included — matching the contract's traitSeed formula.
+ * Compute an off-chain seed that matches the on-chain keccak256 derivation.
+ *
+ * AxiomFounderBadge formula (ERC-721, includes minting wallet):
+ *   keccak256(abi.encodePacked(uint256(tokenId), address(contract), uint256(deployBlock), address(owner)))
+ *
+ * AxiomParticipation / AxiomLandReceipt formula (ERC-1155, no on-chain seed):
+ *   keccak256(abi.encodePacked(uint256(tokenId), address(contract), uint256(deployBlock)))
+ *
+ * @param tokenId       Token ID or parcel ID
+ * @param contractAddress Contract address
+ * @param deployBlock   Block number at which the contract was deployed
+ * @param owner         Minting wallet address (required for ERC-721 FounderBadge; omit for ERC-1155)
  */
-export function computeSeed(tokenId: number | string, contractAddress: string, deployBlock: number | string): string {
+export function computeSeed(
+  tokenId: number | string,
+  contractAddress: string,
+  deployBlock: number | string,
+  owner?: string
+): string {
+  if (owner) {
+    return ethers.keccak256(
+      ethers.solidityPacked(
+        ['uint256', 'address', 'uint256', 'address'],
+        [BigInt(tokenId), contractAddress, BigInt(deployBlock), owner]
+      )
+    );
+  }
   return ethers.keccak256(
     ethers.solidityPacked(
       ['uint256', 'address', 'uint256'],

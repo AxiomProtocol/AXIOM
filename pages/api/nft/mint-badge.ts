@@ -93,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const onChainSeed = await contract.traitSeed(nextTokenId);
       seed = onChainSeed as string;
     } catch {
-      seed = computeSeed(nextTokenId, contractAddress, Number(deployBlock));
+      seed = computeSeed(nextTokenId, contractAddress, Number(deployBlock), walletAddress);
     }
     const traits = computeTraits(seed);
 

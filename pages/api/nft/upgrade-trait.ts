@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { ensureNFTTables, getNFTToken, upsertNFTToken, getNFTBalance, checkBurnTxUsed, recordBurnTx } from '../../../lib/nft/db';
 import { computeTraits, scoreTier, type RarityTier } from '../../../lib/nft/traitEngine';
+import { generateNFTMedia } from '../../../lib/nft/mediaPipeline';
 
 const AXM_ABI = [
   'event Transfer(address indexed from, address indexed to, uint256 value)',
@@ -181,6 +182,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         rarityScore:     newTraits.rarityByte,
         traitsJson:      newTraits,
       });
+
+      const protocol = process.env.VERCEL_URL ? 'https' : 'http';
+      const host     = process.env.VERCEL_URL ?? `localhost:${process.env.PORT ?? 3000}`;
+      const baseUrl  = `${protocol}://${host}`;
+
+      const founderContract_      = process.env.NFT_CONTRACT_FOUNDER;
+      const participationContract_ = process.env.NFT_CONTRACT_PARTICIPATION;
+      const normalizedAddr_       = contractAddress.toLowerCase();
+      const collectionName =
+        founderContract_ && normalizedAddr_ === founderContract_.toLowerCase()
+          ? 'AxiomFounderBadge'
+          : participationContract_ && normalizedAddr_ === participationContract_.toLowerCase()
+          ? 'AxiomParticipation'
+          : 'AxiomLandReceipt';
+
+      generateNFTMedia({
+        tokenId:         parseInt(tokenId),
+        contractAddress,
+        traits:          newTraits,
+        collectionName,
+        baseUrl,
+      }).catch(err => console.warn('[api/nft/upgrade-trait] Media regen failed (non-fatal):', err));
 
       const founderContract      = process.env.NFT_CONTRACT_FOUNDER;
       const participationContract = process.env.NFT_CONTRACT_PARTICIPATION;

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { ensureNFTTables, upsertNFTToken, upsertNFTBalance, upsertEligibility, getEligibility } from '../../../lib/nft/db';
+import { ensureNFTTables, upsertNFTToken, upsertNFTBalance, upsertEligibility, getEligibility, checkBurnTxUsed, recordBurnTx } from '../../../lib/nft/db';
 import { computeSeed, computeTraits } from '../../../lib/nft/traitEngine';
 import { generateNFTMedia } from '../../../lib/nft/mediaPipeline';
 
@@ -11,6 +11,15 @@ const PARTICIPATION_ABI = [
   'function tokenActive(uint256 tokenId) external view returns (bool)',
   'function deployBlock() external view returns (uint256)',
 ];
+
+const ERC20_TRANSFER_ABI = [
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
+];
+
+// AXUSD GENIUS Act Aligned Token on Arbitrum One
+const AXUSD_CONTRACT   = '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C';
+const TREASURY_ADDRESS = '0x3fD63728288546AC41dAe3bf25ca383061c3A929';
+const MINT_FEE_AXUSD   = BigInt('10000000'); // 10 AXUSD (6 decimals)
 
 export const TOKEN_TYPES: Record<number, string> = {
   1: 'Identity Registration',
@@ -26,7 +35,7 @@ const SIGN_WINDOW_MS = 10 * 60 * 1000;
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { walletAddress, tokenId, amount = 1, signature, timestamp } = req.body;
+  const { walletAddress, tokenId, amount = 1, signature, timestamp, feeTxHash } = req.body;
 
   if (!walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
     return res.status(400).json({ error: 'Invalid wallet address' });
@@ -34,7 +43,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!signature || !timestamp) {
     return res.status(400).json({
-      error: 'Missing SIWE fields — sign the participation mint authorization message first',
+      error: 'Missing SIWE fields — sign the participation mint authorization message',
+    });
+  }
+
+  if (!feeTxHash || !/^0x[a-fA-F0-9]{64}$/.test(feeTxHash)) {
+    return res.status(400).json({
+      error: 'Missing feeTxHash — transfer 10 AXUSD to the Axiom treasury first and submit the transaction hash',
     });
   }
 
@@ -70,8 +85,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const deployerKey = process.env.DEPLOYER_PRIVATE_KEY;
   if (!deployerKey) return res.status(503).json({ error: 'Minter not configured' });
 
+  const rpcUrl   = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
+
   try {
     await ensureNFTTables();
+
+    const feeAlreadyUsed = await checkBurnTxUsed(feeTxHash);
+    if (feeAlreadyUsed) {
+      return res.status(409).json({ error: 'This fee transaction has already been used for a mint. Each payment may only be used once.' });
+    }
 
     const eligibility = await getEligibility(walletAddress, `participation_${tokenIdNum}`);
     if (!eligibility || eligibility.eligible !== true) {
@@ -84,13 +107,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (eligibility.minted) {
       return res.status(409).json({
-        error: `${tokenTypeName} already minted for this wallet. Each wallet may hold one mint per action type.`,
+        error: `${tokenTypeName} already minted for this wallet.`,
         mintedTxHash: eligibility.minted_tx_hash,
       });
     }
 
-    const rpcUrl   = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
-    const provider = new ethers.JsonRpcProvider(rpcUrl);
+    const feeReceipt = await provider.getTransactionReceipt(feeTxHash);
+    if (!feeReceipt) {
+      return res.status(400).json({ error: 'Fee transaction not found on Arbitrum One — ensure it is confirmed' });
+    }
+    if (feeReceipt.status !== 1) {
+      return res.status(400).json({ error: 'Fee transaction reverted — 10 AXUSD was not successfully transferred' });
+    }
+
+    const erc20Interface = new ethers.Interface(ERC20_TRANSFER_ABI);
+    const feeLog = feeReceipt.logs.find(log => {
+      try {
+        const parsed = erc20Interface.parseLog({ topics: log.topics as string[], data: log.data });
+        if (!parsed || parsed.name !== 'Transfer') return false;
+        const from  = parsed.args[0].toLowerCase();
+        const to    = parsed.args[1].toLowerCase();
+        const value = parsed.args[2] as bigint;
+        return (
+          log.address.toLowerCase() === AXUSD_CONTRACT.toLowerCase() &&
+          from === walletAddress.toLowerCase() &&
+          to   === TREASURY_ADDRESS.toLowerCase() &&
+          value >= MINT_FEE_AXUSD
+        );
+      } catch {
+        return false;
+      }
+    });
+
+    if (!feeLog) {
+      return res.status(400).json({
+        error: `Fee transaction does not contain a ≥10 AXUSD Transfer from ${walletAddress} to the Axiom treasury (${TREASURY_ADDRESS}) on the AXUSD contract.`,
+        axusdContract: AXUSD_CONTRACT,
+        treasury:      TREASURY_ADDRESS,
+        requiredFee:   '10 AXUSD',
+      });
+    }
+
+    await recordBurnTx({
+      txHash:          feeTxHash,
+      usedBy:          walletAddress,
+      tokenId:         tokenIdNum,
+      contractAddress,
+    });
+
     const signer   = new ethers.Wallet(deployerKey, provider);
     const contract = new ethers.Contract(contractAddress, PARTICIPATION_ABI, signer);
 
@@ -155,6 +219,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       txHash:        receipt.hash,
       rarityTier:    traits.rarityTier,
       seed,
+      feeVerified:   true,
     });
   } catch (err: unknown) {
     console.error('[api/nft/mint-participation]', err);
