@@ -1,0 +1,106 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getNFTToken, ensureNFTTables } from '../../../../lib/nft/db';
+import { computeSeed, computeTraits, traitsToAttributes, generateAnimationHTML } from '../../../../lib/nft/traitEngine';
+
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? `https://${process.env.REPLIT_DEV_DOMAIN ?? 'localhost:5000'}`;
+
+const COLLECTION_CONFIG: Record<string, {
+  name: string;
+  description: string;
+  contractType: string;
+  maxSupply: number;
+  deployBlock: number;
+}> = {
+  founder: {
+    name: 'Axiom Founder Badge',
+    description: 'A soulbound ERC-721 commemorating the first 100 founding wallets of the Axiom Protocol. Non-transferable. Utility-backed: priority AXAU mint queue, 1.5× governance vote weight, 15% discount on Property Analysis.',
+    contractType: 'ERC721',
+    maxSupply: 100,
+    deployBlock: 300000000,
+  },
+  participation: {
+    name: 'Axiom Participation',
+    description: 'Multi-edition ERC-1155 participation badges earned by completing Axiom Protocol milestones: identity registration, Wealth Practice, governance, property deals.',
+    contractType: 'ERC1155',
+    maxSupply: 10000,
+    deployBlock: 300000000,
+  },
+  land: {
+    name: 'Axiom Land Receipt',
+    description: 'ERC-1155 land-parcel receipts representing participation in a specific Axiom Protocol land acquisition. One token ID per property, capped at 1,000 receipts per parcel.',
+    contractType: 'ERC1155',
+    maxSupply: 1000,
+    deployBlock: 300000000,
+  },
+};
+
+function detectCollection(contractAddress: string): string {
+  const addr = contractAddress.toLowerCase();
+  if (process.env.NFT_CONTRACT_FOUNDER && addr === process.env.NFT_CONTRACT_FOUNDER.toLowerCase()) return 'founder';
+  if (process.env.NFT_CONTRACT_PARTICIPATION && addr === process.env.NFT_CONTRACT_PARTICIPATION.toLowerCase()) return 'participation';
+  if (process.env.NFT_CONTRACT_LAND && addr === process.env.NFT_CONTRACT_LAND.toLowerCase()) return 'land';
+  return 'founder';
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { tokenId, contract } = req.query;
+  const tokenIdNum = parseInt(typeof tokenId === 'string' ? tokenId : Array.isArray(tokenId) ? tokenId[0] : '', 10);
+
+  if (isNaN(tokenIdNum) || tokenIdNum < 1) {
+    return res.status(400).json({ error: 'Invalid tokenId' });
+  }
+
+  const contractAddress = typeof contract === 'string' ? contract : process.env.NFT_CONTRACT_FOUNDER ?? '';
+  const collection = detectCollection(contractAddress);
+  const config = COLLECTION_CONFIG[collection] ?? COLLECTION_CONFIG.founder;
+
+  try {
+    await ensureNFTTables();
+
+    let tokenRow = await getNFTToken(tokenIdNum, contractAddress);
+
+    let seed: string;
+    if (tokenRow?.trait_seed) {
+      seed = tokenRow.trait_seed;
+    } else {
+      seed = computeSeed(tokenIdNum, contractAddress, config.deployBlock);
+    }
+
+    const traits = computeTraits(seed);
+    const attributes = traitsToAttributes(traits);
+
+    const imageCid   = tokenRow?.image_cid;
+    const animationCid = tokenRow?.animation_cid;
+
+    const imageUrl = imageCid
+      ? `https://w3s.link/ipfs/${imageCid}`
+      : `${SITE_URL}/api/nft/placeholder?tokenId=${tokenIdNum}&rarity=${traits.rarityTier}`;
+
+    const animationUrl = animationCid
+      ? `https://w3s.link/ipfs/${animationCid}`
+      : `${SITE_URL}/api/nft/animation?tokenId=${tokenIdNum}&contract=${contractAddress}`;
+
+    const metadata = {
+      name:          `${config.name} #${tokenIdNum}`,
+      description:   config.description,
+      image:         imageUrl,
+      animation_url: animationUrl,
+      external_url:  `${SITE_URL}/nft?token=${tokenIdNum}&contract=${contractAddress}`,
+      attributes,
+      properties: {
+        rarityTier:    traits.rarityTier,
+        rarityScore:   traits.rarityScore,
+        collection,
+        contractType:  config.contractType,
+      },
+    };
+
+    res.setHeader('Cache-Control', imageCid ? 'public, s-maxage=86400' : 'public, s-maxage=300');
+    return res.status(200).json(metadata);
+  } catch (err: unknown) {
+    console.error('[api/nft/metadata]', err);
+    return res.status(500).json({ error: err instanceof Error ? err.message : 'Metadata fetch failed' });
+  }
+}

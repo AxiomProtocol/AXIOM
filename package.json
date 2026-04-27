@@ -50,6 +50,8 @@
     "capital-bridge:roles": "hardhat run scripts/capital-bridge/04-configure-roles.ts --config hardhat.config.capital-bridge.ts --network arbitrumAdmin",
     "capital-bridge:observation": "hardhat run scripts/capital-bridge/05-start-observation.ts --config hardhat.config.capital-bridge.ts --network arbitrumAdmin",
     "capital-bridge:verify": "hardhat run scripts/capital-bridge/06-verify-deployment.ts --config hardhat.config.capital-bridge.ts --network arbitrum",
+    "nft:deploy": "hardhat run scripts/nft/deploy-nft.ts --network arbitrum-one",
+    "nft:compile": "hardhat compile",
     "capital-bridge:deploy:fork": "hardhat run scripts/capital-bridge/01-deploy-layer5e.ts --config hardhat.config.capital-bridge.ts --network hardhat",
     "legacy-start": "node unified-platform.js",
     "legacy-dev": "node unified-platform.js",

@@ -88,6 +88,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/wealth-practice', label: 'Wealth Practice' },
       { href: '/land', label: 'Land Pipeline' },
       { href: '/community-credit', label: 'Community Credit' },
+      { href: '/nft', label: 'NFT Utility Collection' },
     ],
   },
   {
