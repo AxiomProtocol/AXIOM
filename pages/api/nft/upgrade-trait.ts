@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { ensureNFTTables, getNFTToken, upsertNFTToken, getNFTBalance, checkBurnTxUsed, recordBurnTx } from '../../../lib/nft/db';
-import { computeTraits, scoreTier, type RarityTier } from '../../../lib/nft/traitEngine';
+import { ensureNFTTables, getNFTToken, upsertNFTToken, checkBurnTxUsed, recordBurnTx } from '../../../lib/nft/db';
+import { computeTraits, type RarityTier } from '../../../lib/nft/traitEngine';
 import { generateNFTMedia } from '../../../lib/nft/mediaPipeline';
 
 const AXM_ABI = [
@@ -103,9 +103,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
     } else {
-      const balance = await getNFTBalance(parseInt(tokenId), contractAddress, walletAddress);
-      if (balance <= 0) {
-        return res.status(403).json({ error: 'You do not hold this token. Trait upgrades require token ownership.' });
+      const nftContract1155 = new ethers.Contract(contractAddress, NFT_ABI, provider);
+      let onChainBalance: bigint;
+      try {
+        onChainBalance = await nftContract1155.balanceOf(walletAddress, parseInt(tokenId));
+      } catch {
+        return res.status(400).json({ error: 'Unable to verify token balance on-chain' });
+      }
+      if (onChainBalance <= 0n) {
+        return res.status(403).json({ error: 'You do not hold this token on-chain. Trait upgrades require token ownership.' });
       }
     }
 
@@ -173,6 +179,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       );
 
       const newTraits = computeTraits(newSeed);
+      // Force the stored tier to match the probability-rolled upgrade result.
+      // The seed-derived tier may differ; the explicit upgrade roll is authoritative.
+      newTraits.rarityTier = newTier;
 
       await upsertNFTToken({
         tokenId:         parseInt(tokenId),

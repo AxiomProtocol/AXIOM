@@ -69,7 +69,7 @@ export async function generateNFTMedia(params: {
 }): Promise<MediaResult> {
   const { tokenId, contractAddress, traits, collectionName, baseUrl } = params;
 
-  const animationUrl = `${baseUrl}/api/nft/animation?tokenId=${tokenId}&contractAddress=${encodeURIComponent(contractAddress)}`;
+  const animationUrl = `${baseUrl}/api/nft/animation?tokenId=${tokenId}&contract=${encodeURIComponent(contractAddress)}`;
 
   let imageData: string | null = null;
   let imageCid:  string | null = null;
@@ -120,7 +120,7 @@ export function resolveImageUrl(
   if (tokenRow?.image_data) {
     return `${baseUrl}/api/nft/image?tokenId=${tokenId}&contractAddress=${encodeURIComponent(contractAddress)}`;
   }
-  return `${baseUrl}/api/nft/animation?tokenId=${tokenId}&contractAddress=${encodeURIComponent(contractAddress)}`;
+  return `${baseUrl}/api/nft/animation?tokenId=${tokenId}&contract=${encodeURIComponent(contractAddress)}`;
 }
 
 /**

@@ -35,7 +35,8 @@ const SIGN_WINDOW_MS = 10 * 60 * 1000;
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { walletAddress, tokenId, amount = 1, signature, timestamp, feeTxHash } = req.body;
+  const { walletAddress, tokenId, signature, timestamp, feeTxHash } = req.body;
+  const amount = 1; // Each participation badge mints exactly 1 token per fee payment
 
   if (!walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
     return res.status(400).json({ error: 'Invalid wallet address' });
