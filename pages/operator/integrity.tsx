@@ -38,6 +38,11 @@ import {
   formatAge,
   shapePagedChannelDisplay,
 } from '../../components/operator/AssetIntegrityAlertsPanel';
+import { IntegrityPagerStatusBanner } from '../../components/operator/IntegrityPagerStatusBanner';
+import {
+  getIntegrityPagerStatus,
+  type IntegrityPagerStatus,
+} from '../../lib/capinfra/notifications/integrityPagerStatus';
 
 const KIND_LABEL: Record<string, string> = {
   oracle_stale: 'Oracle stale',
@@ -63,6 +68,13 @@ interface Props {
    * predate the toggle; SSR always supplies a concrete boolean.
    */
   failedPagesFilter?: boolean;
+  /**
+   * Booleans-only snapshot of the on-call pager configuration. Used
+   * to render the status banner at the top of the page (Task #305).
+   * Optional in the type so the test suite's existing fixtures keep
+   * compiling; SSR always supplies a concrete value.
+   */
+  pagerStatus?: IntegrityPagerStatus;
 }
 
 function readShowAcknowledged(value: string | string[] | undefined): boolean {
@@ -146,6 +158,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       symbolFilter,
       kindFilter,
       failedPagesFilter,
+      pagerStatus: getIntegrityPagerStatus(),
     },
   };
 };
@@ -159,6 +172,7 @@ export default function OperatorIntegrityPage({
   symbolFilter,
   kindFilter,
   failedPagesFilter = false,
+  pagerStatus,
 }: Props) {
   const toggleHref = buildIntegrityHref({
     ack: !showAcknowledged,
@@ -206,6 +220,9 @@ export default function OperatorIntegrityPage({
           </Link>
         </div>
         <h1 className="text-2xl font-serif mb-2">Asset integrity alerts</h1>
+        {pagerStatus ? (
+          <IntegrityPagerStatusBanner status={pagerStatus} />
+        ) : null}
         <p className="text-sm text-dl-muted font-mono mb-4">
           Recent <code>collateral.integrity_failed</code> auto-freeze
           notifications from the last {windowHours}h. Default view shows

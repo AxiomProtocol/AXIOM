@@ -30,6 +30,10 @@
  */
 
 import { getResendClient } from '../../email/resend';
+import {
+  readIntegrityAlertDiscordWebhook,
+  readIntegrityAlertEmailRecipients,
+} from './integrityPagerStatus';
 
 export interface IntegrityPagerPayload {
   /** Affected asset id (always present). */
@@ -77,17 +81,11 @@ const PAGER_LOG_PREFIX = '[capinfra.integrity-pager]';
 
 let warnedNoChannels = false;
 
-function readEmailRecipients(): string[] {
-  const raw = process.env.INTEGRITY_ALERT_EMAIL ?? '';
-  return raw
-    .split(',')
-    .map((e) => e.trim())
-    .filter((e) => e.length > 0);
-}
-
-function readDiscordWebhook(): string {
-  return (process.env.INTEGRITY_ALERT_DISCORD_WEBHOOK ?? '').trim();
-}
+// Env-var reads are now centralized in `./integrityPagerStatus.ts`
+// so the dashboard banner (Task #305) and the pager itself can never
+// disagree about whether a channel is configured.
+const readEmailRecipients = readIntegrityAlertEmailRecipients;
+const readDiscordWebhook = readIntegrityAlertDiscordWebhook;
 
 function buildDashboardUrl(): string {
   const domain = process.env.REPLIT_DEV_DOMAIN

@@ -19,6 +19,11 @@ import {
   type IntegrityAlertView,
 } from '../../lib/capinfra/risk/integrityAlerts';
 import { AssetIntegrityAlertsPanel } from '../../components/operator/AssetIntegrityAlertsPanel';
+import { IntegrityPagerStatusBanner } from '../../components/operator/IntegrityPagerStatusBanner';
+import {
+  getIntegrityPagerStatus,
+  type IntegrityPagerStatus,
+} from '../../lib/capinfra/notifications/integrityPagerStatus';
 
 interface DashboardProps {
   counts: {
@@ -32,6 +37,7 @@ interface DashboardProps {
   mode: { mode: string; version: string; isBootstrap: boolean };
   lastSnapshot: { id: string; checksum: string; asOf: string } | null;
   integrityAlerts: IntegrityAlertView[];
+  pagerStatus: IntegrityPagerStatus;
 }
 
 const STUCK_PAYMENT_MIN_AGE_MIN = (() => {
@@ -110,6 +116,7 @@ export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx
         ? { id: snaps[0].id, checksum: snaps[0].checksum, asOf: snaps[0].asOf.toISOString() }
         : null,
       integrityAlerts,
+      pagerStatus: getIntegrityPagerStatus(),
     },
   };
 };
@@ -158,6 +165,8 @@ export default function OperatorDashboard(props: DashboardProps) {
             </div>
           </div>
         ) : null}
+
+        <IntegrityPagerStatusBanner status={props.pagerStatus} />
 
         <AssetIntegrityAlertsPanel alerts={props.integrityAlerts} />
 

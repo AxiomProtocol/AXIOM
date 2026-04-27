@@ -637,6 +637,28 @@ Configuration model is identical to the prune-overdue alert pipeline
 shape. Both pagers also share the property that channel failures are
 caught and never re-thrown.
 
+#### At-a-glance dashboard banner (Task #305)
+
+The single per-process log warning is easy to miss in aggregated
+logs, so the operator console renders an `IntegrityPagerStatusBanner`
+at the top of `/operator` and `/operator/integrity` that mirrors the
+pager's own configuration view:
+
+| Pager state | Banner |
+|---|---|
+| Both env vars set | Green &mdash; "Pager: email + discord configured" |
+| Exactly one set | Amber &mdash; "Pager: &lt;channel&gt; only — set the other env var for redundancy" |
+| Neither set | Loud red &mdash; "WARNING: on-call pager not configured — auto-freeze events will only show in this dashboard" |
+
+Server-side rendering reads the same env-var helpers the pager uses
+(`lib/capinfra/notifications/integrityPagerStatus.ts`) so the banner
+can never disagree with what the pager actually sees: if the pager
+would skip, the banner says "not configured", and vice versa. The
+companion endpoint
+`GET /api/capinfra/operator/integrity-pager-status` returns the same
+booleans (cookie-auth) for any future client-side refresh path.
+Recipient lists and webhook URLs themselves never reach the client.
+
 #### Verifying configuration after rotation
 
 The pager exposes a synthetic test endpoint specifically so on-call
