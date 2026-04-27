@@ -71,21 +71,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const traits = computeTraits(seed);
     const attributes = traitsToAttributes(traits);
 
-    // Only treat image_cid as IPFS if it does NOT start with 'sha256:' (which is the
-    // local DB-stored fallback pseudo-CID used when NFT.Storage upload is unavailable).
+    // CID gateway: use ipfs.io (universal, works with Pinata-pinned CIDs).
+    // Filter out legacy sha256: pseudo-CIDs that were used as fallbacks before
+    // mandatory IPFS pinning was implemented.
     const rawImageCid  = tokenRow?.image_cid as string | undefined;
     const imageCid     = rawImageCid && !rawImageCid.startsWith('sha256:') ? rawImageCid : undefined;
     const hasImageData = !!tokenRow?.image_data;
     const animationCid = tokenRow?.animation_cid;
 
     const imageUrl = imageCid
-      ? `https://nftstorage.link/ipfs/${imageCid}`
+      ? `https://ipfs.io/ipfs/${imageCid}`
       : hasImageData
         ? `${SITE_URL}/api/nft/image?tokenId=${tokenIdNum}&contractAddress=${encodeURIComponent(contractAddress)}`
         : `${SITE_URL}/api/nft/animation?tokenId=${tokenIdNum}&contract=${contractAddress}`;
 
     const animationUrl = animationCid
-      ? `https://w3s.link/ipfs/${animationCid}`
+      ? `https://ipfs.io/ipfs/${animationCid}`
       : `${SITE_URL}/api/nft/animation?tokenId=${tokenIdNum}&contract=${contractAddress}`;
 
     const metadata = {

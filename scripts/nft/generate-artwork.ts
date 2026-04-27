@@ -1,9 +1,10 @@
 /**
  * NFT Artwork Generation Script
  * ─────────────────────────────────────────────────────────────────────────────
- * Generates AI artwork for Axiom Protocol NFT collections using Gemini, stores
- * base64 image data in nft_tokens.image_data, and optionally pins to IPFS via
- * Storacha w3up when W3UP_SPACE_DID + W3UP_EMAIL env vars are set.
+ * Generates AI artwork for Axiom Protocol NFT collections using Gemini, pins
+ * each image to IPFS via Pinata, and stores the CID in nft_tokens.image_cid.
+ * The base64 dataUrl is also stored in nft_tokens.image_data as a local cache.
+ * IPFS pinning is mandatory — a token is not marked successful without a CID.
  *
  * Usage:
  *   npx ts-node scripts/nft/generate-artwork.ts --contract founder --tokens 1-10
@@ -12,11 +13,8 @@
  *
  * Environment (required):
  *   GEMINI_API_KEY        — Google AI Studio API key
+ *   PINATA_JWT            — Pinata API JWT for IPFS pinning
  *   DATABASE_URL          — PostgreSQL connection string
- *
- * Environment (optional — IPFS pinning):
- *   W3UP_SPACE_DID        — Storacha space DID (did:key:z6Mk...)
- *   W3UP_EMAIL            — Email address registered with web3.storage
  */
 
 import * as path from 'path';
@@ -159,34 +157,55 @@ async function generateImageBase64(
   return { base64, mimeType, dataUrl: `data:${mimeType};base64,${base64}` };
 }
 
-// ── Optional IPFS upload via Storacha w3up ────────────────────────────────────
+// ── Mandatory IPFS upload via Pinata ─────────────────────────────────────────
 
-async function tryUploadToIPFS(
+const PINATA_PIN_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+
+/**
+ * Upload an image buffer to IPFS via Pinata.
+ * Throws if PINATA_JWT is missing or the upload fails — IPFS pinning is
+ * mandatory for this pipeline; a token is not considered complete without a CID.
+ */
+async function uploadToIPFS(
   imageBuffer: Buffer,
   filename: string,
   mimeType: string
-): Promise<string | null> {
-  const spaceDid = process.env.W3UP_SPACE_DID;
-  const email = process.env.W3UP_EMAIL;
-
-  if (!spaceDid || !email) {
-    return null;
+): Promise<string> {
+  const jwt = process.env.PINATA_JWT;
+  if (!jwt) {
+    throw new Error('PINATA_JWT environment variable is not set');
   }
 
-  try {
-    // Dynamic import — @web3-storage/w3up-client is optional
-    const { create } = await import('@web3-storage/w3up-client' as string);
-    const client = await create();
-    await client.login(email as `${string}@${string}`);
-    await client.setCurrentSpace(spaceDid as `did:${string}:${string}`);
-    const file = new File([new Uint8Array(imageBuffer)], filename, { type: mimeType });
-    const cid = await client.uploadFile(file);
-    return cid.toString();
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`    ⚠  IPFS upload skipped: ${msg}`);
-    return null;
+  // Build multipart/form-data body using Node's built-in FormData (Node 18+)
+  // or the undici FormData available in the Next.js runtime.
+  const form = new FormData();
+  const blob = new Blob([new Uint8Array(imageBuffer)], { type: mimeType });
+  form.append('file', blob, filename);
+  form.append(
+    'pinataMetadata',
+    JSON.stringify({ name: filename })
+  );
+  form.append(
+    'pinataOptions',
+    JSON.stringify({ cidVersion: 1 })
+  );
+
+  const response = await fetch(PINATA_PIN_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${jwt}` },
+    body: form,
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`Pinata upload failed (${response.status}): ${text}`);
   }
+
+  const data = (await response.json()) as { IpfsHash: string };
+  if (!data.IpfsHash) {
+    throw new Error(`Pinata response missing IpfsHash: ${JSON.stringify(data)}`);
+  }
+  return data.IpfsHash;
 }
 
 // ── Rarity colour codes for terminal output ───────────────────────────────────
@@ -243,9 +262,13 @@ async function main() {
     return;
   }
 
-  // Validate Gemini key before starting
+  // Validate required keys before starting
   if (!process.env.GEMINI_API_KEY) {
     console.error(`${RED}❌  GEMINI_API_KEY is not set.${RESET}`);
+    process.exit(1);
+  }
+  if (!process.env.PINATA_JWT) {
+    console.error(`${RED}❌  PINATA_JWT is not set. IPFS pinning is mandatory.${RESET}`);
     process.exit(1);
   }
 
@@ -277,12 +300,12 @@ async function main() {
       // Generate image
       const { base64, mimeType, dataUrl } = await generateImageBase64(ai, prompt);
 
-      // Try IPFS upload (optional)
+      // Upload to IPFS via Pinata (mandatory — throws on failure)
       const imageBuffer = Buffer.from(base64, 'base64');
       const filename    = `axiom-nft-${contractKey}-${tokenId}.png`;
-      const ipfsCid     = await tryUploadToIPFS(imageBuffer, filename, mimeType);
+      const ipfsCid     = await uploadToIPFS(imageBuffer, filename, mimeType);
 
-      // Upsert into DB
+      // Upsert into DB with the real IPFS CID
       await upsertNFTToken({
         tokenId,
         contractAddress: cfg.address,
@@ -291,15 +314,11 @@ async function main() {
         rarityTier:      traits.rarityTier,
         rarityScore:     traits.rarityByte,
         traitsJson:      traits as unknown as object,
-        imageCid:        ipfsCid ?? undefined,
+        imageCid:        ipfsCid,
         imageData:       dataUrl,
       });
 
-      const ipfsNote = ipfsCid
-        ? `${GREEN}IPFS: ${ipfsCid.slice(0, 16)}…${RESET}`
-        : `${DIM}base64 stored${RESET}`;
-
-      console.log(`${GREEN}✓${RESET}  ${ipfsNote}`);
+      console.log(`${GREEN}✓${RESET}  IPFS: ${ipfsCid}`);
 
       results.push({
         tokenId,
@@ -334,10 +353,10 @@ async function main() {
   console.log('\n' + '─'.repeat(60));
   console.log(` Summary`);
   console.log('─'.repeat(60));
-  console.log(` Processed : ${results.length}`);
-  console.log(` ${GREEN}Succeeded${RESET} : ${succeeded}`);
-  if (failed > 0) console.log(` ${RED}Failed${RESET}    : ${failed}`);
-  console.log(` IPFS pinned : ${pinned} (${results.length - pinned} stored as base64)`);
+  console.log(` Processed    : ${results.length}`);
+  console.log(` ${GREEN}Succeeded${RESET}    : ${succeeded}`);
+  if (failed > 0) console.log(` ${RED}Failed${RESET}       : ${failed}`);
+  console.log(` IPFS pinned  : ${pinned}/${results.length}`);
 
   // Rarity breakdown
   const tierCounts: Partial<Record<RarityTier, number>> = {};

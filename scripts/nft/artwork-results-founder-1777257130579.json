@@ -1,0 +1,13 @@
+{
+  "collection": "Axiom Founder Badge",
+  "contract": "0x4A651D30097E2b7326A83CbB32c02913dB8b3572",
+  "results": [
+    {
+      "tokenId": 1,
+      "rarityTier": "Uncommon",
+      "status": "ok",
+      "imageCid": "bafybeiapq3tyururbfnclbtuvjjmc5tfidlhx2uiq2y4nidjbxjy3gt354",
+      "imageStored": true
+    }
+  ]
+}

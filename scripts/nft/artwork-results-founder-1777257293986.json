@@ -1,0 +1,34 @@
+{
+  "collection": "Axiom Founder Badge",
+  "contract": "0x4A651D30097E2b7326A83CbB32c02913dB8b3572",
+  "results": [
+    {
+      "tokenId": 7,
+      "rarityTier": "Common",
+      "status": "ok",
+      "imageCid": "bafybeicstc5jxlts7shgf5o2fqrr4tctomutptxjlrmv46o6pb2zo5prym",
+      "imageStored": true
+    },
+    {
+      "tokenId": 8,
+      "rarityTier": "Uncommon",
+      "status": "ok",
+      "imageCid": "bafybeibocwea2chchcscqehp5r2ro3ezv66dncxn3bilipfdihl6e7p6xy",
+      "imageStored": true
+    },
+    {
+      "tokenId": 9,
+      "rarityTier": "Rare",
+      "status": "ok",
+      "imageCid": "bafybeidaw67max6wsk2lo67tmrhbg5soiro25poht4by3xquaeolbfd7wu",
+      "imageStored": true
+    },
+    {
+      "tokenId": 10,
+      "rarityTier": "Common",
+      "status": "ok",
+      "imageCid": "bafybeicfvi2r2bfiwfxijyx4oopu4gp5sk5uxfvabcknx475po4plvazoy",
+      "imageStored": true
+    }
+  ]
+}
