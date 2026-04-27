@@ -26,6 +26,9 @@ temp-compile-*/
 .env.production
 .env*.local
 
+# NFT script run artifacts (timestamped result files from generate-artwork.ts)
+scripts/nft/artwork-results-*.json
+
 # Logs
 *.log
 npm-debug.log*
