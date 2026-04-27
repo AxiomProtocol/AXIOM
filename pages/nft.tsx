@@ -195,7 +195,14 @@ function WalletMintSection() {
           Claim Your Badges
         </h2>
         <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center' }}>
-          <div style={mono({ fontSize: '28px', color: '#D1D5DB' })}>◈</div>
+          <img
+            src="/nft-preview/founder-1.png"
+            alt="Axiom Founder Badge artwork"
+            style={{ maxWidth: '280px', width: '100%', height: 'auto', display: 'block', marginBottom: '0.25rem' }}
+          />
+          <div style={mono({ fontSize: '10px', color: '#C9A84C', letterSpacing: '2px' })}>
+            AXIOM FOUNDER BADGE · FOUNDING 100
+          </div>
           <p style={mono({ fontSize: '12px', color: '#374151', letterSpacing: '1px' })}>
             CONNECT YOUR WALLET TO CHECK ELIGIBILITY
           </p>
@@ -294,9 +301,25 @@ function WalletMintSection() {
           )}
         </div>
 
+        {/* Hero artwork */}
+        <div style={{ background: '#FAFAF8', border: '1px solid #E5E7EB', padding: '1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
+          <img
+            src="/nft-preview/founder-1.png"
+            alt="Axiom Founder Badge artwork"
+            style={{ maxWidth: '320px', width: '100%', height: 'auto', display: 'block' }}
+          />
+        </div>
+
         {/* Already minted */}
         {(founderElig?.minted || founderResult) && (
-          <div style={{ background: '#ECFDF5', border: '1px solid #86EFAC', padding: '1rem', marginBottom: '0.75rem' }}>
+          <div style={{ background: '#ECFDF5', border: '1px solid #86EFAC', padding: '1rem', marginBottom: '0.75rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <img
+              src={`/nft-preview/founder-${founderResult?.tokenId ?? founderElig?.mintedTokenId}.png`}
+              alt={`Founder Badge #${founderResult?.tokenId ?? founderElig?.mintedTokenId}`}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/nft-preview/founder-1.png'; }}
+              style={{ width: '64px', height: 'auto', flexShrink: 0, border: '1px solid #C9A84C', display: 'block' }}
+            />
+            <div style={{ flex: '1 1 200px' }}>
             <div style={mono({ fontSize: '11px', color: '#166534', marginBottom: '0.5rem' })}>
               You hold Founder Badge #{founderResult?.tokenId ?? founderElig?.mintedTokenId}
               {(founderResult?.rarityTier) && (
@@ -324,6 +347,7 @@ function WalletMintSection() {
                   Mint transaction ↗
                 </a>
               )}
+            </div>
             </div>
           </div>
         )}
