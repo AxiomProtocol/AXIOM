@@ -7656,6 +7656,123 @@ END $seed$`, 'seed dp_listings');
       )`, 'table cap_loss_coverage_claim_events');
       await exec(`CREATE INDEX IF NOT EXISTS cap_lcc_events_claim_idx ON cap_loss_coverage_claim_events(claim_id, created_at)`, 'index cap_lcc_events_claim_idx');
 
+      // ── Auto-apply numbered SQL migrations (./migrations/*.sql) ──
+      // When the migrations directory is present on disk (local dev / CI clone,
+      // not a serverless Vercel deployment), apply every unapplied numbered
+      // migration so the DB schema stays in sync without manual intervention.
+      //
+      // Why not use the Drizzle journal migrator here?
+      // migrations/0000_round_medusa.sql uses plain CREATE TABLE (no IF NOT EXISTS),
+      // which conflicts with the inline CREATE TABLE IF NOT EXISTS statements above on
+      // any database that instrumentation.ts has already bootstrapped. Instead we use
+      // a lightweight custom runner with its own tracking table so we can:
+      //   • skip migrations already recorded as applied (idempotent)
+      //   • mark migrations as applied when they fail only because the object
+      //     already exists (42P07 / 42701 / 42710) — the inline DDL above covers
+      //     the baseline schema and these errors are expected on bootstrapped DBs
+      //   • log a warning (never crash) for unexpected errors
+      //
+      // New migrations should use ADD COLUMN IF NOT EXISTS / CREATE TABLE IF NOT EXISTS
+      // so they always succeed cleanly regardless of the startup path taken.
+      //
+      // NOTE on multi-statement migrations: when a migration file contains multiple
+      // SQL statements and the first duplicate-object error fires, the entire transaction
+      // is rolled back and the file is marked applied. Statements that ran before the
+      // error do NOT take effect. For migrations that mix new and pre-existing objects,
+      // use IF NOT EXISTS on every statement to avoid this.
+      //
+      // A dedicated pool (max:2) is used so that the migration runner's client
+      // connection and its tracking-table queries never deadlock against the
+      // main pool (max:1) that drove all the inline DDL above.
+      //
+      // Explicitly scoped to non-production environments: production deployments use
+      // `npm run db:migrate` (with operator oversight) and must not auto-apply
+      // migrations on startup. The check below is belt-and-suspenders alongside the
+      // migrations-directory existence check (Vercel doesn't bundle the folder).
+      const isProductionEnv = process.env.NODE_ENV === 'production';
+      try {
+        const fs = await import('fs');
+        const path = await import('path');
+        const migrationsDir = path.join(process.cwd(), 'migrations');
+
+        if (!isProductionEnv && fs.existsSync(migrationsDir)) {
+          const migPool = new Pool({
+            connectionString: process.env.DATABASE_URL!,
+            ssl: process.env.DATABASE_URL!.includes('neon.tech') ? true : undefined,
+            max: 2,
+            connectionTimeoutMillis: 15000,
+          });
+
+          try {
+            // Tracking table — records which numbered migration files have been applied.
+            await migPool.query(`
+              CREATE TABLE IF NOT EXISTS numbered_sql_migrations (
+                filename   TEXT PRIMARY KEY,
+                applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+              )
+            `);
+
+            const { rows: appliedRows } = await migPool.query<{ filename: string }>(
+              'SELECT filename FROM numbered_sql_migrations',
+            );
+            const applied = new Set(appliedRows.map((r) => r.filename));
+
+            const files: string[] = (fs.readdirSync(migrationsDir) as string[])
+              .filter((f: string) => f.endsWith('.sql'))
+              .sort();
+
+            for (const file of files) {
+              if (applied.has(file)) continue;
+
+              const fullPath = path.join(migrationsDir, file);
+              // Strip Drizzle breakpoint comments so we can run the whole file
+              // as a single statement block inside one transaction.
+              const sql: string = (fs.readFileSync(fullPath, 'utf8') as string)
+                .replace(/^--> statement-breakpoint\s*$/gm, '');
+
+              const client = await migPool.connect();
+              try {
+                await client.query('BEGIN');
+                await client.query(sql);
+                await client.query(
+                  'INSERT INTO numbered_sql_migrations (filename) VALUES ($1) ON CONFLICT DO NOTHING',
+                  [file],
+                );
+                await client.query('COMMIT');
+                console.log(`[instrumentation] Applied migration ${file}`);
+              } catch (migErr: unknown) {
+                await client.query('ROLLBACK');
+                // PG error codes for "object already exists" — expected when the
+                // inline DDL above already bootstrapped the schema.
+                //   42P07 duplicate_table
+                //   42701 duplicate_column
+                //   42710 duplicate_object  (type / index / etc.)
+                const pgCode = (migErr as { code?: string }).code;
+                if (pgCode === '42P07' || pgCode === '42701' || pgCode === '42710') {
+                  await client.query(
+                    'INSERT INTO numbered_sql_migrations (filename) VALUES ($1) ON CONFLICT DO NOTHING',
+                    [file],
+                  );
+                  console.log(`[instrumentation] Migration ${file} already covered by baseline DDL — marked applied`);
+                } else {
+                  const msg = migErr instanceof Error ? migErr.message : String(migErr);
+                  console.warn(`[instrumentation] Migration ${file} failed (non-fatal): ${msg}`);
+                }
+              } finally {
+                client.release();
+              }
+            }
+
+            console.log('[instrumentation] Numbered migrations processed');
+          } finally {
+            await migPool.end();
+          }
+        }
+      } catch (migrateErr: unknown) {
+        const msg = migrateErr instanceof Error ? migrateErr.message : String(migrateErr);
+        console.warn('[instrumentation] Migration step failed (non-fatal):', msg);
+      }
+
       console.log('[instrumentation] Database setup complete');
 
       await pool.end();
