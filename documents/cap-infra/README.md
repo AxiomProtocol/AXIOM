@@ -687,6 +687,51 @@ auto-freeze. If a channel is listed in `errors` it failed delivery —
 fix the env var (typo, expired webhook, Resend domain not verified,
 …) and re-run the test before considering the rotation complete.
 
+#### Scheduled wiring check (Task #306)
+
+The on-call wiring check above is the right gate to use after a
+**rotation** (someone just rotated the email recipients or the Discord
+webhook). But between rotations, an expired Discord webhook or a
+lapsed Resend domain verification can silently break the pager and
+nobody finds out until a real `collateral.integrity_failed` event
+fires and the page never lands. To close that window a separate
+scheduler endpoint fires the same synthetic test page on a fixed
+cadence:
+
+```
+POST /api/scheduler/integrity-pager-wiring-check
+  -H "x-scan-key: $MIRDT_SCAN_KEY"
+```
+
+Wire this from any external scheduler (Google Cloud Scheduler,
+EasyCron, GitHub Actions cron, …). **Recommended cadence: weekly.**
+Auth model is identical to the other scheduler endpoints
+(`MIRDT_SCAN_KEY`).
+
+When the wiring check returns errors or fewer channels than expected
+(or no channels are configured at all) the **runbook owner** is
+notified by email via a separately-configured channel:
+
+| Env var | Format | Purpose |
+|---|---|---|
+| `INTEGRITY_PAGER_WIRING_OWNER_EMAIL` | Comma-separated email recipients | Receives the alert when the wiring check fails. **Must be a different inbox than `INTEGRITY_ALERT_EMAIL`** so the alert about the broken pager is not delivered through the broken pager. Recommend the SRE lead's direct address, not the on-call rotation alias. |
+
+Every run (healthy or not) is persisted to
+`integrity_pager_wiring_check_runs` so the operator dashboard can
+show the most recent outcome at a glance. The new
+`IntegrityPagerWiringCheckStatus` row sits directly under the pager
+status banner on `/operator/integrity` and renders one of:
+
+| Wiring-check state | Banner |
+|---|---|
+| Never run | Amber &mdash; "Wiring check has never run — schedule it" |
+| Last run ok | Green &mdash; "Wiring check ok — channels: email + discord" |
+| Last run failed | Loud red &mdash; "Wiring check FAILED — missing: discord (runbook owner notified)" |
+
+The status row reads only the most recent row of
+`integrity_pager_wiring_check_runs`, so even if the audit table is
+unavailable the rest of the integrity console still renders.
+
 #### Production deployment checklist (paging gate)
 
 A new environment cannot be promoted to production-serving without
@@ -718,6 +763,12 @@ a `collateral.integrity_failed` event fires.
       configured channels with `errors: []`.
 - [ ] The runbook owner (Risk / SRE on-call lead) is recorded in the
       env-var ownership table above and knows they own rotation.
+- [ ] The scheduled wiring check at
+      `POST /api/scheduler/integrity-pager-wiring-check` is wired in
+      the external scheduler (weekly cadence recommended) and
+      `INTEGRITY_PAGER_WIRING_OWNER_EMAIL` is set to a SEPARATE inbox
+      from `INTEGRITY_ALERT_EMAIL` (so the alert about a broken
+      pager is not delivered through the broken pager).
 
 Promotion sign-off should not be granted while any item is
 unchecked. The single per-process warning is intentionally quiet so

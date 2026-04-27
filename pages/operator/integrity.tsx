@@ -39,10 +39,15 @@ import {
   shapePagedChannelDisplay,
 } from '../../components/operator/AssetIntegrityAlertsPanel';
 import { IntegrityPagerStatusBanner } from '../../components/operator/IntegrityPagerStatusBanner';
+import { IntegrityPagerWiringCheckStatus } from '../../components/operator/IntegrityPagerWiringCheckStatus';
 import {
   getIntegrityPagerStatus,
   type IntegrityPagerStatus,
 } from '../../lib/capinfra/notifications/integrityPagerStatus';
+import {
+  getLastIntegrityPagerWiringCheckRun,
+  type WiringCheckRunRecord,
+} from '../../lib/capinfra/notifications/integrityPagerWiringCheck';
 
 const KIND_LABEL: Record<string, string> = {
   oracle_stale: 'Oracle stale',
@@ -75,6 +80,15 @@ interface Props {
    * compiling; SSR always supplies a concrete value.
    */
   pagerStatus?: IntegrityPagerStatus;
+  /**
+   * Most recent scheduled wiring-check run (Task #306). Surfaces the
+   * outcome of the last `/api/scheduler/integrity-pager-wiring-check`
+   * call so an operator can see at a glance whether the pager is
+   * still actually firing — env vars being set is necessary but not
+   * sufficient. `null` when the audit table is empty / unavailable.
+   * Optional in the type so legacy test fixtures keep compiling.
+   */
+  lastWiringCheckRun?: WiringCheckRunRecord | null;
 }
 
 function readShowAcknowledged(value: string | string[] | undefined): boolean {
@@ -148,6 +162,10 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
     console.error('[operator/integrity] failed to load alerts:', loadError);
   }
 
+  // Best-effort: never let a wiring-check audit DB error hide the
+  // primary alerts table. The helper returns null on failure.
+  const lastWiringCheckRun = await getLastIntegrityPagerWiringCheckRun();
+
   return {
     props: {
       alerts,
@@ -159,6 +177,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       kindFilter,
       failedPagesFilter,
       pagerStatus: getIntegrityPagerStatus(),
+      lastWiringCheckRun,
     },
   };
 };
@@ -173,6 +192,7 @@ export default function OperatorIntegrityPage({
   kindFilter,
   failedPagesFilter = false,
   pagerStatus,
+  lastWiringCheckRun = null,
 }: Props) {
   const toggleHref = buildIntegrityHref({
     ack: !showAcknowledged,
@@ -223,6 +243,10 @@ export default function OperatorIntegrityPage({
         {pagerStatus ? (
           <IntegrityPagerStatusBanner status={pagerStatus} />
         ) : null}
+        <IntegrityPagerWiringCheckStatus
+          lastRun={lastWiringCheckRun}
+          generatedAtMs={generatedAtMs}
+        />
         <p className="text-sm text-dl-muted font-mono mb-4">
           Recent <code>collateral.integrity_failed</code> auto-freeze
           notifications from the last {windowHours}h. Default view shows
