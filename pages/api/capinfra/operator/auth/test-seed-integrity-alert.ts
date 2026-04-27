@@ -29,9 +29,20 @@ import { capNotifications } from '../../../../../shared/capInfraSchema';
 import { generateId } from '../../../../../lib/capinfra/ids';
 import { INTEGRITY_ALERT_TOPIC } from '../../../../../lib/capinfra/risk/integrityAlerts';
 
+interface PagedBlob {
+  channels: string[];
+  errors: string[];
+  skipped: boolean;
+}
+
 interface SeedBody {
   action?: 'seed' | 'cleanup';
   id?: string;
+  /**
+   * Optional paging result to embed in the bodyJson `paged` field.
+   * When absent the row is a legacy-style pre-task-#258 row (paged = null).
+   */
+  paged?: PagedBlob | null;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -56,6 +67,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const symbol = `E2EMR${id.slice(-6).toUpperCase()}`;
       const rationale =
         'oracle_stale: e2e mark-read seed — synthetic auto-freeze for Playwright coverage';
+      const bodyJson: Record<string, unknown> = {
+        assetId,
+        symbol,
+        kind: 'oracle_stale',
+        rationale,
+        source: 'e2e-test-seed-integrity-alert',
+      };
+      // Only embed the paged blob when explicitly supplied so legacy
+      // (null-paged) rows can still be seeded by omitting the field.
+      if (body.paged !== undefined && body.paged !== null) {
+        bodyJson.paged = body.paged;
+      }
       await db.insert(capNotifications).values({
         id,
         userId: null,
@@ -63,13 +86,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         topic: INTEGRITY_ALERT_TOPIC,
         severity: 'CRITICAL',
         subject: `[e2e] auto-freeze ${symbol}`,
-        bodyJson: {
-          assetId,
-          symbol,
-          kind: 'oracle_stale',
-          rationale,
-          source: 'e2e-test-seed-integrity-alert',
-        } as Record<string, unknown>,
+        bodyJson,
         correlationId: null,
         relatedEventId: null,
       });

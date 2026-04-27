@@ -62,12 +62,21 @@ async function loginAsOperator(page: Page) {
   ).toBe(200);
 }
 
-async function seedIntegrityAlert(page: Page): Promise<SeedResponse> {
+interface PagedBlob {
+  channels: string[];
+  errors: string[];
+  skipped: boolean;
+}
+
+async function seedIntegrityAlert(
+  page: Page,
+  paged?: PagedBlob,
+): Promise<SeedResponse> {
   const resp = await page.request.post(
     `${BASE}/api/capinfra/operator/auth/test-seed-integrity-alert`,
     {
       headers: { 'content-type': 'application/json' },
-      data: { action: 'seed' },
+      data: paged ? { action: 'seed', paged } : { action: 'seed' },
     },
   );
   if (resp.status() !== 200) {
@@ -248,5 +257,55 @@ test.describe('Operator console — integrity alerts page', () => {
       page.getByTestId(`operator-integrity-row-${unreadSeed.id}`),
       'unread row must remain visible after toggling back to unread-only',
     ).toBeVisible();
+  });
+
+  test('integrity console shows paged-channel summary on rows that have paging data', async ({
+    page,
+  }) => {
+    // Seed a row that has a concrete paging result: email succeeded,
+    // discord failed with a 429. This exercises the console's
+    // shapePagedChannelDisplay rendering path end-to-end.
+    const pagedSeed = await seedIntegrityAlert(page, {
+      channels: ['email'],
+      errors: ['discord: HTTP 429: rate limited'],
+      skipped: false,
+    });
+    seededIds.push(pagedSeed.id);
+
+    await page.goto('/operator/integrity');
+    await expect(
+      page.getByRole('heading', { name: 'Asset integrity alerts' }),
+    ).toBeVisible({ timeout: 10_000 });
+
+    // The row must be visible in default (unread-only) mode.
+    const row = page.getByTestId(`operator-integrity-row-${pagedSeed.id}`);
+    await expect(
+      row,
+      'seeded row with paging data must appear in the unread-only console view',
+    ).toBeVisible();
+
+    // The "Paged" cell must render.
+    const pagedCell = page.getByTestId(
+      `operator-integrity-row-${pagedSeed.id}-paged`,
+    );
+    await expect(
+      pagedCell,
+      '"Paged" cell must be visible for rows that have a paged blob',
+    ).toBeVisible();
+
+    // Email channel succeeded — must show ✓.
+    const emailSpan = page.getByTestId(
+      `operator-integrity-row-${pagedSeed.id}-paged-email`,
+    );
+    await expect(emailSpan).toBeVisible();
+    await expect(emailSpan).toContainText('✓');
+
+    // Discord channel failed — must show ✗ with the reason.
+    const discordSpan = page.getByTestId(
+      `operator-integrity-row-${pagedSeed.id}-paged-discord`,
+    );
+    await expect(discordSpan).toBeVisible();
+    await expect(discordSpan).toContainText('✗');
+    await expect(discordSpan).toContainText('HTTP 429');
   });
 });
