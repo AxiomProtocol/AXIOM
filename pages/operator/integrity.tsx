@@ -484,11 +484,41 @@ export default function OperatorIntegrityPage({
                     >
                       <td className="px-3 py-2 font-bold text-dl-navy break-all">
                         {a.symbol ?? a.assetId}
+                        {a.symbol && (
+                          <Link
+                            href={buildIntegrityHref({
+                              ack: showAcknowledged,
+                              symbol: a.symbol,
+                              kind: kindFilter,
+                              failedPages: failedPagesFilter,
+                              window: windowFilter,
+                            })}
+                            className="ml-1.5 text-[10px] font-normal normal-case tracking-normal text-dl-muted hover:text-dl-ink underline"
+                            data-testid={`operator-integrity-row-${a.id}-symbol-filter`}
+                            title={`Filter to ${a.symbol} only`}
+                          >
+                            only
+                          </Link>
+                        )}
                       </td>
                       <td className="px-3 py-2">
                         <span className="text-[10px] uppercase tracking-wider border border-red-300 bg-red-50 text-red-800 px-1.5 py-0.5">
                           {KIND_LABEL[a.kind] ?? a.kind}
                         </span>
+                        <Link
+                          href={buildIntegrityHref({
+                            ack: showAcknowledged,
+                            symbol: symbolFilter,
+                            kind: a.kind,
+                            failedPages: failedPagesFilter,
+                            window: windowFilter,
+                          })}
+                          className="ml-1.5 text-[10px] normal-case tracking-normal text-dl-muted hover:text-dl-ink underline"
+                          data-testid={`operator-integrity-row-${a.id}-kind-filter`}
+                          title={`Filter to ${a.kind} only`}
+                        >
+                          only
+                        </Link>
                       </td>
                       <td className="px-3 py-2 break-words max-w-md">
                         {a.rationale}

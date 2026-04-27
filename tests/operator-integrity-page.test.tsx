@@ -1647,3 +1647,172 @@ describe('OperatorIntegrityPage — SSR window param', () => {
     expect(props.windowHours).toBe(1);
   });
 });
+
+describe('OperatorIntegrityPage — row symbol/kind pivot links', () => {
+  it('symbol cell renders an "only" link whose href targets ?symbol= preserving no extra filters', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[makeAlertView({ id: 'ntf_sym' })]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+      />,
+    );
+    const row = screen.getByTestId('operator-integrity-row-ntf_sym');
+    const link = within(row).getByTestId(
+      'operator-integrity-row-ntf_sym-symbol-filter',
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe(
+      '/operator/integrity?symbol=AXAU',
+    );
+    expect(link.textContent).toMatch(/only/i);
+  });
+
+  it('symbol pivot link preserves ack=1 when showAcknowledged is true', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[makeAlertView({ id: 'ntf_sym_ack' })]}
+        showAcknowledged={true}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+      />,
+    );
+    const row = screen.getByTestId('operator-integrity-row-ntf_sym_ack');
+    const link = within(row).getByTestId(
+      'operator-integrity-row-ntf_sym_ack-symbol-filter',
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe(
+      '/operator/integrity?ack=1&symbol=AXAU',
+    );
+  });
+
+  it('symbol pivot link preserves an active kind filter alongside the new symbol', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[makeAlertView({ id: 'ntf_sym_kind' })]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={'oracle_stale'}
+      />,
+    );
+    const row = screen.getByTestId('operator-integrity-row-ntf_sym_kind');
+    const link = within(row).getByTestId(
+      'operator-integrity-row-ntf_sym_kind-symbol-filter',
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe(
+      '/operator/integrity?symbol=AXAU&kind=oracle_stale',
+    );
+  });
+
+  it('symbol cell omits the "only" link when the row has no symbol', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[makeAlertView({ id: 'ntf_nosym', symbol: null })]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+      />,
+    );
+    const row = screen.getByTestId('operator-integrity-row-ntf_nosym');
+    expect(
+      within(row).queryByTestId('operator-integrity-row-ntf_nosym-symbol-filter'),
+    ).toBeNull();
+  });
+
+  it('kind cell renders an "only" link whose href targets ?kind= with no extra filters', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[makeAlertView({ id: 'ntf_kind' })]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+      />,
+    );
+    const row = screen.getByTestId('operator-integrity-row-ntf_kind');
+    const link = within(row).getByTestId(
+      'operator-integrity-row-ntf_kind-kind-filter',
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe(
+      '/operator/integrity?kind=oracle_stale',
+    );
+    expect(link.textContent).toMatch(/only/i);
+  });
+
+  it('kind pivot link preserves ack=1 when showAcknowledged is true', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[makeAlertView({ id: 'ntf_kind_ack' })]}
+        showAcknowledged={true}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+      />,
+    );
+    const row = screen.getByTestId('operator-integrity-row-ntf_kind_ack');
+    const link = within(row).getByTestId(
+      'operator-integrity-row-ntf_kind_ack-kind-filter',
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe(
+      '/operator/integrity?ack=1&kind=oracle_stale',
+    );
+  });
+
+  it('kind pivot link preserves an active symbol filter alongside the new kind', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[makeAlertView({ id: 'ntf_kind_sym' })]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={'AXAG'}
+        kindFilter={null}
+      />,
+    );
+    const row = screen.getByTestId('operator-integrity-row-ntf_kind_sym');
+    const link = within(row).getByTestId(
+      'operator-integrity-row-ntf_kind_sym-kind-filter',
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe(
+      '/operator/integrity?symbol=AXAG&kind=oracle_stale',
+    );
+  });
+
+  it('both pivot links are present on the same row', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[makeAlertView({ id: 'ntf_both' })]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+      />,
+    );
+    const row = screen.getByTestId('operator-integrity-row-ntf_both');
+    expect(
+      within(row).getByTestId('operator-integrity-row-ntf_both-symbol-filter'),
+    ).toBeTruthy();
+    expect(
+      within(row).getByTestId('operator-integrity-row-ntf_both-kind-filter'),
+    ).toBeTruthy();
+  });
+});
