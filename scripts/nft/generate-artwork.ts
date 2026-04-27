@@ -1,8 +1,9 @@
 /**
  * NFT Artwork Generation Script
  * ─────────────────────────────────────────────────────────────────────────────
- * Generates AI artwork for Axiom Protocol NFT collections using Gemini, pins
- * each image to IPFS via Pinata, and stores the CID in nft_tokens.image_cid.
+ * Generates AI artwork for Axiom Protocol NFT collections using OpenAI
+ * gpt-image-1 (Hollywood Studio quality, ultra cinematic, photorealistic),
+ * pins each image to IPFS via Pinata, and stores the CID in nft_tokens.image_cid.
  * The base64 dataUrl is also stored in nft_tokens.image_data as a local cache.
  * IPFS pinning is mandatory — a token is not marked successful without a CID.
  *
@@ -12,14 +13,15 @@
  *   npx ts-node scripts/nft/generate-artwork.ts --contract land --tokens 1-5 --dry-run
  *
  * Environment (required):
- *   GEMINI_API_KEY        — Google AI Studio API key
- *   PINATA_JWT            — Pinata API JWT for IPFS pinning
- *   DATABASE_URL          — PostgreSQL connection string
+ *   AI_INTEGRATIONS_OPENAI_API_KEY  — Replit AI Integrations OpenAI key
+ *   AI_INTEGRATIONS_OPENAI_BASE_URL — Replit AI Integrations base URL
+ *   PINATA_JWT                      — Pinata API JWT for IPFS pinning
+ *   DATABASE_URL                    — PostgreSQL connection string
  */
 
 import * as path from 'path';
 import * as fs from 'fs';
-import { GoogleGenAI, Modality } from '@google/genai';
+import OpenAI from 'openai';
 import {
   computeSeed,
   computeTraits,
@@ -114,47 +116,40 @@ function parseArgs(): { contract: string; tokens: number[]; dryRun: boolean } {
   return { contract, tokens, dryRun };
 }
 
-// ── Gemini image generation ───────────────────────────────────────────────────
+// ── OpenAI image generation ───────────────────────────────────────────────────
 
-const GEMINI_MODEL = 'gemini-2.5-flash-image';
+const OPENAI_MODEL = 'gpt-image-1';
+const IMAGE_SIZE   = '1024x1024' as const;
 
-function makeGeminiClient(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY;
+function makeOpenAIClient(): OpenAI {
+  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
   if (!apiKey) {
-    throw new Error('GEMINI_API_KEY environment variable is not set');
+    throw new Error('AI_INTEGRATIONS_OPENAI_API_KEY environment variable is not set');
   }
-  return new GoogleGenAI({ apiKey });
+  return new OpenAI({ apiKey, baseURL: baseURL || undefined });
 }
 
 async function generateImageBase64(
-  ai: GoogleGenAI,
+  client: OpenAI,
   prompt: string
 ): Promise<{ base64: string; mimeType: string; dataUrl: string }> {
-  const response = await ai.models.generateContent({
-    model: GEMINI_MODEL,
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    config: {
-      responseModalities: [Modality.TEXT, Modality.IMAGE],
-    },
+  const response = await client.images.generate({
+    model: OPENAI_MODEL,
+    prompt,
+    n: 1,
+    size: IMAGE_SIZE,
   });
 
-  const candidate = response.candidates?.[0];
-  const imagePart = candidate?.content?.parts?.find(
-    (p: { inlineData?: { data?: string; mimeType?: string } }) => p.inlineData
-  );
-
-  if (!imagePart?.inlineData?.data) {
-    const textPart = candidate?.content?.parts?.find(
-      (p: { text?: string }) => p.text
-    );
+  const b64 = response.data?.[0]?.b64_json;
+  if (!b64) {
     throw new Error(
-      `Gemini returned no image. Response text: ${textPart?.text ?? 'none'}`
+      `OpenAI returned no image data. Response: ${JSON.stringify(response.data)}`
     );
   }
 
-  const mimeType = imagePart.inlineData.mimeType ?? 'image/png';
-  const base64 = imagePart.inlineData.data;
-  return { base64, mimeType, dataUrl: `data:${mimeType};base64,${base64}` };
+  const mimeType = 'image/png';
+  return { base64: b64, mimeType, dataUrl: `data:${mimeType};base64,${b64}` };
 }
 
 // ── Mandatory IPFS upload via Pinata ─────────────────────────────────────────
@@ -176,19 +171,11 @@ async function uploadToIPFS(
     throw new Error('PINATA_JWT environment variable is not set');
   }
 
-  // Build multipart/form-data body using Node's built-in FormData (Node 18+)
-  // or the undici FormData available in the Next.js runtime.
   const form = new FormData();
   const blob = new Blob([new Uint8Array(imageBuffer)], { type: mimeType });
   form.append('file', blob, filename);
-  form.append(
-    'pinataMetadata',
-    JSON.stringify({ name: filename })
-  );
-  form.append(
-    'pinataOptions',
-    JSON.stringify({ cidVersion: 1 })
-  );
+  form.append('pinataMetadata', JSON.stringify({ name: filename }));
+  form.append('pinataOptions', JSON.stringify({ cidVersion: 1 }));
 
   const response = await fetch(PINATA_PIN_URL, {
     method: 'POST',
@@ -211,11 +198,11 @@ async function uploadToIPFS(
 // ── Rarity colour codes for terminal output ───────────────────────────────────
 
 const RARITY_COLOUR: Record<RarityTier, string> = {
-  Legendary: '\x1b[33m', // gold
-  Epic:      '\x1b[35m', // magenta
-  Rare:      '\x1b[36m', // cyan
-  Uncommon:  '\x1b[34m', // blue
-  Common:    '\x1b[37m', // white
+  Legendary: '\x1b[33m',
+  Epic:      '\x1b[35m',
+  Rare:      '\x1b[36m',
+  Uncommon:  '\x1b[34m',
+  Common:    '\x1b[37m',
 };
 const RESET = '\x1b[0m';
 const GREEN = '\x1b[32m';
@@ -244,27 +231,26 @@ async function main() {
   console.log(` Collection : ${cfg.displayName}`);
   console.log(` Contract   : ${cfg.address}`);
   console.log(` Tokens     : ${tokens[0]}–${tokens[tokens.length - 1]} (${tokens.length} total)`);
-  console.log(` Model      : ${GEMINI_MODEL}`);
+  console.log(` Model      : ${OPENAI_MODEL} (Hollywood Studio / Ultra Cinematic)`);
   console.log(` Mode       : ${dryRun ? '🔍 DRY RUN (no API calls, no DB writes)' : '🚀 LIVE'}`);
   console.log('═'.repeat(60) + '\n');
 
   if (dryRun) {
-    // Preview prompts only
     for (const tokenId of tokens) {
       const seed = computeSeed(tokenId, cfg.address, cfg.deployBlock);
       const traits = computeTraits(seed);
       const prompt = buildImagePrompt(tokenId, traits, cfg.displayName);
       console.log(`Token #${tokenId} — ${colourTier(traits.rarityTier)}`);
       console.log(`${DIM}Seed: ${seed}${RESET}`);
-      console.log(`Prompt: ${prompt}\n`);
+      console.log(`Prompt:\n${prompt}\n`);
     }
     console.log(`${DIM}Dry run complete — no images generated.${RESET}\n`);
     return;
   }
 
   // Validate required keys before starting
-  if (!process.env.GEMINI_API_KEY) {
-    console.error(`${RED}❌  GEMINI_API_KEY is not set.${RESET}`);
+  if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+    console.error(`${RED}❌  AI_INTEGRATIONS_OPENAI_API_KEY is not set.${RESET}`);
     process.exit(1);
   }
   if (!process.env.PINATA_JWT) {
@@ -272,10 +258,9 @@ async function main() {
     process.exit(1);
   }
 
-  // Ensure DB tables exist
   await ensureNFTTables();
 
-  const ai = makeGeminiClient();
+  const client = makeOpenAIClient();
 
   const results: {
     tokenId: number;
@@ -297,15 +282,12 @@ async function main() {
     process.stdout.write(`${colourTier(traits.rarityTier)} … `);
 
     try {
-      // Generate image
-      const { base64, mimeType, dataUrl } = await generateImageBase64(ai, prompt);
+      const { base64, mimeType, dataUrl } = await generateImageBase64(client, prompt);
 
-      // Upload to IPFS via Pinata (mandatory — throws on failure)
       const imageBuffer = Buffer.from(base64, 'base64');
       const filename    = `axiom-nft-${contractKey}-${tokenId}.png`;
       const ipfsCid     = await uploadToIPFS(imageBuffer, filename, mimeType);
 
-      // Upsert into DB with the real IPFS CID
       await upsertNFTToken({
         tokenId,
         contractAddress: cfg.address,
@@ -317,6 +299,12 @@ async function main() {
         imageCid:        ipfsCid,
         imageData:       dataUrl,
       });
+
+      // Also write the cached preview PNG for fast display in /nft/preview
+      const previewDir = path.join(__dirname, '../../public/nft-preview');
+      if (!fs.existsSync(previewDir)) fs.mkdirSync(previewDir, { recursive: true });
+      const previewFile = path.join(previewDir, `${contractKey}-${tokenId}.png`);
+      fs.writeFileSync(previewFile, imageBuffer);
 
       console.log(`${GREEN}✓${RESET}  IPFS: ${ipfsCid}`);
 
@@ -340,8 +328,8 @@ async function main() {
       });
     }
 
-    // Rate-limit: 2 s between calls (avoid Gemini quota)
-    if (i < tokens.length - 1) await sleep(2000);
+    // Rate-limit: 3 s between calls
+    if (i < tokens.length - 1) await sleep(3000);
   }
 
   // ── Summary ─────────────────────────────────────────────────────────────────
@@ -358,7 +346,6 @@ async function main() {
   if (failed > 0) console.log(` ${RED}Failed${RESET}       : ${failed}`);
   console.log(` IPFS pinned  : ${pinned}/${results.length}`);
 
-  // Rarity breakdown
   const tierCounts: Partial<Record<RarityTier, number>> = {};
   for (const r of results.filter((r) => r.status === 'ok')) {
     tierCounts[r.rarityTier] = (tierCounts[r.rarityTier] ?? 0) + 1;
@@ -377,7 +364,6 @@ async function main() {
     }
   }
 
-  // Save results JSON
   const outFile = path.join(
     __dirname,
     `artwork-results-${contractKey}-${Date.now()}.json`

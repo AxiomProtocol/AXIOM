@@ -138,81 +138,85 @@ export function traitsToAttributes(traits: NFTTraits) {
 }
 
 /**
- * Rarity-specific visual templates.
- * Each tier has a unique compositional concept so tokens look dramatically
- * different from one another — not just "more ornate" versions of the same thing.
+ * Hollywood Studio quality, ultra cinematic, ultra photorealistic image prompts.
+ * Each rarity tier has a completely distinct visual world — not variations of the same badge.
+ * Prompts use professional photography and cinematography language to extract peak quality
+ * from gpt-image-1.
  */
 const RARITY_VISUAL_CONCEPTS: Record<RarityTier, (traits: NFTTraits, tokenId: string | number, collection: string) => string> = {
 
   Legendary: (traits, tokenId) => `
-Hyper-detailed digital art, square 1:1 format.
-A breathtaking aerial view of a sovereign land territory seen from high altitude at night.
-Gold geometric property boundary lines glow across dark forest and coastline below,
-forming precise blockchain grid coordinates. At the center, an ancient seal floats:
-octagonal, carved from obsidian, inlaid with molten gold filigree — the Axiom Protocol
-mark at its heart, surrounded by rotating concentric rings engraved with coordinates and
-hash fragments. Particle light rays emanate outward like aurora borealis. 
-Color palette: deep midnight navy, forest black, liquid gold (#C9A84C), white star-points.
-Atmosphere: cinematic, awe-inspiring, like a god's-eye view of a new sovereign nation being born.
-${traits.aura} light effect. ${traits.background} environment. Token ${tokenId}.
-Ultra-high detail, 8k quality. No human figures. No plain text labels.
+Ultra cinematic aerial photography, shot from a helicopter at 3,000 feet during the golden hour
+just before sunset. A vast sovereign land territory stretches below — ancient forests meeting
+coastline, a winding river catching the last amber light. Laser-etched gold boundary lines glow
+across the landscape like living circuits, defining the perimeter of a new autonomous territory.
+At the center of the frame, impossibly large, a monolithic obsidian seal the size of a city block
+rises from the earth — octagonal, carved with millimeter-precision geometric glyphs, its surface
+inlaid with rivers of molten 24-karat gold. The Axiom "A" sigil blazes at its core like a second
+sun. Atmospheric volumetric god-rays pierce through scattered clouds above. ${traits.aura} light
+corona halos the seal. The sky transitions from deep cobalt at zenith to pure liquid gold at the
+horizon. Shot on ARRI Alexa 65, Zeiss Master Prime 21mm, f/2.8, ISO 800. 8K resolution,
+IMAX aspect ratio cropped to square. Photorealistic, physically-based rendering. Epic scale.
+No text. No watermarks. Awe-inspiring sovereign majesty. Token ${tokenId}.
 `.trim(),
 
   Epic: (traits, tokenId) => `
-Hyper-detailed digital art, square 1:1 format.
-A monumental treasury seal sculpted in deep relief, photographed under dramatic raking light.
-The seal is cast in aged bronze and inlaid with emerald and sapphire geometric insets —
-the central emblem: a bold upward-pointing triangle (representing land and capital ascent)
-enclosed in a perfect hexagon, itself enclosed in an octagonal frame of interlocking
-chain-link geometry. Each chain link bears a micro-engraved hash symbol.
-${traits.frame} border style with ${traits.aura} atmospheric glow bleeding from the edges.
-The background is ${traits.background.toLowerCase()} — rich dark texture, velvet-black or midnight navy.
-Color palette: verdigris bronze, deep sapphire, muted emerald, gold leaf highlights.
-Mood: powerful, authoritative, like an ancient institution's founding document seal.
-Token ${tokenId}. Ultra-detailed engraving texture. No plain text.
+Extreme close-up macro photography of a masterwork institutional medallion, shot in a professional
+product photography studio with a large-format Hasselblad H6D-400c and 120mm macro lens.
+The medallion is hand-cast in solid 18-karat gold and patinated aged bronze, 6 inches in diameter,
+resting on a surface of polished obsidian stone. Dramatic three-point studio lighting with a
+large octabox key light raking across the surface at 15 degrees, creating deep shadows in every
+engraved groove. The centerpiece: an upward-pointing equilateral triangle inset with genuine
+emerald chip mosaic, surrounded by an interlocking hexagonal border of 24 individual faceted
+sapphires. The outer ring carries micro-engraved chain-link hash symbols, each thinner than a
+human hair, visible under the macro lens. ${traits.aura} practical light effect glows within
+the stone insets. Background: ${traits.background.toLowerCase()} seamless backdrop, deep and velvety.
+Depth of field: tack sharp on center, bokeh at edges. ISO 50, f/11, 1/60s. Photorealistic.
+Hyper-detailed metalworking texture. No text. Token ${tokenId}.
 `.trim(),
 
   Rare: (traits, tokenId) => `
-Hyper-detailed digital art, square 1:1 format.
-A striking Art Deco institutional crest rendered as if pressed from platinum and black enamel.
-Central composition: a stylized "A" monogram built from architectural geometric forms —
-triangles, chevrons, and parallel rules — framed by symmetrical wing-like elements that
-suggest both an eagle's spread and the floor plan of a grand building.
-Behind the crest, fine sunburst lines radiate outward like an old stock certificate.
-The frame is ${traits.frame.toLowerCase()}, with hairline border rules and corner rosettes.
-${traits.aura} light plays across the metallic surfaces. Background: ${traits.background.toLowerCase()}.
-Color palette: platinum silver, charcoal black, muted gold accents (#C9A84C), cream white.
-Style: 1920s Wall Street meets decentralized protocol. Precise, sharp-edged, no gradients.
-Token ${tokenId}. No readable text. High contrast.
+Architectural interior photography of a grand 1920s Art Deco institutional vault, captured on a
+Phase One IQ4 150MP technical camera with 40mm Rodenstock lens, perspective corrected, f/16.
+The chamber walls are hand-laid black Belgian marble with gold inlay geometric patterns soaring
+thirty feet to a coffered ceiling painted midnight navy. At the far end, mounted on a backlit
+alabaster panel, a monumental crest carved from platinum-coated brass: a stylized "A" monogram
+composed of architectural chevrons and ruled lines, flanked by symmetrical eagle-wing buttresses.
+Fine sunburst lines radiate from the crest like a stock certificate engraving — hundreds of
+hairline grooves catching the warm tungsten light from hidden coves. ${traits.frame.toLowerCase()}
+framing elements border the composition. ${traits.aura} practical glow from the alabaster backlight.
+Rich chiaroscuro lighting — deep blacks, brilliant specular highlights on every gold edge.
+Photorealistic. Ultra-detailed architectural photography. Institutional grandeur. No people.
+No text. Token ${tokenId}.
 `.trim(),
 
   Uncommon: (traits, tokenId) => `
-Hyper-detailed digital art, square 1:1 format.
-A precision-engineered protocol sigil: a symmetrical geometric emblem that looks like a
-blueprint schematic brought to life. The design consists of nested geometric shapes —
-diamond inside hexagon inside circle — connected by fine measurement lines and corner
-registration marks, as if this is an architect's technical drawing made from polished steel.
-The central symbol is an abstract land-parcel icon: a bold vertical axis line with
-horizontal strata lines branching left and right, suggesting cross-section geology and
-property boundaries simultaneously. Clean, purposeful negative space.
-${traits.frame} outer frame with thin precision rules. Background: ${traits.background.toLowerCase()}.
-${traits.aura} subtle edge lighting. Color palette: steel blue-grey, off-white, gold line-work.
-Style: Swiss International typography meets engineering precision. Cold, confident.
-Token ${tokenId}. No decorative flourishes — purely structural geometry.
+Professional product photography of a precision-engineered sovereign protocol badge, shot on
+Sony Alpha 1 with 90mm G Master macro lens, f/8, studio strobe lighting with softbox and
+silver reflector fill. The badge is CNC-machined from solid aerospace-grade titanium, 3.5 inches
+across, surface-brushed with directional grain, resting on dark charcoal suede. The face of the
+badge features a symmetrical geometric composition laser-etched at 0.01mm precision: a diamond
+nested inside a hexagon, inside a circle, with fine measurement hairlines and corner registration
+marks — the vocabulary of technical engineering drawings brought into metal. At center, an abstract
+land-parcel emblem: a bold vertical axis crossed by horizontal strata lines suggesting geological
+survey cross-sections. Every line catches the strobe light as a brilliant specular thread.
+${traits.frame} machined border ring. ${traits.aura} subtle edge-lighting effect.
+Background: ${traits.background.toLowerCase()} surface. ISO 100, tack-sharp focus, zero distortion.
+Photorealistic. Cold, precise, confident. No text. No decorative elements. Token ${tokenId}.
 `.trim(),
 
   Common: (traits, tokenId) => `
-Clean, refined digital art, square 1:1 format.
-A minimal institutional mark: a bold hexagonal emblem on a dark field.
-Inside the hexagon: a clean geometric arrangement — an upward triangle bisected by
-a horizontal line (representing land above, protocol below), rendered in single-weight
-strokes like a master logo. The hexagon border has fine hash-mark tick marks at each vertex.
-The composition breathes — generous dark space surrounds the central form.
-A thin circular orbit line traces around the hexagon at a slight distance, dotted at intervals.
-Background: ${traits.background.toLowerCase()} dark texture. Frame: ${traits.frame.toLowerCase()} thin border rule.
-Color palette: dark navy (#1B2B4B) background, cool white emblem, single gold accent line.
-Style: modern institutional identity — confident restraint over decoration.
-Token ${tokenId}. Precise, resolved, no clutter.
+Clean editorial product photography of an institutional membership coin, captured on Canon EOS R5
+with 100mm L macro lens, f/8, single large softbox from upper left, white reflector fill from
+right. The coin is minted from .999 fine silver, 2.5 inches diameter, proof finish — mirror-bright
+fields against frosted design elements. The obverse design: a bold hexagonal emblem on a mirrored
+field. Inside the hexagon, a minimal geometric mark — upward equilateral triangle bisected by a
+single horizontal rule — frosted silver against the polished background, crisp as a razorblade.
+Fine tick marks at each vertex of the hexagon border. A thin orbit ring circles the hex at a
+precise 3mm clearance. The coin rests on ${traits.background.toLowerCase()} luxury fabric, slightly
+angled to catch the key light across the frosted geometry. ${traits.aura} catchlight reflected
+in the mirror fields. ISO 100, f/8, 1/125s, studio strobe. Photorealistic. Mint-state proof
+coin photography. No text engraving visible. No imperfections. Token ${tokenId}.
 `.trim(),
 
 };
@@ -223,10 +227,10 @@ export function buildImagePrompt(tokenId: string | number, traits: NFTTraits, co
 
   return [
     concept,
-    `Collection: ${collectionName} (Axiom Protocol).`,
+    `NFT Collection: ${collectionName} — Axiom Protocol Sovereign Digital-Physical Economy.`,
     `Genesis Tier: ${traits.genesisTier}. Asset Class: ${traits.assetClass}.`,
-    `Render as a square NFT artwork (1:1 aspect ratio). No watermarks. No borders added by the AI.`,
-    `Photorealistic rendering quality. Award-winning digital art.`,
+    `Square 1:1 format, 1024x1024. Hollywood studio quality. Ultra photorealistic. Award-winning commercial photography.`,
+    `No watermarks. No AI-looking artifacts. No cartoonish elements. Physically accurate lighting and materials.`,
   ].join('\n');
 }
 
