@@ -29,13 +29,17 @@ Royalty: 7.5% (750 BPS) sent to treasury `0x3fD63728288546AC41dAe3bf25ca383061c3
 
 ## Step 1 — Open each collection page on OpenSea
 
-OpenSea auto-creates a collection page the first time it indexes a verified contract on a supported chain. Open each URL in a browser:
+OpenSea auto-creates a collection page the first time it indexes a verified contract on a supported chain. Open the collection-level URL for each contract (this is where the **Edit collection** button lives), and the token-level URL for the anchor token (this is the fastest way to confirm OpenSea has actually indexed the contract):
 
-- **Founder Badge**: <https://opensea.io/assets/arbitrum/0x4a651d30097e2b7326a83cbb32c02913db8b3572>
-- **Participation**: <https://opensea.io/assets/arbitrum/0x67f8c7da647abd50afb1e2137553be8c174342ce>
-- **Land Receipt**: <https://opensea.io/assets/arbitrum/0x60f60ad6a2242bc4aab80233b4c25144368f88db>
+| Collection         | Collection page (for claiming)                                                                  | Anchor token (for indexer check)                                                                  |
+| ------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Founder Badge      | <https://opensea.io/assets/arbitrum/0x4a651d30097e2b7326a83cbb32c02913db8b3572>                  | <https://opensea.io/assets/arbitrum/0x4a651d30097e2b7326a83cbb32c02913db8b3572/1>                  |
+| Participation      | <https://opensea.io/assets/arbitrum/0x67f8c7da647abd50afb1e2137553be8c174342ce>                  | <https://opensea.io/assets/arbitrum/0x67f8c7da647abd50afb1e2137553be8c174342ce/1>                  |
+| Land Receipt       | <https://opensea.io/assets/arbitrum/0x60f60ad6a2242bc4aab80233b4c25144368f88db>                  | (no anchor mint yet — see follow-up #379)                                                          |
 
 If a page shows "We couldn't find that page" or an empty grid, wait 5–10 minutes after the anchor mint for OpenSea's indexer to pick up the contract, then refresh.
+
+> **Note on production secrets**: the metadata endpoint is strict and returns 404 for any address that is not one of the three Axiom contracts. Before publishing, confirm `NFT_CONTRACT_FOUNDER`, `NFT_CONTRACT_PARTICIPATION`, and `NFT_CONTRACT_LAND` are all set in the production environment so OpenSea's indexer doesn't get a 404 for legitimate contracts.
 
 ---
 
