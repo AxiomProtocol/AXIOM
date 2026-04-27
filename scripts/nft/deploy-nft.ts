@@ -87,17 +87,18 @@ async function main() {
   // ── Verify MINTER_ROLE granted to deployer on all contracts ───────────────
   console.log('\n' + '─'.repeat(60));
   console.log('Verifying MINTER_ROLE on all contracts...');
-  const MINTER_ROLE = await founderBadge.MINTER_ROLE();
-  const founderHasRole       = await founderBadge.hasRole(MINTER_ROLE, deployer.address);
-  const participationHasRole = await participation.hasRole(MINTER_ROLE, deployer.address);
-  const landHasRole          = await landReceipt.hasRole(MINTER_ROLE, deployer.address);
+  const founderMinterRole       = await founderBadge.MINTER_ROLE();
+  const participationMinterRole = await participation.MINTER_ROLE();
+  const landMinterRole          = await landReceipt.MINTER_ROLE();
+  const founderHasRole          = await founderBadge.hasRole(founderMinterRole, deployer.address);
+  const participationHasRole    = await participation.hasRole(participationMinterRole, deployer.address);
+  const landHasRole             = await landReceipt.hasRole(landMinterRole, deployer.address);
   if (!founderHasRole || !participationHasRole || !landHasRole) {
     throw new Error(`MINTER_ROLE not granted on all contracts. Founder:${founderHasRole} Participation:${participationHasRole} Land:${landHasRole}`);
   }
-  console.log('MINTER_ROLE:', MINTER_ROLE);
-  console.log('AxiomFounderBadge    deployer MINTER_ROLE:', founderHasRole);
-  console.log('AxiomParticipation   deployer MINTER_ROLE:', participationHasRole);
-  console.log('AxiomLandReceipt     deployer MINTER_ROLE:', landHasRole);
+  console.log('AxiomFounderBadge    MINTER_ROLE:', founderMinterRole, '| deployer has role:', founderHasRole);
+  console.log('AxiomParticipation   MINTER_ROLE:', participationMinterRole, '| deployer has role:', participationHasRole);
+  console.log('AxiomLandReceipt     MINTER_ROLE:', landMinterRole, '| deployer has role:', landHasRole);
 
   // ── Output ─────────────────────────────────────────────────────────────────
   const output = {
