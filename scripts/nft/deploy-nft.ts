@@ -79,10 +79,25 @@ async function main() {
   console.log('\n' + '─'.repeat(60));
   console.log('Updating contractURIs with deployed addresses...');
 
-  await (await founderBadge.setContractURI(`${CONTRACT_URI_FOUNDER}${founderAddress}`)).wait();
-  await (await participation.setContractURI(`${CONTRACT_URI_PARTICIPATION}${participationAddress}`)).wait();
-  await (await landReceipt.setContractURI(`${CONTRACT_URI_LAND}${landAddress}`)).wait();
+  const founderURITx       = await (await founderBadge.setContractURI(`${CONTRACT_URI_FOUNDER}${founderAddress}`)).wait();
+  const participationURITx = await (await participation.setContractURI(`${CONTRACT_URI_PARTICIPATION}${participationAddress}`)).wait();
+  const landURITx          = await (await landReceipt.setContractURI(`${CONTRACT_URI_LAND}${landAddress}`)).wait();
   console.log('contractURIs updated');
+
+  // ── Verify MINTER_ROLE granted to deployer on all contracts ───────────────
+  console.log('\n' + '─'.repeat(60));
+  console.log('Verifying MINTER_ROLE on all contracts...');
+  const MINTER_ROLE = await founderBadge.MINTER_ROLE();
+  const founderHasRole       = await founderBadge.hasRole(MINTER_ROLE, deployer.address);
+  const participationHasRole = await participation.hasRole(MINTER_ROLE, deployer.address);
+  const landHasRole          = await landReceipt.hasRole(MINTER_ROLE, deployer.address);
+  if (!founderHasRole || !participationHasRole || !landHasRole) {
+    throw new Error(`MINTER_ROLE not granted on all contracts. Founder:${founderHasRole} Participation:${participationHasRole} Land:${landHasRole}`);
+  }
+  console.log('MINTER_ROLE:', MINTER_ROLE);
+  console.log('AxiomFounderBadge    deployer MINTER_ROLE:', founderHasRole);
+  console.log('AxiomParticipation   deployer MINTER_ROLE:', participationHasRole);
+  console.log('AxiomLandReceipt     deployer MINTER_ROLE:', landHasRole);
 
   // ── Output ─────────────────────────────────────────────────────────────────
   const output = {
@@ -90,27 +105,34 @@ async function main() {
     deployedAt:     new Date().toISOString(),
     deployer:       deployer.address,
     treasury:       TREASURY_ADDRESS,
+    minterRole:     MINTER_ROLE,
     contracts: {
       AxiomFounderBadge: {
-        address:     founderAddress,
-        deployBlock: founderDeployBlock,
-        type:        'ERC-721 Soulbound',
-        maxSupply:   100,
+        address:            founderAddress,
+        deployBlock:        founderDeployBlock,
+        type:               'ERC-721 Soulbound',
+        maxSupply:          100,
+        contractURITx:      founderURITx?.hash ?? '',
+        deployerHasMinter:  founderHasRole,
       },
       AxiomParticipation: {
-        address:     participationAddress,
-        deployBlock: participationDeployBlock,
-        type:        'ERC-1155',
-        tokenTypes:  6,
+        address:            participationAddress,
+        deployBlock:        participationDeployBlock,
+        type:               'ERC-1155',
+        tokenTypes:         6,
+        contractURITx:      participationURITx?.hash ?? '',
+        deployerHasMinter:  participationHasRole,
       },
       AxiomLandReceipt: {
-        address:     landAddress,
-        deployBlock: landDeployBlock,
-        type:        'ERC-1155 Per-Parcel',
-        defaultCap:  1000,
+        address:            landAddress,
+        deployBlock:        landDeployBlock,
+        type:               'ERC-1155 Per-Parcel',
+        defaultCap:         1000,
+        contractURITx:      landURITx?.hash ?? '',
+        deployerHasMinter:  landHasRole,
       },
     },
-    envVarsNeeded: {
+    envVars: {
       NFT_CONTRACT_FOUNDER:       founderAddress,
       NFT_CONTRACT_PARTICIPATION: participationAddress,
       NFT_CONTRACT_LAND:          landAddress,

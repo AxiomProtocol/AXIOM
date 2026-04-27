@@ -3,35 +3,34 @@
   "deployedAt": "2026-04-27T00:00:00.000Z",
   "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
   "treasury": "0x3fD63728288546AC41dAe3bf25ca383061c3A929",
+  "minterRole": "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6",
   "contracts": {
     "AxiomFounderBadge": {
       "address": "0x4A651D30097E2b7326A83CbB32c02913dB8b3572",
       "type": "ERC-721 Soulbound",
       "maxSupply": 100,
-      "contractURITx": "0x22042c17fbe2204efdb858756e0e167561dbea11986b40db106ddf4aa044ce28"
+      "contractURITx": "0x22042c17fbe2204efdb858756e0e167561dbea11986b40db106ddf4aa044ce28",
+      "deployerHasMinter": true
     },
     "AxiomParticipation": {
       "address": "0x67f8c7da647AbD50AFb1E2137553Be8c174342Ce",
       "type": "ERC-1155",
       "tokenTypes": 6,
-      "contractURITx": "0xb0680ff4a76d27c3ccd4f28a300498ba19aa861853241343a6a4ceed402322a5"
+      "contractURITx": "0xb0680ff4a76d27c3ccd4f28a300498ba19aa861853241343a6a4ceed402322a5",
+      "deployerHasMinter": true
     },
     "AxiomLandReceipt": {
       "address": "0x60f60aD6A2242Bc4Aab80233b4C25144368F88db",
       "type": "ERC-1155 Per-Parcel",
       "defaultCap": 1000,
       "deployTx": "0xbbda83dcf808b8ec91f87da96c6944dd306ace5e3a6fe53eb664d4aec4080d8a",
-      "contractURITx": "0x49421762aeb905c86c96b0d3b01ae5e567700257b6016312b4ec3bb76f3d96a9"
+      "contractURITx": "0x49421762aeb905c86c96b0d3b01ae5e567700257b6016312b4ec3bb76f3d96a9",
+      "deployerHasMinter": true
     }
   },
   "envVars": {
     "NFT_CONTRACT_FOUNDER": "0x4A651D30097E2b7326A83CbB32c02913dB8b3572",
     "NFT_CONTRACT_PARTICIPATION": "0x67f8c7da647AbD50AFb1E2137553Be8c174342Ce",
     "NFT_CONTRACT_LAND": "0x60f60aD6A2242Bc4Aab80233b4C25144368F88db"
-  },
-  "blockscout": {
-    "AxiomFounderBadge": "https://arbitrum.blockscout.com/address/0x4A651D30097E2b7326A83CbB32c02913dB8b3572",
-    "AxiomParticipation": "https://arbitrum.blockscout.com/address/0x67f8c7da647AbD50AFb1E2137553Be8c174342Ce",
-    "AxiomLandReceipt": "https://arbitrum.blockscout.com/address/0x60f60aD6A2242Bc4Aab80233b4C25144368F88db"
   }
 }
