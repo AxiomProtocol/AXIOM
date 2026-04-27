@@ -774,3 +774,167 @@ describe('AlertLogRetentionPanel – CSV export', () => {
     expect(screen.queryByText(/CSV export failed/i)).toBeNull();
   });
 });
+
+describe('PruneStatusPanel – CSV export Retry button', () => {
+  const originalFetch = global.fetch;
+  const originalCreateObjectURL = global.URL.createObjectURL;
+  const originalRevokeObjectURL = global.URL.revokeObjectURL;
+
+  beforeEach(() => {
+    global.URL.createObjectURL = vi.fn(() => 'blob:mock');
+    global.URL.revokeObjectURL = vi.fn();
+  });
+
+  afterEach(() => {
+    cleanup();
+    global.fetch = originalFetch;
+    global.URL.createObjectURL = originalCreateObjectURL;
+    global.URL.revokeObjectURL = originalRevokeObjectURL;
+    vi.restoreAllMocks();
+  });
+
+  function mockCsvFetch(rowCount: number) {
+    global.fetch = vi.fn(async () =>
+      new Response('pruned_at,deleted_count,retention_days,triggered_by\r\n', {
+        status: 200,
+        headers: { 'Content-Type': 'text/csv', 'X-Row-Count': String(rowCount) },
+      }),
+    ) as unknown as typeof fetch;
+  }
+
+  it('renders a Retry button inside the error banner', async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: 'db_error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as unknown as typeof fetch;
+    render(
+      <PruneStatusPanel lastPrune={null} pruneHistory={[]} adminKey={ADMIN_KEY} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/CSV export failed/i)).toBeTruthy();
+    });
+    expect(screen.getByRole('button', { name: /Retry/i })).toBeTruthy();
+  });
+
+  it('clears the error banner and shows success after clicking Retry', async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: 'db_error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as unknown as typeof fetch;
+    render(
+      <PruneStatusPanel lastPrune={null} pruneHistory={[]} adminKey={ADMIN_KEY} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/CSV export failed/i)).toBeTruthy();
+    });
+    mockCsvFetch(5);
+    fireEvent.click(screen.getByRole('button', { name: /Retry/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/Exported 5 runs/i)).toBeTruthy();
+    });
+    expect(screen.queryByText(/CSV export failed/i)).toBeNull();
+  });
+
+  it('retry request preserves the currently selected From/To date range', async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: 'timeout' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as unknown as typeof fetch;
+    render(
+      <PruneStatusPanel lastPrune={null} pruneHistory={[]} adminKey={ADMIN_KEY} />,
+    );
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    fireEvent.change(dateInputs[0], { target: { value: '2026-01-01' } });
+    fireEvent.change(dateInputs[1], { target: { value: '2026-03-31' } });
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/CSV export failed/i)).toBeTruthy();
+    });
+    mockCsvFetch(2);
+    fireEvent.click(screen.getByRole('button', { name: /Retry/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/Exported 2 runs/i)).toBeTruthy();
+    });
+    const lastUrl = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.at(-1)?.[0] as string;
+    expect(lastUrl).toContain('from=2026-01-01');
+    expect(lastUrl).toContain('to=2026-03-31');
+  });
+});
+
+describe('AlertLogRetentionPanel – CSV export Retry button', () => {
+  const originalFetch = global.fetch;
+  const originalCreateObjectURL = global.URL.createObjectURL;
+  const originalRevokeObjectURL = global.URL.revokeObjectURL;
+
+  const BASE_STATUS = {
+    rowCount: 0,
+    retentionDays: 90,
+    lastCleanup: null,
+    cleanupHistory: [],
+  };
+
+  beforeEach(() => {
+    global.URL.createObjectURL = vi.fn(() => 'blob:mock');
+    global.URL.revokeObjectURL = vi.fn();
+  });
+
+  afterEach(() => {
+    cleanup();
+    global.fetch = originalFetch;
+    global.URL.createObjectURL = originalCreateObjectURL;
+    global.URL.revokeObjectURL = originalRevokeObjectURL;
+    vi.restoreAllMocks();
+  });
+
+  function mockCsvFetch(rowCount: number) {
+    global.fetch = vi.fn(async () =>
+      new Response('ran_at,deleted_count,retention_days,triggered_by\r\n', {
+        status: 200,
+        headers: { 'Content-Type': 'text/csv', 'X-Row-Count': String(rowCount) },
+      }),
+    ) as unknown as typeof fetch;
+  }
+
+  it('renders a Retry button inside the error banner', async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: 'db_error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as unknown as typeof fetch;
+    render(<AlertLogRetentionPanel adminKey={ADMIN_KEY} status={BASE_STATUS} />);
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/CSV export failed/i)).toBeTruthy();
+    });
+    expect(screen.getByRole('button', { name: /Retry/i })).toBeTruthy();
+  });
+
+  it('clears the error banner and shows success after clicking Retry', async () => {
+    global.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: 'db_error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ) as unknown as typeof fetch;
+    render(<AlertLogRetentionPanel adminKey={ADMIN_KEY} status={BASE_STATUS} />);
+    fireEvent.click(screen.getByRole('button', { name: /Download CSV/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/CSV export failed/i)).toBeTruthy();
+    });
+    mockCsvFetch(4);
+    fireEvent.click(screen.getByRole('button', { name: /Retry/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/Exported 4 runs/i)).toBeTruthy();
+    });
+    expect(screen.queryByText(/CSV export failed/i)).toBeNull();
+  });
+});

@@ -278,11 +278,18 @@ export function PruneStatusPanel({
       {exportStatus?.kind === 'error' && (
         <div
           role="status"
-          className="mb-4 border-l-4 border-l-rose-500 border border-rose-200 bg-rose-50 p-3"
+          className="mb-4 border-l-4 border-l-rose-500 border border-rose-200 bg-rose-50 p-3 flex items-center justify-between gap-3"
         >
           <p className="font-dl-mono text-xs text-rose-800">
             CSV export failed: {exportStatus.message}
           </p>
+          <button
+            type="button"
+            onClick={handleDownloadCsv}
+            className="shrink-0 font-dl-mono text-xs text-rose-700 border border-rose-400 bg-rose-100 hover:bg-rose-200 px-2 py-1 rounded"
+          >
+            Retry
+          </button>
         </div>
       )}
 
@@ -589,11 +596,18 @@ export function AlertLogRetentionPanel({
       {exportStatus?.kind === 'error' && (
         <div
           role="status"
-          className="mb-4 border-l-4 border-l-rose-500 border border-rose-200 bg-rose-50 p-3"
+          className="mb-4 border-l-4 border-l-rose-500 border border-rose-200 bg-rose-50 p-3 flex items-center justify-between gap-3"
         >
           <p className="font-dl-mono text-xs text-rose-800">
             CSV export failed: {exportStatus.message}
           </p>
+          <button
+            type="button"
+            onClick={handleDownloadCsv}
+            className="shrink-0 font-dl-mono text-xs text-rose-700 border border-rose-400 bg-rose-100 hover:bg-rose-200 px-2 py-1 rounded"
+          >
+            Retry
+          </button>
         </div>
       )}
 
