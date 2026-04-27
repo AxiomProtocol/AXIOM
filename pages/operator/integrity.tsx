@@ -36,6 +36,7 @@ import {
 import {
   buildAssetLink,
   formatAge,
+  shapePagedChannelDisplay,
 } from '../../components/operator/AssetIntegrityAlertsPanel';
 
 const KIND_LABEL: Record<string, string> = {
@@ -296,6 +297,7 @@ export default function OperatorIntegrityPage({
                   <th className="px-3 py-2">Rationale</th>
                   <th className="px-3 py-2">Age</th>
                   <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2">Paged</th>
                   <th className="px-3 py-2">Asset</th>
                 </tr>
               </thead>
@@ -339,6 +341,44 @@ export default function OperatorIntegrityPage({
                           >
                             Unread
                           </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2">
+                        {a.paged ? (
+                          <div
+                            className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px]"
+                            data-testid={`operator-integrity-row-${a.id}-paged`}
+                          >
+                            {a.paged.skipped ? (
+                              <span
+                                className="text-amber-700"
+                                data-testid={`operator-integrity-row-${a.id}-paged-skipped`}
+                                title="No paging channels are configured. Set INTEGRITY_ALERT_EMAIL and/or INTEGRITY_ALERT_DISCORD_WEBHOOK so on-call is woken on the next auto-freeze."
+                              >
+                                not configured
+                              </span>
+                            ) : (
+                              shapePagedChannelDisplay(a.paged).map((c, i) => (
+                                <span
+                                  key={`${a.id}-paged-${i}-${c.channel}`}
+                                  className={
+                                    c.ok ? 'text-green-700' : 'text-red-700'
+                                  }
+                                  data-testid={`operator-integrity-row-${a.id}-paged-${c.channel}`}
+                                  title={
+                                    c.ok
+                                      ? `${c.channel} channel paged successfully`
+                                      : `${c.channel} channel failed: ${c.reason ?? 'unknown error'}`
+                                  }
+                                >
+                                  {c.channel} {c.ok ? '✓' : '✗'}
+                                  {!c.ok && c.reason ? ` (${c.reason})` : ''}
+                                </span>
+                              ))
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-dl-muted">—</span>
                         )}
                       </td>
                       <td className="px-3 py-2">

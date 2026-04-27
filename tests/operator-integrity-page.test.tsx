@@ -90,6 +90,11 @@ interface AlertOverrides {
   symbol?: string | null;
   ageMs?: number;
   readAtMs?: number | null;
+  paged?: {
+    channels: string[];
+    errors: string[];
+    skipped: boolean;
+  } | null;
 }
 
 function makeAlertView(o: AlertOverrides = {}) {
@@ -104,7 +109,7 @@ function makeAlertView(o: AlertOverrides = {}) {
     subject: '[op] Asset auto-frozen to RED: AXAU (oracle_stale)',
     createdAtMs: NOW_MS - ageMs,
     readAtMs: o.readAtMs === undefined ? null : o.readAtMs,
-    paged: null,
+    paged: o.paged === undefined ? null : o.paged,
   };
 }
 
@@ -733,5 +738,117 @@ describe('OperatorIntegrityPage — filter strip', () => {
     expect(
       screen.getByTestId('operator-integrity-filter-kind').textContent,
     ).toMatch(/Reserve attestation/);
+  });
+});
+
+describe('OperatorIntegrityPage — paged-channels indicator', () => {
+  it('renders the paging summary on both unread and acknowledged rows', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[
+          // Unread row — email succeeded, discord failed with a 429.
+          makeAlertView({
+            id: 'ntf_unread',
+            paged: {
+              channels: ['email'],
+              errors: ['discord: HTTP 429: rate limited'],
+              skipped: false,
+            },
+          }),
+          // Acknowledged row — both channels succeeded.
+          makeAlertView({
+            id: 'ntf_ack',
+            ageMs: 90 * 60_000,
+            readAtMs: NOW_MS - 5 * 60_000,
+            paged: {
+              channels: ['email', 'discord'],
+              errors: [],
+              skipped: false,
+            },
+          }),
+        ]}
+        showAcknowledged={true}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+      />,
+    );
+
+    // Unread row: email ✓ + discord ✗ (with reason).
+    const unreadRow = screen.getByTestId('operator-integrity-row-ntf_unread');
+    expect(
+      within(unreadRow).getByTestId('operator-integrity-row-ntf_unread-paged'),
+    ).toBeTruthy();
+    const unreadEmail = within(unreadRow).getByTestId(
+      'operator-integrity-row-ntf_unread-paged-email',
+    );
+    expect(unreadEmail.textContent).toMatch(/email/);
+    expect(unreadEmail.textContent).toMatch(/✓/);
+    const unreadDiscord = within(unreadRow).getByTestId(
+      'operator-integrity-row-ntf_unread-paged-discord',
+    );
+    expect(unreadDiscord.textContent).toMatch(/discord/);
+    expect(unreadDiscord.textContent).toMatch(/✗/);
+    expect(unreadDiscord.textContent).toMatch(/HTTP 429: rate limited/);
+
+    // Acknowledged row: both channels ✓.
+    const ackRow = screen.getByTestId('operator-integrity-row-ntf_ack');
+    expect(
+      within(ackRow).getByTestId('operator-integrity-row-ntf_ack-paged'),
+    ).toBeTruthy();
+    const ackEmail = within(ackRow).getByTestId(
+      'operator-integrity-row-ntf_ack-paged-email',
+    );
+    expect(ackEmail.textContent).toMatch(/email/);
+    expect(ackEmail.textContent).toMatch(/✓/);
+    const ackDiscord = within(ackRow).getByTestId(
+      'operator-integrity-row-ntf_ack-paged-discord',
+    );
+    expect(ackDiscord.textContent).toMatch(/discord/);
+    expect(ackDiscord.textContent).toMatch(/✓/);
+  });
+
+  it('renders a "not configured" badge when the row was skipped (no channels wired)', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[
+          makeAlertView({
+            id: 'ntf_skipped',
+            paged: { channels: [], errors: [], skipped: true },
+          }),
+        ]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+      />,
+    );
+    const row = screen.getByTestId('operator-integrity-row-ntf_skipped');
+    const skipped = within(row).getByTestId(
+      'operator-integrity-row-ntf_skipped-paged-skipped',
+    );
+    expect(skipped.textContent).toMatch(/not configured/i);
+  });
+
+  it('omits the paging summary on legacy rows where paged is null', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[makeAlertView({ id: 'ntf_legacy' })]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+      />,
+    );
+    const row = screen.getByTestId('operator-integrity-row-ntf_legacy');
+    expect(
+      within(row).queryByTestId('operator-integrity-row-ntf_legacy-paged'),
+    ).toBeNull();
   });
 });
