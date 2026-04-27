@@ -138,27 +138,96 @@ export function traitsToAttributes(traits: NFTTraits) {
 }
 
 /**
- * Build a Gemini image prompt from traits.
+ * Rarity-specific visual templates.
+ * Each tier has a unique compositional concept so tokens look dramatically
+ * different from one another — not just "more ornate" versions of the same thing.
  */
-export function buildImagePrompt(tokenId: string | number, traits: NFTTraits, collectionName: string): string {
-  const rarityDescriptors: Record<RarityTier, string> = {
-    Legendary: 'an ultra-rare, ornate, cinematic',
-    Epic:      'a premium, richly detailed',
-    Rare:      'a striking, detailed',
-    Uncommon:  'a polished, refined',
-    Common:    'a clean, professional',
-  };
+const RARITY_VISUAL_CONCEPTS: Record<RarityTier, (traits: NFTTraits, tokenId: string | number, collection: string) => string> = {
 
-  const descriptor = rarityDescriptors[traits.rarityTier];
+  Legendary: (traits, tokenId) => `
+Hyper-detailed digital art, square 1:1 format.
+A breathtaking aerial view of a sovereign land territory seen from high altitude at night.
+Gold geometric property boundary lines glow across dark forest and coastline below,
+forming precise blockchain grid coordinates. At the center, an ancient seal floats:
+octagonal, carved from obsidian, inlaid with molten gold filigree — the Axiom Protocol
+mark at its heart, surrounded by rotating concentric rings engraved with coordinates and
+hash fragments. Particle light rays emanate outward like aurora borealis. 
+Color palette: deep midnight navy, forest black, liquid gold (#C9A84C), white star-points.
+Atmosphere: cinematic, awe-inspiring, like a god's-eye view of a new sovereign nation being born.
+${traits.aura} light effect. ${traits.background} environment. Token ${tokenId}.
+Ultra-high detail, 8k quality. No human figures. No plain text labels.
+`.trim(),
+
+  Epic: (traits, tokenId) => `
+Hyper-detailed digital art, square 1:1 format.
+A monumental treasury seal sculpted in deep relief, photographed under dramatic raking light.
+The seal is cast in aged bronze and inlaid with emerald and sapphire geometric insets —
+the central emblem: a bold upward-pointing triangle (representing land and capital ascent)
+enclosed in a perfect hexagon, itself enclosed in an octagonal frame of interlocking
+chain-link geometry. Each chain link bears a micro-engraved hash symbol.
+${traits.frame} border style with ${traits.aura} atmospheric glow bleeding from the edges.
+The background is ${traits.background.toLowerCase()} — rich dark texture, velvet-black or midnight navy.
+Color palette: verdigris bronze, deep sapphire, muted emerald, gold leaf highlights.
+Mood: powerful, authoritative, like an ancient institution's founding document seal.
+Token ${tokenId}. Ultra-detailed engraving texture. No plain text.
+`.trim(),
+
+  Rare: (traits, tokenId) => `
+Hyper-detailed digital art, square 1:1 format.
+A striking Art Deco institutional crest rendered as if pressed from platinum and black enamel.
+Central composition: a stylized "A" monogram built from architectural geometric forms —
+triangles, chevrons, and parallel rules — framed by symmetrical wing-like elements that
+suggest both an eagle's spread and the floor plan of a grand building.
+Behind the crest, fine sunburst lines radiate outward like an old stock certificate.
+The frame is ${traits.frame.toLowerCase()}, with hairline border rules and corner rosettes.
+${traits.aura} light plays across the metallic surfaces. Background: ${traits.background.toLowerCase()}.
+Color palette: platinum silver, charcoal black, muted gold accents (#C9A84C), cream white.
+Style: 1920s Wall Street meets decentralized protocol. Precise, sharp-edged, no gradients.
+Token ${tokenId}. No readable text. High contrast.
+`.trim(),
+
+  Uncommon: (traits, tokenId) => `
+Hyper-detailed digital art, square 1:1 format.
+A precision-engineered protocol sigil: a symmetrical geometric emblem that looks like a
+blueprint schematic brought to life. The design consists of nested geometric shapes —
+diamond inside hexagon inside circle — connected by fine measurement lines and corner
+registration marks, as if this is an architect's technical drawing made from polished steel.
+The central symbol is an abstract land-parcel icon: a bold vertical axis line with
+horizontal strata lines branching left and right, suggesting cross-section geology and
+property boundaries simultaneously. Clean, purposeful negative space.
+${traits.frame} outer frame with thin precision rules. Background: ${traits.background.toLowerCase()}.
+${traits.aura} subtle edge lighting. Color palette: steel blue-grey, off-white, gold line-work.
+Style: Swiss International typography meets engineering precision. Cold, confident.
+Token ${tokenId}. No decorative flourishes — purely structural geometry.
+`.trim(),
+
+  Common: (traits, tokenId) => `
+Clean, refined digital art, square 1:1 format.
+A minimal institutional mark: a bold hexagonal emblem on a dark field.
+Inside the hexagon: a clean geometric arrangement — an upward triangle bisected by
+a horizontal line (representing land above, protocol below), rendered in single-weight
+strokes like a master logo. The hexagon border has fine hash-mark tick marks at each vertex.
+The composition breathes — generous dark space surrounds the central form.
+A thin circular orbit line traces around the hexagon at a slight distance, dotted at intervals.
+Background: ${traits.background.toLowerCase()} dark texture. Frame: ${traits.frame.toLowerCase()} thin border rule.
+Color palette: dark navy (#1B2B4B) background, cool white emblem, single gold accent line.
+Style: modern institutional identity — confident restraint over decoration.
+Token ${tokenId}. Precise, resolved, no clutter.
+`.trim(),
+
+};
+
+export function buildImagePrompt(tokenId: string | number, traits: NFTTraits, collectionName: string): string {
+  const conceptFn = RARITY_VISUAL_CONCEPTS[traits.rarityTier];
+  const concept   = conceptFn(traits, tokenId, collectionName);
+
   return [
-    `Create ${descriptor} digital badge for the "${collectionName}" NFT collection on the Axiom Protocol blockchain platform.`,
-    `Token #${tokenId}. Rarity: ${traits.rarityTier}.`,
-    `Background style: ${traits.background}. Frame style: ${traits.frame}. Aura: ${traits.aura}.`,
+    concept,
+    `Collection: ${collectionName} (Axiom Protocol).`,
     `Genesis Tier: ${traits.genesisTier}. Asset Class: ${traits.assetClass}.`,
-    `Color palette: deep navy (#1B2B4B), forest green (#2D4A3E), muted gold (#C9A84C), pure white (#FAFAFA).`,
-    `Style: institutional, sophisticated, geometric. No text or words. High contrast, sharp edges.`,
-    `The badge should feel like a sovereign financial instrument — austere, prestigious, minimal.`,
-  ].join(' ');
+    `Render as a square NFT artwork (1:1 aspect ratio). No watermarks. No borders added by the AI.`,
+    `Photorealistic rendering quality. Award-winning digital art.`,
+  ].join('\n');
 }
 
 /**

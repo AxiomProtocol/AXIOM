@@ -1,4 +1,5 @@
 import { GetServerSideProps } from 'next';
+import { useRouter } from 'next/router';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
 import { pool } from '../../lib/db';
 
@@ -12,7 +13,9 @@ interface TokenPreview {
 
 interface Props {
   tokens: TokenPreview[];
-  siteUrl: string;
+  page: number;
+  totalPages: number;
+  pageTokens: TokenPreview[];
 }
 
 const RARITY_COLORS: Record<string, string> = {
@@ -23,109 +26,174 @@ const RARITY_COLORS: Record<string, string> = {
   Common:    '#6B7280',
 };
 
-export default function NFTPreviewPage({ tokens, siteUrl }: Props) {
-  const founders      = tokens.filter((t) => t.contractType === 'ERC721');
-  const participation = tokens.filter((t) => t.contractType === 'ERC1155');
+const PAGE_SIZE = 8;
 
-  function imageUrl(t: TokenPreview) {
-    const slug = t.contractType === 'ERC721' ? 'founder' : 'participation';
-    const staticPath = `/nft-preview/${slug}-${t.tokenId}.png`;
-    const apiFallback = `/api/nft/image?tokenId=${t.tokenId}&contractAddress=${encodeURIComponent(t.contractAddress)}`;
-    // Use static file if pre-rendered, API otherwise
-    return staticPath;
-    void apiFallback;
+export default function NFTPreviewPage({ tokens, page, totalPages, pageTokens }: Props) {
+  const router = useRouter();
+
+  function goTo(p: number) {
+    router.push({ pathname: '/nft/preview', query: { page: p } }, undefined, { scroll: true });
   }
 
   function TokenCard({ t }: { t: TokenPreview }) {
     const color = RARITY_COLORS[t.rarityTier] ?? '#6B7280';
+    const slug  = t.contractType === 'ERC721' ? 'founder' : 'participation';
     const label = t.contractType === 'ERC721' ? 'Founder Badge' : 'Participation';
+    const src   = `/nft-preview/${slug}-${t.tokenId}.png`;
+    const ipfsUrl = t.imageCid ? `https://ipfs.io/ipfs/${t.imageCid}` : null;
+
     return (
-      <div style={{ border: `2px solid ${color}`, background: '#0D1117', padding: 10 }}>
-        <img
-          src={imageUrl(t)}
-          alt={`${label} #${t.tokenId}`}
-          style={{ width: '100%', display: 'block', aspectRatio: '1/1', objectFit: 'cover' }}
-        />
-        <div style={{ marginTop: 8, fontFamily: 'monospace', fontSize: 11 }}>
-          <div style={{ color: '#FAFAFA', fontWeight: 700 }}>
+      <div style={{ border: `2px solid ${color}33`, background: '#080D14', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', background: '#0D1117' }}>
+          <img
+            src={src}
+            alt={`${label} #${t.tokenId}`}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+          <div style={{
+            position: 'absolute', top: 8, right: 8,
+            background: color, color: '#fff',
+            fontFamily: 'monospace', fontSize: 9, fontWeight: 700,
+            padding: '2px 6px', letterSpacing: 1,
+          }}>
+            {t.rarityTier.toUpperCase()}
+          </div>
+        </div>
+
+        <div style={{ padding: '12px 14px', flex: 1 }}>
+          <div style={{ fontFamily: 'serif', fontSize: 13, color: '#FAFAFA', marginBottom: 4 }}>
             {label} #{t.tokenId}
           </div>
-          <div style={{ color, marginTop: 2, fontWeight: 600 }}>{t.rarityTier}</div>
-          {t.imageCid ? (
-            <div style={{ color: '#4B5563', marginTop: 4, wordBreak: 'break-all', fontSize: 9 }}>
-              ipfs/{t.imageCid.slice(0, 24)}…
-            </div>
-          ) : (
-            <div style={{ color: '#EF4444', marginTop: 4, fontSize: 9 }}>no IPFS CID</div>
+          <div style={{ fontFamily: 'monospace', fontSize: 10, color: '#4B5563' }}>
+            {t.contractType} · {t.contractAddress.slice(0, 6)}…{t.contractAddress.slice(-4)}
+          </div>
+          {ipfsUrl && (
+            <a
+              href={ipfsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'block', marginTop: 6, fontFamily: 'monospace', fontSize: 9, color: '#374151', textDecoration: 'none', wordBreak: 'break-all' }}
+            >
+              ipfs/{t.imageCid!.slice(0, 28)}…
+            </a>
           )}
         </div>
       </div>
     );
   }
 
+  const start = (page - 1) * PAGE_SIZE + 1;
+  const end   = Math.min(page * PAGE_SIZE, tokens.length);
+
   return (
     <DesignLawLayout>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
-        <h1 style={{ fontFamily: 'serif', fontSize: 28, color: '#FAFAFA', marginBottom: 6 }}>
-          NFT Artwork Preview
-        </h1>
-        <p style={{ fontFamily: 'monospace', fontSize: 12, color: '#6B7280', marginBottom: 8 }}>
-          {tokens.length} tokens · {tokens.filter((t) => t.imageCid).length} pinned to IPFS via Pinata
-        </p>
-        <p style={{ fontFamily: 'monospace', fontSize: 11, color: '#374151', marginBottom: 32 }}>
-          Images load from local cache · IPFS CID shown below each card
-        </p>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
 
-        <h2 style={{ fontFamily: 'serif', fontSize: 18, color: '#C9A84C', marginBottom: 16 }}>
-          Axiom Founder Badge — ERC-721 ({founders.length} of 100 tokens generated)
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 48 }}>
-          {founders.map((t) => <TokenCard key={`founder-${t.tokenId}`} t={t} />)}
+        {/* Header */}
+        <div style={{ marginBottom: 32 }}>
+          <h1 style={{ fontFamily: 'serif', fontSize: 28, color: '#FAFAFA', margin: 0 }}>
+            NFT Artwork Preview
+          </h1>
+          <p style={{ fontFamily: 'monospace', fontSize: 12, color: '#6B7280', marginTop: 6, marginBottom: 0 }}>
+            {tokens.length} tokens · {tokens.filter(t => t.imageCid).length} pinned to IPFS · showing {start}–{end}
+          </p>
         </div>
 
-        <h2 style={{ fontFamily: 'serif', fontSize: 18, color: '#C9A84C', marginBottom: 16 }}>
-          Axiom Participation — ERC-1155 ({participation.length} action types)
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12, marginBottom: 48 }}>
-          {participation.map((t) => <TokenCard key={`participation-${t.tokenId}`} t={t} />)}
+        {/* Token grid — 4 columns */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
+          {pageTokens.map(t => (
+            <TokenCard key={`${t.contractType}-${t.tokenId}`} t={t} />
+          ))}
         </div>
 
-        <div style={{ padding: 16, background: '#0A0F1A', border: '1px solid #1F2937', fontFamily: 'monospace', fontSize: 10, color: '#4B5563' }}>
-          <div style={{ color: '#6B7280', marginBottom: 8, fontWeight: 700 }}>PINATA IPFS REGISTRY</div>
-          {tokens.map((t) => (
-            <div key={`${t.contractType}-${t.tokenId}`} style={{ marginBottom: 3 }}>
-              <span style={{ color: '#9CA3AF' }}>
-                {t.contractType === 'ERC721' ? 'Founder' : 'Participation'} #{t.tokenId}
-              </span>
-              <span style={{ color: RARITY_COLORS[t.rarityTier] ?? '#6B7280' }}> · {t.rarityTier}</span>
-              <span style={{ color: '#4B5563' }}> · {t.imageCid ?? 'NO CID'}</span>
+        {/* Pagination */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'monospace', fontSize: 12 }}>
+          <button
+            onClick={() => goTo(page - 1)}
+            disabled={page <= 1}
+            style={{
+              background: page <= 1 ? '#1F2937' : '#1B2B4B',
+              color: page <= 1 ? '#4B5563' : '#FAFAFA',
+              border: '1px solid #374151', padding: '8px 20px',
+              cursor: page <= 1 ? 'not-allowed' : 'pointer',
+              fontFamily: 'monospace', fontSize: 12,
+            }}
+          >
+            ← Prev
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            <button
+              key={p}
+              onClick={() => goTo(p)}
+              style={{
+                background: p === page ? '#C9A84C' : '#111827',
+                color: p === page ? '#080D14' : '#9CA3AF',
+                border: '1px solid #374151', padding: '8px 14px',
+                cursor: 'pointer', fontFamily: 'monospace', fontSize: 12,
+                fontWeight: p === page ? 700 : 400,
+              }}
+            >
+              {p}
+            </button>
+          ))}
+
+          <button
+            onClick={() => goTo(page + 1)}
+            disabled={page >= totalPages}
+            style={{
+              background: page >= totalPages ? '#1F2937' : '#1B2B4B',
+              color: page >= totalPages ? '#4B5563' : '#FAFAFA',
+              border: '1px solid #374151', padding: '8px 20px',
+              cursor: page >= totalPages ? 'not-allowed' : 'pointer',
+              fontFamily: 'monospace', fontSize: 12,
+            }}
+          >
+            Next →
+          </button>
+
+          <span style={{ color: '#4B5563', marginLeft: 8 }}>
+            Page {page} of {totalPages}
+          </span>
+        </div>
+
+        {/* Legend */}
+        <div style={{ marginTop: 40, display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+          {Object.entries(RARITY_COLORS).map(([tier, color]) => (
+            <div key={tier} style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'monospace', fontSize: 11 }}>
+              <div style={{ width: 10, height: 10, background: color }} />
+              <span style={{ color: '#9CA3AF' }}>{tier}</span>
             </div>
           ))}
         </div>
+
       </div>
     </DesignLawLayout>
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getServerSideProps: GetServerSideProps = async ({ query }) => {
+  const page = Math.max(1, parseInt(String(query.page ?? '1'), 10));
+
   const result = await pool.query(`
     SELECT token_id, contract_type, rarity_tier, contract_address, image_cid
     FROM nft_tokens
     ORDER BY contract_type DESC, token_id ASC
   `);
 
-  const siteUrl = `https://${process.env.REPLIT_DEV_DOMAIN ?? 'localhost:5000'}`;
+  const tokens: TokenPreview[] = result.rows.map((r: Record<string, unknown>) => ({
+    tokenId:         Number(r.token_id),
+    contractType:    String(r.contract_type),
+    rarityTier:      String(r.rarity_tier),
+    contractAddress: String(r.contract_address),
+    imageCid:        r.image_cid ? String(r.image_cid) : null,
+  }));
+
+  const totalPages = Math.ceil(tokens.length / PAGE_SIZE);
+  const safePage   = Math.min(page, totalPages);
+  const pageTokens = tokens.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   return {
-    props: {
-      siteUrl,
-      tokens: result.rows.map((r: Record<string, unknown>) => ({
-        tokenId:         Number(r.token_id),
-        contractType:    String(r.contract_type),
-        rarityTier:      String(r.rarity_tier),
-        contractAddress: String(r.contract_address),
-        imageCid:        r.image_cid ? String(r.image_cid) : null,
-      })),
-    },
+    props: { tokens, page: safePage, totalPages, pageTokens },
   };
 };
