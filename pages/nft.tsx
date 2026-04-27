@@ -591,8 +591,8 @@ export default function NFTPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Axiom Protocol NFT System — Founder Badge · Participation · Land Receipt</title>
-        <meta name="description" content="Three-tier animated utility NFT collection on Arbitrum One. AxiomFounderBadge (soulbound ERC-721), AxiomParticipation (ERC-1155), AxiomLandReceipt (ERC-1155). Real on-chain utility." />
+        <title>Axiom Digital Ownership Ecosystem — Founder Collection, Access, Identity, Utility</title>
+        <meta name="description" content="The Axiom Digital Ownership Ecosystem: utility-driven digital assets for access, identity, rewards, governance, and participation on Arbitrum One. The Founder Collection is the first release inside an expanding ecosystem with an AXAU integration layer." />
       </Head>
 
       {/* ── Cinematic Hero ───────────────────────────────────────────── */}
@@ -600,23 +600,27 @@ export default function NFTPage() {
         {/* Cinematic banner image — full-width, scales naturally on mobile */}
         <img
           src="/images/axiom-founder-collection-hero.png"
-          alt="Axiom Founder Collection — utility-backed NFTs on Arbitrum One"
+          alt="Axiom Founder Collection — genesis release artwork inside the Axiom Digital Ownership Ecosystem"
           style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover', objectPosition: 'left center' }}
         />
+        {/* Caption clarifies that the baked-in 'Founder Collection' artwork represents the genesis release inside the broader ecosystem */}
+        <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#9CA3AF', letterSpacing: '1.5px', textTransform: 'uppercase', textAlign: 'center', padding: '0.6rem 1rem', background: '#0A0E14', borderTop: '1px solid #1F2937', margin: 0 }}>
+          Founder Collection · Genesis release within the Axiom Digital Ownership Ecosystem
+        </p>
 
         {/* Real interactive headline + CTAs (renders below the image so mobile stays readable) */}
         <div style={{ padding: 'clamp(1.25rem, 4vw, 2.25rem)', borderTop: '1px solid #1F2937' }}>
           <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#C9A84C', letterSpacing: '2px', textTransform: 'uppercase', margin: '0 0 0.75rem' }}>
-            AXIOM PROTOCOL · UTILITY COLLECTION · ARBITRUM ONE
+            AXIOM PROTOCOL · DIGITAL OWNERSHIP · ARBITRUM ONE
           </p>
           <h1 style={{ fontFamily: 'serif', fontSize: 'clamp(1.75rem, 4vw, 2.75rem)', fontWeight: 700, color: '#F5E6A8', lineHeight: 1.15, margin: '0 0 1rem' }}>
-            Axiom Founder Collection
+            Axiom Digital Ownership Ecosystem
           </h1>
-          <p style={{ fontFamily: 'sans-serif', fontSize: 'clamp(0.95rem, 1.6vw, 1.05rem)', color: '#D1D5DB', lineHeight: 1.6, maxWidth: '680px', margin: '0 0 0.75rem' }}>
-            Utility-backed NFTs on Arbitrum One. Priority access, governance weight, and ecosystem benefits for verified participants.
+          <p style={{ fontFamily: 'sans-serif', fontSize: 'clamp(0.95rem, 1.6vw, 1.05rem)', color: '#D1D5DB', lineHeight: 1.6, maxWidth: '720px', margin: '0 0 0.75rem' }}>
+            The Founder Collection is the first release in an expanding ecosystem of utility-driven digital assets for access, identity, rewards, governance, and participation on Arbitrum One.
           </p>
-          <p style={{ fontFamily: 'sans-serif', fontSize: '0.9rem', color: '#9CA3AF', lineHeight: 1.6, maxWidth: '680px', margin: '0 0 1.5rem' }}>
-            A limited founder badge system for Axiom participants. Each badge connects identity, access, and protocol utility inside the Axiom ecosystem.
+          <p style={{ fontFamily: 'sans-serif', fontSize: '0.9rem', color: '#9CA3AF', lineHeight: 1.6, maxWidth: '720px', margin: '0 0 1.5rem' }}>
+            Axiom digital assets are designed to support access, identity, rewards, governance participation, and protocol utility — with a dedicated AXAU integration layer for reserve-related ecosystem pathways where supported.
           </p>
 
           {/* CTAs */}
@@ -639,7 +643,7 @@ export default function NFTPage() {
               Connect Wallet
             </button>
             <a
-              href="#collection"
+              href="#collections"
               style={{
                 background: 'transparent',
                 color: '#C9A84C',
@@ -654,7 +658,7 @@ export default function NFTPage() {
                 display: 'inline-block',
               }}
             >
-              View Founder Collection →
+              Explore Collections →
             </a>
           </div>
 
@@ -662,9 +666,9 @@ export default function NFTPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1px', background: '#1F2937', border: '1px solid #1F2937' }}>
             {[
               { label: 'Built on', value: 'Arbitrum One' },
-              { label: 'Founder Cap', value: '100 Badges' },
-              { label: 'ERC-721', value: 'Soulbound' },
+              { label: 'Contracts', value: 'Verified' },
               { label: 'Status', value: 'Utility Enabled' },
+              { label: 'Roadmap', value: 'Ecosystem Expanding' },
             ].map(t => (
               <div key={t.label} style={{ background: '#0D1117', padding: '0.75rem 1rem' }}>
                 <div style={{ fontFamily: 'monospace', fontSize: '9px', color: '#C9A84C', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{t.label}</div>
@@ -680,11 +684,14 @@ export default function NFTPage() {
         <WalletMintSection />
       </div>
 
-      {/* ── Utility gates ─────────────────────────────────────────────── */}
+      {/* ── Current Utility ───────────────────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
-          On-Chain Utility
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '0.5rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
+          Current Utility
         </h2>
+        <p style={{ fontFamily: 'sans-serif', fontSize: '0.9rem', color: '#4B5563', lineHeight: 1.6, marginBottom: '1rem', maxWidth: '720px' }}>
+          Implemented utility available today to eligible holders. Each item below describes a live, on-chain-gated experience — not a future promise.
+        </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1px', background: '#E5E7EB' }}>
           {[
             { label: 'AXAU Mint Priority',    detail: 'Founder Badge holders enter the AXAU mint queue first',             gate: 'Founder Badge' },
@@ -734,11 +741,100 @@ export default function NFTPage() {
         </div>
       </section>
 
-      {/* ── Founder Collection gallery ─────────────────────────────────── */}
-      <section id="collection" style={{ marginBottom: '3rem', scrollMarginTop: '6rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
-          Founder Collection
+      {/* ── AXAU Integration Layer ─────────────────────────────────────── */}
+      <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '0.5rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
+          AXAU Integration Layer
         </h2>
+        <p style={{ fontFamily: 'sans-serif', fontSize: '0.95rem', color: '#374151', lineHeight: 1.6, marginBottom: '0.75rem', maxWidth: '780px' }}>
+          AXAU remains Axiom&apos;s premium reserve asset layer. Axiom digital assets may connect to AXAU-related access pathways, eligibility experiences, and ecosystem privileges where supported.
+        </p>
+        <div style={{ background: '#FAFAF8', border: '1px solid #E5E7EB', padding: '1rem', marginBottom: '1rem' }}>
+          <p style={{ fontFamily: 'sans-serif', fontSize: '0.9rem', color: '#374151', lineHeight: 1.65, margin: 0 }}>
+            Axiom NFTs are not automatically backed by AXAU, do not represent ownership of AXAU, and do not create a fixed redemption right unless a specific future product explicitly provides that functionality. Selected digital assets may support AXAU-linked ecosystem utility — including priority access windows, reserve-layer eligibility, recognition, and participation benefits — disclosed on a per-product basis.
+          </p>
+          <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#C9A84C', letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: '0.75rem', marginBottom: 0 }}>
+            AXAU is the gravity asset · NFTs are the access, identity, and utility rails
+          </p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1px', background: '#E5E7EB' }}>
+          {[
+            {
+              label: 'Priority Reserve Access',
+              detail: 'Selected digital assets may help identify wallets eligible for future AXAU-related access windows, where disclosed.',
+              tag: 'Eligibility-gated',
+            },
+            {
+              label: 'AXAU Ecosystem Recognition',
+              detail: 'Founder and utility assets may display participation status connected to Axiom\u2019s reserve ecosystem.',
+              tag: 'Recognition',
+            },
+            {
+              label: 'Future Utility Pathways',
+              detail: 'Additional AXAU-linked features may be introduced through clearly disclosed future releases, subject to eligibility.',
+              tag: 'Future · Disclosed',
+            },
+          ].map(c => (
+            <div key={c.label} style={{ background: '#FFFFFF', padding: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <span style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 600, color: '#C9A84C', letterSpacing: '1px', textTransform: 'uppercase' }}>{c.label}</span>
+                <span style={{ fontFamily: 'monospace', fontSize: '9px', color: '#6B7280', background: '#F3F4F6', padding: '2px 6px', whiteSpace: 'nowrap' }}>{c.tag}</span>
+              </div>
+              <p style={{ fontFamily: 'sans-serif', fontSize: '0.85rem', color: '#374151', lineHeight: 1.55, margin: 0 }}>{c.detail}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Upcoming Digital Asset Releases (Roadmap) ──────────────────── */}
+      <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '0.5rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
+          Upcoming Digital Asset Releases
+        </h2>
+        <p style={{ fontFamily: 'sans-serif', fontSize: '0.95rem', color: '#374151', lineHeight: 1.6, marginBottom: '1rem', maxWidth: '780px' }}>
+          The Founder Collection is only the opening release. Axiom&apos;s digital ownership ecosystem can expand into new credential, access, and participation assets — each introduced through clearly disclosed future releases, subject to eligibility.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1px', background: '#E5E7EB' }}>
+          {[
+            { label: 'Founder Collection',     phase: 'Live Genesis',    detail: 'Genesis credential release for early aligned participants.' },
+            { label: 'Access Passes',          phase: 'Planned',         detail: 'Future assets for ecosystem events, dashboards, and gated experiences.' },
+            { label: 'Partner Credentials',    phase: 'Planned',         detail: 'Digital credentials for partner programs and verified contributor roles.' },
+            { label: 'Achievement Badges',     phase: 'Planned',         detail: 'Recognition assets for completed actions, education, participation, or milestones.' },
+            { label: 'Reserve Access Assets',  phase: 'Future · AXAU-linked', detail: 'Future digital assets that may support reserve-layer eligibility or AXAU-linked utility where disclosed.' },
+            { label: 'Community Rewards',      phase: 'Planned',         detail: 'Non-financial recognition and ecosystem participation assets.' },
+          ].map(r => (
+            <div key={r.label} style={{ background: '#FFFFFF', padding: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <span style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 600, color: '#1E3A5F', letterSpacing: '0.5px' }}>{r.label}</span>
+                <span style={{ fontFamily: 'monospace', fontSize: '9px', color: '#C9A84C', background: '#FAFAF8', padding: '2px 6px', whiteSpace: 'nowrap', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{r.phase}</span>
+              </div>
+              <p style={{ fontFamily: 'sans-serif', fontSize: '0.85rem', color: '#374151', lineHeight: 1.55, margin: 0 }}>{r.detail}</p>
+            </div>
+          ))}
+        </div>
+        <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280', letterSpacing: '0.5px', marginTop: '0.75rem', lineHeight: 1.6 }}>
+          Roadmap items are forward-looking. Specific eligibility, timing, and feature scope will be disclosed at the time of each release. No allocation, benefit, or future utility is guaranteed.
+        </p>
+      </section>
+
+      {/* ── Featured Genesis Release ───────────────────────────────────── */}
+      <section id="collections" style={{ marginBottom: '3rem', scrollMarginTop: '6rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
+          <div>
+            <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#C9A84C', letterSpacing: '2px', textTransform: 'uppercase', margin: '0 0 0.35rem' }}>
+              Featured Genesis Release
+            </p>
+            <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', margin: 0 }}>
+              Axiom Founder Collection
+            </h2>
+          </div>
+          <a href="#claim" style={{ fontFamily: 'monospace', fontSize: '10px', color: '#1D4ED8', letterSpacing: '1px', textTransform: 'uppercase', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            ↑ Claim Your Badge
+          </a>
+        </div>
+        <p style={{ fontFamily: 'sans-serif', fontSize: '0.95rem', color: '#374151', lineHeight: 1.6, marginBottom: '0.75rem', maxWidth: '720px' }}>
+          The first release inside Axiom&apos;s digital ownership ecosystem, recognizing early builders, aligned participants, and founder-era contributors.
+        </p>
         <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6B7280', letterSpacing: '1px', marginBottom: '1rem' }}>
           FOUNDING 100 · FIRST TWELVE PREVIEWED
         </p>
@@ -929,11 +1025,45 @@ export default function NFTPage() {
         </div>
       </section>
 
-      {/* ── Technical spec ────────────────────────────────────────────── */}
+      {/* ── Marketplace and Wallet Access ──────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
-          Technical Specification
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '0.5rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
+          Marketplace and Wallet Access
         </h2>
+        <p style={{ fontFamily: 'sans-serif', fontSize: '0.9rem', color: '#4B5563', lineHeight: 1.6, marginBottom: '1rem', maxWidth: '780px' }}>
+          Connect a wallet to view eligibility and participation. Verified contracts, supported marketplaces, and Arbitrum One settlement details below.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: '#E5E7EB' }}>
+          {[
+            { label: 'Connect Wallet',     detail: 'View eligibility and collection participation.', action: 'wallet' },
+            { label: 'Verified Contracts', detail: 'Review collection contracts and supported standards.', action: 'contracts' },
+            { label: 'Marketplace Ready',  detail: 'Access supported marketplace links where available.', action: 'marketplace' },
+            { label: 'Arbitrum Native',    detail: 'Built for low-cost participation on Arbitrum One.', action: 'chain' },
+          ].map(c => (
+            <div key={c.label} style={{ background: '#FFFFFF', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <span style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 600, color: '#C9A84C', letterSpacing: '1px', textTransform: 'uppercase' }}>{c.label}</span>
+              <p style={{ fontFamily: 'sans-serif', fontSize: '0.85rem', color: '#374151', lineHeight: 1.5, margin: 0, flex: 1 }}>{c.detail}</p>
+              {c.action === 'wallet' && (
+                <button
+                  onClick={() => openAppKit()}
+                  style={{ background: '#C9A84C', color: '#000000', border: '1px solid #C9A84C', padding: '0.5rem 0.9rem', fontFamily: 'monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', cursor: 'pointer', alignSelf: 'flex-start' }}
+                >
+                  Connect Wallet
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Technical Proof Layer ──────────────────────────────────────── */}
+      <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '0.5rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
+          Technical Proof Layer
+        </h2>
+        <p style={{ fontFamily: 'sans-serif', fontSize: '0.9rem', color: '#4B5563', lineHeight: 1.6, marginBottom: '1rem', maxWidth: '780px' }}>
+          Standards, metadata pipeline, transfer rules, and on-chain verifiability. Every contract is verified on Arbitrum Blockscout — read the source, run the ABI, audit the trait engine.
+        </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
           <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.25rem' }}>
             <p style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 700, color: '#C9A84C', letterSpacing: '1px', marginBottom: '0.75rem' }}>CONTRACT STANDARDS</p>
@@ -1041,8 +1171,14 @@ export default function NFTPage() {
 
       {/* ── Disclosure footer ─────────────────────────────────────────── */}
       <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '1.5rem', marginTop: '1rem' }}>
+        <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#C9A84C', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+          Disclosure
+        </p>
         <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#4B5563', lineHeight: 1.8 }}>
-          NFT DISCLOSURE · These tokens represent protocol participation and utility access within the Axiom Protocol ecosystem. They are not investment contracts, do not represent fractional ownership of any asset, and confer no financial return or profit expectation. Land Receipt NFTs do not constitute fractional real estate ownership — they are participation records. Variable royalties enforced on-chain via EIP-2981. All token types are experimental and subject to change. Not an offer to sell securities.
+          Axiom digital assets are utility and participation assets. They do not represent equity, debt, ownership in protocol reserves, ownership of AXAU, rights to revenue, dividends, profit, or guaranteed financial benefit. Any AXAU-linked utility, eligibility, or access pathway must be separately disclosed and implemented through the applicable product rules. Participation may be subject to wallet verification, eligibility review, jurisdictional restrictions, and protocol terms.
+        </p>
+        <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#4B5563', lineHeight: 1.8, marginTop: '0.5rem' }}>
+          Land Receipt NFTs do not constitute fractional real estate ownership — they are participation records. Variable royalties are enforced on-chain via EIP-2981. All token types are experimental and subject to change. Not an offer to sell securities.
         </p>
         <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#4B5563', marginTop: '0.5rem' }}>
           <Link href="/disclosure" style={{ color: '#6B7280', textDecoration: 'none' }}>→ Institutional Disclosure</Link>
