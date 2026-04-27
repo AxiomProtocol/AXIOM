@@ -281,10 +281,7 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    apiKey: {
-      arbitrumOne: process.env.ARBISCAN_API_KEY || "no-api-key-needed",
-      peaq: "no-api-key-needed",
-    },
+    apiKey: process.env.ARBISCAN_API_KEY || "no-api-key-needed",
     customChains: [
       {
         network: "peaq",
@@ -295,11 +292,11 @@ const config: HardhatUserConfig = {
         },
       },
       {
-        network: "arbitrumOne",
+        network: "arbitrum",
         chainId: 42161,
         urls: {
-          apiURL: "https://arbitrum.blockscout.com/api",
-          browserURL: "https://arbitrum.blockscout.com",
+          apiURL: "https://api.etherscan.io/v2/api?chainid=42161",
+          browserURL: "https://arbiscan.io",
         },
       },
     ],
