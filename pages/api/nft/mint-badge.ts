@@ -8,15 +8,40 @@ const FOUNDER_BADGE_ABI = [
   'function totalMinted() external view returns (uint256)',
   'function MAX_SUPPLY() external view returns (uint256)',
   'function deployBlock() external view returns (uint256)',
+  'function traitSeed(uint256 tokenId) external view returns (bytes32)',
 ];
+
+const SIGN_MESSAGE_PREFIX = 'Axiom NFT Mint Authorization\nCollection: founder\nWallet: ';
+const SIGN_WINDOW_MS = 5 * 60 * 1000;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { walletAddress, tokenId } = req.body;
+  const { walletAddress, signature, timestamp } = req.body;
 
   if (!walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
     return res.status(400).json({ error: 'Invalid wallet address' });
+  }
+
+  if (!signature || !timestamp) {
+    return res.status(400).json({ error: 'Missing signature and timestamp — sign the authorization message first' });
+  }
+
+  const ts = Number(timestamp);
+  if (isNaN(ts) || Date.now() - ts > SIGN_WINDOW_MS) {
+    return res.status(400).json({ error: 'Signature expired — re-sign within 5 minutes of minting' });
+  }
+
+  const message = `${SIGN_MESSAGE_PREFIX}${walletAddress.toLowerCase()}\nTimestamp: ${timestamp}`;
+  let recoveredAddress: string;
+  try {
+    recoveredAddress = ethers.verifyMessage(message, signature).toLowerCase();
+  } catch {
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  if (recoveredAddress !== walletAddress.toLowerCase()) {
+    return res.status(401).json({ error: 'Signature signer does not match walletAddress' });
   }
 
   const contractAddress = process.env.NFT_CONTRACT_FOUNDER;
@@ -33,8 +58,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await ensureNFTTables();
 
     const eligibility = await getEligibility(walletAddress, 'founder');
+
     if (eligibility?.minted) {
       return res.status(409).json({ error: 'Wallet has already minted a Founder Badge' });
+    }
+
+    if (!eligibility || eligibility.eligible !== true) {
+      return res.status(403).json({
+        error: 'Wallet is not on the Founder Badge eligibility list. Eligibility is granted to early AXM holders, governance participants, and founding Wealth Practice members.',
+      });
     }
 
     const rpcUrl = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
@@ -50,14 +82,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(409).json({ error: 'Founder Badge supply cap reached (100/100)' });
     }
 
-    const nextTokenId = tokenId ?? Number(totalMinted) + 1;
+    const nextTokenId = Number(totalMinted) + 1;
 
-    const tx = await contract.mint(walletAddress, nextTokenId, {
-      gasLimit: 300_000,
-    });
+    const tx = await contract.mint(walletAddress, nextTokenId, { gasLimit: 300_000 });
     const receipt = await tx.wait();
 
-    const seed   = computeSeed(nextTokenId, contractAddress, Number(deployBlock), walletAddress);
+    let seed: string;
+    try {
+      const onChainSeed = await contract.traitSeed(nextTokenId);
+      seed = onChainSeed as string;
+    } catch {
+      seed = computeSeed(nextTokenId, contractAddress, Number(deployBlock), walletAddress);
+    }
     const traits = computeTraits(seed);
 
     await upsertNFTToken({

@@ -38,8 +38,11 @@ export interface NFTTraits {
 
 /**
  * Deterministically compute traits for a token from its seed.
- * Seed is keccak256(tokenId + contractAddress + deployBlock + owner) stored on-chain.
- * Off-chain we compute identically using SHA-256 over the same inputs.
+ * On-chain seed: keccak256(abi.encodePacked(tokenId, contractAddress, deployBlock, owner)) — stored in traitSeed mapping.
+ * Off-chain seed (this function's input): SHA-256 over colon-delimited inputs — used for metadata generation.
+ * Both are deterministic from the same inputs, but use different hash algorithms.
+ * The authoritative seed is the on-chain keccak256 value; the off-chain seed is the metadata server's parallel derivation.
+ * After mint, the server reads the on-chain seed (via traitSeed[tokenId]) and stores it in nft_tokens.trait_seed.
  */
 export function computeTraits(seed: string): NFTTraits {
   const buf = Buffer.from(seed.replace(/^0x/, ''), 'hex');
