@@ -30,8 +30,11 @@ import {
   INTEGRITY_ALERT_DEFAULT_WINDOW_MS,
   listRecentIntegrityAlerts,
   parseIntegrityAlertKind,
+  parseIntegrityWindowParam,
+  windowToSinceMs,
   type IntegrityAlertKind,
   type IntegrityAlertView,
+  type IntegrityAlertWindow,
 } from '../../lib/capinfra/risk/integrityAlerts';
 import {
   buildAssetLink,
@@ -73,6 +76,14 @@ interface Props {
    * predate the toggle; SSR always supplies a concrete boolean.
    */
   failedPagesFilter?: boolean;
+  /**
+   * Active time-window filter from `?window=…`. Null means the
+   * default 24h window is in use (no chip is shown). When set to
+   * any allow-listed value the filter strip renders a window chip
+   * with a "reset to 24h" clear link. Optional so legacy test
+   * fixtures that predate this prop keep compiling without changes.
+   */
+  windowFilter?: IntegrityAlertWindow | null;
   /**
    * Booleans-only snapshot of the on-call pager configuration. Used
    * to render the status banner at the top of the page (Task #305).
@@ -128,12 +139,14 @@ export function buildIntegrityHref(params: {
   symbol?: string | null;
   kind?: IntegrityAlertKind | null;
   failedPages?: boolean;
+  window?: IntegrityAlertWindow | null;
 }): string {
   const qs = new URLSearchParams();
   if (params.ack) qs.set('ack', '1');
   if (params.symbol) qs.set('symbol', params.symbol);
   if (params.kind) qs.set('kind', params.kind);
   if (params.failedPages) qs.set('failed_pages', '1');
+  if (params.window) qs.set('window', params.window);
   const s = qs.toString();
   return s ? `/operator/integrity?${s}` : '/operator/integrity';
 }
@@ -144,15 +157,23 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 
   const showAcknowledged = readShowAcknowledged(ctx.query.ack);
   const failedPagesFilter = readFailedPages(ctx.query.failed_pages);
-  const windowHours = Math.round(
-    INTEGRITY_ALERT_DEFAULT_WINDOW_MS / (60 * 60 * 1000),
-  );
   const generatedAtMs = Date.now();
 
   const rawSymbol = readSingle(ctx.query.symbol)?.trim() ?? '';
   const symbolFilter =
     rawSymbol.length > 0 ? rawSymbol.toUpperCase() : null;
   const kindFilter = parseIntegrityAlertKind(readSingle(ctx.query.kind));
+
+  // Parse the ?window= param from the allow-list; null = default 24h.
+  const windowFilter = parseIntegrityWindowParam(
+    readSingle(ctx.query.window),
+  );
+  const sinceMs = windowFilter
+    ? windowToSinceMs(windowFilter, generatedAtMs)
+    : generatedAtMs - INTEGRITY_ALERT_DEFAULT_WINDOW_MS;
+  const windowHours = Math.round(
+    (generatedAtMs - sinceMs) / (60 * 60 * 1000),
+  );
 
   // Best-effort: a malformed notification row must not blank the
   // entire console. Fall back to an empty list and surface the error.
@@ -162,6 +183,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
     alerts = await listRecentIntegrityAlerts({
       includeRead: showAcknowledged,
       limit: 200,
+      sinceMs,
       symbol: symbolFilter ?? undefined,
       kind: kindFilter ?? undefined,
       failedPages: failedPagesFilter ? true : undefined,
@@ -185,6 +207,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       symbolFilter,
       kindFilter,
       failedPagesFilter,
+      windowFilter,
       pagerStatus: getIntegrityPagerStatus(),
       lastWiringCheckRun,
       truncated: alerts.length >= 200,
@@ -201,6 +224,7 @@ export default function OperatorIntegrityPage({
   symbolFilter,
   kindFilter,
   failedPagesFilter = false,
+  windowFilter = null,
   pagerStatus,
   lastWiringCheckRun = null,
   truncated = false,
@@ -210,36 +234,51 @@ export default function OperatorIntegrityPage({
     symbol: symbolFilter,
     kind: kindFilter,
     failedPages: failedPagesFilter,
+    window: windowFilter,
   });
   const toggleLabel = showAcknowledged
     ? 'Hide acknowledged'
     : 'Show acknowledged';
 
   const hasFilter =
-    symbolFilter !== null || kindFilter !== null || failedPagesFilter;
+    symbolFilter !== null ||
+    kindFilter !== null ||
+    failedPagesFilter ||
+    windowFilter !== null;
   const clearAllHref = buildIntegrityHref({
     ack: showAcknowledged,
     symbol: null,
     kind: null,
     failedPages: false,
+    window: null,
   });
   const clearSymbolHref = buildIntegrityHref({
     ack: showAcknowledged,
     symbol: null,
     kind: kindFilter,
     failedPages: failedPagesFilter,
+    window: windowFilter,
   });
   const clearKindHref = buildIntegrityHref({
     ack: showAcknowledged,
     symbol: symbolFilter,
     kind: null,
     failedPages: failedPagesFilter,
+    window: windowFilter,
   });
   const clearFailedPagesHref = buildIntegrityHref({
     ack: showAcknowledged,
     symbol: symbolFilter,
     kind: kindFilter,
     failedPages: false,
+    window: windowFilter,
+  });
+  const clearWindowHref = buildIntegrityHref({
+    ack: showAcknowledged,
+    symbol: symbolFilter,
+    kind: kindFilter,
+    failedPages: failedPagesFilter,
+    window: null,
   });
 
   return (
@@ -362,6 +401,25 @@ export default function OperatorIntegrityPage({
                   className="text-amber-800 hover:text-amber-900 ml-1"
                   data-testid="operator-integrity-filter-failed-pages-clear"
                   aria-label="Clear failed-pages filter"
+                >
+                  ×
+                </Link>
+              </span>
+            )}
+            {windowFilter !== null && (
+              <span
+                className="inline-flex items-center gap-1 border border-dl-border bg-dl-muted/10 px-2 py-0.5"
+                data-testid="operator-integrity-filter-window"
+              >
+                <span className="text-[10px] uppercase tracking-wider text-dl-muted">
+                  window
+                </span>
+                <span className="font-bold text-dl-navy">{windowFilter}</span>
+                <Link
+                  href={clearWindowHref}
+                  className="text-dl-muted hover:text-dl-ink ml-1"
+                  data-testid="operator-integrity-filter-window-clear"
+                  aria-label={`Reset window to 24h (currently ${windowFilter})`}
                 >
                   ×
                 </Link>

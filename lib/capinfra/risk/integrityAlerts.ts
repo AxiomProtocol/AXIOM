@@ -28,6 +28,54 @@ export const INTEGRITY_ALERT_TOPIC = 'collateral.integrity_failed';
 /** Default cutoff for the "recent" window on the integrity page (24h). */
 export const INTEGRITY_ALERT_DEFAULT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Allow-listed time-window values accepted via `?window=…` on the
+ * /operator/integrity page. `'24h'` is the default; the others
+ * extend the look-back for post-incident review or weekly handoffs.
+ */
+export type IntegrityAlertWindow = '1h' | '24h' | '7d' | '30d';
+
+export const INTEGRITY_ALERT_WINDOWS: readonly IntegrityAlertWindow[] = [
+  '1h',
+  '24h',
+  '7d',
+  '30d',
+];
+
+const WINDOW_MS: Record<IntegrityAlertWindow, number> = {
+  '1h': 60 * 60 * 1000,
+  '24h': 24 * 60 * 60 * 1000,
+  '7d': 7 * 24 * 60 * 60 * 1000,
+  '30d': 30 * 24 * 60 * 60 * 1000,
+};
+
+/**
+ * Parse an arbitrary user-supplied string (e.g. from `?window=…`) into
+ * an `IntegrityAlertWindow`. Returns null when the value is missing or
+ * not in the allow-list, so SSR falls back to the default 24h window
+ * rather than silently accepting an arbitrary duration.
+ */
+export function parseIntegrityWindowParam(
+  raw: string | undefined | null,
+): IntegrityAlertWindow | null {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim() as IntegrityAlertWindow;
+  if ((INTEGRITY_ALERT_WINDOWS as readonly string[]).includes(trimmed))
+    return trimmed;
+  return null;
+}
+
+/**
+ * Convert an `IntegrityAlertWindow` to the Unix-ms lower bound for
+ * the `sinceMs` option of `listRecentIntegrityAlerts`.
+ */
+export function windowToSinceMs(
+  window: IntegrityAlertWindow,
+  nowMs: number,
+): number {
+  return nowMs - WINDOW_MS[window];
+}
+
 export type IntegrityAlertKind =
   | 'oracle_stale'
   | 'reserve_attestation_failed'

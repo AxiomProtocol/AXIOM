@@ -71,8 +71,11 @@ const {
   shapeIntegrityAlert,
   listRecentIntegrityAlerts,
   parseIntegrityAlertKind,
+  parseIntegrityWindowParam,
+  windowToSinceMs,
   INTEGRITY_ALERT_DEFAULT_WINDOW_MS,
   INTEGRITY_ALERT_KINDS,
+  INTEGRITY_ALERT_WINDOWS,
 } = await import('../lib/capinfra/risk/integrityAlerts');
 
 const { default: OperatorIntegrityPage, buildIntegrityHref } = await import(
@@ -1338,5 +1341,309 @@ describe('OperatorIntegrityPage — truncation notice', () => {
     } as unknown as Parameters<typeof mod.getServerSideProps>[0]);
     expect(calls).toHaveLength(1);
     expect(calls[0].args.limit).toBe(200);
+  });
+});
+
+describe('parseIntegrityWindowParam — SSR query-param parsing', () => {
+  it('returns null for missing/empty/unknown values', () => {
+    expect(parseIntegrityWindowParam(undefined)).toBeNull();
+    expect(parseIntegrityWindowParam(null)).toBeNull();
+    expect(parseIntegrityWindowParam('')).toBeNull();
+    expect(parseIntegrityWindowParam('2d')).toBeNull();
+    expect(parseIntegrityWindowParam('24')).toBeNull();
+    expect(parseIntegrityWindowParam('INVALID')).toBeNull();
+  });
+
+  it('accepts every value in the allow-list', () => {
+    for (const w of INTEGRITY_ALERT_WINDOWS) {
+      expect(parseIntegrityWindowParam(w)).toBe(w);
+    }
+  });
+
+  it('trims surrounding whitespace before matching', () => {
+    expect(parseIntegrityWindowParam(' 7d ')).toBe('7d');
+  });
+});
+
+describe('windowToSinceMs — conversion helper', () => {
+  const NOW = new Date('2026-04-27T12:00:00.000Z').getTime();
+
+  it('1h → now − 3,600,000 ms', () => {
+    expect(windowToSinceMs('1h', NOW)).toBe(NOW - 60 * 60 * 1000);
+  });
+
+  it('24h → now − 86,400,000 ms (matches INTEGRITY_ALERT_DEFAULT_WINDOW_MS)', () => {
+    expect(windowToSinceMs('24h', NOW)).toBe(
+      NOW - INTEGRITY_ALERT_DEFAULT_WINDOW_MS,
+    );
+  });
+
+  it('7d → now − 604,800,000 ms', () => {
+    expect(windowToSinceMs('7d', NOW)).toBe(
+      NOW - 7 * 24 * 60 * 60 * 1000,
+    );
+  });
+
+  it('30d → now − 2,592,000,000 ms', () => {
+    expect(windowToSinceMs('30d', NOW)).toBe(
+      NOW - 30 * 24 * 60 * 60 * 1000,
+    );
+  });
+});
+
+describe('buildIntegrityHref — window param', () => {
+  it('serialises ?window=7d alongside other filters', () => {
+    expect(buildIntegrityHref({ window: '7d' })).toBe(
+      '/operator/integrity?window=7d',
+    );
+    expect(
+      buildIntegrityHref({
+        ack: true,
+        symbol: 'AXAU',
+        kind: 'oracle_stale',
+        window: '30d',
+      }),
+    ).toBe(
+      '/operator/integrity?ack=1&symbol=AXAU&kind=oracle_stale&window=30d',
+    );
+  });
+
+  it('drops the window key when null (reset to default)', () => {
+    expect(buildIntegrityHref({ ack: true, window: null })).toBe(
+      '/operator/integrity?ack=1',
+    );
+  });
+
+  it('omitting window produces the same href as passing null', () => {
+    expect(buildIntegrityHref({ ack: true })).toBe(
+      buildIntegrityHref({ ack: true, window: null }),
+    );
+  });
+});
+
+describe('OperatorIntegrityPage — window filter chip', () => {
+  it('hides the window chip and filter strip when windowFilter is null (default)', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+        windowFilter={null}
+      />,
+    );
+    expect(
+      screen.queryByTestId('operator-integrity-filter-strip'),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId('operator-integrity-filter-window'),
+    ).toBeNull();
+  });
+
+  it('renders the window chip with the active window label and a clear link', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[]}
+        showAcknowledged={false}
+        windowHours={168}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+        windowFilter="7d"
+      />,
+    );
+    const strip = screen.getByTestId('operator-integrity-filter-strip');
+    const chip = within(strip).getByTestId(
+      'operator-integrity-filter-window',
+    );
+    expect(chip.textContent).toMatch(/7d/);
+
+    const clearLink = within(strip).getByTestId(
+      'operator-integrity-filter-window-clear',
+    ) as HTMLAnchorElement;
+    expect(clearLink.getAttribute('href')).toBe('/operator/integrity');
+  });
+
+  it('preserves ack + other filters across the window clear link', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[]}
+        showAcknowledged={true}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter="AXAU"
+        kindFilter={null}
+        windowFilter="30d"
+      />,
+    );
+    const clearLink = screen.getByTestId(
+      'operator-integrity-filter-window-clear',
+    ) as HTMLAnchorElement;
+    expect(clearLink.getAttribute('href')).toBe(
+      '/operator/integrity?ack=1&symbol=AXAU',
+    );
+  });
+
+  it('preserves the window filter across per-symbol and per-kind clears', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[]}
+        showAcknowledged={false}
+        windowHours={168}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter="AXAU"
+        kindFilter="oracle_stale"
+        windowFilter="7d"
+      />,
+    );
+    const clearSym = screen.getByTestId(
+      'operator-integrity-filter-symbol-clear',
+    ) as HTMLAnchorElement;
+    expect(clearSym.getAttribute('href')).toBe(
+      '/operator/integrity?kind=oracle_stale&window=7d',
+    );
+
+    const clearKind = screen.getByTestId(
+      'operator-integrity-filter-kind-clear',
+    ) as HTMLAnchorElement;
+    expect(clearKind.getAttribute('href')).toBe(
+      '/operator/integrity?symbol=AXAU&window=7d',
+    );
+
+    const clearAll = screen.getByTestId(
+      'operator-integrity-filter-clear-all',
+    ) as HTMLAnchorElement;
+    expect(clearAll.getAttribute('href')).toBe('/operator/integrity');
+  });
+
+  it('preserves the window filter on the toggle link', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[]}
+        showAcknowledged={false}
+        windowHours={720}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+        windowFilter="30d"
+      />,
+    );
+    const toggle = screen.getByTestId(
+      'operator-integrity-toggle',
+    ) as HTMLAnchorElement;
+    expect(toggle.getAttribute('href')).toBe(
+      '/operator/integrity?ack=1&window=30d',
+    );
+  });
+});
+
+describe('OperatorIntegrityPage — SSR window param', () => {
+  it('SSR maps ?window=7d to windowFilter prop and forwards sinceMs to the listing helper', async () => {
+    vi.resetModules();
+    const calls: { args: { sinceMs?: unknown } }[] = [];
+    vi.doMock('../lib/capinfra/operatorAuth', () => ({
+      requireOperatorCookie: () => null,
+    }));
+    vi.doMock('../lib/capinfra/risk/integrityAlerts', async () => {
+      const actual = await vi.importActual<
+        typeof import('../lib/capinfra/risk/integrityAlerts')
+      >('../lib/capinfra/risk/integrityAlerts');
+      return {
+        ...actual,
+        listRecentIntegrityAlerts: async (args: { sinceMs?: unknown }) => {
+          calls.push({ args });
+          return [];
+        },
+      };
+    });
+    const mod = await import('../pages/operator/integrity');
+    const result = await mod.getServerSideProps({
+      query: { window: '7d' },
+      req: {} as unknown,
+      res: {} as unknown,
+      resolvedUrl: '/operator/integrity',
+    } as unknown as Parameters<typeof mod.getServerSideProps>[0]);
+    expect('props' in result).toBe(true);
+    const props = (result as { props: Record<string, unknown> }).props;
+    expect(props.windowFilter).toBe('7d');
+    // windowHours should reflect 7d (168h).
+    expect(props.windowHours).toBe(168);
+    expect(calls).toHaveLength(1);
+    // sinceMs should be ≈ 7 days before generatedAtMs.
+    const sinceMs = calls[0].args.sinceMs as number;
+    const generatedAtMs = props.generatedAtMs as number;
+    expect(generatedAtMs - sinceMs).toBeCloseTo(
+      7 * 24 * 60 * 60 * 1000,
+      -3,
+    );
+  });
+
+  it('SSR ignores invalid ?window= values and falls back to default 24h', async () => {
+    vi.resetModules();
+    const calls: { args: { sinceMs?: unknown } }[] = [];
+    vi.doMock('../lib/capinfra/operatorAuth', () => ({
+      requireOperatorCookie: () => null,
+    }));
+    vi.doMock('../lib/capinfra/risk/integrityAlerts', async () => {
+      const actual = await vi.importActual<
+        typeof import('../lib/capinfra/risk/integrityAlerts')
+      >('../lib/capinfra/risk/integrityAlerts');
+      return {
+        ...actual,
+        listRecentIntegrityAlerts: async (args: { sinceMs?: unknown }) => {
+          calls.push({ args });
+          return [];
+        },
+      };
+    });
+    const mod = await import('../pages/operator/integrity');
+    const result = await mod.getServerSideProps({
+      query: { window: 'INVALID' },
+      req: {} as unknown,
+      res: {} as unknown,
+      resolvedUrl: '/operator/integrity',
+    } as unknown as Parameters<typeof mod.getServerSideProps>[0]);
+    const props = (result as { props: Record<string, unknown> }).props;
+    expect(props.windowFilter).toBeNull();
+    expect(props.windowHours).toBe(24);
+    const sinceMs = calls[0].args.sinceMs as number;
+    const generatedAtMs = props.generatedAtMs as number;
+    expect(generatedAtMs - sinceMs).toBeCloseTo(
+      24 * 60 * 60 * 1000,
+      -3,
+    );
+  });
+
+  it('SSR maps ?window=1h to windowFilter prop and windowHours=1', async () => {
+    vi.resetModules();
+    vi.doMock('../lib/capinfra/operatorAuth', () => ({
+      requireOperatorCookie: () => null,
+    }));
+    vi.doMock('../lib/capinfra/risk/integrityAlerts', async () => {
+      const actual = await vi.importActual<
+        typeof import('../lib/capinfra/risk/integrityAlerts')
+      >('../lib/capinfra/risk/integrityAlerts');
+      return {
+        ...actual,
+        listRecentIntegrityAlerts: async () => [],
+      };
+    });
+    const mod = await import('../pages/operator/integrity');
+    const result = await mod.getServerSideProps({
+      query: { window: '1h' },
+      req: {} as unknown,
+      res: {} as unknown,
+      resolvedUrl: '/operator/integrity',
+    } as unknown as Parameters<typeof mod.getServerSideProps>[0]);
+    const props = (result as { props: Record<string, unknown> }).props;
+    expect(props.windowFilter).toBe('1h');
+    expect(props.windowHours).toBe(1);
   });
 });
