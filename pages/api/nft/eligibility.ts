@@ -1,9 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ensureNFTTables, getEligibility, upsertEligibility } from '../../../lib/nft/db';
 
+const PARTICIPATION_TYPE_IDS = [1, 2, 3, 4, 5, 6];
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
-    const { wallet, collection = 'founder' } = req.query;
+    const { wallet, collection = 'founder', all } = req.query;
     const walletAddress = typeof wallet === 'string' ? wallet : '';
 
     if (!walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
@@ -12,14 +14,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
       await ensureNFTTables();
-      const row = await getEligibility(walletAddress, typeof collection === 'string' ? collection : 'founder');
+
+      // ?all=true returns founder + all 6 participation types in one response
+      if (all === 'true') {
+        const [founderRow, ...participationRows] = await Promise.all([
+          getEligibility(walletAddress, 'founder'),
+          ...PARTICIPATION_TYPE_IDS.map(id => getEligibility(walletAddress, `participation_${id}`)),
+        ]);
+
+        const founder = founderRow
+          ? {
+              eligible:      founderRow.eligible === true,
+              minted:        founderRow.minted === true,
+              mintedTokenId: founderRow.minted_token_id ?? null,
+              mintedTxHash:  founderRow.minted_tx_hash ?? null,
+              reason:        founderRow.reason ?? null,
+            }
+          : { eligible: false, minted: false, mintedTokenId: null, mintedTxHash: null, reason: null };
+
+        const participation = PARTICIPATION_TYPE_IDS.map((id, i) => {
+          const row = participationRows[i];
+          return {
+            tokenId:      id,
+            eligible:     row ? row.eligible === true : false,
+            minted:       row ? row.minted === true : false,
+            mintedTxHash: row?.minted_tx_hash ?? null,
+          };
+        });
+
+        return res.status(200).json({ walletAddress: walletAddress.toLowerCase(), founder, participation });
+      }
+
+      // Single-collection mode (original behaviour)
+      const col = typeof collection === 'string' ? collection : 'founder';
+      const row = await getEligibility(walletAddress, col);
       return res.status(200).json({
         walletAddress,
-        eligible:       row?.eligible ?? false,
-        minted:         row?.minted   ?? false,
-        mintedTokenId:  row?.minted_token_id ?? null,
-        mintedTxHash:   row?.minted_tx_hash  ?? null,
-        reason:         row?.reason ?? null,
+        eligible:      row?.eligible ?? false,
+        minted:        row?.minted   ?? false,
+        mintedTokenId: row?.minted_token_id ?? null,
+        mintedTxHash:  row?.minted_tx_hash  ?? null,
+        reason:        row?.reason ?? null,
       });
     } catch (err: unknown) {
       return res.status(500).json({ error: err instanceof Error ? err.message : 'Eligibility check failed' });

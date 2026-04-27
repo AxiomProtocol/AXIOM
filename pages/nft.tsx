@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useAccount, useSignMessage } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law/DesignLawLayout';
 
 const RARITY_COLORS: Record<string, string> = {
@@ -44,13 +45,381 @@ interface StatsData {
 }
 
 const PARTICIPATION_TOKEN_TYPES = [
-  { id: 1, name: 'Identity Registration',      max: 10000, icon: '◎' },
-  { id: 2, name: 'Wealth Practice Member',       max: 5000,  icon: '⬡' },
-  { id: 3, name: 'Governance Participant',       max: 2500,  icon: '⬢' },
-  { id: 4, name: 'Property Deal Participant',    max: 1000,  icon: '▦' },
-  { id: 5, name: 'AXAU Early Adopter',          max: 500,   icon: '◈' },
-  { id: 6, name: 'Founder Circle',              max: 100,   icon: '✦' },
+  { id: 1, name: 'Identity Registration',    max: 10000, icon: '◎' },
+  { id: 2, name: 'Wealth Practice Member',   max: 5000,  icon: '⬡' },
+  { id: 3, name: 'Governance Participant',   max: 2500,  icon: '⬢' },
+  { id: 4, name: 'Property Deal Participant', max: 1000,  icon: '▦' },
+  { id: 5, name: 'AXAU Early Adopter',       max: 500,   icon: '◈' },
+  { id: 6, name: 'Founder Circle',           max: 100,   icon: '✦' },
 ];
+
+const TREASURY_ADDRESS = '0x3fD63728288546AC41dAe3bf25ca383061c3A929';
+const ARBISCAN_BASE    = 'https://arbiscan.io';
+
+interface FounderEligibility {
+  eligible: boolean;
+  minted: boolean;
+  mintedTokenId?: number | null;
+  mintedTxHash?: string | null;
+  reason?: string | null;
+}
+interface ParticipationTypeEligibility {
+  tokenId: number;
+  eligible: boolean;
+  minted: boolean;
+  mintedTxHash?: string | null;
+}
+interface AllEligibility {
+  founder: FounderEligibility;
+  participation: ParticipationTypeEligibility[];
+}
+
+// ── mono helpers ──
+const mono = (extra: React.CSSProperties = {}): React.CSSProperties => ({
+  fontFamily: 'monospace', ...extra,
+});
+
+// ── WalletMintSection ─────────────────────────────────────────────────────────
+function WalletMintSection() {
+  const { address, isConnected } = useAccount();
+  const { signMessageAsync }     = useSignMessage();
+
+  const [eligibility,  setEligibility]  = useState<AllEligibility | null>(null);
+  const [checking,     setChecking]     = useState(false);
+  const [mintingFounder, setMintingFounder] = useState(false);
+  const [mintingPart,  setMintingPart]  = useState<number | null>(null);
+  const [founderResult, setFounderResult] = useState<{ tokenId: number; txHash: string; rarityTier: string } | null>(null);
+  const [partResult,   setPartResult]   = useState<Record<number, { txHash: string }>>({});
+  const [founderErr,   setFounderErr]   = useState('');
+  const [partErr,      setPartErr]      = useState<Record<number, string>>({});
+  const [partFeeHash,  setPartFeeHash]  = useState<Record<number, string>>({});
+
+  const checkEligibility = useCallback(async (wallet: string) => {
+    setChecking(true);
+    try {
+      const res  = await fetch(`/api/nft/eligibility?wallet=${wallet}&all=true`);
+      const data = await res.json();
+      if (res.ok) setEligibility(data);
+    } finally {
+      setChecking(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isConnected && address) checkEligibility(address);
+    else setEligibility(null);
+  }, [isConnected, address, checkEligibility]);
+
+  // ── Founder Badge mint ────────────────────────────────────────────────────
+  async function mintFounderBadge() {
+    if (!address) return;
+    setMintingFounder(true);
+    setFounderErr('');
+    try {
+      const timestamp = Date.now();
+      const message   = `Axiom NFT Mint Authorization\nCollection: founder\nWallet: ${address.toLowerCase()}\nTimestamp: ${timestamp}`;
+      const signature = await signMessageAsync({ message });
+
+      const res  = await fetch('/api/nft/mint-badge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: address, signature, timestamp }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `Mint failed (${res.status})`);
+
+      setFounderResult({ tokenId: data.tokenId, txHash: data.txHash, rarityTier: data.rarityTier });
+      setEligibility(prev => prev ? { ...prev, founder: { ...prev.founder, minted: true, mintedTokenId: data.tokenId, mintedTxHash: data.txHash } } : prev);
+    } catch (err: unknown) {
+      setFounderErr(err instanceof Error ? err.message : 'Mint failed');
+    } finally {
+      setMintingFounder(false);
+    }
+  }
+
+  // ── Participation mint ────────────────────────────────────────────────────
+  async function mintParticipation(tokenId: number) {
+    if (!address) return;
+    const feeTxHash = partFeeHash[tokenId]?.trim();
+    if (!feeTxHash || !/^0x[a-fA-F0-9]{64}$/.test(feeTxHash)) {
+      setPartErr(prev => ({ ...prev, [tokenId]: 'Enter a valid fee transaction hash (0x + 64 hex chars)' }));
+      return;
+    }
+    setMintingPart(tokenId);
+    setPartErr(prev => ({ ...prev, [tokenId]: '' }));
+    try {
+      const timestamp = Date.now();
+      const message   = `Axiom NFT Mint Authorization\nCollection: participation\nType: ${tokenId}\nWallet: ${address.toLowerCase()}\nTimestamp: ${timestamp}`;
+      const signature = await signMessageAsync({ message });
+
+      const res  = await fetch('/api/nft/mint-participation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: address, tokenId, signature, timestamp, feeTxHash }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `Mint failed (${res.status})`);
+
+      setPartResult(prev => ({ ...prev, [tokenId]: { txHash: data.txHash } }));
+      setEligibility(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          participation: prev.participation.map(p =>
+            p.tokenId === tokenId ? { ...p, minted: true, mintedTxHash: data.txHash } : p
+          ),
+        };
+      });
+    } catch (err: unknown) {
+      setPartErr(prev => ({ ...prev, [tokenId]: err instanceof Error ? err.message : 'Mint failed' }));
+    } finally {
+      setMintingPart(null);
+    }
+  }
+
+  // ── Render: not connected ─────────────────────────────────────────────────
+  if (!isConnected) {
+    return (
+      <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+          Claim Your Badges
+        </h2>
+        <div style={{ background: '#111827', border: '1px solid #374151', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center' }}>
+          <div style={mono({ fontSize: '28px', color: '#374151' })}>◈</div>
+          <p style={mono({ fontSize: '12px', color: '#9CA3AF', letterSpacing: '1px' })}>
+            CONNECT YOUR WALLET TO CHECK ELIGIBILITY
+          </p>
+          <p style={mono({ fontSize: '11px', color: '#4B5563', lineHeight: 1.6, maxWidth: '480px' })}>
+            Use the "Access Platform" button in the top navigation to connect. Eligibility is checked against your on-chain
+            history — early AXM holders, governance participants, and Wealth Practice members qualify for the Founder Badge.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // ── Render: checking ─────────────────────────────────────────────────────
+  if (checking) {
+    return (
+      <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+          Claim Your Badges
+        </h2>
+        <div style={{ background: '#111827', border: '1px solid #374151', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={mono({ fontSize: '10px', color: '#C9A84C', letterSpacing: '2px', animation: 'pulse 1.5s infinite' })}>
+            CHECKING ELIGIBILITY…
+          </div>
+          <div style={mono({ fontSize: '10px', color: '#4B5563' })}>
+            {address?.slice(0, 10)}…{address?.slice(-6)}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const founderElig = eligibility?.founder;
+  const partElig    = eligibility?.participation ?? [];
+
+  // ── Render: results ───────────────────────────────────────────────────────
+  return (
+    <section style={{ marginBottom: '3rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', margin: 0 }}>
+          Claim Your Badges
+        </h2>
+        <span style={mono({ fontSize: '10px', color: '#4B5563', background: '#0D1117', padding: '3px 8px', border: '1px solid #1F2937' })}>
+          {address?.slice(0, 10)}…{address?.slice(-6)}
+        </span>
+      </div>
+
+      {/* ── Founder Badge ──────────────────────────────────────── */}
+      <div style={{ background: '#111827', border: '1px solid #374151', padding: '1.25rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div>
+            <div style={mono({ fontSize: '12px', fontWeight: 700, color: '#C9A84C', letterSpacing: '1px', marginBottom: '0.25rem' })}>
+              AXIOM FOUNDER BADGE
+            </div>
+            <div style={mono({ fontSize: '10px', color: '#6B7280' })}>ERC-721 · SOULBOUND · MAX 100</div>
+          </div>
+          {/* Status pill */}
+          {founderElig?.minted ? (
+            <span style={mono({ fontSize: '10px', color: '#52B788', background: '#0D2B1F', padding: '3px 10px', border: '1px solid #166534' })}>
+              ✓ MINTED
+            </span>
+          ) : founderElig?.eligible ? (
+            <span style={mono({ fontSize: '10px', color: '#FDE68A', background: '#1C1700', padding: '3px 10px', border: '1px solid #92400E' })}>
+              ● ELIGIBLE
+            </span>
+          ) : (
+            <span style={mono({ fontSize: '10px', color: '#6B7280', background: '#111827', padding: '3px 10px', border: '1px solid #374151' })}>
+              NOT ELIGIBLE
+            </span>
+          )}
+        </div>
+
+        {/* Already minted */}
+        {(founderElig?.minted || founderResult) && (
+          <div style={{ background: '#0D2B1F', border: '1px solid #166534', padding: '1rem', marginBottom: '0.75rem' }}>
+            <div style={mono({ fontSize: '11px', color: '#52B788', marginBottom: '0.5rem' })}>
+              You hold Founder Badge #{founderResult?.tokenId ?? founderElig?.mintedTokenId}
+              {(founderResult?.rarityTier) && (
+                <span style={{ color: RARITY_COLORS[founderResult.rarityTier] ?? '#C9A84C', marginLeft: '0.5rem' }}>
+                  [{founderResult.rarityTier}]
+                </span>
+              )}
+            </div>
+            {(founderResult?.txHash ?? founderElig?.mintedTxHash) && (
+              <a
+                href={`${ARBISCAN_BASE}/tx/${founderResult?.txHash ?? founderElig?.mintedTxHash}`}
+                target="_blank" rel="noopener noreferrer"
+                style={mono({ fontSize: '10px', color: '#3B82F6', textDecoration: 'none' })}
+              >
+                View mint transaction on Arbiscan ↗
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* Eligible and not minted */}
+        {founderElig?.eligible && !founderElig.minted && !founderResult && (
+          <div>
+            {founderErr && (
+              <div style={{ background: '#1C0000', border: '1px solid #7F1D1D', padding: '0.75rem', marginBottom: '0.75rem' }}>
+                <span style={mono({ fontSize: '10px', color: '#FCA5A5' })}>{founderErr}</span>
+              </div>
+            )}
+            <p style={mono({ fontSize: '10px', color: '#9CA3AF', lineHeight: 1.6, marginBottom: '0.75rem' })}>
+              You are eligible to claim your soulbound Founder Badge. This token is non-transferable after mint.
+              Clicking "Claim" will prompt you to sign an authorization message — no gas required from your wallet.
+            </p>
+            <button
+              onClick={mintFounderBadge}
+              disabled={mintingFounder}
+              style={{
+                background: mintingFounder ? '#1F2937' : '#C9A84C',
+                color: mintingFounder ? '#6B7280' : '#000000',
+                border: '1px solid #C9A84C',
+                padding: '0.6rem 1.5rem',
+                fontFamily: 'monospace',
+                fontSize: '12px',
+                fontWeight: 700,
+                letterSpacing: '1px',
+                cursor: mintingFounder ? 'wait' : 'pointer',
+              }}
+            >
+              {mintingFounder ? 'MINTING…' : 'CLAIM FOUNDER BADGE'}
+            </button>
+          </div>
+        )}
+
+        {/* Not eligible */}
+        {!founderElig?.eligible && !founderElig?.minted && (
+          <p style={mono({ fontSize: '10px', color: '#6B7280', lineHeight: 1.6 })}>
+            {founderElig?.reason ??
+              'Your wallet is not currently on the Founder Badge eligibility list. Eligibility is granted to early AXM holders, governance participants, and founding Wealth Practice members. Contact the team if you believe this is an error.'}
+          </p>
+        )}
+      </div>
+
+      {/* ── Participation Tokens ───────────────────────────────── */}
+      <div style={{ background: '#0D1117', border: '1px solid #1F2937', padding: '1.25rem' }}>
+        <div style={mono({ fontSize: '12px', fontWeight: 700, color: '#C9A84C', letterSpacing: '1px', marginBottom: '1rem' })}>
+          PARTICIPATION BADGES · ERC-1155 · 10 AXUSD FEE EACH
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1px', background: '#374151' }}>
+          {PARTICIPATION_TOKEN_TYPES.map(type => {
+            const pe      = partElig.find(p => p.tokenId === type.id);
+            const result  = partResult[type.id];
+            const err     = partErr[type.id];
+            const isMinted = pe?.minted || !!result;
+            const isMinting = mintingPart === type.id;
+
+            return (
+              <div key={type.id} style={{ background: '#111827', padding: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={mono({ fontSize: '14px', color: '#C9A84C' })}>{type.icon}</span>
+                    <span style={mono({ fontSize: '11px', color: '#FAFAFA', fontWeight: 600 })}>{type.name}</span>
+                  </div>
+                  {isMinted ? (
+                    <span style={mono({ fontSize: '9px', color: '#52B788', background: '#0D2B1F', padding: '2px 6px' })}>✓ MINTED</span>
+                  ) : pe?.eligible ? (
+                    <span style={mono({ fontSize: '9px', color: '#FDE68A', background: '#1C1700', padding: '2px 6px' })}>ELIGIBLE</span>
+                  ) : (
+                    <span style={mono({ fontSize: '9px', color: '#4B5563', padding: '2px 6px' })}>LOCKED</span>
+                  )}
+                </div>
+
+                {isMinted && (
+                  <div style={mono({ fontSize: '9px', color: '#52B788', marginBottom: '0.5rem' })}>
+                    {(result?.txHash ?? pe?.mintedTxHash) && (
+                      <a
+                        href={`${ARBISCAN_BASE}/tx/${result?.txHash ?? pe?.mintedTxHash}`}
+                        target="_blank" rel="noopener noreferrer"
+                        style={{ color: '#3B82F6', textDecoration: 'none' }}
+                      >
+                        View on Arbiscan ↗
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {pe?.eligible && !isMinted && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <p style={mono({ fontSize: '9px', color: '#6B7280', lineHeight: 1.5, marginBottom: '0.5rem' })}>
+                      Send exactly 10 AXUSD to{' '}
+                      <span style={{ color: '#9CA3AF' }}>{TREASURY_ADDRESS.slice(0,10)}…</span>, then paste the tx hash:
+                    </p>
+                    <input
+                      type="text"
+                      placeholder="0x fee transaction hash"
+                      value={partFeeHash[type.id] ?? ''}
+                      onChange={e => setPartFeeHash(prev => ({ ...prev, [type.id]: e.target.value }))}
+                      style={{
+                        width: '100%', boxSizing: 'border-box',
+                        background: '#0D1117', border: '1px solid #374151',
+                        color: '#9CA3AF', fontFamily: 'monospace', fontSize: '9px',
+                        padding: '5px 8px', marginBottom: '0.5rem',
+                        outline: 'none',
+                      }}
+                    />
+                    {err && <div style={mono({ fontSize: '9px', color: '#FCA5A5', marginBottom: '0.5rem' })}>{err}</div>}
+                    <button
+                      onClick={() => mintParticipation(type.id)}
+                      disabled={isMinting}
+                      style={{
+                        background: isMinting ? '#1F2937' : '#1F2937',
+                        color: isMinting ? '#6B7280' : '#C9A84C',
+                        border: '1px solid #C9A84C',
+                        padding: '4px 12px',
+                        fontFamily: 'monospace',
+                        fontSize: '10px',
+                        cursor: isMinting ? 'wait' : 'pointer',
+                        letterSpacing: '1px',
+                        width: '100%',
+                      }}
+                    >
+                      {isMinting ? 'MINTING…' : 'CLAIM BADGE'}
+                    </button>
+                  </div>
+                )}
+
+                {!pe?.eligible && !isMinted && (
+                  <p style={mono({ fontSize: '9px', color: '#4B5563', lineHeight: 1.4, marginTop: '0.25rem' })}>
+                    Complete the associated protocol action to unlock this badge type.
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <p style={mono({ fontSize: '10px', color: '#4B5563', marginTop: '0.75rem', lineHeight: 1.6 })}>
+          Treasury: {TREASURY_ADDRESS} · AXUSD contract: 0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C · Arbitrum One
+        </p>
+      </div>
+    </section>
+  );
+}
 
 export default function NFTPage() {
   const [stats, setStats] = useState<StatsData | null>(null);
@@ -95,6 +464,9 @@ export default function NFTPage() {
           Three animated, rarity-tiered collections on Arbitrum One. Each NFT carries real protocol utility — priority queue access, governance weight multipliers, and fee discounts. No speculation. No hype. Earned through participation.
         </p>
       </div>
+
+      {/* ── Wallet eligibility + mint ─────────────────────────────────── */}
+      <WalletMintSection />
 
       {/* ── Utility gates ─────────────────────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
