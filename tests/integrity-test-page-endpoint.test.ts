@@ -42,6 +42,9 @@ const {
   SYNTHETIC_TEST_PAGE_ASSET_ID,
   SYNTHETIC_TEST_PAGE_KIND,
   TEST_PAGE_AUDIT_EVENT_TYPE,
+  TEST_PAGE_COOLDOWN_MS,
+  TEST_PAGE_RATE_LIMITED_ERROR,
+  _resetTestPageCooldownsForTests,
 } = await import('../pages/api/capinfra/risk/integrity/test-page');
 
 interface MockReqOptions {
@@ -103,6 +106,7 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    _resetTestPageCooldownsForTests();
     process.env = {
       ...savedEnv,
       ADMIN_SOLVENCY_KEY: OPERATOR_KEY,
@@ -119,6 +123,8 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
 
   afterEach(() => {
     process.env = savedEnv;
+    _resetTestPageCooldownsForTests();
+    vi.useRealTimers();
   });
 
   it('accepts the operator cookie and returns the pager result envelope', async () => {
@@ -430,6 +436,198 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     expect(statusCode()).toBe(200);
     expect(body()).toEqual({
       result: { channelsPaged: ['email'], errors: [], skipped: false },
+    });
+  });
+
+  describe('cooldown / rate-limiting (task #302)', () => {
+    it('rejects a second send within the cooldown window with 429 + retry_after_seconds', async () => {
+      const first = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        first.res,
+      );
+      expect(first.statusCode()).toBe(200);
+      expect(mockPager).toHaveBeenCalledTimes(1);
+
+      const second = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        second.res,
+      );
+
+      expect(second.statusCode()).toBe(429);
+      const body = second.body() as Record<string, unknown>;
+      expect(body.error).toBe(TEST_PAGE_RATE_LIMITED_ERROR);
+      expect(typeof body.retry_after_seconds).toBe('number');
+      expect(body.retry_after_seconds).toBeGreaterThan(0);
+      expect(body.retry_after_seconds).toBeLessThanOrEqual(
+        Math.ceil(TEST_PAGE_COOLDOWN_MS / 1000),
+      );
+      expect(typeof body.message).toBe('string');
+      // Retry-After header is set in whole seconds for generic clients.
+      expect(second.headers()['retry-after']).toBeDefined();
+      // Crucially, the throttled call must NOT actually fire the pager
+      // a second time — that's the whole point of the cooldown.
+      expect(mockPager).toHaveBeenCalledTimes(1);
+      // Nor should it write a duplicate audit row.
+      expect(mockEmitAuditEvent).toHaveBeenCalledTimes(1);
+    });
+
+    it('clears the cooldown for the same actor after the window expires', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-04-26T00:00:00Z'));
+
+      const first = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        first.res,
+      );
+      expect(first.statusCode()).toBe(200);
+
+      // Advance just past the cooldown window.
+      vi.setSystemTime(new Date(Date.now() + TEST_PAGE_COOLDOWN_MS + 1000));
+
+      const second = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        second.res,
+      );
+      expect(second.statusCode()).toBe(200);
+      expect(mockPager).toHaveBeenCalledTimes(2);
+    });
+
+    it('throttles by IP even when a different actor (cookie vs header) hits the same address', async () => {
+      const sameIp = { remoteAddress: '203.0.113.5' };
+      const first = makeRes();
+      await testPageHandler(
+        makeReq({
+          cookies: { cap_operator_key: OPERATOR_KEY },
+          headers: { 'x-operator': 'alice' },
+          socket: sameIp,
+        }),
+        first.res,
+      );
+      expect(first.statusCode()).toBe(200);
+
+      // Different operator label but the same IP must still be blocked
+      // by the per-IP axis of the cooldown.
+      const second = makeRes();
+      await testPageHandler(
+        makeReq({
+          cookies: { cap_operator_key: OPERATOR_KEY },
+          headers: { 'x-operator': 'bob' },
+          socket: sameIp,
+        }),
+        second.res,
+      );
+      expect(second.statusCode()).toBe(429);
+      expect(mockPager).toHaveBeenCalledTimes(1);
+    });
+
+    it('throttles by actor even when the same operator script hits from a different IP', async () => {
+      const first = makeRes();
+      await testPageHandler(
+        makeReq({
+          headers: { 'x-admin-key': RISK_KEY },
+          socket: { remoteAddress: '198.51.100.1' },
+        }),
+        first.res,
+      );
+      expect(first.statusCode()).toBe(200);
+
+      const second = makeRes();
+      await testPageHandler(
+        makeReq({
+          headers: { 'x-admin-key': RISK_KEY },
+          // Same actor (same key → same resolved actor stamp), different IP.
+          socket: { remoteAddress: '198.51.100.99' },
+        }),
+        second.res,
+      );
+      expect(second.statusCode()).toBe(429);
+      expect(mockPager).toHaveBeenCalledTimes(1);
+    });
+
+    it('does NOT arm the cooldown when the pager skipped (no channels configured)', async () => {
+      // skipped=true means no channel was actually paged, so the
+      // operator should be free to keep iterating on env wiring without
+      // waiting 60s between attempts.
+      mockPager.mockResolvedValue({
+        channelsPaged: [],
+        errors: [],
+        skipped: true,
+      });
+
+      const first = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        first.res,
+      );
+      expect(first.statusCode()).toBe(200);
+
+      const second = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        second.res,
+      );
+      expect(second.statusCode()).toBe(200);
+      expect(mockPager).toHaveBeenCalledTimes(2);
+    });
+
+    it('does NOT arm the cooldown when the pager throws unexpectedly', async () => {
+      mockPager.mockRejectedValueOnce(new Error('boom'));
+      const first = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        first.res,
+      );
+      expect(first.statusCode()).toBe(500);
+
+      // Pager is healthy on the retry — the cooldown shouldn't have
+      // armed off the failed attempt.
+      const second = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        second.res,
+      );
+      expect(second.statusCode()).toBe(200);
+    });
+
+    it('arms the cooldown on partial-failure envelopes (at least one channel was hit)', async () => {
+      mockPager.mockResolvedValueOnce({
+        channelsPaged: ['email'],
+        errors: ['discord: HTTP 429'],
+        skipped: false,
+      });
+      const first = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        first.res,
+      );
+      expect(first.statusCode()).toBe(200);
+
+      const second = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        second.res,
+      );
+      expect(second.statusCode()).toBe(429);
+    });
+
+    it('does NOT consume the cooldown on auth failures', async () => {
+      // An unauthenticated probe must never even reach the throttle —
+      // otherwise an attacker could DoS a real operator's button just
+      // by hitting the endpoint anonymously.
+      const probe = makeRes();
+      await testPageHandler(makeReq(), probe.res);
+      expect(probe.statusCode()).toBe(403);
+
+      const real = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        real.res,
+      );
+      expect(real.statusCode()).toBe(200);
     });
   });
 });

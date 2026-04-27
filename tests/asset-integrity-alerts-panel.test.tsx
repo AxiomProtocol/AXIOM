@@ -41,6 +41,7 @@ const {
   buildAssetLink,
   summarizeAlertsForConfirm,
   MARK_ALL_READ_CONFIRM_THRESHOLD,
+  formatTestPageRateLimitedMessage,
 } = await import('../components/operator/AssetIntegrityAlertsPanel');
 
 const { shapeIntegrityAlert } = await import(
@@ -730,6 +731,85 @@ describe('AssetIntegrityAlertsPanel — send test page', () => {
         /sendTestPage failed/i,
       );
     });
+  });
+
+  it('surfaces a tailored cooldown banner when the endpoint returns 429 (task #302)', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: false,
+      status: 429,
+      text: async () => '',
+      headers: { get: (_k: string) => '42' },
+      json: async () => ({
+        error: 'TEST_PAGE_RATE_LIMITED',
+        retry_after_seconds: 42,
+        message: 'cooldown active',
+      }),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<AssetIntegrityAlertsPanel alerts={[]} nowMs={NOW_MS} />);
+
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-send-test-page'),
+    );
+
+    await waitFor(() => {
+      const banner = screen.getByRole('alert').textContent ?? '';
+      expect(banner).toMatch(/rate-limited/i);
+    });
+    const banner = screen.getByRole('alert').textContent ?? '';
+    // The retry hint from the server is what the operator actually
+    // needs to see — generic "500 error" wording must not leak.
+    expect(banner).toMatch(/42/);
+    expect(banner).toMatch(/on-call inbox/i);
+    expect(banner).not.toMatch(/sendTestPage failed/i);
+    expect(banner).not.toMatch(/429/);
+  });
+
+  it('falls back to the Retry-After header when the body has no retry_after_seconds', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: false,
+      status: 429,
+      text: async () => '',
+      headers: { get: (k: string) => (k === 'Retry-After' ? '15' : null) },
+      json: async () => ({ error: 'TEST_PAGE_RATE_LIMITED' }),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<AssetIntegrityAlertsPanel alerts={[]} nowMs={NOW_MS} />);
+
+    fireEvent.click(
+      screen.getByTestId('asset-integrity-alerts-send-test-page'),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toMatch(/rate-limited/i);
+    });
+    expect(screen.getByRole('alert').textContent).toMatch(/15/);
+  });
+});
+
+describe('formatTestPageRateLimitedMessage helper (task #302)', () => {
+  it('uses the singular "second" form for a 1-second wait', () => {
+    expect(formatTestPageRateLimitedMessage(1)).toMatch(/1 second\b/);
+  });
+
+  it('uses the plural "seconds" form for >1', () => {
+    expect(formatTestPageRateLimitedMessage(60)).toMatch(/60 seconds/);
+  });
+
+  it('falls back to 60s when the retry hint is invalid', () => {
+    expect(formatTestPageRateLimitedMessage(0)).toMatch(/60 seconds/);
+    expect(formatTestPageRateLimitedMessage(-5)).toMatch(/60 seconds/);
+    expect(formatTestPageRateLimitedMessage(Number.NaN)).toMatch(/60 seconds/);
+  });
+
+  it('mentions the on-call inbox so an operator understands the rationale', () => {
+    expect(formatTestPageRateLimitedMessage(30)).toMatch(/on-call inbox/i);
+  });
+
+  it('rounds up partial seconds so a sub-second hint never reads "0 seconds"', () => {
+    expect(formatTestPageRateLimitedMessage(0.4)).toMatch(/1 second/);
   });
 });
 

@@ -18,10 +18,23 @@
  *      can press the "Send test page" button without exposing the
  *      admin key on the client.
  *
+ * Throttle (Task #302): Once an actor (or their IP) has successfully
+ * triggered a real fan-out, further calls are short-circuited with
+ * 429 + `retry_after_seconds` for `TEST_PAGE_COOLDOWN_MS` (default
+ * 60s). This protects the on-call inbox from being flooded by a
+ * bored finger on the dashboard button or a runaway operator script,
+ * without removing the on-demand wiring check. Calls that authenticated
+ * but produced no real page (skipped — no channels configured) do NOT
+ * arm the cooldown so the operator can keep iterating on env wiring.
+ *
  * Response (200): `{ result: { channelsPaged, errors, skipped } }`
  *   The pager never throws — channel failures come back inside the
  *   result envelope so the operator console can show "email OK,
  *   Discord failed" rather than a flat 500.
+ *
+ * Response (429): `{ error: 'TEST_PAGE_RATE_LIMITED', retry_after_seconds, message }`
+ *   Also sets the `Retry-After` header (in whole seconds) so generic
+ *   HTTP clients honour the cooldown without parsing the JSON body.
  *
  * Audit trail: every successful POST also writes a single
  * `risk.integrity.test_page_sent` audit event (best-effort) capturing
@@ -43,11 +56,72 @@ import {
 } from '../../../../../lib/capinfra/operatorAuth';
 import { pageOnCallForIntegrityFailure } from '../../../../../lib/capinfra/notifications/integrityPager';
 import { emitAuditEvent } from '../../../../../lib/capinfra/audit';
+import { getClientIp } from '../../../../../lib/multichain/stellar/axiom-rail/adminAuth';
 
 export const SYNTHETIC_TEST_PAGE_ASSET_ID = 'TEST-PAGE-SYNTHETIC';
 export const SYNTHETIC_TEST_PAGE_SYMBOL = 'TEST-PAGE';
 export const SYNTHETIC_TEST_PAGE_KIND = 'test_page';
 export const TEST_PAGE_AUDIT_EVENT_TYPE = 'risk.integrity.test_page_sent';
+
+/**
+ * Per-actor / per-IP cooldown window between successful test pages.
+ * 60s is enough to discourage a bored finger from fanning dozens of
+ * synthetic pages out before the on-call has even acked the first one,
+ * while still letting a legitimate operator re-run the wiring check a
+ * minute later if a channel needs a second confirmation.
+ */
+export const TEST_PAGE_COOLDOWN_MS = 60_000;
+export const TEST_PAGE_RATE_LIMITED_ERROR = 'TEST_PAGE_RATE_LIMITED';
+
+const cooldownMap = new Map<string, number>();
+
+function buildCooldownKeys(actor: string, ip: string): string[] {
+  // Both axes block independently: a single operator on two IPs and
+  // two operators on one shared IP are both rate-limited the same way.
+  return [`actor:${actor}`, `ip:${ip}`];
+}
+
+interface CooldownCheck {
+  ok: boolean;
+  retryAfterSec: number;
+}
+
+function checkCooldown(actor: string, ip: string, nowMs: number): CooldownCheck {
+  let maxRemainingMs = 0;
+  for (const key of buildCooldownKeys(actor, ip)) {
+    const expiresAt = cooldownMap.get(key);
+    if (expiresAt === undefined) continue;
+    if (expiresAt <= nowMs) {
+      cooldownMap.delete(key);
+      continue;
+    }
+    const remaining = expiresAt - nowMs;
+    if (remaining > maxRemainingMs) maxRemainingMs = remaining;
+  }
+  if (maxRemainingMs > 0) {
+    // Round up so a partial second still produces a >=1 retry hint;
+    // a 200ms remaining window should still tell the client "1s".
+    return { ok: false, retryAfterSec: Math.max(1, Math.ceil(maxRemainingMs / 1000)) };
+  }
+  return { ok: true, retryAfterSec: 0 };
+}
+
+function armCooldown(actor: string, ip: string, nowMs: number): void {
+  const expiresAt = nowMs + TEST_PAGE_COOLDOWN_MS;
+  for (const key of buildCooldownKeys(actor, ip)) {
+    cooldownMap.set(key, expiresAt);
+  }
+}
+
+/**
+ * Test-only hook so the cooldown map can be cleared between cases
+ * without re-importing the handler module. Not exported on a public
+ * path; lives on the handler module itself so the test file can call
+ * it after each `it()`.
+ */
+export function _resetTestPageCooldownsForTests(): void {
+  cooldownMap.clear();
+}
 
 function buildSyntheticPayload(actor: string) {
   const ts = new Date().toISOString();
@@ -95,9 +169,32 @@ export default async function handler(
     actor = getActor(req);
   }
 
+  // Throttle AFTER auth so the cooldown is keyed on a real actor; an
+  // unauthenticated probe never even reaches this branch.
+  const nowMs = Date.now();
+  const ip = getClientIp(req);
+  const cd = checkCooldown(actor, ip, nowMs);
+  if (!cd.ok) {
+    res.setHeader('Retry-After', String(cd.retryAfterSec));
+    return res.status(429).json({
+      error: TEST_PAGE_RATE_LIMITED_ERROR,
+      retry_after_seconds: cd.retryAfterSec,
+      message: `Test page is rate-limited to one per ${Math.ceil(
+        TEST_PAGE_COOLDOWN_MS / 1000,
+      )}s per operator/IP to protect the on-call inbox from being flooded. Try again in ${cd.retryAfterSec}s.`,
+    });
+  }
+
   const payload = buildSyntheticPayload(actor);
   try {
     const result = await pageOnCallForIntegrityFailure(payload);
+    // Only arm the cooldown when a real fan-out attempt happened.
+    // `skipped: true` means no channels are configured, so the call
+    // didn't actually wake on-call — the operator should be free to
+    // keep tweaking env vars without waiting 60s between retries.
+    if (!result.skipped) {
+      armCooldown(actor, ip, nowMs);
+    }
     // Best-effort audit row so on-call drills are searchable. The pager
     // has already fanned the synthetic message out — losing one audit
     // row must not make the operator console think the page failed, so

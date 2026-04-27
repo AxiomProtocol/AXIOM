@@ -145,6 +145,27 @@ interface TestPageResponse {
   };
 }
 
+interface TestPageRateLimitedResponse {
+  error: string;
+  retry_after_seconds: number;
+  message?: string;
+}
+
+/**
+ * Shape the user-facing cooldown banner. Exported so the test suite
+ * can pin the wording without standing up the whole panel + a 429
+ * fetch mock. The message is intentionally short and mentions the
+ * "on-call inbox" rationale so an operator who sees it understands
+ * why the button looks rejected instead of broken.
+ */
+export function formatTestPageRateLimitedMessage(retryAfterSec: number): string {
+  const safe = Number.isFinite(retryAfterSec) && retryAfterSec > 0
+    ? Math.ceil(retryAfterSec)
+    : 60;
+  const unit = safe === 1 ? 'second' : 'seconds';
+  return `Test page rate-limited — try again in ${safe} ${unit}. This protects the on-call inbox from being flooded.`;
+}
+
 export function AssetIntegrityAlertsPanel({
   alerts,
   nowMs,
@@ -165,6 +186,22 @@ export function AssetIntegrityAlertsPanel({
       const res = await fetch('/api/capinfra/risk/integrity/test-page', {
         method: 'POST',
       });
+      if (res.status === 429) {
+        // Cooldown is a first-class signal, not a generic failure —
+        // the server is telling us "the wiring is fine, just wait".
+        // Surface a tailored banner so an operator can tell the
+        // difference between "I'm being throttled" and "the pager is
+        // broken" instead of staring at a raw HTTP status.
+        const body = (await res
+          .json()
+          .catch(() => null)) as TestPageRateLimitedResponse | null;
+        const headerRetry = Number(res.headers.get('Retry-After'));
+        const retryAfter =
+          body?.retry_after_seconds ??
+          (Number.isFinite(headerRetry) && headerRetry > 0 ? headerRetry : 60);
+        setError(formatTestPageRateLimitedMessage(retryAfter));
+        return;
+      }
       if (!res.ok) {
         const body = await res.text().catch(() => '');
         throw new Error(
