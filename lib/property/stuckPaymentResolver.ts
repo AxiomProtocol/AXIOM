@@ -84,6 +84,41 @@ function getProvider(): MinimalProvider {
   return new ethers.JsonRpcProvider(rpc);
 }
 
+// ─── Verify / generate overrides (overridable for tests) ─────────────────────
+//
+// These seams use globalThis rather than module-level variables because
+// Next.js's per-route webpack compilation can create separate module instances
+// for the same file — meaning a module-level variable set by the seed endpoint
+// (test-seed-stuck.ts) might not be visible when the stuck route
+// (/api/operator/property-reports/stuck) reads it. globalThis is the true
+// Node.js process global and IS shared across all bundles running in the same
+// server process.
+//
+// __setStuckPaymentVerifyOverride  → replaces verifyOnchainPayment for the
+//   resolveSingleByTxHash (manual operator confirm) path only.
+// __setStuckPaymentGenerateReportOverride → replaces generateReport for the
+//   same path only.
+//
+// Both overrides are installed by the dev-only seed endpoint
+// (pages/api/operator/property-reports/test-seed-stuck.ts, action='seed-for-confirm')
+// and cleared by the cleanup action. They are never active in production
+// because the seed endpoint is gated on NODE_ENV !== 'production'.
+
+type VerifyFn = typeof verifyOnchainPayment;
+type GenerateReportFn = typeof generateReport;
+
+const G = globalThis as Record<string, unknown>;
+
+/** Test seam — overrides verifyOnchainPayment inside resolveSingleByTxHash. */
+export function __setStuckPaymentVerifyOverride(fn: VerifyFn | null): void {
+  G.__stuckPaymentVerifyOverride = fn;
+}
+
+/** Test seam — overrides generateReport inside resolveSingleByTxHash. */
+export function __setStuckPaymentGenerateReportOverride(fn: GenerateReportFn | null): void {
+  G.__stuckPaymentGenerateReportOverride = fn;
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ResolveOptions {
@@ -333,7 +368,8 @@ async function promoteToPaid(
   const cfg = TIER_CONFIG[tier as 'base' | 'premium'];
   if (!cfg) return { ok: false, reason: `Unknown tier ${tier}` };
 
-  const verification = await verifyOnchainPayment(txHash, cfg.priceCents);
+  const verify = (G.__stuckPaymentVerifyOverride as VerifyFn | undefined) ?? verifyOnchainPayment;
+  const verification = await verify(txHash, cfg.priceCents);
   if (!verification.ok) return { ok: false, reason: verification.reason };
 
   // Mirror the sender check from /api/property/confirm-payment: if the row
@@ -380,7 +416,8 @@ async function promoteToPaid(
     .where(eq(propertyReports.id, reportId));
 
   try {
-    await generateReport(reportId);
+    const doGenerate = (G.__stuckPaymentGenerateReportOverride as GenerateReportFn | undefined) ?? generateReport;
+    await doGenerate(reportId);
     // Best-effort buyer notification — never block the resolver write on a
     // mail failure (Resend outage, missing connector creds, bounced address,
     // etc). The report is paid + generated regardless.

@@ -279,6 +279,19 @@ export async function register() {
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )`, 'table property_reports');
 
+      // ── Property Reports — on-chain payment columns (task #230) ──
+      // The initial CREATE TABLE above was written before on-chain AXUSD payments
+      // were added. These ADD COLUMN IF NOT EXISTS statements are idempotent and
+      // bring existing databases up to the current Drizzle schema so all
+      // property-report endpoints work without a manual migration.
+      await exec(`ALTER TABLE property_reports ADD COLUMN IF NOT EXISTS payment_tx_hash VARCHAR(80)`, 'alter property_reports.payment_tx_hash');
+      await exec(`ALTER TABLE property_reports ADD COLUMN IF NOT EXISTS payment_chain_id INTEGER`, 'alter property_reports.payment_chain_id');
+      await exec(`ALTER TABLE property_reports ADD COLUMN IF NOT EXISTS payment_token VARCHAR(42)`, 'alter property_reports.payment_token');
+      await exec(`ALTER TABLE property_reports ADD COLUMN IF NOT EXISTS payment_from_address VARCHAR(42)`, 'alter property_reports.payment_from_address');
+      await exec(`ALTER TABLE property_reports ADD COLUMN IF NOT EXISTS payment_to_address VARCHAR(42)`, 'alter property_reports.payment_to_address');
+      await exec(`ALTER TABLE property_reports ADD COLUMN IF NOT EXISTS payment_confirmed_at TIMESTAMP`, 'alter property_reports.payment_confirmed_at');
+      await exec(`CREATE INDEX IF NOT EXISTS prop_report_payment_tx_idx ON property_reports(payment_tx_hash)`, 'index prop_report_payment_tx_idx');
+
       // ── Idempotency Keys ──
       await exec(`CREATE TABLE IF NOT EXISTS idempotency_keys (
         id SERIAL PRIMARY KEY,

@@ -23,6 +23,13 @@
  *   - Clicking the per-row "Expire" button POSTs `{ mode: 'expire',
  *     reportId }` and after reload the seeded row is gone (status was
  *     flipped to `expired` in the DB).
+ *   - (Task #308) Pasting a tx hash into the per-row input and clicking
+ *     "Confirm payment" POSTs `{ mode: 'resolve', reportId, txHash }` →
+ *     `resolveSingleByTxHash` end-to-end, flipping the row to paid/ready
+ *     in the DB. Uses `__setVerifyOnchainPaymentOverride` +
+ *     `__setGenerateReportOverride` test seams (installed by the seed
+ *     endpoint's `seed-for-confirm` action) so no real RPC or data-provider
+ *     API keys are required.
  *
  * Why a fake provider seed: the sweep call eventually hits
  * provider.getBlockNumber() / getLogs() against ARBITRUM_RPC_URL. The seed
@@ -40,6 +47,15 @@ interface SeedResponse {
   addressRaw: string;
   buyerWallet: string;
   buyerEmail: string;
+  ageMinutes: number;
+}
+
+interface SeedForConfirmResponse {
+  id: string;
+  addressRaw: string;
+  buyerWallet: string;
+  buyerEmail: string;
+  txHash: string;
   ageMinutes: number;
 }
 
@@ -67,6 +83,23 @@ async function seedStuckPendingReport(page: Page): Promise<SeedResponse> {
     throw new Error(`test-seed-stuck (seed) must succeed; got ${resp.status()}: ${body}`);
   }
   return (await resp.json()) as SeedResponse;
+}
+
+async function seedStuckPendingReportForConfirm(page: Page): Promise<SeedForConfirmResponse> {
+  const resp = await page.request.post(
+    `${BASE}/api/operator/property-reports/test-seed-stuck`,
+    {
+      headers: { 'content-type': 'application/json' },
+      data: { action: 'seed-for-confirm' },
+    },
+  );
+  if (resp.status() !== 200) {
+    const body = await resp.text();
+    throw new Error(
+      `test-seed-stuck (seed-for-confirm) must succeed; got ${resp.status()}: ${body}`,
+    );
+  }
+  return (await resp.json()) as SeedForConfirmResponse;
 }
 
 async function cleanupSeededReport(page: Page, id: string) {
@@ -151,6 +184,74 @@ test.describe('Operator console — stuck property-report payments', () => {
     //    so the now-expired row must be gone from the table. We assert on
     //    the addressRaw rather than the whole table (other devs may have
     //    unrelated stuck rows in their dev DB) so this stays isolated.
+    await page.goto('/operator/property-reports/stuck');
+    await expect(
+      page.getByRole('heading', { name: 'Stuck Property-Report Payments' }),
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('tr').filter({ hasText: seed.addressRaw })).toHaveCount(0);
+  });
+
+  test('per-row Confirm payment button resolves the report end-to-end', async ({ page }) => {
+    // 1. Seed a pending property_reports row and install both
+    //    `__setVerifyOnchainPaymentOverride` (so `resolveSingleByTxHash`
+    //    doesn't need a real Arbitrum RPC) and `__setGenerateReportOverride`
+    //    (so the data-pipeline succeeds without real API keys). The seed
+    //    endpoint returns the fake txHash that the verify override expects.
+    const seed = await seedStuckPendingReportForConfirm(page);
+    seededId = seed.id;
+
+    // 2. Open the operator console.
+    await page.goto('/operator/property-reports/stuck');
+    await expect(
+      page.getByRole('heading', { name: 'Stuck Property-Report Payments' }),
+    ).toBeVisible({ timeout: 10_000 });
+
+    // 3. The seeded row must render in the table. Assert on the unique
+    //    addressRaw so the test remains isolated from any other pending rows.
+    const seededRow = page.locator('tr').filter({ hasText: seed.addressRaw });
+    await expect(seededRow).toBeVisible({ timeout: 10_000 });
+    await expect(seededRow).toContainText(seed.id);
+    await expect(seededRow).toContainText('base');
+    await expect(seededRow).toContainText('$4.99');
+
+    // 4. Fill the tx-hash input in the seeded row's "Manual confirm" cell.
+    //    The input has placeholder "0x…" and the Confirm payment button is
+    //    disabled until a non-empty value is entered.
+    const txInput = seededRow.locator('input[placeholder="0x…"]');
+    await txInput.fill(seed.txHash);
+
+    // 5. Click "Confirm payment". This POSTs
+    //    { mode: 'resolve', reportId: seed.id, txHash: seed.txHash }
+    //    to /api/operator/property-reports/stuck, which runs
+    //    `resolveSingleByTxHash` → `promoteToPaid` → verify (mocked) →
+    //    DB update to paid → generateReport (mocked, flips to ready) →
+    //    notifyBuyerReportReady (best-effort, won't throw even if Resend
+    //    is unconfigured). The page then surfaces "Done. Reload to see
+    //    latest state."
+    await seededRow.getByRole('button', { name: 'Confirm payment' }).click();
+    await expect(page.locator('text=/Reload to see latest state/i')).toBeVisible({
+      timeout: 15_000,
+    });
+
+    // 6. Verify the row's DB status is 'ready' — not just "not pending".
+    //    A failed generateReport would leave the row as 'failed', which
+    //    also exits listStuckPending; this check distinguishes the two.
+    const checkResp = await page.request.post(
+      `${BASE}/api/operator/property-reports/test-seed-stuck`,
+      {
+        headers: { 'content-type': 'application/json' },
+        data: { action: 'check', id: seed.id },
+      },
+    );
+    expect(checkResp.status()).toBe(200);
+    const checkBody = (await checkResp.json()) as { id: string; status: string };
+    expect(
+      checkBody.status,
+      `Expected status to be 'ready' after Confirm payment, got '${checkBody.status}'`,
+    ).toBe('ready');
+
+    // 7. Reload — the row is now status='ready' so listStuckPending
+    //    (which only surfaces status='pending' rows) must no longer include it.
     await page.goto('/operator/property-reports/stuck');
     await expect(
       page.getByRole('heading', { name: 'Stuck Property-Report Payments' }),
