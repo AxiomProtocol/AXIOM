@@ -156,7 +156,7 @@ export default function NFTPage() {
             <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#C9A84C', letterSpacing: '2px', margin: '0.25rem 0 0' }}>ERC-721 · SOULBOUND · 100 CAP</p>
           </div>
           {founder?.deployed && (
-            <a href={`https://arbiscan.io/address/${founder.contractAddress}`} target="_blank" rel="noopener noreferrer"
+            <a href={`https://arbitrum.blockscout.com/address/${founder.contractAddress}#code`} target="_blank" rel="noopener noreferrer"
               style={{ fontFamily: 'monospace', fontSize: '11px', color: '#3B82F6', textDecoration: 'none' }}>
               {founder.contractAddress?.slice(0, 10)}…{founder.contractAddress?.slice(-6)} ↗
             </a>
@@ -211,7 +211,7 @@ export default function NFTPage() {
             <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#2D6A4F', letterSpacing: '2px', margin: '0.25rem 0 0' }}>ERC-1155 · MULTI-EDITION · 6 ACTION TYPES</p>
           </div>
           {participation?.deployed && (
-            <a href={`https://arbiscan.io/address/${participation.contractAddress}`} target="_blank" rel="noopener noreferrer"
+            <a href={`https://arbitrum.blockscout.com/address/${participation.contractAddress}#code`} target="_blank" rel="noopener noreferrer"
               style={{ fontFamily: 'monospace', fontSize: '11px', color: '#3B82F6', textDecoration: 'none' }}>
               {participation.contractAddress?.slice(0, 10)}…{participation.contractAddress?.slice(-6)} ↗
             </a>
@@ -248,7 +248,7 @@ export default function NFTPage() {
             <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#52B788', letterSpacing: '2px', margin: '0.25rem 0 0' }}>ERC-1155 · PER-PROPERTY · 1,000 CAP/PARCEL</p>
           </div>
           {land?.deployed && (
-            <a href={`https://arbiscan.io/address/${land.contractAddress}`} target="_blank" rel="noopener noreferrer"
+            <a href={`https://arbitrum.blockscout.com/address/${land.contractAddress}#code`} target="_blank" rel="noopener noreferrer"
               style={{ fontFamily: 'monospace', fontSize: '11px', color: '#3B82F6', textDecoration: 'none' }}>
               {land.contractAddress?.slice(0, 10)}…{land.contractAddress?.slice(-6)} ↗
             </a>
@@ -344,6 +344,52 @@ export default function NFTPage() {
         </div>
       </section>
 
+      {/* ── Verified Contracts ────────────────────────────────────────── */}
+      <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+          Verified Contracts
+        </h2>
+        <div style={{ display: 'grid', gap: '1px', background: '#374151' }}>
+          {[
+            { label: 'Axiom Founder Badge',  type: 'ERC-721 Soulbound',   address: founder?.contractAddress,      deployed: founder?.deployed },
+            { label: 'Axiom Participation',  type: 'ERC-1155',            address: participation?.contractAddress, deployed: participation?.deployed },
+            { label: 'Axiom Land Receipt',   type: 'ERC-1155 Per-Parcel', address: land?.contractAddress,          deployed: land?.deployed },
+          ].map((c) => (
+            <div key={c.label} style={{ background: '#111827', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
+                  {c.deployed && (
+                    <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#52B788', fontWeight: 700, background: '#0D2B1F', padding: '1px 6px' }}>✓ VERIFIED</span>
+                  )}
+                  <span style={{ fontFamily: 'monospace', fontSize: '12px', color: '#FAFAFA', fontWeight: 600 }}>{c.label}</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280', background: '#1F2937', padding: '1px 5px' }}>{c.type}</span>
+                </div>
+                {c.address && (
+                  <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#4B5563' }}>{c.address}</span>
+                )}
+              </div>
+              {c.address ? (
+                <a
+                  href={`https://arbitrum.blockscout.com/address/${c.address}#code`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontFamily: 'monospace', fontSize: '11px', color: '#3B82F6', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                >
+                  View Source + ABI ↗
+                </a>
+              ) : (
+                <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#4B5563' }}>
+                  {loading ? '—' : 'Not deployed'}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+        <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#4B5563', marginTop: '0.5rem' }}>
+          Source code verified on Arbitrum Blockscout. ABI readable by any third party. Compiler: Solidity 0.8.20, optimizer 200 runs, viaIR enabled.
+        </p>
+      </section>
+
       {/* ── OpenSea integration ───────────────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
         <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
@@ -393,7 +439,7 @@ export default function NFTPage() {
           {' · '}
           <Link href="/trust" style={{ color: '#6B7280', textDecoration: 'none' }}>→ Trust Stack</Link>
           {' · '}
-          <a href="https://arbiscan.io" target="_blank" rel="noopener noreferrer" style={{ color: '#6B7280', textDecoration: 'none' }}>→ Arbiscan ↗</a>
+          <a href="https://arbitrum.blockscout.com" target="_blank" rel="noopener noreferrer" style={{ color: '#6B7280', textDecoration: 'none' }}>→ Blockscout ↗</a>
         </p>
       </div>
     </DesignLawLayout>
