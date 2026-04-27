@@ -191,12 +191,12 @@ function WalletMintSection() {
   if (!isConnected) {
     return (
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           Claim Your Badges
         </h2>
-        <div style={{ background: '#111827', border: '1px solid #374151', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center' }}>
-          <div style={mono({ fontSize: '28px', color: '#374151' })}>◈</div>
-          <p style={mono({ fontSize: '12px', color: '#9CA3AF', letterSpacing: '1px' })}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center' }}>
+          <div style={mono({ fontSize: '28px', color: '#D1D5DB' })}>◈</div>
+          <p style={mono({ fontSize: '12px', color: '#374151', letterSpacing: '1px' })}>
             CONNECT YOUR WALLET TO CHECK ELIGIBILITY
           </p>
           <p style={mono({ fontSize: '11px', color: '#4B5563', lineHeight: 1.6, maxWidth: '480px' })}>
@@ -212,19 +212,19 @@ function WalletMintSection() {
   if (checkErr && !checking) {
     return (
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           Claim Your Badges
         </h2>
-        <div style={{ background: '#1C0000', border: '1px solid #7F1D1D', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
-            <div style={mono({ fontSize: '10px', color: '#FCA5A5', letterSpacing: '1px', marginBottom: '0.25rem' })}>
+            <div style={mono({ fontSize: '10px', color: '#991B1B', letterSpacing: '1px', marginBottom: '0.25rem' })}>
               ELIGIBILITY CHECK FAILED
             </div>
             <div style={mono({ fontSize: '10px', color: '#6B7280' })}>{checkErr}</div>
           </div>
           <button
             onClick={() => address && checkEligibility(address)}
-            style={{ background: '#1F2937', color: '#9CA3AF', border: '1px solid #374151', padding: '5px 14px', fontFamily: 'monospace', fontSize: '10px', cursor: 'pointer' }}
+            style={{ background: '#F3F4F6', color: '#374151', border: '1px solid #E5E7EB', padding: '5px 14px', fontFamily: 'monospace', fontSize: '10px', cursor: 'pointer' }}
           >
             RETRY
           </button>
@@ -237,10 +237,10 @@ function WalletMintSection() {
   if (checking) {
     return (
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           Claim Your Badges
         </h2>
-        <div style={{ background: '#111827', border: '1px solid #374151', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={mono({ fontSize: '10px', color: '#C9A84C', letterSpacing: '2px', animation: 'pulse 1.5s infinite' })}>
             CHECKING ELIGIBILITY…
           </div>
@@ -260,17 +260,17 @@ function WalletMintSection() {
   // ── Render: results ───────────────────────────────────────────────────────
   return (
     <section style={{ marginBottom: '3rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', margin: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', margin: 0 }}>
           Claim Your Badges
         </h2>
-        <span style={mono({ fontSize: '10px', color: '#4B5563', background: '#0D1117', padding: '3px 8px', border: '1px solid #1F2937' })}>
+        <span style={mono({ fontSize: '10px', color: '#4B5563', background: '#FAFAF8', padding: '3px 8px', border: '1px solid #F3F4F6' })}>
           {address?.slice(0, 10)}…{address?.slice(-6)}
         </span>
       </div>
 
       {/* ── Founder Badge ──────────────────────────────────────── */}
-      <div style={{ background: '#111827', border: '1px solid #374151', padding: '1.25rem', marginBottom: '1rem' }}>
+      <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.25rem', marginBottom: '1rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
           <div>
             <div style={mono({ fontSize: '12px', fontWeight: 700, color: '#C9A84C', letterSpacing: '1px', marginBottom: '0.25rem' })}>
@@ -280,15 +280,15 @@ function WalletMintSection() {
           </div>
           {/* Status pill */}
           {founderElig?.minted ? (
-            <span style={mono({ fontSize: '10px', color: '#52B788', background: '#0D2B1F', padding: '3px 10px', border: '1px solid #166534' })}>
+            <span style={mono({ fontSize: '10px', color: '#166534', background: '#ECFDF5', padding: '3px 10px', border: '1px solid #86EFAC' })}>
               ✓ MINTED
             </span>
           ) : founderElig?.eligible ? (
-            <span style={mono({ fontSize: '10px', color: '#FDE68A', background: '#1C1700', padding: '3px 10px', border: '1px solid #92400E' })}>
+            <span style={mono({ fontSize: '10px', color: '#92400E', background: '#FEF3C7', padding: '3px 10px', border: '1px solid #F59E0B' })}>
               ● ELIGIBLE
             </span>
           ) : (
-            <span style={mono({ fontSize: '10px', color: '#6B7280', background: '#111827', padding: '3px 10px', border: '1px solid #374151' })}>
+            <span style={mono({ fontSize: '10px', color: '#6B7280', background: '#FFFFFF', padding: '3px 10px', border: '1px solid #E5E7EB' })}>
               NOT ELIGIBLE
             </span>
           )}
@@ -296,8 +296,8 @@ function WalletMintSection() {
 
         {/* Already minted */}
         {(founderElig?.minted || founderResult) && (
-          <div style={{ background: '#0D2B1F', border: '1px solid #166534', padding: '1rem', marginBottom: '0.75rem' }}>
-            <div style={mono({ fontSize: '11px', color: '#52B788', marginBottom: '0.5rem' })}>
+          <div style={{ background: '#ECFDF5', border: '1px solid #86EFAC', padding: '1rem', marginBottom: '0.75rem' }}>
+            <div style={mono({ fontSize: '11px', color: '#166534', marginBottom: '0.5rem' })}>
               You hold Founder Badge #{founderResult?.tokenId ?? founderElig?.mintedTokenId}
               {(founderResult?.rarityTier) && (
                 <span style={{ color: RARITY_COLORS[founderResult.rarityTier] ?? '#C9A84C', marginLeft: '0.5rem' }}>
@@ -310,7 +310,7 @@ function WalletMintSection() {
                 <a
                   href={`${ARBISCAN_BASE}/nft/${founderContract}/${founderResult?.tokenId ?? founderElig?.mintedTokenId}`}
                   target="_blank" rel="noopener noreferrer"
-                  style={mono({ fontSize: '10px', color: '#3B82F6', textDecoration: 'none' })}
+                  style={mono({ fontSize: '10px', color: '#1D4ED8', textDecoration: 'none' })}
                 >
                   View NFT on Arbiscan ↗
                 </a>
@@ -332,11 +332,11 @@ function WalletMintSection() {
         {founderElig?.eligible && !founderElig.minted && !founderResult && (
           <div>
             {founderErr && (
-              <div style={{ background: '#1C0000', border: '1px solid #7F1D1D', padding: '0.75rem', marginBottom: '0.75rem' }}>
-                <span style={mono({ fontSize: '10px', color: '#FCA5A5' })}>{founderErr}</span>
+              <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', padding: '0.75rem', marginBottom: '0.75rem' }}>
+                <span style={mono({ fontSize: '10px', color: '#991B1B' })}>{founderErr}</span>
               </div>
             )}
-            <p style={mono({ fontSize: '10px', color: '#9CA3AF', lineHeight: 1.6, marginBottom: '0.75rem' })}>
+            <p style={mono({ fontSize: '10px', color: '#374151', lineHeight: 1.6, marginBottom: '0.75rem' })}>
               You are eligible to claim your soulbound Founder Badge. This token is non-transferable after mint.
               Clicking "Claim" will prompt you to sign an authorization message — no gas required from your wallet.
             </p>
@@ -344,7 +344,7 @@ function WalletMintSection() {
               onClick={mintFounderBadge}
               disabled={mintingFounder}
               style={{
-                background: mintingFounder ? '#1F2937' : '#C9A84C',
+                background: mintingFounder ? '#F3F4F6' : '#C9A84C',
                 color: mintingFounder ? '#6B7280' : '#000000',
                 border: '1px solid #C9A84C',
                 padding: '0.6rem 1.5rem',
@@ -370,11 +370,11 @@ function WalletMintSection() {
       </div>
 
       {/* ── Participation Tokens ───────────────────────────────── */}
-      <div style={{ background: '#0D1117', border: '1px solid #1F2937', padding: '1.25rem' }}>
+      <div style={{ background: '#FAFAF8', border: '1px solid #F3F4F6', padding: '1.25rem' }}>
         <div style={mono({ fontSize: '12px', fontWeight: 700, color: '#C9A84C', letterSpacing: '1px', marginBottom: '1rem' })}>
           PARTICIPATION BADGES · ERC-1155 · 10 AXUSD FEE EACH
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1px', background: '#374151' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1px', background: '#E5E7EB' }}>
           {PARTICIPATION_TOKEN_TYPES.map(type => {
             const pe      = partElig.find(p => p.tokenId === type.id);
             const result  = partResult[type.id];
@@ -383,16 +383,16 @@ function WalletMintSection() {
             const isMinting = mintingPart === type.id;
 
             return (
-              <div key={type.id} style={{ background: '#111827', padding: '1rem' }}>
+              <div key={type.id} style={{ background: '#FFFFFF', padding: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={mono({ fontSize: '14px', color: '#C9A84C' })}>{type.icon}</span>
-                    <span style={mono({ fontSize: '11px', color: '#FAFAFA', fontWeight: 600 })}>{type.name}</span>
+                    <span style={mono({ fontSize: '11px', color: '#1E3A5F', fontWeight: 600 })}>{type.name}</span>
                   </div>
                   {isMinted ? (
-                    <span style={mono({ fontSize: '9px', color: '#52B788', background: '#0D2B1F', padding: '2px 6px' })}>✓ MINTED</span>
+                    <span style={mono({ fontSize: '9px', color: '#166534', background: '#ECFDF5', padding: '2px 6px' })}>✓ MINTED</span>
                   ) : pe?.eligible ? (
-                    <span style={mono({ fontSize: '9px', color: '#FDE68A', background: '#1C1700', padding: '2px 6px' })}>ELIGIBLE</span>
+                    <span style={mono({ fontSize: '9px', color: '#92400E', background: '#FEF3C7', padding: '2px 6px' })}>ELIGIBLE</span>
                   ) : (
                     <span style={mono({ fontSize: '9px', color: '#4B5563', padding: '2px 6px' })}>LOCKED</span>
                   )}
@@ -404,7 +404,7 @@ function WalletMintSection() {
                       <a
                         href={`${ARBISCAN_BASE}/nft/${partContract}/${type.id}`}
                         target="_blank" rel="noopener noreferrer"
-                        style={mono({ fontSize: '9px', color: '#3B82F6', textDecoration: 'none' })}
+                        style={mono({ fontSize: '9px', color: '#1D4ED8', textDecoration: 'none' })}
                       >
                         View NFT ↗
                       </a>
@@ -425,7 +425,7 @@ function WalletMintSection() {
                   <div style={{ marginTop: '0.5rem' }}>
                     <p style={mono({ fontSize: '9px', color: '#6B7280', lineHeight: 1.5, marginBottom: '0.5rem' })}>
                       Send exactly 10 AXUSD to{' '}
-                      <span style={{ color: '#9CA3AF' }}>{TREASURY_ADDRESS.slice(0,10)}…</span>, then paste the tx hash:
+                      <span style={{ color: '#374151' }}>{TREASURY_ADDRESS.slice(0,10)}…</span>, then paste the tx hash:
                     </p>
                     <input
                       type="text"
@@ -434,18 +434,18 @@ function WalletMintSection() {
                       onChange={e => setPartFeeHash(prev => ({ ...prev, [type.id]: e.target.value }))}
                       style={{
                         width: '100%', boxSizing: 'border-box',
-                        background: '#0D1117', border: '1px solid #374151',
-                        color: '#9CA3AF', fontFamily: 'monospace', fontSize: '9px',
+                        background: '#FAFAF8', border: '1px solid #E5E7EB',
+                        color: '#374151', fontFamily: 'monospace', fontSize: '9px',
                         padding: '5px 8px', marginBottom: '0.5rem',
                         outline: 'none',
                       }}
                     />
-                    {err && <div style={mono({ fontSize: '9px', color: '#FCA5A5', marginBottom: '0.5rem' })}>{err}</div>}
+                    {err && <div style={mono({ fontSize: '9px', color: '#991B1B', marginBottom: '0.5rem' })}>{err}</div>}
                     <button
                       onClick={() => mintParticipation(type.id)}
                       disabled={isMinting}
                       style={{
-                        background: isMinting ? '#1F2937' : '#1F2937',
+                        background: isMinting ? '#F3F4F6' : '#F3F4F6',
                         color: isMinting ? '#6B7280' : '#C9A84C',
                         border: '1px solid #C9A84C',
                         padding: '4px 12px',
@@ -510,14 +510,14 @@ export default function NFTPage() {
       </Head>
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div style={{ borderBottom: '1px solid #2D4A3E', paddingBottom: '2rem', marginBottom: '2rem' }}>
+      <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '2rem', marginBottom: '2rem' }}>
         <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6B7280', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
           AXIOM PROTOCOL · UTILITY COLLECTION · ARBITRUM ONE
         </p>
-        <h1 style={{ fontFamily: 'serif', fontSize: 'clamp(1.75rem, 4vw, 3rem)', fontWeight: 700, color: '#FAFAFA', lineHeight: 1.15, marginBottom: '1rem' }}>
+        <h1 style={{ fontFamily: 'serif', fontSize: 'clamp(1.75rem, 4vw, 3rem)', fontWeight: 700, color: '#1E3A5F', lineHeight: 1.15, marginBottom: '1rem' }}>
           NFT Utility System
         </h1>
-        <p style={{ fontFamily: 'sans-serif', fontSize: '1rem', color: '#9CA3AF', lineHeight: 1.6, maxWidth: '680px' }}>
+        <p style={{ fontFamily: 'sans-serif', fontSize: '1rem', color: '#374151', lineHeight: 1.6, maxWidth: '680px' }}>
           Three animated, rarity-tiered collections on Arbitrum One. Each NFT carries real protocol utility — priority queue access, governance weight multipliers, and fee discounts. No speculation. No hype. Earned through participation.
         </p>
       </div>
@@ -527,22 +527,22 @@ export default function NFTPage() {
 
       {/* ── Utility gates ─────────────────────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           On-Chain Utility
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1px', background: '#374151' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1px', background: '#E5E7EB' }}>
           {[
             { label: 'AXAU Mint Priority',    detail: 'Founder Badge holders enter the AXAU mint queue first',             gate: 'Founder Badge' },
             { label: 'Governance Multiplier', detail: '1.5× vote weight on Axiom Protocol governance proposals',          gate: 'Founder Badge' },
             { label: 'Property Analysis',     detail: '15% discount on all Property Analysis report purchases via Stripe', gate: 'Any Collection NFT' },
             { label: 'DAO Contributor Status', detail: 'Participation Badge required for payroll queue eligibility',       gate: 'Participation Badge' },
           ].map((u) => (
-            <div key={u.label} style={{ background: '#111827', padding: '1.25rem' }}>
+            <div key={u.label} style={{ background: '#FFFFFF', padding: '1.25rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                 <span style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 600, color: '#C9A84C', letterSpacing: '1px', textTransform: 'uppercase' }}>{u.label}</span>
-                <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280', background: '#1F2937', padding: '2px 6px' }}>{u.gate}</span>
+                <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280', background: '#F3F4F6', padding: '2px 6px' }}>{u.gate}</span>
               </div>
-              <p style={{ fontFamily: 'sans-serif', fontSize: '0.85rem', color: '#9CA3AF', lineHeight: 1.5 }}>{u.detail}</p>
+              <p style={{ fontFamily: 'sans-serif', fontSize: '0.85rem', color: '#374151', lineHeight: 1.5 }}>{u.detail}</p>
             </div>
           ))}
         </div>
@@ -550,19 +550,19 @@ export default function NFTPage() {
 
       {/* ── Rarity system ─────────────────────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           Rarity System
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1px', background: '#374151', marginBottom: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1px', background: '#E5E7EB', marginBottom: '1rem' }}>
           {Object.entries(RARITY_LABELS).map(([tier, label]) => (
-            <div key={tier} style={{ background: '#111827', padding: '1rem', cursor: 'pointer', borderTop: `3px solid ${RARITY_COLORS[tier]}` }}
+            <div key={tier} style={{ background: '#FFFFFF', padding: '1rem', cursor: 'pointer', borderTop: `3px solid ${RARITY_COLORS[tier]}` }}
               onClick={() => setPreviewTier(tier)}>
               <div style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 700, color: RARITY_COLORS[tier], marginBottom: '0.25rem' }}>{tier}</div>
               <div style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280', lineHeight: 1.4 }}>{label}</div>
             </div>
           ))}
         </div>
-        <div style={{ background: '#111827', border: '1px solid #374151', padding: '1rem' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1rem' }}>
           <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6B7280', letterSpacing: '1px', marginBottom: '0.5rem' }}>ANIMATION PREVIEW — {previewTier.toUpperCase()}</p>
           <iframe
             src={`/api/nft/animation?tokenId=1&contract=0x0000000000000000000000000000000000000001&rarity=${previewTier}`}
@@ -577,22 +577,22 @@ export default function NFTPage() {
 
       {/* ── Collection 1: Founder Badge ───────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           <div>
-            <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', margin: 0 }}>
+            <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', margin: 0 }}>
               Axiom Founder Badge
             </h2>
             <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#C9A84C', letterSpacing: '2px', margin: '0.25rem 0 0' }}>ERC-721 · SOULBOUND · 100 CAP</p>
           </div>
           {founder?.deployed && (
             <a href={`https://arbitrum.blockscout.com/address/${founder.contractAddress}#code`} target="_blank" rel="noopener noreferrer"
-              style={{ fontFamily: 'monospace', fontSize: '11px', color: '#3B82F6', textDecoration: 'none' }}>
+              style={{ fontFamily: 'monospace', fontSize: '11px', color: '#1D4ED8', textDecoration: 'none' }}>
               {founder.contractAddress?.slice(0, 10)}…{founder.contractAddress?.slice(-6)} ↗
             </a>
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1px', background: '#374151', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1px', background: '#E5E7EB', marginBottom: '1.5rem' }}>
           {[
             { label: 'Total Supply Cap', value: '100' },
             { label: 'Minted',           value: loading ? '—' : founder?.deployed ? String(founder.mintedCount ?? 0) : 'Not Deployed' },
@@ -601,17 +601,17 @@ export default function NFTPage() {
             { label: 'Transfer',         value: 'Soulbound' },
             { label: 'Royalty',          value: '7.5% EIP-2981' },
           ].map(s => (
-            <div key={s.label} style={{ background: '#111827', padding: '1rem' }}>
+            <div key={s.label} style={{ background: '#FFFFFF', padding: '1rem' }}>
               <div style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{s.label}</div>
-              <div style={{ fontFamily: 'monospace', fontSize: '1rem', fontWeight: 700, color: '#FAFAFA' }}>{s.value}</div>
+              <div style={{ fontFamily: 'monospace', fontSize: '1rem', fontWeight: 700, color: '#1E3A5F' }}>{s.value}</div>
             </div>
           ))}
         </div>
 
         {founder?.deployed && (founder.rarityBreakdown) && (
-          <div style={{ background: '#111827', border: '1px solid #374151', padding: '1rem', marginBottom: '1rem' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1rem', marginBottom: '1rem' }}>
             <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280', letterSpacing: '1px', marginBottom: '0.75rem' }}>RARITY DISTRIBUTION (MINTED)</p>
-            <div style={{ display: 'flex', gap: '1px', background: '#374151', height: '24px' }}>
+            <div style={{ display: 'flex', gap: '1px', background: '#E5E7EB', height: '24px' }}>
               {Object.entries(founder.rarityBreakdown).map(([tier, count]) => {
                 const pct = founder.mintedCount ? (count / founder.mintedCount) * 100 : 0;
                 return pct > 0 ? (
@@ -622,45 +622,45 @@ export default function NFTPage() {
           </div>
         )}
 
-        <div style={{ background: '#0D1117', border: '1px solid #1F2937', padding: '1rem' }}>
+        <div style={{ background: '#FAFAF8', border: '1px solid #F3F4F6', padding: '1rem' }}>
           <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6B7280', lineHeight: 1.6 }}>
             Non-transferable after mint. Qualifying wallets: early AXM holders, governance participants, founding Wealth Practice members. Eligibility verified server-side against on-chain state.{' '}
-            {!founder?.deployed && <span style={{ color: '#C9A84C' }}>Contract not yet deployed — deploy with: <code style={{ background: '#1F2937', padding: '1px 4px' }}>npx hardhat run scripts/nft/deploy-nft.ts --network arbitrum-one</code></span>}
+            {!founder?.deployed && <span style={{ color: '#C9A84C' }}>Contract not yet deployed — deploy with: <code style={{ background: '#F3F4F6', padding: '1px 4px' }}>npx hardhat run scripts/nft/deploy-nft.ts --network arbitrum-one</code></span>}
           </p>
         </div>
       </section>
 
       {/* ── Collection 2: Participation ───────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           <div>
-            <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', margin: 0 }}>
+            <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', margin: 0 }}>
               Axiom Participation
             </h2>
             <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#2D6A4F', letterSpacing: '2px', margin: '0.25rem 0 0' }}>ERC-1155 · MULTI-EDITION · 6 ACTION TYPES</p>
           </div>
           {participation?.deployed && (
             <a href={`https://arbitrum.blockscout.com/address/${participation.contractAddress}#code`} target="_blank" rel="noopener noreferrer"
-              style={{ fontFamily: 'monospace', fontSize: '11px', color: '#3B82F6', textDecoration: 'none' }}>
+              style={{ fontFamily: 'monospace', fontSize: '11px', color: '#1D4ED8', textDecoration: 'none' }}>
               {participation.contractAddress?.slice(0, 10)}…{participation.contractAddress?.slice(-6)} ↗
             </a>
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: '#374151', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: '#E5E7EB', marginBottom: '1.5rem' }}>
           {PARTICIPATION_TOKEN_TYPES.map((type) => (
-            <div key={type.id} style={{ background: '#111827', padding: '1rem' }}>
+            <div key={type.id} style={{ background: '#FFFFFF', padding: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <span style={{ fontFamily: 'monospace', fontSize: '16px', color: '#C9A84C' }}>{type.icon}</span>
                 <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280' }}>ID #{type.id}</span>
               </div>
-              <div style={{ fontFamily: 'sans-serif', fontSize: '0.85rem', fontWeight: 600, color: '#FAFAFA', marginBottom: '0.25rem' }}>{type.name}</div>
+              <div style={{ fontFamily: 'sans-serif', fontSize: '0.85rem', fontWeight: 600, color: '#1E3A5F', marginBottom: '0.25rem' }}>{type.name}</div>
               <div style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280' }}>Max supply: {type.max.toLocaleString()}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ background: '#0D1117', border: '1px solid #1F2937', padding: '1rem' }}>
+        <div style={{ background: '#FAFAF8', border: '1px solid #F3F4F6', padding: '1rem' }}>
           <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6B7280', lineHeight: 1.6 }}>
             Minted automatically when completing protocol actions. Each token type is gated by a verified on-chain event — identity KYC confirmation, Wealth Practice join, governance vote cast, deal approval, early AXAU allocation, Founder circle designation.
           </p>
@@ -669,22 +669,22 @@ export default function NFTPage() {
 
       {/* ── Collection 3: Land Receipt ────────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           <div>
-            <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', margin: 0 }}>
+            <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', margin: 0 }}>
               Axiom Land Receipt
             </h2>
-            <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#52B788', letterSpacing: '2px', margin: '0.25rem 0 0' }}>ERC-1155 · PER-PROPERTY · 1,000 CAP/PARCEL</p>
+            <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#166534', letterSpacing: '2px', margin: '0.25rem 0 0' }}>ERC-1155 · PER-PROPERTY · 1,000 CAP/PARCEL</p>
           </div>
           {land?.deployed && (
             <a href={`https://arbitrum.blockscout.com/address/${land.contractAddress}#code`} target="_blank" rel="noopener noreferrer"
-              style={{ fontFamily: 'monospace', fontSize: '11px', color: '#3B82F6', textDecoration: 'none' }}>
+              style={{ fontFamily: 'monospace', fontSize: '11px', color: '#1D4ED8', textDecoration: 'none' }}>
               {land.contractAddress?.slice(0, 10)}…{land.contractAddress?.slice(-6)} ↗
             </a>
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1px', background: '#374151', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1px', background: '#E5E7EB', marginBottom: '1.5rem' }}>
           {[
             { label: 'Token ID Model',   value: 'One per parcel' },
             { label: 'Supply per Parcel', value: '1,000 max' },
@@ -693,14 +693,14 @@ export default function NFTPage() {
             { label: 'Royalty',           value: '7.5% EIP-2981' },
             { label: 'Transferable',      value: 'Yes (secondary market)' },
           ].map(s => (
-            <div key={s.label} style={{ background: '#111827', padding: '1rem' }}>
+            <div key={s.label} style={{ background: '#FFFFFF', padding: '1rem' }}>
               <div style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{s.label}</div>
-              <div style={{ fontFamily: 'monospace', fontSize: '0.95rem', fontWeight: 700, color: '#FAFAFA' }}>{s.value}</div>
+              <div style={{ fontFamily: 'monospace', fontSize: '0.95rem', fontWeight: 700, color: '#1E3A5F' }}>{s.value}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ background: '#0D1117', border: '1px solid #1F2937', padding: '1rem' }}>
+        <div style={{ background: '#FAFAF8', border: '1px solid #F3F4F6', padding: '1rem' }}>
           <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6B7280', lineHeight: 1.6 }}>
             Minted by protocol governance on deal approval. Each land parcel token ID maps to an asset registry entry. Receipts represent participation in the Axiom land acquisition pipeline — not a fractional ownership instrument. Traits include parcel location class, deal stage, and acquisition tier.
           </p>
@@ -709,24 +709,24 @@ export default function NFTPage() {
 
       {/* ── Trait upgrade mechanic ─────────────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           Trait Upgrade Mechanic
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1px', background: '#374151', marginBottom: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1px', background: '#E5E7EB', marginBottom: '1rem' }}>
           {[
             { tier: 'Common',   prob: '40%', cost: '50 AXM' },
             { tier: 'Uncommon', prob: '30%', cost: '50 AXM' },
             { tier: 'Rare',     prob: '20%', cost: '50 AXM' },
             { tier: 'Epic',     prob: '10%', cost: '50 AXM' },
           ].map(r => (
-            <div key={r.tier} style={{ background: '#111827', padding: '1rem', borderTop: `3px solid ${RARITY_COLORS[r.tier]}` }}>
+            <div key={r.tier} style={{ background: '#FFFFFF', padding: '1rem', borderTop: `3px solid ${RARITY_COLORS[r.tier]}` }}>
               <div style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 700, color: RARITY_COLORS[r.tier], marginBottom: '0.25rem' }}>{r.tier} → {Object.keys(RARITY_COLORS)[Object.keys(RARITY_COLORS).indexOf(r.tier) - 1]}</div>
-              <div style={{ fontFamily: 'monospace', fontSize: '11px', color: '#9CA3AF' }}>Success rate: {r.prob}</div>
+              <div style={{ fontFamily: 'monospace', fontSize: '11px', color: '#374151' }}>Success rate: {r.prob}</div>
               <div style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6B7280' }}>Cost: {r.cost} burned</div>
             </div>
           ))}
         </div>
-        <div style={{ background: '#0D1117', border: '1px solid #1F2937', padding: '1rem' }}>
+        <div style={{ background: '#FAFAF8', border: '1px solid #F3F4F6', padding: '1rem' }}>
           <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6B7280', lineHeight: 1.6 }}>
             50 AXM burned per upgrade attempt. Probabilistic outcome. Success advances rarity one tier. Animation is regenerated on tier advancement. Legendary tokens cannot be upgraded further. AXM burned is consumed on failure — no refund.
           </p>
@@ -735,11 +735,11 @@ export default function NFTPage() {
 
       {/* ── Technical spec ────────────────────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           Technical Specification
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
-          <div style={{ background: '#111827', border: '1px solid #374151', padding: '1.25rem' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.25rem' }}>
             <p style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 700, color: '#C9A84C', letterSpacing: '1px', marginBottom: '0.75rem' }}>CONTRACT STANDARDS</p>
             {[
               ['ERC-721 (Soulbound)',  'AxiomFounderBadge'],
@@ -748,13 +748,13 @@ export default function NFTPage() {
               ['ERC-4906',            'Dynamic metadata update events'],
               ['AccessControl',       'MINTER_ROLE, GOVERNANCE_ROLE'],
             ].map(([std, impl]) => (
-              <div key={std} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #1F2937', gap: '1rem' }}>
-                <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#FAFAFA', flexShrink: 0 }}>{std}</span>
+              <div key={std} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #F3F4F6', gap: '1rem' }}>
+                <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#1E3A5F', flexShrink: 0 }}>{std}</span>
                 <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280', textAlign: 'right' }}>{impl}</span>
               </div>
             ))}
           </div>
-          <div style={{ background: '#111827', border: '1px solid #374151', padding: '1.25rem' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.25rem' }}>
             <p style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 700, color: '#C9A84C', letterSpacing: '1px', marginBottom: '0.75rem' }}>METADATA PIPELINE</p>
             {[
               ['Trait seed',      'keccak256(tokenId + contract + block + owner)'],
@@ -764,8 +764,8 @@ export default function NFTPage() {
               ['Metadata format', 'OpenSea standard + animation_url'],
               ['IPFS gateway',    'w3s.link (Storacha)'],
             ].map(([k, v]) => (
-              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #1F2937', gap: '1rem' }}>
-                <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#FAFAFA', flexShrink: 0 }}>{k}</span>
+              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #F3F4F6', gap: '1rem' }}>
+                <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#1E3A5F', flexShrink: 0 }}>{k}</span>
                 <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280', textAlign: 'right' }}>{v}</span>
               </div>
             ))}
@@ -775,23 +775,23 @@ export default function NFTPage() {
 
       {/* ── Verified Contracts ────────────────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           Verified Contracts
         </h2>
-        <div style={{ display: 'grid', gap: '1px', background: '#374151' }}>
+        <div style={{ display: 'grid', gap: '1px', background: '#E5E7EB' }}>
           {[
             { label: 'Axiom Founder Badge',  type: 'ERC-721 Soulbound',   address: founder?.contractAddress,      deployed: founder?.deployed },
             { label: 'Axiom Participation',  type: 'ERC-1155',            address: participation?.contractAddress, deployed: participation?.deployed },
             { label: 'Axiom Land Receipt',   type: 'ERC-1155 Per-Parcel', address: land?.contractAddress,          deployed: land?.deployed },
           ].map((c) => (
-            <div key={c.label} style={{ background: '#111827', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div key={c.label} style={{ background: '#FFFFFF', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
                   {c.deployed && (
-                    <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#52B788', fontWeight: 700, background: '#0D2B1F', padding: '1px 6px' }}>✓ VERIFIED</span>
+                    <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#166534', fontWeight: 700, background: '#ECFDF5', padding: '1px 6px' }}>✓ VERIFIED</span>
                   )}
-                  <span style={{ fontFamily: 'monospace', fontSize: '12px', color: '#FAFAFA', fontWeight: 600 }}>{c.label}</span>
-                  <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280', background: '#1F2937', padding: '1px 5px' }}>{c.type}</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: '12px', color: '#1E3A5F', fontWeight: 600 }}>{c.label}</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280', background: '#F3F4F6', padding: '1px 5px' }}>{c.type}</span>
                 </div>
                 {c.address && (
                   <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#4B5563' }}>{c.address}</span>
@@ -802,7 +802,7 @@ export default function NFTPage() {
                   href={`https://arbitrum.blockscout.com/address/${c.address}#code`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ fontFamily: 'monospace', fontSize: '11px', color: '#3B82F6', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                  style={{ fontFamily: 'monospace', fontSize: '11px', color: '#1D4ED8', textDecoration: 'none', whiteSpace: 'nowrap' }}
                 >
                   View Source + ABI ↗
                 </a>
@@ -821,20 +821,20 @@ export default function NFTPage() {
 
       {/* ── OpenSea integration ───────────────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           Marketplace Integration
         </h2>
-        <div style={{ background: '#111827', border: '1px solid #374151', padding: '1.25rem' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.25rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
             {[
               { label: 'OpenSea', detail: 'contractURI() with seller_fee_basis_points: 750. EIP-2981 on-chain royalty enforcement.', status: 'Configured' },
               { label: 'Blur', detail: 'EIP-2981 royalties respected. No separate integration required.', status: 'Compatible' },
               { label: 'LooksRare', detail: 'EIP-2981 standard royalty. Collection registered via contractURI.', status: 'Compatible' },
             ].map(m => (
-              <div key={m.label} style={{ padding: '0.75rem', background: '#0D1117', border: '1px solid #1F2937' }}>
+              <div key={m.label} style={{ padding: '0.75rem', background: '#FAFAF8', border: '1px solid #F3F4F6' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 700, color: '#FAFAFA' }}>{m.label}</span>
-                  <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#52B788', background: '#0D2B1F', padding: '1px 6px' }}>{m.status}</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 700, color: '#1E3A5F' }}>{m.label}</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#166534', background: '#ECFDF5', padding: '1px 6px' }}>{m.status}</span>
                 </div>
                 <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6B7280', lineHeight: 1.5 }}>{m.detail}</p>
               </div>
@@ -845,12 +845,12 @@ export default function NFTPage() {
 
       {/* ── Deployment instructions ───────────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           Deployment
         </h2>
-        <div style={{ background: '#0D1117', border: '1px solid #374151', padding: '1.25rem', fontFamily: 'monospace', fontSize: '12px', color: '#9CA3AF', lineHeight: 2 }}>
+        <div style={{ background: '#FAFAF8', border: '1px solid #E5E7EB', padding: '1.25rem', fontFamily: 'monospace', fontSize: '12px', color: '#374151', lineHeight: 2 }}>
           <div><span style={{ color: '#6B7280' }}># Deploy all three contracts to Arbitrum One</span></div>
-          <div><span style={{ color: '#C9A84C' }}>npx hardhat run</span> scripts/nft/deploy-nft.ts <span style={{ color: '#3B82F6' }}>--network arbitrum-one</span></div>
+          <div><span style={{ color: '#C9A84C' }}>npx hardhat run</span> scripts/nft/deploy-nft.ts <span style={{ color: '#1D4ED8' }}>--network arbitrum-one</span></div>
           <div style={{ marginTop: '0.5rem' }}><span style={{ color: '#6B7280' }}># Output: deployment-output.json with contract addresses</span></div>
           <div><span style={{ color: '#6B7280' }}># Then set env vars: NFT_CONTRACT_FOUNDER, NFT_CONTRACT_PARTICIPATION, NFT_CONTRACT_LAND</span></div>
           <div style={{ marginTop: '0.5rem' }}><span style={{ color: '#6B7280' }}># Compile contracts</span></div>
@@ -859,7 +859,7 @@ export default function NFTPage() {
       </section>
 
       {/* ── Disclosure footer ─────────────────────────────────────────── */}
-      <div style={{ borderTop: '1px solid #374151', paddingTop: '1.5rem', marginTop: '1rem' }}>
+      <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '1.5rem', marginTop: '1rem' }}>
         <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#4B5563', lineHeight: 1.8 }}>
           NFT DISCLOSURE · These tokens represent protocol participation and utility access within the Axiom Protocol ecosystem. They are not investment contracts, do not represent fractional ownership of any asset, and confer no financial return or profit expectation. Land Receipt NFTs do not constitute fractional real estate ownership — they are participation records. Variable royalties enforced on-chain via EIP-2981. All token types are experimental and subject to change. Not an offer to sell securities.
         </p>
