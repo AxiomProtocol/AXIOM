@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { ensureNFTTables, upsertNFTToken, upsertNFTBalance } from '../../../lib/nft/db';
 import { computeSeed, computeTraits } from '../../../lib/nft/traitEngine';
+import { generateNFTMedia } from '../../../lib/nft/mediaPipeline';
 
 const LAND_RECEIPT_ABI = [
   'function registerParcel(uint256 tokenId, bytes32 assetRegistryId, string calldata propertyAddress, uint256 maxSupply_) external',
@@ -100,6 +101,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         balanceDelta:  Number(amount),
       }),
     ]);
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? `https://${req.headers.host}`;
+    generateNFTMedia({
+      tokenId:        parcelIdNum,
+      contractAddress,
+      traits,
+      collectionName: 'AxiomLandReceipt',
+      baseUrl,
+    }).catch(e => console.warn('[mint-land] media pipeline error:', e?.message));
 
     return res.status(200).json({
       success:          true,

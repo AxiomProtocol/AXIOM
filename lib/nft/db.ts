@@ -275,8 +275,11 @@ export async function upsertEligibility(params: {
 export async function getCollectionStats(contractAddress: string) {
   const result = await pool.query(`
     SELECT
-      COUNT(*) FILTER (WHERE minted_at IS NOT NULL) AS minted_count,
-      COUNT(DISTINCT holder_address) AS unique_holders
+      COUNT(*) FILTER (WHERE t.minted_at IS NOT NULL) AS minted_count,
+      -- COALESCE handles both ERC-721 (owner_address) and ERC-1155 (nft_balances).
+      -- Founder badges track ownership via nft_tokens.owner_address; participation/land
+      -- use nft_balances. Both paths are covered by a single distinct count.
+      COUNT(DISTINCT COALESCE(b.holder_address, t.owner_address)) AS unique_holders
     FROM nft_tokens t
     LEFT JOIN nft_balances b ON b.token_id = t.token_id AND b.contract_address = t.contract_address AND b.balance > 0
     WHERE t.contract_address = $1
