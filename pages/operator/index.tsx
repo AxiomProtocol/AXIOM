@@ -24,6 +24,10 @@ import {
   getIntegrityPagerStatus,
   type IntegrityPagerStatus,
 } from '../../lib/capinfra/notifications/integrityPagerStatus';
+import {
+  getBatchMarkReadSummary,
+  type BatchMarkReadSummary,
+} from '../../lib/capinfra/audit';
 
 interface DashboardProps {
   counts: {
@@ -38,6 +42,7 @@ interface DashboardProps {
   lastSnapshot: { id: string; checksum: string; asOf: string } | null;
   integrityAlerts: IntegrityAlertView[];
   pagerStatus: IntegrityPagerStatus;
+  batchMarkReadSummary: BatchMarkReadSummary;
 }
 
 const STUCK_PAYMENT_MIN_AGE_MIN = (() => {
@@ -101,6 +106,13 @@ export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx
     console.error('[operator.dashboard] failed to load integrity alerts', err);
   }
 
+  let batchMarkReadSummary: BatchMarkReadSummary = { lastBatch: null, clearedToday: 0 };
+  try {
+    batchMarkReadSummary = await getBatchMarkReadSummary();
+  } catch (err) {
+    console.error('[operator.dashboard] failed to load batch mark-read summary', err);
+  }
+
   return {
     props: {
       counts: {
@@ -117,6 +129,7 @@ export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx
         : null,
       integrityAlerts,
       pagerStatus: getIntegrityPagerStatus(),
+      batchMarkReadSummary,
     },
   };
 };
@@ -168,7 +181,10 @@ export default function OperatorDashboard(props: DashboardProps) {
 
         <IntegrityPagerStatusBanner status={props.pagerStatus} />
 
-        <AssetIntegrityAlertsPanel alerts={props.integrityAlerts} />
+        <AssetIntegrityAlertsPanel
+          alerts={props.integrityAlerts}
+          batchMarkReadSummary={props.batchMarkReadSummary}
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {cards.map((c) => (

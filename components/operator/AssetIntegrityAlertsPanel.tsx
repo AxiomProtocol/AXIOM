@@ -17,6 +17,7 @@ import type {
   IntegrityAlertPaging,
   IntegrityAlertView,
 } from '../../lib/capinfra/risk/integrityAlerts';
+import type { BatchMarkReadSummary } from '../../lib/capinfra/audit';
 
 export interface AssetIntegrityAlertsPanelProps {
   alerts: IntegrityAlertView[];
@@ -26,6 +27,11 @@ export interface AssetIntegrityAlertsPanelProps {
    * render time.
    */
   nowMs?: number;
+  /**
+   * Summary of recent batch mark-read events sourced from audit log.
+   * When omitted the footer is hidden entirely.
+   */
+  batchMarkReadSummary?: BatchMarkReadSummary | null;
 }
 
 const KIND_LABEL: Record<string, string> = {
@@ -166,9 +172,26 @@ export function formatTestPageRateLimitedMessage(retryAfterSec: number): string 
   return `Test page rate-limited — try again in ${safe} ${unit}. This protects the on-call inbox from being flooded.`;
 }
 
+/**
+ * Build the "last batch" footer line, e.g.
+ * "last batch: marked 12 of 14 • 2m ago"
+ *
+ * Exported so the test suite can pin the wording without mounting the
+ * full panel with a server-side data fixture.
+ */
+export function formatBatchSummaryFooter(
+  lastBatch: NonNullable<BatchMarkReadSummary['lastBatch']>,
+  nowMs: number,
+): string {
+  const ageMs = nowMs - new Date(lastBatch.createdAt).getTime();
+  const age = formatAge(ageMs);
+  return `last batch: marked ${lastBatch.markedCount} of ${lastBatch.attempted} • ${age}`;
+}
+
 export function AssetIntegrityAlertsPanel({
   alerts,
   nowMs,
+  batchMarkReadSummary,
 }: AssetIntegrityAlertsPanelProps) {
   const [pending, setPending] = useState<Set<string>>(new Set());
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -544,6 +567,23 @@ export function AssetIntegrityAlertsPanel({
           })}
         </ul>
       )}
+
+      {batchMarkReadSummary != null &&
+        (batchMarkReadSummary.lastBatch != null || batchMarkReadSummary.clearedToday > 0) ? (
+        <div
+          className="mt-3 pt-3 border-t border-dl-border flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[11px] font-mono text-dl-muted"
+          data-testid="asset-integrity-alerts-batch-summary"
+        >
+          {batchMarkReadSummary.lastBatch != null ? (
+            <span data-testid="asset-integrity-alerts-batch-last">
+              {formatBatchSummaryFooter(batchMarkReadSummary.lastBatch, now)}
+            </span>
+          ) : null}
+          <span data-testid="asset-integrity-alerts-batch-today">
+            {batchMarkReadSummary.clearedToday} alerts batch-cleared today
+          </span>
+        </div>
+      ) : null}
     </section>
   );
 }

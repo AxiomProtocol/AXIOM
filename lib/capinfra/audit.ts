@@ -160,3 +160,72 @@ export async function listAuditEvents(filters: AuditQueryFilters) {
 
   return { items: enrichedItems, nextCursor };
 }
+
+export interface BatchMarkReadSummary {
+  /** Most recent batch event, or null if none exist. */
+  lastBatch: {
+    attempted: number;
+    markedCount: number;
+    createdAt: string;
+  } | null;
+  /** Total alerts marked read via batch in the last 24 hours. */
+  clearedToday: number;
+}
+
+/**
+ * Returns a summary of recent `operator.notifications.batch_mark_read`
+ * audit events: the most recent event (regardless of age) and an exact
+ * 24-hour aggregate computed in the database.
+ *
+ * Two separate queries are used so that `lastBatch` is never hidden
+ * just because the most recent click happened more than 24 h ago, and
+ * so that `clearedToday` is an exact SUM rather than a JS-side total
+ * that could undercount on high-volume days.
+ *
+ * Best-effort — returns zeros/null on failure so the dashboard renders.
+ */
+export async function getBatchMarkReadSummary(): Promise<BatchMarkReadSummary> {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  // (a) Most recent batch event — no age filter.
+  const [latestRow] = await db
+    .select({
+      payloadJson: capAuditEvents.payloadJson,
+      createdAt: capAuditEvents.createdAt,
+    })
+    .from(capAuditEvents)
+    .where(eq(capAuditEvents.eventType, 'operator.notifications.batch_mark_read'))
+    .orderBy(desc(capAuditEvents.createdAt))
+    .limit(1);
+
+  let lastBatch: BatchMarkReadSummary['lastBatch'] = null;
+  if (latestRow) {
+    const payload = latestRow.payloadJson as Record<string, unknown> | null;
+    const markedCount =
+      typeof payload?.markedCount === 'number' ? payload.markedCount : 0;
+    const attempted =
+      typeof payload?.attempted === 'number' ? payload.attempted : markedCount;
+    lastBatch = {
+      attempted,
+      markedCount,
+      createdAt: latestRow.createdAt.toISOString(),
+    };
+  }
+
+  // (b) 24-hour aggregate — exact SUM in SQL, no row-count cap.
+  const [sumRow] = await db
+    .select({
+      total: sql<number>`COALESCE(SUM((${capAuditEvents.payloadJson}->>'markedCount')::int), 0)`,
+    })
+    .from(capAuditEvents)
+    .where(
+      and(
+        eq(capAuditEvents.eventType, 'operator.notifications.batch_mark_read'),
+        gte(capAuditEvents.createdAt, since),
+      ),
+    );
+
+  const clearedToday = Number(sumRow?.total ?? 0);
+
+  return { lastBatch, clearedToday };
+}
