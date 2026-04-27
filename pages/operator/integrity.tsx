@@ -89,6 +89,15 @@ interface Props {
    * Optional in the type so legacy test fixtures keep compiling.
    */
   lastWiringCheckRun?: WiringCheckRunRecord | null;
+  /**
+   * True when the returned `alerts` array hit the hard ceiling (200
+   * rows). When set, the page renders a visible notice so operators
+   * know rows are being cut off and are prompted to narrow their
+   * filter window rather than silently missing older alerts.
+   * Optional so legacy test fixtures that predate this prop keep
+   * compiling without changes; the page treats absence as false.
+   */
+  truncated?: boolean;
 }
 
 function readShowAcknowledged(value: string | string[] | undefined): boolean {
@@ -152,7 +161,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   try {
     alerts = await listRecentIntegrityAlerts({
       includeRead: showAcknowledged,
-      limit: 100,
+      limit: 200,
       symbol: symbolFilter ?? undefined,
       kind: kindFilter ?? undefined,
       failedPages: failedPagesFilter ? true : undefined,
@@ -178,6 +187,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       failedPagesFilter,
       pagerStatus: getIntegrityPagerStatus(),
       lastWiringCheckRun,
+      truncated: alerts.length >= 200,
     },
   };
 };
@@ -193,6 +203,7 @@ export default function OperatorIntegrityPage({
   failedPagesFilter = false,
   pagerStatus,
   lastWiringCheckRun = null,
+  truncated = false,
 }: Props) {
   const toggleHref = buildIntegrityHref({
     ack: !showAcknowledged,
@@ -363,6 +374,16 @@ export default function OperatorIntegrityPage({
             >
               Clear filters
             </Link>
+          </div>
+        )}
+
+        {truncated && (
+          <div
+            className="border border-dl-gold bg-dl-bg-alt px-4 py-2 mb-4 font-mono text-xs text-dl-ink"
+            data-testid="operator-integrity-truncation-notice"
+          >
+            Showing {alerts.length} of {alerts.length}+ alerts in the last{' '}
+            {windowHours}h — narrow the window or add a filter to see more.
           </div>
         )}
 

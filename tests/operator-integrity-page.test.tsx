@@ -1192,3 +1192,151 @@ describe('OperatorIntegrityPage — paged-channels indicator', () => {
     ).toBeNull();
   });
 });
+
+describe('OperatorIntegrityPage — truncation notice', () => {
+  it('hides the notice when truncated is false (default)', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[makeAlertView({ id: 'ntf_a' })]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+        truncated={false}
+      />,
+    );
+    expect(
+      screen.queryByTestId('operator-integrity-truncation-notice'),
+    ).toBeNull();
+  });
+
+  it('hides the notice when truncated is not supplied (legacy fixtures)', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[makeAlertView({ id: 'ntf_b' })]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+      />,
+    );
+    expect(
+      screen.queryByTestId('operator-integrity-truncation-notice'),
+    ).toBeNull();
+  });
+
+  it('renders a visible truncation notice when truncated is true', () => {
+    const count = 200;
+    const alerts = Array.from({ length: count }, (_, i) =>
+      makeAlertView({ id: `ntf_trunc_${i}` }),
+    );
+    render(
+      <OperatorIntegrityPage
+        alerts={alerts}
+        showAcknowledged={true}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+        truncated={true}
+      />,
+    );
+    const notice = screen.getByTestId('operator-integrity-truncation-notice');
+    expect(notice.textContent).toMatch(/200/);
+    expect(notice.textContent).toMatch(/200\+/);
+    expect(notice.textContent).toMatch(/24h/);
+    expect(notice.textContent).toMatch(/narrow the window or add a filter/i);
+  });
+
+  it('SSR sets truncated=true when listRecentIntegrityAlerts returns 200 rows', async () => {
+    vi.resetModules();
+    vi.doMock('../lib/capinfra/operatorAuth', () => ({
+      requireOperatorCookie: () => null,
+    }));
+    vi.doMock('../lib/capinfra/risk/integrityAlerts', async () => {
+      const actual = await vi.importActual<
+        typeof import('../lib/capinfra/risk/integrityAlerts')
+      >('../lib/capinfra/risk/integrityAlerts');
+      return {
+        ...actual,
+        listRecentIntegrityAlerts: async () =>
+          Array.from({ length: 200 }, (_, i) =>
+            makeAlertView({ id: `ntf_ssr_${i}` }),
+          ),
+      };
+    });
+    const mod = await import('../pages/operator/integrity');
+    const result = await mod.getServerSideProps({
+      query: {},
+      req: {} as unknown,
+      res: {} as unknown,
+      resolvedUrl: '/operator/integrity',
+    } as unknown as Parameters<typeof mod.getServerSideProps>[0]);
+    expect('props' in result).toBe(true);
+    const props = (result as { props: Record<string, unknown> }).props;
+    expect(props.truncated).toBe(true);
+  });
+
+  it('SSR sets truncated=false when listRecentIntegrityAlerts returns fewer than 200 rows', async () => {
+    vi.resetModules();
+    vi.doMock('../lib/capinfra/operatorAuth', () => ({
+      requireOperatorCookie: () => null,
+    }));
+    vi.doMock('../lib/capinfra/risk/integrityAlerts', async () => {
+      const actual = await vi.importActual<
+        typeof import('../lib/capinfra/risk/integrityAlerts')
+      >('../lib/capinfra/risk/integrityAlerts');
+      return {
+        ...actual,
+        listRecentIntegrityAlerts: async () =>
+          Array.from({ length: 42 }, (_, i) =>
+            makeAlertView({ id: `ntf_ssr_${i}` }),
+          ),
+      };
+    });
+    const mod = await import('../pages/operator/integrity');
+    const result = await mod.getServerSideProps({
+      query: {},
+      req: {} as unknown,
+      res: {} as unknown,
+      resolvedUrl: '/operator/integrity',
+    } as unknown as Parameters<typeof mod.getServerSideProps>[0]);
+    expect('props' in result).toBe(true);
+    const props = (result as { props: Record<string, unknown> }).props;
+    expect(props.truncated).toBe(false);
+  });
+
+  it('SSR passes limit:200 to listRecentIntegrityAlerts (uses the full service ceiling)', async () => {
+    vi.resetModules();
+    const calls: { args: { limit?: unknown } }[] = [];
+    vi.doMock('../lib/capinfra/operatorAuth', () => ({
+      requireOperatorCookie: () => null,
+    }));
+    vi.doMock('../lib/capinfra/risk/integrityAlerts', async () => {
+      const actual = await vi.importActual<
+        typeof import('../lib/capinfra/risk/integrityAlerts')
+      >('../lib/capinfra/risk/integrityAlerts');
+      return {
+        ...actual,
+        listRecentIntegrityAlerts: async (args: { limit?: unknown }) => {
+          calls.push({ args });
+          return [];
+        },
+      };
+    });
+    const mod = await import('../pages/operator/integrity');
+    await mod.getServerSideProps({
+      query: {},
+      req: {} as unknown,
+      res: {} as unknown,
+      resolvedUrl: '/operator/integrity',
+    } as unknown as Parameters<typeof mod.getServerSideProps>[0]);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].args.limit).toBe(200);
+  });
+});
