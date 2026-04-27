@@ -25,13 +25,13 @@ CREATE TABLE IF NOT EXISTS "cap_plaid_items" (
   "created_at"             timestamp    NOT NULL DEFAULT now(),
   "updated_at"             timestamp    NOT NULL DEFAULT now()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "cap_plaid_items_user_idx"
   ON "cap_plaid_items" ("user_ref", "removed_at");
-
+--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "cap_plaid_items_plaid_item_uq"
   ON "cap_plaid_items" ("plaid_item_id");
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "cap_plaid_accounts" (
   "id"                       varchar(40)  PRIMARY KEY,
   "item_id"                  varchar(40)  NOT NULL,
@@ -47,9 +47,9 @@ CREATE TABLE IF NOT EXISTS "cap_plaid_accounts" (
   "created_at"               timestamp    NOT NULL DEFAULT now(),
   "updated_at"               timestamp    NOT NULL DEFAULT now()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "cap_plaid_accounts_item_idx"
   ON "cap_plaid_accounts" ("item_id", "removed_at");
-
+--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "cap_plaid_accounts_plaid_account_uq"
   ON "cap_plaid_accounts" ("plaid_account_id");

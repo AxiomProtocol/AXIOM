@@ -18,15 +18,15 @@ CREATE TABLE IF NOT EXISTS prune_alert_log_cleanup_history (
   retention_days  INT          NOT NULL,
   triggered_by    TEXT         NOT NULL DEFAULT 'pg_cron'
 );
-
+--> statement-breakpoint
 COMMENT ON TABLE prune_alert_log_cleanup_history IS
   'One row per prune_prune_alert_log() invocation. Surfaces the cleanup '
   'cadence and impact in the admin dashboard so operators can verify that '
   'the prune_alert_log table is actually being trimmed.';
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS prune_alert_log_cleanup_history_ran_at_desc_idx
   ON prune_alert_log_cleanup_history (ran_at DESC);
-
+--> statement-breakpoint
 CREATE OR REPLACE FUNCTION prune_prune_alert_log(
   retention_days INT  DEFAULT 90,
   triggered_by   TEXT DEFAULT 'pg_cron'
@@ -56,13 +56,13 @@ BEGIN
   RETURN QUERY SELECT v_deleted;
 END;
 $$ LANGUAGE plpgsql;
-
+--> statement-breakpoint
 COMMENT ON FUNCTION prune_prune_alert_log(INT, TEXT) IS
   'Deletes prune_alert_log rows older than retention_days (default 90) and '
   'records the run in prune_alert_log_cleanup_history. Invoked by the '
   '/api/scheduler/prune-overdue-alert endpoint (triggered_by=''http'') and a '
   'daily pg_cron job (triggered_by=''pg_cron'').';
-
+--> statement-breakpoint
 -- Recreate the pg_cron job so it calls the new two-arg signature explicitly.
 DO $$
 BEGIN

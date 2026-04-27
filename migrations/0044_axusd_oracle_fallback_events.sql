@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS axusd_oracle_fallback_events (
   principal_usd DECIMAL(28, 8),
   reason       TEXT
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS axusd_oracle_fallback_occurred_at_idx
   ON axusd_oracle_fallback_events (occurred_at);
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS axusd_oracle_fallback_caller_idx
   ON axusd_oracle_fallback_events (caller);

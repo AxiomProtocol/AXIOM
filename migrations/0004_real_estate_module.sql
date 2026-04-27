@@ -5,24 +5,25 @@
 
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
+--> statement-breakpoint
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
+--> statement-breakpoint
 -- Create ENUM types
 DO $$ BEGIN
   CREATE TYPE deal_strategy AS ENUM ('brrrr', 'flip', 'hold', 'note', 'multifamily');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
-
+--> statement-breakpoint
 DO $$ BEGIN
   CREATE TYPE deal_status AS ENUM ('draft', 'analyzing', 'underwriting', 'approved', 'rejected', 'closed', 'archived');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
-
+--> statement-breakpoint
 DO $$ BEGIN
   CREATE TYPE risk_severity AS ENUM ('low', 'medium', 'high', 'critical');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
-
+--> statement-breakpoint
 -- 1. re_sources: data source registry
 CREATE TABLE IF NOT EXISTS re_sources (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -36,10 +37,11 @@ CREATE TABLE IF NOT EXISTS re_sources (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_sources_name_idx ON re_sources (name);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_sources_type_idx ON re_sources (type);
-
+--> statement-breakpoint
 -- 2. re_ingest_runs: ETL run tracking
 CREATE TABLE IF NOT EXISTS re_ingest_runs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -52,10 +54,11 @@ CREATE TABLE IF NOT EXISTS re_ingest_runs (
   meta JSONB,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_ingest_runs_source_idx ON re_ingest_runs (source_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_ingest_runs_status_idx ON re_ingest_runs (status);
-
+--> statement-breakpoint
 -- 3. re_record_errors: per-record error log
 CREATE TABLE IF NOT EXISTS re_record_errors (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -65,10 +68,11 @@ CREATE TABLE IF NOT EXISTS re_record_errors (
   error_message TEXT,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_record_errors_ingest_run_idx ON re_record_errors (ingest_run_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_record_errors_error_type_idx ON re_record_errors (error_type);
-
+--> statement-breakpoint
 -- 4. re_properties: canonical property records
 CREATE TABLE IF NOT EXISTS re_properties (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -102,14 +106,19 @@ CREATE TABLE IF NOT EXISTS re_properties (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_properties_source_idx ON re_properties (source_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_properties_external_idx ON re_properties (external_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_properties_city_state_idx ON re_properties (city, state);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_properties_zip_idx ON re_properties (zip);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_properties_fips_idx ON re_properties (fips);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_properties_address_trgm_idx ON re_properties USING GIN (address_normalized gin_trgm_ops);
-
+--> statement-breakpoint
 -- 5. re_parcels: parcel geometry records
 CREATE TABLE IF NOT EXISTS re_parcels (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -123,11 +132,13 @@ CREATE TABLE IF NOT EXISTS re_parcels (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_parcels_apn_idx ON re_parcels (apn);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_parcels_fips_idx ON re_parcels (fips);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_parcels_geometry_gist_idx ON re_parcels USING GIST (geometry);
-
+--> statement-breakpoint
 -- 6. re_property_parcel_links: property-to-parcel mapping
 CREATE TABLE IF NOT EXISTS re_property_parcel_links (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -136,10 +147,11 @@ CREATE TABLE IF NOT EXISTS re_property_parcel_links (
   link_confidence DECIMAL(5, 4),
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_prop_parcel_property_idx ON re_property_parcel_links (property_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_prop_parcel_parcel_idx ON re_property_parcel_links (parcel_id);
-
+--> statement-breakpoint
 -- 7. re_property_facts: extensible key-value property attributes
 CREATE TABLE IF NOT EXISTS re_property_facts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -153,11 +165,13 @@ CREATE TABLE IF NOT EXISTS re_property_facts (
   meta JSONB,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_prop_facts_property_idx ON re_property_facts (property_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_prop_facts_type_idx ON re_property_facts (fact_type);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_prop_facts_as_of_idx ON re_property_facts (as_of);
-
+--> statement-breakpoint
 -- 8. re_sales: property sale/transfer history
 CREATE TABLE IF NOT EXISTS re_sales (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -174,11 +188,13 @@ CREATE TABLE IF NOT EXISTS re_sales (
   meta JSONB,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_sales_property_idx ON re_sales (property_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_sales_date_idx ON re_sales (sale_date);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_sales_property_date_idx ON re_sales (property_id, sale_date);
-
+--> statement-breakpoint
 -- 9. re_taxes: tax assessment history
 CREATE TABLE IF NOT EXISTS re_taxes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -195,11 +211,13 @@ CREATE TABLE IF NOT EXISTS re_taxes (
   meta JSONB,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_taxes_property_idx ON re_taxes (property_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_taxes_year_idx ON re_taxes (tax_year);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_taxes_property_year_idx ON re_taxes (property_id, tax_year);
-
+--> statement-breakpoint
 -- 10. re_deals: deal analysis workspace
 CREATE TABLE IF NOT EXISTS re_deals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -215,12 +233,15 @@ CREATE TABLE IF NOT EXISTS re_deals (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_deals_property_idx ON re_deals (property_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_deals_status_idx ON re_deals (status);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_deals_user_idx ON re_deals (user_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_deals_wallet_idx ON re_deals (created_by_wallet);
-
+--> statement-breakpoint
 -- 11. re_deal_scenarios: scenario variants per deal
 CREATE TABLE IF NOT EXISTS re_deal_scenarios (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -232,10 +253,11 @@ CREATE TABLE IF NOT EXISTS re_deal_scenarios (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_deal_scenarios_deal_idx ON re_deal_scenarios (deal_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_deal_scenarios_primary_idx ON re_deal_scenarios (is_primary);
-
+--> statement-breakpoint
 -- 12. re_deal_assumptions: financial inputs per scenario
 CREATE TABLE IF NOT EXISTS re_deal_assumptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -260,9 +282,9 @@ CREATE TABLE IF NOT EXISTS re_deal_assumptions (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_deal_assumptions_scenario_idx ON re_deal_assumptions (scenario_id);
-
+--> statement-breakpoint
 -- 13. re_deal_metrics: computed financial outputs per scenario
 CREATE TABLE IF NOT EXISTS re_deal_metrics (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -286,10 +308,11 @@ CREATE TABLE IF NOT EXISTS re_deal_metrics (
   meta JSONB,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_deal_metrics_scenario_idx ON re_deal_metrics (scenario_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_deal_metrics_computed_idx ON re_deal_metrics (computed_at);
-
+--> statement-breakpoint
 -- 14. re_decision_log: deal approval/rejection audit trail
 CREATE TABLE IF NOT EXISTS re_decision_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -301,10 +324,11 @@ CREATE TABLE IF NOT EXISTS re_decision_log (
   decided_at TIMESTAMP NOT NULL DEFAULT NOW(),
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_decision_log_deal_idx ON re_decision_log (deal_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_decision_log_decided_at_idx ON re_decision_log (decided_at);
-
+--> statement-breakpoint
 -- 15. re_risk_flags: per-scenario risk indicators
 CREATE TABLE IF NOT EXISTS re_risk_flags (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -317,11 +341,13 @@ CREATE TABLE IF NOT EXISTS re_risk_flags (
   resolved_at TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_risk_flags_scenario_idx ON re_risk_flags (scenario_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_risk_flags_severity_idx ON re_risk_flags (severity);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_risk_flags_type_idx ON re_risk_flags (flag_type);
-
+--> statement-breakpoint
 -- 16. re_comparables: comparable property sales for deal valuation
 CREATE TABLE IF NOT EXISTS re_comparables (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -351,7 +377,9 @@ CREATE TABLE IF NOT EXISTS re_comparables (
   meta JSONB,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_comparables_deal_idx ON re_comparables (deal_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_comparables_property_idx ON re_comparables (property_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_comparables_sale_date_idx ON re_comparables (sale_date);

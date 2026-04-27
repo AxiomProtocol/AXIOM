@@ -3,7 +3,7 @@ DO $$ BEGIN
 EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "dao_account_applications" (
         "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
         "entity_name" varchar(300) NOT NULL,

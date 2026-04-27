@@ -9,9 +9,9 @@ CREATE TABLE IF NOT EXISTS user_roles (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   created_by_admin_id UUID
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS user_roles_role_idx ON user_roles(role);
-
+--> statement-breakpoint
 -- Admin Proposals table - two-step approval workflow
 CREATE TABLE IF NOT EXISTS admin_proposals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -38,12 +38,15 @@ CREATE TABLE IF NOT EXISTS admin_proposals (
   unique_key TEXT NOT NULL UNIQUE,
   execution_result JSONB
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS admin_proposals_status_idx ON admin_proposals(status);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS admin_proposals_action_type_idx ON admin_proposals(action_type);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS admin_proposals_created_by_idx ON admin_proposals(created_by);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS admin_proposals_target_idx ON admin_proposals(target_type, target_id);
-
+--> statement-breakpoint
 -- Admin Proposal Events table - append-only event stream
 CREATE TABLE IF NOT EXISTS admin_proposal_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -57,10 +60,11 @@ CREATE TABLE IF NOT EXISTS admin_proposal_events (
   event_payload JSONB,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS admin_proposal_events_proposal_id_idx ON admin_proposal_events(proposal_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS admin_proposal_events_event_type_idx ON admin_proposal_events(event_type);
-
+--> statement-breakpoint
 -- Admin Audit Log table - append-only audit trail
 CREATE TABLE IF NOT EXISTS admin_audit_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -77,12 +81,15 @@ CREATE TABLE IF NOT EXISTS admin_audit_log (
   reason TEXT,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS admin_audit_log_actor_idx ON admin_audit_log(actor_user_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS admin_audit_log_action_idx ON admin_audit_log(action);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS admin_audit_log_target_idx ON admin_audit_log(target_type, target_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS admin_audit_log_created_at_idx ON admin_audit_log(created_at);
-
+--> statement-breakpoint
 -- Payout State History table - tracks payout status transitions
 CREATE TABLE IF NOT EXISTS payout_state_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -94,9 +101,9 @@ CREATE TABLE IF NOT EXISTS payout_state_history (
   reason TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS payout_state_history_payout_id_idx ON payout_state_history(payout_id);
-
+--> statement-breakpoint
 -- Transaction Reversals table - tracks reversed transactions
 CREATE TABLE IF NOT EXISTS transaction_reversals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -107,5 +114,5 @@ CREATE TABLE IF NOT EXISTS transaction_reversals (
   reason TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS transaction_reversals_original_tx_idx ON transaction_reversals(original_transaction_id);

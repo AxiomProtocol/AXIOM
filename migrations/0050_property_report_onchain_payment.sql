@@ -10,7 +10,7 @@ ALTER TABLE "property_reports"
   ADD COLUMN IF NOT EXISTS "payment_from_address" varchar(42),
   ADD COLUMN IF NOT EXISTS "payment_to_address"   varchar(42),
   ADD COLUMN IF NOT EXISTS "payment_confirmed_at" timestamp;
-
+--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "prop_report_tx_uq"
   ON "property_reports" ("payment_tx_hash")
   WHERE "payment_tx_hash" IS NOT NULL;

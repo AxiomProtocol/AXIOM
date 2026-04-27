@@ -10,5 +10,5 @@ CREATE TABLE IF NOT EXISTS "mirdt_signal_log" (
   "checksum" varchar(64) NOT NULL,
   "prev_checksum" varchar(64)
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "mirdt_signal_log_created_at_idx" ON "mirdt_signal_log" ("created_at");

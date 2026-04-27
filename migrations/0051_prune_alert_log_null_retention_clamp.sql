@@ -53,7 +53,7 @@ BEGIN
   RETURN QUERY SELECT v_deleted;
 END;
 $$ LANGUAGE plpgsql;
-
+--> statement-breakpoint
 COMMENT ON FUNCTION prune_prune_alert_log(INT, TEXT) IS
   'Deletes prune_alert_log rows older than retention_days (default 90) and '
   'records the run in prune_alert_log_cleanup_history. NULL or non-positive '

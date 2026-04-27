@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS "admin_action_log" (
   "metadata" jsonb,  -- Object storage for action context; text columns cast to jsonb on existing DBs
   "created_at" timestamp DEFAULT now() NOT NULL
 );
-
+--> statement-breakpoint
 -- Admin roles: DB-backed role registry that is the source of truth for governance
 CREATE TABLE IF NOT EXISTS "admin_roles" (
   "id" serial PRIMARY KEY NOT NULL,
@@ -36,12 +36,14 @@ CREATE TABLE IF NOT EXISTS "admin_roles" (
   "notes" text,
   CONSTRAINT "uq_admin_roles_role_holder" UNIQUE ("role_name", "holder_address")
 );
-
+--> statement-breakpoint
 -- Indexes for fast lookups
 CREATE INDEX IF NOT EXISTS "idx_admin_roles_role" ON "admin_roles" ("role_name");
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_admin_roles_holder" ON "admin_roles" ("holder_address");
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_admin_roles_active" ON "admin_roles" ("is_active");
-
+--> statement-breakpoint
 -- Idempotent bootstrap seed for canonical role assignments
 -- Uses ON CONFLICT DO NOTHING so this can be run multiple times safely
 INSERT INTO "admin_roles" ("role_name", "holder_address", "holder_type", "contract_name", "granted_by", "notes") VALUES
@@ -53,7 +55,7 @@ INSERT INTO "admin_roles" ("role_name", "holder_address", "holder_type", "contra
   ('UPGRADER_ROLE', '0xf1b1d594d6edc9f045df55b32006a24e666ed899', 'TIMELOCK', 'All Upgradeable Contracts', '0x8d7892cf226b43d48b6e3ce988a1274e6d114c96', 'Timelock 24h — Safe holds PROPOSER_ROLE'),
   ('DEFAULT_ADMIN_ROLE', '0x8d7892cf226b43d48b6e3ce988a1274e6d114c96', 'EOA', 'AXIOMFixedLoan, AXIOMCreditMarket, TreasuryHub, GovernanceHub', '0x8d7892cf226b43d48b6e3ce988a1274e6d114c96', 'CRITICAL — pending migration to Timelock via Safe proposal')
 ON CONFLICT ON CONSTRAINT "uq_admin_roles_role_holder" DO NOTHING;
-
+--> statement-breakpoint
 -- Migration patch for existing databases (text -> jsonb for admin_action_log.metadata)
 -- Idempotent: only runs if column is still text type
 DO $$ BEGIN

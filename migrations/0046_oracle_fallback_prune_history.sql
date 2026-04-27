@@ -10,8 +10,9 @@ CREATE TABLE IF NOT EXISTS oracle_fallback_prune_history (
   retention_days  INT         NOT NULL,
   triggered_by    TEXT        NOT NULL DEFAULT 'pg_cron'
 );
-
+--> statement-breakpoint
 COMMENT ON TABLE oracle_fallback_prune_history IS
   'Audit log of every prune_oracle_fallback_events() run, including row counts.';
+--> statement-breakpoint
 COMMENT ON COLUMN oracle_fallback_prune_history.triggered_by IS
   'http = POST /api/scheduler/prune-oracle-fallback, pg_cron = scheduled job';

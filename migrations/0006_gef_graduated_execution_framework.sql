@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS gef_policy_modes (
   is_execution_enabled BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS gef_regime_multipliers (
   regime_id TEXT PRIMARY KEY,
   name TEXT UNIQUE NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS gef_regime_multipliers (
   max_correlated_exposure NUMERIC NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS gef_tier_thresholds (
   tier_id TEXT PRIMARY KEY,
   name TEXT UNIQUE NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS gef_tier_thresholds (
   execution_enabled BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS gef_user_execution_profiles (
   user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   wallet_address TEXT UNIQUE NOT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS gef_user_execution_profiles (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS gef_execution_intents (
   intent_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS gef_execution_intents (
   rejection_reason TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS gef_executions (
   execution_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   intent_id UUID NOT NULL,
@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS gef_executions (
   close_reason TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS gef_audit_hash_chain (
   event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   entity_type TEXT NOT NULL,
@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS gef_audit_hash_chain (
   hash TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS gef_violation_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS gef_violation_events (
   related_execution_id UUID,
   action_taken TEXT
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS gef_qualification_snapshots (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
@@ -167,22 +167,31 @@ CREATE TABLE IF NOT EXISTS gef_qualification_snapshots (
   disqualifiers JSONB,
   notes TEXT
 );
-
+--> statement-breakpoint
 -- MAE/MFE columns on existing paper trades
 DO $$ BEGIN ALTER TABLE mirdt_paper_trades ADD COLUMN mae NUMERIC DEFAULT 0; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+--> statement-breakpoint
 DO $$ BEGIN ALTER TABLE mirdt_paper_trades ADD COLUMN mfe NUMERIC DEFAULT 0; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
-
+--> statement-breakpoint
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_gef_user_exec_wallet ON gef_user_execution_profiles(wallet_address);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS idx_gef_exec_intents_user ON gef_execution_intents(user_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS idx_gef_exec_intents_symbol ON gef_execution_intents(symbol);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS idx_gef_exec_intents_status ON gef_execution_intents(status);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS idx_gef_executions_intent ON gef_executions(intent_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS idx_gef_audit_entity ON gef_audit_hash_chain(entity_type, entity_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS idx_gef_audit_created ON gef_audit_hash_chain(created_at);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS idx_gef_violations_user ON gef_violation_events(user_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS idx_gef_qual_snapshots_user ON gef_qualification_snapshots(user_id);
-
+--> statement-breakpoint
 -- Seed: Policy modes
 INSERT INTO gef_policy_modes (mode_id, name, description, rcf, risk_fraction_default, risk_fraction_max, drawdown_limit, vpi_freeze_threshold, min_stability_to_resume, global_size_multiplier, is_execution_enabled)
 VALUES
@@ -192,7 +201,7 @@ VALUES
   ('RESTRICTED', 'Restricted', 'Severe conditions, minimal new exposure', 0.3, 0.0025, 0.005, 0.03, 0.5, 0.6, 0.3, false),
   ('EMERGENCY', 'Emergency', 'System freeze, no new positions', 0.0, 0.0, 0.0, 0.01, 0.0, 1.0, 0.0, false)
 ON CONFLICT (mode_id) DO NOTHING;
-
+--> statement-breakpoint
 -- Seed: Regime multipliers
 INSERT INTO gef_regime_multipliers (regime_id, name, risk_multiplier, direction_bias, requires_high_conviction, max_correlated_exposure)
 VALUES
@@ -201,7 +210,7 @@ VALUES
   ('RANGE_LOW_VOL', 'Range Low Volatility', 1.0, NULL, false, 0.35),
   ('HIGH_VOL_DISLOCATION', 'High Volatility Dislocation', 0.5, NULL, true, 0.20)
 ON CONFLICT (regime_id) DO NOTHING;
-
+--> statement-breakpoint
 -- Seed: Tier thresholds
 INSERT INTO gef_tier_thresholds (tier_id, name, min_qualification_score, min_governance_weight, min_days_paper, min_trades_paper, max_drawdown_paper, min_sharpe, requires_axm_commitment, requires_axusd_reserve, min_axm_balance, min_axusd_reserve, max_risk_per_trade, max_concurrent_positions, max_correlated_exposure, execution_enabled)
 VALUES

@@ -28,16 +28,16 @@ CREATE TABLE IF NOT EXISTS prune_alert_log (
   alert_status  TEXT         NOT NULL DEFAULT 'stale',
   channels      TEXT[]       NOT NULL DEFAULT '{}'::TEXT[]
 );
-
+--> statement-breakpoint
 COMMENT ON TABLE prune_alert_log IS
   'One row per overdue-prune alert dispatch. Pruned by prune_prune_alert_log(). '
   'Schema is intentionally minimal — the alert-cooldown feature is expected to '
   'ALTER TABLE to add columns (e.g., dedupe keys) when it lands. Reconcile this '
   'definition with that migration to avoid schema drift.';
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS prune_alert_log_sent_at_desc_idx
   ON prune_alert_log (sent_at DESC);
-
+--> statement-breakpoint
 CREATE OR REPLACE FUNCTION prune_prune_alert_log(retention_days INT DEFAULT 90)
 RETURNS TABLE(deleted_count BIGINT) AS $$
 DECLARE
@@ -59,12 +59,12 @@ BEGIN
   RETURN QUERY SELECT v_deleted;
 END;
 $$ LANGUAGE plpgsql;
-
+--> statement-breakpoint
 COMMENT ON FUNCTION prune_prune_alert_log(INT) IS
   'Deletes prune_alert_log rows older than retention_days (default 90). '
   'Invoked by the /api/scheduler/prune-overdue-alert endpoint and a daily '
   'pg_cron job (when the extension is installed).';
-
+--> statement-breakpoint
 -- Attempt to register a daily pg_cron job. Non-fatal if pg_cron is unavailable
 -- (mirrors the pattern used in 0045_oracle_fallback_pruning.sql).
 DO $$

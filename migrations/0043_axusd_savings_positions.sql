@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS savings_positions (
   last_updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS savings_positions_wallet_idx ON savings_positions (wallet_address);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS savings_positions_created_at_idx ON savings_positions (created_at);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS savings_positions_tx_hash_idx ON savings_positions (tx_hash) WHERE tx_hash IS NOT NULL;

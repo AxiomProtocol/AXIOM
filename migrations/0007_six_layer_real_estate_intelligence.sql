@@ -6,22 +6,22 @@ DO $$ BEGIN
   CREATE TYPE field_inspection_status AS ENUM ('draft', 'in_progress', 'submitted', 'verified', 'archived');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
-
+--> statement-breakpoint
 DO $$ BEGIN
   CREATE TYPE field_condition AS ENUM ('good', 'light_rehab', 'medium_rehab', 'full_replace', 'not_inspected');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
-
+--> statement-breakpoint
 DO $$ BEGIN
   CREATE TYPE verification_status AS ENUM ('submitted', 'under_review', 'approved', 'rejected');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
-
+--> statement-breakpoint
 DO $$ BEGIN
   CREATE TYPE strategy_type AS ENUM ('light_turn', 'classic_value_add', 'heavy_reposition', 'systems_only_stabilization', 'premium_interior_upgrade', 'exterior_common_reposition');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS field_inspection_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   deal_id UUID NOT NULL REFERENCES re_deals(id),
@@ -40,11 +40,13 @@ CREATE TABLE IF NOT EXISTS field_inspection_sessions (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS field_inspection_sessions_deal_idx ON field_inspection_sessions (deal_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS field_inspection_sessions_property_idx ON field_inspection_sessions (property_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS field_inspection_sessions_status_idx ON field_inspection_sessions (status);
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS field_unit_walk_rows (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id UUID NOT NULL REFERENCES field_inspection_sessions(id),
@@ -72,10 +74,11 @@ CREATE TABLE IF NOT EXISTS field_unit_walk_rows (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS field_unit_walk_rows_session_idx ON field_unit_walk_rows (session_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS field_unit_walk_rows_unit_label_idx ON field_unit_walk_rows (unit_label);
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS field_unit_walk_photos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id UUID NOT NULL REFERENCES field_inspection_sessions(id),
@@ -87,10 +90,11 @@ CREATE TABLE IF NOT EXISTS field_unit_walk_photos (
   meta JSONB,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS field_unit_walk_photos_session_idx ON field_unit_walk_photos (session_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS field_unit_walk_photos_row_idx ON field_unit_walk_photos (row_id);
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS re_rehab_scopes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   deal_id UUID NOT NULL REFERENCES re_deals(id),
@@ -104,10 +108,11 @@ CREATE TABLE IF NOT EXISTS re_rehab_scopes (
   generated_by VARCHAR(42),
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_rehab_scopes_deal_idx ON re_rehab_scopes (deal_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS re_rehab_scopes_scenario_idx ON re_rehab_scopes (scenario_id);
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS verified_project_outcomes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   deal_id UUID NOT NULL REFERENCES re_deals(id),
@@ -140,11 +145,13 @@ CREATE TABLE IF NOT EXISTS verified_project_outcomes (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS verified_project_outcomes_deal_idx ON verified_project_outcomes (deal_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS verified_project_outcomes_scenario_idx ON verified_project_outcomes (scenario_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS verified_project_outcomes_status_idx ON verified_project_outcomes (status);
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS project_outcome_cost_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   outcome_id UUID NOT NULL REFERENCES verified_project_outcomes(id),
@@ -154,7 +161,7 @@ CREATE TABLE IF NOT EXISTS project_outcome_cost_items (
   invoice_ref VARCHAR(255),
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS project_outcome_documents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   outcome_id UUID NOT NULL REFERENCES verified_project_outcomes(id),
@@ -163,7 +170,7 @@ CREATE TABLE IF NOT EXISTS project_outcome_documents (
   source_tag VARCHAR(50),
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS prediction_actual_variances (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   deal_id UUID NOT NULL REFERENCES re_deals(id),
@@ -177,11 +184,13 @@ CREATE TABLE IF NOT EXISTS prediction_actual_variances (
   interpretation TEXT,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS prediction_actual_variances_deal_idx ON prediction_actual_variances (deal_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS prediction_actual_variances_outcome_idx ON prediction_actual_variances (outcome_id);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS prediction_actual_variances_metric_idx ON prediction_actual_variances (metric_key);
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS operator_strategy_profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   operator_wallet VARCHAR(42) NOT NULL,
@@ -194,7 +203,7 @@ CREATE TABLE IF NOT EXISTS operator_strategy_profiles (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS operator_strategy_signals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   profile_id UUID NOT NULL REFERENCES operator_strategy_profiles(id),
@@ -207,7 +216,7 @@ CREATE TABLE IF NOT EXISTS operator_strategy_signals (
   confidence DECIMAL(6,4),
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS capital_intelligence_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   deal_id UUID REFERENCES re_deals(id),
@@ -222,7 +231,7 @@ CREATE TABLE IF NOT EXISTS capital_intelligence_events (
   payload JSONB,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS market_cost_signals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   zip VARCHAR(20),
@@ -235,7 +244,7 @@ CREATE TABLE IF NOT EXISTS market_cost_signals (
   payload JSONB,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS network_intelligence_snapshots (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   snapshot_date DATE NOT NULL,
@@ -249,7 +258,7 @@ CREATE TABLE IF NOT EXISTS network_intelligence_snapshots (
   confidence_score DECIMAL(6,4) NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS verification_reviews (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   outcome_id UUID NOT NULL REFERENCES verified_project_outcomes(id),
@@ -258,7 +267,7 @@ CREATE TABLE IF NOT EXISTS verification_reviews (
   notes TEXT,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS verified_data_rewards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   outcome_id UUID REFERENCES verified_project_outcomes(id),
@@ -269,7 +278,7 @@ CREATE TABLE IF NOT EXISTS verified_data_rewards (
   reward_ref VARCHAR(255),
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS matrix_rooms (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   matrix_room_id VARCHAR(255) NOT NULL UNIQUE,
@@ -279,7 +288,7 @@ CREATE TABLE IF NOT EXISTS matrix_rooms (
   meta JSONB,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS matrix_room_memberships (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   room_id UUID NOT NULL REFERENCES matrix_rooms(id),
@@ -287,7 +296,7 @@ CREATE TABLE IF NOT EXISTS matrix_room_memberships (
   role VARCHAR(40) NOT NULL DEFAULT 'member',
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS matrix_event_links (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   room_id UUID NOT NULL REFERENCES matrix_rooms(id),

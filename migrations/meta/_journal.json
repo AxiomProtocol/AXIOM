@@ -40,8 +40,127 @@
     {
       "idx": 5,
       "version": "7",
+      "when": 1771632000000,
+      "tag": "0006_gef_graduated_execution_framework",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771718400000,
+      "tag": "0007_six_layer_real_estate_intelligence",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1771804800000,
+      "tag": "0008_community_entry_credit",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1772064000000,
+      "tag": "0039_add_euler_earn_rebalance_action_type",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1772150400000,
+      "tag": "0040_mirdt_signal_log",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1772236800000,
+      "tag": "0041_admin_roles_governance_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1772323200000,
+      "tag": "0042_nexus_card_physical_request",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1772409600000,
+      "tag": "0043_axusd_savings_positions",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1772409601000,
+      "tag": "0043_dao_operating_accounts",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
       "when": 1776499200000,
       "tag": "0044_axusd_oracle_fallback_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1776585600000,
+      "tag": "0045_oracle_fallback_pruning",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1776672000000,
+      "tag": "0046_oracle_fallback_prune_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1776758400000,
+      "tag": "0047_oracle_fallback_prune_history_logging",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1776844800000,
+      "tag": "0048_prune_alert_log_retention",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1776931200000,
+      "tag": "0049_prune_alert_log_cleanup_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1777017600000,
+      "tag": "0050_property_report_onchain_payment",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1777104000000,
+      "tag": "0051_prune_alert_log_null_retention_clamp",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1777190400000,
+      "tag": "0052_plaid_items",
       "breakpoints": true
     }
   ]

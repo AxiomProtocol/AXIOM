@@ -15,7 +15,7 @@ BEGIN
   RETURN QUERY SELECT v_deleted;
 END;
 $$ LANGUAGE plpgsql;
-
+--> statement-breakpoint
 -- Attempt to schedule a daily pg_cron job if the extension is available.
 -- This block is intentionally non-fatal: if pg_cron is not installed the
 -- migration still succeeds and the HTTP endpoint serves as the sole trigger.
@@ -33,7 +33,7 @@ BEGIN
 
     -- Run every day at 02:00 UTC.
     -- Inner dollar-quote uses a distinct tag ($cron$) to avoid conflicting
-    -- with the outer DO-block delimiter ($$).
+    -- with the outer dollar-quote block delimiter.
     PERFORM cron.schedule(
       'prune_oracle_fallback_events',
       '0 2 * * *',
