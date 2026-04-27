@@ -590,7 +590,7 @@ export default function NFTPage() {
           <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6B7280', letterSpacing: '1px', marginBottom: '0.5rem' }}>ANIMATION PREVIEW — {previewTier.toUpperCase()}</p>
           <iframe
             src={`/api/nft/animation?tokenId=1&contract=0x0000000000000000000000000000000000000001&rarity=${previewTier}`}
-            style={{ width: '100%', maxWidth: '400px', height: '200px', border: 'none', display: 'block' }}
+            style={{ width: '100%', maxWidth: '500px', aspectRatio: '1 / 1', border: 'none', display: 'block', background: '#0D1117' }}
             title={`${previewTier} NFT Animation`}
           />
           <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#4B5563', marginTop: '0.5rem' }}>

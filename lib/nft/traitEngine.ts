@@ -277,8 +277,9 @@ export function generateAnimationHTML(tokenId: string | number, traits: NFTTrait
 <meta charset="utf-8">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0D1117; width: 600px; height: 600px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-  .badge-container { position: relative; width: 500px; height: 500px; display: flex; align-items: center; justify-content: center; }
+  html, body { width: 100%; height: 100%; }
+  body { background: #0D1117; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .badge-container { position: relative; width: 500px; height: 500px; display: flex; align-items: center; justify-content: center; transform: scale(calc(min(100vw, 100vh) / 600px)); transform-origin: center center; flex-shrink: 0; }
   .ring { position: absolute; border-radius: 50%; border: 2px solid ${c.primary}; animation: pulse ${d} ease-in-out infinite; }
   .ring-1 { width: 420px; height: 420px; animation-delay: 0s; opacity: 0.8; }
   .ring-2 { width: 360px; height: 360px; animation-delay: calc(${d} / 4); opacity: 0.6; border-color: ${c.accent}; }
