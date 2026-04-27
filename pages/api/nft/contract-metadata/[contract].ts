@@ -5,10 +5,16 @@ const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? `https://${process.env.REPLI
 const TREASURY = process.env.TREASURY_ADDRESS ?? '0x3fD63728288546AC41dAe3bf25ca383061c3A929';
 const ROYALTY_BPS = 750;
 
+const BLOCKSCOUT_URLS: Record<string, string> = {
+  founder:       'https://arbitrum.blockscout.com/address/0x4A651D30097E2b7326A83CbB32c02913dB8b3572#code',
+  participation: 'https://arbitrum.blockscout.com/address/0x67f8c7da647AbD50AFb1E2137553Be8c174342Ce#code',
+  land:          'https://arbitrum.blockscout.com/address/0x60f60aD6A2242Bc4Aab80233b4C25144368F88db#code',
+};
+
 const COLLECTIONS: Record<string, object> = {
   founder: {
     name:                    'Axiom Founder Badge',
-    description:             'A soulbound ERC-721 for the first 100 Axiom Protocol founding wallets. Non-transferable. Utility-backed: priority AXAU mint queue, 1.5× governance vote weight, 15% discount on Property Analysis reports.',
+    description:             `A soulbound ERC-721 for the first 100 Axiom Protocol founding wallets. Non-transferable. Utility-backed: priority AXAU mint queue, 1.5× governance vote weight, 15% discount on Property Analysis reports.\n\nSource verified on Arbitrum Blockscout: ${BLOCKSCOUT_URLS.founder}`,
     image:                   `${SITE_URL}/og/nft-founder-collection.png`,
     external_link:           `${SITE_URL}/nft`,
     seller_fee_basis_points: ROYALTY_BPS,
@@ -16,7 +22,7 @@ const COLLECTIONS: Record<string, object> = {
   },
   participation: {
     name:                    'Axiom Participation',
-    description:             'Multi-edition ERC-1155 badges earned by completing Axiom Protocol milestones. Six action types: identity, Wealth Practice, governance, property deals, AXAU early adopter, and Founder Circle.',
+    description:             `Multi-edition ERC-1155 badges earned by completing Axiom Protocol milestones. Six action types: identity, Wealth Practice, governance, property deals, AXAU early adopter, and Founder Circle.\n\nSource verified on Arbitrum Blockscout: ${BLOCKSCOUT_URLS.participation}`,
     image:                   `${SITE_URL}/og/nft-participation-collection.png`,
     external_link:           `${SITE_URL}/nft`,
     seller_fee_basis_points: ROYALTY_BPS,
@@ -24,7 +30,7 @@ const COLLECTIONS: Record<string, object> = {
   },
   land: {
     name:                    'Axiom Land Receipt',
-    description:             'ERC-1155 land-parcel receipt NFTs representing participation records in Axiom Protocol land acquisitions. One token ID per property, capped at 1,000 receipts per parcel.',
+    description:             `ERC-1155 land-parcel receipt NFTs representing participation records in Axiom Protocol land acquisitions. One token ID per property, capped at 1,000 receipts per parcel.\n\nSource verified on Arbitrum Blockscout: ${BLOCKSCOUT_URLS.land}`,
     image:                   `${SITE_URL}/og/nft-land-collection.png`,
     external_link:           `${SITE_URL}/nft`,
     seller_fee_basis_points: ROYALTY_BPS,
@@ -32,12 +38,12 @@ const COLLECTIONS: Record<string, object> = {
   },
 };
 
-function detectCollection(contractAddress: string): string {
+function detectCollection(contractAddress: string): string | null {
   const addr = contractAddress.toLowerCase();
   if (process.env.NFT_CONTRACT_FOUNDER && addr === process.env.NFT_CONTRACT_FOUNDER.toLowerCase()) return 'founder';
   if (process.env.NFT_CONTRACT_PARTICIPATION && addr === process.env.NFT_CONTRACT_PARTICIPATION.toLowerCase()) return 'participation';
   if (process.env.NFT_CONTRACT_LAND && addr === process.env.NFT_CONTRACT_LAND.toLowerCase()) return 'land';
-  return 'founder';
+  return null;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -51,7 +57,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const collection = detectCollection(contractAddress);
-  const config = COLLECTIONS[collection] ?? COLLECTIONS.founder;
+  if (!collection) {
+    return res.status(404).json({ error: 'Unknown contract address — not an Axiom collection' });
+  }
+  const config = COLLECTIONS[collection];
 
   try {
     const stats = await getCollectionStats(contractAddress).catch(() => null);

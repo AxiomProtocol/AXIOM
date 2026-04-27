@@ -43,5 +43,11 @@
     "NFT_CONTRACT_FOUNDER": "0x4A651D30097E2b7326A83CbB32c02913dB8b3572",
     "NFT_CONTRACT_PARTICIPATION": "0x67f8c7da647AbD50AFb1E2137553Be8c174342Ce",
     "NFT_CONTRACT_LAND": "0x60f60aD6A2242Bc4Aab80233b4C25144368F88db"
-  }
+  },
+  "anchorMints": {
+    "AxiomFounderBadge_anchor": "0x5a8b0fb44bec5f459f309af27524d531b00a9b9020dae195f958e2189ed3fa44",
+    "AxiomParticipation_anchor_tokenId_1": "0xe8c941f711f887e991f6f3a0df3e85772682d896878fefe18c6856d5d177b554"
+  },
+  "uriUpdates": {},
+  "anchorMintAt": "2026-04-27T22:57:28.463Z"
 }

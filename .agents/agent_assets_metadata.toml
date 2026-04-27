@@ -540,6 +540,24 @@ uri = "file://public/images/hero-trust.png"
 type = "image"
 title = "axiom trust hero"
 
+[[generated]]
+id = "sEi6UrjwsHBBNWFhrSim7"
+uri = "file://public/og/nft-founder-collection.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "pdkMDq4VU0vCQF6NB3ieG"
+uri = "file://public/og/nft-participation-collection.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Gvth-tdItf7IXqXBMmyX4"
+uri = "file://public/og/nft-land-collection.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
