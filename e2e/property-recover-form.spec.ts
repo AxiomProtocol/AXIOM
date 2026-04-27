@@ -50,17 +50,30 @@ interface SeedResponse {
   buyerEmail: string;
   addressRaw: string;
   initialStatus: 'pending' | 'expired';
+  wrongSender?: boolean;
+  wrongSenderWallet?: string;
+}
+
+interface SeedOptions {
+  initialStatus?: 'pending' | 'expired';
+  /** When true, the verify override will report a different `from` wallet so
+   *  the sender-wallet security check inside promoteToPaid fires. */
+  wrongSender?: boolean;
 }
 
 async function seedRecoverableReport(
   page: Page,
-  initialStatus: 'pending' | 'expired' = 'pending',
+  initialStatusOrOptions: 'pending' | 'expired' | SeedOptions = 'pending',
 ): Promise<SeedResponse> {
+  const opts: SeedOptions =
+    typeof initialStatusOrOptions === 'string'
+      ? { initialStatus: initialStatusOrOptions }
+      : initialStatusOrOptions;
   const resp = await page.request.post(
     `${BASE}/api/property/test-seed-recoverable`,
     {
       headers: { 'content-type': 'application/json' },
-      data: { action: 'seed', initialStatus },
+      data: { action: 'seed', ...opts },
     },
   );
   if (resp.status() !== 200) {
@@ -70,6 +83,27 @@ async function seedRecoverableReport(
     );
   }
   return (await resp.json()) as SeedResponse;
+}
+
+async function checkSeededReportStatus(
+  page: Page,
+  id: string,
+): Promise<string> {
+  const resp = await page.request.post(
+    `${BASE}/api/property/test-seed-recoverable`,
+    {
+      headers: { 'content-type': 'application/json' },
+      data: { action: 'check-status', id },
+    },
+  );
+  if (resp.status() !== 200) {
+    const body = await resp.text();
+    throw new Error(
+      `test-seed-recoverable (check-status) must succeed; got ${resp.status()}: ${body}`,
+    );
+  }
+  const json = (await resp.json()) as { id: string; status: string };
+  return json.status;
 }
 
 async function cleanupSeededReport(page: Page, id: string): Promise<void> {
@@ -194,6 +228,43 @@ test.describe('Receipt-lookup page — buyer self-service recovery form', () => 
     await link.click();
     await page.waitForURL(`**/property/reports/${seed.id}`, { timeout: 10_000 });
     expect(page.url()).toMatch(new RegExp(`/property/reports/${seed.id}$`));
+  });
+
+  test('security: recovery rejects a tx hash paid from the wrong wallet — 403 error shown, row stays pending', async ({
+    page,
+  }) => {
+    // Seed a pending row for buyer wallet A, but install a verify override
+    // that reports the on-chain transfer as sent from wallet B (a different
+    // address). This triggers the sender-wallet check inside `promoteToPaid`
+    // and should surface a 403 to the buyer without promoting the row.
+    const seed = await seedRecoverableReport(page, {
+      initialStatus: 'pending',
+      wrongSender: true,
+    });
+    seededId = seed.id;
+
+    await page.goto('/property/reports');
+    await page.getByTestId('recover-toggle').click();
+    await expect(page.getByTestId('recover-form')).toBeVisible();
+
+    await page.getByTestId('recover-report-id').fill(seed.id);
+    await page.getByTestId('recover-tx-hash').fill(seed.txHash);
+    await page.getByTestId('recover-submit').click();
+
+    // The form must show the 403 error — "Payment must be sent from the
+    // wallet recorded on the report…" — and must NOT show the success block.
+    await expect(page.getByTestId('recover-error')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('recover-error')).toContainText(
+      /payment must be sent from the wallet recorded on the report/i,
+    );
+    await expect(page.getByTestId('recover-success')).toHaveCount(0);
+
+    // The DB row must still be in its original status — never promoted to paid.
+    const status = await checkSeededReportStatus(page, seed.id);
+    expect(
+      status,
+      'Row must remain pending after a wrong-sender rejection; was promoted instead',
+    ).toBe('pending');
   });
 
   test('headline self-rescue: a seeded EXPIRED row is recoverable through the form (the entire point of task #280)', async ({

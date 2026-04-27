@@ -39,12 +39,20 @@
  *   test leaves no global module state behind for the next spec.
  *
  * Actions (POST body):
- *   { action: 'seed', initialStatus?: 'pending' | 'expired' }
+ *   { action: 'seed', initialStatus?: 'pending' | 'expired', wrongSender?: boolean }
  *     - Inserts one new property_reports row (default status='pending';
  *       'expired' lets the test cover the headline self-rescue path
  *       where the resolver auto-expired the row before the buyer
  *       returned to paste their tx hash).
+ *     - When wrongSender=true the verify override returns `from` as a
+ *       different wallet address (walletB) so the sender-wallet check
+ *       inside promoteToPaid fires and returns 403. The seeded row's
+ *       buyerWallet stays as walletA, proving the mismatch is detected.
  *     - Returns { id, txHash, buyerWallet, addressRaw }.
+ *
+ *   { action: 'check-status', id }
+ *     - Fetches the current status of the seeded row from the DB.
+ *     - Returns { id, status }.
  *
  *   { action: 'cleanup', id }
  *     - Deletes the row, clears both overrides.
@@ -61,13 +69,22 @@ import {
   PROPERTY_PAYMENT_TOKEN,
   type PaymentVerificationResult,
 } from '../../../lib/property/onchainPayment';
-import { __setGenerateReportOverride } from '../../../server/services/property/pipeline';
+import {
+  __setGenerateReportOverride,
+} from '../../../server/services/property/pipeline';
+import {
+  __setStuckPaymentVerifyOverride,
+  __setStuckPaymentGenerateReportOverride,
+} from '../../../lib/property/stuckPaymentResolver';
 import type { EstimationResult } from '../../../server/services/property/estimationEngine';
 
 interface SeedBody {
-  action?: 'seed' | 'cleanup';
+  action?: 'seed' | 'check-status' | 'cleanup';
   id?: string;
   initialStatus?: 'pending' | 'expired';
+  /** When true, the verify override returns a different sender wallet so the
+   *  promoteToPaid sender-wallet check fires and produces a 403 rejection. */
+  wrongSender?: boolean;
 }
 
 /** Stub EstimationResult shape — fields are intentionally minimal. The
@@ -75,9 +92,18 @@ interface SeedBody {
  *  EstimationResult return value is not consumed by the resolver. */
 const STUB_ESTIMATION = {} as EstimationResult;
 
+/**
+ * Builds the verify override for the recovery e2e tests.
+ *
+ * @param expectedTxHash - The tx hash that the override will accept.
+ * @param senderWallet   - The `from` address the override will report.  For the
+ *   happy-path tests this is the same as `buyerWallet`; for the wrong-sender
+ *   test it is deliberately set to a different wallet so the sender-wallet check
+ *   inside `promoteToPaid` fires and returns a 403 to the caller.
+ */
 function buildVerifyOverride(
   expectedTxHash: string,
-  buyerWallet: string,
+  senderWallet: string,
 ): (txHash: string, requiredAmountCents: number) => Promise<PaymentVerificationResult> {
   const expectedLower = expectedTxHash.toLowerCase();
   return async (txHash, requiredAmountCents) => {
@@ -91,7 +117,7 @@ function buildVerifyOverride(
     return {
       ok: true,
       txHash,
-      from: buyerWallet,
+      from: senderWallet,
       to: '0x' + '00'.repeat(20),
       token: PROPERTY_PAYMENT_TOKEN.toLowerCase(),
       chainId: PROPERTY_PAYMENT_CHAIN_ID,
@@ -172,17 +198,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .returning({ id: propertyReports.id });
       } catch (insertErr) {
         // No overrides installed yet, but be defensive in case a future
-        // refactor moves the install up: clear them so the resolver
+        // refactor moves the install up: clear all seams so the resolver
         // module can't be left pinned to a stale fake.
         __setVerifyOnchainPaymentOverride(null);
+        __setStuckPaymentVerifyOverride(null);
         __setGenerateReportOverride(null);
+        __setStuckPaymentGenerateReportOverride(null);
         throw insertErr;
       }
 
       // Install the overrides AFTER the insert succeeded so a failed
       // seed never leaves the resolver pinned to a fake provider.
-      __setVerifyOnchainPaymentOverride(buildVerifyOverride(txHash, buyerWallet));
-      __setGenerateReportOverride(buildGenerateReportOverride(inserted.id));
+      //
+      // We install overrides on BOTH the module-level seam in onchainPayment.ts
+      // (`__setVerifyOnchainPaymentOverride`) AND the globalThis-based seam in
+      // stuckPaymentResolver.ts (`__setStuckPaymentVerifyOverride`). The
+      // globalThis seam is checked FIRST in promoteToPaid, so it wins when
+      // Next.js webpack compilation produces separate module instances per
+      // API route (which can make the module-level override invisible to the
+      // recovery endpoint).
+      //
+      // wrongSender mode: the verify override reports a *different* wallet as
+      // the sender so the sender-wallet check inside promoteToPaid fires and
+      // returns a 403 to the caller — the seeded row is never promoted to paid.
+      // In this mode we don't install the generateReport override because the
+      // resolver bails before reaching that step.
+      const wrongSender = body.wrongSender === true;
+      // Build a deterministically different wallet (all-f address).
+      const wrongSenderWallet = wrongSender
+        ? `0x${'ff'.repeat(20)}`
+        : buyerWallet;
+      const verifyFn = buildVerifyOverride(txHash, wrongSenderWallet);
+      // Install on both seams so the override is visible regardless of which
+      // module instance the recovery endpoint resolves at runtime.
+      __setVerifyOnchainPaymentOverride(verifyFn);
+      __setStuckPaymentVerifyOverride(verifyFn);
+      if (!wrongSender) {
+        const generateFn = buildGenerateReportOverride(inserted.id);
+        __setGenerateReportOverride(generateFn);
+        __setStuckPaymentGenerateReportOverride(generateFn);
+      }
 
       return res.status(200).json({
         id: inserted.id,
@@ -191,7 +246,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         buyerEmail,
         addressRaw,
         initialStatus,
+        wrongSender,
+        wrongSenderWallet: wrongSender ? wrongSenderWallet : undefined,
       });
+    }
+
+    if (action === 'check-status') {
+      if (!body.id || typeof body.id !== 'string') {
+        return res
+          .status(400)
+          .json({ error: 'BAD_REQUEST', detail: 'id is required' });
+      }
+      const [row] = await db
+        .select({ id: propertyReports.id, status: propertyReports.status })
+        .from(propertyReports)
+        .where(eq(propertyReports.id, body.id))
+        .limit(1);
+      if (!row) {
+        return res.status(404).json({ error: 'NOT_FOUND', id: body.id });
+      }
+      return res.status(200).json({ id: row.id, status: row.status });
     }
 
     if (action === 'cleanup') {
@@ -202,7 +276,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       await db.delete(propertyReports).where(eq(propertyReports.id, body.id));
       __setVerifyOnchainPaymentOverride(null);
+      __setStuckPaymentVerifyOverride(null);
       __setGenerateReportOverride(null);
+      __setStuckPaymentGenerateReportOverride(null);
       return res.status(200).json({ id: body.id, deleted: true });
     }
 
