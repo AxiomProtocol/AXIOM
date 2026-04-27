@@ -595,7 +595,7 @@ export default function NFTPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1px', background: '#E5E7EB', marginBottom: '1.5rem' }}>
           {[
             { label: 'Total Supply Cap', value: '100' },
-            { label: 'Minted',           value: loading ? '—' : founder?.deployed ? String(founder.mintedCount ?? 0) : 'Not Deployed' },
+            { label: 'Minted',           value: loading ? '—' : String(founder?.mintedCount ?? 0) },
             { label: 'Unique Holders',   value: loading ? '—' : founder?.deployed ? String(founder.uniqueHolders ?? 0) : '—' },
             { label: 'Remaining',        value: loading ? '—' : founder?.deployed ? String(100 - (founder.mintedCount ?? 0)) : '—' },
             { label: 'Transfer',         value: 'Soulbound' },
@@ -624,8 +624,7 @@ export default function NFTPage() {
 
         <div style={{ background: '#FAFAF8', border: '1px solid #F3F4F6', padding: '1rem' }}>
           <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6B7280', lineHeight: 1.6 }}>
-            Non-transferable after mint. Qualifying wallets: early AXM holders, governance participants, founding Wealth Practice members. Eligibility verified server-side against on-chain state.{' '}
-            {!founder?.deployed && <span style={{ color: '#C9A84C' }}>Contract not yet deployed — deploy with: <code style={{ background: '#F3F4F6', padding: '1px 4px' }}>npx hardhat run scripts/nft/deploy-nft.ts --network arbitrum-one</code></span>}
+            Non-transferable after mint. Qualifying wallets: early AXM holders, governance participants, founding Wealth Practice members. Eligibility verified server-side against on-chain state.
           </p>
         </div>
       </section>
@@ -688,7 +687,7 @@ export default function NFTPage() {
           {[
             { label: 'Token ID Model',   value: 'One per parcel' },
             { label: 'Supply per Parcel', value: '1,000 max' },
-            { label: 'Parcels Registered', value: loading ? '—' : land?.deployed ? String(land.mintedCount ?? 0) : 'Not Deployed' },
+            { label: 'Parcels Registered', value: loading ? '—' : String(land?.mintedCount ?? 0) },
             { label: 'Governance Gate',   value: 'GOVERNANCE_ROLE' },
             { label: 'Royalty',           value: '7.5% EIP-2981' },
             { label: 'Transferable',      value: 'Yes (secondary market)' },
@@ -808,7 +807,7 @@ export default function NFTPage() {
                 </a>
               ) : (
                 <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#4B5563' }}>
-                  {loading ? '—' : 'Not deployed'}
+                  —
                 </span>
               )}
             </div>
@@ -840,21 +839,6 @@ export default function NFTPage() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ── Deployment instructions ───────────────────────────────────── */}
-      <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
-          Deployment
-        </h2>
-        <div style={{ background: '#FAFAF8', border: '1px solid #E5E7EB', padding: '1.25rem', fontFamily: 'monospace', fontSize: '12px', color: '#374151', lineHeight: 2 }}>
-          <div><span style={{ color: '#6B7280' }}># Deploy all three contracts to Arbitrum One</span></div>
-          <div><span style={{ color: '#C9A84C' }}>npx hardhat run</span> scripts/nft/deploy-nft.ts <span style={{ color: '#1D4ED8' }}>--network arbitrum-one</span></div>
-          <div style={{ marginTop: '0.5rem' }}><span style={{ color: '#6B7280' }}># Output: deployment-output.json with contract addresses</span></div>
-          <div><span style={{ color: '#6B7280' }}># Then set env vars: NFT_CONTRACT_FOUNDER, NFT_CONTRACT_PARTICIPATION, NFT_CONTRACT_LAND</span></div>
-          <div style={{ marginTop: '0.5rem' }}><span style={{ color: '#6B7280' }}># Compile contracts</span></div>
-          <div><span style={{ color: '#C9A84C' }}>npx hardhat compile</span></div>
         </div>
       </section>
 
