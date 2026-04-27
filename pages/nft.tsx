@@ -20,102 +20,51 @@ const RARITY_LABELS: Record<string, string> = {
   Common:    '60% — Standard Issue',
 };
 
-const HERO_CARDS: Array<{ src: string; label: string; tokenId: string }> = [
-  { src: '/nft-preview/founder-1.png', label: 'The Architect', tokenId: '#001' },
-  { src: '/nft-preview/founder-2.png', label: 'The Sovereign', tokenId: '#002' },
-  { src: '/nft-preview/founder-3.png', label: 'The Vault',     tokenId: '#003' },
-  { src: '/nft-preview/founder-4.png', label: 'Founder Badge', tokenId: '#004' },
+const FOUNDER_CARDS: Array<{ tokenId: string; src: string; label?: string }> = [
+  { tokenId: '001', src: '/nft-preview/founder-1.png',  label: 'The Architect' },
+  { tokenId: '002', src: '/nft-preview/founder-2.png',  label: 'The Sovereign' },
+  { tokenId: '003', src: '/nft-preview/founder-3.png',  label: 'The Vault' },
+  { tokenId: '004', src: '/nft-preview/founder-4.png' },
+  { tokenId: '005', src: '/nft-preview/founder-5.png' },
+  { tokenId: '006', src: '/nft-preview/founder-6.png' },
+  { tokenId: '007', src: '/nft-preview/founder-7.png' },
+  { tokenId: '008', src: '/nft-preview/founder-8.png' },
+  { tokenId: '009', src: '/nft-preview/founder-9.png' },
+  { tokenId: '010', src: '/nft-preview/founder-10.png' },
+  { tokenId: '011', src: '/nft-preview/founder-11.png' },
+  { tokenId: '012', src: '/nft-preview/founder-12.png' },
 ];
 
-function FounderCarousel({ maxWidth }: { maxWidth: number }) {
-  const [idx, setIdx] = useState(0);
-  const [tick, setTick] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => setIdx(i => (i + 1) % HERO_CARDS.length), 5000);
-    return () => clearInterval(id);
-  }, [tick]);
-
-  const go = (delta: number) => {
-    setIdx(i => (i + delta + HERO_CARDS.length) % HERO_CARDS.length);
-    setTick(t => t + 1);
-  };
-  const goTo = (i: number) => {
-    setIdx(i);
-    setTick(t => t + 1);
-  };
-
-  const current = HERO_CARDS[idx];
-
+function FounderCard({ card }: { card: { tokenId: string; src: string; label?: string } }) {
+  const [errored, setErrored] = useState(false);
+  const caption = `#${card.tokenId}${card.label ? ` · ${card.label.toUpperCase()}` : ''}`;
   return (
-    <div style={{ maxWidth: `${maxWidth}px`, width: '100%' }}>
-      {/* Image stack with overlaid arrows */}
-      <div style={{ position: 'relative', width: '100%' }}>
-        {HERO_CARDS.map((card, i) => (
-          <img
-            key={card.src}
-            src={card.src}
-            alt={i === idx ? `Axiom Founder Badge ${card.tokenId} — ${card.label}` : ''}
-            aria-hidden={i === idx ? undefined : true}
-            style={{
-              ...(i === 0
-                ? { position: 'relative', display: 'block' }
-                : { position: 'absolute', top: 0, left: 0 }),
-              width: '100%',
-              height: 'auto',
-              opacity: i === idx ? 1 : 0,
-              transition: 'opacity 0.6s ease',
-            }}
-          />
-        ))}
-
-        <button
-          type="button"
-          onClick={() => go(-1)}
-          aria-label="Previous card"
-          style={{
-            position: 'absolute', top: '50%', left: '0.5rem', transform: 'translateY(-50%)',
-            background: 'rgba(30,58,95,0.85)', color: '#FFFFFF', border: 'none',
-            padding: '0.5rem 0.75rem', fontFamily: 'monospace', fontSize: '16px',
-            cursor: 'pointer', letterSpacing: '1px', lineHeight: 1,
-          }}
-        >‹</button>
-        <button
-          type="button"
-          onClick={() => go(1)}
-          aria-label="Next card"
-          style={{
-            position: 'absolute', top: '50%', right: '0.5rem', transform: 'translateY(-50%)',
-            background: 'rgba(30,58,95,0.85)', color: '#FFFFFF', border: 'none',
-            padding: '0.5rem 0.75rem', fontFamily: 'monospace', fontSize: '16px',
-            cursor: 'pointer', letterSpacing: '1px', lineHeight: 1,
-          }}
-        >›</button>
+    <div style={{ background: '#FAFAF8', border: '1px solid #E5E7EB', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      {errored ? (
+        <div style={{ width: '100%', aspectRatio: '683 / 1024', background: '#0D1117', color: '#C9A84C', fontFamily: 'monospace', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', letterSpacing: '2px', textAlign: 'center', padding: '1rem' }}>
+          REVEAL PENDING
+        </div>
+      ) : (
+        <img
+          src={card.src}
+          alt={`Axiom Founder Badge #${card.tokenId}${card.label ? ` — ${card.label}` : ''}`}
+          onError={() => setErrored(true)}
+          style={{ width: '100%', height: 'auto', display: 'block' }}
+        />
+      )}
+      <div style={{ fontFamily: 'monospace', fontSize: '10px', color: '#1E3A5F', letterSpacing: '1px', textAlign: 'center' }}>
+        {caption}
       </div>
+    </div>
+  );
+}
 
-      {/* Caption */}
-      <div style={{ marginTop: '0.5rem', textAlign: 'center', fontFamily: 'monospace', fontSize: '10px', color: '#1E3A5F', letterSpacing: '2px' }}>
-        {current.tokenId} · {current.label.toUpperCase()}
-      </div>
-
-      {/* Dot indicators */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-        {HERO_CARDS.map((card, i) => (
-          <button
-            key={card.src}
-            type="button"
-            onClick={() => goTo(i)}
-            aria-label={`Show ${card.label}`}
-            aria-current={i === idx ? 'true' : undefined}
-            style={{
-              width: '10px', height: '10px', padding: 0,
-              border: '1px solid #1E3A5F',
-              background: i === idx ? '#1E3A5F' : '#FFFFFF',
-              cursor: 'pointer',
-            }}
-          />
-        ))}
-      </div>
+function FounderGrid() {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', width: '100%' }}>
+      {FOUNDER_CARDS.map(card => (
+        <FounderCard key={card.tokenId} card={card} />
+      ))}
     </div>
   );
 }
@@ -295,9 +244,11 @@ function WalletMintSection() {
           Claim Your Badges
         </h2>
         <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center' }}>
-          <div style={{ marginBottom: '0.25rem' }}>
-            <FounderCarousel maxWidth={280} />
-          </div>
+          <img
+            src="/nft-preview/founder-1.png"
+            alt="Axiom Founder Badge artwork"
+            style={{ maxWidth: '280px', width: '100%', height: 'auto', display: 'block', marginBottom: '0.25rem' }}
+          />
           <div style={mono({ fontSize: '10px', color: '#C9A84C', letterSpacing: '2px' })}>
             AXIOM FOUNDER BADGE · FOUNDING 100
           </div>
@@ -401,7 +352,11 @@ function WalletMintSection() {
 
         {/* Hero artwork */}
         <div style={{ background: '#FAFAF8', border: '1px solid #E5E7EB', padding: '1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
-          <FounderCarousel maxWidth={320} />
+          <img
+            src="/nft-preview/founder-1.png"
+            alt="Axiom Founder Badge artwork"
+            style={{ maxWidth: '320px', width: '100%', height: 'auto', display: 'block' }}
+          />
         </div>
 
         {/* Already minted */}
@@ -664,6 +619,17 @@ export default function NFTPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* ── Founder Collection gallery ─────────────────────────────────── */}
+      <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
+          Founder Collection
+        </h2>
+        <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6B7280', letterSpacing: '1px', marginBottom: '1rem' }}>
+          FOUNDING 100 · FIRST TWELVE PREVIEWED
+        </p>
+        <FounderGrid />
       </section>
 
       {/* ── Rarity system ─────────────────────────────────────────────── */}
