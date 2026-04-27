@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAccount, useSignMessage } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law/DesignLawLayout';
+import { openAppKit } from '../lib/web3/appKitModal';
 
 const RARITY_COLORS: Record<string, string> = {
   Legendary: '#C9A84C',
@@ -61,7 +62,7 @@ function FounderCard({ card }: { card: { tokenId: string; src: string; label?: s
 
 function FounderGrid() {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', width: '100%' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', width: '100%' }}>
       {FOUNDER_CARDS.map(card => (
         <FounderCard key={card.tokenId} card={card} />
       ))}
@@ -243,22 +244,34 @@ function WalletMintSection() {
         <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           Claim Your Badges
         </h2>
-        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center' }}>
-          <img
-            src="/nft-preview/founder-1.png"
-            alt="Axiom Founder Badge artwork"
-            style={{ maxWidth: '280px', width: '100%', height: 'auto', display: 'block', marginBottom: '0.25rem' }}
-          />
+        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.75rem' }}>
           <div style={mono({ fontSize: '10px', color: '#C9A84C', letterSpacing: '2px' })}>
             AXIOM FOUNDER BADGE · FOUNDING 100
           </div>
           <p style={mono({ fontSize: '12px', color: '#374151', letterSpacing: '1px' })}>
             CONNECT YOUR WALLET TO CHECK ELIGIBILITY
           </p>
-          <p style={mono({ fontSize: '11px', color: '#4B5563', lineHeight: 1.6, maxWidth: '480px' })}>
-            Use the "Access Platform" button in the top navigation to connect. Eligibility is checked against your on-chain
-            history — early AXM holders, governance participants, and Wealth Practice members qualify for the Founder Badge.
+          <p style={mono({ fontSize: '11px', color: '#4B5563', lineHeight: 1.6, maxWidth: '560px' })}>
+            Eligibility is checked against your on-chain history — early AXM holders, governance participants, and
+            Wealth Practice members qualify for the Founder Badge.
           </p>
+          <button
+            onClick={() => openAppKit()}
+            style={{
+              background: '#C9A84C',
+              color: '#000000',
+              border: '1px solid #C9A84C',
+              padding: '0.6rem 1.25rem',
+              fontFamily: 'monospace',
+              fontSize: '11px',
+              fontWeight: 700,
+              letterSpacing: '1.5px',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+            }}
+          >
+            Connect Wallet
+          </button>
         </div>
       </section>
     );
@@ -582,21 +595,90 @@ export default function NFTPage() {
         <meta name="description" content="Three-tier animated utility NFT collection on Arbitrum One. AxiomFounderBadge (soulbound ERC-721), AxiomParticipation (ERC-1155), AxiomLandReceipt (ERC-1155). Real on-chain utility." />
       </Head>
 
-      {/* ── Page header ──────────────────────────────────────────────── */}
-      <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '2rem', marginBottom: '2rem' }}>
-        <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6B7280', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-          AXIOM PROTOCOL · UTILITY COLLECTION · ARBITRUM ONE
-        </p>
-        <h1 style={{ fontFamily: 'serif', fontSize: 'clamp(1.75rem, 4vw, 3rem)', fontWeight: 700, color: '#1E3A5F', lineHeight: 1.15, marginBottom: '1rem' }}>
-          NFT Utility System
-        </h1>
-        <p style={{ fontFamily: 'sans-serif', fontSize: '1rem', color: '#374151', lineHeight: 1.6, maxWidth: '680px' }}>
-          Three animated, rarity-tiered collections on Arbitrum One. Each NFT carries real protocol utility — priority queue access, governance weight multipliers, and fee discounts. No speculation. No hype. Earned through participation.
-        </p>
-      </div>
+      {/* ── Cinematic Hero ───────────────────────────────────────────── */}
+      <section style={{ marginBottom: '2.5rem', background: '#0D1117', border: '1px solid #1F2937' }}>
+        {/* Cinematic banner image — full-width, scales naturally on mobile */}
+        <img
+          src="/images/axiom-founder-collection-hero.png"
+          alt="Axiom Founder Collection — utility-backed NFTs on Arbitrum One"
+          style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover', objectPosition: 'left center' }}
+        />
+
+        {/* Real interactive headline + CTAs (renders below the image so mobile stays readable) */}
+        <div style={{ padding: 'clamp(1.25rem, 4vw, 2.25rem)', borderTop: '1px solid #1F2937' }}>
+          <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#C9A84C', letterSpacing: '2px', textTransform: 'uppercase', margin: '0 0 0.75rem' }}>
+            AXIOM PROTOCOL · UTILITY COLLECTION · ARBITRUM ONE
+          </p>
+          <h1 style={{ fontFamily: 'serif', fontSize: 'clamp(1.75rem, 4vw, 2.75rem)', fontWeight: 700, color: '#F5E6A8', lineHeight: 1.15, margin: '0 0 1rem' }}>
+            Axiom Founder Collection
+          </h1>
+          <p style={{ fontFamily: 'sans-serif', fontSize: 'clamp(0.95rem, 1.6vw, 1.05rem)', color: '#D1D5DB', lineHeight: 1.6, maxWidth: '680px', margin: '0 0 0.75rem' }}>
+            Utility-backed NFTs on Arbitrum One. Priority access, governance weight, and ecosystem benefits for verified participants.
+          </p>
+          <p style={{ fontFamily: 'sans-serif', fontSize: '0.9rem', color: '#9CA3AF', lineHeight: 1.6, maxWidth: '680px', margin: '0 0 1.5rem' }}>
+            A limited founder badge system for Axiom participants. Each badge connects identity, access, and protocol utility inside the Axiom ecosystem.
+          </p>
+
+          {/* CTAs */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <button
+              onClick={() => openAppKit()}
+              style={{
+                background: '#C9A84C',
+                color: '#000000',
+                border: '1px solid #C9A84C',
+                padding: '0.75rem 1.5rem',
+                fontFamily: 'monospace',
+                fontSize: '12px',
+                fontWeight: 700,
+                letterSpacing: '1.5px',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+              }}
+            >
+              Connect Wallet
+            </button>
+            <a
+              href="#collection"
+              style={{
+                background: 'transparent',
+                color: '#C9A84C',
+                border: '1px solid #C9A84C',
+                padding: '0.75rem 1.5rem',
+                fontFamily: 'monospace',
+                fontSize: '12px',
+                fontWeight: 700,
+                letterSpacing: '1.5px',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                display: 'inline-block',
+              }}
+            >
+              View Founder Collection →
+            </a>
+          </div>
+
+          {/* Trust strip — verified facts only */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1px', background: '#1F2937', border: '1px solid #1F2937' }}>
+            {[
+              { label: 'Built on', value: 'Arbitrum One' },
+              { label: 'Founder Cap', value: '100 Badges' },
+              { label: 'ERC-721', value: 'Soulbound' },
+              { label: 'Status', value: 'Utility Enabled' },
+            ].map(t => (
+              <div key={t.label} style={{ background: '#0D1117', padding: '0.75rem 1rem' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: '9px', color: '#C9A84C', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{t.label}</div>
+                <div style={{ fontFamily: 'monospace', fontSize: '11px', color: '#F5E6A8', letterSpacing: '1px' }}>{t.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ── Wallet eligibility + mint ─────────────────────────────────── */}
-      <WalletMintSection />
+      <div id="claim">
+        <WalletMintSection />
+      </div>
 
       {/* ── Utility gates ─────────────────────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
@@ -621,8 +703,39 @@ export default function NFTPage() {
         </div>
       </section>
 
-      {/* ── Founder Collection gallery ─────────────────────────────────── */}
+      {/* ── Featured Founder Badge ─────────────────────────────────────── */}
       <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
+          Featured Founder Badge
+        </h2>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: 'clamp(1rem, 3vw, 2rem)', display: 'flex', flexWrap: 'wrap', gap: 'clamp(1rem, 4vw, 2.5rem)', alignItems: 'center' }}>
+          <div style={{ flex: '0 1 280px', minWidth: '180px' }}>
+            <img
+              src="/nft-preview/founder-1.png"
+              alt="Axiom Founder Badge #001 — The Architect"
+              style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid #1F2937' }}
+            />
+          </div>
+          <div style={{ flex: '1 1 320px' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: '10px', color: '#C9A84C', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+              #001 · The Architect
+            </div>
+            <h3 style={{ fontFamily: 'serif', fontSize: '1.4rem', color: '#1E3A5F', margin: '0 0 0.75rem', fontWeight: 700 }}>
+              Founder Badge · Founding 100
+            </h3>
+            <p style={{ fontFamily: 'sans-serif', fontSize: '0.95rem', color: '#374151', lineHeight: 1.65, marginBottom: '1rem' }}>
+              Soulbound ERC-721 reserved for verified founding participants. Each Founder Badge confers priority access
+              to AXAU mint queues, a 1.5× governance vote weight multiplier, and a 15% discount on Property Analysis report purchases.
+            </p>
+            <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6B7280', lineHeight: 1.7, letterSpacing: '0.5px' }}>
+              ERC-721 · SOULBOUND · ARBITRUM ONE · 100 CAP · 7.5% EIP-2981 ROYALTY
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Founder Collection gallery ─────────────────────────────────── */}
+      <section id="collection" style={{ marginBottom: '3rem', scrollMarginTop: '6rem' }}>
         <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#1E3A5F', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.5rem' }}>
           Founder Collection
         </h2>
