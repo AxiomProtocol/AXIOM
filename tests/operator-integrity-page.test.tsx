@@ -375,6 +375,19 @@ describe('AssetIntegrityAlertsPanel — link points at /operator/integrity', () 
     expect(link.getAttribute('href')).toBe('/operator/integrity');
     expect(link.textContent).toMatch(/all integrity alerts/i);
   });
+
+  it('exposes a one-click cross-link to /operator/integrity?failed_pages=1', () => {
+    // The whole point of the dedicated filter is that an on-call lead
+    // can land on the failed-page subset without typing a query
+    // string. Pin both the destination and the wording so a future
+    // header refactor can't silently break the cross-link.
+    render(<AssetIntegrityAlertsPanel alerts={[]} nowMs={NOW_MS} />);
+    const link = screen.getByTestId(
+      'asset-integrity-alerts-failed-pages-link',
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/operator/integrity?failed_pages=1');
+    expect(link.textContent).toMatch(/didn.+t wake on-call/i);
+  });
 });
 
 describe('parseIntegrityAlertKind — SSR query-param parsing', () => {
@@ -524,6 +537,157 @@ describe('listRecentIntegrityAlerts — symbol/kind filtering', () => {
   });
 });
 
+describe('listRecentIntegrityAlerts — failedPages filter', () => {
+  // Build a fixture covering every paging shape the filter has to
+  // discriminate: a clean success (paged but no errors and not
+  // skipped — must drop), an errors-non-empty row (must keep), a
+  // skipped row (must keep), and a legacy null-paged row (must drop
+  // — we cannot retroactively tell whether on-call was woken).
+  function makePagingDb() {
+    const chain: Record<string, unknown> = {};
+    chain.select = () => chain;
+    chain.from = () => chain;
+    chain.where = () => chain;
+    chain.orderBy = () => chain;
+    chain.limit = async () => [
+      {
+        id: 'ntf_clean',
+        subject: 's',
+        bodyJson: {
+          assetId: 'asset_a',
+          symbol: 'AXAU',
+          kind: 'oracle_stale',
+          paged: { channels: ['email', 'discord'], errors: [], skipped: false },
+        },
+        createdAt: new Date(NOW_MS - 60_000),
+        readAt: null,
+      },
+      {
+        id: 'ntf_errors',
+        subject: 's',
+        bodyJson: {
+          assetId: 'asset_b',
+          symbol: 'AXAG',
+          kind: 'oracle_stale',
+          paged: {
+            channels: ['email'],
+            errors: ['discord: HTTP 429: rate limited'],
+            skipped: false,
+          },
+        },
+        createdAt: new Date(NOW_MS - 120_000),
+        readAt: null,
+      },
+      {
+        id: 'ntf_skipped',
+        subject: 's',
+        bodyJson: {
+          assetId: 'asset_c',
+          symbol: 'AXPT',
+          kind: 'reserve_attestation_failed',
+          paged: { channels: [], errors: [], skipped: true },
+        },
+        createdAt: new Date(NOW_MS - 180_000),
+        readAt: null,
+      },
+      {
+        id: 'ntf_legacy_null',
+        subject: 's',
+        bodyJson: {
+          assetId: 'asset_d',
+          symbol: 'AXPD',
+          kind: 'oracle_stale',
+          // No `paged` blob — pre-task #258 row.
+        },
+        createdAt: new Date(NOW_MS - 240_000),
+        readAt: null,
+      },
+    ];
+    return { db: chain };
+  }
+
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it('returns every row when failedPages is unset', async () => {
+    vi.doMock('../server/db', () => makePagingDb());
+    const mod = await import('../lib/capinfra/risk/integrityAlerts');
+    const out = await mod.listRecentIntegrityAlerts({ nowMs: NOW_MS });
+    expect(out.map((a) => a.id)).toEqual([
+      'ntf_clean',
+      'ntf_errors',
+      'ntf_skipped',
+      'ntf_legacy_null',
+    ]);
+  });
+
+  it('keeps only rows whose paging failed or was skipped when failedPages=true', async () => {
+    vi.doMock('../server/db', () => makePagingDb());
+    const mod = await import('../lib/capinfra/risk/integrityAlerts');
+    const out = await mod.listRecentIntegrityAlerts({
+      nowMs: NOW_MS,
+      failedPages: true,
+    });
+    // Clean row + legacy null-paged row are excluded; errors and
+    // skipped rows are kept (these are the ones that needed a human
+    // and didn't get one).
+    expect(out.map((a) => a.id)).toEqual(['ntf_errors', 'ntf_skipped']);
+  });
+
+  it('combines failedPages with symbol/kind as AND', async () => {
+    vi.doMock('../server/db', () => makePagingDb());
+    const mod = await import('../lib/capinfra/risk/integrityAlerts');
+    const out = await mod.listRecentIntegrityAlerts({
+      nowMs: NOW_MS,
+      failedPages: true,
+      kind: 'oracle_stale',
+    });
+    // Of the failed/skipped rows, only ntf_errors is oracle_stale.
+    expect(out.map((a) => a.id)).toEqual(['ntf_errors']);
+  });
+});
+
+describe('isPagingFailedOrSkipped — predicate', () => {
+  it('returns false for legacy null paging blobs', async () => {
+    const mod = await import('../lib/capinfra/risk/integrityAlerts');
+    expect(mod.isPagingFailedOrSkipped(null)).toBe(false);
+  });
+
+  it('returns false for healthy paging (channels paged, no errors)', async () => {
+    const mod = await import('../lib/capinfra/risk/integrityAlerts');
+    expect(
+      mod.isPagingFailedOrSkipped({
+        channels: ['email'],
+        errors: [],
+        skipped: false,
+      }),
+    ).toBe(false);
+  });
+
+  it('returns true when any errors are present', async () => {
+    const mod = await import('../lib/capinfra/risk/integrityAlerts');
+    expect(
+      mod.isPagingFailedOrSkipped({
+        channels: ['email'],
+        errors: ['discord: HTTP 429: rate limited'],
+        skipped: false,
+      }),
+    ).toBe(true);
+  });
+
+  it('returns true when skipped (no channels configured)', async () => {
+    const mod = await import('../lib/capinfra/risk/integrityAlerts');
+    expect(
+      mod.isPagingFailedOrSkipped({
+        channels: [],
+        errors: [],
+        skipped: true,
+      }),
+    ).toBe(true);
+  });
+});
+
 describe('buildIntegrityHref — URL builder', () => {
   it('returns the bare path when no params are set', () => {
     expect(buildIntegrityHref({})).toBe('/operator/integrity');
@@ -539,6 +703,26 @@ describe('buildIntegrityHref — URL builder', () => {
     expect(
       buildIntegrityHref({ ack: true, symbol: null, kind: 'oracle_stale' }),
     ).toBe('/operator/integrity?ack=1&kind=oracle_stale');
+  });
+
+  it('serialises failedPages as ?failed_pages=1 alongside other filters', () => {
+    expect(buildIntegrityHref({ failedPages: true })).toBe(
+      '/operator/integrity?failed_pages=1',
+    );
+    expect(
+      buildIntegrityHref({
+        ack: true,
+        symbol: 'AXAU',
+        kind: 'oracle_stale',
+        failedPages: true,
+      }),
+    ).toBe(
+      '/operator/integrity?ack=1&symbol=AXAU&kind=oracle_stale&failed_pages=1',
+    );
+    // Falsy = drop the key (per-toggle clear).
+    expect(
+      buildIntegrityHref({ ack: true, failedPages: false }),
+    ).toBe('/operator/integrity?ack=1');
   });
 });
 
@@ -738,6 +922,162 @@ describe('OperatorIntegrityPage — filter strip', () => {
     expect(
       screen.getByTestId('operator-integrity-filter-kind').textContent,
     ).toMatch(/Reserve attestation/);
+  });
+
+  it('renders the failed-pages chip with a clear-only link that drops just failed_pages', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[]}
+        showAcknowledged={true}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter="AXAU"
+        kindFilter={null}
+        failedPagesFilter={true}
+      />,
+    );
+    const strip = screen.getByTestId('operator-integrity-filter-strip');
+    const chip = within(strip).getByTestId(
+      'operator-integrity-filter-failed-pages',
+    );
+    expect(chip.textContent).toMatch(/failed or skipped/i);
+
+    const clearOnlyFailed = within(strip).getByTestId(
+      'operator-integrity-filter-failed-pages-clear',
+    ) as HTMLAnchorElement;
+    // Per-chip clear preserves ack=1 + the symbol filter and only
+    // drops failed_pages — operators iterate filters mid-incident
+    // and the previous narrowing should not be discarded by accident.
+    expect(clearOnlyFailed.getAttribute('href')).toBe(
+      '/operator/integrity?ack=1&symbol=AXAU',
+    );
+  });
+
+  it('preserves failed_pages across the toggle and per-filter clear links', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter="AXAU"
+        kindFilter="oracle_stale"
+        failedPagesFilter={true}
+      />,
+    );
+    // ack toggle preserves symbol+kind+failed_pages.
+    const toggle = screen.getByTestId(
+      'operator-integrity-toggle',
+    ) as HTMLAnchorElement;
+    expect(toggle.getAttribute('href')).toBe(
+      '/operator/integrity?ack=1&symbol=AXAU&kind=oracle_stale&failed_pages=1',
+    );
+    // Per-symbol clear drops only symbol but keeps kind+failed_pages.
+    const clearSym = screen.getByTestId(
+      'operator-integrity-filter-symbol-clear',
+    ) as HTMLAnchorElement;
+    expect(clearSym.getAttribute('href')).toBe(
+      '/operator/integrity?kind=oracle_stale&failed_pages=1',
+    );
+    // Clear-all drops every filter (including failed_pages).
+    const clearAll = screen.getByTestId(
+      'operator-integrity-filter-clear-all',
+    ) as HTMLAnchorElement;
+    expect(clearAll.getAttribute('href')).toBe('/operator/integrity');
+  });
+
+  it('renders just the failed-pages chip when no other filters are set', () => {
+    render(
+      <OperatorIntegrityPage
+        alerts={[]}
+        showAcknowledged={false}
+        windowHours={24}
+        loadError={null}
+        generatedAtMs={NOW_MS}
+        symbolFilter={null}
+        kindFilter={null}
+        failedPagesFilter={true}
+      />,
+    );
+    const strip = screen.getByTestId('operator-integrity-filter-strip');
+    expect(
+      within(strip).queryByTestId('operator-integrity-filter-symbol'),
+    ).toBeNull();
+    expect(
+      within(strip).queryByTestId('operator-integrity-filter-kind'),
+    ).toBeNull();
+    expect(
+      within(strip).getByTestId('operator-integrity-filter-failed-pages'),
+    ).toBeTruthy();
+    // Filter-aware empty-state copy fires off the failed-pages flag too.
+    expect(
+      screen.getByTestId('operator-integrity-empty').textContent,
+    ).toMatch(/matching the current filters/i);
+  });
+
+  it('SSR getServerSideProps maps ?failed_pages=1 into props and forwards failedPages=true', async () => {
+    vi.resetModules();
+    const calls: { args: { failedPages?: unknown } }[] = [];
+    vi.doMock('../lib/capinfra/operatorAuth', () => ({
+      requireOperatorCookie: () => null,
+    }));
+    vi.doMock('../lib/capinfra/risk/integrityAlerts', async () => {
+      const actual = await vi.importActual<
+        typeof import('../lib/capinfra/risk/integrityAlerts')
+      >('../lib/capinfra/risk/integrityAlerts');
+      return {
+        ...actual,
+        listRecentIntegrityAlerts: async (args: { failedPages?: unknown }) => {
+          calls.push({ args });
+          return [];
+        },
+      };
+    });
+    const mod = await import('../pages/operator/integrity');
+    const result = await mod.getServerSideProps({
+      query: { failed_pages: '1' },
+      req: {} as unknown,
+      res: {} as unknown,
+      resolvedUrl: '/operator/integrity',
+    } as unknown as Parameters<typeof mod.getServerSideProps>[0]);
+    const props = (result as { props: Record<string, unknown> }).props;
+    expect(props.failedPagesFilter).toBe(true);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].args.failedPages).toBe(true);
+  });
+
+  it('SSR drops the failed_pages prop when the query param is missing or unrecognised', async () => {
+    vi.resetModules();
+    const calls: { args: { failedPages?: unknown } }[] = [];
+    vi.doMock('../lib/capinfra/operatorAuth', () => ({
+      requireOperatorCookie: () => null,
+    }));
+    vi.doMock('../lib/capinfra/risk/integrityAlerts', async () => {
+      const actual = await vi.importActual<
+        typeof import('../lib/capinfra/risk/integrityAlerts')
+      >('../lib/capinfra/risk/integrityAlerts');
+      return {
+        ...actual,
+        listRecentIntegrityAlerts: async (args: { failedPages?: unknown }) => {
+          calls.push({ args });
+          return [];
+        },
+      };
+    });
+    const mod = await import('../pages/operator/integrity');
+    const result = await mod.getServerSideProps({
+      query: { failed_pages: 'maybe' },
+      req: {} as unknown,
+      res: {} as unknown,
+      resolvedUrl: '/operator/integrity',
+    } as unknown as Parameters<typeof mod.getServerSideProps>[0]);
+    const props = (result as { props: Record<string, unknown> }).props;
+    expect(props.failedPagesFilter).toBe(false);
+    // We forward `undefined` rather than `false` to keep the helper's
+    // option default + boolean-strict branch clean.
+    expect(calls[0].args.failedPages).toBeUndefined();
   });
 });
 

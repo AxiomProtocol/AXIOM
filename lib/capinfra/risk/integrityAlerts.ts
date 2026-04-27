@@ -303,6 +303,33 @@ export interface ListRecentIntegrityAlertsOptions {
    * as `symbol` above.
    */
   kind?: IntegrityAlertKind;
+  /**
+   * When true, restrict results to rows where the on-call pager
+   * either failed (`paged.errors` is non-empty) or was skipped
+   * (`paged.skipped` is true) — i.e. auto-freezes that needed a
+   * human and didn't get one. Legacy rows whose `paged` blob is
+   * null are filtered out, since we cannot retroactively tell
+   * whether on-call was woken for those.
+   */
+  failedPages?: boolean;
+}
+
+/**
+ * Returns true when an `IntegrityAlertPaging` summary represents a
+ * row where on-call paging either failed (one or more channel errors)
+ * or was skipped because no channels were configured. Legacy rows
+ * with no paging blob (`null`) return false — we cannot retroactively
+ * tell whether on-call was woken, so they don't count as "failed to
+ * page" for the dedicated filter.
+ *
+ * Exported so the `/operator/integrity` page (and its tests) can
+ * pin the rule without re-deriving it from individual fields.
+ */
+export function isPagingFailedOrSkipped(
+  paged: IntegrityAlertPaging | null,
+): boolean {
+  if (!paged) return false;
+  return paged.skipped || paged.errors.length > 0;
 }
 
 /**
@@ -358,6 +385,9 @@ export async function listRecentIntegrityAlerts(
       if (view.symbol.toUpperCase() !== symbolFilter) continue;
     }
     if (kindFilter !== null && view.kind !== kindFilter) continue;
+    if (opts.failedPages === true && !isPagingFailedOrSkipped(view.paged)) {
+      continue;
+    }
     out.push(view);
   }
   return out;

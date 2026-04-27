@@ -56,9 +56,22 @@ interface Props {
   generatedAtMs: number;
   symbolFilter: string | null;
   kindFilter: IntegrityAlertKind | null;
+  /**
+   * `?failed_pages=1` toggle — when true, only rows whose on-call
+   * pager either failed or was skipped are shown. Optional in the
+   * type because earlier callers (and a few legacy test fixtures)
+   * predate the toggle; SSR always supplies a concrete boolean.
+   */
+  failedPagesFilter?: boolean;
 }
 
 function readShowAcknowledged(value: string | string[] | undefined): boolean {
+  if (!value) return false;
+  const v = Array.isArray(value) ? value[0] : value;
+  return v === '1' || v === 'true' || v === 'yes';
+}
+
+function readFailedPages(value: string | string[] | undefined): boolean {
   if (!value) return false;
   const v = Array.isArray(value) ? value[0] : value;
   return v === '1' || v === 'true' || v === 'yes';
@@ -79,11 +92,13 @@ export function buildIntegrityHref(params: {
   ack?: boolean;
   symbol?: string | null;
   kind?: IntegrityAlertKind | null;
+  failedPages?: boolean;
 }): string {
   const qs = new URLSearchParams();
   if (params.ack) qs.set('ack', '1');
   if (params.symbol) qs.set('symbol', params.symbol);
   if (params.kind) qs.set('kind', params.kind);
+  if (params.failedPages) qs.set('failed_pages', '1');
   const s = qs.toString();
   return s ? `/operator/integrity?${s}` : '/operator/integrity';
 }
@@ -93,6 +108,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   if (redirect) return redirect;
 
   const showAcknowledged = readShowAcknowledged(ctx.query.ack);
+  const failedPagesFilter = readFailedPages(ctx.query.failed_pages);
   const windowHours = Math.round(
     INTEGRITY_ALERT_DEFAULT_WINDOW_MS / (60 * 60 * 1000),
   );
@@ -113,6 +129,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       limit: 100,
       symbol: symbolFilter ?? undefined,
       kind: kindFilter ?? undefined,
+      failedPages: failedPagesFilter ? true : undefined,
     });
   } catch (err) {
     loadError = err instanceof Error ? err.message : 'unknown error';
@@ -128,6 +145,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       generatedAtMs,
       symbolFilter,
       kindFilter,
+      failedPagesFilter,
     },
   };
 };
@@ -140,31 +158,43 @@ export default function OperatorIntegrityPage({
   generatedAtMs,
   symbolFilter,
   kindFilter,
+  failedPagesFilter = false,
 }: Props) {
   const toggleHref = buildIntegrityHref({
     ack: !showAcknowledged,
     symbol: symbolFilter,
     kind: kindFilter,
+    failedPages: failedPagesFilter,
   });
   const toggleLabel = showAcknowledged
     ? 'Hide acknowledged'
     : 'Show acknowledged';
 
-  const hasFilter = symbolFilter !== null || kindFilter !== null;
+  const hasFilter =
+    symbolFilter !== null || kindFilter !== null || failedPagesFilter;
   const clearAllHref = buildIntegrityHref({
     ack: showAcknowledged,
     symbol: null,
     kind: null,
+    failedPages: false,
   });
   const clearSymbolHref = buildIntegrityHref({
     ack: showAcknowledged,
     symbol: null,
     kind: kindFilter,
+    failedPages: failedPagesFilter,
   });
   const clearKindHref = buildIntegrityHref({
     ack: showAcknowledged,
     symbol: symbolFilter,
     kind: null,
+    failedPages: failedPagesFilter,
+  });
+  const clearFailedPagesHref = buildIntegrityHref({
+    ack: showAcknowledged,
+    symbol: symbolFilter,
+    kind: kindFilter,
+    failedPages: false,
   });
 
   return (
@@ -258,6 +288,28 @@ export default function OperatorIntegrityPage({
                   className="text-dl-muted hover:text-dl-ink ml-1"
                   data-testid="operator-integrity-filter-kind-clear"
                   aria-label={`Clear kind filter ${kindFilter}`}
+                >
+                  ×
+                </Link>
+              </span>
+            )}
+            {failedPagesFilter && (
+              <span
+                className="inline-flex items-center gap-1 border border-amber-300 bg-amber-50 px-2 py-0.5"
+                data-testid="operator-integrity-filter-failed-pages"
+                title="Showing only auto-freezes whose on-call page failed or was skipped (no channels configured)."
+              >
+                <span className="text-[10px] uppercase tracking-wider text-amber-800">
+                  paging
+                </span>
+                <span className="font-bold text-amber-900">
+                  failed or skipped
+                </span>
+                <Link
+                  href={clearFailedPagesHref}
+                  className="text-amber-800 hover:text-amber-900 ml-1"
+                  data-testid="operator-integrity-filter-failed-pages-clear"
+                  aria-label="Clear failed-pages filter"
                 >
                   ×
                 </Link>

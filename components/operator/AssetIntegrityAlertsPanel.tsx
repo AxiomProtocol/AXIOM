@@ -375,6 +375,14 @@ export function AssetIntegrityAlertsPanel({
             </button>
           ) : null}
           <Link
+            href="/operator/integrity?failed_pages=1"
+            className="text-xs underline text-amber-700 hover:text-amber-900"
+            data-testid="asset-integrity-alerts-failed-pages-link"
+            title="Filter the integrity console to auto-freezes whose on-call page failed or was skipped."
+          >
+            View auto-freezes that didn&rsquo;t wake on-call →
+          </Link>
+          <Link
             href="/operator/integrity"
             className="text-xs underline text-dl-muted"
             data-testid="asset-integrity-alerts-all-link"
