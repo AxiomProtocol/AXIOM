@@ -17,6 +17,8 @@ import { DesignLawLayout } from '../../components/design-law';
 import { PRUNE_STALE_HOURS, PRUNE_GAP_WARN_HOURS } from '../../lib/admin/config';
 
 const PAGE_SIZE = 50;
+const EXPORT_STATUS_DISMISS_MS = 5000;
+const EXPORT_STATUS_ERROR_DISMISS_MS = 8000;
 
 interface FallbackEvent {
   id: number;
@@ -144,6 +146,13 @@ export function PruneStatusPanel({
     | { kind: 'error'; message: string }
     | null
   >(null);
+
+  useEffect(() => {
+    if (!exportStatus) return;
+    const delay = exportStatus.kind === 'error' ? EXPORT_STATUS_ERROR_DISMISS_MS : EXPORT_STATUS_DISMISS_MS;
+    const t = setTimeout(() => setExportStatus(null), delay);
+    return () => clearTimeout(t);
+  }, [exportStatus]);
 
   async function handleDownloadCsv() {
     setCsvLoading(true);
@@ -441,6 +450,13 @@ export function AlertLogRetentionPanel({
     | { kind: 'error'; message: string }
     | null
   >(null);
+
+  useEffect(() => {
+    if (!exportStatus) return;
+    const delay = exportStatus.kind === 'error' ? EXPORT_STATUS_ERROR_DISMISS_MS : EXPORT_STATUS_DISMISS_MS;
+    const t = setTimeout(() => setExportStatus(null), delay);
+    return () => clearTimeout(t);
+  }, [exportStatus]);
 
   async function handleDownloadCsv() {
     setCsvLoading(true);
