@@ -84,6 +84,18 @@ jobs:
           NODE_ENV: test
         run: npm run db:migrate
 
+      - name: Verify migration bootstrap is idempotent (second pass with row-count assertion)
+        env:
+          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          NODE_ENV: test
+        run: npm run db:migrate:idempotency-check
+
+      - name: Verify per-file SQL idempotency of handwritten migrations
+        env:
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          NODE_ENV: test
+        run: npm run test:migrate-idempotency
+
       - name: Run capinfra smoke + correctness tests
         run: npm run test:capinfra
 

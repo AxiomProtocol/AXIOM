@@ -113,6 +113,8 @@
     "test:e2e:prune-staleness": "playwright test e2e/prune-staleness-warning.spec.ts",
     "test:e2e:prune-history-csv": "playwright test e2e/prune-history-csv.spec.ts",
     "test:user-search-index": "vitest run tests/cap-identity-profiles-trgm-index.test.ts",
+    "db:migrate:idempotency-check": "npx ts-node scripts/check-migrate-idempotent.ts",
+    "test:migrate-idempotency": "vitest run tests/migrate-idempotency.test.ts",
     "test:prune-status-panel": "vitest run tests/prune-status-panel.test.tsx --reporter=verbose",
     "export:policy-pdfs": "tsx scripts/export-policy-pdfs.ts",
     "test:policy-pdfs": "vitest run tests/export-policy-pdfs.test.ts"

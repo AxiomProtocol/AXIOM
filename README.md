@@ -171,6 +171,12 @@ You should **not** need `SKIP_MIGRATIONS=true` just to get past a migration that
 - Handwritten SQL migrations under `drizzle/migrations/` are tracked in the `handwritten_migrations` table (filename + checksum). Once a file has been applied successfully it is recorded there and skipped next time.
 - Every handwritten migration is required to be **idempotent** — i.e. it must use `IF NOT EXISTS` / `IF EXISTS` guards (or `DO $$ ... EXCEPTION WHEN duplicate_object THEN null END $$` blocks for enums) so that it can run cleanly even on a database whose schema has already partially diverged. New handwritten migrations should follow the same pattern; if you need to drop or rename a column, guard the statement on `information_schema.columns` so the migration is still safe to re-run on a database that never had the legacy column.
 
+This contract is enforced by two automated guards in CI (see `.github/workflows/main.yml`), both run immediately after the initial migration step:
+
+1. **Row-count assertion on the second pass** (`npm run db:migrate:idempotency-check`, backed by `scripts/check-migrate-idempotent.ts`): records the `handwritten_migrations` row count, runs the full migration bootstrap a second time, then records the count again and exits non-zero if any rows were inserted. This catches migrations that are not correctly tracked (and would therefore re-run on every local dev bootstrap).
+
+2. **Per-file SQL re-execution check** (`npm run test:migrate-idempotency`, backed by `tests/migrate-idempotency.test.ts`): for each `.sql` file in `drizzle/migrations/`, opens a transaction, temporarily removes the file's tracking row, re-executes the raw SQL against the fully-migrated schema, then rolls back (Postgres DDL is transactional). This catches unguarded DDL such as `ADD COLUMN` without `IF NOT EXISTS` — the column already exists in the committed schema so the statement fails — even before the tracking mechanism would have a chance to protect it.
+
 If a re-run of `npm run test:vitest` ever fails inside `[migrate] Applying handwritten migration …`, that is a bug in the migration itself (not something to paper over with `SKIP_MIGRATIONS=true`); fix the migration to be idempotent.
 
 ### Production Build
