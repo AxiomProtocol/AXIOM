@@ -106,7 +106,7 @@ async function main() {
     deployedAt:     new Date().toISOString(),
     deployer:       deployer.address,
     treasury:       TREASURY_ADDRESS,
-    minterRole:     MINTER_ROLE,
+    minterRole:     founderMinterRole,
     contracts: {
       AxiomFounderBadge: {
         address:            founderAddress,
