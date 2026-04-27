@@ -70,6 +70,8 @@ interface ParticipationTypeEligibility {
   mintedTxHash?: string | null;
 }
 interface AllEligibility {
+  founderContract?: string | null;
+  participationContract?: string | null;
   founder: FounderEligibility;
   participation: ParticipationTypeEligibility[];
 }
@@ -86,6 +88,7 @@ function WalletMintSection() {
 
   const [eligibility,  setEligibility]  = useState<AllEligibility | null>(null);
   const [checking,     setChecking]     = useState(false);
+  const [checkErr,     setCheckErr]     = useState('');
   const [mintingFounder, setMintingFounder] = useState(false);
   const [mintingPart,  setMintingPart]  = useState<number | null>(null);
   const [founderResult, setFounderResult] = useState<{ tokenId: number; txHash: string; rarityTier: string } | null>(null);
@@ -96,10 +99,17 @@ function WalletMintSection() {
 
   const checkEligibility = useCallback(async (wallet: string) => {
     setChecking(true);
+    setCheckErr('');
     try {
       const res  = await fetch(`/api/nft/eligibility?wallet=${wallet}&all=true`);
       const data = await res.json();
-      if (res.ok) setEligibility(data);
+      if (res.ok) {
+        setEligibility(data);
+      } else {
+        setCheckErr(data.error ?? `Eligibility check failed (${res.status})`);
+      }
+    } catch (err: unknown) {
+      setCheckErr(err instanceof Error ? err.message : 'Could not reach the eligibility service — please try again.');
     } finally {
       setChecking(false);
     }
@@ -107,7 +117,7 @@ function WalletMintSection() {
 
   useEffect(() => {
     if (isConnected && address) checkEligibility(address);
-    else setEligibility(null);
+    else { setEligibility(null); setCheckErr(''); }
   }, [isConnected, address, checkEligibility]);
 
   // ── Founder Badge mint ────────────────────────────────────────────────────
@@ -198,6 +208,31 @@ function WalletMintSection() {
     );
   }
 
+  // ── Render: eligibility fetch error ──────────────────────────────────────
+  if (checkErr && !checking) {
+    return (
+      <section style={{ marginBottom: '3rem' }}>
+        <h2 style={{ fontFamily: 'serif', fontSize: '1.25rem', fontWeight: 700, color: '#FAFAFA', marginBottom: '1rem', borderBottom: '1px solid #374151', paddingBottom: '0.5rem' }}>
+          Claim Your Badges
+        </h2>
+        <div style={{ background: '#1C0000', border: '1px solid #7F1D1D', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <div style={mono({ fontSize: '10px', color: '#FCA5A5', letterSpacing: '1px', marginBottom: '0.25rem' })}>
+              ELIGIBILITY CHECK FAILED
+            </div>
+            <div style={mono({ fontSize: '10px', color: '#6B7280' })}>{checkErr}</div>
+          </div>
+          <button
+            onClick={() => address && checkEligibility(address)}
+            style={{ background: '#1F2937', color: '#9CA3AF', border: '1px solid #374151', padding: '5px 14px', fontFamily: 'monospace', fontSize: '10px', cursor: 'pointer' }}
+          >
+            RETRY
+          </button>
+        </div>
+      </section>
+    );
+  }
+
   // ── Render: checking ─────────────────────────────────────────────────────
   if (checking) {
     return (
@@ -217,8 +252,10 @@ function WalletMintSection() {
     );
   }
 
-  const founderElig = eligibility?.founder;
-  const partElig    = eligibility?.participation ?? [];
+  const founderElig        = eligibility?.founder;
+  const partElig           = eligibility?.participation ?? [];
+  const founderContract    = eligibility?.founderContract;
+  const partContract       = eligibility?.participationContract;
 
   // ── Render: results ───────────────────────────────────────────────────────
   return (
@@ -268,15 +305,26 @@ function WalletMintSection() {
                 </span>
               )}
             </div>
-            {(founderResult?.txHash ?? founderElig?.mintedTxHash) && (
-              <a
-                href={`${ARBISCAN_BASE}/tx/${founderResult?.txHash ?? founderElig?.mintedTxHash}`}
-                target="_blank" rel="noopener noreferrer"
-                style={mono({ fontSize: '10px', color: '#3B82F6', textDecoration: 'none' })}
-              >
-                View mint transaction on Arbiscan ↗
-              </a>
-            )}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+              {founderContract && (founderResult?.tokenId ?? founderElig?.mintedTokenId) && (
+                <a
+                  href={`${ARBISCAN_BASE}/nft/${founderContract}/${founderResult?.tokenId ?? founderElig?.mintedTokenId}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={mono({ fontSize: '10px', color: '#3B82F6', textDecoration: 'none' })}
+                >
+                  View NFT on Arbiscan ↗
+                </a>
+              )}
+              {(founderResult?.txHash ?? founderElig?.mintedTxHash) && (
+                <a
+                  href={`${ARBISCAN_BASE}/tx/${founderResult?.txHash ?? founderElig?.mintedTxHash}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={mono({ fontSize: '10px', color: '#6B7280', textDecoration: 'none' })}
+                >
+                  Mint transaction ↗
+                </a>
+              )}
+            </div>
           </div>
         )}
 
@@ -351,14 +399,23 @@ function WalletMintSection() {
                 </div>
 
                 {isMinted && (
-                  <div style={mono({ fontSize: '9px', color: '#52B788', marginBottom: '0.5rem' })}>
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                    {partContract && (
+                      <a
+                        href={`${ARBISCAN_BASE}/nft/${partContract}/${type.id}`}
+                        target="_blank" rel="noopener noreferrer"
+                        style={mono({ fontSize: '9px', color: '#3B82F6', textDecoration: 'none' })}
+                      >
+                        View NFT ↗
+                      </a>
+                    )}
                     {(result?.txHash ?? pe?.mintedTxHash) && (
                       <a
                         href={`${ARBISCAN_BASE}/tx/${result?.txHash ?? pe?.mintedTxHash}`}
                         target="_blank" rel="noopener noreferrer"
-                        style={{ color: '#3B82F6', textDecoration: 'none' }}
+                        style={mono({ fontSize: '9px', color: '#6B7280', textDecoration: 'none' })}
                       >
-                        View on Arbiscan ↗
+                        Mint tx ↗
                       </a>
                     )}
                   </div>

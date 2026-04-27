@@ -42,7 +42,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           };
         });
 
-        return res.status(200).json({ walletAddress: walletAddress.toLowerCase(), founder, participation });
+        return res.status(200).json({
+          walletAddress:        walletAddress.toLowerCase(),
+          founderContract:      process.env.NFT_CONTRACT_FOUNDER      ?? null,
+          participationContract: process.env.NFT_CONTRACT_PARTICIPATION ?? null,
+          founder,
+          participation,
+        });
       }
 
       // Single-collection mode (original behaviour)
