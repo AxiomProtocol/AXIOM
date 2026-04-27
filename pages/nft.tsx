@@ -20,6 +20,41 @@ const RARITY_LABELS: Record<string, string> = {
   Common:    '60% — Standard Issue',
 };
 
+const HERO_CARDS: Array<{ src: string; label: string }> = [
+  { src: '/nft-preview/founder-1.png', label: 'Axiom Founder Badge #001 — The Architect' },
+  { src: '/nft-preview/founder-2.png', label: 'Axiom Founder Badge #002 — The Sovereign' },
+  { src: '/nft-preview/founder-3.png', label: 'Axiom Founder Badge #003 — The Vault' },
+];
+
+function RotatingHero({ maxWidth }: { maxWidth: number }) {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setIdx(i => (i + 1) % HERO_CARDS.length), 5000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div style={{ position: 'relative', maxWidth: `${maxWidth}px`, width: '100%' }}>
+      {HERO_CARDS.map((card, i) => (
+        <img
+          key={card.src}
+          src={card.src}
+          alt={i === idx ? card.label : ''}
+          aria-hidden={i === idx ? undefined : true}
+          style={{
+            ...(i === 0
+              ? { position: 'relative', display: 'block' }
+              : { position: 'absolute', top: 0, left: 0 }),
+            width: '100%',
+            height: 'auto',
+            opacity: i === idx ? 1 : 0,
+            transition: 'opacity 0.6s ease',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 interface CollectionStats {
   deployed: boolean;
   contractAddress?: string;
@@ -195,11 +230,9 @@ function WalletMintSection() {
           Claim Your Badges
         </h2>
         <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center' }}>
-          <img
-            src="/nft-preview/founder-1.png"
-            alt="Axiom Founder Badge artwork"
-            style={{ maxWidth: '280px', width: '100%', height: 'auto', display: 'block', marginBottom: '0.25rem' }}
-          />
+          <div style={{ marginBottom: '0.25rem' }}>
+            <RotatingHero maxWidth={280} />
+          </div>
           <div style={mono({ fontSize: '10px', color: '#C9A84C', letterSpacing: '2px' })}>
             AXIOM FOUNDER BADGE · FOUNDING 100
           </div>
@@ -303,11 +336,7 @@ function WalletMintSection() {
 
         {/* Hero artwork */}
         <div style={{ background: '#FAFAF8', border: '1px solid #E5E7EB', padding: '1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
-          <img
-            src="/nft-preview/founder-1.png"
-            alt="Axiom Founder Badge artwork"
-            style={{ maxWidth: '320px', width: '100%', height: 'auto', display: 'block' }}
-          />
+          <RotatingHero maxWidth={320} />
         </div>
 
         {/* Already minted */}
