@@ -1,0 +1,48 @@
+{
+  "collection": "Axiom Participation",
+  "contract": "0x67f8c7da647AbD50AFb1E2137553Be8c174342Ce",
+  "results": [
+    {
+      "tokenId": 1,
+      "rarityTier": "Common",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 2,
+      "rarityTier": "Uncommon",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 3,
+      "rarityTier": "Rare",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 4,
+      "rarityTier": "Uncommon",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 5,
+      "rarityTier": "Common",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 6,
+      "rarityTier": "Common",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    }
+  ]
+}

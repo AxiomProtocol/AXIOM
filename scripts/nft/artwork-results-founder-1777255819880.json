@@ -1,0 +1,76 @@
+{
+  "collection": "Axiom Founder Badge",
+  "contract": "0x4A651D30097E2b7326A83CbB32c02913dB8b3572",
+  "results": [
+    {
+      "tokenId": 1,
+      "rarityTier": "Uncommon",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 2,
+      "rarityTier": "Uncommon",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 3,
+      "rarityTier": "Common",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 4,
+      "rarityTier": "Rare",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 5,
+      "rarityTier": "Common",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 6,
+      "rarityTier": "Common",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 7,
+      "rarityTier": "Common",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 8,
+      "rarityTier": "Uncommon",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 9,
+      "rarityTier": "Rare",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    },
+    {
+      "tokenId": 10,
+      "rarityTier": "Common",
+      "status": "ok",
+      "imageCid": null,
+      "imageStored": true
+    }
+  ]
+}
