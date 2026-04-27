@@ -101,3 +101,12 @@ export async function markRead(id: string): Promise<CapNotification | null> {
     .returning();
   return row ?? null;
 }
+
+export async function markUnread(id: string): Promise<CapNotification | null> {
+  const [row] = await db
+    .update(capNotifications)
+    .set({ readAt: null })
+    .where(eq(capNotifications.id, id))
+    .returning();
+  return row ?? null;
+}

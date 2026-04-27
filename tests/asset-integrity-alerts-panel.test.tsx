@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 
 vi.mock('next/link', () => ({
   default: ({
@@ -41,6 +41,7 @@ const {
   buildAssetLink,
   summarizeAlertsForConfirm,
   MARK_ALL_READ_CONFIRM_THRESHOLD,
+  UNDO_TIMEOUT_MS,
   formatTestPageRateLimitedMessage,
 } = await import('../components/operator/AssetIntegrityAlertsPanel');
 
@@ -563,6 +564,236 @@ describe('AssetIntegrityAlertsPanel — mark all read confirmation (task #300)',
     expect(
       screen.getByTestId('asset-integrity-alerts-notice').textContent,
     ).toMatch(new RegExp(`Marked ${count} of ${count} read`));
+  });
+});
+
+describe('AssetIntegrityAlertsPanel — undo after mark all read (task #325)', () => {
+  beforeEach(() => {
+    // shouldAdvanceTime lets real wall-clock time pass so waitFor can poll,
+    // while still allowing vi.advanceTimersByTime for the undo-expiry test.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('shows an Undo button inside the success notice after a full-success batch', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '',
+      json: async () => ({
+        attempted: 2,
+        marked: ['ntf_a', 'ntf_b'],
+        notFound: [],
+        failed: [],
+      }),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[
+          makeAlert({ id: 'ntf_a', symbol: 'AXAU' }),
+          makeAlert({ id: 'ntf_b', symbol: 'AXAG' }),
+        ]}
+        nowMs={NOW_MS}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('asset-integrity-alerts-mark-all-read'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('asset-integrity-alerts-notice')).toBeTruthy();
+    });
+
+    expect(screen.getByTestId('asset-integrity-alerts-undo')).toBeTruthy();
+    expect(
+      screen.getByTestId('asset-integrity-alerts-notice').textContent,
+    ).toMatch(/Marked 2 of 2 read/);
+  });
+
+  it('does NOT show the Undo button on partial failure (error path)', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '',
+      json: async () => ({
+        attempted: 2,
+        marked: ['ntf_a'],
+        notFound: [],
+        failed: [{ id: 'ntf_b', error: 'boom' }],
+      }),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[
+          makeAlert({ id: 'ntf_a', symbol: 'AXAU' }),
+          makeAlert({ id: 'ntf_b', symbol: 'AXAG' }),
+        ]}
+        nowMs={NOW_MS}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('asset-integrity-alerts-mark-all-read'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeTruthy();
+    });
+
+    expect(screen.queryByTestId('asset-integrity-alerts-undo')).toBeNull();
+    expect(screen.queryByTestId('asset-integrity-alerts-notice')).toBeNull();
+  });
+
+  it('clicking Undo POSTs to mark-unread-batch and restores the dismissed rows', async () => {
+    let callCount = 0;
+    const fetchMock = vi.fn(async (url: string) => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          ok: true,
+          status: 200,
+          text: async () => '',
+          json: async () => ({
+            attempted: 2,
+            marked: ['ntf_a', 'ntf_b'],
+            notFound: [],
+            failed: [],
+          }),
+        } as unknown as Response;
+      }
+      return {
+        ok: true,
+        status: 200,
+        text: async () => '',
+        json: async () => ({
+          attempted: 2,
+          marked: ['ntf_a', 'ntf_b'],
+          notFound: [],
+          failed: [],
+        }),
+      } as unknown as Response;
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[
+          makeAlert({ id: 'ntf_a', symbol: 'AXAU' }),
+          makeAlert({ id: 'ntf_b', symbol: 'AXAG' }),
+        ]}
+        nowMs={NOW_MS}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('asset-integrity-alerts-mark-all-read'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('asset-integrity-alerts-undo')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId('asset-integrity-alerts-undo'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('asset-integrity-alert-ntf_a')).toBeTruthy();
+      expect(screen.getByTestId('asset-integrity-alert-ntf_b')).toBeTruthy();
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [undoUrl, undoInit] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(undoUrl).toBe(
+      '/api/capinfra/operator/notifications/mark-unread-batch',
+    );
+    expect(undoInit.method).toBe('POST');
+    expect(JSON.parse(undoInit.body as string)).toEqual({
+      ids: ['ntf_a', 'ntf_b'],
+    });
+  });
+
+  it('undo failure surfaces an error banner', async () => {
+    let callCount = 0;
+    const fetchMock = vi.fn(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          ok: true,
+          status: 200,
+          text: async () => '',
+          json: async () => ({
+            attempted: 1,
+            marked: ['ntf_a'],
+            notFound: [],
+            failed: [],
+          }),
+        } as unknown as Response;
+      }
+      return {
+        ok: false,
+        status: 500,
+        text: async () => 'internal error',
+        json: async () => ({}),
+      } as unknown as Response;
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[makeAlert({ id: 'ntf_a', symbol: 'AXAU' })]}
+        nowMs={NOW_MS}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('asset-integrity-alerts-mark-all-read'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('asset-integrity-alerts-undo')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId('asset-integrity-alerts-undo'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toMatch(/undo failed/i);
+    });
+  });
+
+  it('the notice auto-collapses and the Undo button disappears after UNDO_TIMEOUT_MS', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '',
+      json: async () => ({
+        attempted: 1,
+        marked: ['ntf_a'],
+        notFound: [],
+        failed: [],
+      }),
+    } as unknown as Response));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[makeAlert({ id: 'ntf_a', symbol: 'AXAU' })]}
+        nowMs={NOW_MS}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('asset-integrity-alerts-mark-all-read'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('asset-integrity-alerts-undo')).toBeTruthy();
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(UNDO_TIMEOUT_MS);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('asset-integrity-alerts-notice')).toBeNull();
+      expect(screen.queryByTestId('asset-integrity-alerts-undo')).toBeNull();
+    });
   });
 });
 

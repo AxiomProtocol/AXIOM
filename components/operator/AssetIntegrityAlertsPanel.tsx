@@ -12,7 +12,7 @@
  */
 
 import Link from 'next/link';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   IntegrityAlertPaging,
   IntegrityAlertView,
@@ -122,6 +122,14 @@ interface BatchResponse {
 export const MARK_ALL_READ_CONFIRM_THRESHOLD = 5;
 
 /**
+ * How long (in milliseconds) the "Undo" affordance stays available
+ * after a successful "Mark all read" batch. After this window the
+ * success notice auto-collapses so the link can't be triggered hours
+ * after the fact.
+ */
+export const UNDO_TIMEOUT_MS = 30_000;
+
+/**
  * Build the human-readable summary line shown on the confirm dialog,
  * e.g. "AXAU (Oracle stale), AXAG (Reserve attestation), AXPT
  * (Redemption), …+2 more". Exported so the test suite can pin it
@@ -200,10 +208,28 @@ export function AssetIntegrityAlertsPanel({
   const [batchPending, setBatchPending] = useState(false);
   const [testPagePending, setTestPagePending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [undoBatch, setUndoBatch] = useState<string[] | null>(null);
+  const [undoPending, setUndoPending] = useState(false);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (undoBatch === null) return;
+    undoTimerRef.current = setTimeout(() => {
+      setUndoBatch(null);
+      setNotice(null);
+    }, UNDO_TIMEOUT_MS);
+    return () => {
+      if (undoTimerRef.current !== null) {
+        clearTimeout(undoTimerRef.current);
+        undoTimerRef.current = null;
+      }
+    };
+  }, [undoBatch]);
 
   const onSendTestPage = useCallback(async () => {
     setError(null);
     setNotice(null);
+    setUndoBatch(null);
     setTestPagePending(true);
     try {
       const res = await fetch('/api/capinfra/risk/integrity/test-page', {
@@ -263,6 +289,7 @@ export function AssetIntegrityAlertsPanel({
   const onMarkRead = useCallback(async (id: string) => {
     setError(null);
     setNotice(null);
+    setUndoBatch(null);
     setPending((prev) => {
       const next = new Set(prev);
       next.add(id);
@@ -299,6 +326,7 @@ export function AssetIntegrityAlertsPanel({
   const runMarkAllRead = useCallback(async () => {
     setError(null);
     setNotice(null);
+    setUndoBatch(null);
     const ids = visible.map((a) => a.id);
     if (ids.length === 0) return;
     setBatchPending(true);
@@ -337,6 +365,10 @@ export function AssetIntegrityAlertsPanel({
           `Marked ${data.marked.length} of ${data.attempted} — ${failedCount} could not be marked read.`,
         );
       } else {
+        // Full success: surface an undo affordance for UNDO_TIMEOUT_MS.
+        if (data.marked.length > 0) {
+          setUndoBatch(data.marked);
+        }
         setNotice(`Marked ${data.marked.length} of ${data.attempted} read.`);
       }
     } catch (err) {
@@ -345,6 +377,43 @@ export function AssetIntegrityAlertsPanel({
       setBatchPending(false);
     }
   }, [visible]);
+
+  const onUndo = useCallback(async () => {
+    if (!undoBatch) return;
+    const ids = undoBatch;
+    setUndoBatch(null);
+    setNotice(null);
+    setUndoPending(true);
+    try {
+      const res = await fetch(
+        '/api/capinfra/operator/notifications/mark-unread-batch',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids }),
+        },
+      );
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        throw new Error(`undo failed: ${res.status} ${body || ''}`.trim());
+      }
+      const data = (await res.json().catch(() => null)) as BatchResponse | null;
+      if (!data || !Array.isArray(data.marked)) {
+        throw new Error('undo failed: malformed response');
+      }
+      if (data.marked.length > 0) {
+        setDismissed((prev) => {
+          const next = new Set(prev);
+          for (const mid of data.marked) next.delete(mid);
+          return next;
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to undo');
+    } finally {
+      setUndoPending(false);
+    }
+  }, [undoBatch]);
 
   const onMarkAllRead = useCallback(() => {
     if (visible.length === 0) return;
@@ -427,10 +496,21 @@ export function AssetIntegrityAlertsPanel({
       {notice ? (
         <div
           role="status"
-          className="mb-3 border-l-4 border-l-green-500 border border-dl-border bg-green-50 p-2 text-xs font-mono text-green-800"
+          className="mb-3 border-l-4 border-l-green-500 border border-dl-border bg-green-50 p-2 text-xs font-mono text-green-800 flex items-baseline gap-2 flex-wrap"
           data-testid="asset-integrity-alerts-notice"
         >
-          {notice}
+          <span>{notice}</span>
+          {undoBatch !== null ? (
+            <button
+              type="button"
+              onClick={onUndo}
+              disabled={undoPending}
+              className="underline hover:no-underline disabled:opacity-50"
+              data-testid="asset-integrity-alerts-undo"
+            >
+              {undoPending ? 'Undoing…' : 'Undo'}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
