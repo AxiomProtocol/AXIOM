@@ -121,8 +121,8 @@ function NFTCard({ t, index }: { t: TokenPreview; index: number }) {
             alt={`${label} #${t.tokenId}`}
             onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0'; }}
             style={{
-              width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-              transform: hovering ? 'scale(1.05)' : 'scale(1)',
+              width: '100%', height: '100%', objectFit: 'contain', display: 'block',
+              transform: hovering ? 'scale(1.03)' : 'scale(1)',
               transition: 'transform 0.5s ease',
             }}
           />
