@@ -76,7 +76,7 @@ const ROWS: Row[] = [
   {
     failure: 'Anonymous founder rug',
     protection:
-      'Real legal name, real LinkedIn, real US-incorporated operating entity. BitGo multi-party authorization on Arbitrum One. Increase fiat custody, FDIC-insured at the depository layer.',
+      'Real legal name, real LinkedIn, real US-incorporated operating entity. BitGo multi-party authorization on Arbitrum One for institutional crypto custody.',
     maturity: 'LIVE',
     verifyLabel: 'Team page',
     verifyHref: '/trust/team',
@@ -132,7 +132,7 @@ const ROWS: Row[] = [
   {
     failure: 'Custody comingling',
     protection:
-      'AXUSD reserves, AXAU reserves, operating cash, and Loss Coverage Reserve each held at distinct addresses with distinct lines on the solvency snapshot. Increase FDIC-insured depository; BitGo multi-party crypto custody.',
+      'AXUSD reserves, AXAU reserves, operating cash, and Loss Coverage Reserve each held at distinct addresses with distinct lines on the solvency snapshot. BitGo multi-party crypto custody on Arbitrum One.',
     maturity: 'LIVE',
     verifyLabel: 'Security page',
     verifyHref: '/trust/security',

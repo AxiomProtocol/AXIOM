@@ -1313,7 +1313,6 @@ export default function DealWorkspacePage() {
                         </div>
                         <p className="text-[10px] text-dl-gray font-dl-mono">
                           Earnest money is held in escrow pending contract execution. Upon closing, it is applied to the purchase price. Upon contract cancellation, it is returned per the terms of the purchase agreement.
-                          <a href="/banking/my-account" className="text-dl-navy underline ml-1 hover:no-underline">Manage your account</a>
                         </p>
                       </div>
                     ) : (

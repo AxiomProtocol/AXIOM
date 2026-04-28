@@ -866,8 +866,7 @@ function CapitalCallsTab({ capitalCalls, nexusParticipant }: { capitalCalls: any
                   </div>
                 </div>
                 <p className="text-[10px] text-dl-gray font-dl-mono">
-                  ACH transfers settle in 1–2 business days. Operations applies your capital call within the same business day as settlement.
-                  <a href="/banking/my-account" className="text-dl-navy underline ml-1 hover:no-underline">View full account details</a>
+                  Capital call settlement instructions are issued by Operations at the time of each call. Reach out to ops if you need updated routing details.
                 </p>
               </div>
             ) : (

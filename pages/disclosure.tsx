@@ -373,6 +373,10 @@ export default function DisclosurePage() {
                   <p className="text-xs text-dl-gray">Coverage Ratio (Snapshot Basis)</p>
                 </div>
                 <p className="text-lg font-dl-mono text-dl-navy font-bold">{snapshot ? fmtPct(snapshot.coverageRatio) : '--'}</p>
+                <p className="text-[10px] text-dl-gray font-dl-mono mt-2 leading-tight">
+                  Computed on the gross-liability basis as the conservative measure.{' '}
+                  <a href="#external-exposure" className="underline hover:text-dl-navy">See external creditor exposure below ↓</a>
+                </p>
               </div>
               <div className="px-5 py-4 border-t-4 border-t-yellow-700">
                 <div className="flex items-center gap-2 mb-2">
@@ -386,7 +390,7 @@ export default function DisclosurePage() {
             </div>
 
             {snapshot && snapshot.liabilitiesExternalUsd !== null && (
-              <div className="border border-dl-border border-t-0 px-6 py-4 bg-dl-bg">
+              <div id="external-exposure" className="border border-dl-border border-t-0 px-6 py-4 bg-dl-bg scroll-mt-24">
                 <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
                   <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">External Creditor Exposure (Net of Internal Liquidity)</p>
                   <p className="text-base font-dl-mono text-dl-navy font-semibold">{fmtUsd(snapshot.liabilitiesExternalUsd)}</p>

@@ -65,9 +65,9 @@ const CAPITAL_FLOW = [
   {
     step: 'USD',
     layer: '00',
-    title: 'Banking Entry',
-    why: 'Dollar capital enters the protocol through FDIC-insured fiat rails (Increase) or institutional crypto custody (BitGo). This is the only fiat on-ramp. KYC/AML compliance is enforced at this layer.',
-    href: '/banking',
+    title: 'Onramp + Custody',
+    why: 'Dollar capital enters the protocol through Coinbase Onramp (card-to-USDC on Arbitrum) and is held in institutional crypto custody via BitGo CaaS. KYC/AML compliance is enforced at the onramp layer by Coinbase.',
+    href: '/onramp',
   },
   {
     step: 'AXUSD',
@@ -102,13 +102,13 @@ const CAPITAL_FLOW = [
 const LAYERS = [
   {
     id: '00',
-    title: 'Banking / Fiat Entry',
+    title: 'Onramp + Custody',
     status: 'LIVE' as Status,
     icon: '/visuals/icon-banking.png',
-    what: 'The primary dollar on-ramp and off-ramp. FDIC-insured fiat rails via Increase (ACH, wire, account infrastructure). Institutional crypto custody via BitGo CaaS on Arbitrum One.',
-    components: ['Increase (FDIC-insured)', 'BitGo CaaS (crypto custody)', 'ACH / Wire rails', 'KYC/AML compliance layer'],
-    href: '/banking',
-    cta: 'View Banking Infrastructure',
+    what: 'The primary dollar entry path. Coinbase Onramp settles card payments directly to USDC on Arbitrum One; institutional crypto custody is provided by BitGo CaaS. KYC/AML compliance is enforced at the onramp layer by Coinbase.',
+    components: ['Coinbase Onramp (card → USDC)', 'BitGo CaaS (crypto custody)', 'KYC/AML at onramp layer'],
+    href: '/onramp',
+    cta: 'View Card Onramp',
   },
   {
     id: '01',
@@ -190,7 +190,6 @@ const PATH_DATA = [
     description: 'Flows where an operations team mediates part of the process. Used for higher-touch or off-chain settlement requirements.',
     examples: [
       'AXAU purchase via AXUSD fulfillment: user submits request, ops team acquires PAXG, deposits to vault, mints AXAU',
-      'Banking wire/ACH: routed through Increase with ops oversight',
       'Capital program enrollment: Lending Fund and SPV programs require KYC documentation and manual review',
     ],
     gating: 'Ops-assisted flows are explicitly labeled throughout the platform. Settlement timelines and processes are disclosed at point of entry.',

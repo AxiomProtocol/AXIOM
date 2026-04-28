@@ -1182,23 +1182,6 @@ export default function LendingFundPage() {
             </div>
           </div>
 
-          {/* My Nexus Account CTA */}
-          <div className="border border-dl-border bg-dl-bg-alt p-6 mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <p className="font-dl-serif text-dl-navy text-lg mb-1">Get Your Dedicated Account Number</p>
-              <p className="text-xs text-dl-gray leading-relaxed">
-                Every registered participant receives a unique ACH routing and account number through the Axiom Nexus Account layer.
-                Your deposits are routed directly to your LP position with zero co-mingling.
-              </p>
-            </div>
-            <a
-              href="/banking/my-account"
-              className="inline-block border border-dl-navy bg-dl-navy text-white font-dl-mono text-xs uppercase tracking-wider px-6 py-3 hover:bg-dl-navy/90 transition-colors whitespace-nowrap"
-            >
-              My Nexus Account
-            </a>
-          </div>
-
           {/* FAQ */}
           <SectionHeading>Frequently Asked Questions</SectionHeading>
           <div className="border border-dl-border divide-y divide-dl-border">

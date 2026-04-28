@@ -152,7 +152,7 @@ function Hero() {
 // ─── Architecture Strip ───────────────────────────────────────────────────────
 function ArchitectureStrip() {
   const layers = [
-    { layer: 'Layer 00', label: 'Banking', token: 'Increase / BitGo', detail: 'FDIC-insured fiat entry layer' },
+    { layer: 'Layer 00', label: 'Onramp + Custody', token: 'Coinbase Onramp / BitGo', detail: 'Card-to-USDC entry; institutional crypto custody' },
     { layer: 'Layer 01', label: 'Settlement', token: 'AXUSD', detail: 'PSM-issued USD settlement token', active: true },
     { layer: 'Layer 01.5', label: 'Exchange', token: 'Camelot + EulerSwap', detail: 'Peg maintenance and liquidity' },
     { layer: 'Layer 02', label: 'Reserve', token: 'AXAU', detail: 'PAXG-backed gold reserve unit' },

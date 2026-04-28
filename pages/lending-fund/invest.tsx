@@ -763,9 +763,6 @@ export default function InvestPage() {
                               ? 'Your dedicated Axiom Nexus account is provisioned — no memo required.'
                               : `Registered as ${lpParticipant.fullName} · Ref: ${lpParticipant.participantRef}`}
                           </p>
-                          <a href="/banking/my-account" className="text-xs text-dl-navy font-dl-mono underline hover:no-underline shrink-0 ml-4">
-                            My Full Account →
-                          </a>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-0 border border-dl-border mb-5">
