@@ -1,3 +1,43 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// KILL SWITCH (Increase account cancelled — 2026-04-28)
+// ─────────────────────────────────────────────────────────────────────────────
+// Set INCREASE_DISABLED=true (default behavior when API key is absent) to make
+// every Increase API call short-circuit with a typed IncreaseDisabledError.
+// HTTP handlers should catch this and return 503 with reason BANKING_DISABLED.
+// Leaving the secrets in place lets us reverse the kill switch instantly if a
+// new Increase account is provisioned, but the kill switch ALWAYS supersedes
+// the secrets.
+//
+// To re-enable: unset INCREASE_DISABLED (or set to 'false') AND ensure
+// INCREASE_API_KEY is present.
+// ─────────────────────────────────────────────────────────────────────────────
+export class IncreaseDisabledError extends Error {
+  readonly code = 'BANKING_DISABLED';
+  readonly status = 503;
+  readonly reason: string;
+  constructor(reason: string) {
+    super(`Banking provider unavailable: ${reason}`);
+    this.name = 'IncreaseDisabledError';
+    this.reason = reason;
+  }
+}
+
+export function isIncreaseDisabled(): { disabled: boolean; reason: string } {
+  if (process.env.INCREASE_DISABLED === 'true') {
+    return {
+      disabled: true,
+      reason: 'Increase provider disabled by operator (INCREASE_DISABLED=true). Account cancelled, replacement banking provider not yet selected.',
+    };
+  }
+  if (!process.env.INCREASE_API_KEY) {
+    return {
+      disabled: true,
+      reason: 'INCREASE_API_KEY not set — Increase provider unavailable.',
+    };
+  }
+  return { disabled: false, reason: '' };
+}
+
 // Environment-aware base URL:
 // INCREASE_ENVIRONMENT=production → live Increase API (https://api.increase.com)
 // Anything else (or unset) → sandbox (https://sandbox.increase.com)
@@ -30,8 +70,12 @@ async function increaseRequest<T>(
   body?: Record<string, unknown>,
   idempotencyKey?: string,
 ): Promise<T> {
+  const killSwitch = isIncreaseDisabled();
+  if (killSwitch.disabled) {
+    throw new IncreaseDisabledError(killSwitch.reason);
+  }
   const apiKey = process.env.INCREASE_API_KEY;
-  if (!apiKey) throw new Error('INCREASE_API_KEY environment variable is not set');
+  if (!apiKey) throw new IncreaseDisabledError('INCREASE_API_KEY environment variable is not set');
   const headers: Record<string, string> = {
     Authorization: `Bearer ${apiKey}`,
     'Content-Type': 'application/json',

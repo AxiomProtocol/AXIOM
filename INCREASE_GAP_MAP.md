@@ -1,5 +1,16 @@
 # Increase Banking Layer — Gap Remediation Map
 
+> ## ⚠ DEPRECATED 2026-04-28
+> The Increase account was cancelled. Every Increase API call now short-circuits via `IncreaseDisabledError` (HTTP 503), gated by the `INCREASE_DISABLED=true` env var. The user-facing UI for banking, DAO payroll, rent collection, and the Stripe→Increase card rail has been removed from navigation. Code and database tables are preserved.
+>
+> **The gaps below are no longer being remediated.** This document is retained for historical context — if Increase is ever re-enabled, or if a new banking provider is selected, the gap analysis is still useful as a checklist of operational concerns to address.
+>
+> The provider-agnostic seam for the next banking integration lives at `lib/banking/` (`types.ts`, `registry.ts`, `README.md`).
+>
+> See `replit.md` → "Banking Infrastructure" for current status.
+
+---
+
 **Generated:** 2026-04-01  
 **Source:** Axiom Increase Banking Audit (see `AUDIT_REPORT.md`)  
 **Audit snapshot:** commit `27406198` — all gap descriptions reflect the codebase at that point  

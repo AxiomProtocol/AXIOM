@@ -16,8 +16,12 @@
  */
 
 import { createHash } from 'node:crypto';
+import { isIncreaseDisabled, IncreaseDisabledError } from '../../../services/IncreaseService';
 
 export type IncreaseEnvironment = 'sandbox' | 'production';
+
+const DISABLED_MESSAGE =
+  'Increase provider disabled by operator (INCREASE_DISABLED=true). Account cancelled, replacement banking provider not yet selected.';
 
 const BASE_URLS: Record<IncreaseEnvironment, string> = {
   sandbox: process.env.INCREASE_SANDBOX_BASE_URL || 'https://sandbox.increase.com',
@@ -105,6 +109,9 @@ export async function fetchIncreaseTransactionsPage(opts: {
   });
   if (opts.cursor) params.set('cursor', opts.cursor);
 
+  if (isIncreaseDisabled()) {
+    throw new IncreaseDisabledError(DISABLED_MESSAGE);
+  }
   const apiKey = apiKeyForEnvironment(opts.environment);
   const res = await fetch(`${base}/transactions?${params.toString()}`, {
     method: 'GET',
@@ -149,8 +156,16 @@ export async function validateIncreaseCredentials(opts: {
   signal?: AbortSignal;
 }): Promise<CredentialProbeResult> {
   const base = BASE_URLS[opts.environment];
-  const apiKey = apiKeyForEnvironment(opts.environment);
   const started = Date.now();
+  if (isIncreaseDisabled()) {
+    return {
+      reachable: false,
+      accountId: opts.accountId,
+      error: 'BANKING_DISABLED: Increase provider disabled by operator (account cancelled).',
+      latencyMs: 0,
+    };
+  }
+  const apiKey = apiKeyForEnvironment(opts.environment);
   try {
     const res = await fetch(`${base}/accounts/${opts.accountId}`, {
       method: 'GET',
@@ -243,6 +258,9 @@ export interface AchTransferResult {
  * It does NOT mean the transfer has cleared at the receiving bank.
  */
 export async function submitAchTransfer(input: AchTransferInput): Promise<AchTransferResult> {
+  if (isIncreaseDisabled()) {
+    throw new IncreaseDisabledError(DISABLED_MESSAGE);
+  }
   const base = BASE_URLS[input.environment];
   const apiKey = apiKeyForEnvironment(input.environment);
   const body = {

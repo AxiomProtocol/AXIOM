@@ -79,6 +79,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // ── Kill switch (Increase account cancelled 2026-04-28) ────────────────────
+  // Reject every event before signature verification, body parsing, or any DB
+  // write. Returning 503 (rather than 200) signals the sender that the
+  // endpoint is temporarily unavailable; since the upstream account is gone,
+  // no retries will actually arrive.
+  if (process.env.INCREASE_DISABLED === 'true') {
+    return res.status(503).json({
+      error: 'Banking provider unavailable',
+      code: 'BANKING_DISABLED',
+      reason: 'Increase account cancelled — webhook endpoint disabled.',
+    });
+  }
+
   const rawBody = await readRawBody(req);
   const webhookSecret = process.env.INCREASE_WEBHOOK_SECRET;
   const isDev = process.env.NODE_ENV === 'development';

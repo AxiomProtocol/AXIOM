@@ -34,6 +34,17 @@ function check(
 export function getProviderStatus(provider: ProviderName): ProviderStatusResult {
   switch (provider) {
     case 'increase': {
+      // Kill switch: Increase account cancelled 2026-04-28. The legacy code
+      // and DB tables are preserved but every API call short-circuits via
+      // IncreaseService. Surface that here so the integrations console and
+      // any UI consuming this endpoint reflects the true operational state.
+      if (process.env.INCREASE_DISABLED === 'true') {
+        return {
+          status: 'unavailable',
+          reason: 'Increase account cancelled — provider disabled. Replacement banking provider not yet selected.',
+          environment: process.env.INCREASE_ENVIRONMENT ?? 'sandbox',
+        };
+      }
       const missing = ['INCREASE_API_KEY'].filter((v) => !process.env[v]);
       if (missing.length > 0) {
         return { status: 'not_connected', reason: `Missing env vars: ${missing.join(', ')}` };

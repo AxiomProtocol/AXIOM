@@ -10,6 +10,7 @@
  */
 
 import type { IncreaseTransferRequest, IncreaseTransferResult } from './types';
+import { isIncreaseDisabled, IncreaseDisabledError } from '../../../services/IncreaseService';
 
 function getBaseUrl(): string {
   return process.env.INCREASE_ENVIRONMENT === 'production'
@@ -29,6 +30,11 @@ async function increaseRequest<T>(
   body?: Record<string, unknown>,
   idempotencyKey?: string,
 ): Promise<T> {
+  if (isIncreaseDisabled()) {
+    throw new IncreaseDisabledError(
+      'Increase provider disabled by operator (INCREASE_DISABLED=true). Account cancelled, replacement banking provider not yet selected.',
+    );
+  }
   const apiKey = process.env.INCREASE_API_KEY;
   if (!apiKey) throw new Error('INCREASE_API_KEY environment variable is not set');
   const headers: Record<string, string> = {

@@ -8,6 +8,12 @@ export type FeatureFlag =
   | 'DISCLOSURE_AUTO_SNAPSHOT';
 
 export function isFeatureEnabled(flag: FeatureFlag): boolean {
+  // Increase kill switch (account cancelled 2026-04-28): when the provider is
+  // disabled, INCREASE_SYNC must always report disabled regardless of any
+  // residual FEATURE_INCREASE_SYNC=true setting in the environment.
+  if (flag === 'INCREASE_SYNC' && process.env.INCREASE_DISABLED === 'true') {
+    return false;
+  }
   return process.env[`FEATURE_${flag}`] === 'true';
 }
 
