@@ -75,7 +75,12 @@ type Status = CapSettlementInstruction['status'];
 export const VALID_TRANSITIONS: Record<Status, Status[]> = {
   PENDING: ['AUTHORIZED', 'CANCELLED'],
   AUTHORIZED: ['EXECUTING', 'PENDING_OPERATOR_APPROVAL', 'SUBMITTED', 'CANCELLED'],
-  EXECUTING: ['SETTLED', 'FAILED'],
+  // EXECUTING → SUBMITTED is allowed for non-ACH rails (e.g. EVM) whose
+  // adapter dispatches asynchronously and returns receipt.submitted=true,
+  // signalling the rail accepted the request but the result is not yet
+  // chain-/bank-final. Final SETTLED requires a webhook or reconciliation
+  // confirmation via externallySettleInstruction.
+  EXECUTING: ['SETTLED', 'FAILED', 'SUBMITTED'],
   // PENDING_OPERATOR_APPROVAL: operator must approve (→ SUBMITTED) or reject (→ FAILED).
   PENDING_OPERATOR_APPROVAL: ['SUBMITTED', 'FAILED'],
   // SUBMITTED: bank-accepted but not bank-final. Transitions to SETTLED or FAILED
@@ -452,7 +457,60 @@ export async function executeInstruction(
     return failed;
   }
 
-  // SETTLED — atomic with portfolio + ledger writes.
+  // ── Receipt routing ──────────────────────────────────────────────
+  // If the adapter returned receipt.submitted=true, the rail accepted
+  // the request but the result is not yet chain-/bank-final. Park the
+  // instruction at SUBMITTED with NO portfolio write. SETTLED requires
+  // a webhook or reconciliation confirmation via
+  // externallySettleInstruction. This protects against re-orgs (raw
+  // EVM) and any other rail with delayed finality.
+  if (receipt.submitted) {
+    const submitted = await db.transaction(async (tx) => {
+      const current = await reloadInstruction(tx, instructionId);
+      if (!current) throw new NotFoundError(`instruction ${instructionId} vanished mid-submit`);
+      assertTransition(current.status, 'SUBMITTED');
+      const [next] = await tx
+        .update(capSettlementInstructions)
+        .set({
+          status: 'SUBMITTED',
+          externalRef: receipt.externalRef,
+          updatedAt: new Date(),
+          payloadJson: {
+            ...(current.payloadJson as Record<string, unknown> | null ?? {}),
+            adapterReceipt: receipt.receiptJson ?? null,
+          },
+        })
+        .where(eq(capSettlementInstructions.id, instructionId))
+        .returning();
+      // No applySettlement — SUBMITTED ≠ chain-/bank-final. Portfolio write blocked.
+      await emitAuditEventStrict(
+        {
+          eventType: 'settlement.submitted',
+          aggregateType: 'settlement_instruction',
+          aggregateId: instructionId,
+          userId: next.userId,
+          assetId: next.assetId,
+          instructionId: next.id,
+          actor,
+          correlationId: correlationId ?? null,
+          payloadJson: {
+            externalRef: receipt.externalRef,
+            settlementType: asset.settlementType,
+            note: 'SUBMITTED means the rail accepted dispatch. Final SETTLED requires confirmation via externallySettleInstruction.',
+          },
+        },
+        tx,
+      );
+      return next;
+    });
+    await _dispatchNotifications(
+      await buildCtx(submitted, 'settlement.submitted', correlationId),
+    );
+    return submitted;
+  }
+
+  // SETTLED — atomic with portfolio + ledger writes (default branch
+  // for fast-final adapters: INTERNAL, STELLAR, etc.).
   const settled = await db.transaction(async (tx) => {
     const current = await reloadInstruction(tx, instructionId);
     if (!current) throw new NotFoundError(`instruction ${instructionId} vanished mid-settle`);

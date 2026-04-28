@@ -2,11 +2,18 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../../server/db';
 import { increaseParticipants } from '../../../../../shared/increaseParticipantSchema';
 import { getSiweWallet } from '../../../../../lib/server/banking/siweHelper';
+import { isIncreaseDisabled, IncreaseDisabledError } from '../../../../../lib/services/IncreaseService';
 import { eq } from 'drizzle-orm';
 
 async function fetchCardTransactions(cardId: string, limit = 25): Promise<unknown[]> {
+  // Kill switch (Increase account cancelled 2026-04-28): refuse to query
+  // /card_purchases when the provider is disabled. Defense-in-depth — the
+  // handler also short-circuits 503 above before reaching this helper.
+  const killSwitch = isIncreaseDisabled();
+  if (killSwitch.disabled) throw new IncreaseDisabledError(killSwitch.reason);
+
   const apiKey = process.env.INCREASE_API_KEY;
-  if (!apiKey) throw new Error('INCREASE_API_KEY environment variable is not set');
+  if (!apiKey) throw new IncreaseDisabledError('INCREASE_API_KEY environment variable is not set');
   const isLive = process.env.INCREASE_ENVIRONMENT === 'production';
   const baseUrl = isLive ? (process.env.INCREASE_BASE_URL ?? 'https://api.increase.com') : 'https://sandbox.increase.com';
 
@@ -44,6 +51,17 @@ interface CardPurchase {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Kill switch (Increase account cancelled 2026-04-28): short-circuit BEFORE
+  // wallet-auth, DB lookup, or fetch. Returns the same {code:"BANKING_DISABLED"}
+  // shape as every other Increase-backed endpoint.
+  const killSwitch = isIncreaseDisabled();
+  if (killSwitch.disabled) {
+    return res.status(503).json({
+      error: `Banking provider unavailable: ${killSwitch.reason}`,
+      code: 'BANKING_DISABLED',
+    });
+  }
 
   const { walletAddress } = req.query;
   if (!walletAddress || typeof walletAddress !== 'string') {

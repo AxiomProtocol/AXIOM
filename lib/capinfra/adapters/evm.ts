@@ -30,10 +30,10 @@
  *     Throws AdapterDisabledError on every dispatch. Use as a manual
  *     kill-switch.
  *
- * Action types supported (from instruction.actionType):
+ * Action types supported (from instruction.actionType — capActionTypeEnum):
  *
  *   MINT     → IAXAU.mint(to, amountWei)        (ERC-20 mint shape)
- *   BURN     → IAXAU.burn(from, amountWei)
+ *   REDEEM   → IAXAU.burn(from, amountWei)      (REDEEM = burn supply)
  *   TRANSFER → IERC20.transfer(to, amountWei)
  *
  * Per-asset gating: an asset must opt into LIVE broadcasts by symbol
@@ -119,23 +119,51 @@ function resolveRoute(input: AdapterDispatchInput): ResolvedRoute {
 // ── Amount conversion (decimal string → wei BigInt) ────────────────
 
 function toWei(amount: string, decimals: number): bigint {
-  // amount is a fixed-point decimal string (e.g. "0.5000000000").
-  // Avoid floating-point: split on '.' and pad/truncate the fractional
-  // part to `decimals` digits.
+  // amount is a fixed-point non-negative decimal string (e.g. "0.5000000000").
+  // Avoid floating-point: split on '.' and pad the fractional part to
+  // exactly `decimals` digits. Strict validation: rejects negatives,
+  // multiple decimal points, non-digit chars, and excess fractional
+  // precision (so we never silently truncate value).
   const trimmed = amount.trim();
-  const negative = trimmed.startsWith('-');
-  const body = negative ? trimmed.slice(1) : trimmed;
-  const [whole, fracRaw = ''] = body.split('.');
-  if (!/^\d+$/.test(whole) || (fracRaw.length > 0 && !/^\d+$/.test(fracRaw))) {
-    throw new Error(`evm-adapter: invalid amount string "${amount}"`);
+  if (trimmed.length === 0) {
+    throw new Error('evm-adapter: amount string is empty');
+  }
+  if (trimmed.startsWith('-')) {
+    throw new Error(`evm-adapter: negative amounts are not supported ("${amount}")`);
+  }
+  if (!Number.isInteger(decimals) || decimals < 0 || decimals > 36) {
+    throw new Error(`evm-adapter: invalid decimals=${decimals}`);
+  }
+  // Single decimal point or none. Reject "1.2.3" etc.
+  const parts = trimmed.split('.');
+  if (parts.length > 2) {
+    throw new Error(`evm-adapter: invalid amount string "${amount}" (multiple decimal points)`);
+  }
+  const [whole, fracRaw = ''] = parts;
+  if (!/^\d+$/.test(whole)) {
+    throw new Error(`evm-adapter: invalid amount string "${amount}" (non-digit in whole part)`);
+  }
+  if (fracRaw.length > 0 && !/^\d+$/.test(fracRaw)) {
+    throw new Error(`evm-adapter: invalid amount string "${amount}" (non-digit in fractional part)`);
+  }
+  // Reject excess fractional precision unless the excess is all trailing
+  // zeros (i.e. "0.5000000000000000000" with decimals=18 is OK, but
+  // "0.50000000000000000001" with decimals=18 is rejected — that would
+  // silently truncate value).
+  if (fracRaw.length > decimals) {
+    const excess = fracRaw.slice(decimals);
+    if (!/^0*$/.test(excess)) {
+      throw new Error(
+        `evm-adapter: amount "${amount}" has more precision than asset decimals=${decimals} (would silently truncate)`,
+      );
+    }
   }
   const frac =
     fracRaw.length >= decimals
       ? fracRaw.slice(0, decimals)
       : fracRaw + '0'.repeat(decimals - fracRaw.length);
   const combined = `${whole}${frac}`.replace(/^0+(?=\d)/, '');
-  const result = BigInt(combined.length > 0 ? combined : '0');
-  return negative ? -result : result;
+  return BigInt(combined.length > 0 ? combined : '0');
 }
 
 // ── DRY_RUN dispatch (no broadcast) ────────────────────────────────
@@ -150,7 +178,7 @@ function dryRunDispatch(
 
   // Deterministic-enough txHash with a unique suffix so replays don't
   // collide on the cap_settlement_instructions.externalRef index.
-  const suffix = generateId('evm').slice(-12);
+  const suffix = generateId('inst').slice(-12);
   const externalRef = `0xdryrun-${instruction.id.slice(-16)}-${suffix}`;
 
   let amountWei: string | null = null;
@@ -203,11 +231,28 @@ function arbitrumRpcUrl(): string {
   return `https://arb-mainnet.g.alchemy.com/v2/${key}`;
 }
 
+// Chains this adapter knows how to broadcast on. Adding a new chain
+// requires a corresponding RPC URL builder. We refuse to broadcast on
+// unknown chains rather than defaulting to Arbitrum and risking a
+// wrong-chain transaction.
+const SUPPORTED_LIVE_CHAIN_IDS = new Set<number>([42161]); // Arbitrum One
+
 async function liveDispatch(input: AdapterDispatchInput): Promise<AdapterDispatchResult> {
   const { instruction, asset } = input;
 
   if (!asset.contractAddress) {
     throw new Error(`evm-adapter: asset ${asset.symbol} has no contractAddress`);
+  }
+  const chainId = asset.chainId ?? null;
+  if (chainId === null) {
+    throw new Error(
+      `evm-adapter: asset ${asset.symbol} has no chainId — refusing to broadcast on unknown chain`,
+    );
+  }
+  if (!SUPPORTED_LIVE_CHAIN_IDS.has(chainId)) {
+    throw new Error(
+      `evm-adapter: asset ${asset.symbol} chainId=${chainId} is not in the live-broadcast allowlist (supported: ${Array.from(SUPPORTED_LIVE_CHAIN_IDS).join(',')})`,
+    );
   }
   const route = resolveRoute(input);
   if ((instruction.actionType === 'MINT' || instruction.actionType === 'TRANSFER') && !route.to) {
@@ -238,7 +283,7 @@ async function liveDispatch(input: AdapterDispatchInput): Promise<AdapterDispatc
     case 'MINT':
       tx = await contract.mint(route.to, amountWei);
       break;
-    case 'BURN':
+    case 'REDEEM':
       tx = await contract.burn(route.from ?? wallet.address, amountWei);
       break;
     case 'TRANSFER':
@@ -246,7 +291,7 @@ async function liveDispatch(input: AdapterDispatchInput): Promise<AdapterDispatc
       break;
     default:
       throw new Error(
-        `evm-adapter: unsupported actionType "${instruction.actionType}" — supported: MINT, BURN, TRANSFER`,
+        `evm-adapter: unsupported actionType "${instruction.actionType}" — supported: MINT, REDEEM, TRANSFER`,
       );
   }
 
