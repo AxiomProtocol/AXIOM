@@ -1,0 +1,17 @@
+{
+  "pinnedAt": "2026-04-28T02:25:00.000Z",
+  "contractAddress": "0x4A651D30097E2b7326A83CbB32c02913dB8b3572",
+  "note": "Remap of nft_tokens.image_cid for tokenIds 1-10 from the original procedurally-generated AI artwork (April 27 deployment) to the named Axiom Founder Collection cards (Architect..Apex). Old CIDs remain pinned on Pinata — rollback is one UPDATE per row using the previousImageCid values below.",
+  "results": [
+    { "tokenId":  1, "label": "The Architect",   "file": "founder-1.png",  "previousImageCid": "bafybeifcdoizrmit4bvcph73qksydy7zeqtw3hgid6gx7w7yyzshfqhf2y", "newImageCid": "bafybeibjtuezvcm3lvgrtpwp4zbtdpxx4d77k46t6g5ybbuh47unogcph4" },
+    { "tokenId":  2, "label": "The Sovereign",   "file": "founder-2.png",  "previousImageCid": "bafybeibwoep6dkrwaitrmnocjcghwzxx4x7h7qtmxheb2m4txpei7uxmqi", "newImageCid": "bafybeigrqsjw4kwardcvozfrd5f3vukkxsvo2qbmk7l6td5y6i2szxzkiq" },
+    { "tokenId":  3, "label": "The Vault",       "file": "founder-3.png",  "previousImageCid": "bafybeiel2oczqhfzy3gs7w7pqs3fo6zhqrp2z4wfbm3elx2vu3xs245i6e", "newImageCid": "bafybeihhl7islvvz3bv274s7kbbrrpkqo333raccumwcevbbnhvvefyqjq" },
+    { "tokenId":  4, "label": "The Guardian",    "file": "founder-4.png",  "previousImageCid": "bafybeif5mvdu6xoxtjtmi5sxctrkmpsgk6d5qlfsmz5tdeelggfmggijlm", "newImageCid": "bafybeidbtmp2dn5wkuc3egdauckosz7wwy7zpm4wrgm6dzr2ovdiy5l3h4" },
+    { "tokenId":  5, "label": "The Sentinel",    "file": "founder-5.png",  "previousImageCid": "bafybeidtetcwj755mhxaf4wuhavyjggxp3etyb42ps2e66gyd6psaboawi", "newImageCid": "bafybeibtnwduysmegvikgg375jbpv2dk3fp3i47crsoqdh3wub6knfxddi" },
+    { "tokenId":  6, "label": "The Builder",     "file": "founder-6.png",  "previousImageCid": "bafybeiemoxb7fqxhbvurl3kge6bj4kkb4mgtswdtijelmht4f3fqs2dipq", "newImageCid": "bafybeiectjsj3a5h4xka5xs5pf5wvkko7voi6blhxozjqpe53dqnbn6mw4" },
+    { "tokenId":  7, "label": "The Oracle",      "file": "founder-7.jpg",  "previousImageCid": "bafybeih22kzxzv3dryhk25dac46vlwt4j3avsd4n5g54hnfphryjr6xiby", "newImageCid": "bafybeiextkrgm2bm3nomi4smxhqfjfv3sv7pcab7xk4vp3yfz43t7kzhje" },
+    { "tokenId":  8, "label": "The Railmaster",  "file": "founder-8.jpg",  "previousImageCid": "bafybeic4ncreknynibwr5xrxge47fsadflnjj3rqnn5e7d2e4trespol6e", "newImageCid": "bafybeiaqtvboyxalodbwqb4hgn7vkgcb2mgq62urp2e3oq7eriwphyda2m" },
+    { "tokenId":  9, "label": "The Founder",     "file": "founder-9.jpg",  "previousImageCid": "bafybeiggxllczfnfbxsw6fft2w7jpk62cotwzwvoa5r36umpwhhlb2wtbi", "newImageCid": "bafybeia4uxojatryykgzjcdm44pxp3lxxk4tyex76rgaxabfihp6s4dnju" },
+    { "tokenId": 10, "label": "The Apex",        "file": "founder-10.jpg", "previousImageCid": "bafybeiepnjsvipgaltjq7fa6vms2df2hmckzzpp7p457obklxmv3xcwngm", "newImageCid": "bafybeigpkvbp2ghmeluhylbt2p2ve7t7y6au4e5yzg6mdwn3a5wrypybpy" }
+  ]
+}

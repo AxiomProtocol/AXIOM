@@ -34,6 +34,23 @@ const COLLECTION_CONFIG: Record<string, {
   },
 };
 
+// Named character labels for the Axiom Founder Collection.
+// When a tokenId has a label, the OpenSea title becomes
+// "Axiom Founder Badge #N · THE NAME" and a "Character" attribute is added.
+// Tokens not in this map fall back to the generic "Axiom Founder Badge #N" title.
+const FOUNDER_LABELS: Record<number, string> = {
+  1:  'The Architect',
+  2:  'The Sovereign',
+  3:  'The Vault',
+  4:  'The Guardian',
+  5:  'The Sentinel',
+  6:  'The Builder',
+  7:  'The Oracle',
+  8:  'The Railmaster',
+  9:  'The Founder',
+  10: 'The Apex',
+};
+
 function detectCollection(contractAddress: string): string {
   const addr = contractAddress.toLowerCase();
   if (process.env.NFT_CONTRACT_FOUNDER && addr === process.env.NFT_CONTRACT_FOUNDER.toLowerCase()) return 'founder';
@@ -69,7 +86,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const traits = computeTraits(seed);
-    const attributes = traitsToAttributes(traits);
+    const baseAttributes = traitsToAttributes(traits);
+
+    const founderLabel =
+      collection === 'founder' ? FOUNDER_LABELS[tokenIdNum] : undefined;
+
+    const attributes = founderLabel
+      ? [{ trait_type: 'Character', value: founderLabel }, ...baseAttributes]
+      : baseAttributes;
 
     // CID gateway: use ipfs.io (universal, works with Pinata-pinned CIDs).
     // Filter out legacy sha256: pseudo-CIDs that were used as fallbacks before
@@ -90,7 +114,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       : `${SITE_URL}/api/nft/animation?tokenId=${tokenIdNum}&contract=${contractAddress}`;
 
     const metadata = {
-      name:          `${config.name} #${tokenIdNum}`,
+      name:          founderLabel
+        ? `${config.name} #${tokenIdNum} · ${founderLabel}`
+        : `${config.name} #${tokenIdNum}`,
       description:   config.description,
       image:         imageUrl,
       animation_url: animationUrl,
