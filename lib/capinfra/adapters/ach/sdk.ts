@@ -109,8 +109,9 @@ export async function fetchIncreaseTransactionsPage(opts: {
   });
   if (opts.cursor) params.set('cursor', opts.cursor);
 
-  if (isIncreaseDisabled()) {
-    throw new IncreaseDisabledError(DISABLED_MESSAGE);
+  const ks = isIncreaseDisabled();
+  if (ks.disabled) {
+    throw new IncreaseDisabledError(ks.reason);
   }
   const apiKey = apiKeyForEnvironment(opts.environment);
   const res = await fetch(`${base}/transactions?${params.toString()}`, {
@@ -157,11 +158,12 @@ export async function validateIncreaseCredentials(opts: {
 }): Promise<CredentialProbeResult> {
   const base = BASE_URLS[opts.environment];
   const started = Date.now();
-  if (isIncreaseDisabled()) {
+  const ks = isIncreaseDisabled();
+  if (ks.disabled) {
     return {
       reachable: false,
       accountId: opts.accountId,
-      error: 'BANKING_DISABLED: Increase provider disabled by operator (account cancelled).',
+      error: `BANKING_DISABLED: ${ks.reason}`,
       latencyMs: 0,
     };
   }
@@ -258,8 +260,9 @@ export interface AchTransferResult {
  * It does NOT mean the transfer has cleared at the receiving bank.
  */
 export async function submitAchTransfer(input: AchTransferInput): Promise<AchTransferResult> {
-  if (isIncreaseDisabled()) {
-    throw new IncreaseDisabledError(DISABLED_MESSAGE);
+  const ks = isIncreaseDisabled();
+  if (ks.disabled) {
+    throw new IncreaseDisabledError(ks.reason);
   }
   const base = BASE_URLS[input.environment];
   const apiKey = apiKeyForEnvironment(input.environment);

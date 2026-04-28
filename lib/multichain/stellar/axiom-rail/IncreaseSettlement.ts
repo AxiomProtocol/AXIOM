@@ -30,10 +30,9 @@ async function increaseRequest<T>(
   body?: Record<string, unknown>,
   idempotencyKey?: string,
 ): Promise<T> {
-  if (isIncreaseDisabled()) {
-    throw new IncreaseDisabledError(
-      'Increase provider disabled by operator (INCREASE_DISABLED=true). Account cancelled, replacement banking provider not yet selected.',
-    );
+  const killSwitch = isIncreaseDisabled();
+  if (killSwitch.disabled) {
+    throw new IncreaseDisabledError(killSwitch.reason);
   }
   const apiKey = process.env.INCREASE_API_KEY;
   if (!apiKey) throw new Error('INCREASE_API_KEY environment variable is not set');
