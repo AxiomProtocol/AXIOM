@@ -32,8 +32,6 @@ const FOUNDER_CARDS: Array<{ tokenId: string; src: string; label?: string }> = [
   { tokenId: '008', src: '/nft-preview/founder-8.jpg',  label: 'The Railmaster' },
   { tokenId: '009', src: '/nft-preview/founder-9.jpg',  label: 'The Founder' },
   { tokenId: '010', src: '/nft-preview/founder-10.jpg', label: 'The Apex' },
-  { tokenId: '011', src: '/nft-preview/founder-11.png' },
-  { tokenId: '012', src: '/nft-preview/founder-12.png' },
 ];
 
 function FounderCard({ card }: { card: { tokenId: string; src: string; label?: string } }) {
