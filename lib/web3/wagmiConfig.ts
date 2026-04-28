@@ -1,5 +1,5 @@
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
-import { arbitrum, base } from '@reown/appkit/networks';
+import { arbitrum } from '@reown/appkit/networks';
 import { createConfig, http } from 'wagmi';
 import { mock } from 'wagmi/connectors';
 
@@ -8,7 +8,11 @@ const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '';
 
 export { projectId };
 
-export const networks = [arbitrum, base];
+// SIWE verifier (pages/api/auth/siwe/verify.ts) hard-gates chain id 42161.
+// Including Base here let users connect on a chain SIWE would silently reject,
+// producing a confusing "CHAIN_MISMATCH" after they signed. Restrict the
+// AppKit modal to Arbitrum One only until SIWE is widened.
+export const networks = [arbitrum];
 
 /**
  * Task #249 — opt-in mock-wagmi mode for end-to-end browser tests.
@@ -42,10 +46,9 @@ if (E2E_WAGMI) {
   // as a blank `<div id="__next" />`). For e2e we don't need cross-render
   // state; the connector auto-connects on mount via `defaultConnected`.
   _wagmiConfig = createConfig({
-    chains: [arbitrum, base],
+    chains: [arbitrum],
     transports: {
       [arbitrum.id]: http('https://arb1.arbitrum.io/rpc'),
-      [base.id]: http(),
     },
     connectors: [
       mock({
@@ -62,7 +65,6 @@ if (E2E_WAGMI) {
       [arbitrum.id]: alchemyKey
         ? http(`https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`)
         : http(),
-      [base.id]: http(),
     },
     ssr: true,
   });
