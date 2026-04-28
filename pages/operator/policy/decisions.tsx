@@ -1,6 +1,6 @@
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
-import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
+import { OperatorConsoleLayout } from '../../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../../lib/capinfra/operatorAuth';
 import { db } from '../../../server/db';
 import { capPolicyDecisions } from '../../../shared/capInfraSchema';
@@ -49,7 +49,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 
 export default function PolicyDecisionsPage({ items, deniedOnly }: Props) {
   return (
-    <DesignLawLayout>
+    <OperatorConsoleLayout>
       <div className="py-8">
         <div className="mb-4"><Link href="/operator" className="text-sm underline">← Back to console</Link></div>
         <h1 className="text-2xl font-serif mb-4">Policy Decisions</h1>
@@ -90,6 +90,6 @@ export default function PolicyDecisionsPage({ items, deniedOnly }: Props) {
           </tbody>
         </table>
       </div>
-    </DesignLawLayout>
+    </OperatorConsoleLayout>
   );
 }

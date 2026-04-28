@@ -1,7 +1,7 @@
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import { useState } from 'react';
-import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
+import { OperatorConsoleLayout } from '../../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../../lib/capinfra/operatorAuth';
 import { db } from '../../../server/db';
 import { capWebhookEvents, capReconciliationRuns, capReconciliationDrift } from '../../../shared/capInfraSchema';
@@ -163,7 +163,7 @@ export default function IncreaseAdapterPage({ health, recent, reconRuns, latestD
       : 'bg-amber-100 text-amber-900 border-amber-300';
 
   return (
-    <DesignLawLayout>
+    <OperatorConsoleLayout>
       <div className="py-8">
         <div className="mb-4">
           <Link href="/operator" className="text-sm underline">← Back to console</Link>
@@ -353,6 +353,6 @@ export default function IncreaseAdapterPage({ health, recent, reconRuns, latestD
           )}
         </section>
       </div>
-    </DesignLawLayout>
+    </OperatorConsoleLayout>
   );
 }

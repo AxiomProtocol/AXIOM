@@ -24,7 +24,7 @@
 
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
-import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
+import { OperatorConsoleLayout } from '../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../lib/capinfra/operatorAuth';
 import {
   INTEGRITY_ALERT_DEFAULT_WINDOW_MS,
@@ -282,7 +282,7 @@ export default function OperatorIntegrityPage({
   });
 
   return (
-    <DesignLawLayout>
+    <OperatorConsoleLayout>
       <div className="py-8">
         <div className="mb-4">
           <Link href="/operator" className="text-sm underline">
@@ -600,6 +600,6 @@ export default function OperatorIntegrityPage({
           </div>
         )}
       </div>
-    </DesignLawLayout>
+    </OperatorConsoleLayout>
   );
 }

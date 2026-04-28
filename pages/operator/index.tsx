@@ -1,6 +1,6 @@
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
-import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
+import { OperatorConsoleLayout } from '../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../lib/capinfra/operatorAuth';
 import { db } from '../../server/db';
 import {
@@ -158,7 +158,7 @@ const adapters: Array<{ href: string; label: string; mode: string }> = [
 export default function OperatorDashboard(props: DashboardProps) {
   const isHalt = props.mode.mode === 'MANUAL_INTERVENTION';
   return (
-    <DesignLawLayout>
+    <OperatorConsoleLayout>
       <div className="py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-serif">Operator Console</h1>
@@ -299,6 +299,6 @@ export default function OperatorDashboard(props: DashboardProps) {
           </div>
         </section>
       </div>
-    </DesignLawLayout>
+    </OperatorConsoleLayout>
   );
 }

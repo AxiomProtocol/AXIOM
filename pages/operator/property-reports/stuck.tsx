@@ -1,7 +1,7 @@
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import { useState } from 'react';
-import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
+import { OperatorConsoleLayout } from '../../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../../lib/capinfra/operatorAuth';
 import { listStuckPending } from '../../../lib/property/stuckPaymentResolver';
 
@@ -106,7 +106,7 @@ export default function StuckPropertyPaymentsPage({
   }
 
   return (
-    <DesignLawLayout>
+    <OperatorConsoleLayout>
       <div className="py-8">
         <div className="mb-4">
           <Link href="/operator" className="text-sm underline">← Back to console</Link>
@@ -236,6 +236,6 @@ export default function StuckPropertyPaymentsPage({
           </div>
         )}
       </div>
-    </DesignLawLayout>
+    </OperatorConsoleLayout>
   );
 }

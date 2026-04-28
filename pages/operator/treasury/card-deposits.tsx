@@ -1,6 +1,6 @@
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
-import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
+import { OperatorConsoleLayout } from '../../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../../lib/capinfra/operatorAuth';
 import { listDeposits, type CardDepositStatus, type CardDepositIntent } from '../../../lib/capinfra/cardDeposits/service';
 
@@ -71,7 +71,7 @@ const INTENTS = ['', 'TREASURY_FUND', 'AXUSD_MINT', 'AXAU_MINT'];
 
 export default function CardDepositsOperatorPage({ rows, status, intent, loadError }: Props) {
   return (
-    <DesignLawLayout>
+    <OperatorConsoleLayout>
       <div className="py-8">
         <div className="mb-4">
           <Link href="/operator" className="text-sm underline">← Back to console</Link>
@@ -196,6 +196,6 @@ export default function CardDepositsOperatorPage({ rows, status, intent, loadErr
           </tbody>
         </table>
       </div>
-    </DesignLawLayout>
+    </OperatorConsoleLayout>
   );
 }

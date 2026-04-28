@@ -9,7 +9,8 @@ import Head from 'next/head';
 import Link from 'next/link';
 import type { GetServerSideProps } from 'next';
 import { useEffect, useState } from 'react';
-import { DesignLawLayout, SectionHeading } from '../../../components/design-law';
+import { SectionHeading } from '../../../components/design-law';
+import { OperatorConsoleLayout } from '../../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie, getOperatorAdminKey } from '../../../lib/capinfra/operatorAuth';
 import {
   listClaims,
@@ -143,7 +144,7 @@ export default function OperatorLossCoverageClaimsPage(props: PageProps) {
       <Head>
         <title>Operator — Loss Coverage Claims</title>
       </Head>
-      <DesignLawLayout>
+      <OperatorConsoleLayout>
         <div className="mb-6">
           <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide">
             Operator / Trust / Loss Coverage Claims
@@ -243,7 +244,7 @@ export default function OperatorLossCoverageClaimsPage(props: PageProps) {
             Public claim register →
           </Link>
         </div>
-      </DesignLawLayout>
+      </OperatorConsoleLayout>
     </>
   );
 }

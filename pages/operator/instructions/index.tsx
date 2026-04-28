@@ -1,6 +1,6 @@
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
-import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
+import { OperatorConsoleLayout } from '../../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../../lib/capinfra/operatorAuth';
 import { db } from '../../../server/db';
 import { capSettlementInstructions } from '../../../shared/capInfraSchema';
@@ -47,7 +47,7 @@ const STATUSES = ['', 'CREATED', 'AUTHORIZED', 'SUBMITTED', 'CONFIRMED', 'FAILED
 
 export default function InstructionsPage({ items, status }: Props) {
   return (
-    <DesignLawLayout>
+    <OperatorConsoleLayout>
       <div className="py-8">
         <div className="mb-4">
           <Link href="/operator" className="text-sm underline">← Back to console</Link>
@@ -101,6 +101,6 @@ export default function InstructionsPage({ items, status }: Props) {
           </tbody>
         </table>
       </div>
-    </DesignLawLayout>
+    </OperatorConsoleLayout>
   );
 }

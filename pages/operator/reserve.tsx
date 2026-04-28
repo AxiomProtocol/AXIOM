@@ -1,6 +1,6 @@
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
-import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
+import { OperatorConsoleLayout } from '../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../lib/capinfra/operatorAuth';
 import { db } from '../../server/db';
 import {
@@ -92,7 +92,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 
 export default function ReserveDashboard({ mode, headrooms, recentSnapshots, loadError }: Props) {
   return (
-    <DesignLawLayout>
+    <OperatorConsoleLayout>
       <div className="py-8">
         <div className="mb-4"><Link href="/operator" className="text-sm underline">← Back to console</Link></div>
         <h1 className="text-2xl font-serif mb-4">Reserve Dashboard</h1>
@@ -170,6 +170,6 @@ export default function ReserveDashboard({ mode, headrooms, recentSnapshots, loa
           )}
         </section>
       </div>
-    </DesignLawLayout>
+    </OperatorConsoleLayout>
   );
 }

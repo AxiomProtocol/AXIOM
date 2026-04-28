@@ -1,6 +1,6 @@
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
-import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
+import { OperatorConsoleLayout } from '../../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../../lib/capinfra/operatorAuth';
 import { db } from '../../../server/db';
 import {
@@ -74,7 +74,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 export default function InstructionInspector({ instruction, audits, decision, loadError }: Props) {
   if (!instruction) {
     return (
-      <DesignLawLayout>
+      <OperatorConsoleLayout>
         <div className="py-8">
           {loadError && (
             <div className="border border-dl-gold bg-dl-bg-alt p-4 mb-4 font-mono text-xs">
@@ -87,11 +87,11 @@ export default function InstructionInspector({ instruction, audits, decision, lo
           )}
           {!loadError && 'Instruction not found.'}
         </div>
-      </DesignLawLayout>
+      </OperatorConsoleLayout>
     );
   }
   return (
-    <DesignLawLayout>
+    <OperatorConsoleLayout>
       <div className="py-8">
         <div className="mb-4">
           <Link href="/operator/instructions" className="text-sm underline">← All instructions</Link>
@@ -140,6 +140,6 @@ export default function InstructionInspector({ instruction, audits, decision, lo
           )}
         </section>
       </div>
-    </DesignLawLayout>
+    </OperatorConsoleLayout>
   );
 }
