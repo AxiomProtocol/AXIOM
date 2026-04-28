@@ -4,6 +4,7 @@ import { pool } from '../../../server/db';
 import crypto from 'crypto';
 import {
   ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM,
+  CANONICAL_PSM, isCanonicalPsmDeployed,
   EVK_OPEN_MARKET_VAULT_ADDRESS, isEvkVaultDeployed,
   EULER_EARN_VAULT_ADDRESS, isEulerEarnDeployed,
   EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, isEulerSwapDeployed,
@@ -79,9 +80,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const primaryAxusd = new ethers.Contract(ACTIVE_AXUSD, ERC20_ABI, provider);
     const eulerAxusd = new ethers.Contract(EULER_AXUSD, ERC20_ABI, provider);
 
+    // CANONICAL_PSM (the live ERC-3643 PSM) is queried alongside the legacy
+    // GENIUS PSM (ACTIVE_PSM) and Euler PSM. Prior to this fix only the
+    // legacy/Euler PSM USDC reserves were summed, which silently dropped the
+    // canonical PSM's USDC backing from treasury and made coverage look
+    // worse than reality on /disclosure.
     const [
       primaryPsmUsdcRaw,
       eulerPsmUsdcRaw,
+      canonicalPsmUsdcRaw,
       primaryAxusdSupplyRaw,
       eulerAxusdSupplyRaw,
       deployerEthRaw,
@@ -89,6 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ] = await Promise.all([
       usdc.balanceOf(ACTIVE_PSM),
       usdc.balanceOf(EULER_PSM),
+      isCanonicalPsmDeployed() ? usdc.balanceOf(CANONICAL_PSM) : Promise.resolve(0n),
       primaryAxusd.totalSupply(),
       eulerAxusd.totalSupply(),
       provider.getBalance(DEPLOYER_ADDRESS),
@@ -97,6 +105,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const primaryPsmUsdc = parseFloat(ethers.formatUnits(primaryPsmUsdcRaw, 6));
     const eulerPsmUsdc = parseFloat(ethers.formatUnits(eulerPsmUsdcRaw, 6));
+    const canonicalPsmUsdc = parseFloat(ethers.formatUnits(canonicalPsmUsdcRaw, 6));
     const primaryAxusdSupply = parseFloat(ethers.formatUnits(primaryAxusdSupplyRaw, 18));
     const eulerAxusdSupply = parseFloat(ethers.formatUnits(eulerAxusdSupplyRaw, 18));
     const deployerEth = parseFloat(ethers.formatEther(deployerEthRaw));
@@ -110,7 +119,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch {}
 
     const deployerEthUsd = Math.round(deployerEth * ethPrice * 100) / 100;
-    const psmReservesTotal = Math.round((primaryPsmUsdc + eulerPsmUsdc) * 100) / 100;
+    const psmReservesTotal = Math.round((primaryPsmUsdc + eulerPsmUsdc + canonicalPsmUsdc) * 100) / 100;
 
     const VAULT_ABI_SIMPLE = ['function totalAssets() view returns (uint256)'];
 
@@ -179,10 +188,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const liabilitiesTotalUsd = Math.round((primaryAxusdSupply + eulerAxusdSupply) * 100) / 100;
 
     const totalAssets = deployerEthUsd + deployerUsdc + psmReservesTotal;
+    const safePct = (v: number) => totalAssets > 0 ? Math.round(v / totalAssets * 10000) / 100 : 0;
     const composition = [
-      { label: 'ETH (Deployer)', valueUsd: deployerEthUsd, pct: Math.round(deployerEthUsd / totalAssets * 10000) / 100 },
-      { label: 'USDC (PSM)', valueUsd: psmReservesTotal, pct: Math.round(psmReservesTotal / totalAssets * 10000) / 100 },
-      { label: 'USDC (Deployer)', valueUsd: deployerUsdc, pct: Math.round(deployerUsdc / totalAssets * 10000) / 100 },
+      { label: 'ETH (Deployer)', valueUsd: deployerEthUsd, pct: safePct(deployerEthUsd) },
+      { label: 'USDC (Canonical PSM)', valueUsd: Math.round(canonicalPsmUsdc * 100) / 100, pct: safePct(canonicalPsmUsdc) },
+      { label: 'USDC (Legacy GENIUS PSM)', valueUsd: Math.round(primaryPsmUsdc * 100) / 100, pct: safePct(primaryPsmUsdc) },
+      { label: 'USDC (Euler PSM)', valueUsd: Math.round(eulerPsmUsdc * 100) / 100, pct: safePct(eulerPsmUsdc) },
+      { label: 'USDC (Deployer)', valueUsd: deployerUsdc, pct: safePct(deployerUsdc) },
     ].filter(c => c.valueUsd > 0);
 
     // ── ERC-7726 Oracle price enrichment ────────────────────────────────────
