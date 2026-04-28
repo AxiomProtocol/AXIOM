@@ -4,6 +4,7 @@ import { increaseParticipants } from '../../../../shared/increaseParticipantSche
 import {
   IncreaseService,
   getAccountId,
+  IncreaseDisabledError,
 } from '../../../../lib/services/IncreaseService';
 import { getSiweWallet } from '../../../../lib/server/banking/siweHelper';
 import { eq } from 'drizzle-orm';
@@ -122,6 +123,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         full_name: fullName.trim(),
       });
     } catch (err) {
+      if (err instanceof IncreaseDisabledError) {
+        return res.status(err.status).json({ error: err.message, code: err.code });
+      }
       return res.status(502).json({
         error: `Virtual account provisioning failed: ${err instanceof Error ? err.message : String(err)}`,
         code: 'VIRTUAL_ACCOUNT_PROVISIONING_FAILED',
@@ -163,6 +167,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
   } catch (err: unknown) {
+    if (err instanceof IncreaseDisabledError) {
+      return res.status(err.status).json({ error: err.message, code: err.code });
+    }
     const msg = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ error: msg });
   }

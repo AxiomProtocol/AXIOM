@@ -4,7 +4,7 @@ import {
   increaseParticipants,
   increaseProductEscrows,
 } from '../../../../shared/increaseParticipantSchema';
-import { IncreaseService } from '../../../../lib/services/IncreaseService';
+import { IncreaseService, IncreaseDisabledError } from '../../../../lib/services/IncreaseService';
 import { getSiweWallet } from '../../../../lib/server/banking/siweHelper';
 import { eq, and } from 'drizzle-orm';
 
@@ -164,6 +164,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       canJoinWealthPractice: !!fundedHold,
     });
   } catch (err: unknown) {
+    if (err instanceof IncreaseDisabledError) {
+      return res.status(err.status).json({ error: err.message, code: err.code });
+    }
     const msg = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ error: msg });
   }

@@ -6,7 +6,7 @@ import {
   increaseProductEscrows,
   increaseDistributions,
 } from '../../../../../shared/increaseParticipantSchema';
-import { IncreaseService, getAccountId } from '../../../../../lib/services/IncreaseService';
+import { IncreaseService, getAccountId, IncreaseDisabledError } from '../../../../../lib/services/IncreaseService';
 import { eq, and } from 'drizzle-orm';
 
 function isAdmin(req: NextApiRequest): boolean {
@@ -134,6 +134,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         transferId = transfer.id;
         transferStatus = transfer.status;
       } catch (err) {
+        if (err instanceof IncreaseDisabledError) {
+          return res.status(err.status).json({ error: err.message, code: err.code });
+        }
         return res.status(502).json({
           error: `ACH return initiation failed: ${err instanceof Error ? err.message : String(err)}`,
           code: 'ACH_TRANSFER_FAILED',
@@ -177,6 +180,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       transfer: transferId ? { id: transferId, status: transferStatus } : null,
     });
   } catch (err: unknown) {
+    if (err instanceof IncreaseDisabledError) {
+      return res.status(err.status).json({ error: err.message, code: err.code });
+    }
     return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
   }
 }

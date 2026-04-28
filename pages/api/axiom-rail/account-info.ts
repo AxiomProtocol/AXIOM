@@ -15,7 +15,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyRailJwt } from '../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
-import { IncreaseService, getAccountId } from '../../../lib/services/IncreaseService';
+import { IncreaseService, getAccountId, IncreaseDisabledError } from '../../../lib/services/IncreaseService';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -71,6 +71,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status: 'ok',
     });
   } catch (err: unknown) {
+    if (err instanceof IncreaseDisabledError) {
+      return res.status(err.status).json({ error: err.message, code: err.code });
+    }
     console.error('[account-info] Increase error:', err);
     return res.status(500).json({
       error: err instanceof Error ? err.message : String(err),

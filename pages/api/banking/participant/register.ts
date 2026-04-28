@@ -5,7 +5,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import { increaseParticipants } from '../../../../shared/increaseParticipantSchema';
-import { IncreaseService, getAccountId, getEntityId } from '../../../../lib/services/IncreaseService';
+import { IncreaseService, getAccountId, getEntityId, IncreaseDisabledError } from '../../../../lib/services/IncreaseService';
 import { getSiweWallet } from '../../../../lib/server/banking/siweHelper';
 import { eq } from 'drizzle-orm';
 
@@ -107,6 +107,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(201).json({ success: true, participant, isNew: true });
   } catch (err: unknown) {
+    if (err instanceof IncreaseDisabledError) {
+      return res.status(err.status).json({ error: err.message, code: err.code });
+    }
     const msg = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ error: msg });
   }

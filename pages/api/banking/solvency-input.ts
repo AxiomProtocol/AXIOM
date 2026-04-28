@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { IncreaseService, getAccountId } from '../../../lib/services/IncreaseService';
+import { IncreaseService, getAccountId, IncreaseDisabledError } from '../../../lib/services/IncreaseService';
 
 /**
  * GET /api/banking/solvency-input
@@ -72,6 +72,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
   } catch (err: unknown) {
+    if (err instanceof IncreaseDisabledError) {
+      return res.status(err.status).json({ error: err.message, code: err.code });
+    }
     const msg = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ error: msg });
   }

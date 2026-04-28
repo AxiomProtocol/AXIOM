@@ -5,7 +5,7 @@ import {
   increaseParticipants,
   increaseDistributions,
 } from '../../../../shared/increaseParticipantSchema';
-import { IncreaseService, getAccountId } from '../../../../lib/services/IncreaseService';
+import { IncreaseService, getAccountId, IncreaseDisabledError } from '../../../../lib/services/IncreaseService';
 import { eq } from 'drizzle-orm';
 
 function isAdmin(req: NextApiRequest): boolean {
@@ -136,6 +136,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         participantRef: p.participantRef,
       });
     } catch (err: unknown) {
+      if (err instanceof IncreaseDisabledError) {
+        return res.status(err.status).json({ error: err.message, code: err.code });
+      }
       results.push({
         walletAddress,
         success: false,

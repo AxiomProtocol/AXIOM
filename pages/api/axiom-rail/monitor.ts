@@ -36,7 +36,7 @@ import { db } from '../../../server/db';
 import { stellarPaymentTransfers } from '../../../shared/stellarSchema';
 import { axiomRailEscrows } from '../../../shared/escrowSchema';
 import { eq, inArray } from 'drizzle-orm';
-import { IncreaseService, getAccountId } from '../../../lib/services/IncreaseService';
+import { IncreaseService, getAccountId, isIncreaseDisabled, IncreaseDisabledError } from '../../../lib/services/IncreaseService';
 import { AXIOM_RAIL_DEPOSIT_ACCOUNT } from '../../../lib/multichain/stellar/axiom-rail/AxiomRailService';
 import { requireAdminAuth } from '../../../lib/multichain/stellar/axiom-rail/adminAuth';
 import { setRailCors, handlePreflight } from '../../../lib/multichain/stellar/axiom-rail/corsUtils';
@@ -141,6 +141,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (handlePreflight(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!requireAdminAuth(req, res)) return;
+
+  // Banking provider kill switch — short-circuit before running any phases.
+  // The monitor performs many Increase calls across withdraw, deposit, and escrow flows;
+  // if the provider is disabled, return the canonical 503 immediately rather than spamming
+  // logs with per-phase IncreaseDisabledError catches.
+  const killSwitch = isIncreaseDisabled();
+  if (killSwitch.disabled) {
+    const err = new IncreaseDisabledError(killSwitch.reason);
+    return res.status(err.status).json({ error: err.message, code: err.code });
+  }
 
   const result: MonitorResult = {
     phase1DetectedWithdraws: 0,

@@ -18,7 +18,7 @@ import { createHash, timingSafeEqual } from 'crypto';
 import { eq } from 'drizzle-orm';
 import { db } from '../../../../server/db';
 import { daoAccountApplications } from '../../../../shared/daoAccountSchema';
-import { IncreaseService } from '../../../../lib/services/IncreaseService';
+import { IncreaseService, IncreaseDisabledError } from '../../../../lib/services/IncreaseService';
 
 const TOKEN_SALT = 'axiom-dao-account-token-v1';
 
@@ -153,6 +153,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
   } catch (err: unknown) {
+    if (err instanceof IncreaseDisabledError) {
+      return res.status(err.status).json({ error: err.message, code: err.code });
+    }
     console.error('[DAO Account Transfer] Error:', err);
     return res.status(500).json({ error: err instanceof Error ? err.message : 'Transfer failed' });
   }

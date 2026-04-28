@@ -13,7 +13,7 @@ import { cryptoCreditLines } from '../../../shared/cryptoCreditSchema';
 import { stellarPaymentTransfers } from '../../../shared/stellarSchema';
 import { increaseParticipants } from '../../../shared/increaseParticipantSchema';
 import { getSiweWallet } from '../../../lib/server/banking/siweHelper';
-import { IncreaseService, getAccountId } from '../../../lib/services/IncreaseService';
+import { IncreaseService, getAccountId, IncreaseDisabledError } from '../../../lib/services/IncreaseService';
 import { eq, and, inArray } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -108,6 +108,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       idempotencyKey,
     );
   } catch (err) {
+    if (err instanceof IncreaseDisabledError) {
+      return res.status(err.status).json({ error: err.message, code: err.code });
+    }
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[credit/draw] Increase ACH error:', msg);
     return res.status(502).json({ error: `ACH transfer failed: ${msg}` });
