@@ -13,6 +13,7 @@
     "build:replit": "next build",
     "start": "next start",
     "snapshot": "node scripts/saveReserveSnapshot.js",
+    "cron:refresh-solvency": "tsx scripts/refresh-solvency.ts",
     "admin:reset-password": "node scripts/reset-admin-password.js",
     "test": "hardhat test",
     "test:lexicon": "npx tsx tests/mirdt-lexicon.run.ts",
