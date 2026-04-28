@@ -1,0 +1,36 @@
+name: Solvency Refresh
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: POST /api/cron/refresh-solvency
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL:     ${{ secrets.APP_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CRON_SECRET:-}" ] || [ -z "${APP_URL:-}" ]; then
+            echo "::error::CRON_SECRET and APP_URL repo secrets must both be set."
+            exit 1
+          fi
+          RESP=$(mktemp)
+          HTTP=$(curl -sS -o "$RESP" -w '%{http_code}' -X POST \
+                      -H "Authorization: Bearer $CRON_SECRET" \
+                      -H "Content-Type: application/json" \
+                      "$APP_URL/api/cron/refresh-solvency")
+          echo "HTTP $HTTP"
+          cat "$RESP"
+          echo
+          if [ "$HTTP" != "200" ]; then
+            echo "::error::Solvency refresh failed with HTTP $HTTP"
+            exit 1
+          fi
+          jq -e '.success == true or .ok == true or (.snapshotId|type=="string")' "$RESP" \
+            || (echo "::error::Response did not look successful"; exit 1)
