@@ -1316,6 +1316,82 @@ describe('shapePagedChannelDisplay — error-string parser (task #258)', () => {
   });
 });
 
+describe('AssetIntegrityAlertsPanel — failed-pages cross-link (task #331)', () => {
+  it('hides the failed-pages link when failedPagesCount is 0', () => {
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[makeAlert({ id: 'ntf_a', symbol: 'AXAU' })]}
+        nowMs={NOW_MS}
+        failedPagesCount={0}
+      />,
+    );
+    expect(
+      screen.queryByTestId('asset-integrity-alerts-failed-pages-link'),
+    ).toBeNull();
+  });
+
+  it('hides the failed-pages link when failedPagesCount is omitted', () => {
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[makeAlert({ id: 'ntf_a', symbol: 'AXAU' })]}
+        nowMs={NOW_MS}
+      />,
+    );
+    expect(
+      screen.queryByTestId('asset-integrity-alerts-failed-pages-link'),
+    ).toBeNull();
+  });
+
+  it('shows the link with the count when failedPagesCount > 0', () => {
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[makeAlert({ id: 'ntf_a', symbol: 'AXAU' })]}
+        nowMs={NOW_MS}
+        failedPagesCount={3}
+      />,
+    );
+    const link = screen.getByTestId(
+      'asset-integrity-alerts-failed-pages-link',
+    ) as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('href')).toBe('/operator/integrity?failed_pages=1');
+    expect(link.textContent).toContain('3');
+    expect(link.textContent).toContain('auto-freezes');
+    expect(link.textContent).toContain('wake on-call');
+  });
+
+  it('uses singular "auto-freeze" when failedPagesCount is exactly 1', () => {
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[makeAlert({ id: 'ntf_a', symbol: 'AXAU' })]}
+        nowMs={NOW_MS}
+        failedPagesCount={1}
+      />,
+    );
+    const link = screen.getByTestId(
+      'asset-integrity-alerts-failed-pages-link',
+    ) as HTMLAnchorElement;
+    expect(link.textContent).toContain('1 auto-freeze ');
+    expect(link.textContent).not.toContain('auto-freezes');
+  });
+
+  it('shows the failed-pages link even when the alerts list is empty', () => {
+    render(
+      <AssetIntegrityAlertsPanel
+        alerts={[]}
+        nowMs={NOW_MS}
+        failedPagesCount={5}
+      />,
+    );
+    const link = screen.getByTestId(
+      'asset-integrity-alerts-failed-pages-link',
+    ) as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.textContent).toContain('5');
+    expect(screen.getByTestId('asset-integrity-alerts-empty')).toBeTruthy();
+  });
+});
+
 describe('shapeIntegrityAlert — defensive shaping', () => {
   it('returns null when assetId is missing from bodyJson', () => {
     const view = shapeIntegrityAlert({

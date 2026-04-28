@@ -32,6 +32,16 @@ export interface AssetIntegrityAlertsPanelProps {
    * When omitted the footer is hidden entirely.
    */
   batchMarkReadSummary?: BatchMarkReadSummary | null;
+  /**
+   * Count of recent UNREAD auto-freezes (within the default 24h window)
+   * where the on-call page failed or was skipped. Intentionally
+   * unread-only to match the default view at the cross-link destination
+   * (`/operator/integrity?failed_pages=1`), so the count is never
+   * higher than what the operator will actually see when they click
+   * through. When provided and greater than zero the link shows the
+   * count inline; when zero (or omitted) the link is hidden entirely.
+   */
+  failedPagesCount?: number;
 }
 
 const KIND_LABEL: Record<string, string> = {
@@ -200,6 +210,7 @@ export function AssetIntegrityAlertsPanel({
   alerts,
   nowMs,
   batchMarkReadSummary,
+  failedPagesCount = 0,
 }: AssetIntegrityAlertsPanelProps) {
   const [pending, setPending] = useState<Set<string>>(new Set());
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -466,14 +477,16 @@ export function AssetIntegrityAlertsPanel({
               {batchPending ? 'Marking all…' : 'Mark all read'}
             </button>
           ) : null}
-          <Link
-            href="/operator/integrity?failed_pages=1"
-            className="text-xs underline text-amber-700 hover:text-amber-900"
-            data-testid="asset-integrity-alerts-failed-pages-link"
-            title="Filter the integrity console to auto-freezes whose on-call page failed or was skipped."
-          >
-            View auto-freezes that didn&rsquo;t wake on-call →
-          </Link>
+          {failedPagesCount > 0 ? (
+            <Link
+              href="/operator/integrity?failed_pages=1"
+              className="text-xs underline text-amber-700 hover:text-amber-900"
+              data-testid="asset-integrity-alerts-failed-pages-link"
+              title="Filter the integrity console to auto-freezes whose on-call page failed or was skipped."
+            >
+              View {failedPagesCount} auto-freeze{failedPagesCount === 1 ? '' : 's'} that didn&rsquo;t wake on-call →
+            </Link>
+          ) : null}
           <Link
             href="/operator/integrity"
             className="text-xs underline text-dl-muted"

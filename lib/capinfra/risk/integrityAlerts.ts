@@ -381,6 +381,60 @@ export function isPagingFailedOrSkipped(
 }
 
 /**
+ * Count recent UNREAD `collateral.integrity_failed` notifications
+ * (within the default 24h window) where the on-call page either
+ * failed or was skipped. The result deliberately matches the default
+ * view at `/operator/integrity?failed_pages=1`, which shows
+ * unread-only rows unless the operator toggles "Show acknowledged"
+ * (`ack=1`). Counting only unread rows ensures the dashboard link
+ * is hidden — rather than misleadingly shown — when all matching
+ * rows have already been acknowledged.
+ *
+ * Used by the dashboard to surface the count on the cross-link before
+ * the operator has to click through.
+ */
+export async function countRecentFailedPages(
+  opts: { nowMs?: number } = {},
+): Promise<number> {
+  const now = opts.nowMs ?? Date.now();
+  const sinceDate = new Date(now - INTEGRITY_ALERT_DEFAULT_WINDOW_MS);
+
+  // Count only UNREAD rows to match the default view at the cross-link
+  // destination (/operator/integrity?failed_pages=1), which uses
+  // showAcknowledged=false (includeRead: false) unless ack=1 is present.
+  // Counting acknowledged rows would cause the link to appear on the
+  // dashboard even when clicking through reveals zero results.
+  const rows = await db
+    .select({
+      id: capNotifications.id,
+      subject: capNotifications.subject,
+      bodyJson: capNotifications.bodyJson,
+      createdAt: capNotifications.createdAt,
+      readAt: capNotifications.readAt,
+    })
+    .from(capNotifications)
+    .where(
+      and(
+        eq(capNotifications.topic, INTEGRITY_ALERT_TOPIC),
+        eq(capNotifications.channel, 'operator'),
+        gte(capNotifications.createdAt, sinceDate),
+        isNull(capNotifications.readAt),
+      ),
+    )
+    .orderBy(desc(capNotifications.createdAt))
+    .limit(200);
+
+  let count = 0;
+  for (const row of rows) {
+    const view = shapeIntegrityAlert(row);
+    if (view && isPagingFailedOrSkipped(view.paged)) {
+      count++;
+    }
+  }
+  return count;
+}
+
+/**
  * Returns recent `collateral.integrity_failed` operator-channel
  * notifications, newest first, shaped for the operator integrity
  * console (/operator/integrity). Unlike

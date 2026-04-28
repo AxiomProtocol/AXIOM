@@ -16,6 +16,7 @@ import { desc, eq, and, inArray, isNotNull, lt, sql } from 'drizzle-orm';
 import { getActiveSolvencyMode } from '../../lib/capinfra/reserve/solvencyMode';
 import {
   listRecentUnreadIntegrityAlerts,
+  countRecentFailedPages,
   type IntegrityAlertView,
 } from '../../lib/capinfra/risk/integrityAlerts';
 import { AssetIntegrityAlertsPanel } from '../../components/operator/AssetIntegrityAlertsPanel';
@@ -41,6 +42,7 @@ interface DashboardProps {
   mode: { mode: string; version: string; isBootstrap: boolean };
   lastSnapshot: { id: string; checksum: string; asOf: string } | null;
   integrityAlerts: IntegrityAlertView[];
+  failedPagesCount: number;
   pagerStatus: IntegrityPagerStatus;
   batchMarkReadSummary: BatchMarkReadSummary;
 }
@@ -106,6 +108,13 @@ export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx
     console.error('[operator.dashboard] failed to load integrity alerts', err);
   }
 
+  let failedPagesCount = 0;
+  try {
+    failedPagesCount = await countRecentFailedPages();
+  } catch (err) {
+    console.error('[operator.dashboard] failed to load failed-pages count', err);
+  }
+
   let batchMarkReadSummary: BatchMarkReadSummary = { lastBatch: null, clearedToday: 0 };
   try {
     batchMarkReadSummary = await getBatchMarkReadSummary();
@@ -128,6 +137,7 @@ export const getServerSideProps: GetServerSideProps<DashboardProps> = async (ctx
         ? { id: snaps[0].id, checksum: snaps[0].checksum, asOf: snaps[0].asOf.toISOString() }
         : null,
       integrityAlerts,
+      failedPagesCount,
       pagerStatus: getIntegrityPagerStatus(),
       batchMarkReadSummary,
     },
@@ -183,6 +193,7 @@ export default function OperatorDashboard(props: DashboardProps) {
 
         <AssetIntegrityAlertsPanel
           alerts={props.integrityAlerts}
+          failedPagesCount={props.failedPagesCount}
           batchMarkReadSummary={props.batchMarkReadSummary}
         />
 
