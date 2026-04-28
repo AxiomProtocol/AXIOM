@@ -161,6 +161,51 @@ export async function listAuditEvents(filters: AuditQueryFilters) {
   return { items: enrichedItems, nextCursor };
 }
 
+/**
+ * Queries the audit table for the most recent `risk.integrity.test_page_sent`
+ * event that matches either the given actor or the given client IP within the
+ * last `windowMs` milliseconds. Returns the event's `createdAt` timestamp so
+ * the caller can compute a precise `retry_after_seconds` hint, or `null` if
+ * no blocking event exists.
+ *
+ * This is the shared-store backing for the test-page per-actor / per-IP
+ * cooldown. Keying off the audit table means the cooldown survives process
+ * restarts and applies uniformly across every Next.js replica behind the load
+ * balancer — there is no instance-local state to bypass.
+ *
+ * The IP is stored in `payloadJson->>'ip'` by the test-page handler; if an
+ * older row was written before the IP field was added it simply won't match
+ * the IP axis (which is fine — it still matches the actor axis if the actor
+ * is the same).
+ */
+export async function getLatestTestPageEvent(
+  actor: string,
+  ip: string,
+  windowMs: number,
+): Promise<{ createdAt: Date } | null> {
+  const since = new Date(Date.now() - windowMs);
+  const [row] = await db
+    .select({ createdAt: capAuditEvents.createdAt })
+    .from(capAuditEvents)
+    .where(
+      and(
+        eq(capAuditEvents.eventType, 'risk.integrity.test_page_sent'),
+        gte(capAuditEvents.createdAt, since),
+        // Exclude skipped calls — no channel was paged, so the cooldown
+        // must not fire (consistent with the original in-process behaviour
+        // where armCooldown was only called when !result.skipped).
+        sql`(${capAuditEvents.payloadJson}->>'skipped')::boolean IS NOT TRUE`,
+        or(
+          eq(capAuditEvents.actor, actor),
+          sql`${capAuditEvents.payloadJson}->>'ip' = ${ip}`,
+        ) as SQL,
+      ),
+    )
+    .orderBy(desc(capAuditEvents.createdAt))
+    .limit(1);
+  return row ?? null;
+}
+
 export interface BatchMarkReadSummary {
   /** Most recent batch event, or null if none exist. */
   lastBatch: {

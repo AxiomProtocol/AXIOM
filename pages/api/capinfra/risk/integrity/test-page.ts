@@ -18,7 +18,7 @@
  *      can press the "Send test page" button without exposing the
  *      admin key on the client.
  *
- * Throttle (Task #302): Once an actor (or their IP) has successfully
+ * Throttle (Task #302 / #328): Once an actor (or their IP) has successfully
  * triggered a real fan-out, further calls are short-circuited with
  * 429 + `retry_after_seconds` for `TEST_PAGE_COOLDOWN_MS` (default
  * 60s). This protects the on-call inbox from being flooded by a
@@ -26,6 +26,23 @@
  * without removing the on-demand wiring check. Calls that authenticated
  * but produced no real page (skipped — no channels configured) do NOT
  * arm the cooldown so the operator can keep iterating on env wiring.
+ *
+ * The cooldown is backed by the shared Postgres audit table
+ * (`cap_audit_events`). This means it survives process restarts and
+ * applies uniformly across every Next.js replica — there is no
+ * instance-local state to bypass by hitting a different server or
+ * triggering a deploy.
+ *
+ * Reliability guarantees:
+ *   - If the cooldown DB read fails, the endpoint returns 503 (fail-closed)
+ *     rather than accidentally allowing a send that should be rate-limited.
+ *   - For non-skipped sends the audit row is written with a strict (throwing)
+ *     writer so the cooldown record is always created or the request fails
+ *     with 500. This prevents a silent audit-write failure from leaving the
+ *     cooldown unarmed after a real page was sent.
+ *   - Skipped sends still use the soft (best-effort) audit writer because no
+ *     cooldown record is needed and losing an informational audit row must
+ *     not stop the operator from iterating on env wiring.
  *
  * Response (200): `{ result: { channelsPaged, errors, skipped } }`
  *   The pager never throws — channel failures come back inside the
@@ -36,12 +53,18 @@
  *   Also sets the `Retry-After` header (in whole seconds) so generic
  *   HTTP clients honour the cooldown without parsing the JSON body.
  *
+ * Response (503): `{ error: 'COOLDOWN_CHECK_UNAVAILABLE', message }`
+ *   Returned when the cooldown DB read fails. Fail-closed: we cannot
+ *   confirm the cooldown status, so we refuse the request rather than
+ *   risk flooding on-call.
+ *
  * Audit trail: every successful POST also writes a single
- * `risk.integrity.test_page_sent` audit event (best-effort) capturing
- * the resolved actor, correlationId, channelsPaged and channel error
+ * `risk.integrity.test_page_sent` audit event capturing the resolved
+ * actor, correlationId, client IP, channelsPaged and channel error
  * strings — so on-call drills are searchable in the cap-infra audit
  * search UI even when the synthetic email/Discord message is silently
- * lost in transit.
+ * lost in transit. For non-skipped sends the write is strict (failure
+ * means 500); for skipped sends it is best-effort.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -55,7 +78,11 @@ import {
   readOperatorCookie,
 } from '../../../../../lib/capinfra/operatorAuth';
 import { pageOnCallForIntegrityFailure } from '../../../../../lib/capinfra/notifications/integrityPager';
-import { emitAuditEvent } from '../../../../../lib/capinfra/audit';
+import {
+  emitAuditEvent,
+  emitAuditEventStrict,
+  getLatestTestPageEvent,
+} from '../../../../../lib/capinfra/audit';
 import { getClientIp } from '../../../../../lib/multichain/stellar/axiom-rail/adminAuth';
 
 export const SYNTHETIC_TEST_PAGE_ASSET_ID = 'TEST-PAGE-SYNTHETIC';
@@ -73,54 +100,41 @@ export const TEST_PAGE_AUDIT_EVENT_TYPE = 'risk.integrity.test_page_sent';
 export const TEST_PAGE_COOLDOWN_MS = 60_000;
 export const TEST_PAGE_RATE_LIMITED_ERROR = 'TEST_PAGE_RATE_LIMITED';
 
-const cooldownMap = new Map<string, number>();
-
-function buildCooldownKeys(actor: string, ip: string): string[] {
-  // Both axes block independently: a single operator on two IPs and
-  // two operators on one shared IP are both rate-limited the same way.
-  return [`actor:${actor}`, `ip:${ip}`];
-}
-
 interface CooldownCheck {
   ok: boolean;
   retryAfterSec: number;
 }
 
-function checkCooldown(actor: string, ip: string, nowMs: number): CooldownCheck {
-  let maxRemainingMs = 0;
-  for (const key of buildCooldownKeys(actor, ip)) {
-    const expiresAt = cooldownMap.get(key);
-    if (expiresAt === undefined) continue;
-    if (expiresAt <= nowMs) {
-      cooldownMap.delete(key);
-      continue;
-    }
-    const remaining = expiresAt - nowMs;
-    if (remaining > maxRemainingMs) maxRemainingMs = remaining;
-  }
-  if (maxRemainingMs > 0) {
-    // Round up so a partial second still produces a >=1 retry hint;
-    // a 200ms remaining window should still tell the client "1s".
-    return { ok: false, retryAfterSec: Math.max(1, Math.ceil(maxRemainingMs / 1000)) };
-  }
-  return { ok: true, retryAfterSec: 0 };
-}
-
-function armCooldown(actor: string, ip: string, nowMs: number): void {
-  const expiresAt = nowMs + TEST_PAGE_COOLDOWN_MS;
-  for (const key of buildCooldownKeys(actor, ip)) {
-    cooldownMap.set(key, expiresAt);
-  }
+/**
+ * Checks the shared Postgres audit table for a recent
+ * `risk.integrity.test_page_sent` event matching this actor or IP.
+ * Returns `{ ok: false, retryAfterSec }` while the cooldown is active,
+ * `{ ok: true, retryAfterSec: 0 }` otherwise.
+ *
+ * Deliberately lets DB errors propagate to the caller so it can
+ * respond fail-closed (503) rather than silently allowing a send that
+ * should be rate-limited.
+ */
+async function checkCooldown(actor: string, ip: string, nowMs: number): Promise<CooldownCheck> {
+  // Throws intentionally on DB error — caller must handle.
+  const event = await getLatestTestPageEvent(actor, ip, TEST_PAGE_COOLDOWN_MS);
+  if (!event) return { ok: true, retryAfterSec: 0 };
+  const expiresAt = event.createdAt.getTime() + TEST_PAGE_COOLDOWN_MS;
+  const remainingMs = expiresAt - nowMs;
+  if (remainingMs <= 0) return { ok: true, retryAfterSec: 0 };
+  // Round up so a partial second still produces a >=1 retry hint;
+  // a 200ms remaining window should still tell the client "1s".
+  return { ok: false, retryAfterSec: Math.max(1, Math.ceil(remainingMs / 1000)) };
 }
 
 /**
- * Test-only hook so the cooldown map can be cleared between cases
- * without re-importing the handler module. Not exported on a public
- * path; lives on the handler module itself so the test file can call
- * it after each `it()`.
+ * No-op kept for backward compatibility with the test suite. The
+ * cooldown is now backed by the Postgres audit table (via
+ * `getLatestTestPageEvent`), so tests mock that function directly
+ * rather than clearing an in-process map.
  */
 export function _resetTestPageCooldownsForTests(): void {
-  cooldownMap.clear();
+  // no-op — cooldown state lives in the database, not in process memory.
 }
 
 function buildSyntheticPayload(actor: string) {
@@ -173,7 +187,25 @@ export default async function handler(
   // unauthenticated probe never even reaches this branch.
   const nowMs = Date.now();
   const ip = getClientIp(req);
-  const cd = checkCooldown(actor, ip, nowMs);
+
+  // Fail-closed: if the cooldown DB read fails we cannot confirm the
+  // rate-limit state, so refuse the request with 503 rather than
+  // accidentally allowing a send that should be blocked.
+  let cd: CooldownCheck;
+  try {
+    cd = await checkCooldown(actor, ip, nowMs);
+  } catch (err) {
+    console.error(
+      '[capinfra.risk.integrity.test-page] cooldown check failed',
+      err,
+    );
+    return res.status(503).json({
+      error: 'COOLDOWN_CHECK_UNAVAILABLE',
+      message:
+        'Unable to verify rate-limit status. The test page was not sent. Please try again in a moment.',
+    });
+  }
+
   if (!cd.ok) {
     res.setHeader('Retry-After', String(cd.retryAfterSec));
     return res.status(429).json({
@@ -188,20 +220,8 @@ export default async function handler(
   const payload = buildSyntheticPayload(actor);
   try {
     const result = await pageOnCallForIntegrityFailure(payload);
-    // Only arm the cooldown when a real fan-out attempt happened.
-    // `skipped: true` means no channels are configured, so the call
-    // didn't actually wake on-call — the operator should be free to
-    // keep tweaking env vars without waiting 60s between retries.
-    if (!result.skipped) {
-      armCooldown(actor, ip, nowMs);
-    }
-    // Best-effort audit row so on-call drills are searchable. The pager
-    // has already fanned the synthetic message out — losing one audit
-    // row must not make the operator console think the page failed, so
-    // we use the soft-guarantee writer (logs and swallows). Operators
-    // can find these rows in the cap-infra audit search by filtering
-    // on Event Type = `risk.integrity.test_page_sent`.
-    await emitAuditEvent({
+
+    const auditPayload = {
       eventType: TEST_PAGE_AUDIT_EVENT_TYPE,
       aggregateType: 'asset',
       aggregateId: SYNTHETIC_TEST_PAGE_ASSET_ID,
@@ -211,22 +231,39 @@ export default async function handler(
       payloadJson: {
         kind: SYNTHETIC_TEST_PAGE_KIND,
         testPage: true,
+        ip,
         channelsPaged: result.channelsPaged,
         errors: result.errors,
         skipped: result.skipped,
       },
-    });
+    };
+
+    if (!result.skipped) {
+      // Strong-guarantee write for non-skipped sends: the audit row IS
+      // the cooldown record. If this insert fails the throw is caught
+      // below and returned as 500. Returning 200 without the row would
+      // leave the cooldown unarmed after a real page was dispatched,
+      // which is the reliability regression the reviewer flagged.
+      await emitAuditEventStrict(auditPayload);
+    } else {
+      // Skipped sends: soft-guarantee write so an informational audit row
+      // that carries no cooldown weight never aborts the operator's
+      // env-wiring iteration loop.
+      await emitAuditEvent(auditPayload);
+    }
+
     return res.status(200).json({ result });
   } catch (err) {
     // Defense-in-depth: the pager already swallows channel errors, but
-    // never let an unexpected throw leak as a 500 without context.
+    // never let an unexpected throw (including a failed strict audit
+    // write for a non-skipped send) leak as a 500 without context.
     console.error(
-      '[capinfra.risk.integrity.test-page] unexpected pager throw',
+      '[capinfra.risk.integrity.test-page] unexpected throw',
       err,
     );
     return res.status(500).json({
       error: 'INTERNAL',
-      message: err instanceof Error ? err.message : 'pager threw',
+      message: err instanceof Error ? err.message : 'unexpected error',
     });
   }
 }

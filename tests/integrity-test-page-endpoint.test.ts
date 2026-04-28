@@ -21,6 +21,14 @@
  *   4. Synthetic payload shape:
  *      - testPage flag, dedicated symbol/assetId/kind, GREEN
  *        previousClass, actor stamp present.
+ *   5. Audit trail:
+ *      - Non-skipped sends use the strict-guarantee writer so the
+ *        cooldown record is always created or the request fails 500.
+ *      - Skipped sends use the soft-guarantee writer.
+ *   6. Cooldown / rate-limiting (task #302 + #328):
+ *      - DB-backed cooldown persists across process restarts and
+ *        applies across replicas.
+ *      - Fail-closed: 503 when the cooldown DB read fails.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -28,6 +36,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 const mockPager = vi.fn();
 const mockEmitAuditEvent = vi.fn();
+const mockEmitAuditEventStrict = vi.fn();
+const mockGetLatestTestPageEvent = vi.fn();
 
 vi.mock('../lib/capinfra/notifications/integrityPager', () => ({
   pageOnCallForIntegrityFailure: (...args: unknown[]) => mockPager(...args),
@@ -35,6 +45,8 @@ vi.mock('../lib/capinfra/notifications/integrityPager', () => ({
 
 vi.mock('../lib/capinfra/audit', () => ({
   emitAuditEvent: (...args: unknown[]) => mockEmitAuditEvent(...args),
+  emitAuditEventStrict: (...args: unknown[]) => mockEmitAuditEventStrict(...args),
+  getLatestTestPageEvent: (...args: unknown[]) => mockGetLatestTestPageEvent(...args),
 }));
 
 const {
@@ -118,7 +130,11 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
       errors: [],
       skipped: false,
     });
+    // Non-skipped sends use the strict writer; skipped sends use the soft writer.
+    mockEmitAuditEventStrict.mockResolvedValue('ae_strict_test');
     mockEmitAuditEvent.mockResolvedValue('ae_test');
+    // Default: no blocking cooldown event in the DB.
+    mockGetLatestTestPageEvent.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -284,7 +300,7 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     expect(body()).toMatchObject({ error: 'INTERNAL', message: 'boom' });
   });
 
-  it('writes a single audit event with the resolved actor, channels paged, and errors', async () => {
+  it('writes a single strict audit event with the resolved actor, channels paged, and errors', async () => {
     mockPager.mockResolvedValueOnce({
       channelsPaged: ['email', 'discord'],
       errors: [],
@@ -300,8 +316,10 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     );
 
     expect(statusCode()).toBe(200);
-    expect(mockEmitAuditEvent).toHaveBeenCalledTimes(1);
-    const audit = mockEmitAuditEvent.mock.calls[0][0] as Record<string, unknown>;
+    // Non-skipped send → strict writer.
+    expect(mockEmitAuditEventStrict).toHaveBeenCalledTimes(1);
+    expect(mockEmitAuditEvent).not.toHaveBeenCalled();
+    const audit = mockEmitAuditEventStrict.mock.calls[0][0] as Record<string, unknown>;
     expect(audit.eventType).toBe(TEST_PAGE_AUDIT_EVENT_TYPE);
     expect(audit.eventType).toBe('risk.integrity.test_page_sent');
     expect(audit.aggregateType).toBe('asset');
@@ -320,6 +338,22 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     expect(payloadJson.skipped).toBe(false);
   });
 
+  it('records the client IP in the audit payload for cross-replica cooldown checks', async () => {
+    const { res, statusCode } = makeRes();
+    await testPageHandler(
+      makeReq({
+        cookies: { cap_operator_key: OPERATOR_KEY },
+        socket: { remoteAddress: '203.0.113.42' },
+      }),
+      res,
+    );
+
+    expect(statusCode()).toBe(200);
+    const audit = mockEmitAuditEventStrict.mock.calls[0][0] as Record<string, unknown>;
+    const payloadJson = audit.payloadJson as Record<string, unknown>;
+    expect(payloadJson.ip).toBe('203.0.113.42');
+  });
+
   it('records channel error strings in the audit payload (partial-failure)', async () => {
     mockPager.mockResolvedValueOnce({
       channelsPaged: ['email'],
@@ -333,8 +367,9 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     );
 
     expect(statusCode()).toBe(200);
-    expect(mockEmitAuditEvent).toHaveBeenCalledTimes(1);
-    const audit = mockEmitAuditEvent.mock.calls[0][0] as {
+    // Partial failure is not skipped → strict writer.
+    expect(mockEmitAuditEventStrict).toHaveBeenCalledTimes(1);
+    const audit = mockEmitAuditEventStrict.mock.calls[0][0] as {
       payloadJson: { channelsPaged: string[]; errors: string[]; skipped: boolean };
     };
     expect(audit.payloadJson.channelsPaged).toEqual(['email']);
@@ -342,7 +377,7 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     expect(audit.payloadJson.skipped).toBe(false);
   });
 
-  it('records skipped=true in the audit payload when no channels are configured', async () => {
+  it('uses the soft-guarantee writer for skipped sends (no cooldown record needed)', async () => {
     mockPager.mockResolvedValueOnce({
       channelsPaged: [],
       errors: [],
@@ -355,7 +390,9 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     );
 
     expect(statusCode()).toBe(200);
+    // Skipped → soft writer; strict writer must NOT have been called.
     expect(mockEmitAuditEvent).toHaveBeenCalledTimes(1);
+    expect(mockEmitAuditEventStrict).not.toHaveBeenCalled();
     const audit = mockEmitAuditEvent.mock.calls[0][0] as {
       payloadJson: { channelsPaged: string[]; errors: string[]; skipped: boolean };
     };
@@ -371,8 +408,8 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     );
 
     expect(statusCode()).toBe(200);
-    expect(mockEmitAuditEvent).toHaveBeenCalledTimes(1);
-    const audit = mockEmitAuditEvent.mock.calls[0][0] as { actor: string };
+    expect(mockEmitAuditEventStrict).toHaveBeenCalledTimes(1);
+    const audit = mockEmitAuditEventStrict.mock.calls[0][0] as { actor: string };
     expect(typeof audit.actor).toBe('string');
     expect(audit.actor.length).toBeGreaterThan(0);
   });
@@ -385,7 +422,7 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     );
 
     const pagerPayload = mockPager.mock.calls[0][0] as { correlationId: string };
-    const audit = mockEmitAuditEvent.mock.calls[0][0] as { correlationId: string };
+    const audit = mockEmitAuditEventStrict.mock.calls[0][0] as { correlationId: string };
     expect(audit.correlationId).toBe(pagerPayload.correlationId);
   });
 
@@ -398,6 +435,7 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     );
 
     expect(statusCode()).toBe(500);
+    expect(mockEmitAuditEventStrict).not.toHaveBeenCalled();
     expect(mockEmitAuditEvent).not.toHaveBeenCalled();
   });
 
@@ -412,6 +450,7 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     );
 
     expect(statusCode()).toBe(405);
+    expect(mockEmitAuditEventStrict).not.toHaveBeenCalled();
     expect(mockEmitAuditEvent).not.toHaveBeenCalled();
   });
 
@@ -420,13 +459,19 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     await testPageHandler(makeReq(), res);
 
     expect(statusCode()).toBe(403);
+    expect(mockEmitAuditEventStrict).not.toHaveBeenCalled();
     expect(mockEmitAuditEvent).not.toHaveBeenCalled();
   });
 
-  it('still returns 200 with the pager envelope if the audit write fails', async () => {
-    // emitAuditEvent is best-effort by contract — losing one audit row
-    // must not make the operator console think the page failed.
-    mockEmitAuditEvent.mockResolvedValueOnce(null);
+  it('still returns 200 with the pager envelope if the audit write fails for skipped sends', async () => {
+    // For skipped sends, emitAuditEvent (soft) is used — losing one informational
+    // audit row must not abort the operator's env-wiring iteration loop.
+    mockPager.mockResolvedValueOnce({
+      channelsPaged: [],
+      errors: [],
+      skipped: true,
+    });
+    mockEmitAuditEvent.mockResolvedValueOnce(null); // simulates soft-swallowed failure
     const { res, statusCode, body } = makeRes();
     await testPageHandler(
       makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
@@ -435,12 +480,39 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
 
     expect(statusCode()).toBe(200);
     expect(body()).toEqual({
-      result: { channelsPaged: ['email'], errors: [], skipped: false },
+      result: { channelsPaged: [], errors: [], skipped: true },
     });
   });
 
-  describe('cooldown / rate-limiting (task #302)', () => {
+  it('returns 500 if the strict cooldown-record write fails on a real send', async () => {
+    // For non-skipped sends, emitAuditEventStrict throws on failure. That
+    // throw propagates to the outer catch and becomes a 500 — a real page was
+    // sent but no cooldown record was created, which is a data-integrity
+    // problem the operator must know about rather than silently swallow.
+    mockEmitAuditEventStrict.mockRejectedValueOnce(new Error('db down'));
+    const { res, statusCode, body } = makeRes();
+    await testPageHandler(
+      makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+      res,
+    );
+
+    expect(statusCode()).toBe(500);
+    expect(body()).toMatchObject({ error: 'INTERNAL', message: 'db down' });
+  });
+
+  describe('cooldown / rate-limiting (task #302 + #328)', () => {
+    /**
+     * Simulate the DB returning a cooldown row written `msSinceAgo` ms ago.
+     * Defaults to 500 ms ago so there are still ~59.5 s left in the window.
+     */
+    function setBlockingCooldown(msSinceAgo = 500) {
+      mockGetLatestTestPageEvent.mockResolvedValue({
+        createdAt: new Date(Date.now() - msSinceAgo),
+      });
+    }
+
     it('rejects a second send within the cooldown window with 429 + retry_after_seconds', async () => {
+      // First send — DB has no blocking event yet.
       const first = makeRes();
       await testPageHandler(
         makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
@@ -448,6 +520,9 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
       );
       expect(first.statusCode()).toBe(200);
       expect(mockPager).toHaveBeenCalledTimes(1);
+
+      // Simulate the DB now holding the event from the first send (500 ms ago).
+      setBlockingCooldown(500);
 
       const second = makeRes();
       await testPageHandler(
@@ -470,30 +545,23 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
       // a second time — that's the whole point of the cooldown.
       expect(mockPager).toHaveBeenCalledTimes(1);
       // Nor should it write a duplicate audit row.
-      expect(mockEmitAuditEvent).toHaveBeenCalledTimes(1);
+      expect(mockEmitAuditEventStrict).toHaveBeenCalledTimes(1);
     });
 
     it('clears the cooldown for the same actor after the window expires', async () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-04-26T00:00:00Z'));
+      // The DB returns an event that is older than the cooldown window.
+      // checkCooldown computes remainingMs <= 0 and lets the call through.
+      mockGetLatestTestPageEvent.mockResolvedValue({
+        createdAt: new Date(Date.now() - TEST_PAGE_COOLDOWN_MS - 1000),
+      });
 
-      const first = makeRes();
+      const { res, statusCode } = makeRes();
       await testPageHandler(
         makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
-        first.res,
+        res,
       );
-      expect(first.statusCode()).toBe(200);
-
-      // Advance just past the cooldown window.
-      vi.setSystemTime(new Date(Date.now() + TEST_PAGE_COOLDOWN_MS + 1000));
-
-      const second = makeRes();
-      await testPageHandler(
-        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
-        second.res,
-      );
-      expect(second.statusCode()).toBe(200);
-      expect(mockPager).toHaveBeenCalledTimes(2);
+      expect(statusCode()).toBe(200);
+      expect(mockPager).toHaveBeenCalledTimes(1);
     });
 
     it('throttles by IP even when a different actor (cookie vs header) hits the same address', async () => {
@@ -508,6 +576,9 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
         first.res,
       );
       expect(first.statusCode()).toBe(200);
+
+      // Simulate the DB returning a blocking event for the shared IP.
+      setBlockingCooldown(500);
 
       // Different operator label but the same IP must still be blocked
       // by the per-IP axis of the cooldown.
@@ -535,6 +606,9 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
       );
       expect(first.statusCode()).toBe(200);
 
+      // Simulate the DB returning a blocking event for the same actor.
+      setBlockingCooldown(500);
+
       const second = makeRes();
       await testPageHandler(
         makeReq({
@@ -552,6 +626,8 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
       // skipped=true means no channel was actually paged, so the
       // operator should be free to keep iterating on env wiring without
       // waiting 60s between attempts.
+      // getLatestTestPageEvent filters out skipped rows in the DB query,
+      // so the mock remains null → both calls return 200.
       mockPager.mockResolvedValue({
         channelsPaged: [],
         errors: [],
@@ -575,6 +651,9 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
     });
 
     it('does NOT arm the cooldown when the pager throws unexpectedly', async () => {
+      // On a pager throw, emitAuditEventStrict is never called, so the DB has
+      // no new row → getLatestTestPageEvent keeps returning null → second
+      // call is allowed through.
       mockPager.mockRejectedValueOnce(new Error('boom'));
       const first = makeRes();
       await testPageHandler(
@@ -583,8 +662,7 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
       );
       expect(first.statusCode()).toBe(500);
 
-      // Pager is healthy on the retry — the cooldown shouldn't have
-      // armed off the failed attempt.
+      // Pager is healthy on the retry — mock still returns null.
       const second = makeRes();
       await testPageHandler(
         makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
@@ -606,6 +684,9 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
       );
       expect(first.statusCode()).toBe(200);
 
+      // Partial-failure is not skipped → the strict audit row arms the cooldown.
+      setBlockingCooldown(500);
+
       const second = makeRes();
       await testPageHandler(
         makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
@@ -622,12 +703,66 @@ describe('POST /api/capinfra/risk/integrity/test-page', () => {
       await testPageHandler(makeReq(), probe.res);
       expect(probe.statusCode()).toBe(403);
 
+      // DB still returns null — the unauthenticated probe did not arm anything.
       const real = makeRes();
       await testPageHandler(
         makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
         real.res,
       );
       expect(real.statusCode()).toBe(200);
+    });
+
+    it('returns 503 when the cooldown DB read fails (fail-closed)', async () => {
+      // If getLatestTestPageEvent throws (transient DB error), the endpoint
+      // must refuse the request with 503 rather than allowing a send that
+      // might be rate-limited. Fail-closed is the correct posture here.
+      mockGetLatestTestPageEvent.mockRejectedValueOnce(new Error('db timeout'));
+      const { res, statusCode, body } = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        res,
+      );
+
+      expect(statusCode()).toBe(503);
+      const b = body() as Record<string, unknown>;
+      expect(b.error).toBe('COOLDOWN_CHECK_UNAVAILABLE');
+      expect(typeof b.message).toBe('string');
+      // Pager must NOT have fired — request was refused.
+      expect(mockPager).not.toHaveBeenCalled();
+    });
+
+    it('persists the cooldown across a simulated process restart (task #328)', async () => {
+      // Establish that a successful page was sent on the first instance.
+      const first = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        first.res,
+      );
+      expect(first.statusCode()).toBe(200);
+
+      // Simulate a process restart: the in-process state is gone.
+      // _resetTestPageCooldownsForTests() is a no-op with the DB-backed
+      // implementation; the cooldown is held in Postgres. We model the
+      // DB still holding the audit row from the first send.
+      _resetTestPageCooldownsForTests();
+      setBlockingCooldown(500); // DB row still present after restart.
+
+      // A request arriving on the fresh instance must still be rate-limited.
+      const second = makeRes();
+      await testPageHandler(
+        makeReq({ cookies: { cap_operator_key: OPERATOR_KEY } }),
+        second.res,
+      );
+      expect(second.statusCode()).toBe(429);
+      const body = second.body() as Record<string, unknown>;
+      expect(body.error).toBe(TEST_PAGE_RATE_LIMITED_ERROR);
+      expect(typeof body.retry_after_seconds).toBe('number');
+      expect(body.retry_after_seconds).toBeGreaterThan(0);
+      // The Retry-After hint must be consistent — it's derived from the
+      // DB row's createdAt, not from instance-local expiry tracking.
+      expect(second.headers()['retry-after']).toBeDefined();
+      // Pager must NOT have been called on the restarted instance.
+      expect(mockPager).toHaveBeenCalledTimes(1);
     });
   });
 });
