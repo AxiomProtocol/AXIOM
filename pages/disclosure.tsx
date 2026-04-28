@@ -13,6 +13,7 @@ interface SnapshotData {
   asOfUtc: string;
   treasuryTotalUsd: number;
   liabilitiesTotalUsd: number;
+  liabilitiesExternalUsd: number | null;
   coverageRatio: number;
   policyMode: string;
   checksum: string;
@@ -91,6 +92,10 @@ export default function DisclosurePage() {
           asOfUtc: data.asOfUtc || data.as_of_utc || data.timestamp || '',
           treasuryTotalUsd: data.treasuryTotalUsd || data.treasury_total_usd || 0,
           liabilitiesTotalUsd: data.liabilitiesTotalUsd || data.liabilities_total_usd || 0,
+          liabilitiesExternalUsd:
+            typeof data.liabilitiesExternalUsd === 'number'
+              ? data.liabilitiesExternalUsd
+              : null,
           coverageRatio: data.coverageRatio || data.coverage_ratio || 0,
           policyMode: data.policyMode || data.policy_mode || 'BOOTSTRAP',
           checksum: data.checksum || '',
@@ -379,6 +384,18 @@ export default function DisclosurePage() {
                 </p>
               </div>
             </div>
+
+            {snapshot && snapshot.liabilitiesExternalUsd !== null && (
+              <div className="border border-dl-border border-t-0 px-6 py-4 bg-dl-bg">
+                <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+                  <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono">External Creditor Exposure (Net of Internal Liquidity)</p>
+                  <p className="text-base font-dl-mono text-dl-navy font-semibold">{fmtUsd(snapshot.liabilitiesExternalUsd)}</p>
+                </div>
+                <p className="text-xs text-dl-gray leading-relaxed mt-2">
+                  Of the <span className="font-semibold text-dl-navy">{fmtUsd(snapshot.liabilitiesTotalUsd)}</span> gross AXUSD outstanding, <span className="font-semibold text-dl-navy">{fmtUsd(snapshot.liabilitiesExternalUsd)}</span> sits outside protocol-controlled internal-liquidity venues (the deployer-controlled EVK Open Money Market vault). The remainder is held by the issuer in those internal-liquidity venues and is treated as protocol-owned under this methodology rather than as third-party creditor exposure. Prudential coverage and reserve-ratio math on this page continue to use the gross basis as the conservative measure.
+                </p>
+              </div>
+            )}
 
             <div className="border border-dl-border border-t-0 px-6 py-4 bg-dl-bg-alt">
               <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-2">Metric Interpretation Guidance</p>

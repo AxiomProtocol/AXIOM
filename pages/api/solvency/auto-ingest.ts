@@ -85,6 +85,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // legacy/Euler PSM USDC reserves were summed, which silently dropped the
     // canonical PSM's USDC backing from treasury and made coverage look
     // worse than reality on /disclosure.
+    //
+    // Internal-liquidity netting (Task: wallet-only launch C2):
+    // The deployer-controlled EVK Open Money Market vault (eAXUSD-6) holds
+    // canonical AXUSD as its underlying asset. AXUSD sitting inside that
+    // vault is not an external creditor claim — it's protocol-owned
+    // liquidity. We compute it here so liabilitiesTotalUsd reflects the
+    // *circulating external* supply rather than gross totalSupply.
     const [
       primaryPsmUsdcRaw,
       eulerPsmUsdcRaw,
@@ -93,6 +100,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       eulerAxusdSupplyRaw,
       deployerEthRaw,
       deployerUsdcRaw,
+      evkVaultAxusdRaw,
     ] = await Promise.all([
       usdc.balanceOf(ACTIVE_PSM),
       usdc.balanceOf(EULER_PSM),
@@ -101,6 +109,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       eulerAxusd.totalSupply(),
       provider.getBalance(DEPLOYER_ADDRESS),
       usdc.balanceOf(DEPLOYER_ADDRESS),
+      isEvkVaultDeployed() ? primaryAxusd.balanceOf(EVK_OPEN_MARKET_VAULT_ADDRESS) : Promise.resolve(0n),
     ]);
 
     const primaryPsmUsdc = parseFloat(ethers.formatUnits(primaryPsmUsdcRaw, 6));
@@ -110,6 +119,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const eulerAxusdSupply = parseFloat(ethers.formatUnits(eulerAxusdSupplyRaw, 18));
     const deployerEth = parseFloat(ethers.formatEther(deployerEthRaw));
     const deployerUsdc = parseFloat(ethers.formatUnits(deployerUsdcRaw, 6));
+    const evkVaultAxusd = parseFloat(ethers.formatUnits(evkVaultAxusdRaw, 18));
+
+    // Circulating-external canonical AXUSD = totalSupply − internal liquidity.
+    // Clamp at zero in case oracle/proxy quirks ever return >totalSupply.
+    const canonicalAxusdInternalUsd = Math.round(evkVaultAxusd * 100) / 100;
+    const canonicalAxusdExternalUsd = Math.max(
+      0,
+      Math.round((primaryAxusdSupply - evkVaultAxusd) * 100) / 100
+    );
 
     let ethPrice = 2600;
     try {
@@ -185,7 +203,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const eulerSwapTotalTvl = eulerSwapUsdcTvl + eulerSwapAxmTvl;
 
     const treasuryTotalUsd = Math.round((deployerEthUsd + deployerUsdc + psmReservesTotal) * 100) / 100;
-    const liabilitiesTotalUsd = Math.round((primaryAxusdSupply + eulerAxusdSupply) * 100) / 100;
+
+    // liabilitiesTotalUsd remains the GROSS liability number (canonical AXUSD
+    // total supply + legacy Euler AXUSD supply). Every existing consumer —
+    // metrics.ts, solvency.tsx, lib/solvency/model.ts, AME v1 — reads this
+    // field as "outstanding AXUSD" for prudential coverage / reserve-ratio
+    // math, and that conservative basis must not silently shift.
+    //
+    // liabilitiesExternalUsd is the net (external creditor exposure) figure:
+    // canonical AXUSD held OUTSIDE the deployer-controlled EVK Open Money
+    // Market vault, plus legacy Euler AXUSD. /disclosure surfaces this as
+    // additional context; policy gates do NOT consume it.
+    const liabilitiesGrossUsd = Math.round((primaryAxusdSupply + eulerAxusdSupply) * 100) / 100;
+    const liabilitiesTotalUsd = liabilitiesGrossUsd;
+    const liabilitiesExternalUsd = Math.round((canonicalAxusdExternalUsd + eulerAxusdSupply) * 100) / 100;
 
     const totalAssets = deployerEthUsd + deployerUsdc + psmReservesTotal;
     const safePct = (v: number) => totalAssets > 0 ? Math.round(v / totalAssets * 10000) / 100 : 0;
@@ -224,6 +255,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       treasuryLiquidUsd: treasuryTotalUsd,
       reservesTotalUsd: psmReservesTotal,
       liabilitiesTotalUsd,
+      liabilitiesGrossUsd,
+      liabilitiesExternalUsd,
+      axusdLiquidity: {
+        canonicalSupplyUsd: Math.round(primaryAxusdSupply * 100) / 100,
+        canonicalInternalUsd: canonicalAxusdInternalUsd,
+        canonicalExternalUsd: canonicalAxusdExternalUsd,
+        eulerLegacySupplyUsd: Math.round(eulerAxusdSupply * 100) / 100,
+        internalLiquidityVenue: {
+          name: 'EVK Open Money Market (eAXUSD-6)',
+          address: EVK_OPEN_MARKET_VAULT_ADDRESS,
+          axusdHeld: evkVaultAxusd,
+        },
+        nettingBasis:
+          'liabilitiesTotalUsd is the GROSS outstanding AXUSD (all consumers — metrics, AME, policy gates — read this). liabilitiesExternalUsd nets canonical AXUSD held in the deployer-controlled EVK Open Money Market vault, treating it as protocol-owned internal liquidity rather than external creditor exposure; surfaced on /disclosure for context only.',
+      },
       lossBufferUsd: 0,
       policyMode: 'BOOTSTRAP',
       hardBrake: 'OFF',

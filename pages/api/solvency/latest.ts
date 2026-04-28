@@ -95,11 +95,23 @@ export default async function handler(
       .filter((item: CompositionItem) => item.label && item.label.toUpperCase().includes('PSM'))
       .reduce((sum: number, item: CompositionItem) => sum + Number(item.valueUsd || 0), 0);
 
-    const axusdSupply = Number(p.liabilitiesTotalUsd || 0);
+    // liabilitiesTotalUsd is the GROSS outstanding AXUSD basis used by every
+    // policy/AME/metric consumer. liabilitiesGrossUsd mirrors it for clarity
+    // (older snapshots may omit the explicit field, hence the fallback).
+    // liabilitiesExternalUsd is the netted "external creditor exposure" figure
+    // exposed for /disclosure context only — never used in stability math.
+    const liabilitiesGrossUsd =
+      p.liabilitiesGrossUsd != null
+        ? Math.round(Number(p.liabilitiesGrossUsd) * 100) / 100
+        : liabilitiesTotalUsd;
+    const liabilitiesExternalUsd =
+      p.liabilitiesExternalUsd != null
+        ? Math.round(Number(p.liabilitiesExternalUsd) * 100) / 100
+        : null;
 
     const axusdStability = computeAxusdStability(
       Math.round(psmReserves * 100) / 100,
-      Math.round(axusdSupply * 100) / 100,
+      Math.round(liabilitiesGrossUsd * 100) / 100,
       treasuryLiquidUsd
     );
 
@@ -119,6 +131,9 @@ export default async function handler(
       treasuryLiquidUsd,
       reservesTotalUsd,
       liabilitiesTotalUsd,
+      liabilitiesGrossUsd,
+      liabilitiesExternalUsd,
+      axusdLiquidity: p.axusdLiquidity ?? null,
       lossBufferUsd,
       coverageRatio: computed.coverageRatio,
       reserveRatio: computed.reserveRatio,
