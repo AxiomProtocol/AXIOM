@@ -25,6 +25,13 @@ import { timingSafeEqual } from 'crypto';
  *
  * INTERNAL_API_BASE_URL is locked to loopback (localhost / 127.0.0.1) to
  * prevent SSRF / admin-key exfiltration via env misconfiguration.
+ *
+ * On Vercel, where each route is its own isolated serverless function and
+ * nothing is listening on loopback, the handler instead uses the deployment's
+ * auto-injected hostname (VERCEL_URL). That value is set by the platform
+ * itself, not by user-configurable env, so the SSRF property — that the
+ * upstream call cannot be redirected to an attacker-controlled host — is
+ * preserved.
  */
 
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
@@ -42,6 +49,24 @@ function isSafeInternalBase(raw: string): { ok: true; base: string } | { ok: fal
   } catch {
     return { ok: false, reason: 'INTERNAL_API_BASE_URL is not a valid URL' };
   }
+}
+
+function resolveInternalBase(): { ok: true; base: string } | { ok: false; reason: string } {
+  // Vercel: same-deployment self-call via the platform-injected hostname.
+  // VERCEL_URL is set by Vercel and not user-configurable for application
+  // code, so SSRF cannot be introduced via env misconfiguration here.
+  if (process.env.VERCEL === '1' && process.env.VERCEL_URL) {
+    try {
+      const host = process.env.VERCEL_URL;
+      const u = new URL(host.startsWith('http') ? host : `https://${host}`);
+      return { ok: true, base: u.origin };
+    } catch {
+      return { ok: false, reason: 'VERCEL_URL is not a valid hostname' };
+    }
+  }
+  // Everywhere else (Replit dev, single-process deploys): loopback only.
+  const rawBase = process.env.INTERNAL_API_BASE_URL || 'http://localhost:5000';
+  return isSafeInternalBase(rawBase);
 }
 
 function safeEqualStr(a: string, b: string): boolean {
@@ -85,8 +110,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
 
-  const rawBase = process.env.INTERNAL_API_BASE_URL || 'http://localhost:5000';
-  const baseCheck = isSafeInternalBase(rawBase);
+  const baseCheck = resolveInternalBase();
   if (!baseCheck.ok) {
     return res.status(503).json({ ok: false, error: baseCheck.reason });
   }
