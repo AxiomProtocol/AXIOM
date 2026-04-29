@@ -9,6 +9,14 @@
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    // ── On-call pager preflight ──────────────────────────────────────────────
+    // Must run before any early returns so the gate is unconditional for
+    // production boots regardless of DATABASE_URL availability (Task #334).
+    const { assertIntegrityPagerConfigured } = await import(
+      './lib/capinfra/notifications/integrityPagerStatus'
+    );
+    assertIntegrityPagerConfigured();
+
     if (!process.env.DATABASE_URL) {
       console.warn('[instrumentation] DATABASE_URL not set — skipping DB setup');
       return;

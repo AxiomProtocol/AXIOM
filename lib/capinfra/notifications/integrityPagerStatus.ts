@@ -73,3 +73,56 @@ export function getIntegrityPagerStatus(): IntegrityPagerStatus {
     bothConfigured: email && discord,
   };
 }
+
+/**
+ * Production boot preflight check for the on-call pager.
+ *
+ * Called once from the Next.js instrumentation hook (`instrumentation.ts`)
+ * on server startup. Behaviour:
+ *
+ *  - If at least one channel (email or Discord) is configured → returns
+ *    silently (all good).
+ *  - If no channel is configured **and** `NODE_ENV === 'production'` →
+ *    writes a fatal message to stderr and exits with code 1, refusing
+ *    to serve traffic with a silently unwired pager.
+ *  - If no channel is configured **and** `NODE_ENV !== 'production'` →
+ *    emits a console warning so local developers see the gap without
+ *    being blocked.
+ *
+ * The optional dependency-injection parameters (`nodeEnv`, `onFatal`,
+ * `onWarn`) exist solely to make unit tests deterministic without
+ * spawning child processes or mocking `process.exit` globally.
+ */
+export function assertIntegrityPagerConfigured({
+  nodeEnv = process.env.NODE_ENV,
+  onFatal = (msg: string): void => {
+    process.stderr.write(msg + '\n');
+    process.exit(1);
+  },
+  onWarn = (msg: string): void => {
+    console.warn(msg);
+  },
+}: {
+  nodeEnv?: string;
+  onFatal?: (msg: string) => void;
+  onWarn?: (msg: string) => void;
+} = {}): void {
+  const status = getIntegrityPagerStatus();
+  if (status.anyConfigured) return;
+
+  const fatalMsg =
+    '[capinfra] FATAL: No on-call pager channel is configured. ' +
+    'Set INTEGRITY_ALERT_EMAIL and/or INTEGRITY_ALERT_DISCORD_WEBHOOK ' +
+    'before deploying to production. Refusing to start.';
+
+  const warnMsg =
+    '[capinfra] WARNING: No on-call pager channel is configured ' +
+    '(INTEGRITY_ALERT_EMAIL / INTEGRITY_ALERT_DISCORD_WEBHOOK unset). ' +
+    'This would block a production boot.';
+
+  if (nodeEnv === 'production') {
+    onFatal(fatalMsg);
+  } else {
+    onWarn(warnMsg);
+  }
+}
