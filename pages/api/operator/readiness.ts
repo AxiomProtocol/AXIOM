@@ -21,9 +21,9 @@ const ERC20_ABI       = ['function balanceOf(address) view returns (uint256)'];
 /**
  * Minimum PAXG the deployer wallet must hold on Arbitrum One before launch.
  * Override with PAXG_BUFFER_MIN_PAXG env var (decimal string, e.g. "0.5").
- * Default: 0.1 PAXG (~one small Assisted Mint order at current NAV).
+ * Default: 0.003 PAXG (day-one seed buffer; raise via env var as volume grows).
  */
-const PAXG_BUFFER_MIN = parseFloat(process.env.PAXG_BUFFER_MIN_PAXG ?? '0.1');
+const PAXG_BUFFER_MIN = parseFloat(process.env.PAXG_BUFFER_MIN_PAXG ?? '0.003');
 
 function sha256OfFile(relPath: string): string | null {
   try {
