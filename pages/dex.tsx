@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { SwapInterface, PoolList, LiquidityManager, DexStats, UserRewards } from '../components/dex';
 import EulerVaultCard from '../components/EulerVaultCard';
@@ -360,6 +361,30 @@ export default function DexPage() {
       </div>
 
       <PriceTicker />
+
+      {/* Acquire AXUSD callout */}
+      <div className="border border-dl-border p-5 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex-1">
+          <p className="font-dl-mono text-[10px] text-dl-gray uppercase tracking-widest mb-1">Need AXUSD to Trade or Provide Liquidity?</p>
+          <p className="text-sm text-dl-gray leading-relaxed">
+            Buy USDC with a debit or credit card via Coinbase Pay, then convert 1:1 to AXUSD through the Peg Stability Module — or pay directly by card and receive AXUSD minted to your wallet.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <Link
+            href="/onramp"
+            className="px-4 py-2 bg-dl-ink text-dl-surface font-dl-mono text-xs uppercase tracking-wide hover:opacity-90"
+          >
+            Card → AXUSD
+          </Link>
+          <Link
+            href="/banking"
+            className="px-4 py-2 border border-dl-border text-dl-gray font-dl-mono text-xs uppercase tracking-wide hover:text-dl-navy"
+          >
+            All Funding Paths
+          </Link>
+        </div>
+      </div>
 
       {/* Peg stability mechanism block */}
       <div className="border border-dl-border bg-dl-bg p-5 mb-6">

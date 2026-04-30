@@ -126,6 +126,10 @@ export default function InvestPage() {
   /** Primary entry mode: Euler Earn vault or Phase 6 direct deposit */
   const [investMode, setInvestMode] = useState<'earn-vault' | 'phase6'>('earn-vault');
 
+  /** Stripe card checkout state (LP capital intake path) */
+  const [cardCheckoutLoading, setCardCheckoutLoading] = useState(false);
+  const [cardCheckoutError, setCardCheckoutError] = useState<string | null>(null);
+
 
   interface EarnStatsData {
     vaultAddress: string;
@@ -177,6 +181,37 @@ export default function InvestPage() {
       .catch(() => {})
       .finally(() => setEarnLoading(false));
   }, []);
+
+  const handleCardCheckout = async () => {
+    if (!walletAddress) return;
+    const amountNum = parseFloat(amount);
+    if (!Number.isFinite(amountNum) || amountNum < 100 || amountNum > 10_000) {
+      setCardCheckoutError('Investment amount must be between $100 and $10,000 for card checkout.');
+      return;
+    }
+    setCardCheckoutLoading(true);
+    setCardCheckoutError(null);
+    try {
+      const res = await fetch('/api/lending-fund/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amountUsd: amountNum, walletAddress }),
+      });
+      const data = await res.json() as { checkoutUrl?: string; error?: string; message?: string };
+      if (!res.ok || !data.checkoutUrl) {
+        const msg = data.error === 'stripe_not_configured'
+          ? 'Card checkout is temporarily unavailable. Please use Coinbase Onramp below.'
+          : (data.message ?? data.error ?? 'Checkout failed — please try again.');
+        setCardCheckoutError(msg);
+        return;
+      }
+      window.location.href = data.checkoutUrl;
+    } catch {
+      setCardCheckoutError('Network error. Please try again.');
+    } finally {
+      setCardCheckoutLoading(false);
+    }
+  };
 
   const checkWalletConnection = async () => {
     const eth = getEth();
@@ -1272,6 +1307,27 @@ export default function InvestPage() {
                           </Link>
                         </div>
                       </div>
+                      <div className="border border-dl-border bg-dl-bg p-4 mb-5">
+                        <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wider mb-1">Option 4 — Direct Capital Intake</p>
+                        <p className="text-sm font-bold text-dl-navy font-dl-serif mb-1">Pay by Card (Stripe Checkout)</p>
+                        <p className="text-xs text-dl-gray font-dl-mono leading-relaxed mb-3">
+                          Pay the full investment amount by debit or credit card. AXUSD is minted 1:1 to your wallet after payment confirms — no on-ramp steps required. Maximum $10,000 per transaction.
+                          {parseFloat(amount) > 10_000 && (
+                            <span className="block text-dl-error mt-1">Your selected amount exceeds the $10,000 card limit. Use Coinbase Pay or wire for larger amounts.</span>
+                          )}
+                        </p>
+                        {cardCheckoutError && (
+                          <p className="text-xs text-dl-error font-dl-mono mb-2">{cardCheckoutError}</p>
+                        )}
+                        <button
+                          onClick={handleCardCheckout}
+                          disabled={cardCheckoutLoading || parseFloat(amount) > 10_000}
+                          className="px-5 py-2 bg-dl-navy text-white font-dl-mono text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {cardCheckoutLoading ? 'Creating checkout…' : `Pay $${parseFloat(amount).toLocaleString()} by Card →`}
+                        </button>
+                      </div>
+
                       <div className="flex flex-wrap gap-3">
                         <Link
                           href="/onramp"

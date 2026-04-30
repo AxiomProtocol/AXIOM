@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import { DesignLawLayout, SectionHeading, DetailGrid } from '../components/design-law';
@@ -1724,6 +1725,31 @@ function PsmTab({
       {psmError && (
         <p className="text-sm text-dl-error font-dl-mono py-4">Error: {psmError}</p>
       )}
+
+      {/* Fiat → AXUSD onramp callout */}
+      <div className="border border-dl-border p-5 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex-1">
+          <p className="font-dl-mono text-[10px] text-dl-gray uppercase tracking-widest mb-1">Don&apos;t have AXUSD yet?</p>
+          <p className="text-sm text-dl-gray leading-relaxed">
+            Buy USDC with a debit or credit card via Coinbase Pay, then use the PSM below to convert 1:1 to AXUSD.
+            Or pay directly by card and receive AXUSD minted to your wallet.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <Link
+            href="/onramp"
+            className="px-4 py-2 bg-dl-ink text-dl-surface font-dl-mono text-xs uppercase tracking-wide hover:opacity-90"
+          >
+            Card → AXUSD
+          </Link>
+          <Link
+            href="/banking"
+            className="px-4 py-2 border border-dl-border text-dl-gray font-dl-mono text-xs uppercase tracking-wide hover:text-dl-navy"
+          >
+            All Funding Paths
+          </Link>
+        </div>
+      </div>
 
       {psmData && (
         <>
