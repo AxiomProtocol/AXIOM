@@ -19,10 +19,6 @@ import {
 import type { Column } from '../../../components/design-law';
 import { useWallet } from '../../../components/WalletConnect/WalletContext';
 
-const NexusBankingPanel = dynamic(
-  () => import('../../../components/design-law/NexusBankingPanel').then(m => m.NexusBankingPanel),
-  { ssr: false }
-);
 
 const RE_DISCLOSURE = 'All deal metrics are computed from user-supplied assumptions and are probabilistic estimates only. DSCR, cap rate, cash-on-cash, and other outputs depend on assumptions that may not reflect actual market conditions. Risk flags indicate areas requiring further review and do not constitute investment advice or a recommendation to acquire any property.';
 
@@ -701,14 +697,14 @@ export default function DealWorkspace() {
         </div>
 
         <div className="mb-8">
-          <SectionHeading>Earnest Money & Acquisition Funding</SectionHeading>
-          <NexusBankingPanel
-            product="real-estate"
-            context="earnest-money"
-            amountLabel={deal?.target_purchase_price ? `$${Number(deal.target_purchase_price).toLocaleString()} target acquisition` : undefined}
-            description="Earnest money and acquisition deposits for this deal are held in the Axiom Nexus Account at First Internet Bank — FDIC-insured institutional custody. Register your account to receive your dedicated deposit instructions. Funds are tracked against the deal and applied at closing."
-            collapsible={false}
-          />
+          <SectionHeading>Earnest Money &amp; Acquisition Funding</SectionHeading>
+          <div className="border border-dl-border bg-dl-bg-alt px-6 py-5">
+            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest mb-2">Deposit Instructions</p>
+            <p className="text-sm text-dl-gray leading-relaxed">
+              ACH/wire banking infrastructure is currently offline. Earnest money deposit instructions will be updated when rails are restored.
+              Contact Operations to coordinate earnest money handling for this deal.
+            </p>
+          </div>
         </div>
 
         <DisclosureBlock text={RE_DISCLOSURE} />

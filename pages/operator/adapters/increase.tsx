@@ -177,6 +177,10 @@ export default function IncreaseAdapterPage({ health, recent, reconRuns, latestD
             </>
           )}
         </div>
+        <div className="border border-dl-gold bg-dl-bg-alt px-4 py-3 mb-4 font-mono text-xs">
+          <span className="uppercase tracking-wider text-dl-gold font-bold">Decommissioned 2026-04-28</span>
+          <span className="text-dl-muted ml-3">INCREASE_DISABLED=true · All ACH/wire rails offline · User-facing banking UI removed · Backend schema and webhook routes retained for audit continuity</span>
+        </div>
         {loadError && (
           <div className="border border-dl-gold bg-dl-bg-alt p-4 mb-4 mt-2 font-mono text-xs">
             <div className="font-serif text-sm text-dl-navy mb-1">Operational notice</div>

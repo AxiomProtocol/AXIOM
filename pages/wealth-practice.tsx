@@ -142,24 +142,6 @@ export default function WealthPracticePage() {
   const [myPracticeError, setMyPracticeError] = useState('');
   const [practiceAddress, setPracticeAddress] = useState('');
 
-  const [participant, setParticipant] = useState<{
-    id: number; walletAddress: string; participantRef: string; fullName: string; email: string; status: string;
-    cardStatus?: string; cardLast4?: string;
-    accountBalance?: { availableBalanceCents: number; currentBalanceCents: number; currency: string } | null;
-    accountAccessMode?: 'dedicated' | 'virtual-only';
-    virtualRoutingNumber?: string; virtualAccountNumber?: string;
-  } | null>(null);
-  const [participantHolds, setParticipantHolds] = useState<Array<{
-    id: number; groupId: string | null; groupDisplayName: string | null; amountCents: number; depositedAmountCents: number; status: string; fundedAt: string | null;
-  }>>([]);
-  const [regForm, setRegForm] = useState({
-    fullName: '', email: '', phone: '',
-    dateOfBirth: '', ssn: '', addressLine1: '', city: '', state: '', zip: '',
-  });
-  const [regLoading, setRegLoading] = useState(false);
-  const [regMsg, setRegMsg] = useState('');
-  const [regError, setRegError] = useState('');
-  const [participantLoading, setParticipantLoading] = useState(false);
 
   // Join flow state (gated by insurance status check)
   const [joiningGroupId, setJoiningGroupId] = useState<number | null>(null);
@@ -562,89 +544,6 @@ export default function WealthPracticePage() {
   const handleLookupPractice = () => {
     if (practiceAddress.trim()) {
       fetchMyPractice(practiceAddress.trim());
-      fetchParticipantInfo(practiceAddress.trim());
-    }
-  };
-
-  const fetchParticipantInfo = async (address: string) => {
-    if (!/^0x[a-fA-F0-9]{40}$/i.test(address)) return;
-    setParticipantLoading(true);
-    try {
-      const res = await fetch(`/api/banking/participant/status?wallet=${encodeURIComponent(address)}`);
-      const data = await res.json();
-      if (data.registered) {
-        setParticipant({
-          id: 0,
-          walletAddress: address,
-          participantRef: data.participantRef,
-          fullName: data.fullName,
-          email: '',
-          status: data.status,
-          cardStatus: data.cardStatus ?? undefined,
-          cardLast4: data.cardLast4 ?? undefined,
-          accountBalance: data.accountBalance ?? null,
-          accountAccessMode: data.accountAccessMode ?? 'virtual-only',
-          virtualRoutingNumber: data.virtualRoutingNumber ?? undefined,
-          virtualAccountNumber: data.virtualAccountNumber ?? undefined,
-        });
-        setParticipantHolds(data.insuranceHolds || []);
-      } else {
-        setParticipant(null);
-        setParticipantHolds([]);
-      }
-    } catch {
-      setParticipant(null);
-    } finally {
-      setParticipantLoading(false);
-    }
-  };
-
-  const handleRegisterParticipant = async () => {
-    if (!practiceAddress.trim() || !/^0x[a-fA-F0-9]{40}$/i.test(practiceAddress.trim())) {
-      setRegError('A valid wallet address is required');
-      return;
-    }
-    if (!regForm.fullName.trim()) { setRegError('Full legal name is required'); return; }
-    if (!regForm.email.trim() || !regForm.email.includes('@')) { setRegError('Valid email address is required'); return; }
-    if (!regForm.dateOfBirth || !/^\d{4}-\d{2}-\d{2}$/.test(regForm.dateOfBirth)) { setRegError('Date of birth required (YYYY-MM-DD)'); return; }
-    if (!regForm.ssn || regForm.ssn.replace(/\D/g, '').length !== 4) { setRegError('Last 4 digits of SSN required'); return; }
-    if (!regForm.addressLine1.trim()) { setRegError('Street address required'); return; }
-    if (!regForm.city.trim()) { setRegError('City required'); return; }
-    if (!regForm.state || !/^[A-Z]{2}$/.test(regForm.state)) { setRegError('State required (2-letter code, e.g. TX)'); return; }
-    if (!regForm.zip || !/^\d{5}$/.test(regForm.zip)) { setRegError('ZIP code required (5 digits)'); return; }
-    setRegLoading(true);
-    setRegError('');
-    setRegMsg('');
-    try {
-      const res = await fetch('/api/banking/participant/onboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          walletAddress: practiceAddress.trim(),
-          fullName: regForm.fullName.trim(),
-          email: regForm.email.trim(),
-          phone: regForm.phone.trim() || undefined,
-          dateOfBirth: regForm.dateOfBirth,
-          ssn: regForm.ssn.replace(/\D/g, ''),
-          addressLine1: regForm.addressLine1.trim(),
-          city: regForm.city.trim(),
-          state: regForm.state.trim().toUpperCase(),
-          zip: regForm.zip.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setParticipant(data.participant);
-        setRegMsg('Axiom Nexus account provisioned. Your dedicated account number is ready.');
-        setRegForm({ fullName: '', email: '', phone: '', dateOfBirth: '', ssn: '', addressLine1: '', city: '', state: '', zip: '' });
-        fetchParticipantInfo(practiceAddress.trim());
-      } else {
-        setRegError(data.error || 'Registration failed');
-      }
-    } catch {
-      setRegError('Registration failed');
-    } finally {
-      setRegLoading(false);
     }
   };
 
@@ -1383,8 +1282,7 @@ export default function WealthPracticePage() {
                           ) : (
                             <>
                               <p className="text-xs text-dl-gray mb-3 leading-relaxed">
-                                To join this group, your Axiom Nexus Account must have a funded insurance hold
-                                of <strong className="text-dl-navy">${((Math.round(parseFloat(String(group.contribution_amount || '0')) * 100)) / 4 / 100).toFixed(2)}</strong> (1-week equivalent of the ${group.contribution_amount}/mo contribution).
+                                To join this group, an insurance hold of <strong className="text-dl-navy">${((Math.round(parseFloat(String(group.contribution_amount || '0')) * 100)) / 4 / 100).toFixed(2)}</strong> (1-week equivalent of the ${group.contribution_amount}/mo contribution) is required. Deposit instructions will be provided when banking rails are restored.
                               </p>
                               {connectedAddress ? (
                                 <div className="flex gap-2 mb-3">
@@ -1415,44 +1313,10 @@ export default function WealthPracticePage() {
                                 <p className="text-xs text-red-700 mb-2">{joinError}</p>
                               )}
 
-                              {joinStatus === 'needs-registration' && (
+                              {(joinStatus === 'needs-registration' || joinStatus === 'needs-funding' || joinStatus === 'pending-funding') && (
                                 <div className="border border-dl-border p-3 text-xs text-dl-gray leading-relaxed">
-                                  <strong className="text-dl-navy block mb-1">Nexus Account Required</strong>
-                                  This wallet address is not registered with the Axiom Nexus Account banking layer.
-                                  {' '}
-                                  <a href="/banking/my-account" className="text-dl-navy underline">Register your account</a> first, then return here to join.
-                                </div>
-                              )}
-
-                              {(joinStatus === 'needs-funding' || joinStatus === 'pending-funding') && joinInsuranceData && (
-                                <div className="border border-dl-gold p-3 text-xs leading-relaxed">
-                                  <strong className="text-dl-navy block mb-2">
-                                    {joinStatus === 'pending-funding' ? 'Deposit Pending Settlement' : 'Insurance Hold Required'}
-                                  </strong>
-                                  {joinStatus === 'pending-funding' ? (
-                                    <p className="text-dl-gray">
-                                      Your insurance deposit is on its way — we are waiting for ACH settlement (1–2 business days).
-                                      You can join this group once the hold is confirmed funded.
-                                    </p>
-                                  ) : (
-                                    <>
-                                      <p className="text-dl-gray mb-2">
-                                        Send exactly <strong className="text-dl-navy">${(Number((joinInsuranceData as Record<string, unknown>).amountCents ?? 0) / 100).toFixed(2)}</strong> via ACH with the memo below to activate your hold:
-                                      </p>
-                                      {(() => {
-                                        const instr = (joinInsuranceData as Record<string, unknown>).depositInstructions as Record<string, unknown> | undefined;
-                                        return instr ? (
-                                          <div className="font-dl-mono text-dl-navy space-y-1">
-                                            <div>Bank: <span className="text-dl-gray">{String(instr.bankName ?? '')}</span></div>
-                                            <div>Routing: <span className="text-dl-gray">{String(instr.routingNumber ?? '')}</span></div>
-                                            {instr.accountNumber && <div>Account: <span className="text-dl-gray">{String(instr.accountNumber)}</span></div>}
-                                            <div>Memo: <span className="text-dl-gray font-semibold">{String(instr.memo ?? '')}</span></div>
-                                          </div>
-                                        ) : null;
-                                      })()}
-                                      <p className="text-dl-gray mt-2">Once your deposit settles, return here to complete joining.</p>
-                                    </>
-                                  )}
+                                  <strong className="text-dl-navy block mb-1">Banking Rail Offline</strong>
+                                  Insurance hold deposit instructions are unavailable while banking infrastructure is offline. Contact Operations to complete group enrollment.
                                 </div>
                               )}
                             </>
@@ -1588,251 +1452,14 @@ export default function WealthPracticePage() {
 
           {practiceAddress && /^0x[a-fA-F0-9]{40}$/i.test(practiceAddress) && (
             <div className="mt-8">
-              <h3 className="font-dl-serif text-lg text-dl-navy font-bold mb-1">Banking & Insurance Hold</h3>
-              <p className="text-dl-gray text-sm mb-6 leading-relaxed">
-                Wealth Practice groups run on real money. All contributions and insurance deposits flow through the
-                <span className="font-semibold text-dl-navy"> Axiom Nexus Account</span> — an FDIC-insured institutional
-                checking account at First Internet Bank. Each participant gets a unique reference code that ties every
-                ACH transfer directly to their record.
-              </p>
-
-              {participantLoading && <p className="text-dl-gray text-sm">Loading banking info...</p>}
-
-              {!participantLoading && !participant && (
-                <div className="border border-dl-gold p-6 mb-4">
-                  <div className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Step 1 — Get Your Reference Code</div>
-                  <p className="text-dl-gray text-sm mb-4">
-                    Register once to receive your personal <span className="font-dl-mono font-semibold text-dl-navy">AXM-XXXXXXXX</span> reference code.
-                    This code is your banking identifier — include it in the memo field of every ACH transfer you send
-                    to the Axiom Nexus Account so your deposits are matched automatically.
-                  </p>
-                  <p className="text-dl-gray text-xs mb-4 font-dl-mono border-l-2 border-dl-gold pl-3">
-                    Your information is used to provision a dedicated FDIC-insured account with Increase. Submitted once — never stored beyond what is required.
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Full Legal Name</label>
-                      <input type="text" value={regForm.fullName} onChange={(e) => setRegForm({ ...regForm, fullName: e.target.value })} placeholder="First Last" className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]" />
-                    </div>
-                    <div>
-                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Email Address</label>
-                      <input type="email" value={regForm.email} onChange={(e) => setRegForm({ ...regForm, email: e.target.value })} placeholder="you@example.com" className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]" />
-                    </div>
-                    <div>
-                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Date of Birth</label>
-                      <input type="date" value={regForm.dateOfBirth} onChange={(e) => setRegForm({ ...regForm, dateOfBirth: e.target.value })} className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]" />
-                    </div>
-                    <div>
-                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Last 4 of SSN</label>
-                      <input type="password" autoComplete="off" value={regForm.ssn} onChange={(e) => setRegForm({ ...regForm, ssn: e.target.value.replace(/\D/g, '').slice(0, 4) })} placeholder="••••" maxLength={4} className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px] font-dl-mono tracking-widest" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div className="md:col-span-3">
-                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Street Address</label>
-                      <input type="text" value={regForm.addressLine1} onChange={(e) => setRegForm({ ...regForm, addressLine1: e.target.value })} placeholder="123 Main St" className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]" />
-                    </div>
-                    <div>
-                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">City</label>
-                      <input type="text" value={regForm.city} onChange={(e) => setRegForm({ ...regForm, city: e.target.value })} placeholder="Houston" className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px]" />
-                    </div>
-                    <div>
-                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">State</label>
-                      <input type="text" value={regForm.state} onChange={(e) => setRegForm({ ...regForm, state: e.target.value.toUpperCase().slice(0, 2) })} placeholder="TX" maxLength={2} className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px] font-dl-mono uppercase" />
-                    </div>
-                    <div>
-                      <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">ZIP Code</label>
-                      <input type="text" value={regForm.zip} onChange={(e) => setRegForm({ ...regForm, zip: e.target.value.replace(/\D/g, '').slice(0, 5) })} placeholder="77001" maxLength={5} className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px] font-dl-mono" />
-                    </div>
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-dl-navy text-xs font-bold mb-1 font-dl-mono uppercase">Phone (optional)</label>
-                    <input type="tel" value={regForm.phone} onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })} placeholder="+1 (555) 000-0000" className="w-full border border-dl-border bg-dl-bg px-4 py-2.5 text-sm text-dl-navy focus:outline-none min-h-[44px] max-w-xs" />
-                  </div>
-                  {regError && <p className="text-sm mb-3" style={{ color: '#991b1b' }}>{regError}</p>}
-                  {regMsg && <p className="text-dl-forest text-sm mb-3">{regMsg}</p>}
-                  <button
-                    onClick={handleRegisterParticipant}
-                    disabled={regLoading}
-                    className="border border-dl-navy bg-dl-navy text-white px-6 py-2.5 min-h-[44px] text-sm font-bold hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-50"
-                  >
-                    {regLoading ? 'Provisioning account...' : 'Register Axiom Nexus Account'}
-                  </button>
-                </div>
-              )}
-
-              {participant && (
-                <div className="border border-dl-forest p-6 mb-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="font-dl-mono text-xs text-dl-forest uppercase tracking-wider">Axiom Nexus Account — Active</div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-dl-mono text-xs border border-dl-forest text-dl-forest px-2 py-0.5 uppercase">{participant.status}</span>
-                      <a href="/banking/my-account" className="font-dl-mono text-xs text-dl-navy underline hover:no-underline">
-                        Full Account →
-                      </a>
-                    </div>
-                  </div>
-
-                  {participant.virtualAccountNumber ? (
-                    <div className="mb-5">
-                      <p className="text-dl-gray text-xs font-dl-mono uppercase mb-3">Your Dedicated Account Details</p>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border">
-                        <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
-                          <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Reference Code</div>
-                          <div className="font-dl-mono text-dl-navy font-bold">{participant.participantRef}</div>
-                          <div className="text-dl-gray text-xs mt-1">Backup identifier</div>
-                        </div>
-                        <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
-                          <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Routing</div>
-                          <div className="font-dl-mono text-dl-navy font-bold">{participant.virtualRoutingNumber}</div>
-                          <div className="text-dl-gray text-xs mt-1">First Internet Bank</div>
-                        </div>
-                        <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
-                          <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Your Account No.</div>
-                          <div className="font-dl-mono text-dl-navy font-bold">{participant.virtualAccountNumber}</div>
-                          <div className="text-dl-forest text-xs mt-1">No memo needed</div>
-                        </div>
-                        <div className="p-3">
-                          <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Payee</div>
-                          <div className="font-dl-mono text-dl-navy text-xs font-bold">Axiom Protocol LLC</div>
-                          <div className="text-dl-gray text-xs mt-1">Nexus Account</div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-0 border border-dl-border border-t-0">
-                        <div className="p-3 border-r border-dl-border">
-                          <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Account Balance</div>
-                          {participant.accountBalance ? (
-                            <div className="font-dl-mono text-dl-navy font-bold">
-                              ${(participant.accountBalance.availableBalanceCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </div>
-                          ) : (
-                            <div className="font-dl-mono text-dl-gray">—</div>
-                          )}
-                          <div className="text-dl-gray text-xs mt-1">Available · {participant.accountAccessMode === 'dedicated' ? 'Dedicated account' : 'Virtual account'}</div>
-                        </div>
-                        <div className="p-3">
-                          <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Debit Card</div>
-                          {participant.cardStatus === 'active' && participant.cardLast4 ? (
-                            <div className="font-dl-mono text-dl-navy font-bold">••••&nbsp;{participant.cardLast4}</div>
-                          ) : participant.cardStatus === 'issued' ? (
-                            <div className="font-dl-mono text-dl-forest">Issued — activation pending</div>
-                          ) : (
-                            <div className="font-dl-mono text-dl-gray">Not issued</div>
-                          )}
-                          <div className="text-dl-gray text-xs mt-1">Axiom Nexus Debit · {participant.cardStatus ?? 'not requested'}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-                      <div className="border border-dl-border p-4">
-                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Your Reference Code</div>
-                        <div className="font-dl-mono text-dl-navy font-bold text-lg">{participant.participantRef}</div>
-                        <div className="text-dl-gray text-xs mt-1">Include in all ACH memo fields</div>
-                      </div>
-                      <div className="border border-dl-border p-4">
-                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Routing Number</div>
-                        <div className="font-dl-mono text-dl-navy font-bold">071006486</div>
-                        <div className="text-dl-gray text-xs mt-1">First Internet Bank</div>
-                      </div>
-                      <div className="border border-dl-border p-4">
-                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Payee Name</div>
-                        <div className="font-dl-mono text-dl-navy font-bold text-xs">Axiom Protocol LLC</div>
-                        <div className="text-dl-gray text-xs mt-1">Nexus Account · Account no. via secure message</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Step 2 — Insurance Hold */}
-                  <div className="border border-dl-border p-5 mb-5">
-                    <div className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-2">Step 2 — Fund Your Insurance Hold</div>
-                    <p className="text-dl-gray text-sm mb-3 leading-relaxed">
-                      Every Wealth Practice group requires a one-time insurance hold before your first contribution cycle.
-                      The hold is equal to one week&apos;s equivalent of your group&apos;s contribution amount. For example:
-                      a $200/month group requires a <span className="font-dl-mono font-semibold text-dl-navy">$50 insurance hold</span>.
-                      A $500/month group requires a <span className="font-dl-mono font-semibold text-dl-navy">$125 hold</span>.
-                      This amount protects all group members and is fully returned when your group completes its cycle.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border mb-3">
-                      <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
-                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Hold Amount</div>
-                        <div className="text-dl-navy text-sm font-semibold">One Week Equivalent</div>
-                        <div className="text-dl-gray text-xs mt-1">Monthly contribution ÷ 4</div>
-                      </div>
-                      <div className="p-3 border-b md:border-b-0 md:border-r border-dl-border">
-                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Released When</div>
-                        <div className="text-dl-navy text-sm font-semibold">Group Graduation</div>
-                        <div className="text-dl-gray text-xs mt-1">Full ACH return to your bank</div>
-                      </div>
-                      <div className="p-3">
-                        <div className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Early Exit</div>
-                        <div className="text-dl-navy text-sm font-semibold">Hold Forfeited</div>
-                        <div className="text-dl-gray text-xs mt-1">Protects all group members</div>
-                      </div>
-                    </div>
-                    <p className="text-dl-gray text-xs leading-relaxed">
-                      {(participant as { virtualAccountNumber?: string }).virtualAccountNumber
-                        ? `Send your hold via ACH using your dedicated account number above — your deposit is automatically matched, no memo required.`
-                        : `Send your insurance deposit via ACH to the Axiom Nexus Account — include your reference code ${participant.participantRef} in the memo field. Operations confirms receipt within 1-2 business days.`
-                      }
-                    </p>
-                  </div>
-
-                  {/* Step 3 — Contribute Each Cycle */}
-                  <div className="border border-dl-border p-5 mb-5">
-                    <div className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-2">Step 3 — Contribute Each Cycle</div>
-                    <p className="text-dl-gray text-sm leading-relaxed">
-                      Each contribution period, send your group contribution amount via ACH to the Axiom Nexus Account — always with your reference code in the memo.
-                      When your rotation comes, Operations distributes the pooled funds directly to your designated account.
-                      Your group&apos;s trust score increases with every on-time contribution.
-                    </p>
-                  </div>
-
-                  {participantHolds.length > 0 && (
-                    <div>
-                      <div className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-3">Your Insurance Holds</div>
-                      <div className="space-y-2">
-                        {participantHolds.map((hold) => (
-                          <div key={hold.id} className="border border-dl-border p-4">
-                            <div className="flex items-start justify-between mb-2">
-                              <div>
-                                <div className="font-dl-mono text-sm text-dl-navy font-bold">{hold.groupDisplayName || hold.groupId}</div>
-                                <div className="text-dl-gray text-xs mt-1">
-                                  Required: <span className="font-dl-mono text-dl-navy">${(hold.amountCents / 100).toFixed(2)}</span>
-                                  {' '}· Deposited: <span className="font-dl-mono text-dl-navy">${(hold.depositedAmountCents / 100).toFixed(2)}</span>
-                                </div>
-                              </div>
-                              <span className={`text-xs px-2 py-0.5 uppercase font-dl-mono border ${hold.status === 'funded' ? 'border-dl-forest text-dl-forest' : hold.status === 'released' ? 'border-dl-navy text-dl-navy' : hold.status === 'forfeited' ? 'border-red-700 text-red-700' : 'border-dl-gold text-dl-gold'}`}>
-                                {hold.status}
-                              </span>
-                            </div>
-                            {hold.status === 'pending' && (
-                              <p className="text-dl-gray text-xs mt-2 leading-relaxed">
-                                Your hold is pending. Send <span className="font-dl-mono font-semibold text-dl-navy">${(hold.amountCents / 100).toFixed(2)}</span> via ACH to the Axiom Nexus Account (routing 071006486, payee: Axiom Protocol LLC) with memo <span className="font-dl-mono font-semibold text-dl-navy">{participant.participantRef}</span>. Operations will confirm within 1-2 business days.
-                              </p>
-                            )}
-                            {hold.status === 'funded' && (
-                              <p className="text-dl-gray text-xs mt-2">Insurance hold funded. You are cleared to participate in this group&apos;s contribution cycles.</p>
-                            )}
-                            {hold.status === 'released' && (
-                              <p className="text-dl-gray text-xs mt-2">Hold released — your group completed its cycle successfully. Well done.</p>
-                            )}
-                            {hold.status === 'forfeited' && (
-                              <p className="text-xs mt-2" style={{ color: '#991b1b' }}>Hold forfeited on early exit. Contact operations if you believe this is in error.</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {participantHolds.length === 0 && (
-                    <p className="text-dl-gray text-xs border border-dl-border p-4">
-                      No insurance holds on file yet. A hold is created automatically when you join a circle group. It will appear here once created.
-                    </p>
-                  )}
-                </div>
-              )}
+              <h3 className="font-dl-serif text-lg text-dl-navy font-bold mb-1">Contributions & Insurance Hold</h3>
+              <div className="border border-dl-border bg-dl-bg-alt px-6 py-5">
+                <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest mb-2">Banking Rail — Offline</p>
+                <p className="text-sm text-dl-gray leading-relaxed">
+                  ACH/wire deposit infrastructure is currently offline. Contribution deposit instructions and insurance hold provisioning will be updated when rails are restored.
+                  Contact Operations to coordinate contributions or insurance holds for your group.
+                </p>
+              </div>
 
               {/* FAQ — Banking & Insurance */}
               <div className="mt-8 border border-dl-border">
@@ -1842,32 +1469,24 @@ export default function WealthPracticePage() {
                 <div className="divide-y divide-dl-border">
                   {[
                     {
-                      q: 'What is the ACH reference code?',
-                      a: 'Your personal AXM-XXXXXXXX code is a unique identifier assigned to your wallet address when you register. Every ACH transfer you send to the Axiom Nexus Account must include this code in the memo or description field — it is how your payments are matched to your record automatically.'
+                      q: 'What is an insurance hold?',
+                      a: 'An insurance hold is a one-time deposit required before joining a Wealth Practice group — equal to one week\'s equivalent of the group\'s monthly contribution. It protects all members and is returned when the group completes its full cycle.'
                     },
                     {
-                      q: 'Where do I send my ACH deposits?',
-                      a: 'Send to the Axiom Nexus Account: Routing 071006486 · Bank: First Internet Bank · Payee: Axiom Protocol LLC — Nexus Account. Always include your reference code in the memo field. You will receive the full account number via secure message after registration.'
-                    },
-                    {
-                      q: 'How long does it take for my deposit to be confirmed?',
-                      a: 'Standard ACH transfers settle within 1-2 business days. Once the funds clear, Operations will verify your deposit against the memo reference code and update your record — usually within the same business day as settlement.'
+                      q: 'How do I submit my contribution or insurance hold deposit?',
+                      a: 'Banking infrastructure is currently offline. Deposit instructions will be provided when rails are restored. Contact Operations to coordinate contributions or insurance holds in the interim.'
                     },
                     {
                       q: 'What happens to my insurance hold if I leave the group early?',
-                      a: 'Your insurance hold is forfeited if you exit the group before it graduates. This protects the other members who are counting on everyone to complete the cycle. The forfeiture amount stays in the Axiom Nexus Account and is redistributed or held at Operations\' discretion.'
+                      a: 'Your insurance hold is forfeited if you exit the group before it graduates. This protects the other members who are counting on everyone to complete the cycle.'
                     },
                     {
                       q: 'When does my insurance hold get returned?',
-                      a: 'Your hold is released when your group completes its full cycle (graduates). Upon graduation, Operations initiates a return ACH to the account on file — or the balance is available for your next group if you re-enroll.'
+                      a: 'Your hold is released when your group completes its full cycle (graduates). Upon graduation, Operations initiates return of the hold amount to your account on file.'
                     },
                     {
-                      q: 'Is my money FDIC insured?',
-                      a: 'Yes. All USD held in the Axiom Nexus Account at First Internet Bank is FDIC-insured up to $250,000 per depositor. Axiom Protocol maintains a single institutional account — your funds are part of this account, not a separate personal account.'
-                    },
-                    {
-                      q: 'Do I need to re-register if I join a second group?',
-                      a: 'No. You register once. Your AXM-XXXXXXXX reference code applies to all Wealth Practice groups you join. Each new group creates a new insurance hold record tied to your existing participant account.'
+                      q: 'Do I need to register again if I join a second group?',
+                      a: 'No. Participant records are tied to your wallet address. Each new group creates a new insurance hold record linked to your existing account.'
                     }
                   ].map(({ q, a }) => (
                     <div key={q} className="px-5 py-4">

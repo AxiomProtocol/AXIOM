@@ -78,7 +78,6 @@ export default function InvestorPortal() {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<Tab>('holdings');
-  const [nexusParticipant, setNexusParticipant] = useState<Record<string, any> | null>(null);
   const [portfolio, setPortfolio] = useState<any | null>(null);
   const [portfolioLoading, setPortfolioLoading] = useState(false);
 
@@ -100,18 +99,6 @@ export default function InvestorPortal() {
     }
   }, []);
 
-  const loadNexusParticipant = useCallback(async (wallet: string) => {
-    try {
-      const res = await fetch(`/api/banking/participant/status?wallet=${encodeURIComponent(wallet)}`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.registered) setNexusParticipant(json);
-      }
-    } catch {
-      // Non-fatal — ACH panel degrades gracefully
-    }
-  }, []);
-
   const loadPortfolio = useCallback(async (wallet: string) => {
     setPortfolioLoading(true);
     try {
@@ -130,12 +117,11 @@ export default function InvestorPortal() {
   useEffect(() => {
     if (isConnected && address) {
       loadPortal();
-      loadNexusParticipant(address);
       loadPortfolio(address);
     } else {
       setLoading(false);
     }
-  }, [isConnected, address, loadPortal, loadNexusParticipant, loadPortfolio]);
+  }, [isConnected, address, loadPortal, loadPortfolio]);
 
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: 'holdings', label: 'My Holdings', count: data?.holdings?.length },
@@ -298,7 +284,7 @@ export default function InvestorPortal() {
               refreshing={portfolioLoading}
             />
           )}
-          {activeTab === 'capitalCalls' && <CapitalCallsTab capitalCalls={data.capitalCalls} nexusParticipant={nexusParticipant} />}
+          {activeTab === 'capitalCalls' && <CapitalCallsTab capitalCalls={data.capitalCalls} />}
           {activeTab === 'distributions' && <DistributionsTab distributions={data.distributions} />}
         </>
       )}
@@ -730,7 +716,7 @@ function DocumentsSection({ documents }: { documents: any[] }) {
   );
 }
 
-function CapitalCallsTab({ capitalCalls, nexusParticipant }: { capitalCalls: any[]; nexusParticipant?: Record<string, any> | null }) {
+function CapitalCallsTab({ capitalCalls }: { capitalCalls: any[] }) {
   const openCalls = capitalCalls.filter((cc: any) => cc.status === 'sent' || cc.status === 'pending');
 
   if (capitalCalls.length === 0) {
@@ -792,112 +778,13 @@ function CapitalCallsTab({ capitalCalls, nexusParticipant }: { capitalCalls: any
         </div>
       </div>
 
-      {/* ── Axiom Nexus ACH Funding Panel ── */}
       {openCalls.length > 0 && (
-        <div className="border border-dl-navy">
-          <div className="px-5 py-3 bg-dl-navy">
-            <p className="font-dl-mono text-xs text-white uppercase tracking-wider">Fund via Axiom Nexus — ACH Instructions</p>
-          </div>
-          <div className="p-5 space-y-4">
-            <p className="text-sm text-dl-gray leading-relaxed">
-              Capital calls are funded via USD bank transfer (ACH or wire) to the Axiom Nexus Account at First Internet Bank.
-              Use your dedicated account number or include your reference code in the memo to ensure your transfer is matched
-              to your investor record.
-            </p>
-
-            {nexusParticipant ? (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
-                  {nexusParticipant.hasVirtualAccount ? (
-                    <>
-                      <div className="px-4 py-3 border-b md:border-b-0 md:border-r border-dl-border">
-                        <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Routing Number</p>
-                        <p className="font-dl-mono text-dl-navy font-bold text-sm">{nexusParticipant.virtualRoutingNumber}</p>
-                        <p className="text-[10px] text-dl-gray mt-0.5">First Internet Bank · ABA</p>
-                      </div>
-                      <div className="px-4 py-3">
-                        <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Account Number</p>
-                        <p className="font-dl-mono text-dl-navy font-bold text-sm">{nexusParticipant.virtualAccountNumber}</p>
-                        <p className="text-[10px] text-dl-gray mt-0.5">Dedicated — no memo required</p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="px-4 py-3 border-b md:border-b-0 md:border-r border-dl-border">
-                        <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Routing Number</p>
-                        <p className="font-dl-mono text-dl-navy font-bold text-sm">071006486</p>
-                        <p className="text-[10px] text-dl-gray mt-0.5">First Internet Bank · ABA</p>
-                      </div>
-                      <div className="px-4 py-3">
-                        <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Memo Field (Required)</p>
-                        <p className="font-dl-mono text-dl-navy font-bold text-sm">{nexusParticipant.participantRef}</p>
-                        <p className="text-[10px] text-dl-gray mt-0.5">Your unique investor reference code</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="border border-dl-border px-4 py-3">
-                  <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Payee Name</p>
-                  <p className="font-dl-mono text-dl-navy text-sm">Axiom Protocol LLC — Nexus Account</p>
-                  <p className="text-[10px] text-dl-gray mt-0.5">FDIC-insured · First Internet Bank</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
-                  <div className="px-4 py-3 border-b md:border-b-0 md:border-r border-dl-border">
-                    <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Account Balance</p>
-                    {nexusParticipant.accountBalance ? (
-                      <p className="font-dl-mono text-dl-navy font-bold text-sm">
-                        ${(nexusParticipant.accountBalance.availableBalanceCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </p>
-                    ) : (
-                      <p className="font-dl-mono text-dl-gray text-sm">—</p>
-                    )}
-                    <p className="text-[10px] text-dl-gray mt-0.5">Available balance · {nexusParticipant.accountAccessMode === 'dedicated' ? 'Dedicated account' : 'Virtual account'}</p>
-                  </div>
-                  <div className="px-4 py-3">
-                    <p className="text-[10px] text-dl-gray font-dl-mono uppercase mb-1">Debit Card</p>
-                    {nexusParticipant.cardStatus === 'active' && nexusParticipant.cardLast4 ? (
-                      <p className="font-dl-mono text-dl-navy font-bold text-sm">••••&nbsp;{nexusParticipant.cardLast4}</p>
-                    ) : nexusParticipant.cardStatus === 'issued' ? (
-                      <p className="font-dl-mono text-dl-forest text-sm">Issued — activation pending</p>
-                    ) : (
-                      <p className="font-dl-mono text-dl-gray text-sm">Not issued</p>
-                    )}
-                    <p className="text-[10px] text-dl-gray mt-0.5">Axiom Nexus Debit · {nexusParticipant.cardStatus ?? 'not requested'}</p>
-                  </div>
-                </div>
-                <p className="text-[10px] text-dl-gray font-dl-mono">
-                  Capital call settlement instructions are issued by Operations at the time of each call. Reach out to ops if you need updated routing details.
-                </p>
-              </div>
-            ) : (
-              <div className="border border-dl-gold p-4">
-                <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Nexus Account Required</p>
-                <p className="text-sm text-dl-gray leading-relaxed mb-3">
-                  You must register an Axiom Nexus Account before funding a capital call via ACH.
-                  Registration takes under 2 minutes and provisions your dedicated account number and reference code.
-                </p>
-                <a href="/lending-fund/invest" className="inline-block border border-dl-navy bg-dl-navy text-white px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-navy">
-                  Register Nexus Account
-                </a>
-              </div>
-            )}
-
-            <div className="border-t border-dl-border pt-3">
-              <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-2">Capital Call FAQ</p>
-              <div className="space-y-2">
-                {[
-                  { q: 'What happens after I send the ACH?', a: 'Operations matches your incoming transfer to your reference code on the Nexus ledger and applies it to your capital call record — typically the same business day as ACH settlement.' },
-                  { q: 'Can I fund via wire instead of ACH?', a: 'Yes. Domestic wires settle same-day. Use the same routing number and account number. Include your reference code in the OBI (wire memo) field.' },
-                  { q: 'Is there a deadline?', a: 'Capital calls have a stated due date. Transfers must settle by the due date to be counted as timely. Operations will notify you if your transfer arrives late.' },
-                ].map((item, i) => (
-                  <details key={i} className="border border-dl-border">
-                    <summary className="px-3 py-2 text-xs font-dl-mono text-dl-navy cursor-pointer">{item.q}</summary>
-                    <p className="px-3 pb-3 pt-1 text-xs text-dl-gray leading-relaxed">{item.a}</p>
-                  </details>
-                ))}
-              </div>
-            </div>
-          </div>
+        <div className="border border-dl-border bg-dl-bg-alt px-5 py-4">
+          <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest mb-2">Capital Call Funding</p>
+          <p className="text-sm text-dl-gray leading-relaxed">
+            ACH/wire banking infrastructure is currently offline. Contribution instructions will be updated when rails are restored.
+            Contact Operations to coordinate funding for open capital calls.
+          </p>
         </div>
       )}
     </div>

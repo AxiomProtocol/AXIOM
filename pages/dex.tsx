@@ -5,10 +5,6 @@ import { SwapInterface, PoolList, LiquidityManager, DexStats, UserRewards } from
 import EulerVaultCard from '../components/EulerVaultCard';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
 
-const NexusBankingPanel = dynamic(
-  () => import('../components/design-law/NexusBankingPanel').then(m => m.NexusBankingPanel),
-  { ssr: false }
-);
 
 const TradingViewChart = dynamic(() => import('../components/dex/TradingViewChart'), {
   ssr: false,
@@ -536,16 +532,6 @@ export default function DexPage() {
               </div>
             </div>
           )}
-        <div className="mt-8 px-4">
-          <SectionHeading>Settlement & Withdrawal Account</SectionHeading>
-          <NexusBankingPanel
-            product="exchange"
-            context="settlement"
-            title="Axiom Nexus — Exchange Settlement Account"
-            description="Fiat settlements and ACH withdrawals from the Exchange are processed through the Axiom Nexus Account at First Internet Bank. Register your account to receive your dedicated settlement routing details. On-chain to off-ramp conversions settle within 1–2 business days."
-            collapsible={true}
-          />
-        </div>
         </main>
       </div>
     </DesignLawLayout>

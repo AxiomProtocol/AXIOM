@@ -2612,159 +2612,17 @@ export default function FounderOpsPage() {
             {activeTab === 'banking' && (
               <>
                 <div className="mb-6">
-                  <h2 className="font-dl-serif text-xl text-dl-navy mb-1">Axiom Nexus Account</h2>
-                  <p className="font-dl-mono text-xs text-dl-gray">First Internet Bank · Increase Banking Infrastructure · FDIC-insured</p>
+                  <h2 className="font-dl-serif text-xl text-dl-navy mb-1">Banking Infrastructure</h2>
+                  <p className="font-dl-mono text-xs text-dl-gray">ACH / Wire Settlement Rail</p>
                 </div>
 
-                {bankingData?.environment === 'sandbox' && (
-                  <div className="bg-yellow-50 border border-yellow-300 px-4 py-2 mb-6">
-                    <p className="font-dl-mono text-xs text-yellow-800 uppercase tracking-wider">Sandbox mode — no real money</p>
-                  </div>
-                )}
-
-                <div className="mb-4 flex gap-3 items-center">
-                  <input
-                    type="password"
-                    placeholder="Admin key for transaction history"
-                    value={bankingAdminKey}
-                    onChange={e => { setBankingAdminKey(e.target.value); }}
-                    className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-surface w-72 outline-none"
-                  />
-                  <button
-                    onClick={() => loadBankingData(bankingAdminKey)}
-                    className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 uppercase tracking-wider hover:bg-dl-navy hover:text-white transition-colors"
-                  >
-                    {bankingLoading ? 'Loading…' : 'Refresh'}
-                  </button>
-                  <a href="/banking" target="_blank" rel="noopener noreferrer" className="font-dl-mono text-xs border border-dl-border text-dl-gray px-4 py-2 uppercase tracking-wider hover:text-dl-navy">
-                    Open Full Dashboard ↗
-                  </a>
+                <div className="border border-dl-border bg-dl-bg-alt px-6 py-5 mb-6">
+                  <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest mb-2">Rail Status — Offline</p>
+                  <p className="text-sm text-dl-gray leading-relaxed">
+                    ACH/wire banking infrastructure is currently offline. The full settlement dashboard and transaction history will be available when rails are restored.
+                  </p>
                 </div>
 
-                {bankingError && (
-                  <div className="border border-dl-error p-4 mb-4">
-                    <p className="font-dl-mono text-xs text-dl-error">{bankingError}</p>
-                  </div>
-                )}
-
-                {bankingLoading && !bankingData && (
-                  <p className="font-dl-mono text-xs text-dl-gray">Loading account data…</p>
-                )}
-
-                {bankingData && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <div className="border border-dl-border bg-dl-surface p-4">
-                      <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-3">Account</p>
-                      <p className="font-dl-serif text-base text-dl-navy mb-1">{bankingData.account.name}</p>
-                      <div className="space-y-1.5 mt-3">
-                        {[
-                          ['Status', <span key="s" className={`font-dl-mono text-xs border px-2 py-0.5 uppercase ${bankingData.account.status === 'open' ? 'border-dl-forest text-dl-forest' : 'border-dl-gray text-dl-gray'}`}>{bankingData.account.status}</span>],
-                          ['Bank', bankingData.account.bank?.replace(/_/g, ' ')],
-                          ['APY', `${(parseFloat(bankingData.account.interestRate ?? '0') * 100).toFixed(2)}%`],
-                          ['Opened', new Date(bankingData.account.createdAt).toLocaleDateString()],
-                        ].map(([lbl, val]) => (
-                          <div key={String(lbl)} className="flex justify-between items-center text-xs py-1 border-b border-dl-border">
-                            <span className="font-dl-mono text-dl-gray uppercase tracking-wider text-[10px]">{lbl}</span>
-                            <span className="font-dl-mono text-dl-navy">{val}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="border border-dl-border p-4">
-                      <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-3">Balance</p>
-                      {bankingData.balance ? (
-                        <>
-                          <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider text-[10px]">Available</p>
-                          <p className="font-dl-serif text-3xl text-dl-navy mt-1 mb-4">{bankingData.balance.availableFormatted}</p>
-                          <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider text-[10px]">Current</p>
-                          <p className="font-dl-serif text-lg text-dl-gray">{bankingData.balance.currentFormatted}</p>
-                        </>
-                      ) : (
-                        <p className="font-dl-mono text-xs text-dl-gray">No balance data — fund the account.</p>
-                      )}
-                    </div>
-
-                    <div className="border border-dl-border bg-dl-surface p-4">
-                      <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-3">Routing Info</p>
-                      {bankingData.routingInfo ? (
-                        <div className="space-y-2">
-                          {[
-                            ['Name', bankingData.routingInfo.name],
-                            ['Routing', bankingData.routingInfo.routingNumber],
-                            ['Status', bankingData.routingInfo.status],
-                          ].map(([lbl, val]) => (
-                            <div key={String(lbl)} className="py-1 border-b border-dl-border">
-                              <p className="font-dl-mono text-[10px] text-dl-gray uppercase tracking-wider">{lbl}</p>
-                              <p className="font-dl-mono text-xs text-dl-navy mt-0.5">{val}</p>
-                            </div>
-                          ))}
-                          <div className="pt-1">
-                            <p className="font-dl-mono text-[10px] text-dl-gray uppercase tracking-wider mb-1">Account Number</p>
-                            <div className="font-dl-mono text-sm text-dl-navy bg-white border border-dl-border px-3 py-2 tracking-widest">{bankingData.routingInfo.accountNumber}</div>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="font-dl-mono text-xs text-dl-gray">No routing number provisioned. Go to the Banking dashboard to create one.</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {bankingData && (
-                  <div className="mb-8">
-                    <h3 className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-3">
-                      Recent Transactions {bankingTxData ? `(${bankingTxData.transactions.length} settled)` : ''}
-                    </h3>
-                    {!bankingAdminKey ? (
-                      <p className="font-dl-mono text-xs text-dl-gray">Enter admin key above to load transaction history.</p>
-                    ) : bankingTxData ? (
-                      bankingTxData.transactions.length === 0 ? (
-                        <p className="font-dl-mono text-xs text-dl-gray">No settled transactions yet.</p>
-                      ) : (
-                        <table className="w-full border border-dl-border text-sm">
-                          <thead>
-                            <tr className="bg-dl-surface">
-                              {['Date', 'Description', 'Route', 'Amount'].map(h => (
-                                <th key={h} className="font-dl-mono text-[10px] text-dl-gray uppercase tracking-wider text-left p-3 border-b border-dl-border">{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {bankingTxData.transactions.map((tx: any) => (
-                              <tr key={tx.id} className="border-b border-dl-border hover:bg-dl-surface/50">
-                                <td className="font-dl-mono text-xs p-3 text-dl-gray whitespace-nowrap">{new Date(tx.createdAt).toLocaleDateString()}</td>
-                                <td className="font-dl-mono text-xs p-3 text-dl-navy">{tx.description}</td>
-                                <td className="font-dl-mono text-xs p-3 text-dl-gray">{tx.routeType ?? '—'}</td>
-                                <td className={`font-dl-mono text-sm p-3 font-semibold ${tx.direction === 'credit' ? 'text-dl-forest' : 'text-dl-error'}`}>
-                                  {tx.direction === 'credit' ? '+' : ''}{tx.amountFormatted}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )
-                    ) : (
-                      <p className="font-dl-mono text-xs text-dl-gray">Click Refresh to load transactions.</p>
-                    )}
-                  </div>
-                )}
-
-                <div className="border-t border-dl-border pt-6">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[
-                      ['Banking Partner', 'Increase'],
-                      ['Settlement Bank', 'First Internet Bank'],
-                      ['ACH Rails', 'Same-day & standard'],
-                      ['FDIC Coverage', 'Up to $250,000'],
-                    ].map(([lbl, val]) => (
-                      <div key={lbl}>
-                        <p className="font-dl-mono text-[10px] text-dl-gray uppercase tracking-wider">{lbl}</p>
-                        <p className="font-dl-mono text-xs text-dl-navy mt-1">{val}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </>
             )}
 

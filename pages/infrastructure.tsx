@@ -27,9 +27,9 @@ const NOT_THIS = [
 
 const DIFFERENTIATORS = [
   {
-    label: 'FDIC-Insured Banking Layer',
-    badge: 'L00 · LIVE',
-    desc: 'Fiat capital enters through a real institutional bank account — First Internet Bank via Increase ACH/wire rails. No crypto-only on-ramp. BitGo institutional custody handles the on-chain layer. Capital is traceable at every step.',
+    label: 'Banking & Settlement Layer',
+    badge: 'L00 · OFFLINE',
+    desc: 'ACH/wire banking infrastructure is currently offline. BitGo institutional custody handles the on-chain layer. Fiat capital entry rails will be restored when the settlement layer is reconfigured.',
     href: '/banking',
   },
   {
@@ -65,7 +65,7 @@ const DIFFERENTIATORS = [
 ];
 
 const LIVE_NOW = [
-  { layer: '00', name: 'Banking Infrastructure', detail: 'Increase ACH/wire · FDIC-insured (First Internet Bank) · BitGo institutional custody active', href: '/banking', status: 'LIVE' },
+  { layer: '00', name: 'Banking Infrastructure', detail: 'ACH/wire settlement rail offline · BitGo institutional custody active', href: '/banking', status: 'OFFLINE' },
   { layer: '01', name: 'AXUSD Settlement Rail', detail: 'ERC-3643 stablecoin · PSM active · Identity-gated · Peg maintained via Camelot V2', href: '/axusd-3643', status: 'LIVE' },
   { layer: '01.5', name: 'Protocol Exchange (DEX)', detail: 'Camelot V2 · AXM/AXUSD trading pairs · PSM-backed peg maintenance · EulerSwap LP', href: '/dex', status: 'LIVE' },
   { layer: '02', name: 'AXAU Reserve', detail: 'PAXG-backed positions · Direct on-chain mint/redeem · GoldVault contract · Coverage ratio enforced', href: '/axau', status: 'LIVE' },
@@ -78,7 +78,7 @@ const LIVE_NOW = [
 ];
 
 const CAPITAL_FLOW = [
-  { step: 'USD', label: 'Fiat Entry', sub: 'Banking — ACH / Wire via Increase · FDIC-insured · First Internet Bank', color: C.forest, layer: 'L00', href: '/banking' },
+  { step: 'USD', label: 'Fiat Entry', sub: 'Banking rail offline · ACH/wire entry pending restoration', color: C.forest, layer: 'L00' },
   { step: 'AXUSD', label: 'Settlement Rail', sub: 'ERC-3643 · PSM-backed peg · Exclusive unit of account', color: C.navy, layer: 'L01', href: '/axusd-3643' },
   { step: 'DEX / PSM', label: 'Conversion + Peg', sub: 'Camelot V2 · Peg maintenance · AXM liquidity', color: C.gold, layer: 'L01.5', href: '/dex' },
   { step: 'AXAU', label: 'Reserve Layer', sub: 'PAXG-backed positions · Direct on-chain mint · Coverage enforced', color: C.gold, layer: 'L02', href: '/axau' },
