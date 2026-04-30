@@ -252,6 +252,9 @@ export interface AXAUSystemState {
   // Oracle freshness (derived from Chainlink updatedAt)
   oracleStale:     boolean;
   oracleUpdatedAt: number;
+  // NAV Engine degraded state (true when on-chain oracle revert prevents NAV reads)
+  navEngineDegraded:       boolean;
+  navEngineDegradedReason: string | null;
   // Timestamps
   fetchedAt: string;
 }
@@ -288,74 +291,93 @@ export async function getAXAUSystemState(): Promise<AXAUSystemState> {
   const landVault  = new ethers.Contract(AXAU_ADDRESSES.AXLandVault,          LAND_VAULT_ABI,   provider);
   const chainlink  = new ethers.Contract(AXAU_ADDRESSES.ChainlinkXauUsd,      CHAINLINK_ABI,    provider);
 
-  // Parallel reads — group by contract to minimise latency
+  // ── Phase 1: oracle-independent reads (always succeed) ─────────────────────
   const [
     totalSupply, tokenName, tokenSymbol,
-    navSnap, totalBackingUsd, backingNav, mintNav, coverageBpsRaw, isSolvent,
-    goldValueUsd,
     mintPaused, redeemPaused, mintFeeBps, redeemFeeBps, totalMinted, totalRedeemed,
     goldSnap, goldReserveAsset, goldTotalUnits, goldFrozen,
     landSnap, landLastTimestamp,
     chainlinkRound,
   ] = await Promise.all([
-    // Token
     token.totalSupply(),
     token.name(),
     token.symbol(),
-    // NAV Engine
-    navEngine.snapshot(),
-    navEngine.totalBackingUsdWad(),
-    navEngine.backingNavPerAXAUWad(),
-    navEngine.mintNavPerAXAUWad(),
-    navEngine.coverageRatioBps(),
-    navEngine.isSolvent(),
-    navEngine.componentValueUsdWad(COMPONENT_IDS.XAU),
-    // Controller
     controller.mintPaused(),
     controller.redeemPaused(),
     controller.mintFeeBps(),
     controller.redeemFeeBps(),
     controller.totalMinted(),
     controller.totalRedeemed(),
-    // Gold Vault
     goldVault.goldSnapshot(),
     goldVault.reserveAsset(),
     goldVault.totalUnits(),
     goldVault.vaultFrozen(),
-    // Land Vault
     landVault.landSnapshot(),
     landVault.lastNavTimestamp(),
-    // Chainlink
     chainlink.latestRoundData(),
   ]);
 
-  // ── Parse results ──────────────────────────────────────────────────────────
+  // ── Chainlink / oracle freshness ────────────────────────────────────────────
+  const oracleUpdatedAt = BigInt(chainlinkRound.updatedAt.toString());
+  const oracleAnswer    = BigInt(chainlinkRound.answer.toString());
+  const oracleStale     = !isOracleFresh(oracleUpdatedAt, oracleAnswer);
 
-  const coverageBps = BigInt(coverageBpsRaw.toString());
-  // type(uint256).max means division by zero / no supply — display as "∞"
-  const coverageDisplay =
-    coverageBps > 100_000n
-      ? "∞ (zero supply)"
-      : (Number(coverageBps) / 100).toFixed(2) + "%";
-
-  // Chainlink: 8 decimal places
-  const xauPrice = BigInt(chainlinkRound.answer.toString());
+  const xauPrice    = BigInt(chainlinkRound.answer.toString());
   const xauUsdPrice = (Number(xauPrice) / 1e8).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
-  // Oracle freshness (non-throwing — caller decides what to do with stale data)
-  const oracleUpdatedAt = BigInt(chainlinkRound.updatedAt.toString());
-  const oracleAnswer    = BigInt(chainlinkRound.answer.toString());
-  const oracleStale     = !isOracleFresh(oracleUpdatedAt, oracleAnswer);
+  // ── Phase 2: NAVEngine reads (require fresh oracle — may revert) ────────────
+  let navEngineDegraded       = false;
+  let navEngineDegradedReason: string | null = null;
+  let totalBackingUsd   = 0n;
+  let backingNav        = 0n;
+  let mintNav           = 0n;
+  let coverageBps       = 0n;
+  let isSolvent         = false;
+  let goldValueUsd      = 0n;
 
-  // Land snapshot
+  try {
+    const [
+      navSnap, _totalBackingUsd, _backingNav, _mintNav, _coverageBpsRaw, _isSolvent,
+      _goldValueUsd,
+    ] = await Promise.all([
+      navEngine.snapshot(),
+      navEngine.totalBackingUsdWad(),
+      navEngine.backingNavPerAXAUWad(),
+      navEngine.mintNavPerAXAUWad(),
+      navEngine.coverageRatioBps(),
+      navEngine.isSolvent(),
+      navEngine.componentValueUsdWad(COMPONENT_IDS.XAU),
+    ]);
+    totalBackingUsd = BigInt(_totalBackingUsd.toString());
+    backingNav      = BigInt(_backingNav.toString());
+    mintNav         = BigInt(_mintNav.toString());
+    coverageBps     = BigInt(_coverageBpsRaw.toString());
+    isSolvent       = _isSolvent;
+    goldValueUsd    = BigInt(_goldValueUsd.toString());
+    void navSnap;
+  } catch (navErr: any) {
+    navEngineDegraded = true;
+    const msg: string = navErr?.reason ?? navErr?.message ?? String(navErr);
+    navEngineDegradedReason = msg.includes('stale oracle') || msg.includes('stale')
+      ? 'NAVEngine: stale oracle — Chainlink XAU/USD feed has not updated within the on-chain staleness window. NAV values will be available once the feed refreshes (typically within 24 h).'
+      : `NAVEngine unavailable: ${msg}`;
+    console.warn('[AXAUContractService] NAVEngine reads degraded:', navEngineDegradedReason);
+  }
+
+  // ── Parse oracle-independent results ───────────────────────────────────────
+  const coverageDisplay =
+    navEngineDegraded
+      ? '—'
+      : coverageBps > 100_000n
+        ? '∞ (zero supply)'
+        : (Number(coverageBps) / 100).toFixed(2) + '%';
+
   const landValueUsdWad: bigint = BigInt(landSnap.valueUsdWad.toString());
   const landStale: boolean       = landSnap.stale;
-
-  // Gold snapshot (address, units)
-  const goldUnits: bigint = BigInt(goldSnap.units.toString());
+  const goldUnits: bigint        = BigInt(goldTotalUnits.toString());
 
   return {
     totalSupply:          totalSupply.toString(),
@@ -364,10 +386,10 @@ export async function getAXAUSystemState(): Promise<AXAUSystemState> {
     tokenSymbol,
 
     totalBackingUsd:          totalBackingUsd.toString(),
-    totalBackingUsdFormatted: formatWad(BigInt(totalBackingUsd.toString()), 2),
-    backingNavPerToken:       formatWad(BigInt(backingNav.toString()), 6),
-    mintNavPerToken:          formatWad(BigInt(mintNav.toString()), 6),
-    coverageRatioBps:         Number(coverageBps > 10_000_000n ? 10_000_000n : coverageBps),
+    totalBackingUsdFormatted: navEngineDegraded ? '—' : formatWad(totalBackingUsd, 2),
+    backingNavPerToken:       navEngineDegraded ? '—' : formatWad(backingNav, 6),
+    mintNavPerToken:          navEngineDegraded ? '—' : formatWad(mintNav, 6),
+    coverageRatioBps:         navEngineDegraded ? 0 : Number(coverageBps > 10_000_000n ? 10_000_000n : coverageBps),
     coverageRatioPct:         coverageDisplay,
     isSolvent,
 
@@ -381,7 +403,7 @@ export async function getAXAUSystemState(): Promise<AXAUSystemState> {
     goldReserveAsset,
     goldTotalUnits:   formatWad(goldUnits, 6),
     goldFrozen,
-    goldValueUsd:     formatWad(BigInt(goldValueUsd.toString()), 2),
+    goldValueUsd:     navEngineDegraded ? '—' : formatWad(goldValueUsd, 2),
 
     landValueUsd:      formatWad(landValueUsdWad, 2),
     landStale,
@@ -390,6 +412,9 @@ export async function getAXAUSystemState(): Promise<AXAUSystemState> {
     xauUsdPrice,
     oracleStale,
     oracleUpdatedAt:   Number(oracleUpdatedAt),
+
+    navEngineDegraded,
+    navEngineDegradedReason,
     fetchedAt: new Date().toISOString(),
   };
 }

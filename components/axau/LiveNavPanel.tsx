@@ -26,6 +26,9 @@ interface SystemState {
   landStale:               boolean;
   landLastTimestamp:       number;
   xauUsdPrice:             string;
+  oracleStale:             boolean;
+  navEngineDegraded:       boolean;
+  navEngineDegradedReason: string | null;
   fetchedAt:               string;
 }
 
@@ -134,6 +137,21 @@ export default function LiveNavPanel() {
           </button>
         </div>
       </div>
+
+      {/* NAV Engine degraded banner */}
+      {state.navEngineDegraded && (
+        <div className="flex items-start gap-3 px-5 py-3 border-b border-dl-border bg-amber-50">
+          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-semibold text-amber-800 font-dl-mono uppercase tracking-wide">
+              NAV Engine — Oracle Temporarily Unavailable
+            </p>
+            <p className="text-xs text-amber-700 mt-0.5 font-dl-mono leading-relaxed">
+              {state.navEngineDegradedReason ?? 'The Chainlink XAU/USD feed has not updated within the on-chain staleness window. NAV, coverage, and solvency values are paused until the feed refreshes (typically within 24 h). Token supply, vault holdings, controller state, and mint/redeem status remain accurate.'}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Status badges */}
       <div className="flex items-center gap-3 flex-wrap px-5 py-3 border-b border-dl-border">
