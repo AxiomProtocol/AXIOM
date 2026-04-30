@@ -55,7 +55,7 @@ export interface TrustCard {
 export interface StatusRow {
   system: string;
   status: ClaimStatus;
-  note: string;
+  note?: string;
   href: string;
   verifiedFrom: string;
 }
@@ -427,11 +427,7 @@ export class HomepageTruthService {
       status.push({
         system: 'Banking Infrastructure',
         status: bankingLive ? 'live' : (increase.status === 'configured' ? 'configured' : 'inactive'),
-        note: bankingLive
-          ? 'ACH/wire rails active. FDIC-insured banking partner connected.'
-          : increase.status === 'unavailable'
-            ? 'Banking provider transition underway — Increase account decommissioned. Replacement selection in progress.'
-            : 'Banking infrastructure configured — not yet in production.',
+        ...(bankingLive ? { note: 'ACH/wire rails active. FDIC-insured banking partner connected.' } : {}),
         href: '/banking',
         verifiedFrom: 'SystemStateService.banking.status',
       });

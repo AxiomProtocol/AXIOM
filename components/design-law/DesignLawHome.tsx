@@ -681,7 +681,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
                   >
                     <div className="flex-1 min-w-0 pr-4">
                       <p className="text-sm md:text-base text-dl-navy font-medium">{row.system}</p>
-                      <p className="text-xs text-dl-gray mt-0.5">{row.note}</p>
+                      {row.note && <p className="text-xs text-dl-gray mt-0.5">{row.note}</p>}
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <StatusChip status={row.status} />
