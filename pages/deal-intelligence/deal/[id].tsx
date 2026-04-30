@@ -1191,7 +1191,7 @@ export default function DealWorkspacePage() {
               <div className="space-y-6">
                 <div className="border border-dl-navy">
                   <div className="px-5 py-3 bg-dl-navy">
-                    <p className="font-dl-mono text-xs text-white uppercase tracking-wider">Earnest Money Deposit — Axiom Nexus ACH</p>
+                    <p className="font-dl-mono text-xs text-white uppercase tracking-wider">Earnest Money Deposit</p>
                   </div>
                   <div className="p-5 space-y-5">
                     <p className="text-sm text-dl-gray leading-relaxed">
