@@ -135,8 +135,14 @@ export default function AttestationsPage({ keyRotations, runbooks, allClear, fet
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
 
+  const [rbAckedBy, setRbAckedBy] = useState('');
+  const [rbNotes, setRbNotes] = useState('');
+  const [rbSubmitting, setRbSubmitting] = useState<string | null>(null);
+  const [rbResult, setRbResult] = useState<{ runbook: string; ok: boolean; message: string } | null>(null);
+
   const adminKeyRow = keyRotations.find((k) => k.ref === 'ADMIN_SOLVENCY_KEY');
   const alreadyAttested = adminKeyRow?.attested ?? false;
+  const pendingRunbooks = runbooks.filter((r) => !r.acked);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -160,6 +166,31 @@ export default function AttestationsPage({ keyRotations, runbooks, allClear, fet
       setResult({ ok: false, message: err instanceof Error ? err.message : String(err) });
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleRunbookAck(e: React.FormEvent, runbook: string) {
+    e.preventDefault();
+    if (!rbAckedBy.trim()) return;
+    setRbSubmitting(runbook);
+    setRbResult(null);
+    try {
+      const res = await fetch('/api/operator/record-runbook-ack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runbook, ackedBy: rbAckedBy.trim(), notes: rbNotes.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setRbResult({ runbook, ok: true, message: `Runbook acknowledged. Hash: ${data.hash?.slice(0, 16)}…` });
+        setTimeout(() => window.location.reload(), 1200);
+      } else {
+        setRbResult({ runbook, ok: false, message: data.error ?? 'Unknown error' });
+      }
+    } catch (err) {
+      setRbResult({ runbook, ok: false, message: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setRbSubmitting(null);
     }
   }
 
@@ -236,6 +267,63 @@ export default function AttestationsPage({ keyRotations, runbooks, allClear, fet
             ))}
           </div>
         </section>
+
+        {pendingRunbooks.length > 0 && (
+          <section className="border border-dl-rule p-6">
+            <h2 className="font-dl-serif text-lg text-dl-navy mb-1">
+              Acknowledge Pending Runbooks
+            </h2>
+            <p className="text-sm text-dl-gray mb-4">
+              Read each runbook, then submit your acknowledgment. The server hashes the current file content — re-acknowledgment is required if the file changes.
+            </p>
+            <div className="space-y-6">
+              {pendingRunbooks.map((rb) => (
+                <div key={rb.runbook} className="border-t border-dl-rule pt-4 first:border-t-0 first:pt-0">
+                  <p className="font-dl-mono text-xs text-dl-navy mb-3 break-all">{rb.runbook}</p>
+                  <form onSubmit={(e) => handleRunbookAck(e, rb.runbook)} className="space-y-3 max-w-md">
+                    <div>
+                      <label className="block font-dl-mono text-xs uppercase tracking-widest text-dl-gray mb-1">
+                        Acknowledged By
+                      </label>
+                      <input
+                        type="text"
+                        value={rbAckedBy}
+                        onChange={(e) => setRbAckedBy(e.target.value)}
+                        placeholder="e.g. protocol-operator"
+                        required
+                        className="w-full border border-dl-rule px-3 py-2 font-dl-mono text-sm text-dl-navy bg-white focus:outline-none focus:border-dl-navy"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-dl-mono text-xs uppercase tracking-widest text-dl-gray mb-1">
+                        Notes (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={rbNotes}
+                        onChange={(e) => setRbNotes(e.target.value)}
+                        placeholder="Review date or confirmation statement"
+                        className="w-full border border-dl-rule px-3 py-2 font-dl-mono text-sm text-dl-navy bg-white focus:outline-none focus:border-dl-navy"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={rbSubmitting === rb.runbook || !rbAckedBy.trim()}
+                      className="bg-dl-navy text-white font-dl-mono text-xs uppercase tracking-widest px-6 py-2.5 disabled:opacity-50 hover:bg-dl-navy/90 transition-colors"
+                    >
+                      {rbSubmitting === rb.runbook ? 'Recording…' : 'Acknowledge Runbook'}
+                    </button>
+                    {rbResult?.runbook === rb.runbook && (
+                      <p className={`font-dl-mono text-xs mt-1 ${rbResult.ok ? 'text-dl-forest' : 'text-red-600'}`}>
+                        {rbResult.message}
+                      </p>
+                    )}
+                  </form>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {!alreadyAttested && (
           <section className="border border-dl-rule p-6">
