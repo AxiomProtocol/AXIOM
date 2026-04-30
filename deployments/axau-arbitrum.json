@@ -1,37 +1,45 @@
 {
-  "network": "arbitrum-one",
-  "chainId": 42161,
-  "deployedAt": "2026-04-02T20:00:47.770Z",
-  "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
-  "contracts": {
-    "AXAUTokenLite3643": "0xbcCA4D937d427829914498423aE6E04C846dB0Bb",
-    "CommodityRegistry": "0x6D3aAa92793503B40b3F3593d2fCc409Ca610bDa",
-    "AXGoldVault": "0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8",
-    "LandNAVOracleMultiSig": "0x8FF5D66d4be4C107362e63f8E9E8283E8c5EA0Fc",
-    "AXLandVault": "0x66Aadce66a359609ec5E18fb3d8927a2363449cf",
-    "NAVEngine": "0x80F8634a43B26a2bd403396A42465F138aeCC519",
-    "MintRedeemController": "0x036F05a3fB74d35439c074f25F691b36f5D37792"
-  },
-  "externalAddresses": {
-    "chainlinkXauUsd": "0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2c",
-    "goldReserveAsset": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-    "goldReserveNote": "WETH placeholder — call GoldVault.setReserveAsset(paxgAddress) before activating mint",
-    "oracleSigner1": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
-    "oracleSigner2": "0x9bE7FCEa316D8e9a09fdD6a67E158A16Acf64f3f",
-    "oracleSigner2Note": "Deterministic offline key (keccak256('axiom-land-oracle-signer-2-2026')). Rotate to hardware wallet via addSigner/removeSigner."
-  },
-  "componentIds": {
-    "XAU": "0x7c687a3207cd9c05b4b11d8dd7ac337919c2200102d72989a597ebc5afcf180b",
-    "LAND": "0xb0366c216037e04ae0c0a5c253f7e5a16707d3697cf6669be968fc739da1fa87"
-  },
-  "activationChecklist": [
-    "1. Confirm canonical gold token address on Arbitrum One (PAXG bridge or equivalent)",
-    "2. Call GoldVault.setReserveAsset(<goldTokenAddress>) — vault must be empty",
-    "3. Call Registry.updateComponent(XAU_ID, goldVaultAddr, <oracle>, 500)",
-    "4. Transfer GOVERNOR_ROLE to multisig wallet",
-    "5. Add more LandNAVOracle signers and raise threshold (addSigner + setThreshold)",
-    "6. Rotate ORACLE_SIGNER_2 to hardware wallet via addSigner/removeSigner",
-    "7. Call Controller.pauseMint(false) + Controller.pauseRedeem(false)",
-    "8. Call Token.enableTransferGate(<identityRegistryAddress>) for ERC-3643 compliance"
-  ]
+    "network": "arbitrum-one",
+    "chainId": 42161,
+    "deployedAt": "2026-04-02T20:00:47.770Z",
+    "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+    "contracts": {
+        "AXAUTokenLite3643": "0xbcCA4D937d427829914498423aE6E04C846dB0Bb",
+        "CommodityRegistry": "0x6D3aAa92793503B40b3F3593d2fCc409Ca610bDa",
+        "AXGoldVault": "0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8",
+        "LandNAVOracleMultiSig": "0x8FF5D66d4be4C107362e63f8E9E8283E8c5EA0Fc",
+        "AXLandVault": "0x66Aadce66a359609ec5E18fb3d8927a2363449cf",
+        "NAVEngine": "0x80F8634a43B26a2bd403396A42465F138aeCC519",
+        "MintRedeemController": "0x682Ed413767b6275e29fc706391474F2C5Cc1A2A",
+        "MintRedeemController_v1": "0x036F05a3fB74d35439c074f25F691b36f5D37792"
+    },
+    "externalAddresses": {
+        "chainlinkXauUsd": "0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2c",
+        "goldReserveAsset": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+        "goldReserveNote": "WETH placeholder — call GoldVault.setReserveAsset(paxgAddress) before activating mint",
+        "oracleSigner1": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+        "oracleSigner2": "0x9bE7FCEa316D8e9a09fdD6a67E158A16Acf64f3f",
+        "oracleSigner2Note": "Deterministic offline key (keccak256('axiom-land-oracle-signer-2-2026')). Rotate to hardware wallet via addSigner/removeSigner."
+    },
+    "componentIds": {
+        "XAU": "0x7c687a3207cd9c05b4b11d8dd7ac337919c2200102d72989a597ebc5afcf180b",
+        "LAND": "0xb0366c216037e04ae0c0a5c253f7e5a16707d3697cf6669be968fc739da1fa87"
+    },
+    "activationChecklist": [
+        "1. Confirm canonical gold token address on Arbitrum One (PAXG bridge or equivalent)",
+        "2. Call GoldVault.setReserveAsset(<goldTokenAddress>) — vault must be empty",
+        "3. Call Registry.updateComponent(XAU_ID, goldVaultAddr, <oracle>, 500)",
+        "4. Transfer GOVERNOR_ROLE to multisig wallet",
+        "5. Add more LandNAVOracle signers and raise threshold (addSigner + setThreshold)",
+        "6. Rotate ORACLE_SIGNER_2 to hardware wallet via addSigner/removeSigner",
+        "7. Call Controller.pauseMint(false) + Controller.pauseRedeem(false)",
+        "8. Call Token.enableTransferGate(<identityRegistryAddress>) for ERC-3643 compliance"
+    ],
+    "updatedAt": "2026-04-30T18:36:20.050Z",
+    "controllerRedeploy": {
+        "reason": "Oracle staleness window made configurable — default 97200 s (27 h)",
+        "oldAddress": "0x036F05a3fB74d35439c074f25F691b36f5D37792",
+        "newAddress": "0x682Ed413767b6275e29fc706391474F2C5Cc1A2A",
+        "deployedAt": "2026-04-30T18:36:20.050Z"
+    }
 }

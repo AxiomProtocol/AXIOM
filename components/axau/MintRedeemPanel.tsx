@@ -16,7 +16,7 @@ const ARBITRUM_ONE = 42161;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const CONTROLLER   = "0x036F05a3fB74d35439c074f25F691b36f5D37792" as `0x${string}`;
+const CONTROLLER   = "0x682Ed413767b6275e29fc706391474F2C5Cc1A2A" as `0x${string}`;
 const AXAU_TOKEN   = "0xbcCA4D937d427829914498423aE6E04C846dB0Bb" as `0x${string}`;
 const PAXG_ADDR    = "0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429" as `0x${string}`;
 const XAU_VAULT_ID = "0x7c687a3207cd9c05b4b11d8dd7ac337919c2200102d72989a597ebc5afcf180b" as `0x${string}`;

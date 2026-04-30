@@ -208,7 +208,7 @@ export default function LiveNavPanel() {
         {[
           ['Token (AXAU)',        '0xbcCA4D937d427829914498423aE6E04C846dB0Bb'],
           ['NAV Engine',          '0x80F8634a43B26a2bd403396A42465F138aeCC519'],
-          ['Mint/Redeem Controller','0x036F05a3fB74d35439c074f25F691b36f5D37792'],
+          ['Mint/Redeem Controller','0x682Ed413767b6275e29fc706391474F2C5Cc1A2A'],
           ['Commodity Registry',  '0x6D3aAa92793503B40b3F3593d2fCc409Ca610bDa'],
           ['Gold Vault',          '0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8'],
           ['Land Vault',          '0x66Aadce66a359609ec5E18fb3d8927a2363449cf'],

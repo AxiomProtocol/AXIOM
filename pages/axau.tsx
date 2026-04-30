@@ -332,7 +332,7 @@ function ReserveFlow() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
           {[
             { label: 'GoldVault', addr: '0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8' },
-            { label: 'MintRedeemController', addr: '0x036F05a3fB74d35439c074f25F691b36f5D37792' },
+            { label: 'MintRedeemController', addr: '0x682Ed413767b6275e29fc706391474F2C5Cc1A2A' },
             { label: 'NAVEngine', addr: '0x80F8634a43B26a2bd403396A42465F138aeCC519' },
             { label: 'AXAU Token', addr: '0xbcCA4D937d427829914498423aE6E04C846dB0Bb' },
           ].map(c => (
@@ -735,7 +735,7 @@ function Disclosures() {
         <div style={{ paddingTop: 16, borderTop: `1px solid ${C.borderAlt}`, display: 'flex', flexWrap: 'wrap', gap: 20 }}>
           {[
             ['Token Contract', '0xbcCA4D937d427829914498423aE6E04C846dB0Bb', 'https://arbitrum.blockscout.com/address/0xbcCA4D937d427829914498423aE6E04C846dB0Bb'],
-            ['MintRedeem Controller', '0x036F05a3fB74d35439c074f25F691b36f5D37792', 'https://arbitrum.blockscout.com/address/0x036F05a3fB74d35439c074f25F691b36f5D37792'],
+            ['MintRedeem Controller', '0x682Ed413767b6275e29fc706391474F2C5Cc1A2A', 'https://arbitrum.blockscout.com/address/0x682Ed413767b6275e29fc706391474F2C5Cc1A2A'],
             ['NAV Engine', '0x80F8634a43B26a2bd403396A42465F138aeCC519', 'https://arbitrum.blockscout.com/address/0x80F8634a43B26a2bd403396A42465F138aeCC519'],
             ['Gold Vault', '0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8', 'https://arbitrum.blockscout.com/address/0xaCc9BFf51AD291fc0c9003C6f8CC09BBa63C4CF8'],
           ].map(([label, addr, url]) => (

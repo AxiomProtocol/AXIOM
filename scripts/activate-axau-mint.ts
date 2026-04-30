@@ -12,7 +12,7 @@
 
 import { ethers } from "hardhat";
 
-const CONTROLLER = "0x036F05a3fB74d35439c074f25F691b36f5D37792";
+const CONTROLLER = "0x682Ed413767b6275e29fc706391474F2C5Cc1A2A";
 
 const ABI = [
   "function pauseMint(bool paused) external",

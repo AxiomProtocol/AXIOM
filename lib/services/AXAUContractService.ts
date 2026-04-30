@@ -14,7 +14,7 @@ export const AXAU_ADDRESSES = {
   LandNAVOracleMultiSig: "0x8FF5D66d4be4C107362e63f8E9E8283E8c5EA0Fc",
   AXLandVault:           "0x66Aadce66a359609ec5E18fb3d8927a2363449cf",
   NAVEngine:             "0x80F8634a43B26a2bd403396A42465F138aeCC519",
-  MintRedeemController:  "0x036F05a3fB74d35439c074f25F691b36f5D37792",
+  MintRedeemController:  "0x682Ed413767b6275e29fc706391474F2C5Cc1A2A",
   WETH:                  "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
   ChainlinkXauUsd:       "0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2c",
 } as const;
