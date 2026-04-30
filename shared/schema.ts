@@ -9677,3 +9677,6 @@ export const savingsPositions = pgTable("savings_positions", {
 
 export type SavingsPosition = typeof savingsPositions.$inferSelect;
 export type InsertSavingsPosition = typeof savingsPositions.$inferInsert;
+
+// launch_attestations moved to shared/launchAttestationsSchema.ts because the
+// SWC bundler dropped exports appended at the bottom of this 9700-line file.

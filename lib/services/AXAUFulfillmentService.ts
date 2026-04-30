@@ -18,6 +18,7 @@ import { ethers } from 'ethers';
 import {
   AXAU_ADDRESSES,
   COMPONENT_IDS,
+  ORACLE_STALE_THRESHOLD_SECONDS,
   assertOracleFresh,
   isOracleFresh,
 } from './AXAUContractService';
@@ -25,6 +26,13 @@ import { db } from '../../server/db';
 import { axauPurchaseRequests } from '../../shared/axauSchema';
 import { adminActionLog } from '../../shared/erc3643Schema';
 import { eq, inArray } from 'drizzle-orm';
+
+export class XauOracleStaleError extends Error {
+  constructor(public ageSeconds: number, public thresholdSeconds: number) {
+    super(`XAU/USD oracle is stale (age=${ageSeconds}s threshold=${thresholdSeconds}s); refusing to price AXAU operations`);
+    this.name = 'XauOracleStaleError';
+  }
+}
 
 // ─── ABIs ─────────────────────────────────────────────────────────────────────
 
@@ -128,7 +136,55 @@ function getSigner(): ethers.Wallet {
 async function getXauPriceFloat(provider: ethers.JsonRpcProvider): Promise<number> {
   const chainlink = new ethers.Contract(AXAU_ADDRESSES.ChainlinkXauUsd, CHAINLINK_ABI, provider);
   const round = await chainlink.latestRoundData();
-  return Number(BigInt(round.answer.toString())) / 1e8;
+  const answer    = BigInt(round.answer.toString());
+  const updatedAt = BigInt(round.updatedAt.toString());
+
+  // Enforce launch-blocker oracle staleness policy: any pricing call into the
+  // AXAU buffer (mint quote, redemption, vault state) refuses a stale or
+  // invalid Chainlink XAU/USD round instead of silently using the last value.
+  try {
+    assertOracleFresh(updatedAt, answer);
+  } catch (err) {
+    const nowSec = BigInt(Math.floor(Date.now() / 1000));
+    const ageSec = updatedAt > 0n ? Number(nowSec - updatedAt) : -1;
+    throw new XauOracleStaleError(ageSec, ORACLE_STALE_THRESHOLD_SECONDS);
+  }
+
+  return Number(answer) / 1e8;
+}
+
+/**
+ * Public diagnostic for /api/axau/oracle-freshness. Returns the live
+ * staleness state plus the policy threshold so operators can see what window
+ * is being enforced.
+ */
+export async function getXauOraclePolicyState(): Promise<{
+  policy: { maxStalenessSec: number; source: 'env' | 'default' };
+  lastUpdatedAt: number;
+  ageSec: number;
+  isStale: boolean;
+  priceUsd: number | null;
+}> {
+  const provider  = getProvider();
+  const chainlink = new ethers.Contract(AXAU_ADDRESSES.ChainlinkXauUsd, CHAINLINK_ABI, provider);
+  const round     = await chainlink.latestRoundData();
+  const answer    = BigInt(round.answer.toString());
+  const updatedAt = BigInt(round.updatedAt.toString());
+
+  const nowSec = BigInt(Math.floor(Date.now() / 1000));
+  const ageSec = updatedAt > 0n ? Number(nowSec - updatedAt) : -1;
+  const fresh  = isOracleFresh(updatedAt, answer);
+
+  return {
+    policy: {
+      maxStalenessSec: ORACLE_STALE_THRESHOLD_SECONDS,
+      source: process.env.ORACLE_STALE_THRESHOLD_SECONDS ? 'env' : 'default',
+    },
+    lastUpdatedAt: Number(updatedAt),
+    ageSec,
+    isStale: !fresh,
+    priceUsd: fresh ? Number(answer) / 1e8 : null,
+  };
 }
 
 async function getReserveAsset(provider: ethers.JsonRpcProvider): Promise<string> {
