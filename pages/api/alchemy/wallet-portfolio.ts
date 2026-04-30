@@ -7,7 +7,7 @@ const TOKENS = {
   AXAU:  { address: '0xbcCA4D937d427829914498423aE6E04C846dB0Bb', symbol: 'AXAU',  decimals: 18 },
   AXUSD: { address: '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7', symbol: 'AXUSD', decimals: 18 },
   AXM:   { address: '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D', symbol: 'AXM',   decimals: 18 },
-  PAXG:  { address: '0xfAfD4CB703B25CB22f43D017e7e0d75FEBc26743', symbol: 'PAXG',  decimals: 18 },
+  PAXG:  { address: '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429', symbol: 'PAXG',  decimals: 18 },
   USDC:  { address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', symbol: 'USDC',  decimals: 6  },
   WETH:  { address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', symbol: 'WETH',  decimals: 18 },
 };

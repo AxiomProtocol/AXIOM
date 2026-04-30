@@ -5,7 +5,7 @@ const ALCHEMY_KEY = process.env.ALCHEMY_API_KEY ?? process.env.NEXT_PUBLIC_ALCHE
 const ALCHEMY_URL = `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`;
 
 const AXAU_CONTRACT = '0xbcCA4D937d427829914498423aE6E04C846dB0Bb';
-const PAXG_ADDRESS  = '0xfAfD4CB703B25CB22f43D017e7e0d75FEBc26743';
+const PAXG_ADDRESS  = '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429';
 
 const ERC20_ABI  = ['function approve(address spender, uint256 amount) external returns (bool)'];
 const AXAU_ABI   = ['function mintWithPaxg(uint256 paxgAmountIn) external'];

@@ -7,7 +7,7 @@ const AXIOM_TOKENS: Record<string, { symbol: string; address: string }> = {
   AXAU:  { symbol: 'AXAU',  address: '0xbcCA4D937d427829914498423aE6E04C846dB0Bb' },
   AXUSD: { symbol: 'AXUSD', address: '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7' },
   AXM:   { symbol: 'AXM',   address: '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D' },
-  PAXG:  { symbol: 'PAXG',  address: '0xfAfD4CB703B25CB22f43D017e7e0d75FEBc26743' },
+  PAXG:  { symbol: 'PAXG',  address: '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429' },
   USDC:  { symbol: 'USDC',  address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831' },
   WETH:  { symbol: 'WETH',  address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1' },
 };

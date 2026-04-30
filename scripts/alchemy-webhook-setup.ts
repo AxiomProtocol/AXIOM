@@ -10,7 +10,7 @@ const NOTIFY_API = 'https://dashboard.alchemy.com/api';
 const AXIOM_TREASURY_WALLET = process.env.AXIOM_TREASURY_WALLET ?? '';
 const AXAU_CONTRACT   = '0xbcCA4D937d427829914498423aE6E04C846dB0Bb';
 const AXUSD_CONTRACT  = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
-const PAXG_ADDRESS    = '0xfAfD4CB703B25CB22f43D017e7e0d75FEBc26743';
+const PAXG_ADDRESS    = '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429';
 
 interface WebhookConfig {
   network: string;
