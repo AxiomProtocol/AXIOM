@@ -426,12 +426,19 @@ export async function handlePropertyStripeWebhookEvent(
         } else {
           // ATOMIC STATE TRANSITION: only the writer that flips
           // pending → paid performs side effects.
+          //
+          // Restamp stripe_account_id on transition (review fix): for
+          // post-#400 rows the column is already correct, but for any
+          // legacy-NULL row that survived to this point we want to
+          // tag it with the live account so future read-then-call
+          // sites can use `assertCurrentStripeAccount()` strictly.
           const transitioned = await db
             .update(propertyReports)
             .set({
               status: 'paid',
               stripeSessionId: report.stripeSessionId ?? sessionId,
               stripePaymentIntentId: paymentIntentId ?? report.stripePaymentIntentId,
+              stripeAccountId: report.stripeAccountId ?? stripeAccountId,
               buyerEmail: session.customer_email ?? report.buyerEmail,
               paymentConfirmedAt: new Date(),
               updatedAt: new Date(),
