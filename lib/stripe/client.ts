@@ -141,6 +141,55 @@ export async function getStripeAccountInfo(): Promise<{
 }
 
 /**
+ * Returns the resolved live account id (e.g. `acct_1MBRQRL7nVuSbK4H`). Use
+ * this when stamping `stripe_account_id` on a row at insert time so the row
+ * carries provenance for which Stripe account its ids belong to.
+ */
+export async function currentStripeAccountId(): Promise<string> {
+  await getStripe();
+  const v = await _verification!;
+  return v.accountId;
+}
+
+/**
+ * Thrown by `assertCurrentStripeAccount()` when a stored row references a
+ * different Stripe account than the one we're currently configured against.
+ * Callers (typically API handlers) should catch this and surface a typed
+ * 409 / `legacy_stripe_account` response instead of letting it bubble.
+ */
+export class LegacyStripeAccountError extends Error {
+  readonly rowAccountId: string;
+  readonly currentAccountId: string;
+  constructor(rowAccountId: string, currentAccountId: string) {
+    super(
+      `Row references Stripe account ${rowAccountId} but the live key resolves ` +
+        `to ${currentAccountId}. Refusing to call Stripe with cross-account ids.`,
+    );
+    this.name = 'LegacyStripeAccountError';
+    this.rowAccountId = rowAccountId;
+    this.currentAccountId = currentAccountId;
+  }
+}
+
+/**
+ * Guard for read-then-call-Stripe code paths after the task #398 cutover.
+ * Pass the `stripe_account_id` column value from a loaded row; throws
+ * `LegacyStripeAccountError` if it doesn't match the currently-resolved
+ * account. A `null`/`undefined`/empty value is treated as "untagged"
+ * (legacy row from before the column existed) and is allowed through —
+ * callers can opt to be stricter at their own site if needed.
+ */
+export async function assertCurrentStripeAccount(
+  rowAccountId: string | null | undefined,
+): Promise<void> {
+  if (!rowAccountId) return;
+  const current = await currentStripeAccountId();
+  if (rowAccountId !== current) {
+    throw new LegacyStripeAccountError(rowAccountId, current);
+  }
+}
+
+/**
  * Test-only: resets the in-process verification cache. Not used in production.
  */
 export function _resetStripeClientForTests(): void {

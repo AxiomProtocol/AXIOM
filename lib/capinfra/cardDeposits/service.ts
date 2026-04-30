@@ -16,7 +16,11 @@
  */
 
 import { db } from '../../../server/db';
-import { getStripe } from '../../stripe/client';
+import {
+  getStripe,
+  currentStripeAccountId,
+  assertCurrentStripeAccount,
+} from '../../stripe/client';
 import {
   capCardDeposits,
   capCardDepositWebhookEvents,
@@ -125,6 +129,10 @@ export async function createCheckoutSession(
     }
     // Re-fetch the session URL from Stripe so the caller can redirect.
     const stripe = await getStripe();
+    // Refuse to resume a deposit whose session belongs to a different
+    // Stripe account than the live key resolves to (task #400). Throws
+    // `LegacyStripeAccountError` for the route handler to surface.
+    await assertCurrentStripeAccount(dep.stripeAccountId);
     const session = await stripe.checkout.sessions.retrieve(dep.stripeSessionId);
     return {
       deposit: dep,
@@ -135,6 +143,7 @@ export async function createCheckoutSession(
 
   const id = generateId('cd');
   const stripe = await getStripe();
+  const stripeAccountId = await currentStripeAccountId();
 
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
@@ -182,6 +191,7 @@ export async function createCheckoutSession(
     buyerEmail: input.buyerEmail ?? null,
     idempotencyKey: input.idempotencyKey,
     metadataJson: { source: 'card-onramp' },
+    stripeAccountId,
   };
   // Race-safe insert: if a concurrent caller already inserted a row for
   // this idempotency key (or this Stripe session id), DO NOTHING and
@@ -242,12 +252,16 @@ export async function handleStripeWebhookEvent(
   // the row owns the right to perform side effects. All other concurrent
   // deliveries see a no-op and return immediately. This eliminates the
   // duplicate-mint race that exists with select-then-process patterns.
+  // Stamp `stripe_account_id` from the verified live key (task #400) so
+  // the audit log carries provenance for which Stripe account signed it.
+  const stripeAccountId = await currentStripeAccountId();
   const evRow: NewCapCardDepositWebhookEvent = {
     id: generateId('we'),
     stripeEventId: event.id,
     eventType: event.type,
     depositId: null,
     payloadJson: { type: event.type, claimedAt: new Date().toISOString() },
+    stripeAccountId,
   };
   // IMPORTANT: a thrown error here (DB unreachable, connection lost,
   // etc.) is allowed to propagate. The route handler will surface it

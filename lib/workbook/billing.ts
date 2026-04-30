@@ -1,5 +1,12 @@
 import { pool } from '../../server/db';
-import { getStripe } from '../stripe/client';
+import {
+  getStripe,
+  currentStripeAccountId,
+  assertCurrentStripeAccount,
+  LegacyStripeAccountError,
+} from '../stripe/client';
+
+export { LegacyStripeAccountError };
 
 const stripeConfigured = !!process.env.STRIPE_SECRET_KEY;
 
@@ -79,13 +86,16 @@ export const billingProvider: BillingProvider = {
           const periodEnd = typeof subscription.current_period_end === 'number'
             ? new Date(subscription.current_period_end * 1000)
             : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-            
+          // Stamp provenance (task #400). The webhook signature already
+          // proves which account this event came from, so reading the
+          // current account here matches the event's account.
+          const stripeAccountId = await currentStripeAccountId();
           await pool.query(`
-            INSERT INTO subscription_entitlements (user_id, plan_key, status, provider_customer_id, provider_subscription_id, current_period_start, current_period_end)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            ON CONFLICT (user_id) 
-            DO UPDATE SET status = $3, provider_customer_id = $4, provider_subscription_id = $5, current_period_start = $6, current_period_end = $7, updated_at = NOW()
-          `, [userId, 'workbook_monthly_20', 'active', customerId, subscriptionId, periodStart, periodEnd]);
+            INSERT INTO subscription_entitlements (user_id, plan_key, status, provider_customer_id, provider_subscription_id, current_period_start, current_period_end, stripe_account_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            ON CONFLICT (user_id)
+            DO UPDATE SET status = $3, provider_customer_id = $4, provider_subscription_id = $5, current_period_start = $6, current_period_end = $7, stripe_account_id = $8, updated_at = NOW()
+          `, [userId, 'workbook_monthly_20', 'active', customerId, subscriptionId, periodStart, periodEnd, stripeAccountId]);
         }
         break;
       }
@@ -169,25 +179,43 @@ export const billingProvider: BillingProvider = {
     const stripe = await getStripe();
 
     const result = await pool.query(
-      `SELECT provider_subscription_id FROM subscription_entitlements WHERE user_id = $1 LIMIT 1`,
+      `SELECT provider_subscription_id, stripe_account_id FROM subscription_entitlements WHERE user_id = $1 LIMIT 1`,
       [userId]
     );
 
     const subscriptionId = result.rows[0]?.provider_subscription_id;
+    const rowAccountId = result.rows[0]?.stripe_account_id ?? null;
 
     if (!subscriptionId) {
       return false;
     }
 
     try {
+      // Refuse to call Stripe with an id that belongs to a different
+      // account than the live key resolves to (task #400 / #398 cutover).
+      // Lets the route handler return a typed `legacy_stripe_account`
+      // response instead of getting a confusing "no such subscription"
+      // from Stripe.
+      await assertCurrentStripeAccount(rowAccountId);
+
       await stripe.subscriptions.cancel(subscriptionId);
-      
+
       await pool.query(`
         UPDATE subscription_entitlements SET status = 'canceled', updated_at = NOW() WHERE user_id = $1
       `, [userId]);
-      
+
       return true;
     } catch (error) {
+      if (error instanceof LegacyStripeAccountError) {
+        // Caller decides how to surface this — keep the original
+        // boolean contract for backward compatibility, but log loudly
+        // so the user-facing flow can be improved at the call site.
+        console.warn(
+          `[billing] refusing to cancel subscription ${subscriptionId} for user ${userId}: ` +
+          `row stamped with ${error.rowAccountId}, live key resolves to ${error.currentAccountId}.`,
+        );
+        return false;
+      }
       console.error('Failed to cancel subscription:', error);
       return false;
     }

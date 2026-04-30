@@ -827,6 +827,10 @@ export const capCardDeposits = pgTable('cap_card_deposits', {
   idempotencyKey: varchar('idempotency_key', { length: 200 }).notNull(),
   metadataJson: jsonb('metadata_json'),
   errorReason: text('error_reason'),
+  // Provenance: which Stripe account the ids in this row belong to.
+  // Stamped at insert time from `currentStripeAccountId()`. Legacy rows
+  // (pre task #400) backfilled by `instrumentation.ts`.
+  stripeAccountId: varchar('stripe_account_id', { length: 64 }),
   createdAt: timestamp('created_at').notNull().default(sql`now()`),
   updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
 }, (t) => ({
@@ -847,6 +851,9 @@ export const capCardDepositWebhookEvents = pgTable('cap_card_deposit_webhook_eve
   eventType: varchar('event_type', { length: 80 }).notNull(),
   depositId: varchar('deposit_id', { length: 40 }),
   payloadJson: jsonb('payload_json'),
+  // Provenance: which Stripe account the event was signed by. Stamped on
+  // claim from `currentStripeAccountId()` (post task #400 cutover).
+  stripeAccountId: varchar('stripe_account_id', { length: 64 }),
   processedAt: timestamp('processed_at').notNull().default(sql`now()`),
 }, (t) => ({
   stripeEventUq: uniqueIndex('cap_card_deposit_webhook_events_stripe_event_uq').on(t.stripeEventId),

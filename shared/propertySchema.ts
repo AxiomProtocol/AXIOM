@@ -57,6 +57,9 @@ export const propertyReports = pgTable("property_reports", {
   // consumer payments fully on-chain; new rows do not populate these).
   stripeSessionId: varchar("stripe_session_id", { length: 255 }),
   stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
+  // Provenance for the legacy Stripe ids above (task #400). Null when the
+  // row has no Stripe state at all (i.e. paid on-chain).
+  stripeAccountId: varchar("stripe_account_id", { length: 64 }),
   // On-chain AXUSD payment fields (task #230).
   paymentTxHash: varchar("payment_tx_hash", { length: 80 }),
   paymentChainId: integer("payment_chain_id"),

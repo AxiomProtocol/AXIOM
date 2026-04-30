@@ -5461,6 +5461,8 @@ export const subscriptionEntitlements = pgTable("subscription_entitlements", {
   currentPeriodEnd: timestamp("current_period_end"),
   providerCustomerId: varchar("provider_customer_id", { length: 100 }),
   providerSubscriptionId: varchar("provider_subscription_id", { length: 100 }),
+  // Provenance: which Stripe account the provider_* ids belong to (task #400).
+  stripeAccountId: varchar("stripe_account_id", { length: 64 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -6618,6 +6620,8 @@ export const membershipSubscriptions = pgTable("membership_subscriptions", {
   cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 100 }),
   stripeCustomerId: varchar("stripe_customer_id", { length: 100 }),
+  // Provenance: which Stripe account these ids belong to (task #400).
+  stripeAccountId: varchar("stripe_account_id", { length: 64 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({

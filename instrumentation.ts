@@ -935,6 +935,34 @@ export async function register() {
       await exec(`DO $$ BEGIN ALTER TABLE mirdt_paper_trades ADD COLUMN exit_reason VARCHAR(50); EXCEPTION WHEN duplicate_column THEN NULL; END $$`, 'alter mirdt_paper_trades add exit_reason');
       await exec(`DO $$ BEGIN ALTER TABLE mirdt_paper_trades ADD COLUMN direction VARCHAR(10); EXCEPTION WHEN duplicate_column THEN NULL; END $$`, 'alter mirdt_paper_trades add direction');
 
+      // ─── Stripe account-id provenance (task #400, post #398 cutover) ───
+      // Tag every row that holds a Stripe id with the account that owns
+      // that id, so post-cutover code can refuse to call Stripe with
+      // cross-account ids. Backfill any pre-existing Stripe-id rows with
+      // the legacy account `acct_1TOTd0ERnK9EuJkU`. Idempotent by
+      // construction — adds the column only if missing, and only fills
+      // rows that are still NULL.
+      await exec(`DO $$ BEGIN ALTER TABLE cap_card_deposits ADD COLUMN stripe_account_id VARCHAR(64); EXCEPTION WHEN duplicate_column THEN NULL; END $$`, 'alter cap_card_deposits add stripe_account_id');
+      await exec(`DO $$ BEGIN ALTER TABLE cap_card_deposit_webhook_events ADD COLUMN stripe_account_id VARCHAR(64); EXCEPTION WHEN duplicate_column THEN NULL; END $$`, 'alter cap_card_deposit_webhook_events add stripe_account_id');
+      await exec(`DO $$ BEGIN ALTER TABLE membership_subscriptions ADD COLUMN stripe_account_id VARCHAR(64); EXCEPTION WHEN duplicate_column THEN NULL; END $$`, 'alter membership_subscriptions add stripe_account_id');
+      await exec(`DO $$ BEGIN ALTER TABLE property_reports ADD COLUMN stripe_account_id VARCHAR(64); EXCEPTION WHEN duplicate_column THEN NULL; END $$`, 'alter property_reports add stripe_account_id');
+      await exec(`DO $$ BEGIN ALTER TABLE sentinel_subscriptions ADD COLUMN stripe_account_id VARCHAR(64); EXCEPTION WHEN duplicate_column THEN NULL; END $$`, 'alter sentinel_subscriptions add stripe_account_id');
+      await exec(`DO $$ BEGIN ALTER TABLE subscription_entitlements ADD COLUMN stripe_account_id VARCHAR(64); EXCEPTION WHEN duplicate_column THEN NULL; END $$`, 'alter subscription_entitlements add stripe_account_id');
+
+      // Backfill: tag legacy rows with the old account. Only touches rows
+      // that still hold a Stripe id (so non-Stripe rows in property_reports
+      // and subscription_entitlements stay NULL — null = no Stripe state).
+      // Each is wrapped in DO/EXCEPTION so a referenced column missing
+      // from a drifted DB (pre-existing Drizzle vs. DB schema drift on the
+      // dead `membership_subscriptions` / `subscription_entitlements`
+      // tables, which have 0 rows anyway) is a no-op rather than an error.
+      await exec(`DO $$ BEGIN UPDATE cap_card_deposits SET stripe_account_id = 'acct_1TOTd0ERnK9EuJkU' WHERE stripe_account_id IS NULL AND (stripe_session_id IS NOT NULL OR stripe_payment_intent_id IS NOT NULL OR stripe_payout_id IS NOT NULL); EXCEPTION WHEN undefined_column THEN NULL; END $$`, 'backfill cap_card_deposits stripe_account_id');
+      await exec(`DO $$ BEGIN UPDATE cap_card_deposit_webhook_events SET stripe_account_id = 'acct_1TOTd0ERnK9EuJkU' WHERE stripe_account_id IS NULL; EXCEPTION WHEN undefined_column THEN NULL; END $$`, 'backfill cap_card_deposit_webhook_events stripe_account_id');
+      await exec(`DO $$ BEGIN UPDATE membership_subscriptions SET stripe_account_id = 'acct_1TOTd0ERnK9EuJkU' WHERE stripe_account_id IS NULL AND (stripe_subscription_id IS NOT NULL OR stripe_customer_id IS NOT NULL); EXCEPTION WHEN undefined_column THEN NULL; END $$`, 'backfill membership_subscriptions stripe_account_id');
+      await exec(`DO $$ BEGIN UPDATE property_reports SET stripe_account_id = 'acct_1TOTd0ERnK9EuJkU' WHERE stripe_account_id IS NULL AND (stripe_session_id IS NOT NULL OR stripe_payment_intent_id IS NOT NULL); EXCEPTION WHEN undefined_column THEN NULL; END $$`, 'backfill property_reports stripe_account_id');
+      await exec(`DO $$ BEGIN UPDATE sentinel_subscriptions SET stripe_account_id = 'acct_1TOTd0ERnK9EuJkU' WHERE stripe_account_id IS NULL AND (stripe_subscription_id IS NOT NULL OR stripe_customer_id IS NOT NULL); EXCEPTION WHEN undefined_column THEN NULL; END $$`, 'backfill sentinel_subscriptions stripe_account_id');
+      await exec(`DO $$ BEGIN UPDATE subscription_entitlements SET stripe_account_id = 'acct_1TOTd0ERnK9EuJkU' WHERE stripe_account_id IS NULL AND (provider_subscription_id IS NOT NULL OR provider_customer_id IS NOT NULL); EXCEPTION WHEN undefined_column THEN NULL; END $$`, 'backfill subscription_entitlements stripe_account_id');
+
       // ═══════════════════════════════════════════
       //  INDEXES & CONSTRAINTS
       // ═══════════════════════════════════════════
