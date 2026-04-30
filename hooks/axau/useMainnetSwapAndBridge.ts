@@ -213,7 +213,7 @@ export function useMainnetSwapAndBridge() {
   );
 
   const execute = useCallback(
-    async ({ usdcAmount, expectedPaxgOut, slippageBps = SLIPPAGE_BPS_DEFAULT }: ExecuteParams) => {
+    async ({ usdcAmount, expectedPaxgOut, expectedPaxgOutRaw, slippageBps = SLIPPAGE_BPS_DEFAULT }: ExecuteParams) => {
       if (!address || !walletClient || !publicClient) {
         fail("idle", "Wallet not connected.");
         return;
