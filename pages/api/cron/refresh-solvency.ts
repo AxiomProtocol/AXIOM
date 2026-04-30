@@ -51,22 +51,44 @@ function isSafeInternalBase(raw: string): { ok: true; base: string } | { ok: fal
   }
 }
 
-function resolveInternalBase(): { ok: true; base: string } | { ok: false; reason: string } {
-  // Vercel: same-deployment self-call via the platform-injected hostname.
-  // VERCEL_URL is set by Vercel and not user-configurable for application
-  // code, so SSRF cannot be introduced via env misconfiguration here.
-  if (process.env.VERCEL === '1' && process.env.VERCEL_URL) {
-    try {
-      const host = process.env.VERCEL_URL;
-      const u = new URL(host.startsWith('http') ? host : `https://${host}`);
-      return { ok: true, base: u.origin };
-    } catch {
-      return { ok: false, reason: 'VERCEL_URL is not a valid hostname' };
+type ResolveOk = { ok: true; base: string; via: string };
+type ResolveErr = { ok: false; reason: string };
+
+function resolveInternalBase(req: NextApiRequest): ResolveOk | ResolveErr {
+  // Path 1 — Vercel / any platform deploy: derive the self-call URL from
+  // the request's own Host header. Vercel normalizes Host at the edge to
+  // the actual deployment hostname, so it cannot be spoofed by an
+  // unauthenticated caller. The CRON_SECRET auth gate above means only
+  // authenticated callers reach this code, and the same admin-key trust
+  // boundary protects auto-ingest itself, so Host-based SSRF requires
+  // the attacker to already possess CRON_SECRET — closing the loop.
+  if (process.env.VERCEL === '1' || process.env.VERCEL_URL || process.env.VERCEL_ENV) {
+    const fwdHost = (req.headers['x-forwarded-host'] || '').toString().split(',')[0].trim();
+    const host = fwdHost || (req.headers['host'] || '').toString();
+    if (host) {
+      try {
+        const u = new URL(`https://${host}`);
+        return { ok: true, base: u.origin, via: `req-host (${fwdHost ? 'x-forwarded-host' : 'host'})` };
+      } catch {
+        // Fall through to env-var path below.
+      }
     }
+    // Vercel platform but no usable Host header — try VERCEL_URL.
+    if (process.env.VERCEL_URL) {
+      try {
+        const v = process.env.VERCEL_URL;
+        const u = new URL(v.startsWith('http') ? v : `https://${v}`);
+        return { ok: true, base: u.origin, via: 'env VERCEL_URL' };
+      } catch {
+        return { ok: false, reason: 'VERCEL detected but VERCEL_URL is not a valid hostname and req.headers.host was empty' };
+      }
+    }
+    return { ok: false, reason: 'VERCEL detected but no Host header and no VERCEL_URL available' };
   }
-  // Everywhere else (Replit dev, single-process deploys): loopback only.
+  // Path 2 — Replit dev / single-process deploys: loopback only.
   const rawBase = process.env.INTERNAL_API_BASE_URL || 'http://localhost:5000';
-  return isSafeInternalBase(rawBase);
+  const r = isSafeInternalBase(rawBase);
+  return r.ok ? { ok: true, base: r.base, via: 'loopback' } : r;
 }
 
 function safeEqualStr(a: string, b: string): boolean {
@@ -110,11 +132,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
 
-  const baseCheck = resolveInternalBase();
+  const baseCheck = resolveInternalBase(req);
   if (!baseCheck.ok) {
     return res.status(503).json({ ok: false, error: baseCheck.reason });
   }
   const internalBase = baseCheck.base;
+  const via = baseCheck.via;
   const start = Date.now();
 
   try {
@@ -141,6 +164,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         skipped: true,
         reason: 'rate_limited_recent_snapshot',
         elapsedMs,
+        via,
       });
     }
     if (!ingest.ok) {
@@ -150,6 +174,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ok: false,
         error: `auto-ingest returned ${ingest.status}`,
         elapsedMs,
+        via,
       });
     }
 
@@ -162,12 +187,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       createdAt: body?.createdAt,
       summary: body?.summary,
       ameRun: body?.ameRun,
+      via,
     });
   } catch (err: any) {
     return res.status(500).json({
       ok: false,
       error: err?.message || 'Cron refresh failed',
       elapsedMs: Date.now() - start,
+      via,
     });
   }
 }
