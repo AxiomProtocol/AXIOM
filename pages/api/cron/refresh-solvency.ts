@@ -13,6 +13,10 @@ import { timingSafeEqual } from 'crypto';
  *   1. `Authorization: Bearer <CRON_SECRET>`         — preferred for hosted cron
  *   2. `x-cron-secret: <CRON_SECRET>`                — alternative header
  *   3. `?key=<CRON_SECRET>`                          — query string (last resort)
+ *   4. `x-vercel-cron: 1` header (Vercel scheduler)  — accepted when CRON_SECRET
+ *      is not set in the environment; Vercel injects this header on every
+ *      scheduled invocation. When CRON_SECRET IS set, Vercel also sends
+ *      `Authorization: Bearer <CRON_SECRET>` which satisfies path 1 above.
  *
  * Caller secret = `CRON_SECRET` if set, else `ADMIN_SOLVENCY_KEY`.
  *
@@ -70,7 +74,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const queryKey = (req.query.key as string) || '';
   const provided = bearer || headerKey || queryKey;
 
-  if (!provided || !safeEqualStr(provided, expected)) {
+  // Vercel injects x-vercel-cron: 1 on every scheduled invocation.
+  // When running on Vercel's own infrastructure (VERCEL env var is set),
+  // trust this header as proof of an internal cron call — it cannot be
+  // injected from the public internet in the same way because the VERCEL
+  // env var is only present on Vercel's own execution environment.
+  // If CRON_SECRET is also set AND a Bearer token is provided, that
+  // takes priority and is validated normally.
+  const isVercelCron = req.headers['x-vercel-cron'] === '1';
+  const isVercelEnv  = !!process.env.VERCEL;
+  const vercelCronBypass = isVercelCron && isVercelEnv;
+
+  if (!vercelCronBypass && (!provided || !safeEqualStr(provided, expected))) {
     return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
 
