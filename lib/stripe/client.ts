@@ -100,8 +100,13 @@ export async function getStripe(): Promise<Stripe> {
 }
 
 /**
- * Returns the resolved account info without forcing a Stripe call beyond the
- * cached verification. Convenience for status endpoints.
+ * Returns the resolved account info. Convenience for status endpoints.
+ *
+ * IMPORTANT: this routes through `getStripe()` so the same account-id
+ * enforcement runs. Calling this helper before any other Stripe code path
+ * cannot bypass the mismatch check — if `STRIPE_EXPECTED_ACCOUNT_ID` is set
+ * and differs from the resolved id, this throws `StripeAccountMismatchError`
+ * exactly like every other call site.
  */
 export async function getStripeAccountInfo(): Promise<{
   accountId: string;
@@ -109,14 +114,8 @@ export async function getStripeAccountInfo(): Promise<{
   expected: string | null;
   match: boolean;
 }> {
-  const client = buildClient();
-  if (!_verification) {
-    _verification = (async () => {
-      const acct = await client.accounts.retrieve();
-      return { accountId: acct.id ?? '', chargesEnabled: !!acct.charges_enabled };
-    })();
-  }
-  const v = await _verification;
+  await getStripe(); // runs the pin check + populates the cache
+  const v = await _verification!;
   const expected = process.env.STRIPE_EXPECTED_ACCOUNT_ID || null;
   return {
     accountId: v.accountId,
