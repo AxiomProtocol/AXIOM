@@ -16,6 +16,7 @@
  */
 
 import { db } from '../../../server/db';
+import { getStripe } from '../../stripe/client';
 import {
   capCardDeposits,
   capCardDepositWebhookEvents,
@@ -102,8 +103,7 @@ export async function createCheckoutSession(
 ): Promise<CreateCheckoutResult> {
   validateInput(input);
 
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  if (!stripeKey) throw new Error('STRIPE_SECRET_KEY not configured');
+  if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not configured');
 
   // Idempotent replay: if a deposit with this key already exists, return it.
   const existing = await db
@@ -124,8 +124,7 @@ export async function createCheckoutSession(
       throw new Error('Existing deposit has no Stripe session id; cannot resume');
     }
     // Re-fetch the session URL from Stripe so the caller can redirect.
-    const Stripe = (await import('stripe')).default;
-    const stripe = new Stripe(stripeKey);
+    const stripe = await getStripe();
     const session = await stripe.checkout.sessions.retrieve(dep.stripeSessionId);
     return {
       deposit: dep,
@@ -135,8 +134,7 @@ export async function createCheckoutSession(
   }
 
   const id = generateId('cd');
-  const Stripe = (await import('stripe')).default;
-  const stripe = new Stripe(stripeKey);
+  const stripe = await getStripe();
 
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',

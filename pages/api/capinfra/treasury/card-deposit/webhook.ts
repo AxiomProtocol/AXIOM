@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { handleStripeWebhookEvent } from '../../../../../lib/capinfra/cardDeposits/service';
+import { getStripe, StripeAccountMismatchError } from '../../../../../lib/stripe/client';
 
 export const config = {
   api: { bodyParser: false },
@@ -24,8 +25,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const Stripe = (await import('stripe')).default;
-    const stripe = new Stripe(stripeKey);
+    // getStripe() runs the account-id pin check on first use per process.
+    // A mismatch (wrong key vs STRIPE_EXPECTED_ACCOUNT_ID) must NOT silently
+    // process events from the wrong account, so we hard-fail before signature
+    // verification. 503 is appropriate because Stripe will retry once the
+    // operator corrects the env.
+    let stripe;
+    try {
+      stripe = await getStripe();
+    } catch (err) {
+      if (err instanceof StripeAccountMismatchError) {
+        console.error('[card-deposit/webhook] account mismatch:', err.message);
+        return res.status(503).json({
+          error: 'stripe_account_mismatch',
+          expected: err.expectedAccountId,
+          actual: err.actualAccountId,
+        });
+      }
+      throw err;
+    }
 
     const rawBody = await getRawBody(req);
     const sig = req.headers['stripe-signature'] as string | undefined;

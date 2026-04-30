@@ -1,9 +1,7 @@
-import Stripe from 'stripe';
 import { pool } from '../../server/db';
+import { getStripe } from '../stripe/client';
 
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY)
-  : null;
+const stripeConfigured = !!process.env.STRIPE_SECRET_KEY;
 
 const WORKBOOK_PRICE_ID = process.env.BILLING_PRICE_ID_WORKBOOK_MONTHLY || '';
 
@@ -16,9 +14,10 @@ export interface BillingProvider {
 
 export const billingProvider: BillingProvider = {
   async createCheckoutSession(userId: number, email: string, successUrl: string, cancelUrl: string): Promise<string> {
-    if (!stripe) {
+    if (!stripeConfigured) {
       throw new Error('Payment provider not configured');
     }
+    const stripe = await getStripe();
 
     const result = await pool.query(
       `SELECT provider_customer_id FROM subscription_entitlements WHERE user_id = $1 LIMIT 1`,
@@ -53,9 +52,10 @@ export const billingProvider: BillingProvider = {
   },
 
   async handleWebhook(payload: string, signature: string): Promise<void> {
-    if (!stripe) {
+    if (!stripeConfigured) {
       throw new Error('Payment provider not configured');
     }
+    const stripe = await getStripe();
 
     const webhookSecret = process.env.BILLING_WEBHOOK_SECRET;
     if (!webhookSecret) {
@@ -163,9 +163,10 @@ export const billingProvider: BillingProvider = {
   },
 
   async cancelSubscription(userId: number): Promise<boolean> {
-    if (!stripe) {
+    if (!stripeConfigured) {
       return false;
     }
+    const stripe = await getStripe();
 
     const result = await pool.query(
       `SELECT provider_subscription_id FROM subscription_entitlements WHERE user_id = $1 LIMIT 1`,
