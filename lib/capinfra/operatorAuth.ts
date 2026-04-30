@@ -21,14 +21,15 @@ function constantTimeEquals(a: string, b: string): boolean {
 }
 
 function getExpectedKey(): string | null {
-  return process.env.ADMIN_SOLVENCY_KEY ?? null;
+  const raw = process.env.ADMIN_SOLVENCY_KEY ?? null;
+  return raw ? raw.trim() : null;
 }
 
 export function isValidOperatorKey(provided: string | undefined | null): boolean {
   if (!provided) return false;
   const expected = getExpectedKey();
   if (!expected) return false;
-  return constantTimeEquals(provided, expected);
+  return constantTimeEquals(provided.trim(), expected);
 }
 
 export function readOperatorCookie(req: GetServerSidePropsContext['req'] | NextApiRequest): string | null {

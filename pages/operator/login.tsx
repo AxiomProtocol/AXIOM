@@ -43,8 +43,11 @@ export default function OperatorLoginPage() {
           <div>
             <label className="block text-xs uppercase tracking-wide mb-2">Operator key</label>
             <input
-              type="password"
-              autoComplete="current-password"
+              type="text"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
               className="w-full border border-dl-border bg-dl-bg px-3 py-2 font-mono text-sm"
               value={key}
               onChange={(e) => setKey(e.target.value)}
