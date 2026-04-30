@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { timingSafeEqual } from 'crypto';
-import { runAutoIngest, RunAutoIngestError } from '../../../lib/solvency/runAutoIngest';
 
 /**
  * Scheduled solvency-snapshot refresher.
@@ -78,6 +77,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const start = Date.now();
 
   try {
+    // Lazy-load the snapshot generator so any module-load errors land
+    // INSIDE this try/catch and surface as a real JSON envelope rather
+    // than a Vercel-level FUNCTION_INVOCATION_FAILED page.
+    const { runAutoIngest, RunAutoIngestError } = await import('../../../lib/solvency/runAutoIngest');
+
     const result = await runAutoIngest({
       notes: `Scheduled refresh — triggered by /api/cron/refresh-solvency at ${new Date().toISOString()}`,
       // Skip auxiliary HTTP calls — see header comment.
@@ -109,10 +113,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       via: 'in-process',
     });
   } catch (err: any) {
-    const status = err instanceof RunAutoIngestError ? err.status : 500;
+    // Status comes from the lazy-loaded RunAutoIngestError if present;
+    // we don't reference the class directly to avoid hoisting it out of
+    // the dynamic import scope.
+    const status = typeof err?.status === 'number' && err?.name === 'RunAutoIngestError' ? err.status : 500;
     return res.status(status).json({
       ok: false,
       error: err?.message || 'Cron refresh failed',
+      stack: process.env.VERCEL ? undefined : err?.stack,
       elapsedMs: Date.now() - start,
       via: 'in-process',
     });
