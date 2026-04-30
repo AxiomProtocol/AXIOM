@@ -1,37 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { ethers } from 'ethers';
-import { pool } from '../../../server/db';
-import crypto from 'crypto';
-import {
-  ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM,
-  CANONICAL_PSM, isCanonicalPsmDeployed,
-  EVK_OPEN_MARKET_VAULT_ADDRESS, isEvkVaultDeployed,
-  EULER_EARN_VAULT_ADDRESS, isEulerEarnDeployed,
-  EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, isEulerSwapDeployed,
-} from '../../../src/config/activeContracts.generated';
-import { AXUSD_ORACLE_ADAPTER, isOracleDeployed } from '../../../src/config/oracleConfig';
-import { EULER_LENDING_CONTRACTS } from '../../../shared/contracts';
+import { runAutoIngest, RunAutoIngestError } from '../../../lib/solvency/runAutoIngest';
 
-const PSM_ABI = [
-  'function axusd() view returns (address)',
-  'function collateral() view returns (address)',
-  'function debtCeiling() view returns (uint256)',
-  'function mintFee() view returns (uint256)',
-  'function redeemFee() view returns (uint256)',
-  'function paused() view returns (bool)',
-];
-
-const ERC20_ABI = [
-  'function balanceOf(address account) view returns (uint256)',
-  'function totalSupply() view returns (uint256)',
-  'function decimals() view returns (uint8)',
-];
-
-const USDC_ADDRESS = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
-const DEPLOYER_ADDRESS = '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96';
-
-const INTERNAL_SECRET = process.env.AUTO_INGEST_SECRET || crypto.randomBytes(32).toString('hex');
-
+/**
+ * Public auto-ingest endpoint.
+ *
+ * The actual snapshot generation lives in `lib/solvency/runAutoIngest.ts`
+ * so the scheduled cron handler can invoke it directly without an HTTP
+ * self-call (which is unreliable on Vercel's split-serverless model).
+ *
+ * Auth model preserved verbatim from the previous implementation:
+ *   - Trusted-host check (request originated from same deployment), OR
+ *   - Admin key via `x-auto-ingest-key` header / `?key=` query string.
+ *
+ * Auxiliary calls (oracle enrichment, AME re-run) are wired through the
+ * request-derived host URL so the existing on-Replit behavior is
+ * preserved end-to-end. On Vercel they will quietly fail-soft and the
+ * snapshot still persists.
+ */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -57,342 +42,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
-  const lastSnapshotResult = await pool.query(
-    `SELECT created_at FROM solvency_snapshots ORDER BY created_at DESC LIMIT 1`
-  ).catch(() => ({ rows: [] }));
-
-  if (lastSnapshotResult.rows.length > 0) {
-    const lastCreated = new Date(lastSnapshotResult.rows[0].created_at);
-    const secondsSince = (Date.now() - lastCreated.getTime()) / 1000;
-    if (secondsSince < 30) {
-      return res.status(429).json({ success: false, error: `Rate limited. Last snapshot was ${Math.round(secondsSince)}s ago. Wait at least 30 seconds.` });
+  // Derive an internal base URL for auxiliary calls (oracle, AME). On
+  // Replit dev this is loopback; on hosted platforms we use the request's
+  // own Host header (already validated by the trusted-host check above).
+  const fwdHost = (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) || '';
+  const reqHost = (Array.isArray(host) ? host[0] : host) || '';
+  const auxHost = (fwdHost || reqHost).toString();
+  let internalBaseUrl: string | null = null;
+  if (auxHost) {
+    try {
+      const isLocal = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:|$)/.test(auxHost);
+      const proto = isLocal ? 'http' : 'https';
+      internalBaseUrl = new URL(`${proto}://${auxHost}`).origin;
+    } catch {
+      internalBaseUrl = process.env.INTERNAL_API_BASE_URL || 'http://localhost:5000';
     }
-  }
-
-  const alchemyKey = process.env.ALCHEMY_API_KEY;
-  if (!alchemyKey) {
-    return res.status(500).json({ success: false, error: 'ALCHEMY_API_KEY not configured' });
+  } else {
+    internalBaseUrl = process.env.INTERNAL_API_BASE_URL || 'http://localhost:5000';
   }
 
   try {
-    const provider = new ethers.JsonRpcProvider(`https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`);
-    const usdc = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, provider);
-    const primaryAxusd = new ethers.Contract(ACTIVE_AXUSD, ERC20_ABI, provider);
-    const eulerAxusd = new ethers.Contract(EULER_AXUSD, ERC20_ABI, provider);
+    const result = await runAutoIngest({
+      notes: req.body?.notes,
+      internalBaseUrl,
+      adminKey,
+    });
 
-    // CANONICAL_PSM (the live ERC-3643 PSM) is queried alongside the legacy
-    // GENIUS PSM (ACTIVE_PSM) and Euler PSM. Prior to this fix only the
-    // legacy/Euler PSM USDC reserves were summed, which silently dropped the
-    // canonical PSM's USDC backing from treasury and made coverage look
-    // worse than reality on /disclosure.
-    //
-    // Internal-liquidity netting (Task: wallet-only launch C2):
-    // The deployer-controlled EVK Open Money Market vault (eAXUSD-6) holds
-    // canonical AXUSD as its underlying asset. AXUSD sitting inside that
-    // vault is not an external creditor claim — it's protocol-owned
-    // liquidity. We compute it here so liabilitiesTotalUsd reflects the
-    // *circulating external* supply rather than gross totalSupply.
-    const [
-      primaryPsmUsdcRaw,
-      eulerPsmUsdcRaw,
-      canonicalPsmUsdcRaw,
-      primaryAxusdSupplyRaw,
-      eulerAxusdSupplyRaw,
-      deployerEthRaw,
-      deployerUsdcRaw,
-      evkVaultAxusdRaw,
-    ] = await Promise.all([
-      usdc.balanceOf(ACTIVE_PSM),
-      usdc.balanceOf(EULER_PSM),
-      isCanonicalPsmDeployed() ? usdc.balanceOf(CANONICAL_PSM) : Promise.resolve(0n),
-      primaryAxusd.totalSupply(),
-      eulerAxusd.totalSupply(),
-      provider.getBalance(DEPLOYER_ADDRESS),
-      usdc.balanceOf(DEPLOYER_ADDRESS),
-      isEvkVaultDeployed() ? primaryAxusd.balanceOf(EVK_OPEN_MARKET_VAULT_ADDRESS) : Promise.resolve(0n),
-    ]);
-
-    const primaryPsmUsdc = parseFloat(ethers.formatUnits(primaryPsmUsdcRaw, 6));
-    const eulerPsmUsdc = parseFloat(ethers.formatUnits(eulerPsmUsdcRaw, 6));
-    const canonicalPsmUsdc = parseFloat(ethers.formatUnits(canonicalPsmUsdcRaw, 6));
-    const primaryAxusdSupply = parseFloat(ethers.formatUnits(primaryAxusdSupplyRaw, 18));
-    const eulerAxusdSupply = parseFloat(ethers.formatUnits(eulerAxusdSupplyRaw, 18));
-    const deployerEth = parseFloat(ethers.formatEther(deployerEthRaw));
-    const deployerUsdc = parseFloat(ethers.formatUnits(deployerUsdcRaw, 6));
-    const evkVaultAxusd = parseFloat(ethers.formatUnits(evkVaultAxusdRaw, 18));
-
-    // Circulating-external canonical AXUSD = totalSupply − internal liquidity.
-    // Clamp at zero in case oracle/proxy quirks ever return >totalSupply.
-    const canonicalAxusdInternalUsd = Math.round(evkVaultAxusd * 100) / 100;
-    const canonicalAxusdExternalUsd = Math.max(
-      0,
-      Math.round((primaryAxusdSupply - evkVaultAxusd) * 100) / 100
-    );
-
-    let ethPrice = 2600;
-    try {
-      const cgRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
-      const cgData = await cgRes.json();
-      if (cgData?.ethereum?.usd) ethPrice = cgData.ethereum.usd;
-    } catch {}
-
-    const deployerEthUsd = Math.round(deployerEth * ethPrice * 100) / 100;
-    const psmReservesTotal = Math.round((primaryPsmUsdc + eulerPsmUsdc + canonicalPsmUsdc) * 100) / 100;
-
-    const VAULT_ABI_SIMPLE = ['function totalAssets() view returns (uint256)'];
-
-    // ── EVK Open Market vault TVL (Task #38) ─────────────────────────────────
-    // Reports zero when vault is PENDING_DEPLOYMENT; updates automatically after deploy.
-    let evkVaultTvlAxusd = 0;
-    if (isEvkVaultDeployed()) {
-      try {
-        const evkVault = new ethers.Contract(EVK_OPEN_MARKET_VAULT_ADDRESS, VAULT_ABI_SIMPLE, provider);
-        const tvlRaw: bigint = await evkVault.totalAssets();
-        evkVaultTvlAxusd = parseFloat(ethers.formatEther(tvlRaw));
-      } catch {
-        // Non-fatal — EVK vault may be in initialization state
-      }
-    }
-
-    // ── Euler Earn AXUSD vault TVL (Task #39) ────────────────────────────────
-    // Multi-strategy yield aggregation vault. Reports zero until on-chain deploy.
-    let eulerEarnTvlAxusd = 0;
-    if (isEulerEarnDeployed()) {
-      try {
-        const eulerEarnVault = new ethers.Contract(EULER_EARN_VAULT_ADDRESS, VAULT_ABI_SIMPLE, provider);
-        const tvlRaw: bigint = await eulerEarnVault.totalAssets();
-        eulerEarnTvlAxusd = parseFloat(ethers.formatUnits(tvlRaw, 6));
-      } catch {
-        // Non-fatal — Euler Earn vault may be in initialization state
-      }
-    }
-
-    // ── EulerSwap AXUSD Liquidity Layer (Task #40) ───────────────────────────
-    // Dual-yield AMM pools (swap fees + EVK vault lending yield).
-    // Peg stability signal: pool depth as primary liquidity metric.
-    const EULERSWAP_POOL_ABI_LITE = [
-      'function getReserves() view returns (uint256 reserve0, uint256 reserve1)',
-      'function token0() view returns (address)',
-    ];
-    const AXUSD_ADDR_LOWER = '0xd6110f59a978ada6ef5c0e9d6baa04455d46ade7'; // ERC-3643 AXUSD, 6 decimals
-    let eulerSwapUsdcTvl = 0;
-    let eulerSwapAxmTvl  = 0;
-    const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
-    if (isEulerSwapDeployed()) {
-      if (EULER_SWAP_AXUSD_USDC_POOL_ADDRESS !== ZERO_ADDR) {
-        try {
-          const usdcPool = new ethers.Contract(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULERSWAP_POOL_ABI_LITE, provider);
-          const [r, token0] = await Promise.all([usdcPool.getReserves(), usdcPool.token0()]);
-          // Both AXUSD and USDC are 6 decimals — sum directly
-          eulerSwapUsdcTvl = parseFloat(ethers.formatUnits(r[0], 6)) + parseFloat(ethers.formatUnits(r[1], 6));
-          void token0;
-        } catch {}
-      }
-      if (EULER_SWAP_AXUSD_AXM_POOL_ADDRESS !== ZERO_ADDR) {
-        try {
-          const axmPool = new ethers.Contract(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, EULERSWAP_POOL_ABI_LITE, provider);
-          const [r, token0] = await Promise.all([axmPool.getReserves(), axmPool.token0()]);
-          // AXM is 18 decimals; avoid 1e12 error by using AXUSD reserve × 2 (balanced-pool proxy)
-          const isAxusdToken0 = (token0 as string).toLowerCase() === AXUSD_ADDR_LOWER;
-          const axusdRaw = isAxusdToken0 ? r[0] : r[1];
-          const axusdReserve = parseFloat(ethers.formatUnits(axusdRaw, 6));
-          eulerSwapAxmTvl = axusdReserve * 2;
-        } catch {}
-      }
-    }
-    const eulerSwapTotalTvl = eulerSwapUsdcTvl + eulerSwapAxmTvl;
-
-    const treasuryTotalUsd = Math.round((deployerEthUsd + deployerUsdc + psmReservesTotal) * 100) / 100;
-
-    // liabilitiesTotalUsd remains the GROSS liability number (canonical AXUSD
-    // total supply + legacy Euler AXUSD supply). Every existing consumer —
-    // metrics.ts, solvency.tsx, lib/solvency/model.ts, AME v1 — reads this
-    // field as "outstanding AXUSD" for prudential coverage / reserve-ratio
-    // math, and that conservative basis must not silently shift.
-    //
-    // liabilitiesExternalUsd is the net (external creditor exposure) figure:
-    // canonical AXUSD held OUTSIDE the deployer-controlled EVK Open Money
-    // Market vault, plus legacy Euler AXUSD. /disclosure surfaces this as
-    // additional context; policy gates do NOT consume it.
-    const liabilitiesGrossUsd = Math.round((primaryAxusdSupply + eulerAxusdSupply) * 100) / 100;
-    const liabilitiesTotalUsd = liabilitiesGrossUsd;
-    const liabilitiesExternalUsd = Math.round((canonicalAxusdExternalUsd + eulerAxusdSupply) * 100) / 100;
-
-    const totalAssets = deployerEthUsd + deployerUsdc + psmReservesTotal;
-    const safePct = (v: number) => totalAssets > 0 ? Math.round(v / totalAssets * 10000) / 100 : 0;
-    const composition = [
-      { label: 'ETH (Deployer)', valueUsd: deployerEthUsd, pct: safePct(deployerEthUsd) },
-      { label: 'USDC (Canonical PSM)', valueUsd: Math.round(canonicalPsmUsdc * 100) / 100, pct: safePct(canonicalPsmUsdc) },
-      { label: 'USDC (Legacy GENIUS PSM)', valueUsd: Math.round(primaryPsmUsdc * 100) / 100, pct: safePct(primaryPsmUsdc) },
-      { label: 'USDC (Euler PSM)', valueUsd: Math.round(eulerPsmUsdc * 100) / 100, pct: safePct(eulerPsmUsdc) },
-      { label: 'USDC (Deployer)', valueUsd: deployerUsdc, pct: safePct(deployerUsdc) },
-    ].filter(c => c.valueUsd > 0);
-
-    // ── ERC-7726 Oracle price enrichment ────────────────────────────────────
-    // Use a fixed internal base URL to prevent SSRF via Host header manipulation.
-    // Server-to-server internal calls always target the same process on port 5000.
-    const INTERNAL_BASE = process.env.INTERNAL_API_BASE_URL || 'http://localhost:5000';
-    let axusdOraclePrice: number | null = null;
-    let axusdOracleSource = 'pending_deployment';
-    try {
-      const oracleRes = await fetch(`${INTERNAL_BASE}/api/oracle/axusd-price`, {
-        signal: AbortSignal.timeout(5000),
+    if (result.rateLimited) {
+      return res.status(429).json({
+        success: false,
+        error: `Rate limited. Last snapshot was ${result.secondsSinceLast}s ago. Wait at least 30 seconds.`,
       });
-      if (oracleRes.ok) {
-        const oracleData = await oracleRes.json() as { axusdUsdPrice?: string; source?: string };
-        if (oracleData.axusdUsdPrice) {
-          axusdOraclePrice = parseFloat(oracleData.axusdUsdPrice);
-          axusdOracleSource = oracleData.source ?? 'unknown';
-        }
-      }
-    } catch {
-      // Non-fatal — solvency snapshot proceeds without oracle enrichment
-    }
-
-    const now = new Date().toISOString();
-    const payloadJson = {
-      treasuryTotalUsd,
-      treasuryLiquidUsd: treasuryTotalUsd,
-      reservesTotalUsd: psmReservesTotal,
-      liabilitiesTotalUsd,
-      liabilitiesGrossUsd,
-      liabilitiesExternalUsd,
-      axusdLiquidity: {
-        canonicalSupplyUsd: Math.round(primaryAxusdSupply * 100) / 100,
-        canonicalInternalUsd: canonicalAxusdInternalUsd,
-        canonicalExternalUsd: canonicalAxusdExternalUsd,
-        eulerLegacySupplyUsd: Math.round(eulerAxusdSupply * 100) / 100,
-        internalLiquidityVenue: {
-          name: 'EVK Open Money Market (eAXUSD-6)',
-          address: EVK_OPEN_MARKET_VAULT_ADDRESS,
-          axusdHeld: evkVaultAxusd,
-        },
-        nettingBasis:
-          'liabilitiesTotalUsd is the GROSS outstanding AXUSD (all consumers — metrics, AME, policy gates — read this). liabilitiesExternalUsd nets canonical AXUSD held in the deployer-controlled EVK Open Money Market vault, treating it as protocol-owned internal liquidity rather than external creditor exposure; surfaced on /disclosure for context only.',
-      },
-      lossBufferUsd: 0,
-      policyMode: 'BOOTSTRAP',
-      hardBrake: 'OFF',
-      gateStatus: 'OPEN',
-      composition,
-      evkOpenMarket: {
-        vaultAddress: EVK_OPEN_MARKET_VAULT_ADDRESS,
-        deployed: isEvkVaultDeployed(),
-        tvlAxusd: evkVaultTvlAxusd,
-        status: isEvkVaultDeployed() ? 'LIVE' : 'PENDING_DEPLOYMENT',
-        note: isEvkVaultDeployed()
-          ? `EVK Open Money Market live — ${evkVaultTvlAxusd.toFixed(2)} AXUSD TVL`
-          : 'EVK Open Money Market vault pending on-chain deployment (Task #38)',
-      },
-      eulerEarn: {
-        vaultAddress: EULER_EARN_VAULT_ADDRESS,
-        deployed: isEulerEarnDeployed(),
-        tvlAxusd: eulerEarnTvlAxusd,
-        strategies: ['Phase 6 Credit Market (40%)', 'EVK Open Money Market (40%)', 'T-Bill Reserve (20%)'],
-        perfFeeBps: 1000,
-        smearingPeriodDays: 14,
-        status: isEulerEarnDeployed() ? 'LIVE' : 'PENDING_DEPLOYMENT',
-        note: isEulerEarnDeployed()
-          ? `Euler Earn AXUSD yield aggregation vault live — ${eulerEarnTvlAxusd.toFixed(2)} AXUSD TVL`
-          : 'Euler Earn AXUSD vault pending on-chain deployment (Task #39)',
-      },
-      eulerSwap: {
-        deployed: isEulerSwapDeployed(),
-        pools: [
-          {
-            pair: 'AXUSD/USDC',
-            address: EULER_SWAP_AXUSD_USDC_POOL_ADDRESS,
-            tvlUsd: eulerSwapUsdcTvl,
-            status: EULER_SWAP_AXUSD_USDC_POOL_ADDRESS !== ZERO_ADDR ? 'LIVE' : 'PENDING_DEPLOYMENT',
-          },
-          {
-            pair: 'AXUSD/AXM',
-            address: EULER_SWAP_AXUSD_AXM_POOL_ADDRESS,
-            tvlUsd: eulerSwapAxmTvl,
-            status: EULER_SWAP_AXUSD_AXM_POOL_ADDRESS !== ZERO_ADDR ? 'LIVE' : 'PENDING_DEPLOYMENT',
-          },
-        ],
-        totalTvlUsd: eulerSwapTotalTvl,
-        pegDepthUsd: eulerSwapUsdcTvl,
-        status: isEulerSwapDeployed() ? 'LIVE' : 'PENDING_DEPLOYMENT',
-        note: isEulerSwapDeployed()
-          ? `EulerSwap AXUSD pools live — ${eulerSwapTotalTvl.toFixed(2)} USD TVL (peg depth: ${eulerSwapUsdcTvl.toFixed(2)} USD)`
-          : 'EulerSwap AXUSD/USDC + AXUSD/AXM pools pending on-chain deployment (Task #40)',
-      },
-      oracle: {
-        axusdUsdPrice: axusdOraclePrice,
-        axusdOracleSource,
-        oracleAddress: AXUSD_ORACLE_ADAPTER,
-        oracleDeployed: isOracleDeployed(),
-        standard: 'ERC-7726',
-        note: isOracleDeployed()
-          ? 'Price sourced from AXIOMOracleAdapter on-chain contract'
-          : 'Oracle pending deployment — price sourced from PSM ratio or static parity',
-      },
-      sources: [
-        { label: 'Arbitrum One RPC', detail: 'Live on-chain balance queries via Alchemy' },
-        { label: 'CoinGecko', detail: `ETH/USD spot price: $${ethPrice}` },
-        { label: 'Contract Registry', detail: 'activeContracts.generated.ts — PSM, deployer addresses' },
-        { label: 'ERC-7726 Oracle', detail: axusdOraclePrice ? `AXUSD/USD: $${axusdOraclePrice.toFixed(6)} via ${axusdOracleSource}` : 'Oracle price unavailable' },
-        { label: 'Euler Earn AXUSD', detail: isEulerEarnDeployed() ? `Multi-strategy vault live — ${eulerEarnTvlAxusd.toFixed(2)} AXUSD TVL` : 'Pending deployment (Task #39)' },
-        { label: 'EulerSwap Pools', detail: isEulerSwapDeployed() ? `AXUSD/USDC + AXUSD/AXM live — ${eulerSwapTotalTvl.toFixed(2)} USD TVL, peg depth ${eulerSwapUsdcTvl.toFixed(2)} USD` : 'Pending deployment (Task #40)' },
-      ],
-    };
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS solvency_snapshots (
-        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        as_of_utc TIMESTAMP NOT NULL,
-        payload_json JSONB NOT NULL,
-        checksum TEXT NOT NULL,
-        notes TEXT
-      );
-    `);
-
-    const payloadStr = JSON.stringify(payloadJson);
-    const checksum = crypto.createHash('sha256').update(payloadStr).digest('hex').slice(0, 16);
-    const notes = req.body?.notes || `Auto-ingest after PSM operation — ${now}`;
-
-    const result = await pool.query(
-      `INSERT INTO solvency_snapshots (id, created_at, as_of_utc, payload_json, checksum, notes)
-       VALUES (gen_random_uuid(), NOW(), $1, $2::jsonb, $3, $4)
-       RETURNING id, created_at, checksum`,
-      [now, payloadStr, checksum, notes]
-    );
-
-    const row = result.rows[0];
-
-    let ameResult = null;
-    try {
-      const ameRes = await fetch(`${INTERNAL_BASE}/api/solvency/ame/run`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': process.env.ADMIN_SOLVENCY_KEY || '',
-        },
-        body: JSON.stringify({}),
-      });
-      ameResult = await ameRes.json();
-    } catch (ameErr: any) {
-      console.warn('[auto-ingest] AME auto-run warning:', ameErr.message);
     }
 
     return res.status(201).json({
       success: true,
-      snapshotId: row.id,
-      checksum: row.checksum,
-      createdAt: row.created_at,
-      summary: {
-        treasuryTotalUsd,
-        psmReserves: psmReservesTotal,
-        liabilities: liabilitiesTotalUsd,
-        ethPrice,
-      },
-      ameRun: ameResult?.dataStatus === 'ok' ? 'success' : (ameResult?.error || 'skipped'),
+      snapshotId: result.snapshotId,
+      checksum: result.checksum,
+      createdAt: result.createdAt,
+      summary: result.summary,
+      ameRun: result.ameRun,
     });
   } catch (err: any) {
     console.error('[solvency/auto-ingest] Error:', err);
-    return res.status(500).json({ success: false, error: err.message || 'Auto-ingest failed' });
+    const status = err instanceof RunAutoIngestError ? err.status : 500;
+    return res.status(status).json({ success: false, error: err.message || 'Auto-ingest failed' });
   }
 }

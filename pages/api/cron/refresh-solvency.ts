@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { timingSafeEqual } from 'crypto';
+import { runAutoIngest, RunAutoIngestError } from '../../../lib/solvency/runAutoIngest';
 
 /**
  * Scheduled solvency-snapshot refresher.
@@ -16,88 +17,31 @@ import { timingSafeEqual } from 'crypto';
  *
  * Caller secret = `CRON_SECRET` if set, else `ADMIN_SOLVENCY_KEY`.
  *
- * Internally proxies to /api/solvency/auto-ingest so all rate-limiting,
- * snapshot persistence, AME re-run, and audit trail behavior stays in
- * a single canonical place. Because auto-ingest itself requires
- * `ADMIN_SOLVENCY_KEY`, this endpoint hard-requires it regardless of
- * which caller secret is configured — otherwise the upstream call would
- * silently 401 and produce a misleading 502 to the scheduler.
+ * IMPLEMENTATION NOTE — Vercel-safe execution model
+ * ─────────────────────────────────────────────────
+ * Earlier versions of this handler proxied into `/api/solvency/auto-ingest`
+ * over HTTP. That works on Replit (one long-running process, loopback
+ * always reachable) but breaks on Vercel — every API route is its own
+ * isolated serverless function, so an HTTP self-call has to traverse
+ * the public edge, which on this deployment surfaced as the framework's
+ * generic "A server error has occurred" 500 even though the upstream
+ * function itself was fine.
  *
- * INTERNAL_API_BASE_URL is locked to loopback (localhost / 127.0.0.1) to
- * prevent SSRF / admin-key exfiltration via env misconfiguration.
- *
- * On Vercel, where each route is its own isolated serverless function and
- * nothing is listening on loopback, the handler instead uses the deployment's
- * auto-injected hostname (VERCEL_URL). That value is set by the platform
- * itself, not by user-configurable env, so the SSRF property — that the
- * upstream call cannot be redirected to an attacker-controlled host — is
- * preserved.
+ * The fix is to skip the self-call entirely: both this endpoint and
+ * `/api/solvency/auto-ingest` now call `runAutoIngest()` from
+ * `lib/solvency/runAutoIngest.ts` directly, in-process. No cross-function
+ * network hops, no Host-header derivation, no platform-specific URL
+ * resolver. The optional auxiliary calls (oracle, AME re-run) are
+ * skipped from the cron path because they are non-essential — the
+ * snapshot itself contains all the material data, and AME re-runs on
+ * every public dashboard load anyway.
  */
-
-const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
-
-function isSafeInternalBase(raw: string): { ok: true; base: string } | { ok: false; reason: string } {
-  try {
-    const u = new URL(raw);
-    if (u.protocol !== 'http:' && u.protocol !== 'https:') {
-      return { ok: false, reason: `Unsupported protocol: ${u.protocol}` };
-    }
-    if (!LOOPBACK_HOSTS.has(u.hostname)) {
-      return { ok: false, reason: `INTERNAL_API_BASE_URL must point at loopback (localhost / 127.0.0.1); got "${u.hostname}"` };
-    }
-    return { ok: true, base: u.origin };
-  } catch {
-    return { ok: false, reason: 'INTERNAL_API_BASE_URL is not a valid URL' };
-  }
-}
-
-type ResolveOk = { ok: true; base: string; via: string };
-type ResolveErr = { ok: false; reason: string };
-
-function resolveInternalBase(req: NextApiRequest): ResolveOk | ResolveErr {
-  // Path 1 — Vercel / any platform deploy: derive the self-call URL from
-  // the request's own Host header. Vercel normalizes Host at the edge to
-  // the actual deployment hostname, so it cannot be spoofed by an
-  // unauthenticated caller. The CRON_SECRET auth gate above means only
-  // authenticated callers reach this code, and the same admin-key trust
-  // boundary protects auto-ingest itself, so Host-based SSRF requires
-  // the attacker to already possess CRON_SECRET — closing the loop.
-  if (process.env.VERCEL === '1' || process.env.VERCEL_URL || process.env.VERCEL_ENV) {
-    const fwdHost = (req.headers['x-forwarded-host'] || '').toString().split(',')[0].trim();
-    const host = fwdHost || (req.headers['host'] || '').toString();
-    if (host) {
-      try {
-        const u = new URL(`https://${host}`);
-        return { ok: true, base: u.origin, via: `req-host (${fwdHost ? 'x-forwarded-host' : 'host'})` };
-      } catch {
-        // Fall through to env-var path below.
-      }
-    }
-    // Vercel platform but no usable Host header — try VERCEL_URL.
-    if (process.env.VERCEL_URL) {
-      try {
-        const v = process.env.VERCEL_URL;
-        const u = new URL(v.startsWith('http') ? v : `https://${v}`);
-        return { ok: true, base: u.origin, via: 'env VERCEL_URL' };
-      } catch {
-        return { ok: false, reason: 'VERCEL detected but VERCEL_URL is not a valid hostname and req.headers.host was empty' };
-      }
-    }
-    return { ok: false, reason: 'VERCEL detected but no Host header and no VERCEL_URL available' };
-  }
-  // Path 2 — Replit dev / single-process deploys: loopback only.
-  const rawBase = process.env.INTERNAL_API_BASE_URL || 'http://localhost:5000';
-  const r = isSafeInternalBase(rawBase);
-  return r.ok ? { ok: true, base: r.base, via: 'loopback' } : r;
-}
 
 function safeEqualStr(a: string, b: string): boolean {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
   const aBuf = Buffer.from(a, 'utf8');
   const bBuf = Buffer.from(b, 'utf8');
   if (aBuf.length !== bBuf.length) {
-    // Constant-time-ish: still run a compare against itself to avoid
-    // length-based timing leak, then return false.
     timingSafeEqual(aBuf, aBuf);
     return false;
   }
@@ -113,10 +57,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const adminKey = process.env.ADMIN_SOLVENCY_KEY;
   if (!adminKey) {
-    // Required to authenticate the upstream call into auto-ingest.
     return res.status(503).json({
       ok: false,
-      error: 'ADMIN_SOLVENCY_KEY is not configured (required to proxy into auto-ingest).',
+      error: 'ADMIN_SOLVENCY_KEY is not configured.',
     });
   }
 
@@ -132,49 +75,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
 
-  const baseCheck = resolveInternalBase(req);
-  if (!baseCheck.ok) {
-    return res.status(503).json({ ok: false, error: baseCheck.reason });
-  }
-  const internalBase = baseCheck.base;
-  const via = baseCheck.via;
   const start = Date.now();
 
   try {
-    // Re-use auto-ingest so rate-limit (30s), persistence, AME, and notes are all centralized.
-    const ingest = await fetch(`${internalBase}/api/solvency/auto-ingest`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-auto-ingest-key': adminKey,
-      },
-      body: JSON.stringify({
-        notes: `Scheduled refresh — triggered by /api/cron/refresh-solvency at ${new Date().toISOString()}`,
-      }),
-      signal: AbortSignal.timeout(45_000),
+    const result = await runAutoIngest({
+      notes: `Scheduled refresh — triggered by /api/cron/refresh-solvency at ${new Date().toISOString()}`,
+      // Skip auxiliary HTTP calls — see header comment.
+      internalBaseUrl: null,
     });
 
     const elapsedMs = Date.now() - start;
-    const body: any = await ingest.json().catch(() => ({}));
 
-    if (ingest.status === 429) {
-      // Rate-limited — last snapshot still recent enough; treat as a no-op success.
+    if (result.rateLimited) {
       return res.status(200).json({
         ok: true,
         skipped: true,
         reason: 'rate_limited_recent_snapshot',
+        secondsSinceLast: result.secondsSinceLast,
         elapsedMs,
-        via,
-      });
-    }
-    if (!ingest.ok) {
-      // Don't echo upstream body — it may include diagnostic detail intended
-      // for the same admin trust boundary, but the safer default is silence.
-      return res.status(502).json({
-        ok: false,
-        error: `auto-ingest returned ${ingest.status}`,
-        elapsedMs,
-        via,
+        via: 'in-process',
       });
     }
 
@@ -182,19 +101,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ok: true,
       skipped: false,
       elapsedMs,
-      snapshotId: body?.snapshotId,
-      checksum: body?.checksum,
-      createdAt: body?.createdAt,
-      summary: body?.summary,
-      ameRun: body?.ameRun,
-      via,
+      snapshotId: result.snapshotId,
+      checksum: result.checksum,
+      createdAt: result.createdAt,
+      summary: result.summary,
+      ameRun: result.ameRun,
+      via: 'in-process',
     });
   } catch (err: any) {
-    return res.status(500).json({
+    const status = err instanceof RunAutoIngestError ? err.status : 500;
+    return res.status(status).json({
       ok: false,
       error: err?.message || 'Cron refresh failed',
       elapsedMs: Date.now() - start,
-      via,
+      via: 'in-process',
     });
   }
 }
