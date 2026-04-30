@@ -3,6 +3,7 @@ import { db } from '../../../server/db';
 import { propertyReports } from '../../../shared/propertySchema';
 import { eq } from 'drizzle-orm';
 import { verifyReportAccess } from '../../../lib/property/cardCheckout';
+import { assertCurrentStripeAccount, LegacyStripeAccountError } from '../../../lib/stripe/client';
 
 /**
  * Task #403 — Checkout status poll endpoint for the card-payment flow.
@@ -45,10 +46,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       id: propertyReports.id,
       status: propertyReports.status,
       stripeSessionId: propertyReports.stripeSessionId,
+      stripeAccountId: propertyReports.stripeAccountId,
       paymentConfirmedAt: propertyReports.paymentConfirmedAt,
     }).from(propertyReports).where(eq(propertyReports.id, reportId)).limit(1);
 
     if (!report) return res.status(404).json({ error: 'report_not_found' });
+
+    // Strict provenance check (review fix): if this row was created by a
+    // previous Stripe account (cutover/legacy), refuse to report status
+    // rather than silently look like a stuck pending row. Untagged NULL
+    // rows are treated as legacy and skipped by `assertCurrentStripeAccount`,
+    // so this only triggers on real account drift.
+    if (report.stripeSessionId && report.stripeAccountId) {
+      try {
+        await assertCurrentStripeAccount(report.stripeAccountId);
+      } catch (err) {
+        if (err instanceof LegacyStripeAccountError) {
+          return res.status(409).json({ error: 'stripe_account_mismatch' });
+        }
+        throw err;
+      }
+    }
 
     res.setHeader('Cache-Control', 'no-cache, no-store');
     return res.status(200).json({
