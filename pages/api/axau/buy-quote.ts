@@ -105,6 +105,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const msgLow = msg.toLowerCase();
 
       // Map known contract reverts to deterministic HTTP codes
+      if (msgLow.includes("stale oracle") || msgLow.includes("staleoracle") || msgLow.includes("oracle is stale") || msgLow.includes("oracle stale") || msgLow.includes("chainlink") && msgLow.includes("stale")) {
+        res.setHeader("Retry-After", String(RETRY_AFTER_SECONDS));
+        return res.status(503).json({ error: "Oracle price stale — mint unavailable. The XAU/USD feed has not updated within the on-chain staleness window. Please retry in ~90 seconds.", oracleStale: true });
+      }
       if (msgLow.includes("mintpaused") || msgLow.includes("paused")) {
         return res.status(423).json({ error: "Mint is currently paused", mintPaused: true });
       }
