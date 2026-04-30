@@ -76,9 +76,12 @@ export interface CreateCardCheckoutResult {
   checkoutUrl: string;
   sessionId: string;
   /**
-   * Short-lived HMAC bound to reportId. The /checkout-status poll
-   * endpoint requires this so a leaked report UUID cannot be used as a
-   * status oracle by a third party.
+   * Deterministic HMAC bound to reportId (keyed by STRIPE_SECRET_KEY).
+   * Not time-bound — the same report id always produces the same token,
+   * which is the property the modal relies on to keep polling after a
+   * page reload. The /checkout-status poll endpoint requires this token
+   * so a leaked report UUID alone cannot be used as a status oracle.
+   * Effective security depends on the secrecy of STRIPE_SECRET_KEY.
    */
   accessToken: string;
 }
