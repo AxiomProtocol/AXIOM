@@ -200,8 +200,8 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
         </h1>
         <p style={{ color: '#444', maxWidth: 640, lineHeight: 1.7, marginBottom: '1rem' }}>
           AXUSD and AXAU-denominated payments settled via Axiom Rail — Axiom Protocol's own
-          Stellar SEP-10/24/31/38 anchor. Funds clear through Increase FDIC-insured ACH and
-          domestic wire rails. No third-party anchor partnerships required.
+          Stellar SEP-10/24/31/38 anchor. Funds clear through FDIC-insured ACH and
+          domestic wire settlement rails. No third-party anchor partnerships required.
         </p>
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
           <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#555' }}>
@@ -399,14 +399,14 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
               label: 'Interactive Anchor',
               status: 'IMPLEMENTED',
               ok: true,
-              desc: 'Axiom Rail interactive withdrawal flow. User submits bank/account details via hosted Axiom Rail UI; settlement via Increase ACH or domestic wire.',
+              desc: 'Axiom Rail interactive withdrawal flow. User submits bank/account details via hosted Axiom Rail UI; settlement via ACH or domestic wire.',
             },
             {
               protocol: 'SEP-0031',
               label: 'Cross-Border Payments',
               status: 'IMPLEMENTED',
               ok: true,
-              desc: 'Direct non-interactive payment API. Axiom Rail accepts USDC on Stellar and settles USD via Increase wire rails. Supports AXUSD and AXAU source assets.',
+              desc: 'Direct non-interactive payment API. Axiom Rail accepts USDC on Stellar and settles USD via domestic wire settlement rails. Supports AXUSD and AXAU source assets.',
             },
             {
               protocol: 'SEP-0038',
@@ -446,8 +446,8 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
         </h2>
         <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '1.5rem', lineHeight: 1.6 }}>
           Generates an Axiom Rail SEP-24 interactive withdrawal URL. You will be redirected to complete
-          destination details (bank account, recipient information). Settlement is processed via Increase
-          ACH or domestic wire. Transfer is tracked internally.
+          destination details (bank account, recipient information). Settlement is processed via ACH
+          or domestic wire. Transfer is tracked internally.
         </p>
 
         {railEnabled ? (
@@ -643,7 +643,7 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
             </button>
             <p style={{ fontSize: '0.75rem', color: '#888', lineHeight: 1.5 }}>
               You will be redirected to the Axiom Rail hosted UI to complete the withdrawal.
-              This action does not move funds — settlement via Increase ACH/Wire occurs after you complete the flow.
+              This action does not move funds — settlement via ACH/wire occurs after you complete the flow.
             </p>
           </div>
         </form>
@@ -654,7 +654,7 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
               STATUS: CONFIGURED — NOT YET ACTIVATED
             </p>
             <p style={{ fontFamily: 'Georgia, serif', fontSize: '0.95rem', color: '#1e3a5f', marginBottom: '0.75rem' }}>
-              Axiom Rail is fully configured and ready for activation. AXUSD and AXAU payments settle via Increase ACH and domestic wire.
+              Axiom Rail is fully configured and ready for activation. AXUSD and AXAU payments settle via ACH and domestic wire settlement rails.
               Payment initiation is not available until the rail is activated by the operations team.
             </p>
             <p style={{ fontSize: '0.8rem', color: '#666', lineHeight: 1.6 }}>
@@ -678,7 +678,7 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
             { step: '02', label: 'SEP-10 Auth', desc: 'Axiom generates a Stellar keypair for this session. Signs the Axiom Rail SEP-10 challenge server-side.' },
             { step: '03', label: 'SEP-24 Initiation', desc: 'Axiom posts to the Axiom Rail interactive withdrawal endpoint. Returns a hosted URL and transfer ID.' },
             { step: '04', label: 'User Completes Flow', desc: 'User is redirected to the Axiom Rail hosted UI to provide destination bank, account, and compliance details.' },
-            { step: '05', label: 'Increase Settlement', desc: 'Axiom Rail settles to destination account via Increase ACH or domestic wire. Transfer status polled via SEP-24.' },
+            { step: '05', label: 'ACH Settlement', desc: 'Axiom Rail settles to destination account via ACH or domestic wire. Transfer status polled via SEP-24.' },
             { step: '06', label: 'Transfer Confirmed', desc: 'Stellar transaction hash recorded. Axiom DB updated. Transfer marked completed.' },
           ].map(s => (
             <div key={s.step} style={{ background: '#fff', padding: '1.25rem' }}>
@@ -696,7 +696,7 @@ export default function AxiomPaymentRailsPage({ railEnabled }: { railEnabled: bo
         <p style={{ fontSize: '0.78rem', color: '#666', lineHeight: 1.6 }}>
           Axiom Rail is a configured integration. Live fund movement requires operations team activation of the payments rail flag.
           Payments are denominated in AXUSD or AXAU and converted to USDC at the point of transfer.
-          Settlement times are estimates based on Stellar network performance and Increase ACH/wire processing windows.
+          Settlement times are estimates based on Stellar network performance and ACH/wire processing windows.
           This is not a custodial service. Axiom does not hold user funds in transit.
           Review the{' '}
           <a href="/disclosure" style={{ color: '#1e3a5f' }}>Disclosure</a> and{' '}

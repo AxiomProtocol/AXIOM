@@ -17,7 +17,7 @@ const FEATURES = [
   {
     label: 'STELLAR SETTLEMENT',
     title: 'USDC in, USD out',
-    desc: 'Funds move over the Stellar network as USDC. Axiom Rail converts and settles to each contributor\'s US bank account via Increase FDIC-insured ACH or domestic wire rails.',
+    desc: 'Funds move over the Stellar network as USDC. Axiom Rail converts and settles to each contributor\'s US bank account via FDIC-insured ACH or domestic wire settlement rails.',
   },
   {
     label: 'BSA COMPLIANCE',
@@ -47,7 +47,7 @@ const FEE_STRUCTURE = [
   { label: 'Minimum per recipient', value: '$10.00' },
   { label: 'Maximum per recipient', value: '$25,000.00' },
   { label: 'Maximum recipients per run', value: '200' },
-  { label: 'Settlement rail', value: 'Increase ACH / Wire' },
+  { label: 'Settlement rail', value: 'ACH / Wire' },
 ];
 
 export default function DaoPayrollLandingPage() {
@@ -63,7 +63,7 @@ export default function DaoPayrollLandingPage() {
         </h1>
         <p style={{ color: '#444', maxWidth: 640, lineHeight: 1.7, marginBottom: '1.5rem' }}>
           Batch USDC disbursements to DAO contributors, protocol teams, and service providers —
-          settled in USD to US bank accounts via Increase FDIC-insured ACH and domestic wire,
+          settled in USD to US bank accounts via FDIC-insured ACH and domestic wire,
           powered by Axiom Rail.
         </p>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -122,7 +122,7 @@ export default function DaoPayrollLandingPage() {
             {
               step: '04',
               title: 'USD Settles',
-              desc: 'Axiom Rail processes each transfer and dispatches ACH or domestic wire via Increase to each contributor\'s US bank account within the stated settlement window.',
+              desc: 'Axiom Rail processes each transfer and dispatches ACH or domestic wire to each contributor\'s US bank account within the stated settlement window.',
             },
           ].map(s => (
             <div key={s.step} style={{ background: '#fff', padding: '1.5rem' }}>
@@ -196,9 +196,9 @@ export default function DaoPayrollLandingPage() {
             parties except as required by applicable law.
           </p>
           <p style={{ fontSize: '0.85rem', color: '#444', lineHeight: 1.7 }}>
-            Payroll is processed via Increase, an FDIC-insured banking partner operating under federal
-            money transmission regulations. Axiom Rail acts as the settlement intermediary. All transfers
-            are subject to Axiom Rail's standard terms and applicable federal AML obligations.
+            Payroll settlement is processed via FDIC-insured ACH and wire rails. Axiom Rail acts as the
+            settlement intermediary. All transfers are subject to Axiom Rail's standard terms and applicable
+            federal AML obligations.
           </p>
         </div>
       </section>

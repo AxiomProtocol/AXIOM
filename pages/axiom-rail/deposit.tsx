@@ -4,7 +4,7 @@
  * SEP-24 interactive deposit page — opened by Stellar wallets.
  * User sends USD to Axiom Rail via ACH or wire, then receives
  * USDC/AXUSD/AXAU on their Stellar or Arbitrum wallet.
- * Axiom Rail settles via Increase on FDIC-insured rails.
+ * Axiom Rail settles via FDIC-insured ACH/wire settlement rails.
  *
  * Two-step flow:
  *  Step 1 (bank)     — Source bank account details
@@ -182,7 +182,7 @@ export default function AxiomRailDeposit() {
 
   const shortAccount = account ? `${account.slice(0, 6)}...${account.slice(-6)}` : '';
 
-  const bankName = accountInfo?.bankName ?? 'Increase (FDIC-insured)';
+  const bankName = accountInfo?.bankName ?? 'Settlement Bank';
   const beneficiary = accountInfo?.beneficiary ?? 'Axiom Protocol LLC';
   const receivingRouting = accountInfoLoading ? 'Loading...' : (accountInfo?.routingNumber ?? '— contact support —');
   const receivingAccount = accountInfoLoading

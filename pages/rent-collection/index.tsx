@@ -165,7 +165,7 @@ export default function RentCollectionLandingPage() {
             },
             {
               label: 'FDIC-Insured Settlement',
-              body: 'Payments settle via Increase — an FDIC-insured bank-as-a-service platform. ACH transfers complete in 1–3 business days. Same-day domestic wire available.',
+              body: 'Payments settle via FDIC-insured ACH and wire settlement rails. ACH transfers complete in 1–3 business days. Same-day domestic wire available.',
             },
             {
               label: 'Permanent Audit Trail',
@@ -193,7 +193,7 @@ export default function RentCollectionLandingPage() {
               { step: '1', text: 'Landlord registers their property and receiving bank account at /rent-collection/setup. A shareable payment link and one-time management token are generated.' },
               { step: '2', text: 'Landlord shares the payment URL with their tenant. The URL is stable — the same link works for every monthly payment.' },
               { step: '3', text: 'Tenant visits the payment link, enters their source bank details and BSA identity fields (same two-step form as Axiom Rail deposits), and submits.' },
-              { step: '4', text: 'Payment is queued. Axiom Rail operations staff trigger settlement via Increase ACH or wire to the landlord\'s registered bank account.' },
+              { step: '4', text: 'Payment is queued. Axiom Rail operations staff trigger settlement via ACH or wire to the landlord\'s registered bank account.' },
               { step: '5', text: 'Landlord views all payment history, settlement status, and per-transaction details from /rent-collection/dashboard using their management token.' },
             ].map(item => (
               <li key={item.step} style={{ fontSize: '0.85rem', color: '#333', lineHeight: 1.8, marginBottom: '0.75rem' }}>

@@ -3,7 +3,7 @@
  *
  * SEP-24 interactive withdrawal page — opened by Stellar wallets.
  * User provides bank account details + BSA identity to receive USD
- * via ACH or wire. Axiom Rail settles via Increase on FDIC-insured rails.
+ * via ACH or wire. Axiom Rail settles via FDIC-insured ACH/wire settlement rails.
  *
  * Two-step flow:
  *  Step 1 (bank)     — Bank account details

@@ -2917,7 +2917,7 @@ export default function FounderOpsPage() {
                 <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
                   <div>
                     <h2 className="font-dl-serif text-xl text-dl-navy mb-1">Axiom Rail — Settlement Console</h2>
-                    <p className="font-dl-mono text-xs text-dl-gray">Stellar SEP-24/31 · Increase ACH/Wire · Monitor &amp; Settle</p>
+                    <p className="font-dl-mono text-xs text-dl-gray">Stellar SEP-24/31 · ACH/Wire Settlement · Monitor &amp; Settle</p>
                   </div>
                   <div className="flex gap-2 items-center flex-wrap">
                     <a href="/axiom-payment-rails" target="_blank" rel="noopener noreferrer"
@@ -3135,7 +3135,7 @@ export default function FounderOpsPage() {
                       ['Anchor ID', 'axiom-rail'],
                       ['Signing Key', 'GBLOO5…YIIY'],
                       ['Deposit Account', 'GA4GMI…VITM7P'],
-                      ['Settlement Bank', 'Thread Bank via Increase'],
+                      ['Settlement Bank', 'ACH/Wire Settlement Rail'],
                     ].map(([lbl, val]) => (
                       <div key={lbl}>
                         <p className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider">{lbl}</p>
@@ -3153,7 +3153,7 @@ export default function FounderOpsPage() {
                 <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
                   <div>
                     <h2 className="font-dl-serif text-xl text-dl-navy mb-1">DAO Operating Accounts</h2>
-                    <p className="font-dl-mono text-xs text-dl-gray">Review applications · Provision via Increase · Manage active accounts</p>
+                    <p className="font-dl-mono text-xs text-dl-gray">Review applications · Manage active accounts</p>
                   </div>
                   <a href="/banking/dao-account" target="_blank" rel="noopener noreferrer"
                     className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy">
@@ -3285,7 +3285,7 @@ export default function FounderOpsPage() {
                 <div className="border-t border-dl-border pt-5 mt-6">
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {[
-                      ['Banking Layer', 'Increase / First Internet Bank'],
+                      ['Banking Layer', 'ACH/Wire Rail — Offline'],
                       ['FDIC Coverage', 'Up to $250,000 per depositor'],
                       ['Application Page', '/banking/dao-account'],
                     ].map(([lbl, val]) => (
