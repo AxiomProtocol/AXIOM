@@ -95,22 +95,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ? [{ trait_type: 'Character', value: founderLabel }, ...baseAttributes]
       : baseAttributes;
 
-    // CID gateway: use ipfs.io (universal, works with Pinata-pinned CIDs).
+    // CID gateway: use nftstorage.link (dedicated NFT CDN, better uptime for
+    // marketplaces like OpenSea/Blur). Works with all Pinata-pinned CIDs.
     // Filter out legacy sha256: pseudo-CIDs that were used as fallbacks before
     // mandatory IPFS pinning was implemented.
+    const IPFS_GATEWAY = 'https://nftstorage.link/ipfs';
     const rawImageCid  = tokenRow?.image_cid as string | undefined;
     const imageCid     = rawImageCid && !rawImageCid.startsWith('sha256:') ? rawImageCid : undefined;
     const hasImageData = !!tokenRow?.image_data;
     const animationCid = tokenRow?.animation_cid;
 
     const imageUrl = imageCid
-      ? `https://ipfs.io/ipfs/${imageCid}`
+      ? `${IPFS_GATEWAY}/${imageCid}`
       : hasImageData
         ? `${SITE_URL}/api/nft/image?tokenId=${tokenIdNum}&contractAddress=${encodeURIComponent(contractAddress)}`
         : `${SITE_URL}/api/nft/animation?tokenId=${tokenIdNum}&contract=${contractAddress}`;
 
     const animationUrl = animationCid
-      ? `https://ipfs.io/ipfs/${animationCid}`
+      ? `${IPFS_GATEWAY}/${animationCid}`
       : `${SITE_URL}/api/nft/animation?tokenId=${tokenIdNum}&contract=${contractAddress}`;
 
     const metadata = {
