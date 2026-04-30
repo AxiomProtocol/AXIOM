@@ -206,7 +206,7 @@ export default function AttestationsPage({ keyRotations, runbooks, allClear, fet
               Launch Attestations
             </h1>
             <p className="text-sm text-dl-gray mt-1">
-              Durable record of key rotations and runbook acknowledgments required before AXAU bankless launch.
+              Durable record of key rotations and runbook acknowledgments for AXAU crypto-native, non-ACH launch. Fiat entry via Stripe/Coinbase card-to-crypto only.
             </p>
           </div>
           <span

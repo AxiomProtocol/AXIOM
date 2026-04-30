@@ -288,7 +288,7 @@ export default function OperatorDashboard(props: DashboardProps) {
         <section className="border border-dl-border p-4 mb-6">
           <h2 className="font-serif text-lg mb-3">Launch Readiness</h2>
           <p className="text-sm text-dl-muted mb-3">
-            Key rotation attestations and runbook acknowledgments required before AXAU bankless launch.
+            Key rotation attestations and runbook acknowledgments for AXAU crypto-native, non-ACH launch. Active rails: Stripe, Coinbase Onramp, Arbitrum One, BitGo CaaS. ACH, wires, and bank payouts are deferred.
           </p>
           <Link href="/operator/attestations" className="text-sm underline">
             Open attestations console →

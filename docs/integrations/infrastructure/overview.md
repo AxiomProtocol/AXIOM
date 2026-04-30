@@ -8,7 +8,8 @@ This document summarizes Axiom Protocol's current integration infrastructure and
 
 | Layer | Component | Status | Technology |
 |-------|-----------|--------|-----------|
-| L00 — Banking | Increase (ACH/wire) | Live | REST API |
+| L00 — Fiat entry | Stripe / Coinbase Onramp (card-to-crypto) | Live | REST API / Widget |
+| L00 — Banking (ACH/wire) | Increase | **Deferred** (non-ACH launch) | REST API |
 | L00 — Custody | BitGo CaaS | Live (activated) | REST API |
 | L01 — Settlement | AXUSD (ERC-3643) | Live | Solidity / Arbitrum |
 | L01 — PSM | Canonical PSM (ERC-3643 gated) | Live | Solidity / Arbitrum |

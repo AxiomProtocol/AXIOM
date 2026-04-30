@@ -3,7 +3,7 @@
  *
  * Companion to scripts/vault-sprint1-ach.ts. Where Sprint 1 proved the
  * ACH MANUAL_APPROVAL path, this script proves the equivalent invariants
- * for the EVM rail under the bankless / crypto-native launch scope.
+ * for the EVM rail under the crypto-native, non-ACH launch scope.
  *
  * Invariants targeted (mirrored from Sprint 1, re-mapped for EVM):
  *
