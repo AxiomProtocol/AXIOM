@@ -11,6 +11,7 @@ import {
   integer,
   pgEnum,
   uuid,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const propReportTierEnum = pgEnum('prop_report_tier', ['free', 'base', 'premium']);
@@ -111,6 +112,29 @@ export const propContextCache = pgTable("prop_context_cache", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at").notNull(),
 });
+
+// Task #403 — Stripe webhook gateway idempotency for property report card
+// payments. Mirrors `cap_card_deposit_webhook_events`. Each Stripe event id
+// is recorded exactly once via UNIQUE(stripe_event_id) so webhook retries
+// (or duplicate deliveries) are short-circuited as benign no-ops; only the
+// inserter performs the report-paid side effects.
+export const propertyReportWebhookEvents = pgTable("property_report_webhook_events", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  stripeEventId: varchar("stripe_event_id", { length: 200 }).notNull(),
+  eventType: varchar("event_type", { length: 80 }).notNull(),
+  reportId: uuid("report_id"),
+  payloadJson: jsonb("payload_json"),
+  // Provenance: which Stripe account signed the event. Stamped on claim
+  // from `currentStripeAccountId()` (post task #400 cutover).
+  stripeAccountId: varchar("stripe_account_id", { length: 64 }),
+  processedAt: timestamp("processed_at").notNull().default(sql`now()`),
+}, (t) => ({
+  stripeEventUq: uniqueIndex('property_report_webhook_events_stripe_event_uq').on(t.stripeEventId),
+  reportIdx: index('property_report_webhook_events_report_idx').on(t.reportId),
+}));
+
+export type PropertyReportWebhookEvent = typeof propertyReportWebhookEvents.$inferSelect;
+export type NewPropertyReportWebhookEvent = typeof propertyReportWebhookEvents.$inferInsert;
 
 export const propProviderCalls = pgTable("prop_provider_calls", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),

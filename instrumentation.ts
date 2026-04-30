@@ -926,6 +926,28 @@ export async function register() {
         UNIQUE(wallet_address)
       )`, 'table sentinel_subscriptions');
 
+      // ── Property report Stripe webhook idempotency (task #403) ──
+      // Mirrors cap_card_deposit_webhook_events: each Stripe event id
+      // claims this row exactly once. Webhook retries / duplicate
+      // deliveries see ON CONFLICT DO NOTHING and short-circuit.
+      await exec(`CREATE TABLE IF NOT EXISTS property_report_webhook_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        stripe_event_id VARCHAR(200) NOT NULL,
+        event_type VARCHAR(80) NOT NULL,
+        report_id UUID,
+        payload_json JSONB,
+        stripe_account_id VARCHAR(64),
+        processed_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table property_report_webhook_events');
+      await exec(
+        `CREATE UNIQUE INDEX IF NOT EXISTS property_report_webhook_events_stripe_event_uq ON property_report_webhook_events (stripe_event_id)`,
+        'idx property_report_webhook_events stripe_event_uq',
+      );
+      await exec(
+        `CREATE INDEX IF NOT EXISTS property_report_webhook_events_report_idx ON property_report_webhook_events (report_id)`,
+        'idx property_report_webhook_events report_idx',
+      );
+
       // ═══════════════════════════════════════════
       //  COLUMN SAFETY: ADD MISSING COLUMNS
       // ═══════════════════════════════════════════
