@@ -142,9 +142,7 @@ export default function TrustTeamPage({
               <strong className="font-dl-serif text-dl-navy">
                 Fiat custody is bank-grade.
               </strong>{' '}
-              Operating cash and card-onramp settlement flow through Increase,
-              a US-regulated banking partner. Deposits at Increase are
-              FDIC-insured at the depository layer.
+              ACH/wire banking rails are currently offline. On-chain capital operations via BitGo institutional custody remain active.
             </li>
             <li>
               <strong className="font-dl-serif text-dl-navy">

@@ -536,8 +536,8 @@ export default function DeNetDePINPage() {
               <NexusBankingPanel
                 product="depin"
                 context="node-rewards"
-                title="Axiom Nexus — Node Reward Account"
-                description="DePIN node rewards are disbursed directly to your dedicated Axiom Nexus sub-account. Register your address to receive your personal routing and account number. Rewards are settled via ACH after on-chain verification. Connect your wallet to register."
+                title="Node Reward Disbursement"
+                description="ACH/wire banking infrastructure is currently offline. Node reward disbursement instructions will be updated when rails are restored. Contact Operations to arrange reward settlement."
                 collapsible={true}
               />
             </div>

@@ -216,7 +216,7 @@ export default function TransparencyPage() {
 
       <section id="treasury" className="mb-10">
         <SectionHeading>Treasury Dashboard</SectionHeading>
-        <p className="text-sm text-dl-gray mb-4">Real-time visibility into Axiom Nexus lending pools and reserves</p>
+        <p className="text-sm text-dl-gray mb-4">Real-time visibility into Axiom Protocol lending pools and reserves</p>
         {lastUpdated && (
           <p className="text-xs text-dl-gray font-dl-mono mb-4">Last updated: {lastUpdated.toLocaleTimeString()}</p>
         )}

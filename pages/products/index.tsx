@@ -173,12 +173,12 @@ const LAYER_5 = [
   {
     id: 'banking',
     name: 'Banking Infrastructure',
-    description: 'FDIC-insured banking layer via Increase.com with ACH and wire transfer rails for capital intake and disbursement. Configured and awaiting production activation.',
+    description: 'ACH/wire banking rail for fiat capital intake and disbursement. Currently offline — deposit instructions will be updated when rails are restored.',
     href: '/banking',
-    status: 'CONFIGURED',
+    status: 'OFFLINE',
     metrics: [
-      { label: 'Provider', value: 'Increase.com' },
-      { label: 'Coverage', value: 'FDIC-Insured' },
+      { label: 'Rail Status', value: 'Offline' },
+      { label: 'On-Chain', value: 'Active' },
       { label: 'Rails', value: 'ACH + Wire' },
     ],
   },

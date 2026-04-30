@@ -169,13 +169,7 @@ export default function FundTreasuryCardPage() {
             </div>
           </div>
           <p className="text-xs text-dl-muted font-mono mt-4">
-            This flow funds the on-chain Treasury wallet, not the Axiom Nexus
-            operating bank account at Increase. For wire or ACH funding into the
-            bank account, use the{' '}
-            <Link href="/treasury/fund" className="underline">
-              wire / ACH page
-            </Link>
-            .
+            This flow funds the on-chain Treasury wallet directly. ACH/wire treasury funding is currently offline.
           </p>
         </div>
 

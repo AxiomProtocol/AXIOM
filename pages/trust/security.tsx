@@ -127,10 +127,10 @@ const CONTROLS: ControlRow[] = [
     source: 'BitGo CaaS account holder verification on request',
   },
   {
-    control: 'Increase fiat custody (FDIC depository)',
-    what: 'Operating cash and card-onramp settlement at Increase. FDIC-insured at the depository layer.',
-    state: 'LIVE',
-    source: 'Increase account holder verification on request',
+    control: 'Fiat banking rail',
+    what: 'ACH/wire settlement rail currently offline. BitGo institutional custody active for on-chain layer.',
+    state: 'OFFLINE',
+    source: 'Rails reconfiguration in progress',
   },
   {
     control: 'Loss Coverage Reserve',

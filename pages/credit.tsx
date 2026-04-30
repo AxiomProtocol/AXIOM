@@ -410,8 +410,8 @@ export default function CreditPage() {
               <a href="#credit-dashboard" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold border border-white text-white hover:bg-white hover:text-dl-navy transition-none">
                 Open a Credit Line
               </a>
-              <a href="/banking/my-account" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                My Nexus Account →
+              <a href="/banking" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                Banking Status →
               </a>
             </div>
           </div>
