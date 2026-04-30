@@ -48,7 +48,7 @@ interface HomepageTruth {
 const FALLBACK_TRUTH: HomepageTruth = {
   hero: {
     headline: 'Build Wealth Through Verified Financial Infrastructure',
-    subheadline: 'Live banking rails, digital dollar systems, reserve access, and public proof tools — all connected through one operating framework.',
+    subheadline: 'Digital dollar systems, reserve access, and public proof tools — all connected through one operating framework.',
     trustItems: [
       { label: 'Built on Arbitrum One', verifiedFrom: 'fallback' },
       { label: 'Self-custody by default', verifiedFrom: 'fallback' },
@@ -109,7 +109,7 @@ const MICRO_STRIP: Array<{ key: string; label: string; sub: string }> = [
 ];
 
 const CATEGORY_PILLARS: Array<{ icon: React.ComponentType<{ className?: string }>; title: string; body: string }> = [
-  { icon: Banknote,    title: 'Banking + On-Chain',          body: 'Regulated banking rails connect to programmable settlement, reserve access, and digital dollar systems.' },
+  { icon: Banknote,    title: 'Banking + On-Chain',          body: 'On-chain settlement, reserve access, and digital dollar systems — integrated banking infrastructure under provider transition.' },
   { icon: Activity,    title: 'Intelligence + Authorization', body: 'MIRDT regime detection and Sentinel capital authorization operate in advisory mode — readable before capital moves.' },
   { icon: Eye,         title: 'Proof Before Participation',   body: 'Public solvency, disclosure, operational logs, and property analysis are available to review before committing capital.' },
   { icon: Network,     title: 'One Operating Framework',      body: 'Banking, settlement, intelligence, property, NFT, DePIN, and community programs — one connected system.' },
@@ -583,7 +583,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
                 {SECTION_TITLES.category}
               </h2>
               <p className="text-sm md:text-base text-white/70 mt-3 max-w-2xl">
-                Axiom connects banking rails, digital dollar systems, reserve access, and public proof into one reviewable operating framework.
+                Axiom connects on-chain settlement, digital dollar systems, reserve access, capital intelligence, and public proof into one reviewable operating framework.
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border border-white/20">

@@ -167,15 +167,15 @@ export type HeroHeadlineVariant = 'A' | 'B' | 'C';
 const HERO_HEADLINE_VARIANTS: Record<HeroHeadlineVariant, { headline: string; subheadline: string }> = {
   A: {
     headline: 'Build Wealth Through Verified Financial Infrastructure',
-    subheadline: 'Banking rails, digital dollar systems, reserve access, capital intelligence, property analysis, and public proof tools — all connected through one operating framework.',
+    subheadline: 'Digital dollar systems, reserve access, capital intelligence, property analysis, and public proof tools — all connected through one operating framework.',
   },
   B: {
     headline: 'Where Capital Moves With Proof, Not Promises',
-    subheadline: 'Banking, settlement, reserve, intelligence, and solvency proof — fully reviewable before capital moves.',
+    subheadline: 'Settlement layer, reserve access, capital intelligence, and solvency proof — fully reviewable before capital moves.',
   },
   C: {
     headline: 'Banking. Intelligence. Reserve. Proof — One System.',
-    subheadline: 'Axiom connects regulated banking rails, capital intelligence, on-chain settlement, reserve access, property analysis, and public proof into one operating framework.',
+    subheadline: 'Axiom connects on-chain settlement, capital intelligence, reserve access, property analysis, and public proof into one operating framework.',
   },
 };
 
@@ -428,8 +428,10 @@ export class HomepageTruthService {
         system: 'Banking Infrastructure',
         status: bankingLive ? 'live' : (increase.status === 'configured' ? 'configured' : 'inactive'),
         note: bankingLive
-          ? 'Increase ACH/wire rails active. FDIC-insured banking partner connected.'
-          : 'Increase rails configured but not in production environment.',
+          ? 'ACH/wire rails active. FDIC-insured banking partner connected.'
+          : increase.status === 'unavailable'
+            ? 'Banking provider transition underway — Increase account decommissioned. Replacement selection in progress.'
+            : 'Banking infrastructure configured — not yet in production.',
         href: '/banking',
         verifiedFrom: 'SystemStateService.banking.status',
       });
