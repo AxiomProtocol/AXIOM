@@ -87,24 +87,32 @@ const SECTION_TITLES = {
 
 // Path card audience/visual metadata. Sublabels are framing devices only.
 const PATH_META: Record<string, { icon: React.ComponentType<{ className?: string }>; audience: string; border: string; color: string }> = {
-  earn:    { icon: TrendingUp,  audience: 'For Savers',                 border: 'border-l-dl-forest', color: 'text-dl-forest' },
-  borrow:  { icon: Coins,       audience: 'For Bitcoin Holders',        border: 'border-l-dl-navy',   color: 'text-dl-navy'   },
-  reserve: { icon: ShieldCheck, audience: 'For Reserve Participants',   border: 'border-l-dl-gold',   color: 'text-dl-gold'   },
-  verify:  { icon: Eye,         audience: 'For Diligence-First Users',  border: 'border-l-dl-navy',   color: 'text-dl-navy'   },
+  earn:         { icon: TrendingUp,  audience: 'For Savers',                  border: 'border-l-dl-forest', color: 'text-dl-forest' },
+  borrow:       { icon: Coins,       audience: 'For Bitcoin Holders',          border: 'border-l-dl-navy',   color: 'text-dl-navy'   },
+  reserve:      { icon: ShieldCheck, audience: 'For Reserve Participants',     border: 'border-l-dl-gold',   color: 'text-dl-gold'   },
+  intelligence: { icon: Activity,    audience: 'For Regime-Aware Operators',   border: 'border-l-dl-navy',   color: 'text-dl-navy'   },
+  property:     { icon: BarChart3,   audience: 'For Property Investors',       border: 'border-l-dl-forest', color: 'text-dl-forest' },
+  capital:      { icon: Banknote,    audience: 'For Capital Participants',      border: 'border-l-dl-gold',   color: 'text-dl-gold'   },
+  community:    { icon: Network,     audience: 'For Community Members',         border: 'border-l-dl-forest', color: 'text-dl-forest' },
+  verify:       { icon: Eye,         audience: 'For Diligence-First Users',    border: 'border-l-dl-navy',   color: 'text-dl-navy'   },
 };
 
 const MICRO_STRIP: Array<{ key: string; label: string; sub: string }> = [
-  { key: 'earn',    label: 'Earn',    sub: 'Put digital dollars to work' },
-  { key: 'borrow',  label: 'Borrow',  sub: 'Access Bitcoin-backed liquidity' },
-  { key: 'reserve', label: 'Reserve', sub: 'Apply for reserve access' },
-  { key: 'verify',  label: 'Verify',  sub: 'Inspect the system first' },
+  { key: 'earn',         label: 'Earn',         sub: 'Put digital dollars to work' },
+  { key: 'borrow',       label: 'Borrow',        sub: 'Access Bitcoin-backed liquidity' },
+  { key: 'reserve',      label: 'Reserve',       sub: 'Apply for reserve access' },
+  { key: 'intelligence', label: 'Intelligence',  sub: 'Regime detection & authorization' },
+  { key: 'property',     label: 'Property',      sub: 'AI-powered property analysis' },
+  { key: 'capital',      label: 'Capital',       sub: 'Capital programs & lending' },
+  { key: 'community',    label: 'Community',     sub: 'Wealth Practice & NFT collection' },
+  { key: 'verify',       label: 'Verify',        sub: 'Inspect the system first' },
 ];
 
 const CATEGORY_PILLARS: Array<{ icon: React.ComponentType<{ className?: string }>; title: string; body: string }> = [
-  { icon: Banknote, title: 'Banking + On-Chain',        body: 'Axiom connects regulated banking rails to programmable financial systems.' },
-  { icon: Eye,      title: 'Proof Before Participation', body: 'Public solvency, disclosure, and operations data are available before capital moves.' },
-  { icon: KeyRound, title: 'Structured Access',          body: 'Reserve, yield, and capital paths are organized through verified entry points.' },
-  { icon: Network,  title: 'One Operating Framework',    body: 'Instead of fragmented products, Axiom presents one connected system for modern wealth infrastructure.' },
+  { icon: Banknote,    title: 'Banking + On-Chain',          body: 'Regulated banking rails connect to programmable settlement, reserve access, and digital dollar systems.' },
+  { icon: Activity,    title: 'Intelligence + Authorization', body: 'MIRDT regime detection and Sentinel capital authorization operate in advisory mode — readable before capital moves.' },
+  { icon: Eye,         title: 'Proof Before Participation',   body: 'Public solvency, disclosure, operational logs, and property analysis are available to review before committing capital.' },
+  { icon: Network,     title: 'One Operating Framework',      body: 'Banking, settlement, intelligence, property, NFT, DePIN, and community programs — one connected system.' },
 ];
 
 const CAPITAL_CARDS = [

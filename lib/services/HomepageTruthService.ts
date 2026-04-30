@@ -167,15 +167,15 @@ export type HeroHeadlineVariant = 'A' | 'B' | 'C';
 const HERO_HEADLINE_VARIANTS: Record<HeroHeadlineVariant, { headline: string; subheadline: string }> = {
   A: {
     headline: 'Build Wealth Through Verified Financial Infrastructure',
-    subheadline: 'Live banking rails, digital dollar systems, reserve access, and public proof tools — all connected through one operating framework.',
+    subheadline: 'Banking rails, digital dollar systems, reserve access, capital intelligence, property analysis, and public proof tools — all connected through one operating framework.',
   },
   B: {
     headline: 'Where Capital Moves With Proof, Not Promises',
-    subheadline: 'Banking rails, settlement, reserve access, and solvency proof — reviewable before capital moves.',
+    subheadline: 'Banking, settlement, reserve, intelligence, and solvency proof — fully reviewable before capital moves.',
   },
   C: {
-    headline: 'Banking. Settlement. Reserve. Proof — One System.',
-    subheadline: 'Axiom connects regulated banking rails, on-chain settlement, reserve access, and public proof into one operating framework.',
+    headline: 'Banking. Intelligence. Reserve. Proof — One System.',
+    subheadline: 'Axiom connects regulated banking rails, capital intelligence, on-chain settlement, reserve access, property analysis, and public proof into one operating framework.',
   },
 };
 
@@ -199,27 +199,51 @@ function pickHeroHeadline(): { variant: HeroHeadlineVariant; headline: string; s
 // fallback below auto-discovers via filesystem so local development still
 // catches drift without requiring a manual update.
 const KNOWN_HOMEPAGE_ROUTES: ReadonlySet<string> = new Set([
+  // ── Core infrastructure ──────────────────────────────────────────────
   '/banking',
   '/axusd-3643',
   '/dex',
   '/axau',
   '/axau-early-access',
+  '/onramp',
+  '/earn/axusd',
   '/savings',
   '/borrow',
-  '/observer',
+  // ── Proof / transparency ─────────────────────────────────────────────
   '/solvency',
+  '/observer',
   '/disclosure',
-  '/lending-fund',
   '/infrastructure',
   '/proof-of-execution',
+  '/transparency',
+  // ── Capital ──────────────────────────────────────────────────────────
+  '/lending-fund',
+  '/pilot',
+  '/syndication',
+  '/secondary',
+  // ── Intelligence ─────────────────────────────────────────────────────
+  '/mirdt',
+  '/sentinel',
+  '/re',
+  '/deal-intelligence',
+  '/distressed-feed',
+  '/property',
+  // ── Community / real-world ───────────────────────────────────────────
+  '/wealth-practice',
+  '/community-credit',
+  '/land',
+  '/nft',
+  // ── Infrastructure / DePIN ───────────────────────────────────────────
+  '/depin/denet',
+  '/escrow',
+  // ── Utility ──────────────────────────────────────────────────────────
   '/contact',
   '/start',
   '/yield',
   '/credit',
   '/verify',
-  '/wealth-practice',
-  '/pilot',
-  '/mirdt',
+  '/trust',
+  '/system-map',
 ]);
 
 function pageExists(routePath: string): boolean {
@@ -317,6 +341,34 @@ export class HomepageTruthService {
         body: 'Apply for access to Axiom\u2019s reserve layer structured around hard assets.',
         cta: 'Apply for Reserve Access',
         href: '/axau-early-access',
+      },
+      {
+        key: 'intelligence',
+        title: 'Access Capital Intelligence',
+        body: 'Regime detection, capital authorization scoring, and deal intelligence — regime-aware and advisory-only.',
+        cta: 'View Intelligence',
+        href: '/mirdt',
+      },
+      {
+        key: 'property',
+        title: 'Analyze Properties',
+        body: 'AI-powered property analysis reports with rental estimates, comparables, and acquisition insight.',
+        cta: 'Analyze a Property',
+        href: '/property',
+      },
+      {
+        key: 'capital',
+        title: 'Access Capital Programs',
+        body: 'Structured participation through the Capital Program, Lending Fund, and Syndication pipeline.',
+        cta: 'View Capital Access',
+        href: '/pilot',
+      },
+      {
+        key: 'community',
+        title: 'Join the Community Economy',
+        body: 'Wealth Practice groups, NFT utility collection, community credit, and land acquisition pipeline.',
+        cta: 'Explore Community',
+        href: '/wealth-practice',
       },
       {
         key: 'verify',
@@ -487,6 +539,116 @@ export class HomepageTruthService {
       });
     }
 
+    if (pageExists('/sentinel')) {
+      status.push({
+        system: 'Sentinel Authorization Layer',
+        status: 'live',
+        note: 'Capital authorization layer operating in advisory mode. Regime-aware decision engine active.',
+        href: '/sentinel',
+        verifiedFrom: 'route:/sentinel',
+      });
+    }
+
+    if (pageExists('/mirdt')) {
+      status.push({
+        system: 'MIRDT Regime Intelligence',
+        status: 'live',
+        note: 'Multi-indicator regime detection and capital intelligence terminal.',
+        href: '/mirdt',
+        verifiedFrom: 'route:/mirdt',
+      });
+    }
+
+    if (pageExists('/property')) {
+      status.push({
+        system: 'Property Analysis Tool',
+        status: 'live',
+        note: 'AI-powered property analysis with automated report generation. Card payment enabled.',
+        href: '/property',
+        verifiedFrom: 'route:/property',
+      });
+    }
+
+    if (pageExists('/nft')) {
+      status.push({
+        system: 'NFT Utility Collection',
+        status: 'live',
+        note: 'Founder Badge, Participation, and Land Receipt NFTs. Artwork pinned to IPFS.',
+        href: '/nft',
+        verifiedFrom: 'route:/nft',
+      });
+    }
+
+    if (pageExists('/depin/denet')) {
+      status.push({
+        system: 'DePIN Node Network',
+        status: 'configured',
+        note: 'DeNet-integrated decentralized infrastructure node participation layer.',
+        href: '/depin/denet',
+        verifiedFrom: 'route:/depin/denet',
+      });
+    }
+
+    if (pageExists('/onramp')) {
+      status.push({
+        system: 'Card Onramp',
+        status: 'live',
+        note: 'Purchase AXUSD and AXAU directly with a debit or credit card.',
+        href: '/onramp',
+        verifiedFrom: 'route:/onramp',
+      });
+    }
+
+    if (pageExists('/pilot')) {
+      status.push({
+        system: 'Capital Program',
+        status: 'live',
+        note: 'Structured capital participation program. Applications and reporting active.',
+        href: '/pilot',
+        verifiedFrom: 'route:/pilot',
+      });
+    }
+
+    if (pageExists('/syndication')) {
+      status.push({
+        system: 'Syndication Module',
+        status: 'formation',
+        note: 'Real estate syndication infrastructure in formation. Deal pipeline active.',
+        href: '/syndication',
+        verifiedFrom: 'route:/syndication + product-stage:formation',
+      });
+    }
+
+    if (pageExists('/secondary')) {
+      status.push({
+        system: 'Secondary Network',
+        status: 'formation',
+        note: 'Peer-to-peer secondary market infrastructure for protocol assets.',
+        href: '/secondary',
+        verifiedFrom: 'route:/secondary + product-stage:formation',
+      });
+    }
+
+    if (pageExists('/re')) {
+      status.push({
+        system: 'Real Estate Intelligence',
+        status: 'live',
+        note: 'Property deal tracking, underwriting analysis, and acquisition pipeline.',
+        href: '/re',
+        verifiedFrom: 'route:/re',
+      });
+    }
+
+    if (pageExists('/escrow')) {
+      status.push({
+        system: 'Escrow Infrastructure',
+        status: 'live',
+        note: 'On-chain escrow creation, management, and dispute resolution.',
+        href: '/escrow',
+        verifiedFrom: 'route:/escrow',
+      });
+    }
+
     // ── Proof links ───────────────────────────────────────────────────
     // `verify` → infrastructure overview page
     // `proof`  → public live proof entry. Prefers /solvency (live snapshot
@@ -554,8 +716,10 @@ export class HomepageTruthService {
     });
     metrics.push({
       label: 'Public Dashboards',
-      value: String(['/solvency', '/observer', '/disclosure', '/proof-of-execution', '/infrastructure']
-        .filter((r) => pageExists(r)).length),
+      value: String([
+        '/solvency', '/observer', '/disclosure', '/proof-of-execution',
+        '/infrastructure', '/mirdt', '/sentinel', '/transparency',
+      ].filter((r) => pageExists(r)).length),
       verifiedFrom: 'derived:route-count',
     });
     metrics.push({
@@ -571,6 +735,9 @@ export class HomepageTruthService {
         disclosure: pageExists('/disclosure'),
         proof: pageExists('/proof-of-execution'),
         observer: pageExists('/observer'),
+        transparency: pageExists('/transparency'),
+        mirdt: pageExists('/mirdt'),
+        sentinel: pageExists('/sentinel'),
       }).filter(Boolean).length),
       verifiedFrom: 'derived:proof-routes.count',
     });
@@ -598,8 +765,10 @@ export class HomepageTruthService {
       });
     }
 
-    const dashboardCount = ['/solvency', '/observer', '/disclosure', '/proof-of-execution', '/infrastructure']
-      .filter((r) => pageExists(r)).length;
+    const dashboardCount = [
+      '/solvency', '/observer', '/disclosure', '/proof-of-execution',
+      '/infrastructure', '/mirdt', '/sentinel', '/transparency',
+    ].filter((r) => pageExists(r)).length;
     if (dashboardCount > 0) {
       momentum.push({
         label: 'Public dashboards',
