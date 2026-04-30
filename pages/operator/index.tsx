@@ -285,6 +285,16 @@ export default function OperatorDashboard(props: DashboardProps) {
           </Link>
         </section>
 
+        <section className="border border-dl-border p-4 mb-6">
+          <h2 className="font-serif text-lg mb-3">Launch Readiness</h2>
+          <p className="text-sm text-dl-muted mb-3">
+            Key rotation attestations and runbook acknowledgments required before AXAU bankless launch.
+          </p>
+          <Link href="/operator/attestations" className="text-sm underline">
+            Open attestations console →
+          </Link>
+        </section>
+
         <section className="border border-dl-border p-4">
           <h2 className="font-serif text-lg mb-3">Adapters</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
