@@ -1321,10 +1321,19 @@ export default function InvestPage() {
                         )}
                         <button
                           onClick={handleCardCheckout}
-                          disabled={cardCheckoutLoading || parseFloat(amount) > 10_000}
+                          disabled={
+                            cardCheckoutLoading ||
+                            !Number.isFinite(parseFloat(amount)) ||
+                            parseFloat(amount) < 100 ||
+                            parseFloat(amount) > 10_000
+                          }
                           className="px-5 py-2 bg-dl-navy text-white font-dl-mono text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {cardCheckoutLoading ? 'Creating checkout…' : `Pay $${parseFloat(amount).toLocaleString()} by Card →`}
+                          {cardCheckoutLoading
+                            ? 'Creating checkout…'
+                            : Number.isFinite(parseFloat(amount)) && parseFloat(amount) >= 100
+                              ? `Pay $${parseFloat(amount).toLocaleString()} by Card →`
+                              : 'Enter a valid amount'}
                         </button>
                       </div>
 

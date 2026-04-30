@@ -25,9 +25,17 @@ import { randomUUID } from 'crypto';
 const MIN_USD = 100;
 const MAX_USD = 10_000;
 
+/**
+ * Resolves the public base URL used to build Stripe success/cancel URLs.
+ * NEXT_PUBLIC_BASE_URL must be set in production — host-derived fallback is
+ * used only in local development to avoid hard-coding ports.
+ */
 function resolveBaseUrl(req: NextApiRequest): string {
   const envBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL;
   if (envBase) return envBase.replace(/\/+$/, '');
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('[lending-fund/checkout] NEXT_PUBLIC_BASE_URL not set in production — falling back to host header');
+  }
   const proto = (req.headers['x-forwarded-proto'] as string | undefined) || 'https';
   const host = req.headers.host || 'localhost:5000';
   return `${proto}://${host}`;
