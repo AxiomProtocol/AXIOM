@@ -15,10 +15,12 @@
  *   3. If `STRIPE_EXPECTED_ACCOUNT_ID` is set and the resolved id differs,
  *      throws `StripeAccountMismatchError` — every Stripe-bearing flow
  *      (checkout-create, subscription-cancel, webhook signature-verify) hits
- *      the same guard, so the failure is loud and fast.
- *   4. If `STRIPE_EXPECTED_ACCOUNT_ID` is unset, the verification still runs
- *      and the resolved id is logged once, but no enforcement happens (back
- *      compat with environments that haven't set the expected-id pin yet).
+ *      the same guard, so the failure is loud and fast. `STRIPE_EXPECTED_KEY_ID`
+ *      is accepted as an alias to ease historical operator setups; the
+ *      canonical name is `STRIPE_EXPECTED_ACCOUNT_ID`.
+ *   4. If neither pin var is set, the verification still runs and the
+ *      resolved id is logged once, but no enforcement happens (back compat
+ *      with environments that haven't set the pin yet).
  *
  * The verification result is memoised, so the cost is one `/v1/account` call
  * per process boot — not per request. Webhook signature verification does not
@@ -54,6 +56,19 @@ export class StripeNotConfiguredError extends Error {
 let _client: Stripe | null = null;
 let _verification: Promise<{ accountId: string; chargesEnabled: boolean }> | null = null;
 
+/**
+ * Resolves the configured expected-account pin. Reads `STRIPE_EXPECTED_ACCOUNT_ID`
+ * (canonical) and falls back to `STRIPE_EXPECTED_KEY_ID` (alias). Trims whitespace
+ * and treats an empty string as unset so a placeholder secret doesn't silently
+ * arm the guard with a falsy value.
+ */
+function getExpectedAccountId(): string | undefined {
+  const v =
+    process.env.STRIPE_EXPECTED_ACCOUNT_ID?.trim() ||
+    process.env.STRIPE_EXPECTED_KEY_ID?.trim();
+  return v && v.length > 0 ? v : undefined;
+}
+
 function buildClient(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new StripeNotConfiguredError();
@@ -74,7 +89,7 @@ export async function getStripe(): Promise<Stripe> {
     _verification = (async () => {
       const acct = await client.accounts.retrieve();
       const accountId = acct.id ?? '';
-      const expected = process.env.STRIPE_EXPECTED_ACCOUNT_ID;
+      const expected = getExpectedAccountId();
       if (expected && expected !== accountId) {
         // Reset the cache so a corrected key on the next process can recover
         // (the wrong client itself is fine, the throw just refuses to use it).
