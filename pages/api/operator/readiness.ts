@@ -12,7 +12,7 @@ const RUNBOOKS = [
   'docs/solvency/ame-operations-runbook.md',
 ] as const;
 
-const REQUIRED_KEY_ROTATION_REFS = ['DEPLOYER_PRIVATE_KEY'] as const;
+const REQUIRED_KEY_ROTATION_REFS = ['DEPLOYER_PRIVATE_KEY', 'ADMIN_SOLVENCY_KEY'] as const;
 
 function sha256OfFile(relPath: string): string | null {
   try {
