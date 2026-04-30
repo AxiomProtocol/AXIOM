@@ -101,8 +101,6 @@ export default function DealWorkspacePage() {
   const [savingAnalysis, setSavingAnalysis] = useState(false);
   const [analysisSavedAt, setAnalysisSavedAt] = useState<string | null>(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
-  const [nexusParticipant, setNexusParticipant] = useState<Record<string, any> | null>(null);
-  const [nexusLoading, setNexusLoading] = useState(false);
   const [mlsEnrichment, setMlsEnrichment] = useState<{
     listPrice?: number;
     daysOnMarket?: number;
@@ -402,15 +400,6 @@ export default function DealWorkspacePage() {
     }
   }, [id, compsLoaded, loadComps]);
 
-  useEffect(() => {
-    if (!address) return;
-    setNexusLoading(true);
-    fetch(`/api/banking/participant/status?wallet=${encodeURIComponent(address)}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(json => { if (json?.registered) setNexusParticipant(json); })
-      .catch(() => {})
-      .finally(() => setNexusLoading(false));
-  }, [address]);
 
   const handleField = (field: keyof AssumptionsState, value: string) => {
     setAssumptions(prev => ({ ...prev, [field]: value }));
@@ -460,7 +449,7 @@ export default function DealWorkspacePage() {
     { key: 'costIntelligence' as const, label: 'Cost Intelligence' },
     { key: 'outcomes' as const, label: 'Outcomes' },
     { key: 'dealAssistant' as const, label: 'Deal Assistant' },
-    { key: 'escrow' as const, label: 'Earnest Money ACH' },
+    { key: 'escrow' as const, label: 'Earnest Money' },
   ];
 
   const inputField = (label: string, field: keyof AssumptionsState, prefix = '', suffix = '') => (

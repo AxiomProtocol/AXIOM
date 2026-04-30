@@ -126,21 +126,6 @@ export default function InvestPage() {
   /** Primary entry mode: Euler Earn vault or Phase 6 direct deposit */
   const [investMode, setInvestMode] = useState<'earn-vault' | 'phase6'>('earn-vault');
 
-  const [lpParticipant, setLpParticipant] = useState<{
-    participantRef: string; fullName: string;
-    cardStatus: string | null; cardLast4: string | null;
-    accountBalance: { availableBalanceCents: number; currentBalanceCents: number; currency: string } | null;
-    accountAccessMode: 'dedicated' | 'virtual-only';
-    depositInstructions: { routingNumber: string; accountNumber?: string; bankName: string; accountName: string; memo: string; hasVirtualAccount?: boolean };
-  } | null>(null);
-  const [lpRegForm, setLpRegForm] = useState({
-    fullName: '', email: '',
-    dateOfBirth: '', ssn: '', addressLine1: '', city: '', state: '', zip: '',
-  });
-  const [lpRegLoading, setLpRegLoading] = useState(false);
-  const [lpRegMsg, setLpRegMsg] = useState('');
-  const [lpRegError, setLpRegError] = useState('');
-  const [lpParticipantLoading, setLpParticipantLoading] = useState(false);
 
   interface EarnStatsData {
     vaultAddress: string;
@@ -193,77 +178,6 @@ export default function InvestPage() {
       .finally(() => setEarnLoading(false));
   }, []);
 
-  const fetchLpParticipant = async (address: string) => {
-    if (!/^0x[a-fA-F0-9]{40}$/i.test(address)) return;
-    setLpParticipantLoading(true);
-    try {
-      const res = await fetch(`/api/banking/participant/status?wallet=${encodeURIComponent(address)}`);
-      const data = await res.json();
-      if (data.registered) {
-        setLpParticipant({
-          participantRef: data.participantRef,
-          fullName: data.fullName,
-          cardStatus: data.cardStatus ?? null,
-          cardLast4: data.cardLast4 ?? null,
-          accountBalance: data.accountBalance ?? null,
-          accountAccessMode: data.accountAccessMode ?? 'virtual-only',
-          depositInstructions: {
-            routingNumber: data.virtualRoutingNumber,
-            accountNumber: data.virtualAccountNumber,
-            bankName: 'First Internet Bank',
-            accountName: 'Axiom Protocol LLC — Nexus Account',
-            memo: data.participantRef,
-            hasVirtualAccount: data.hasVirtualAccount,
-            note: data.hasVirtualAccount
-              ? `Use your dedicated Axiom Nexus account number ${data.virtualAccountNumber} with routing ${data.virtualRoutingNumber}. No memo required.`
-              : `Include your reference code "${data.participantRef}" in the ACH memo field.`,
-          },
-        });
-      } else {
-        setLpParticipant(null);
-      }
-    } catch { setLpParticipant(null); }
-    finally { setLpParticipantLoading(false); }
-  };
-
-  const handleLpRegister = async () => {
-    if (!walletAddress) { setLpRegError('Wallet not connected'); return; }
-    if (!lpRegForm.fullName.trim()) { setLpRegError('Full legal name required'); return; }
-    if (!lpRegForm.email.trim() || !lpRegForm.email.includes('@')) { setLpRegError('Valid email required'); return; }
-    if (!lpRegForm.dateOfBirth || !/^\d{4}-\d{2}-\d{2}$/.test(lpRegForm.dateOfBirth)) { setLpRegError('Date of birth required (YYYY-MM-DD)'); return; }
-    if (!lpRegForm.ssn || lpRegForm.ssn.replace(/\D/g, '').length !== 4) { setLpRegError('Last 4 digits of SSN required'); return; }
-    if (!lpRegForm.addressLine1.trim()) { setLpRegError('Street address required'); return; }
-    if (!lpRegForm.city.trim()) { setLpRegError('City required'); return; }
-    if (!lpRegForm.state || !/^[A-Z]{2}$/.test(lpRegForm.state)) { setLpRegError('State required (2-letter code, e.g. TX)'); return; }
-    if (!lpRegForm.zip || !/^\d{5}$/.test(lpRegForm.zip)) { setLpRegError('ZIP code required (5 digits)'); return; }
-    setLpRegLoading(true); setLpRegError(''); setLpRegMsg('');
-    try {
-      const res = await fetch('/api/banking/participant/onboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          walletAddress,
-          fullName: lpRegForm.fullName.trim(),
-          email: lpRegForm.email.trim(),
-          dateOfBirth: lpRegForm.dateOfBirth,
-          ssn: lpRegForm.ssn.replace(/\D/g, ''),
-          addressLine1: lpRegForm.addressLine1.trim(),
-          city: lpRegForm.city.trim(),
-          state: lpRegForm.state.trim().toUpperCase(),
-          zip: lpRegForm.zip.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setLpRegMsg('Axiom Nexus account provisioned. Your dedicated account number is ready.');
-        await fetchLpParticipant(walletAddress);
-      } else {
-        setLpRegError(data.error || 'Registration failed');
-      }
-    } catch { setLpRegError('Registration failed'); }
-    finally { setLpRegLoading(false); }
-  };
-
   const checkWalletConnection = async () => {
     const eth = getEth();
     if (!eth) return;
@@ -276,7 +190,6 @@ export default function InvestPage() {
         setCurrentStep(2);
         fetchVaultPosition(accounts[0]);
         restoreAccreditationState(accounts[0]);
-        fetchLpParticipant(accounts[0]);
       }
     } catch (error) {
       console.error('Wallet check error:', error);
@@ -353,7 +266,6 @@ export default function InvestPage() {
         setCurrentStep(2);
         fetchVaultPosition(accounts[0]);
         restoreAccreditationState(accounts[0]);
-        fetchLpParticipant(accounts[0]);
       }
     } catch (error) {
       console.error('Failed to connect wallet:', error);
@@ -687,210 +599,6 @@ export default function InvestPage() {
                 </p>
               </div>
 
-              {/* LP Banking / Fiat Deposit Panel */}
-              {walletConnected && (
-                <div className="mt-6 border border-dl-navy">
-                  <div className="px-5 py-3 bg-dl-navy flex items-center justify-between">
-                    <p className="font-dl-mono text-xs text-white uppercase tracking-wider">Fiat Deposit</p>
-                    <span className="font-dl-mono text-xs text-white opacity-60">Axiom Nexus Account</span>
-                  </div>
-                  <div className="p-5">
-                    <p className="text-sm text-dl-gray leading-relaxed mb-5">
-                      Accredited participants may fund their limited partner position via USD bank transfer (ACH or wire) to the
-                      <span className="font-semibold text-dl-navy"> Axiom Nexus Account</span> — an FDIC-insured institutional
-                      checking account at First Internet Bank. Your deposit is logged against your wallet address and applied
-                      to your LP record within 1-2 business days of confirmed receipt.
-                    </p>
-
-                    {/* How it works — steps */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-0 border border-dl-border mb-5">
-                      {[
-                        { step: '1', title: 'Register', body: 'Get your unique AXM-XXXXXXXX reference code — assigned once per wallet.' },
-                        { step: '2', title: 'Initiate ACH', body: 'Log your intended deposit amount here, then send ACH to the Nexus Account with your reference code in the memo.' },
-                        { step: '3', title: 'Operations Reviews', body: 'Axiom Operations matches your deposit to your reference code on the incoming ACH ledger.' },
-                        { step: '4', title: 'LP Record Updated', body: 'Your LP deposit record is marked received and applied within 1-2 business days of settlement.' },
-                      ].map((s, i, arr) => (
-                        <div key={s.step} className={`p-4 ${i < arr.length - 1 ? 'border-b md:border-b-0 md:border-r border-dl-border' : ''}`}>
-                          <div className="font-dl-mono text-xs text-dl-gold mb-1">Step {s.step}</div>
-                          <div className="text-dl-navy font-semibold text-sm mb-1">{s.title}</div>
-                          <div className="text-dl-gray text-xs leading-relaxed">{s.body}</div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {lpParticipantLoading && <p className="text-dl-gray text-xs">Loading your banking record...</p>}
-
-                    {!lpParticipantLoading && !lpParticipant && (
-                      <div className="border border-dl-gold p-4">
-                        <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Account Registration Required</p>
-                        <p className="text-dl-gray text-xs mb-1">Provision your dedicated Axiom Nexus banking account. Required for all LP deposit instructions.</p>
-                        <p className="text-dl-gray text-xs mb-4 font-dl-mono border-l-2 border-dl-gold pl-3">Your information provisions a dedicated FDIC-insured account via Increase. Submitted once — for LP identity verification.</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                          <input type="text" placeholder="Full legal name" value={lpRegForm.fullName} onChange={(e) => setLpRegForm({ ...lpRegForm, fullName: e.target.value })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none" />
-                          <input type="email" placeholder="Email address" value={lpRegForm.email} onChange={(e) => setLpRegForm({ ...lpRegForm, email: e.target.value })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none" />
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[10px] text-dl-gray font-dl-mono uppercase">Date of Birth</label>
-                            <input type="date" value={lpRegForm.dateOfBirth} onChange={(e) => setLpRegForm({ ...lpRegForm, dateOfBirth: e.target.value })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none" />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[10px] text-dl-gray font-dl-mono uppercase">Last 4 of SSN</label>
-                            <input type="password" autoComplete="off" placeholder="••••" maxLength={4} value={lpRegForm.ssn} onChange={(e) => setLpRegForm({ ...lpRegForm, ssn: e.target.value.replace(/\D/g, '').slice(0, 4) })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none font-dl-mono tracking-widest" />
-                          </div>
-                          <input type="text" placeholder="Street address (123 Main St)" value={lpRegForm.addressLine1} onChange={(e) => setLpRegForm({ ...lpRegForm, addressLine1: e.target.value })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none md:col-span-2" />
-                          <input type="text" placeholder="City" value={lpRegForm.city} onChange={(e) => setLpRegForm({ ...lpRegForm, city: e.target.value })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none" />
-                          <div className="grid grid-cols-2 gap-3">
-                            <input type="text" placeholder="State (TX)" maxLength={2} value={lpRegForm.state} onChange={(e) => setLpRegForm({ ...lpRegForm, state: e.target.value.toUpperCase().slice(0, 2) })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none font-dl-mono uppercase" />
-                            <input type="text" placeholder="ZIP (77001)" maxLength={5} value={lpRegForm.zip} onChange={(e) => setLpRegForm({ ...lpRegForm, zip: e.target.value.replace(/\D/g, '').slice(0, 5) })} className="border border-dl-border bg-dl-bg px-4 py-2 text-sm text-dl-navy focus:outline-none font-dl-mono" />
-                          </div>
-                        </div>
-                        {lpRegError && <p className="text-xs mb-2" style={{ color: '#991b1b' }}>{lpRegError}</p>}
-                        {lpRegMsg && <p className="text-dl-forest text-xs mb-2">{lpRegMsg}</p>}
-                        <button
-                          onClick={handleLpRegister}
-                          disabled={lpRegLoading}
-                          className="border border-dl-navy bg-dl-navy text-white px-5 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-navy transition-none disabled:opacity-50"
-                        >
-                          {lpRegLoading ? 'Provisioning account...' : 'Register Axiom Nexus Account'}
-                        </button>
-                      </div>
-                    )}
-
-                    {lpParticipant && (
-                      <>
-                        <div className="border border-dl-forest p-3 mb-4 flex items-center justify-between">
-                          <p className="text-dl-forest text-xs font-dl-mono">
-                            {lpParticipant.depositInstructions.hasVirtualAccount
-                              ? 'Your dedicated Axiom Nexus account is provisioned — no memo required.'
-                              : `Registered as ${lpParticipant.fullName} · Ref: ${lpParticipant.participantRef}`}
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-0 border border-dl-border mb-5">
-                          <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
-                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Reference Code</p>
-                            <p className="font-dl-mono text-dl-navy font-bold text-lg">{lpParticipant.participantRef}</p>
-                            <p className="text-dl-gray text-xs mt-1">Backup memo identifier</p>
-                          </div>
-                          <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
-                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Routing Number</p>
-                            <p className="font-dl-mono text-dl-navy font-bold">{lpParticipant.depositInstructions.routingNumber}</p>
-                            <p className="text-dl-gray text-xs mt-1">{lpParticipant.depositInstructions.bankName}</p>
-                          </div>
-                          <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
-                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">
-                              {lpParticipant.depositInstructions.hasVirtualAccount ? 'Your Account Number' : 'Account Number'}
-                            </p>
-                            {lpParticipant.depositInstructions.hasVirtualAccount && lpParticipant.depositInstructions.accountNumber ? (
-                              <>
-                                <p className="font-dl-mono text-dl-navy font-bold">{lpParticipant.depositInstructions.accountNumber}</p>
-                                <p className="text-dl-forest text-xs mt-1">Dedicated to you — no memo needed</p>
-                              </>
-                            ) : (
-                              <>
-                                <p className="font-dl-mono text-dl-navy font-bold text-xs">See secure message</p>
-                                <p className="text-dl-gray text-xs mt-1">Sent after registration</p>
-                              </>
-                            )}
-                          </div>
-                          <div className="px-4 py-4">
-                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Payee Name</p>
-                            <p className="font-dl-mono text-dl-navy font-bold text-xs">{lpParticipant.depositInstructions.accountName}</p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border mb-5">
-                          <div className="px-4 py-4 border-b md:border-b-0 md:border-r border-dl-border">
-                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Account Balance</p>
-                            {lpParticipant.accountBalance ? (
-                              <p className="font-dl-mono text-dl-navy font-bold">
-                                ${(lpParticipant.accountBalance.availableBalanceCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              </p>
-                            ) : (
-                              <p className="font-dl-mono text-dl-gray">—</p>
-                            )}
-                            <p className="text-dl-gray text-xs mt-1">Available · {lpParticipant.accountAccessMode === 'dedicated' ? 'Dedicated account' : 'Virtual account'}</p>
-                          </div>
-                          <div className="px-4 py-4">
-                            <p className="text-dl-gray text-xs font-dl-mono uppercase mb-1">Debit Card</p>
-                            {lpParticipant.cardStatus === 'active' && lpParticipant.cardLast4 ? (
-                              <p className="font-dl-mono text-dl-navy font-bold">••••&nbsp;{lpParticipant.cardLast4}</p>
-                            ) : lpParticipant.cardStatus === 'issued' ? (
-                              <p className="font-dl-mono text-dl-forest">Issued — activation pending</p>
-                            ) : (
-                              <p className="font-dl-mono text-dl-gray">Not issued</p>
-                            )}
-                            <p className="text-dl-gray text-xs mt-1">Axiom Nexus Debit · {lpParticipant.cardStatus ?? 'not requested'}</p>
-                          </div>
-                        </div>
-
-                        {/* What happens after you send */}
-                        <div className="border border-dl-border p-4 mb-5">
-                          <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-3">After You Send</p>
-                          <ol className="space-y-2">
-                            {[
-                              'Your bank initiates the ACH — typically settles in 1-2 business days.',
-                              'Axiom Operations receives the transfer and matches it to your reference code on the incoming ledger.',
-                              'Your LP deposit record is updated to "received" status and notated with the confirmed amount.',
-                              'Operations applies the deposit to your LP position. You will receive confirmation via the email on file.',
-                              'Your capital is deployed into the Lending Fund strategies as part of the next allocation cycle.',
-                            ].map((item, i) => (
-                              <li key={i} className="flex gap-3 text-xs text-dl-gray leading-relaxed">
-                                <span className="font-dl-mono text-dl-gold shrink-0">{i + 1}.</span>
-                                <span>{item}</span>
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
-
-                        <p className="text-xs text-dl-gray leading-relaxed">
-                          Questions about your deposit? Contact Axiom Operations with your reference code and the date of transfer.
-                          ACH deposits are non-refundable once applied to your LP record. Review the{' '}
-                          <Link href="/disclosure" className="underline text-dl-navy">Disclosure</Link> before committing capital.
-                          This is a Reg D 506(c) offering — for accredited investors only.
-                        </p>
-                      </>
-                    )}
-
-                    {/* FAQ */}
-                    <div className="mt-6 border-t border-dl-border pt-5">
-                      <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-wider mb-4">ACH Deposit FAQ</p>
-                      <div className="space-y-4">
-                        {[
-                          {
-                            q: 'Why do I need a reference code?',
-                            a: 'The Axiom Nexus Account receives ACH transfers from many participants. Your reference code is how Operations uniquely identifies your deposit and applies it to your LP record — without it, your transfer cannot be matched. Always include it in the ACH memo or wire OBI field.'
-                          },
-                          {
-                            q: 'What is the minimum LP deposit?',
-                            a: 'The minimum initial deposit via the ACH path is $100. There is no published maximum for the ACH path, though large positions ($50,000+) may require coordination with Operations. On-chain deposits via Euler Finance have their own limits set by vault parameters.'
-                          },
-                          {
-                            q: 'Is my deposit FDIC insured while it is in transit?',
-                            a: 'Funds held in the Axiom Nexus Account at First Internet Bank are FDIC-insured up to $250,000. Once capital is deployed into lending strategies (on-chain), it is governed by the automated control layer terms and is not FDIC-covered.'
-                          },
-                          {
-                            q: 'Can I deposit via wire instead of ACH?',
-                            a: 'Yes. Wire transfers are accepted. Use the same routing number (071006486) and payee name, and include your reference code in the wire OBI (originator-to-beneficiary information) field. Contact Operations for the full wire details including account number.'
-                          },
-                          {
-                            q: 'How are returns distributed?',
-                            a: 'Distributions from the Lending Fund are calculated based on your pro-rata share of the deployed capital pool. Operations initiates ACH credits to participants on a schedule determined by the fund. Review the fund terms in the Disclosure for current distribution frequency.'
-                          },
-                          {
-                            q: 'What if I already deposited via Euler Finance on-chain?',
-                            a: 'On-chain deposits via Euler Finance and ACH deposits via the Nexus Account are two separate paths. They are not interchangeable. If you deposited on-chain, your position is tracked by the Euler vault contract. The ACH path is for participants who prefer traditional banking rails.'
-                          },
-                        ].map(({ q, a }) => (
-                          <div key={q} className="border-b border-dl-border pb-4 last:border-b-0 last:pb-0">
-                            <p className="text-dl-navy text-sm font-semibold mb-1">{q}</p>
-                            <p className="text-dl-gray text-xs leading-relaxed">{a}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </>
           )}
 

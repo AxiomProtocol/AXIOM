@@ -193,7 +193,7 @@ export default function LendingFundPage() {
   const [claimStatus, setClaimStatus] = useState<'idle' | 'claiming' | 'success' | 'error'>('idle');
   const [claimTxHash, setClaimTxHash] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'lp-dashboard' | 'open-market' | 'fiat-deposit'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'lp-dashboard' | 'open-market'>('overview');
   const [juniorPoolStats, setJuniorPoolStats] = useState<JuniorPoolStats | null>(null);
   const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([]);
   const [loansLoading, setLoansLoading] = useState(true);
@@ -405,14 +405,6 @@ export default function LendingFundPage() {
           }`}
         >
           Open Market
-        </button>
-        <button
-          onClick={() => setActiveTab('fiat-deposit')}
-          className={`px-6 py-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap ${
-            activeTab === 'fiat-deposit' ? 'border-dl-navy text-dl-navy' : 'border-transparent text-dl-gray'
-          }`}
-        >
-          Fiat Deposit
         </button>
         <Link
           href="/lending-fund/borrow"
@@ -1131,87 +1123,6 @@ export default function LendingFundPage() {
                 </div>
               </>
             )}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'fiat-deposit' && (
-        <div className="mb-12">
-          <SectionHeading>Fiat Deposit — Axiom Nexus Account</SectionHeading>
-          <p className="text-sm text-dl-gray mb-8 leading-relaxed">
-            The Lending Fund accepts fiat capital contributions via domestic ACH and wire transfer through the Axiom Nexus Account banking layer
-            (First Internet Bank, FDIC-insured). Your deposit is credited to the LP Deposit ledger and allocated to the fund once settlement is confirmed.
-          </p>
-
-          {/* How it works */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-dl-border mb-10">
-            {[
-              { n: '01', title: 'Register Your Nexus Account', body: 'Visit My Nexus Account to register your wallet address and receive your unique reference code (AXM-XXXXXXXX) and dedicated ACH routing and account number.' },
-              { n: '02', title: 'Send ACH or Wire', body: 'Initiate a domestic ACH or wire to your dedicated virtual account number. Include your reference code in the memo field. Funds typically settle in 1–2 business days.' },
-              { n: '03', title: 'LP Position Credited', body: 'Once the Axiom team confirms receipt, your LP deposit record is updated to "received" and your capital is allocated to the Lending Fund pool. You will receive a confirmation notification.' },
-            ].map((s, i) => (
-              <div key={s.n} className={`p-6 ${i < 2 ? 'border-r border-dl-border' : ''}`}>
-                <p className="text-3xl font-dl-serif text-dl-navy mb-3">{s.n}</p>
-                <p className="text-sm font-semibold text-dl-navy mb-2">{s.title}</p>
-                <p className="text-xs text-dl-gray leading-relaxed">{s.body}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Deposit instructions panel */}
-          <div className="border border-dl-border mb-10">
-            <div className="bg-dl-navy px-6 py-4">
-              <p className="font-dl-mono text-xs text-white uppercase tracking-wider">ACH Deposit Instructions</p>
-            </div>
-            <div className="divide-y divide-dl-border">
-              {[
-                { label: 'Bank Name', value: 'First Internet Bank' },
-                { label: 'Account Name', value: 'Axiom Protocol LLC — Nexus Account' },
-                { label: 'Account Type', value: 'Checking' },
-                { label: 'Routing Number', value: '071006486' },
-                { label: 'Account Number', value: 'Your dedicated virtual account number (see My Nexus Account)' },
-                { label: 'Memo / Reference', value: 'Include your AXM-XXXXXXXX reference code' },
-                { label: 'Settlement', value: '1–2 business days (ACH) · Same day (wire, by 2PM ET)' },
-                { label: 'Minimum Deposit', value: '$5,000 (accredited participants only)' },
-              ].map((row) => (
-                <div key={row.label} className="flex justify-between px-6 py-3 text-xs font-dl-mono">
-                  <span className="text-dl-gray uppercase">{row.label}</span>
-                  <span className="text-dl-navy text-right max-w-xs">{row.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* FAQ */}
-          <SectionHeading>Frequently Asked Questions</SectionHeading>
-          <div className="border border-dl-border divide-y divide-dl-border">
-            {[
-              {
-                q: 'Is my fiat deposit insured?',
-                a: 'The Axiom Nexus Account is held at First Internet Bank, an FDIC-insured institution. Deposits are insured up to $250,000 per depositor, per insured bank, per ownership category.',
-              },
-              {
-                q: 'How long does settlement take?',
-                a: 'Standard ACH transfers settle in 1–2 business days. Same-day wire transfers initiated before 2 PM ET typically settle the same business day. International wire transfers may take 2–5 business days.',
-              },
-              {
-                q: 'What is the minimum deposit for the Lending Fund?',
-                a: 'The minimum fiat deposit for Lending Fund participation is $5,000. This offering is available only to verified accredited participants under SEC Rule 506(c).',
-              },
-              {
-                q: 'Can I use on-chain AXUSD instead of fiat?',
-                a: 'Yes. The Lending Fund also accepts AXUSD via the Open Market tab. Fiat capital and on-chain AXUSD are both valid contribution pathways. Your LP position is denominated in AXUSD equivalent.',
-              },
-              {
-                q: 'What happens after my deposit is confirmed?',
-                a: 'Once the Axiom operations team confirms your ACH receipt, your LP Deposit record transitions from "pending" to "received" and then "applied" once capital is deployed to the fund. You will be notified at each stage.',
-              },
-            ].map(({ q, a }) => (
-              <div key={q} className="px-6 py-4">
-                <p className="font-semibold text-dl-navy text-sm mb-1">{q}</p>
-                <p className="text-xs text-dl-gray leading-relaxed">{a}</p>
-              </div>
-            ))}
           </div>
         </div>
       )}
