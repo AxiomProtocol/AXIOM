@@ -12,10 +12,27 @@ export async function register() {
     // ── On-call pager preflight ──────────────────────────────────────────────
     // Must run before any early returns so the gate is unconditional for
     // production boots regardless of DATABASE_URL availability (Task #334).
-    const { assertIntegrityPagerConfigured } = await import(
-      './lib/capinfra/notifications/integrityPagerStatus'
-    );
-    assertIntegrityPagerConfigured();
+    //
+    // SERVERLESS-SAFE: the assertion now THROWS (rather than calling
+    // process.exit) by default in production when no pager channel is
+    // configured. We catch and log the failure here so a single misconfigured
+    // env var on Vercel doesn't crash every cold-start lambda invocation as
+    // an opaque FUNCTION_INVOCATION_FAILED with no diagnostic body.
+    //
+    // Operators who want the historical hard-fail behaviour for pre-deploy
+    // CI healthchecks can opt back in by setting STRICT_BOOT_PREFLIGHT=1,
+    // which restores the process.exit(1) path inside the preflight itself.
+    try {
+      const { assertIntegrityPagerConfigured } = await import(
+        './lib/capinfra/notifications/integrityPagerStatus'
+      );
+      assertIntegrityPagerConfigured();
+    } catch (preflightErr: any) {
+      console.error(
+        '[instrumentation] Integrity pager preflight failed (non-fatal in serverless mode):',
+        preflightErr?.message || preflightErr,
+      );
+    }
 
     if (!process.env.DATABASE_URL) {
       console.warn('[instrumentation] DATABASE_URL not set — skipping DB setup');

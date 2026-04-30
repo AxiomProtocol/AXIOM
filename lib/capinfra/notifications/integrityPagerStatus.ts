@@ -75,6 +75,21 @@ export function getIntegrityPagerStatus(): IntegrityPagerStatus {
 }
 
 /**
+ * Thrown by the default `onFatal` of `assertIntegrityPagerConfigured`
+ * when production boot finds no on-call pager channel configured. The
+ * caller (typically the Next.js instrumentation hook) decides how to
+ * react — long-running servers may want to refuse to start, while
+ * serverless lambdas should catch and log without killing the worker
+ * (see `instrumentation.ts`).
+ */
+export class IntegrityPagerNotConfiguredError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'IntegrityPagerNotConfiguredError';
+  }
+}
+
+/**
  * Production boot preflight check for the on-call pager.
  *
  * Called once from the Next.js instrumentation hook (`instrumentation.ts`)
@@ -83,8 +98,16 @@ export function getIntegrityPagerStatus(): IntegrityPagerStatus {
  *  - If at least one channel (email or Discord) is configured → returns
  *    silently (all good).
  *  - If no channel is configured **and** `NODE_ENV === 'production'` →
- *    writes a fatal message to stderr and exits with code 1, refusing
- *    to serve traffic with a silently unwired pager.
+ *    writes a fatal message to stderr and either:
+ *      - calls `process.exit(1)` when `STRICT_BOOT_PREFLIGHT=1`
+ *        (preserves the hard-fail behaviour for explicit pre-deploy
+ *        gating in CI healthchecks), OR
+ *      - throws `IntegrityPagerNotConfiguredError` (default — lets the
+ *        caller decide whether to halt or surface the failure as a
+ *        diagnostic). This is the serverless-safe default: on Vercel,
+ *        `process.exit` from `instrumentation.register()` corrupts the
+ *        entire lambda invocation as opaque `FUNCTION_INVOCATION_FAILED`
+ *        with no body.
  *  - If no channel is configured **and** `NODE_ENV !== 'production'` →
  *    emits a console warning so local developers see the gap without
  *    being blocked.
@@ -95,15 +118,14 @@ export function getIntegrityPagerStatus(): IntegrityPagerStatus {
  */
 export function assertIntegrityPagerConfigured({
   nodeEnv = process.env.NODE_ENV,
-  onFatal = (msg: string): void => {
-    process.stderr.write(msg + '\n');
-    process.exit(1);
-  },
+  strictBootPreflight = process.env.STRICT_BOOT_PREFLIGHT === '1',
+  onFatal,
   onWarn = (msg: string): void => {
     console.warn(msg);
   },
 }: {
   nodeEnv?: string;
+  strictBootPreflight?: boolean;
   onFatal?: (msg: string) => void;
   onWarn?: (msg: string) => void;
 } = {}): void {
@@ -113,15 +135,26 @@ export function assertIntegrityPagerConfigured({
   const fatalMsg =
     '[capinfra] FATAL: No on-call pager channel is configured. ' +
     'Set INTEGRITY_ALERT_EMAIL and/or INTEGRITY_ALERT_DISCORD_WEBHOOK ' +
-    'before deploying to production. Refusing to start.';
+    'before deploying to production.';
 
   const warnMsg =
     '[capinfra] WARNING: No on-call pager channel is configured ' +
     '(INTEGRITY_ALERT_EMAIL / INTEGRITY_ALERT_DISCORD_WEBHOOK unset). ' +
-    'This would block a production boot.';
+    'This would block a strict-mode production boot.';
+
+  // Default fatal handler — picks process.exit (strict) vs throw (default)
+  // unless the caller injected its own (tests do).
+  const defaultFatal = (msg: string): void => {
+    process.stderr.write(msg + '\n');
+    if (strictBootPreflight) {
+      process.exit(1);
+    } else {
+      throw new IntegrityPagerNotConfiguredError(msg);
+    }
+  };
 
   if (nodeEnv === 'production') {
-    onFatal(fatalMsg);
+    (onFatal ?? defaultFatal)(fatalMsg);
   } else {
     onWarn(warnMsg);
   }
