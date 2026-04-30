@@ -131,7 +131,7 @@ export async function getStripeAccountInfo(): Promise<{
 }> {
   await getStripe(); // runs the pin check + populates the cache
   const v = await _verification!;
-  const expected = process.env.STRIPE_EXPECTED_ACCOUNT_ID || null;
+  const expected = getExpectedAccountId() ?? null;
   return {
     accountId: v.accountId,
     chargesEnabled: v.chargesEnabled,
