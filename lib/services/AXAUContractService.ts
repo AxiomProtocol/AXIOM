@@ -25,7 +25,9 @@ export const COMPONENT_IDS = {
   LAND: "0xb0366c216037e04ae0c0a5c253f7e5a16707d3697cf6669be968fc739da1fa87",
 } as const;
 
-// Oracle staleness threshold: Chainlink XAU/USD heartbeat is 24h; allow 26h.
+// Oracle staleness threshold: Chainlink XAU/USD heartbeat is 24 h; allow 27 h (3 h buffer).
+// This MUST match the MintRedeemController.oracleStaleness default (97,200 s) so the
+// service-level pre-check accurately reflects what the on-chain contract will accept.
 // Override via ORACLE_STALE_THRESHOLD_SECONDS env var (seconds, integer).
 export const ORACLE_STALE_THRESHOLD_SECONDS: number = (() => {
   const envVal = process.env.ORACLE_STALE_THRESHOLD_SECONDS;
@@ -33,7 +35,7 @@ export const ORACLE_STALE_THRESHOLD_SECONDS: number = (() => {
     const parsed = parseInt(envVal, 10);
     if (!isNaN(parsed) && parsed > 0) return parsed;
   }
-  return 26 * 3600;
+  return 97_200; // 27 h — matches MintRedeemController.oracleStaleness default
 })();
 
 // ─── Minimal ABIs (verified against compiled artifacts) ───────────────────────

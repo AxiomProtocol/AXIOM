@@ -58,6 +58,10 @@ contract MintRedeemController {
     uint256 public redeemFeeBps;
     bool    public mintPaused;
     bool    public redeemPaused;
+    /// @notice Maximum age of the Chainlink oracle round before mint/redeem reverts.
+    ///         Default: 97200 s (27 h) — covers the 24 h XAU/USD heartbeat + 3 h buffer.
+    ///         Governor may tighten or widen this via setOracleStaleness().
+    uint256 public oracleStaleness = 97_200;
 
     // ── Metrics ───────────────────────────────────────────────────────────────
     uint256 public totalMinted;
@@ -88,6 +92,7 @@ contract MintRedeemController {
     event CircuitBreaker(string reason, uint256 coverageBps);
     event RoleGranted(bytes32 indexed role, address indexed account);
     event RoleRevoked(bytes32 indexed role, address indexed account);
+    event OracleStalenessUpdated(uint256 previousSeconds, uint256 newSeconds);
 
     // ── Constructor ───────────────────────────────────────────────────────────
     constructor(
@@ -287,7 +292,7 @@ contract MintRedeemController {
         if (roundId == 0 || startedAt == 0 || answeredInRound == 0) {}
 
         require(answer > 0, "Controller: non-positive oracle");
-        require(block.timestamp - updatedAt <= 3600, "Controller: stale oracle");
+        require(block.timestamp - updatedAt <= oracleStaleness, "Controller: stale oracle");
         uint256 price = uint256(answer);
         return feedDec <= 18
             ? price * (10 ** (18 - feedDec))
@@ -355,6 +360,14 @@ contract MintRedeemController {
     function setFeeRecipient(address recipient) external onlyGovernor {
         require(recipient != address(0), "Controller: zero recipient");
         protocolFeeRecipient = recipient;
+    }
+
+    /// @notice Adjust the oracle staleness window. Minimum 3600 s (1 h), maximum 172800 s (48 h).
+    function setOracleStaleness(uint256 seconds_) external onlyGovernor {
+        require(seconds_ >= 3_600,   "Controller: staleness < 1 h");
+        require(seconds_ <= 172_800, "Controller: staleness > 48 h");
+        emit OracleStalenessUpdated(oracleStaleness, seconds_);
+        oracleStaleness = seconds_;
     }
 
     function setNavEngine(address engine) external onlyGovernor {
