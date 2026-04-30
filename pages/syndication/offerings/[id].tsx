@@ -1449,7 +1449,7 @@ export default function OfferingBuilder() {
               product="syndication"
               context="capital-call"
               amountLabel={offering?.minimum_investment ? `$${Number(offering.minimum_investment).toLocaleString()} minimum` : undefined}
-              description="Capital call payments for this offering are processed through the Axiom Nexus Account at First Internet Bank. Register your account to receive your dedicated routing details. Your deposit is matched to your subscription and confirmed within 1–2 business days of ACH settlement."
+              description="ACH/wire banking infrastructure is currently offline. Capital call deposit instructions will be updated when rails are restored. Contact Operations to coordinate funding for this offering."
               collapsible={true}
             />
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">

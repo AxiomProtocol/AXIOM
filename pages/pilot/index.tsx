@@ -310,8 +310,8 @@ export default function PilotDashboard() {
         <NexusBankingPanel
           product="pilot"
           context="capital-program"
-          title="Axiom Nexus — Capital Program Account"
-          description="Capital program contributions and SPV distributions are processed through the Axiom Nexus Account at First Internet Bank. Register your account to receive dedicated deposit routing instructions. Contributions are tracked against your program participation record."
+          title="Capital Program Deposit Account"
+          description="ACH/wire banking infrastructure is currently offline. Capital program contribution deposit instructions will be available when rails are restored. Contact Operations to coordinate funding."
           collapsible={true}
         />
       </div>

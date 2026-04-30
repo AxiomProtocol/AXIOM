@@ -194,9 +194,8 @@ export default function DirectDepositPage() {
               Get Paid<br />Up to 2 Days Early.
             </h1>
             <p className="text-base leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.78)', maxWidth: '480px' }}>
-              Your Axiom Nexus Account comes with a dedicated routing and account number.
-              When your employer sends your paycheck via ACH, we credit your account the moment the file arrives —
-              not when traditional banks post it.
+              Direct deposit setup via ACH is currently offline while banking infrastructure is being reconfigured.
+              Deposit details will be available when rails are restored.
             </p>
             <div className="flex flex-wrap gap-4">
               <a href="#deposit-setup" className="font-dl-mono text-xs uppercase tracking-wider px-6 py-3 font-bold border border-white text-white hover:bg-white hover:text-dl-navy transition-none">
@@ -399,7 +398,7 @@ export default function DirectDepositPage() {
         <div className="border border-dl-gold p-6 mb-8">
           <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Not Registered</p>
           <p className="text-dl-gray text-sm mb-4">
-            You do not have an Axiom Nexus Account yet. Register through any product to receive your dedicated routing and account numbers.
+            ACH banking infrastructure is currently offline. Direct deposit routing and account numbers are unavailable while rails are being reconfigured.
           </p>
           <div className="flex gap-3 flex-wrap">
             <a href="/wealth-practice" className="border border-dl-navy bg-dl-navy text-white px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-navy">

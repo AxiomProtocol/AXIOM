@@ -337,25 +337,32 @@ export default function InfrastructurePage() {
         </div>
         <div style={{ border: `1px solid ${C.border}` }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 0 }}>
-            {CAPITAL_FLOW.map((node, i) => (
-              <Link key={node.step} href={node.href} style={{ textDecoration: 'none' }}>
-                <div style={{
-                  padding: '24px 18px 20px',
-                  borderRight: i < CAPITAL_FLOW.length - 1 ? `1px solid ${C.border}` : 'none',
-                  background: i % 2 === 0 ? C.bg : C.bgAlt,
-                  height: '100%', boxSizing: 'border-box' as const,
-                }}>
-                  <p style={{ ...monoLabel, color: C.muted, marginBottom: 6 }}>{node.layer}</p>
-                  <p style={{ ...serifBold(22, C.navy), marginBottom: 4 }}>{node.step}</p>
-                  <p style={{ ...mono, color: node.color, fontWeight: 700, marginBottom: 8, fontSize: 11 }}>{node.label}</p>
-                  <p style={{ ...mono, fontSize: 10, lineHeight: 1.65, color: C.muted }}>{node.sub}</p>
-                  {i < CAPITAL_FLOW.length - 1 && (
-                    <p style={{ ...mono, color: C.muted, marginTop: 12, textAlign: 'right' }}>→</p>
-                  )}
-                </div>
-                <div style={{ height: 3, background: node.color }} />
-              </Link>
-            ))}
+            {CAPITAL_FLOW.map((node, i) => {
+              const inner = (
+                <>
+                  <div style={{
+                    padding: '24px 18px 20px',
+                    borderRight: i < CAPITAL_FLOW.length - 1 ? `1px solid ${C.border}` : 'none',
+                    background: i % 2 === 0 ? C.bg : C.bgAlt,
+                    height: '100%', boxSizing: 'border-box' as const,
+                  }}>
+                    <p style={{ ...monoLabel, color: C.muted, marginBottom: 6 }}>{node.layer}</p>
+                    <p style={{ ...serifBold(22, C.navy), marginBottom: 4 }}>{node.step}</p>
+                    <p style={{ ...mono, color: node.color, fontWeight: 700, marginBottom: 8, fontSize: 11 }}>{node.label}</p>
+                    <p style={{ ...mono, fontSize: 10, lineHeight: 1.65, color: C.muted }}>{node.sub}</p>
+                    {i < CAPITAL_FLOW.length - 1 && (
+                      <p style={{ ...mono, color: C.muted, marginTop: 12, textAlign: 'right' }}>→</p>
+                    )}
+                  </div>
+                  <div style={{ height: 3, background: node.color }} />
+                </>
+              );
+              return node.href ? (
+                <Link key={node.step} href={node.href} style={{ textDecoration: 'none' }}>{inner}</Link>
+              ) : (
+                <div key={node.step}>{inner}</div>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -508,8 +508,8 @@ export default function MyCardPage() {
         <div className="border border-dl-gold p-6 mb-8">
           <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-2">Not Registered</p>
           <p className="text-dl-gray text-sm mb-4">
-            You do not have an Axiom Nexus Account. Register through the Wealth Practice, Lending Fund, or Real Estate portal
-            to receive your participant account and card eligibility.
+            ACH banking infrastructure is currently offline. Card issuance and account registration are unavailable at this time.
+            Check back when rails are restored.
           </p>
           <div className="flex gap-3 flex-wrap">
             <a href="/wealth-practice" className="border border-dl-navy bg-dl-navy text-white px-4 py-2 text-xs font-bold font-dl-mono uppercase hover:bg-dl-bg hover:text-dl-navy">
