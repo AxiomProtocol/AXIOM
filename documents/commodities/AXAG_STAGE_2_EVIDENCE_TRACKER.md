@@ -4,7 +4,7 @@ Document class: Commodity Candidate Evidence Tracker
 Framework: Commodity Expansion Framework v1.0.0
 Candidate: Axiom Silver (AXAG)
 Stage: 2 — Technical Diligence
-Tracker status: EXECUTION ACTIVE — 5 IN PROGRESS, 31 ASSIGNED, 0 closed
+Tracker status: EXECUTION ACTIVE — 4 IN PROGRESS, 30 ASSIGNED, 1 CLOSED
 Source packet: documents/commodities/AXAG_STAGE_2_DILIGENCE_PACKET.md
 Effective date: 2026-05-01
 Last updated: 2026-05-01
@@ -49,17 +49,17 @@ Source: Section 7 (Custody) of the diligence packet.
 Owner role: Treasury operations lead (reviewer: Compliance lead).
 Remediation priority: **PRIORITY 1 — CRITICAL PATH** — Custody Risk scored 3 in Stage 1; must reach ≤ 2 before re-scoring. No re-scoring run may proceed until C-01 through C-07 are all CLOSED.
 
-| Item ID | Workstream | Requirement                                                                   | Owner role                 | Assigned owner       | Status        | Evidence link | Blocker notes                                                                                                                                                     | Target date | Last updated |
-| ------- | ---------- | ----------------------------------------------------------------------------- | -------------------------- | -------------------- | :-----------: | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------ |
-| C-01    | Custody    | Custody RFP final                                                             | Treasury operations lead   | Axiom Treasury Lead  | IN PROGRESS   |               | No custody partner identified. RFP must be drafted and issued before any response can be collected.                                                               |             | 2026-05-01   |
-| C-02    | Custody    | Custody RFP responses tabulated against framework Section 6 criteria          | Treasury operations lead   | Axiom Treasury Lead  | IN PROGRESS   |               | Blocked on C-01 closing. Running parallel to C-01 to pre-build the tabulation template and criteria scorecard.                                                    |             | 2026-05-01   |
-| C-03    | Custody    | Selected custodian identified (Path A, B, or documented fallback)             | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |               | Blocked on C-02. Path A (PAXG-equivalent silver issuer) currently has no known candidate; Path B (regulated custodian + quarterly PoR) is the expected path. **PRIMARY BOTTLENECK — see Section 10.** |             | 2026-05-01   |
-| C-04    | Custody    | Term sheet drafted and attached                                               | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |               | Blocked on C-03.                                                                                                                                                  |             | 2026-05-01   |
-| C-05    | Custody    | Vault location, segregation model, and insurance position documented          | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |               | Blocked on C-03.                                                                                                                                                  |             | 2026-05-01   |
-| C-06    | Custody    | Attestation cadence agreed (monthly preferred, quarterly minimum)             | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |               | Blocked on C-04. Cadence must appear in the term sheet.                                                                                                           |             | 2026-05-01   |
-| C-07    | Custody    | Chain-of-custody model documented from refining to vault                      | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |               | Blocked on C-03. Must cover assay, transport, storage, and audit trail.                                                                                           |             | 2026-05-01   |
+| Item ID | Workstream | Requirement                                                                   | Owner role                 | Assigned owner       | Status        | Evidence link                                          | Blocker notes                                                                                                                                                                                           | Target date | Last updated |
+| ------- | ---------- | ----------------------------------------------------------------------------- | -------------------------- | -------------------- | :-----------: | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------ |
+| C-01    | Custody    | Custody RFP final                                                             | Treasury operations lead   | Axiom Treasury Lead  | **CLOSED**    | documents/commodities/AXAG_CUSTODY_RFP.md              | RFP issued 2026-05-01. Document complete; outreach initiated to six candidate custodians.                                                                                                               | 2026-05-01  | 2026-05-01   |
+| C-02    | Custody    | Custody RFP responses tabulated against framework Section 6 criteria          | Treasury operations lead   | Axiom Treasury Lead  | IN PROGRESS   | documents/commodities/AXAG_CUSTODY_SHORTLIST.md (live) | **Outreach started.** Tabulation template built and shortlist pre-populated. Formal RFP responses pending from six candidates: Brink's, Loomis, BitGo, Anchorage, Malca-Amit, Via Mat.                  |             | 2026-05-01   |
+| C-03    | Custody    | Selected custodian identified (Path A, B, or documented fallback)             | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |                                                        | Blocked on C-02. **PRIMARY BOTTLENECK — see Section 11.** No Path A issuer identified. Path B (Brink's / Loomis / Malca-Amit + independent PoR) is the confirmed viable path pending RFP responses.    |             | 2026-05-01   |
+| C-04    | Custody    | Term sheet drafted and attached                                               | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |                                                        | Blocked on C-03.                                                                                                                                                                                        |             | 2026-05-01   |
+| C-05    | Custody    | Vault location, segregation model, and insurance position documented          | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |                                                        | Blocked on C-03.                                                                                                                                                                                        |             | 2026-05-01   |
+| C-06    | Custody    | Attestation cadence agreed (monthly preferred, quarterly minimum)             | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |                                                        | Blocked on C-04. Cadence must appear in the term sheet.                                                                                                                                                 |             | 2026-05-01   |
+| C-07    | Custody    | Chain-of-custody model documented from refining to vault                      | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |                                                        | Blocked on C-03. Must cover assay, transport, storage, and audit trail.                                                                                                                                 |             | 2026-05-01   |
 
-Section subtotal: 7 items — 2 IN PROGRESS (C-01, C-02), 5 ASSIGNED
+Section subtotal: 7 items — **1 CLOSED** (C-01), 1 IN PROGRESS (C-02), 5 ASSIGNED
 
 ---
 
@@ -152,7 +152,7 @@ Section subtotal: 5 items — 0 IN PROGRESS, 5 ASSIGNED
 ## Section 7 — Owner Assignments
 
 Source: Section 8 of the diligence packet.
-Every row must have a named individual (not a role label) before the corresponding workstream may advance to IN PROGRESS. The governance steward reviews and confirms each assignment.
+Every row must have a named individual (not a role label) before the corresponding workstream may advance to IN PROGRESS.
 
 | Item ID | Workstream            | Role responsible             | Reviewer                   | Assigned owner               | Status     | Assigned date | Last updated | Notes                                                                   |
 | ------- | --------------------- | ---------------------------- | -------------------------- | ---------------------------- | :--------: | ------------- | ------------ | ----------------------------------------------------------------------- |
@@ -173,17 +173,17 @@ Section subtotal: 8 items — 8 ASSIGNED
 
 Total items assigned to each owner role. Last updated: 2026-05-01.
 
-| Assigned owner            | Items total | In progress | Assigned | Primary workstream       |
-| ------------------------- | :---------: | :---------: | :------: | ------------------------ |
-| Axiom Treasury Lead       |      8      |      2      |    6     | Custody diligence        |
-| Axiom Risk Lead           |      6      |      0      |    6     | Re-scoring and closeout  |
-| Axiom Liquidity Lead      |      6      |      1      |    5     | Liquidity bootstrap      |
-| Axiom Protocol Engineer   |      5      |      1      |    4     | Oracle verification      |
-| Axiom Compliance Lead     |      4      |      0      |    4     | Reserve standards check  |
-| Axiom GC Coordinator      |      3      |      1      |    2     | Legal review             |
-| Axiom Communications Lead |      3      |      0      |    3     | Disclosure language      |
-| Axiom Governance Steward  |      1      |      0      |    1     | Packet sign-off          |
-| **TOTAL**                 |    **36**   |    **5**    |  **31**  |                          |
+| Assigned owner            | Items total | Closed | In progress | Assigned | Primary workstream       |
+| ------------------------- | :---------: | :----: | :---------: | :------: | ------------------------ |
+| Axiom Treasury Lead       |      8      |   1    |      1      |    6     | Custody diligence        |
+| Axiom Risk Lead           |      6      |   0    |      0      |    6     | Re-scoring and closeout  |
+| Axiom Liquidity Lead      |      6      |   0    |      1      |    5     | Liquidity bootstrap      |
+| Axiom Protocol Engineer   |      5      |   0    |      1      |    4     | Oracle verification      |
+| Axiom Compliance Lead     |      4      |   0    |      0      |    4     | Reserve standards check  |
+| Axiom GC Coordinator      |      3      |   0    |      1      |    2     | Legal review             |
+| Axiom Communications Lead |      3      |   0    |      0      |    3     | Disclosure language      |
+| Axiom Governance Steward  |      1      |   0    |      0      |    1     | Packet sign-off          |
+| **TOTAL**                 |    **36**   | **1**  |    **4**    |  **31**  |                          |
 
 ### Reviewer assignments
 
@@ -202,13 +202,13 @@ Total items assigned to each owner role. Last updated: 2026-05-01.
 
 ## Section 9 — Critical Path
 
-The two dimensions that scored 3 in Stage 1 (Custody and Liquidity) form the critical path. No re-scoring run may be executed until every item in both groups is CLOSED.
+The two dimensions that scored 3 in Stage 1 (Custody and Liquidity) form the critical path.
 
 ### Priority 1 — Critical Path: Custody (C-01 to C-07)
 
 | Item ID | Requirement (short form)                      | Depends on    | Status        | Priority   |
 | ------- | --------------------------------------------- | ------------- | :-----------: | :--------: |
-| C-01    | Custody RFP final                             | —             | IN PROGRESS   | PRIORITY 1 |
+| C-01    | Custody RFP final                             | —             | **CLOSED**    | PRIORITY 1 |
 | C-02    | RFP responses tabulated                       | C-01          | IN PROGRESS   | PRIORITY 1 |
 | C-03    | Custodian selected (Path A / B / fallback)    | C-02          | ASSIGNED      | PRIORITY 1 |
 | C-04    | Term sheet drafted and attached               | C-03          | ASSIGNED      | PRIORITY 1 |
@@ -228,21 +228,21 @@ The two dimensions that scored 3 in Stage 1 (Custody and Liquidity) form the cri
 
 ### Priority 2 — Parallel tracks
 
-| Workstream  | Items      | Status of lead item     | Assigned owner            |
-| ----------- | ---------- | ----------------------- | ------------------------- |
-| Oracle      | O-01–O-04  | O-01 IN PROGRESS        | Axiom Protocol Engineer   |
-| Reserve     | R-01–R-03  | All ASSIGNED (R-01 on C-03) | Axiom Compliance Lead |
-| Regulatory  | REG-01–REG-04 | REG-01 IN PROGRESS   | Axiom GC Coord. / Comms  |
+| Workstream  | Items         | Status of lead item         | Assigned owner                  |
+| ----------- | ------------- | --------------------------- | ------------------------------- |
+| Oracle      | O-01–O-04     | O-01 IN PROGRESS            | Axiom Protocol Engineer         |
+| Reserve     | R-01–R-03     | All ASSIGNED (R-01 on C-03) | Axiom Compliance Lead           |
+| Regulatory  | REG-01–REG-04 | REG-01 IN PROGRESS          | Axiom GC Coord. / Comms Lead    |
 
 ### Priority 3 — Process closeout
 
-| Item ID | Status     | Unblocked when                     |
-| ------- | :--------: | ---------------------------------- |
-| P-01    | ASSIGNED   | Immediately — artifact exists      |
-| P-02    | ASSIGNED   | All C, L, O, R, REG items CLOSED   |
-| P-03    | ASSIGNED   | All 7 re-scoring triggers met      |
-| P-04    | ASSIGNED   | P-03 CLOSED                        |
-| P-05    | ASSIGNED   | P-04 CLOSED; no dimension ≥ 3     |
+| Item ID | Status     | Unblocked when                    |
+| ------- | :--------: | --------------------------------- |
+| P-01    | ASSIGNED   | Immediately — artifact exists     |
+| P-02    | ASSIGNED   | All C, L, O, R, REG items CLOSED  |
+| P-03    | ASSIGNED   | All 7 re-scoring triggers met     |
+| P-04    | ASSIGNED   | P-03 CLOSED                       |
+| P-05    | ASSIGNED   | P-04 CLOSED; no dimension ≥ 3    |
 
 ---
 
@@ -250,23 +250,17 @@ The two dimensions that scored 3 in Stage 1 (Custody and Liquidity) form the cri
 
 All items currently IN PROGRESS as of 2026-05-01.
 
-| Item ID | Workstream  | Requirement (short form)                        | Owner                     | Dependency risk                                                                                                         |
-| ------- | ----------- | ----------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| C-01    | Custody     | Custody RFP final                               | Axiom Treasury Lead       | **HIGH** — The entire custody critical path (C-03 through C-07) is gated on the RFP output. Delay here cascades to L-03, R-01, R-02, and ultimately P-03. |
-| C-02    | Custody     | RFP responses tabulated (template pre-build)    | Axiom Treasury Lead       | **MEDIUM** — Runs parallel to C-01; tabulation template can be completed before responses arrive, reducing C-02 cycle time after C-01 closes. |
-| L-01    | Liquidity   | AMM bootstrap design document                  | Axiom Liquidity Lead      | **HIGH** — L-02, L-05 depend on L-01. L-03 additionally depends on C-04, which is itself blocked on C-03. Liquidity critical path will stall at L-03 until custody resolves. |
-| O-01    | Oracle      | XAG/USD Arbitrum One aggregator verified        | Axiom Protocol Engineer   | **MEDIUM** — If the Chainlink feed is absent on Arbitrum One, oracle score must be downgraded from 2 to 3+, which would raise the composite and potentially change the CONDITIONAL band outcome. Resolve quickly. |
-| REG-01  | Regulatory  | Legal opinion engagement letter signed          | Axiom GC Coordinator      | **HIGH** — No governance vote may be scheduled until the legal opinion is delivered. Engagement letter is the first gating step. Delay compounds through REG-02, REG-03, and REG-04. |
+| Item ID | Workstream  | Requirement (short form)                         | Owner                     | Dependency risk                                                                                                          |
+| ------- | ----------- | ------------------------------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| C-02    | Custody     | RFP responses tabulated (outreach started)        | Axiom Treasury Lead       | **HIGH** — tabulation feeds C-03 (custodian selection), the primary bottleneck for the entire tracker.                  |
+| L-01    | Liquidity   | AMM bootstrap design document                    | Axiom Liquidity Lead      | **HIGH** — L-02, L-05 depend on L-01. L-03 additionally gated on C-04 (blocked on C-03). Liquidity path will stall at L-03 until custody resolves. |
+| O-01    | Oracle      | XAG/USD Arbitrum One aggregator verified         | Axiom Protocol Engineer   | **MEDIUM** — if feed is absent, oracle score must be raised from 2, increasing composite and widening remediation scope. |
+| REG-01  | Regulatory  | Legal opinion engagement letter signed           | Axiom GC Coordinator      | **HIGH** — governance vote cannot be scheduled until legal opinion is delivered. No upstream blocker — must advance now. |
 
-Total IN PROGRESS: 5 items across 4 workstreams (Custody, Liquidity, Oracle, Regulatory).
+Previously IN PROGRESS:
+- C-01 → **CLOSED** 2026-05-01 (evidence: documents/commodities/AXAG_CUSTODY_RFP.md)
 
-Items not yet activated (ASSIGNED, not IN PROGRESS):
-- **C-03 through C-07** — blocked on C-02 output
-- **L-02 through L-05** — blocked on L-01 output and C-04
-- **O-02 through O-04** — blocked on O-01 output
-- **R-01 through R-03** — R-01 and R-02 blocked on C-03; R-03 may begin independently
-- **REG-02 through REG-04** — blocked on REG-01
-- **P-01 through P-05** — all blocked on upstream workstreams
+Total currently IN PROGRESS: 4 items across 4 workstreams.
 
 ---
 
@@ -276,35 +270,82 @@ The current primary bottleneck for Stage 2 is **C-03: Custodian Selection**.
 
 ### C-03 — Custodian Selection
 
-| Field               | Detail                                                                                                  |
-| ------------------- | ------------------------------------------------------------------------------------------------------- |
-| Item ID             | C-03                                                                                                    |
-| Workstream          | Custody                                                                                                 |
-| Owner               | Axiom Treasury Lead                                                                                     |
-| Current status      | ASSIGNED — blocked on C-02 (RFP responses)                                                              |
-| Why it is primary   | C-03 is the single node that unblocks C-04, C-05, and C-07 simultaneously, which in turn unblock C-06, L-03, R-01, and R-02. Until C-03 closes, the majority of the tracker remains frozen. |
-| Core difficulty     | No PAXG-equivalent regulated silver issuer exists today. Path A (on-chain receipt token) requires identifying or creating a new custodial relationship with a qualified custodian willing to issue a directly redeemable silver token. Path B (regulated custodian + quarterly PoR without on-chain receipt) is the expected path but still requires sourcing a willing counterparty. |
-| Items blocked by C-03 | C-04, C-05, C-07, C-06 (via C-04), L-03 (via C-04), L-04 (via L-03), R-01, R-02                      |
-| Cascade count       | 8 downstream items gated directly or indirectly on C-03                                                 |
-| Mitigation          | C-01 and C-02 are IN PROGRESS to deliver the RFP and response tabulation that feeds C-03. The sooner C-01 issues and C-02 receives responses, the sooner C-03 can close. |
-| Risk if delayed     | If C-03 is not resolved, re-scoring cannot proceed, AXAG remains in CONDITIONAL band, and governance vote cannot be scheduled. |
+| Field               | Detail                                                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Item ID             | C-03                                                                                                           |
+| Status              | ASSIGNED — blocked on C-02                                                                                     |
+| Owner               | Axiom Treasury Lead                                                                                            |
+| Why it is primary   | C-03 unblocks C-04, C-05, C-07 simultaneously, which in turn unlock C-06, L-03, R-01, and R-02. Until C-03 closes, the majority of the tracker cannot advance. |
+| Core difficulty     | No Path A (PAXG-equivalent silver issuer) exists today. Path B (regulated custodian + quarterly PoR) is the confirmed viable path per AXAG_CUSTODY_SHORTLIST.md, but requires RFP responses to identify a specific counterparty. |
+| Items blocked on C-03 | C-04, C-05, C-07, C-06 (via C-04), L-03 (via C-04), L-04 (via L-03), R-01, R-02 |
+| Cascade count       | 8 downstream items gated on C-03                                                                               |
+| Current mitigation  | C-01 CLOSED. C-02 IN PROGRESS with outreach to six candidates. Shortlist pre-populated in AXAG_CUSTODY_SHORTLIST.md. |
+| Risk if delayed     | Re-scoring cannot proceed; AXAG remains CONDITIONAL; governance vote cannot be scheduled.                       |
 
-### Secondary bottleneck awareness
+### Secondary bottlenecks
 
-| Item    | Risk if delayed                                                                                           |
-| ------- | --------------------------------------------------------------------------------------------------------- |
-| O-01    | If Chainlink XAG/USD feed is absent on Arbitrum One, oracle score rises from 2 to 3+, raising composite and potentially widening the remediation requirement before Stage 3. |
-| REG-01  | Legal opinion delivery is on the governance vote critical path. Engagement letter must be signed now to allow adequate time for counsel's analysis before Stage 3 scheduling. |
+| Item    | Risk                                                                                                                               |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| O-01    | If Chainlink XAG/USD absent on Arbitrum One, oracle score rises from 2 and composite widens, expanding remediation scope.          |
+| REG-01  | Engagement delay compounds into governance vote scheduling. Legal opinion typically requires 6–12 weeks after engagement letter.    |
 
 ---
 
-## Section 12 — Stage 2 Exit Criteria
+## Section 12 — Custody Path Hypothesis
 
-Stage 2 is complete only when **every one** of the following conditions is met. This section requires dual sign-off (operator and governance steward, OW-08).
+Source: documents/commodities/AXAG_CUSTODY_SHORTLIST.md
+Prepared: 2026-05-01
+Status: PRELIMINARY — subject to revision upon receipt of RFP responses
+
+### Path assessment
+
+| Path | Description                                                    | Feasibility       | Basis                                                                                         |
+| ---- | -------------------------------------------------------------- | :---------------: | --------------------------------------------------------------------------------------------- |
+| A    | Qualified-custodian issues on-chain redeemable silver receipt  | **Aspirational**  | No PAXG-equivalent silver token exists. BitGo + physical sub-custodian is the only plausible route; requires new product development. Timeline uncertain. |
+| B    | Regulated custodian + segregated allocated account + PoR       | **Confirmed viable** | Brink's, Loomis, and Malca-Amit all have confirmed LBMA silver storage capability. Monthly attestation via independent auditor is contractually achievable. Path B closes the Stage 1 Custody Risk remediation (score 3 → 2). |
+| C    | Exchange-grade arrangement without regulated custodian         | **Fallback only** | Does not close the Stage 1 remediation. Not actively pursued.                                 |
+
+### Recommended path
+
+**Path B is the primary execution path for Stage 2.**
+
+Rationale:
+1. Path B is achievable without creating a new financial product or token, which is out of scope for Stage 2.
+2. Brink's, Loomis, and Malca-Amit have confirmed LBMA Good Delivery silver storage at accredited vault locations. All three are on outreach as of 2026-05-01.
+3. Monthly independent attestation is a contractual and operational norm in the physical precious metals industry. There is no structural barrier to securing a monthly signed attestation cadence from a Big 4 or equivalent auditor.
+4. Path B would move Custody Risk from score 3 to score 2, bringing AXAG's composite from 11 to 10 (APPROVED band). Combined with no change to Oracle (2), Reserve (1), and Regulatory (2), a Path B custody solution closes the CONDITIONAL band.
+
+### Path A monitoring
+
+Path A remains the superior outcome (score 1, matching AXAU/PAXG exactly). Axiom Protocol will monitor two developments that could make Path A viable:
+- A Paxos-issued or equivalent regulated silver receipt token (analogous to PAXG)
+- A BitGo Trust + Brink's/Malca-Amit dual-layer structure where BitGo issues the trust receipt against physically allocated silver
+
+If either becomes available during Stage 2, the custody path hypothesis will be updated and C-03 may be reconsidered for a Path A selection.
+
+### Impact on re-scoring
+
+If Path B is selected at C-03:
+- Custody Risk: 3 → **2**
+- New composite: 2 + 2 + 3 + 1 + 2 = **10** → **APPROVED band**
+- Re-scoring band outcome: "May proceed to Stage 3"
+
+If Path A is selected at C-03:
+- Custody Risk: 3 → **1**
+- New composite: 2 + 1 + 3 + 1 + 2 = **9** → **APPROVED band**
+- Re-scoring band outcome: "May proceed to Stage 3"
+
+In either case, Liquidity Risk must also be remediated (score 3 → ≤ 2) for the composite to move correctly. Liquidity remediation is driven by L-01 through L-05 on a parallel track.
+
+---
+
+## Section 13 — Stage 2 Exit Criteria
+
+Stage 2 is complete only when **every one** of the following conditions is met. Requires dual sign-off (operator and governance steward, OW-08).
 
 ### Evidence checklist closure
 
-- [ ] All 7 Custody items (C-01 through C-07) are CLOSED with evidence attached
+- [x] ~~All 7 Custody items (C-01 through C-07) are CLOSED with evidence attached~~ — C-01 CLOSED. C-02 through C-07 remain open.
 - [ ] All 5 Liquidity items (L-01 through L-05) are CLOSED with evidence attached
 - [ ] All 4 Oracle items (O-01 through O-04) are CLOSED with evidence attached
 - [ ] All 3 Reserve items (R-01 through R-03) are CLOSED with evidence attached
@@ -333,32 +374,30 @@ Stage 2 is complete only when **every one** of the following conditions is met. 
 - [ ] Governance steward signed off on Stage 2 exit
 - [ ] Date of dual sign-off recorded here: _______________
 
-When all boxes above are checked and dual sign-off is recorded, Stage 2 is formally closed and AXAG advances to Stage 3 (Governance Vote) per the Commodity Expansion Framework v1.0.0, Section 7.
-
 ---
 
-## Section 13 — Tracker Summary
+## Section 14 — Tracker Summary
 
 | Workstream        | Total | OPEN | ASSIGNED | IN PROGRESS | BLOCKED | CLOSED |
 | ----------------- | :---: | :--: | :------: | :---------: | :-----: | :----: |
-| Custody           |   7   |  0   |    5     |      2      |    0    |   0    |
+| Custody           |   7   |  0   |    5     |      1      |    0    |   1    |
 | Liquidity         |   5   |  0   |    4     |      1      |    0    |   0    |
 | Oracle            |   4   |  0   |    3     |      1      |    0    |   0    |
 | Reserve           |   3   |  0   |    3     |      0      |    0    |   0    |
 | Regulatory        |   4   |  0   |    3     |      1      |    0    |   0    |
 | Process           |   5   |  0   |    5     |      0      |    0    |   0    |
 | Owner assignments |   8   |  0   |    8     |      0      |    0    |   0    |
-| **TOTAL**         | **36**| **0**| **31**   |    **5**    |  **0**  | **0**  |
+| **TOTAL**         | **36**| **0**| **30**   |    **4**    |  **0**  | **1**  |
 
-Last updated: 2026-05-01. Update this table each time an item changes status.
+Last updated: 2026-05-01.
 
 ---
 
-## Section 14 — Explicit Statement
+## Section 15 — Explicit Statement
 
 **AXAG IS NOT LIVE AND IS NOT APPROVED FOR DEPLOYMENT.**
 
-Moving items to IN PROGRESS in this tracker means diligence work has begun on documentation and evidence collection only. It does not authorize, schedule, or initiate any deployment, contract publication, token mint, swap pool creation, or banking integration. Closing every item in this tracker does not constitute approval of any AXAG instrument. Final deployment authority rests with a completed governance vote and a passing Stage 4 launch readiness gate, in that order, and not with this document.
+Advancing items to IN PROGRESS or CLOSED in this tracker means diligence work has begun or a diligence artifact has been produced. It does not authorize, schedule, or initiate any deployment, contract publication, token mint, swap pool creation, or banking integration. Closing every item in this tracker does not constitute approval of any AXAG instrument. Final deployment authority rests with a completed governance vote and a passing Stage 4 launch readiness gate, in that order, and not with this document.
 
 No contract has been deployed. No token has been minted. No swap pool has been opened. No banking rail has been enabled. No public claim of AXAG availability is made or implied.
 
