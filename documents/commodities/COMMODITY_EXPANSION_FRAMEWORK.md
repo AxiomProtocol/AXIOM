@@ -1,9 +1,9 @@
 # Axiom Protocol — Commodity Expansion Framework
 
-**Document class:** Governance Framework  
-**Version:** 1.0.0  
-**Effective date:** 2026-05-01  
-**Status:** ACTIVE — governs evaluation only. No commodity listed in this document is approved, deployed, or live unless separately confirmed by a completed governance vote and launch gate sign-off.
+Document class: Governance Framework  
+Version: 1.0.0  
+Effective date: 2026-05-01  
+Status: ACTIVE — governs evaluation only. No commodity listed in this document is approved, deployed, or live unless separately confirmed by a completed governance vote and launch gate sign-off.
 
 ---
 
@@ -31,7 +31,7 @@ This document establishes a governance-grade, repeatable framework for evaluatin
 
 ### What this document governs
 
-This framework governs the **evaluation and approval process** — not the launch, deployment, or approval of any specific commodity. No commodity described or named in this document is live, approved, or committed to a delivery timeline unless separately confirmed by all of the following:
+This framework governs the evaluation and approval process — not the launch, deployment, or approval of any specific commodity. No commodity described or named in this document is live, approved, or committed to a delivery timeline unless separately confirmed by all of the following:
 
 - A completed governance vote with documented majority
 - A passing launch readiness gate sign-off (Section 11)
@@ -60,71 +60,71 @@ The following five categories represent the scope of commodities that Axiom Prot
 
 ### Category A: Precious Metals
 
-**Status: NOT LAUNCHED — candidate only.**
+Status: NOT LAUNCHED — candidate only.
 
-**Description:** Reserve instruments backed by physical precious metals other than gold — primarily silver (XAG), and potentially platinum (XPT) and palladium (XPD).
+Description: Reserve instruments backed by physical precious metals other than gold — primarily silver (XAG), and potentially platinum (XPT) and palladium (XPD).
 
-**Why this category is viable:** Precious metals share AXAU's core infrastructure pattern. Chainlink publishes price feeds for XAG/USD, XPT/USD, and XPD/USD on major EVM networks. Tokenized precious metal instruments (e.g., Paxos silver, Perth Mint) provide a custody-eligible reserve asset class. The redemption model (return underlying metal token, not fiat) maps cleanly to AXAU's PAXG redemption pattern.
+Why this category is viable: Precious metals share AXAU's core infrastructure pattern. Chainlink publishes price feeds for XAG/USD, XPT/USD, and XPD/USD on major EVM networks. Tokenized precious metal instruments (e.g., Paxos silver, Perth Mint) provide a custody-eligible reserve asset class. The redemption model (return underlying metal token, not fiat) maps cleanly to AXAU's PAXG redemption pattern.
 
-**Key differentiation from AXAU:** Silver trades at a lower per-unit price than gold, which means a given dollar value of backing requires a larger physical quantity — operational buffer management and transfer costs are meaningfully different. Platinum and palladium have thinner markets and less Chainlink feed history; additional oracle due diligence is required.
+Key differentiation from AXAU: Silver trades at a lower per-unit price than gold, which means a given dollar value of backing requires a larger physical quantity — operational buffer management and transfer costs are meaningfully different. Platinum and palladium have thinner markets and less Chainlink feed history; additional oracle due diligence is required.
 
-**Eligibility commentary:** A silver reserve instrument (AXAG) is the most technically straightforward first expansion candidate given existing Chainlink XAG/USD feed maturity on Arbitrum One. Platinum and palladium remain deferred pending deeper oracle and liquidity analysis (see Section 12).
+Eligibility commentary: A silver reserve instrument (AXAG) is the most technically straightforward first expansion candidate given existing Chainlink XAG/USD feed maturity on Arbitrum One. Platinum and palladium remain deferred pending deeper oracle and liquidity analysis (see Section 12).
 
 ---
 
 ### Category B: Base Metals
 
-**Status: NOT LAUNCHED — candidate only.**
+Status: NOT LAUNCHED — candidate only.
 
-**Description:** Reserve instruments backed by industrial base metals — copper (XCU), aluminum, or similar.
+Description: Reserve instruments backed by industrial base metals — copper (XCU), aluminum, or similar.
 
-**Why this category is viable:** Copper has strong long-term demand fundamentals tied to electrification and infrastructure build-out. Tokenized copper instruments exist (e.g., warehouse receipt tokens backed by LME-grade copper).
+Why this category is viable: Copper has strong long-term demand fundamentals tied to electrification and infrastructure build-out. Tokenized copper instruments exist (e.g., warehouse receipt tokens backed by LME-grade copper).
 
-**Key differentiation from AXAU:** Base metal markets are dominated by futures contracts, not spot physical delivery, which introduces roll risk and storage cost considerations not present in the gold/silver model. On-chain price feed maturity for base metals is significantly lower than for precious metals — Chainlink does not publish a production-grade XCU/USD feed on Arbitrum One at the time of this document.
+Key differentiation from AXAU: Base metal markets are dominated by futures contracts, not spot physical delivery, which introduces roll risk and storage cost considerations not present in the gold/silver model. On-chain price feed maturity for base metals is significantly lower than for precious metals — Chainlink does not publish a production-grade XCU/USD feed on Arbitrum One at the time of this document.
 
-**Eligibility commentary:** Base metals are deferred until a production-grade Chainlink (or equivalent Tier 1 oracle) feed is live on Arbitrum One. No base metal instrument should proceed past Stage 1 (Candidate Submission) until an oracle meeting Section 5 requirements exists.
+Eligibility commentary: Base metals are deferred until a production-grade Chainlink (or equivalent Tier 1 oracle) feed is live on Arbitrum One. No base metal instrument should proceed past Stage 1 (Candidate Submission) until an oracle meeting Section 5 requirements exists.
 
 ---
 
 ### Category C: Energy-Linked Reserve Instruments
 
-**Status: NOT LAUNCHED — candidate only.**
+Status: NOT LAUNCHED — candidate only.
 
-**Description:** Reserve instruments economically linked to energy commodities — primarily oil (WTI or Brent) or natural gas.
+Description: Reserve instruments economically linked to energy commodities — primarily oil (WTI or Brent) or natural gas.
 
-**Why this category is viable:** Energy is a foundational global commodity. On-chain oil price feeds exist (Chainlink WTI/USD is available on some EVM networks). Several energy tokenization projects have published frameworks for oil-backed instruments.
+Why this category is viable: Energy is a foundational global commodity. On-chain oil price feeds exist (Chainlink WTI/USD is available on some EVM networks). Several energy tokenization projects have published frameworks for oil-backed instruments.
 
-**Key differentiation from AXAU:** Energy commodities cannot be physically settled in a wallet-to-wallet manner equivalent to PAXG. Redemption of an energy-linked instrument likely requires a third-party intermediary for physical delivery or conversion to cash (which conflicts with this framework's non-fiat-redemption standard). Energy prices are significantly more volatile than gold, and leverage through futures introduces basis risk.
+Key differentiation from AXAU: Energy commodities cannot be physically settled in a wallet-to-wallet manner equivalent to PAXG. Redemption of an energy-linked instrument likely requires a third-party intermediary for physical delivery or conversion to cash (which conflicts with this framework's non-fiat-redemption standard). Energy prices are significantly more volatile than gold, and leverage through futures introduces basis risk.
 
-**Eligibility commentary:** Energy-linked instruments face a structural challenge with the redemption model standard (Section 7). Any energy-linked instrument must solve physical delivery or adopt a warehouse-receipt model with a qualified custodian holding physical units before it can pass Stage 2. These instruments are classified as deferred — technically eligible in principle but requiring significant structural work before they can meet this framework's standards.
+Eligibility commentary: Energy-linked instruments face a structural challenge with the redemption model standard (Section 7). Any energy-linked instrument must solve physical delivery or adopt a warehouse-receipt model with a qualified custodian holding physical units before it can pass Stage 2. These instruments are classified as deferred — technically eligible in principle but requiring significant structural work before they can meet this framework's standards.
 
 ---
 
 ### Category D: Agricultural Commodity Instruments
 
-**Status: NOT LAUNCHED — candidate only.**
+Status: NOT LAUNCHED — candidate only.
 
-**Description:** Reserve instruments backed by agricultural commodities — grain, cotton, coffee, cocoa, or similar.
+Description: Reserve instruments backed by agricultural commodities — grain, cotton, coffee, cocoa, or similar.
 
-**Why this category is viable:** Agricultural commodities represent real economic output and could serve the protocol's broader mission of bridging digital capital to real-world productive assets. Warehouse receipt tokenization is a growing infrastructure layer for agricultural markets.
+Why this category is viable: Agricultural commodities represent real economic output and could serve the protocol's broader mission of bridging digital capital to real-world productive assets. Warehouse receipt tokenization is a growing infrastructure layer for agricultural markets.
 
-**Key differentiation from AXAU:** Agricultural commodities are perishable or subject to quality degradation over time, introducing reserve adequacy risks not present in gold. Chainlink does not maintain production-grade agricultural commodity feeds on Arbitrum One at the time of this document. Market liquidity is highly seasonal. Storage and insurance costs are meaningful.
+Key differentiation from AXAU: Agricultural commodities are perishable or subject to quality degradation over time, introducing reserve adequacy risks not present in gold. Chainlink does not maintain production-grade agricultural commodity feeds on Arbitrum One at the time of this document. Market liquidity is highly seasonal. Storage and insurance costs are meaningful.
 
-**Eligibility commentary:** Agricultural instruments are deferred. The minimum conditions for reconsideration are: (a) a production Chainlink or Tier 1 oracle feed for the specific commodity on Arbitrum One, (b) a non-perishable or durability-certified custody model, and (c) a demonstrated redemption path that does not require USD fiat settlement.
+Eligibility commentary: Agricultural instruments are deferred. The minimum conditions for reconsideration are: (a) a production Chainlink or Tier 1 oracle feed for the specific commodity on Arbitrum One, (b) a non-perishable or durability-certified custody model, and (c) a demonstrated redemption path that does not require USD fiat settlement.
 
 ---
 
 ### Category E: Land-Backed Reserve Units
 
-**Status: NOT LAUNCHED as a standalone commodity instrument — partially addressed by AXAU's existing land vault component.**
+Status: NOT LAUNCHED as a standalone commodity instrument — partially addressed by AXAU's existing land vault component.
 
-**Description:** Reserve instruments backed primarily by a portfolio of land or real property, distinct from AXAU's current land vault component (which is a secondary backing source, not the primary commodity).
+Description: Reserve instruments backed primarily by a portfolio of land or real property, distinct from AXAU's current land vault component (which is a secondary backing source, not the primary commodity).
 
-**Why this category is viable:** Land is a foundational real-world asset. Axiom Protocol's existing infrastructure includes a Land NAV Oracle (multi-party authorization), an AXLandVault contract, a Physical Asset Pipeline, and a Field Capture System — all oriented toward land-backed value. A standalone land reserve instrument (distinct from AXAU) is a logical extension of this infrastructure.
+Why this category is viable: Land is a foundational real-world asset. Axiom Protocol's existing infrastructure includes a Land NAV Oracle (multi-party authorization), an AXLandVault contract, a Physical Asset Pipeline, and a Field Capture System — all oriented toward land-backed value. A standalone land reserve instrument (distinct from AXAU) is a logical extension of this infrastructure.
 
-**Key differentiation from AXAU:** Land is illiquid relative to gold. A land-backed reserve instrument requires an automated control layer for periodic NAV attestation (already prototyped in the AXLandVault / LandNAVOracleMultiSig infrastructure), a clear redemption model for an illiquid asset (likely fractionalized land receipt tokens or staged auction mechanisms rather than instant physical delivery), and governance approval of a valuation methodology.
+Key differentiation from AXAU: Land is illiquid relative to gold. A land-backed reserve instrument requires an automated control layer for periodic NAV attestation (already prototyped in the AXLandVault / LandNAVOracleMultiSig infrastructure), a clear redemption model for an illiquid asset (likely fractionalized land receipt tokens or staged auction mechanisms rather than instant physical delivery), and governance approval of a valuation methodology.
 
-**Eligibility commentary:** A standalone land-backed reserve instrument is the most architecturally adjacent expansion to AXAU — the oracle, vault, and NAV attestation infrastructure already exist in partial form. This is the highest-priority category for Phase 3 evaluation, but it requires: (a) a finalized land NAV oracle methodology with external attestation, (b) a redemption model that does not promise USD fiat payout, and (c) governance vote establishing acceptable NAV update frequency and staleness thresholds.
+Eligibility commentary: A standalone land-backed reserve instrument is the most architecturally adjacent expansion to AXAU — the oracle, vault, and NAV attestation infrastructure already exist in partial form. This is the highest-priority category for Phase 3 evaluation, but it requires: (a) a finalized land NAV oracle methodology with external attestation, (b) a redemption model that does not promise USD fiat payout, and (c) governance vote establishing acceptable NAV update frequency and staleness thresholds.
 
 ---
 
@@ -136,9 +136,9 @@ All commodity candidates follow a four-stage pipeline. No stage may be skipped. 
 
 ### Stage 1 — Candidate Submission
 
-**Initiator:** Any AXM governance token holder, Axiom Protocol core team, or designated research committee.
+Initiator: Any AXM governance token holder, Axiom Protocol core team, or designated research committee.
 
-**Process:** Submit a Commodity Candidate Brief (CCB) to the governance forum. The CCB must include:
+Process: Submit a Commodity Candidate Brief (CCB) to the governance forum. The CCB must include:
 
 1. Commodity identifier and market (e.g., XAG, silver, LBMA spot)
 2. Proposed category per Section 2
@@ -149,15 +149,15 @@ All commodity candidates follow a four-stage pipeline. No stage may be skipped. 
 7. Known risks and open questions
 8. Statement that the submitter has reviewed this framework and believes the commodity meets the standards herein
 
-**Artifact required to advance:** Published CCB on the governance forum with a minimum 7-day comment period. No community vote is required at this stage — Stage 1 is informational.
+Artifact required to advance: Published CCB on the governance forum with a minimum 7-day comment period. No community vote is required at this stage — Stage 1 is informational.
 
 ---
 
 ### Stage 2 — Technical Diligence
 
-**Initiator:** Axiom Protocol technical team upon acknowledgment of a Stage 1 CCB.
+Initiator: Axiom Protocol technical team upon acknowledgment of a Stage 1 CCB.
 
-**Process:** Conduct a structured technical review against the standards in Sections 4 through 9. Produce a Technical Diligence Report (TDR) covering:
+Process: Conduct a structured technical review against the standards in Sections 4 through 9. Produce a Technical Diligence Report (TDR) covering:
 
 1. Oracle feed assessment (Section 5 checklist)
 2. Reserve asset assessment (Section 4 checklist)
@@ -168,27 +168,27 @@ All commodity candidates follow a four-stage pipeline. No stage may be skipped. 
 7. Preliminary launch gate pre-check (Section 11) — identifying any hard blockers
 8. Recommended proceed / defer / reject recommendation with reasoning
 
-**Artifact required to advance:** Published TDR with a risk score and explicit proceed/defer/reject recommendation. If the score is 17 or above (DEFERRED or REJECTED per Section 10), the workflow terminates at Stage 2 and the candidate must be substantially revised or withdrawn before re-submission.
+Artifact required to advance: Published TDR with a risk score and explicit proceed/defer/reject recommendation. If the score is 17 or above (DEFERRED or REJECTED per Section 10), the workflow terminates at Stage 2 and the candidate must be substantially revised or withdrawn before re-submission.
 
 ---
 
 ### Stage 3 — Governance Vote
 
-**Initiator:** Axiom Protocol governance multisig upon receipt of a passing TDR (score 10 or below for APPROVED; 11–16 for CONDITIONAL with documented remediation plan).
+Initiator: Axiom Protocol governance multisig upon receipt of a passing TDR (score 10 or below for APPROVED; 11–16 for CONDITIONAL with documented remediation plan).
 
-**Process:** A formal on-chain governance proposal is published. The proposal must reference the CCB and TDR by hash or IPFS CID and include the full risk score breakdown. Voting parameters follow the current AXM governance rules (minimum quorum, minimum approval threshold, voting window).
+Process: A formal on-chain governance proposal is published. The proposal must reference the CCB and TDR by hash or IPFS CID and include the full risk score breakdown. Voting parameters follow the current AXM governance rules (minimum quorum, minimum approval threshold, voting window).
 
-**Artifact required to advance:** On-chain governance vote with passing outcome, recorded transaction hash, and a post-vote Governance Approval Record (GAR) documenting the approved parameters (commodity, reserve asset, oracle, custodian, redemption model, any conditional requirements).
+Artifact required to advance: On-chain governance vote with passing outcome, recorded transaction hash, and a post-vote Governance Approval Record (GAR) documenting the approved parameters (commodity, reserve asset, oracle, custodian, redemption model, any conditional requirements).
 
 ---
 
 ### Stage 4 — Launch Gate
 
-**Initiator:** Axiom Protocol technical team upon receipt of a GAR.
+Initiator: Axiom Protocol technical team upon receipt of a GAR.
 
-**Process:** Execute the full launch readiness gate (Section 11) against a deployed staging environment. Every hard blocker must pass. Every soft gate must either pass or have a documented governance waiver. A final Launch Readiness Certificate (LRC) is issued.
+Process: Execute the full launch readiness gate (Section 11) against a deployed staging environment. Every hard blocker must pass. Every soft gate must either pass or have a documented governance waiver. A final Launch Readiness Certificate (LRC) is issued.
 
-**Artifact required to advance:** Signed LRC, published on-chain disclosure endpoint meeting Section 9 requirements, and public commodity status console meeting the Phase 2C pattern. Only after LRC issuance may the instrument be described as "LIVE" in any user-facing context.
+Artifact required to advance: Signed LRC, published on-chain disclosure endpoint meeting Section 9 requirements, and public commodity status console meeting the Phase 2C pattern. Only after LRC issuance may the instrument be described as "LIVE" in any user-facing context.
 
 ---
 
@@ -200,11 +200,11 @@ These standards define what constitutes an acceptable reserve asset for a commod
 
 The reserve asset must be:
 
-1. **On-chain representable** — the reserve must exist as an ERC-20 token on a supported EVM network (currently Arbitrum One) or be convertible to one via a qualified, audited bridge.
-2. **Price-oracle addressable** — a Chainlink (or equivalent Tier 1) price feed for the reserve asset must exist on the target network with a track record of at least 12 months of production uptime.
-3. **Non-rehypothecable by default** — the reserve asset held in the protocol vault must not be lent, pledged, or otherwise re-encumbered without an explicit governance vote authorizing the specific use.
-4. **Independently auditable** — the reserve asset's on-chain balance must be verifiable by any party with a standard RPC provider connection, without reliance on privileged data.
-5. **Transfer-capable without fiat intermediary** — the reserve asset must be deliverable to a user's self-custody wallet on redemption without requiring a USD wire, ACH, or bank transfer.
+1. On-chain representable — the reserve must exist as an ERC-20 token on a supported EVM network (currently Arbitrum One) or be convertible to one via a qualified, audited bridge.
+2. Price-oracle addressable — a Chainlink (or equivalent Tier 1) price feed for the reserve asset must exist on the target network with a track record of at least 12 months of production uptime.
+3. Non-rehypothecable by default — the reserve asset held in the protocol vault must not be lent, pledged, or otherwise re-encumbered without an explicit governance vote authorizing the specific use.
+4. Independently auditable — the reserve asset's on-chain balance must be verifiable by any party with a standard RPC provider connection, without reliance on privileged data.
+5. Transfer-capable without fiat intermediary — the reserve asset must be deliverable to a user's self-custody wallet on redemption without requiring a USD wire, ACH, or bank transfer.
 
 ### 4.2 Coverage ratio requirements
 
@@ -221,9 +221,9 @@ All commodity reserve instruments must maintain a minimum coverage ratio of 105%
 
 Custody of the reserve asset must be independently attested at minimum:
 
-- **Annually** — formal third-party custody audit
-- **Quarterly** — internal attestation published on-chain or via a public disclosure endpoint
-- **On demand** — any time the coverage ratio falls below 105%
+- Annually — formal third-party custody audit
+- Quarterly — internal attestation published on-chain or via a public disclosure endpoint
+- On demand — any time the coverage ratio falls below 105%
 
 ### 4.4 AXAU reference
 
@@ -254,8 +254,8 @@ The primary oracle must meet all of the following criteria:
 
 The protocol enforces oracle staleness at two levels:
 
-1. **Service level** — `ORACLE_STALE_THRESHOLD_SECONDS` (configurable, default 97,200 s) enforced by `assertOracleFresh()`. If the oracle age exceeds this threshold, the instrument's commodity disclosure console grades the oracle section CRITICAL, mint pauses, and no new liquidity routes are simulated.
-2. **On-chain level** — the MintRedeemController enforces the same threshold on-chain. A stale oracle at the contract level will cause NAVEngine reads to revert, triggering `navEngineDegraded = true`.
+1. Service level — `ORACLE_STALE_THRESHOLD_SECONDS` (configurable, default 97,200 s) enforced by `assertOracleFresh()`. If the oracle age exceeds this threshold, the instrument's commodity disclosure console grades the oracle section CRITICAL, mint pauses, and no new liquidity routes are simulated.
+2. On-chain level — the MintRedeemController enforces the same threshold on-chain. A stale oracle at the contract level will cause NAVEngine reads to revert, triggering `navEngineDegraded = true`.
 
 Both levels must agree. If the on-chain staleness threshold and the service-level threshold differ, the more conservative (shorter) value governs.
 
@@ -279,19 +279,19 @@ A missing or absent oracle is an unconditional hard blocker for launch. No instr
 
 The following custodian models are acceptable, in descending order of preference:
 
-1. **Qualified custodian with on-chain representation** — a regulated trust company or custodian (e.g., Paxos, BitGo, Copper) that issues an ERC-20 receipt token directly redeemable for the physical asset. This is the AXAU pattern (PAXG / Paxos).
-2. **Exchange-grade multi-party authorization** — an institutional-grade multi-party authorization arrangement (minimum 3-of-5 keyholders, geographically distributed) holding the reserve asset in a segregated account with independent proof-of-reserve.
-3. **On-chain deployer-controlled buffer** — acceptable as a supplemental operational buffer (to cover pending settlement demand) but not as the primary reserve custody model. The buffer minimum formula is defined in Section 8.2.
+1. Qualified custodian with on-chain representation — a regulated trust company or custodian (e.g., Paxos, BitGo, Copper) that issues an ERC-20 receipt token directly redeemable for the physical asset. This is the AXAU pattern (PAXG / Paxos).
+2. Exchange-grade multi-party authorization — an institutional-grade multi-party authorization arrangement (minimum 3-of-5 keyholders, geographically distributed) holding the reserve asset in a segregated account with independent proof-of-reserve.
+3. On-chain deployer-controlled buffer — acceptable as a supplemental operational buffer (to cover pending settlement demand) but not as the primary reserve custody model. The buffer minimum formula is defined in Section 8.2.
 
 ### 6.2 Custodian requirements
 
 Regardless of model, the custodian must:
 
-1. Hold the reserve asset in a **segregated account** — not commingled with the custodian's proprietary assets or other clients.
-2. Publish **proof of reserves** at minimum quarterly, using a methodology that allows independent on-chain or cryptographic verification.
-3. Carry **insurance or surety** covering at minimum the replacement value of the reserve assets under custody.
-4. Operate under a **written custody agreement** that gives Axiom Protocol the right to direct redemption of the reserve asset to a user's wallet address.
-5. Provide an **emergency contact and escalation path** for custody incidents, documented in the Technical Diligence Report.
+1. Hold the reserve asset in a segregated account — not commingled with the custodian's proprietary assets or other clients.
+2. Publish proof of reserves at minimum quarterly, using a methodology that allows independent on-chain or cryptographic verification.
+3. Carry insurance or surety covering at minimum the replacement value of the reserve assets under custody.
+4. Operate under a written custody agreement that gives Axiom Protocol the right to direct redemption of the reserve asset to a user's wallet address.
+5. Provide an emergency contact and escalation path for custody incidents, documented in the Technical Diligence Report.
 
 ### 6.3 Custodian prohibitions
 
@@ -313,7 +313,7 @@ AXAU's primary reserve custody is provided by Paxos Trust Company via PAXG. The 
 
 Redemption must return the underlying reserve asset — not USD, not a stablecoin, not a bank wire. This is the foundational distinction between a commodity reserve instrument and a stablecoin. A commodity reserve instrument that promises USD on redemption is a stablecoin with extra steps.
 
-**AXAU reference:** Redeeming AXAU returns PAXG to the user's wallet. The user holds physical-gold-backed tokens directly in self-custody. Converting PAXG to fiat is the user's own action through a third-party venue. Axiom Protocol does not intermediate that conversion.
+AXAU reference: Redeeming AXAU returns PAXG to the user's wallet. The user holds physical-gold-backed tokens directly in self-custody. Converting PAXG to fiat is the user's own action through a third-party venue. Axiom Protocol does not intermediate that conversion.
 
 ### 7.2 Required redemption properties
 
@@ -388,7 +388,23 @@ All liquidity engine outputs must carry explicit machine-readable transparency f
 
 These fields must appear in the API response of the commodity disclosure endpoint. No route output may be described as an "executable quote" or "best execution" without an active order-routing integration that accounts for actual pool depth and slippage — which is not in scope for any Phase 2 instrument.
 
-### 8.4 On-chain pool depth (Phase 3 requirement)
+### 8.4 Simulation baseline thresholds
+
+Although slippage and pool depth are not modeled at Phase 2 (see Section 8.3), the liquidity engine must use the following baseline threshold assumptions to classify price deviation and arbitrage risk. These thresholds are advisory defaults calibrated against AXAU. A different commodity may require different thresholds, which must be documented in the Technical Diligence Report and confirmed by governance.
+
+| Threshold | Default value | AXAU reference | Notes |
+|-----------|--------------|----------------|-------|
+| Arbitrage trigger (price deviation before arbitrage flag) | 50 bps | 50 bps | Below this, deviation is within normal spread; no arbitrage flag raised |
+| HEALTHY band ceiling (deviation before WATCH classification) | 100 bps | 100 bps | Deviation within 100 bps of NAV is considered normal for a production instrument |
+| THIN / WATCH band ceiling | 200 bps | 200 bps | Deviation between 100 and 200 bps raises WATCH; arbitrage opportunity may exist |
+| CRITICAL band threshold | 200 bps+ | 200 bps | Deviation above 200 bps indicates a systemic dislocation requiring operator review |
+| Assumed notional per simulated route | 1,000 AXAUSD equivalent | 1,000 AXUSD | Route simulation uses this notional; actual execution size may differ |
+| Minimum assumed reserve pool depth (simulation floor) | 10,000 AXUSD equivalent | Not modeled | Notional floor used only for route feasibility classification; actual depth not measured |
+| Assumed slippage for simulation-only outputs | 0 bps (no slippage modeled) | 0 bps | All simulation outputs must carry the transparency fields from Section 8.3 |
+
+These thresholds define the simulation model's classification behavior. They do not represent real market conditions, executable prices, or actual pool depth. Any communication of these thresholds to end users must be accompanied by the simulation-only disclosure from Section 8.3.
+
+### 8.5 On-chain pool depth (Phase 3 requirement)
 
 On-chain pool depth modeling (AMM integration, Camelot / Uniswap routing, real slippage) is out of scope for the foundation liquidity layer but is a Phase 3 requirement before any instrument is described as having "deep liquidity." The Phase 2B/2D simulation-only engine is sufficient for disclosure and operator monitoring but must not be presented as a measure of actual market depth.
 
@@ -422,16 +438,16 @@ Technical terms are preserved in the protocol's canonical glossary (`lib/glossar
 
 Every commodity reserve instrument must expose a public read-only commodity disclosure endpoint following the Phase 2C pattern established by `/api/axau/commodity-disclosure`. The endpoint must return:
 
-1. **Overall risk label** — HEALTHY / WATCH / DEGRADED / CRITICAL (worst of all subsections)
-2. **Backing and reserve section** — coverage ratio, reserve asset balance, vault frozen status, buffer capacity
-3. **NAV engine section** — degraded flag, backing NAV per token, mint NAV per token
-4. **Oracle section** — stale flag, oracle age, staleness threshold, last updated timestamp, spot price
-5. **Liquidity section** — implied instrument price, spot commodity price, deviation in bps, arbitrage direction, simulation transparency fields
-6. **Mint/redeem section** — paused flags, fee schedule, cumulative volume
-7. **Solvency snapshot section** — snapshot freshness, age, checksum
-8. **Known limitations** — static list of modeling gaps and disclosure caveats
-9. **Deferred rails** — explicit list of redemption pathways not supported (ACH, wires, fiat bank payout)
-10. **Disclaimers** — including crypto-native nature, return-of-reserve-asset redemption model, simulation-only liquidity
+1. Overall risk label — HEALTHY / WATCH / DEGRADED / CRITICAL (worst of all subsections)
+2. Backing and reserve section — coverage ratio, reserve asset balance, vault frozen status, buffer capacity
+3. NAV engine section — degraded flag, backing NAV per token, mint NAV per token
+4. Oracle section — stale flag, oracle age, staleness threshold, last updated timestamp, spot price
+5. Liquidity section — implied instrument price, spot commodity price, deviation in bps, arbitrage direction, simulation transparency fields
+6. Mint/redeem section — paused flags, fee schedule, cumulative volume
+7. Solvency snapshot section — snapshot freshness, age, checksum
+8. Known limitations — static list of modeling gaps and disclosure caveats
+9. Deferred rails — explicit list of redemption pathways not supported (ACH, wires, fiat bank payout)
+10. Disclaimers — including crypto-native nature, return-of-reserve-asset redemption model, simulation-only liquidity
 
 ### 9.4 Required public disclosure page
 
@@ -456,6 +472,10 @@ No disclosure documentation for a commodity reserve instrument may contain:
 ### 10.1 Overview
 
 Each commodity candidate is scored across five risk dimensions. Each dimension is scored 1 (lowest risk) to 5 (highest risk). The composite score determines the approval outcome.
+
+All five dimensions carry equal weight (20% each). The composite score is the unweighted sum of the five dimension scores: a minimum possible score of 5 (all dimensions score 1) and a maximum possible score of 25 (all dimensions score 5). No dimension may be omitted from a completed Technical Diligence Report; a missing dimension is treated as a score of 5 for that dimension.
+
+Governance may vote to apply dimension-specific multipliers for a specific commodity candidate if it presents an unusually concentrated risk profile — for example, a multiplier of 1.5 on Oracle Risk for a commodity with a newly deployed price feed. Any such multiplier must be documented in the Stage 2 TDR and confirmed by governance before the Stage 3 vote. If no multiplier is approved, equal weighting (1.0x per dimension) applies.
 
 ### 10.2 Score bands
 
@@ -537,7 +557,7 @@ AXAU is the reference implementation. Its score at launch was:
 | Liquidity Risk | 2 | PAXG on-chain, but limited AMM depth for AXAU itself at launch; deep gold spot market |
 | Reserve Risk | 1 | Physical gold, LBMA accredited, non-perishable, centuries of value preservation |
 | Regulatory Risk | 2 | Strong commodity precedent for gold; stablecoin regulatory framework in development; legal review in progress |
-| **Composite** | **7** | **APPROVED band (5–10)** |
+| Composite | 7 | APPROVED band (5–10) |
 
 A composite score of 7 places AXAU solidly in the APPROVED band. Future instruments should target a score of 10 or below. Any dimension scoring 4 or 5 requires explicit governance discussion and a remediation commitment before the instrument can proceed.
 
@@ -668,20 +688,20 @@ The framework's purpose is to surface risk clearly so governance can make inform
 
 ## Appendix B — Key Definitions
 
-**Reserve instrument:** A protocol-issued token whose value is backed by a specific underlying reserve asset held in custody, with coverage measured in real time by an on-chain NAV engine.
+Reserve instrument: A protocol-issued token whose value is backed by a specific underlying reserve asset held in custody, with coverage measured in real time by an on-chain NAV engine.
 
-**Coverage ratio:** The ratio of the total USD value of assets held in the protocol's vaults (backing) to the total USD value of the circulating supply of the instrument, expressed in basis points. 10,000 bps = 100% coverage.
+Coverage ratio: The ratio of the total USD value of assets held in the protocol's vaults (backing) to the total USD value of the circulating supply of the instrument, expressed in basis points. 10,000 bps = 100% coverage.
 
-**NAVEngine:** The on-chain automated control layer that computes the backing NAV per token and the mint NAV per token using live oracle prices and vault balances.
+NAVEngine: The on-chain automated control layer that computes the backing NAV per token and the mint NAV per token using live oracle prices and vault balances.
 
-**Oracle staleness:** The condition where the on-chain price feed for the reserve asset has not been updated within the configured staleness threshold. A stale oracle prevents the NAVEngine from computing a valid NAV and triggers an automatic CRITICAL classification in the commodity disclosure console.
+Oracle staleness: The condition where the on-chain price feed for the reserve asset has not been updated within the configured staleness threshold. A stale oracle prevents the NAVEngine from computing a valid NAV and triggers an automatic CRITICAL classification in the commodity disclosure console.
 
-**Operational buffer:** The reserve asset (or a liquid equivalent) held by the protocol deployer to pre-fund pending redemption and mint settlement demand while on-chain settlement processes asynchronously.
+Operational buffer: The reserve asset (or a liquid equivalent) held by the protocol deployer to pre-fund pending redemption and mint settlement demand while on-chain settlement processes asynchronously.
 
-**Liquidity engine:** The read-only computation layer (Phase 2B pattern) that derives an implied instrument price from NAV per token, compares it to the spot commodity price, classifies arbitrage conditions, and simulates deterministic mint/redeem routes. Outputs are simulations only; slippage and pool depth are not modeled.
+Liquidity engine: The read-only computation layer (Phase 2B pattern) that derives an implied instrument price from NAV per token, compares it to the spot commodity price, classifies arbitrage conditions, and simulates deterministic mint/redeem routes. Outputs are simulations only; slippage and pool depth are not modeled.
 
-**Commodity disclosure console:** The public read-only status page and API endpoint (Phase 2C pattern) that aggregates reserve, NAVEngine, oracle, liquidity, mint/redeem, and solvency snapshot health into a single structured disclosure surface with four-tier risk labels (HEALTHY / WATCH / DEGRADED / CRITICAL).
+Commodity disclosure console: The public read-only status page and API endpoint (Phase 2C pattern) that aggregates reserve, NAVEngine, oracle, liquidity, mint/redeem, and solvency snapshot health into a single structured disclosure surface with four-tier risk labels (HEALTHY / WATCH / DEGRADED / CRITICAL).
 
 ---
 
-*This document is a governance framework. Nothing in this document constitutes investment advice, a solicitation to invest, a representation of current or future performance, a guarantee of any return, or a legal opinion. All commodity candidates listed herein are candidates only and are not launched, approved, or available for purchase unless separately confirmed by a completed governance vote, a passing launch gate, and a live commodity disclosure endpoint.*
+This document is a governance framework. Nothing in this document constitutes investment advice, a solicitation to invest, a representation of current or future performance, a guarantee of any return, or a legal opinion. All commodity candidates listed herein are candidates only and are not launched, approved, or available for purchase unless separately confirmed by a completed governance vote, a passing launch gate, and a live commodity disclosure endpoint.
