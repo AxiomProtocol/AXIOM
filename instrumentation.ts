@@ -66,6 +66,10 @@ export async function register() {
       // ── Extensions ──
       await exec(`CREATE EXTENSION IF NOT EXISTS pg_trgm`, 'pg_trgm');
       await exec(`CREATE EXTENSION IF NOT EXISTS pgcrypto`, 'pgcrypto');
+      // PostGIS is used by migration 0004 (re_parcels.geometry GIST index).
+      // Skipped silently if the extension is unavailable on this Postgres
+      // build — the app uses geometry_json (jsonb) at runtime.
+      await exec(`CREATE EXTENSION IF NOT EXISTS postgis`, 'postgis');
 
       // ── Enums: Real Estate ──
       await exec(enumSafe('deal_strategy', ['brrrr','flip','hold','note','multifamily']), 'enum deal_strategy');
@@ -325,6 +329,26 @@ export async function register() {
         expires_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`, 'table idempotency_keys');
+      // Sync with migration 0003 + lib/server/idempotency.ts (queries the
+      // canonical column set). Legacy `key`/`response` columns are kept
+      // nullable to preserve existing rows on dev DBs.
+      await exec(`ALTER TABLE idempotency_keys ALTER COLUMN key DROP NOT NULL`, 'alter idempotency_keys.key drop not null');
+      await exec(`ALTER TABLE idempotency_keys ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(255)`, 'alter idempotency_keys.idempotency_key');
+      await exec(`ALTER TABLE idempotency_keys ADD COLUMN IF NOT EXISTS endpoint VARCHAR(255)`, 'alter idempotency_keys.endpoint');
+      await exec(`ALTER TABLE idempotency_keys ADD COLUMN IF NOT EXISTS method VARCHAR(10)`, 'alter idempotency_keys.method');
+      await exec(`ALTER TABLE idempotency_keys ADD COLUMN IF NOT EXISTS request_id VARCHAR(64)`, 'alter idempotency_keys.request_id');
+      await exec(`ALTER TABLE idempotency_keys ADD COLUMN IF NOT EXISTS response_code INTEGER`, 'alter idempotency_keys.response_code');
+      await exec(`ALTER TABLE idempotency_keys ADD COLUMN IF NOT EXISTS response_body TEXT`, 'alter idempotency_keys.response_body');
+      // Unique constraint required by the ON CONFLICT clause in storeIdempotencyKey().
+      await exec(`DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'idempotency_keys_idempotency_key_endpoint_method_key'
+        ) THEN
+          ALTER TABLE idempotency_keys ADD CONSTRAINT idempotency_keys_idempotency_key_endpoint_method_key UNIQUE (idempotency_key, endpoint, method);
+        END IF;
+      END $$`, 'unique idempotency_keys (idempotency_key, endpoint, method)');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_idempotency_keys_lookup ON idempotency_keys (idempotency_key, endpoint, method)`, 'index idx_idempotency_keys_lookup');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_idempotency_keys_expires ON idempotency_keys (expires_at)`, 'index idx_idempotency_keys_expires');
 
       // ═══════════════════════════════════════════
       //  FIELD INTELLIGENCE CAPTURE (Layer 5)
@@ -397,9 +421,13 @@ export async function register() {
       await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS laundry_room unit_condition DEFAULT 'not_inspected'`, 'alter walk_rows.laundry_room');
       await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS voice_note TEXT`, 'alter walk_rows.voice_note');
       await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS unit_class VARCHAR(30) DEFAULT 'classic'`, 'alter walk_rows.unit_class');
+      // Sync with migration 0007 + shared/fieldIntelligenceSchema.ts (unit_label
+      // is the canonical column; legacy unit_number is kept for back-compat).
+      await exec(`ALTER TABLE field_unit_walk_rows ADD COLUMN IF NOT EXISTS unit_label VARCHAR(120)`, 'alter walk_rows.unit_label');
 
       await exec(`CREATE INDEX IF NOT EXISTS field_walk_session_idx ON field_unit_walk_rows(session_id)`, 'index field_walk_session_idx');
       await exec(`CREATE INDEX IF NOT EXISTS field_walk_unit_number_idx ON field_unit_walk_rows(unit_number)`, 'index field_walk_unit_number_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS field_unit_walk_rows_unit_label_idx ON field_unit_walk_rows(unit_label)`, 'index field_unit_walk_rows_unit_label_idx');
 
       await exec(`CREATE TABLE IF NOT EXISTS field_unit_walk_deficiencies (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -439,6 +467,13 @@ export async function register() {
 
       await exec(`CREATE INDEX IF NOT EXISTS field_photos_walk_idx ON field_unit_walk_photos(unit_walk_id)`, 'index field_photos_walk_idx');
       await exec(`CREATE INDEX IF NOT EXISTS field_photos_type_idx ON field_unit_walk_photos(photo_type)`, 'index field_photos_type_idx');
+      // Sync with migration 0007: session_id + row_id columns are referenced
+      // by indexes the migration creates. Added nullable so existing rows
+      // (which were captured against unit_walk_id) are preserved.
+      await exec(`ALTER TABLE field_unit_walk_photos ADD COLUMN IF NOT EXISTS session_id UUID`, 'alter field_unit_walk_photos.session_id');
+      await exec(`ALTER TABLE field_unit_walk_photos ADD COLUMN IF NOT EXISTS row_id UUID`, 'alter field_unit_walk_photos.row_id');
+      await exec(`CREATE INDEX IF NOT EXISTS field_unit_walk_photos_session_idx ON field_unit_walk_photos(session_id)`, 'index field_unit_walk_photos_session_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS field_unit_walk_photos_row_idx ON field_unit_walk_photos(row_id)`, 'index field_unit_walk_photos_row_idx');
 
       await exec(`CREATE TABLE IF NOT EXISTS field_inspection_summaries (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -900,6 +935,11 @@ export async function register() {
         land_use VARCHAR(100), zoning VARCHAR(50), meta JSONB,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(), updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )`, 'table re_parcels');
+      // Sync with shared/realEstateSchema.ts: geometry_json (jsonb) is the
+      // app-level column. The PostGIS `geometry` column is also added so
+      // migration 0004's GIST index can build cleanly when PostGIS is present.
+      await exec(`ALTER TABLE re_parcels ADD COLUMN IF NOT EXISTS geometry_json JSONB`, 'alter re_parcels.geometry_json');
+      await exec(`ALTER TABLE re_parcels ADD COLUMN IF NOT EXISTS geometry GEOMETRY(Polygon, 4326)`, 'alter re_parcels.geometry');
 
       await exec(`CREATE TABLE IF NOT EXISTS re_property_parcel_links (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
