@@ -296,9 +296,14 @@ export default function OperatorDashboard(props: DashboardProps) {
           <p className="text-sm text-dl-muted mb-3">
             Deferred: ACH, wires, virtual accounts, direct deposit, fiat redemption. Redemption returns PAXG.
           </p>
-          <Link href="/operator/attestations" className="text-sm underline">
-            Open attestations log →
-          </Link>
+          <div className="flex gap-4">
+            <Link href="/operator/attestations" className="text-sm underline">
+              Open attestations log →
+            </Link>
+            <Link href="/operator/axau-stabilization" className="text-sm underline">
+              Phase 2A stabilization report →
+            </Link>
+          </div>
         </section>
 
         <section className="border border-dl-border p-4">
