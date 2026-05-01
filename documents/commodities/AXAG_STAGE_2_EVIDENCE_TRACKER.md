@@ -4,7 +4,7 @@ Document class: Commodity Candidate Evidence Tracker
 Framework: Commodity Expansion Framework v1.0.0
 Candidate: Axiom Silver (AXAG)
 Stage: 2 — Technical Diligence
-Tracker status: ASSIGNED — 36 items assigned, 0 in progress, 0 closed
+Tracker status: EXECUTION ACTIVE — 5 IN PROGRESS, 31 ASSIGNED, 0 closed
 Source packet: documents/commodities/AXAG_STAGE_2_DILIGENCE_PACKET.md
 Effective date: 2026-05-01
 Last updated: 2026-05-01
@@ -25,20 +25,21 @@ AXAG is a **candidate only**. AXAG is **not live**, **not approved for deploymen
 | Workstream        | Custody / Liquidity / Oracle / Reserve / Regulatory / Process / Owner          |
 | Requirement       | Verbatim from the Stage 2 diligence packet evidence checklist or owner table.   |
 | Owner role        | Role from the diligence packet.                                                 |
-| Assigned owner    | Named role designation. Replace with a named individual when one is confirmed.  |
+| Assigned owner    | Named role designation. Replace with a named individual when confirmed.         |
 | Status            | OPEN / ASSIGNED / IN PROGRESS / BLOCKED / CLOSED                                |
-| Evidence link     | Path to attached document, URL, or artifact reference. Leave blank until filed. |
+| Evidence link     | Path to attached document, URL, or artifact reference.                          |
 | Blocker notes     | Any dependency, constraint, or risk blocking progress.                          |
 | Target date       | Leave blank until owner agrees to a target.                                     |
+| Last updated      | Date the row was last changed.                                                  |
 
 Status definitions:
 - **OPEN** — not started; no owner, no evidence
 - **ASSIGNED** — owner role designated; work has not yet begun; no evidence filed
-- **IN PROGRESS** — named individual confirmed; work actively under way
+- **IN PROGRESS** — work actively under way; owner moving against this item today
 - **BLOCKED** — work cannot proceed; blocker notes required
 - **CLOSED** — evidence filed and reviewed by the designated reviewer
 
-No item in this tracker may advance to IN PROGRESS until the corresponding OW-row in Section 7 has a named individual (not a role placeholder) recorded in the Assigned owner field and confirmed by the governance steward.
+No item may advance to CLOSED without evidence attached and reviewer sign-off.
 
 ---
 
@@ -48,17 +49,17 @@ Source: Section 7 (Custody) of the diligence packet.
 Owner role: Treasury operations lead (reviewer: Compliance lead).
 Remediation priority: **PRIORITY 1 — CRITICAL PATH** — Custody Risk scored 3 in Stage 1; must reach ≤ 2 before re-scoring. No re-scoring run may proceed until C-01 through C-07 are all CLOSED.
 
-| Item ID | Workstream | Requirement                                                                   | Owner role                 | Assigned owner       | Status     | Evidence link | Blocker notes                                                                        | Target date |
-| ------- | ---------- | ----------------------------------------------------------------------------- | -------------------------- | -------------------- | :--------: | ------------- | ------------------------------------------------------------------------------------ | ----------- |
-| C-01    | Custody    | Custody RFP final                                                             | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED   |               | No custody partner identified. RFP must be drafted and issued before any response can be collected. |             |
-| C-02    | Custody    | Custody RFP responses tabulated against framework Section 6 criteria          | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED   |               | Blocked on C-01.                                                                     |             |
-| C-03    | Custody    | Selected custodian identified (Path A, B, or documented fallback)             | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED   |               | Blocked on C-02. Path A (PAXG-equivalent silver issuer) currently has no known candidate; Path B (regulated custodian + quarterly PoR) is the expected path. |             |
-| C-04    | Custody    | Term sheet drafted and attached                                               | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED   |               | Blocked on C-03.                                                                     |             |
-| C-05    | Custody    | Vault location, segregation model, and insurance position documented          | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED   |               | Blocked on C-03.                                                                     |             |
-| C-06    | Custody    | Attestation cadence agreed (monthly preferred, quarterly minimum)             | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED   |               | Blocked on C-04. Cadence must appear in the term sheet.                              |             |
-| C-07    | Custody    | Chain-of-custody model documented from refining to vault                      | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED   |               | Blocked on C-03. Must cover assay, transport, storage, and audit trail.              |             |
+| Item ID | Workstream | Requirement                                                                   | Owner role                 | Assigned owner       | Status        | Evidence link | Blocker notes                                                                                                                                                     | Target date | Last updated |
+| ------- | ---------- | ----------------------------------------------------------------------------- | -------------------------- | -------------------- | :-----------: | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------ |
+| C-01    | Custody    | Custody RFP final                                                             | Treasury operations lead   | Axiom Treasury Lead  | IN PROGRESS   |               | No custody partner identified. RFP must be drafted and issued before any response can be collected.                                                               |             | 2026-05-01   |
+| C-02    | Custody    | Custody RFP responses tabulated against framework Section 6 criteria          | Treasury operations lead   | Axiom Treasury Lead  | IN PROGRESS   |               | Blocked on C-01 closing. Running parallel to C-01 to pre-build the tabulation template and criteria scorecard.                                                    |             | 2026-05-01   |
+| C-03    | Custody    | Selected custodian identified (Path A, B, or documented fallback)             | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |               | Blocked on C-02. Path A (PAXG-equivalent silver issuer) currently has no known candidate; Path B (regulated custodian + quarterly PoR) is the expected path. **PRIMARY BOTTLENECK — see Section 10.** |             | 2026-05-01   |
+| C-04    | Custody    | Term sheet drafted and attached                                               | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |               | Blocked on C-03.                                                                                                                                                  |             | 2026-05-01   |
+| C-05    | Custody    | Vault location, segregation model, and insurance position documented          | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |               | Blocked on C-03.                                                                                                                                                  |             | 2026-05-01   |
+| C-06    | Custody    | Attestation cadence agreed (monthly preferred, quarterly minimum)             | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |               | Blocked on C-04. Cadence must appear in the term sheet.                                                                                                           |             | 2026-05-01   |
+| C-07    | Custody    | Chain-of-custody model documented from refining to vault                      | Treasury operations lead   | Axiom Treasury Lead  | ASSIGNED      |               | Blocked on C-03. Must cover assay, transport, storage, and audit trail.                                                                                           |             | 2026-05-01   |
 
-Section subtotal: 7 items — 7 ASSIGNED
+Section subtotal: 7 items — 2 IN PROGRESS (C-01, C-02), 5 ASSIGNED
 
 ---
 
@@ -68,15 +69,15 @@ Source: Section 7 (Liquidity) of the diligence packet.
 Owner role: Liquidity operations lead (reviewer: Treasury operations lead).
 Remediation priority: **PRIORITY 1 — CRITICAL PATH** — Liquidity Risk scored 3 in Stage 1; must reach ≤ 2 before re-scoring. No re-scoring run may proceed until L-01 through L-05 are all CLOSED.
 
-| Item ID | Workstream | Requirement                                                                              | Owner role                  | Assigned owner        | Status     | Evidence link | Blocker notes                                                                                     | Target date |
-| ------- | ---------- | ---------------------------------------------------------------------------------------- | --------------------------- | --------------------- | :--------: | ------------- | ------------------------------------------------------------------------------------------------- | ----------- |
-| L-01    | Liquidity  | AMM bootstrap design document (venue, paired asset, fee tier, seed amount, slippage targets) | Liquidity operations lead   | Axiom Liquidity Lead  | ASSIGNED   |               | No AMM pool exists for tokenized silver on Arbitrum One today. Design must precede any pool action. |             |
-| L-02    | Liquidity  | Market-maker arrangement documented, or documented decision not to engage one            | Liquidity operations lead   | Axiom Liquidity Lead  | ASSIGNED   |               | Depends on L-01. If no market maker engaged, decision must be written and reviewed.               |             |
-| L-03    | Liquidity  | Redemption SLA draft (T+0 / T+1 / T+N, identity verification, fee schedule, cancellation policy) | Liquidity operations lead   | Axiom Liquidity Lead  | ASSIGNED   |               | Depends on C-04 (custody term sheet) to determine achievable settlement window.                   |             |
-| L-04    | Liquidity  | Fallback redemption path documented for primary-channel unavailability                   | Liquidity operations lead   | Axiom Liquidity Lead  | ASSIGNED   |               | Blocked on L-03.                                                                                  |             |
-| L-05    | Liquidity  | Projected liquidity depth and turnover with stated assumptions                           | Liquidity operations lead   | Axiom Liquidity Lead  | ASSIGNED   |               | Blocked on L-01 and L-02. Projections must state assumptions explicitly (seed capital, maker commitment, volume ramp). |             |
+| Item ID | Workstream | Requirement                                                                                   | Owner role                  | Assigned owner        | Status        | Evidence link | Blocker notes                                                                                                                                                       | Target date | Last updated |
+| ------- | ---------- | --------------------------------------------------------------------------------------------- | --------------------------- | --------------------- | :-----------: | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------ |
+| L-01    | Liquidity  | AMM bootstrap design document (venue, paired asset, fee tier, seed amount, slippage targets)  | Liquidity operations lead   | Axiom Liquidity Lead  | IN PROGRESS   |               | No AMM pool exists for tokenized silver on Arbitrum One today. Design must precede any pool action. Design work started.                                             |             | 2026-05-01   |
+| L-02    | Liquidity  | Market-maker arrangement documented, or documented decision not to engage one                 | Liquidity operations lead   | Axiom Liquidity Lead  | ASSIGNED      |               | Depends on L-01. If no market maker engaged, decision must be written and reviewed.                                                                                 |             | 2026-05-01   |
+| L-03    | Liquidity  | Redemption SLA draft (T+0 / T+1 / T+N, identity verification, fee schedule, cancellation policy) | Liquidity operations lead   | Axiom Liquidity Lead  | ASSIGNED      |               | Depends on C-04 (custody term sheet) to determine achievable settlement window. Blocked until C-03 resolves.                                                        |             | 2026-05-01   |
+| L-04    | Liquidity  | Fallback redemption path documented for primary-channel unavailability                        | Liquidity operations lead   | Axiom Liquidity Lead  | ASSIGNED      |               | Blocked on L-03.                                                                                                                                                    |             | 2026-05-01   |
+| L-05    | Liquidity  | Projected liquidity depth and turnover with stated assumptions                                | Liquidity operations lead   | Axiom Liquidity Lead  | ASSIGNED      |               | Blocked on L-01 and L-02. Projections must state assumptions explicitly (seed capital, maker commitment, volume ramp).                                              |             | 2026-05-01   |
 
-Section subtotal: 5 items — 5 ASSIGNED
+Section subtotal: 5 items — 1 IN PROGRESS (L-01), 4 ASSIGNED
 
 ---
 
@@ -84,16 +85,16 @@ Section subtotal: 5 items — 5 ASSIGNED
 
 Source: Section 7 (Oracle) of the diligence packet.
 Owner role: Protocol engineering lead (reviewer: Risk lead).
-Remediation priority: **PRIORITY 2 — VERIFY** — Oracle Risk scored 2 in Stage 1; score holds but evidence must be filed. Can run in parallel with custody and liquidity.
+Remediation priority: **PRIORITY 2 — VERIFY** — Oracle Risk scored 2 in Stage 1; score holds but evidence must be filed. Runs in parallel with critical path.
 
-| Item ID | Workstream | Requirement                                                                                    | Owner role                   | Assigned owner            | Status     | Evidence link | Blocker notes                                                                                       | Target date |
-| ------- | ---------- | ---------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------- | :--------: | ------------- | --------------------------------------------------------------------------------------------------- | ----------- |
-| O-01    | Oracle     | Chainlink XAG/USD Arbitrum One aggregator address verified (or absence documented)             | Protocol engineering lead    | Axiom Protocol Engineer   | ASSIGNED   |               | If the feed does not exist on Arbitrum One, oracle score must be downgraded and a Tier 2 plan filed in its place. |             |
-| O-02    | Oracle     | HB-01 freshness probe result captured, or Tier 2 oracle plan attached                         | Protocol engineering lead    | Axiom Protocol Engineer   | ASSIGNED   |               | Blocked on O-01. If O-01 confirms absence, O-02 becomes the Tier 2 plan.                           |             |
-| O-03    | Oracle     | Heartbeat, deviation threshold, and stale-policy documented                                   | Protocol engineering lead    | Axiom Protocol Engineer   | ASSIGNED   |               | Blocked on O-01. Derived from the aggregator configuration or from the Tier 2 design.               |             |
-| O-04    | Oracle     | Oracle failure-mode policy attached (behavior during stale, missing, or out-of-bounds reading) | Protocol engineering lead    | Axiom Protocol Engineer   | ASSIGNED   |               | Must cover AXAG minting pause, redemption pause, and circuit-breaker reset procedure.               |             |
+| Item ID | Workstream | Requirement                                                                                    | Owner role                   | Assigned owner            | Status        | Evidence link | Blocker notes                                                                                       | Target date | Last updated |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------- | :-----------: | ------------- | --------------------------------------------------------------------------------------------------- | ----------- | ------------ |
+| O-01    | Oracle     | Chainlink XAG/USD Arbitrum One aggregator address verified (or absence documented)             | Protocol engineering lead    | Axiom Protocol Engineer   | IN PROGRESS   |               | If the feed does not exist on Arbitrum One, oracle score must be downgraded and a Tier 2 plan filed in its place. Verification under way. |             | 2026-05-01   |
+| O-02    | Oracle     | HB-01 freshness probe result captured, or Tier 2 oracle plan attached                         | Protocol engineering lead    | Axiom Protocol Engineer   | ASSIGNED      |               | Blocked on O-01. If O-01 confirms absence, O-02 becomes the Tier 2 plan.                           |             | 2026-05-01   |
+| O-03    | Oracle     | Heartbeat, deviation threshold, and stale-policy documented                                   | Protocol engineering lead    | Axiom Protocol Engineer   | ASSIGNED      |               | Blocked on O-01. Derived from the aggregator configuration or from the Tier 2 design.               |             | 2026-05-01   |
+| O-04    | Oracle     | Oracle failure-mode policy attached (behavior during stale, missing, or out-of-bounds reading) | Protocol engineering lead    | Axiom Protocol Engineer   | ASSIGNED      |               | Must cover AXAG minting pause, redemption pause, and circuit-breaker reset procedure.               |             | 2026-05-01   |
 
-Section subtotal: 4 items — 4 ASSIGNED
+Section subtotal: 4 items — 1 IN PROGRESS (O-01), 3 ASSIGNED
 
 ---
 
@@ -101,15 +102,15 @@ Section subtotal: 4 items — 4 ASSIGNED
 
 Source: Section 7 (Reserve) of the diligence packet.
 Owner role: Compliance lead (reviewer: Treasury operations lead).
-Remediation priority: **PRIORITY 2 — CONFIRM** — Reserve Risk scored 1 in Stage 1; confirm and file evidence to lock the score. R-01 and R-02 depend on custody items.
+Remediation priority: **PRIORITY 2 — CONFIRM** — Reserve Risk scored 1 in Stage 1. R-01 and R-02 depend on custody items; R-03 can start independently.
 
-| Item ID | Workstream | Requirement                                                                           | Owner role        | Assigned owner           | Status     | Evidence link | Blocker notes                                                                             | Target date |
-| ------- | ---------- | ------------------------------------------------------------------------------------- | ----------------- | ------------------------ | :--------: | ------------- | ----------------------------------------------------------------------------------------- | ----------- |
-| R-01    | Reserve    | LBMA Good Delivery silver bar specification confirmed                                 | Compliance lead   | Axiom Compliance Lead    | ASSIGNED   |               | Depends on C-03. Specification must match the custodian's accepted delivery standards.    |             |
-| R-02    | Reserve    | Storage location, insurance, and chain-of-custody documentation collected             | Compliance lead   | Axiom Compliance Lead    | ASSIGNED   |               | Depends on C-05 and C-07.                                                                 |             |
-| R-03    | Reserve    | Volatility floor analysis showing < 40% annualized historical volatility for silver   | Compliance lead   | Axiom Compliance Lead    | ASSIGNED   |               | Use at least 36 months of XAG/USD historical data. Stress-test the 40% threshold explicitly. |             |
+| Item ID | Workstream | Requirement                                                                           | Owner role        | Assigned owner           | Status     | Evidence link | Blocker notes                                                                                | Target date | Last updated |
+| ------- | ---------- | ------------------------------------------------------------------------------------- | ----------------- | ------------------------ | :--------: | ------------- | -------------------------------------------------------------------------------------------- | ----------- | ------------ |
+| R-01    | Reserve    | LBMA Good Delivery silver bar specification confirmed                                 | Compliance lead   | Axiom Compliance Lead    | ASSIGNED   |               | Depends on C-03. Specification must match the custodian's accepted delivery standards.       |             | 2026-05-01   |
+| R-02    | Reserve    | Storage location, insurance, and chain-of-custody documentation collected             | Compliance lead   | Axiom Compliance Lead    | ASSIGNED   |               | Depends on C-05 and C-07.                                                                    |             | 2026-05-01   |
+| R-03    | Reserve    | Volatility floor analysis showing < 40% annualized historical volatility for silver   | Compliance lead   | Axiom Compliance Lead    | ASSIGNED   |               | No custody dependency. Can begin immediately. Use ≥ 36 months XAG/USD data; stress-test 40% threshold. |             | 2026-05-01   |
 
-Section subtotal: 3 items — 3 ASSIGNED
+Section subtotal: 3 items — 0 IN PROGRESS, 3 ASSIGNED
 
 ---
 
@@ -117,16 +118,16 @@ Section subtotal: 3 items — 3 ASSIGNED
 
 Source: Section 7 (Regulatory) of the diligence packet.
 Owner role: General counsel coordinator (REG-01, REG-02); Communications lead (REG-03, REG-04). Reviewer: Compliance lead.
-Remediation priority: **PRIORITY 2 — DOCUMENT** — Regulatory Risk scored 2 in Stage 1; legal opinion is required to hold the score. Can run in parallel with custody and liquidity.
+Remediation priority: **PRIORITY 2 — DOCUMENT** — Regulatory Risk scored 2 in Stage 1. REG-01 can start immediately; no custody dependency.
 
-| Item ID | Workstream  | Requirement                                                                                      | Owner role                    | Assigned owner               | Status     | Evidence link | Blocker notes                                                                                                        | Target date |
-| ------- | ----------- | ------------------------------------------------------------------------------------------------ | ----------------------------- | ---------------------------- | :--------: | ------------- | -------------------------------------------------------------------------------------------------------------------- | ----------- |
-| REG-01  | Regulatory  | Outside legal opinion engagement letter signed                                                   | General counsel coordinator   | Axiom GC Coordinator         | ASSIGNED   |               | No engagement begun. This is a Stage 2 hard prerequisite — governance vote cannot be scheduled until the opinion is delivered. |             |
-| REG-02  | Regulatory  | Scope of work covers commodity (CFTC), securities (Reves/Howey), and money-transmission analyses | General counsel coordinator   | Axiom GC Coordinator         | ASSIGNED   |               | Blocked on REG-01. Scope must be confirmed in the engagement letter before work commences.                           |             |
-| REG-03  | Regulatory  | Disclosure draft reviewed against lib/glossary.ts                                                | Communications lead           | Axiom Communications Lead    | ASSIGNED   |               | Requires REG-01 and REG-02 to be in progress. Glossary rules in lib/glossary.ts are binding. |             |
-| REG-04  | Regulatory  | Glossary alignment check completed and signed off                                                | Communications lead           | Axiom Communications Lead    | ASSIGNED   |               | Blocked on REG-03. Sign-off requires both communications lead and general counsel coordinator.                       |             |
+| Item ID | Workstream  | Requirement                                                                                      | Owner role                    | Assigned owner               | Status        | Evidence link | Blocker notes                                                                                                        | Target date | Last updated |
+| ------- | ----------- | ------------------------------------------------------------------------------------------------ | ----------------------------- | ---------------------------- | :-----------: | ------------- | -------------------------------------------------------------------------------------------------------------------- | ----------- | ------------ |
+| REG-01  | Regulatory  | Outside legal opinion engagement letter signed                                                   | General counsel coordinator   | Axiom GC Coordinator         | IN PROGRESS   |               | Engagement outreach started. Hard prerequisite — governance vote cannot be scheduled until opinion is delivered.     |             | 2026-05-01   |
+| REG-02  | Regulatory  | Scope of work covers commodity (CFTC), securities (Reves/Howey), and money-transmission analyses | General counsel coordinator   | Axiom GC Coordinator         | ASSIGNED      |               | Blocked on REG-01. Scope must be confirmed in the engagement letter before work commences.                           |             | 2026-05-01   |
+| REG-03  | Regulatory  | Disclosure draft reviewed against lib/glossary.ts                                                | Communications lead           | Axiom Communications Lead    | ASSIGNED      |               | Requires REG-01 and REG-02 to be in progress. Glossary rules in lib/glossary.ts are binding.                         |             | 2026-05-01   |
+| REG-04  | Regulatory  | Glossary alignment check completed and signed off                                                | Communications lead           | Axiom Communications Lead    | ASSIGNED      |               | Blocked on REG-03. Sign-off requires both communications lead and general counsel coordinator.                       |             | 2026-05-01   |
 
-Section subtotal: 4 items — 4 ASSIGNED
+Section subtotal: 4 items — 1 IN PROGRESS (REG-01), 3 ASSIGNED
 
 ---
 
@@ -136,33 +137,33 @@ Source: Section 7 (Process) of the diligence packet.
 Owner role: Risk lead (reviewer: Compliance lead).
 Remediation priority: **PRIORITY 3 — SEQUENCE** — closing artifacts; all other sections must be CLOSED before P-02 through P-05 can advance.
 
-| Item ID | Workstream | Requirement                                                                 | Owner role       | Assigned owner      | Status     | Evidence link | Blocker notes                                                                                       | Target date |
-| ------- | ---------- | --------------------------------------------------------------------------- | ---------------- | ------------------- | :--------: | ------------- | --------------------------------------------------------------------------------------------------- | ----------- |
-| P-01    | Process    | Stage 1 scoring report attached to this packet                              | Risk lead        | Axiom Risk Lead     | ASSIGNED   |               | Report is complete. Owner must formally attach the artifact to the packet.                          |             |
-| P-02    | Process    | Stage 2 diligence packet completed and reviewed                             | Risk lead        | Axiom Risk Lead     | ASSIGNED   |               | Requires all C, L, O, R, REG items to be CLOSED before this item can close.                         |             |
-| P-03    | Process    | Re-scoring run executed against the validated engine                        | Risk lead        | Axiom Risk Lead     | ASSIGNED   |               | Blocked on all seven re-scoring trigger conditions in packet Section 9. Engine: pages/api/operator/commodity-risk-score.ts (operator-gated). |             |
-| P-04    | Process    | Re-scoring result (JSON artifact) attached                                  | Risk lead        | Axiom Risk Lead     | ASSIGNED   |               | Blocked on P-03.                                                                                    |             |
-| P-05    | Process    | Stage 3 governance vote scheduling decision recorded                        | Risk lead        | Axiom Risk Lead     | ASSIGNED   |               | Blocked on P-04. May only be scheduled if re-scoring shows no dimension scoring 3 or above.         |             |
+| Item ID | Workstream | Requirement                                                                 | Owner role       | Assigned owner      | Status     | Evidence link | Blocker notes                                                                                       | Target date | Last updated |
+| ------- | ---------- | --------------------------------------------------------------------------- | ---------------- | ------------------- | :--------: | ------------- | --------------------------------------------------------------------------------------------------- | ----------- | ------------ |
+| P-01    | Process    | Stage 1 scoring report attached to this packet                              | Risk lead        | Axiom Risk Lead     | ASSIGNED   |               | Report is complete. Owner must formally attach the artifact to the packet.                          |             | 2026-05-01   |
+| P-02    | Process    | Stage 2 diligence packet completed and reviewed                             | Risk lead        | Axiom Risk Lead     | ASSIGNED   |               | Requires all C, L, O, R, REG items to be CLOSED before this item can close.                         |             | 2026-05-01   |
+| P-03    | Process    | Re-scoring run executed against the validated engine                        | Risk lead        | Axiom Risk Lead     | ASSIGNED   |               | Blocked on all seven re-scoring trigger conditions in packet Section 9. Engine: pages/api/operator/commodity-risk-score.ts (operator-gated). |             | 2026-05-01   |
+| P-04    | Process    | Re-scoring result (JSON artifact) attached                                  | Risk lead        | Axiom Risk Lead     | ASSIGNED   |               | Blocked on P-03.                                                                                    |             | 2026-05-01   |
+| P-05    | Process    | Stage 3 governance vote scheduling decision recorded                        | Risk lead        | Axiom Risk Lead     | ASSIGNED   |               | Blocked on P-04. May only be scheduled if re-scoring shows no dimension scoring 3 or above.         |             | 2026-05-01   |
 
-Section subtotal: 5 items — 5 ASSIGNED
+Section subtotal: 5 items — 0 IN PROGRESS, 5 ASSIGNED
 
 ---
 
 ## Section 7 — Owner Assignments
 
 Source: Section 8 of the diligence packet.
-Every row below must have a named individual (not a role label) before the corresponding workstream may advance to IN PROGRESS. The governance steward reviews and confirms each assignment.
+Every row must have a named individual (not a role label) before the corresponding workstream may advance to IN PROGRESS. The governance steward reviews and confirms each assignment.
 
-| Item ID | Workstream            | Role responsible             | Reviewer                   | Assigned owner               | Status     | Assigned date | Notes                                                                   |
-| ------- | --------------------- | ---------------------------- | -------------------------- | ---------------------------- | :--------: | ------------- | ----------------------------------------------------------------------- |
-| OW-01   | Custody diligence     | Treasury operations lead     | Compliance lead            | Axiom Treasury Lead          | ASSIGNED   |               | Replace with named individual to unlock C-01.                           |
-| OW-02   | Liquidity bootstrap   | Liquidity operations lead    | Treasury operations lead   | Axiom Liquidity Lead         | ASSIGNED   |               | Replace with named individual to unlock L-01.                           |
-| OW-03   | Oracle verification   | Protocol engineering lead    | Risk lead                  | Axiom Protocol Engineer      | ASSIGNED   |               | Replace with named individual to unlock O-01.                           |
-| OW-04   | Legal review          | General counsel coordinator  | Compliance lead            | Axiom GC Coordinator         | ASSIGNED   |               | Replace with named individual to unlock REG-01.                         |
-| OW-05   | Reserve standards     | Compliance lead              | Treasury operations lead   | Axiom Compliance Lead        | ASSIGNED   |               | Replace with named individual to unlock R-01.                           |
-| OW-06   | Disclosure language   | Communications lead          | General counsel coord.     | Axiom Communications Lead    | ASSIGNED   |               | Replace with named individual to unlock REG-03.                         |
-| OW-07   | Re-scoring run        | Risk lead                    | Compliance lead            | Axiom Risk Lead              | ASSIGNED   |               | Replace with named individual to unlock P-03.                           |
-| OW-08   | Packet sign-off       | Operator (named)             | Governance steward         | Axiom Governance Steward     | ASSIGNED   |               | Final sign-off gate. Must be a named individual confirmed by the board. |
+| Item ID | Workstream            | Role responsible             | Reviewer                   | Assigned owner               | Status     | Assigned date | Last updated | Notes                                                                   |
+| ------- | --------------------- | ---------------------------- | -------------------------- | ---------------------------- | :--------: | ------------- | ------------ | ----------------------------------------------------------------------- |
+| OW-01   | Custody diligence     | Treasury operations lead     | Compliance lead            | Axiom Treasury Lead          | ASSIGNED   |               | 2026-05-01   | Replace with named individual to unlock C-01.                           |
+| OW-02   | Liquidity bootstrap   | Liquidity operations lead    | Treasury operations lead   | Axiom Liquidity Lead         | ASSIGNED   |               | 2026-05-01   | Replace with named individual to unlock L-01.                           |
+| OW-03   | Oracle verification   | Protocol engineering lead    | Risk lead                  | Axiom Protocol Engineer      | ASSIGNED   |               | 2026-05-01   | Replace with named individual to unlock O-01.                           |
+| OW-04   | Legal review          | General counsel coordinator  | Compliance lead            | Axiom GC Coordinator         | ASSIGNED   |               | 2026-05-01   | Replace with named individual to unlock REG-01.                         |
+| OW-05   | Reserve standards     | Compliance lead              | Treasury operations lead   | Axiom Compliance Lead        | ASSIGNED   |               | 2026-05-01   | Replace with named individual to unlock R-01.                           |
+| OW-06   | Disclosure language   | Communications lead          | General counsel coord.     | Axiom Communications Lead    | ASSIGNED   |               | 2026-05-01   | Replace with named individual to unlock REG-03.                         |
+| OW-07   | Re-scoring run        | Risk lead                    | Compliance lead            | Axiom Risk Lead              | ASSIGNED   |               | 2026-05-01   | Replace with named individual to unlock P-03.                           |
+| OW-08   | Packet sign-off       | Operator (named)             | Governance steward         | Axiom Governance Steward     | ASSIGNED   |               | 2026-05-01   | Final sign-off gate. Must be a named individual confirmed by the board. |
 
 Section subtotal: 8 items — 8 ASSIGNED
 
@@ -170,21 +171,21 @@ Section subtotal: 8 items — 8 ASSIGNED
 
 ## Section 8 — Execution Ownership Summary
 
-Total items assigned to each owner role. These counts update as items advance or are reassigned. Last updated: 2026-05-01.
+Total items assigned to each owner role. Last updated: 2026-05-01.
 
-| Assigned owner            | Items assigned | Workstreams covered                          | Primary workstream       |
-| ------------------------- | :------------: | -------------------------------------------- | ------------------------ |
-| Axiom Treasury Lead       |       8        | Custody (C-01–C-07), Owner (OW-01)           | Custody diligence        |
-| Axiom Risk Lead           |       6        | Process (P-01–P-05), Owner (OW-07)           | Re-scoring and closeout  |
-| Axiom Liquidity Lead      |       6        | Liquidity (L-01–L-05), Owner (OW-02)         | Liquidity bootstrap      |
-| Axiom Protocol Engineer   |       5        | Oracle (O-01–O-04), Owner (OW-03)            | Oracle verification      |
-| Axiom Compliance Lead     |       4        | Reserve (R-01–R-03), Owner (OW-05)           | Reserve standards check  |
-| Axiom GC Coordinator      |       3        | Regulatory (REG-01–REG-02), Owner (OW-04)    | Legal review             |
-| Axiom Communications Lead |       3        | Regulatory (REG-03–REG-04), Owner (OW-06)    | Disclosure language       |
-| Axiom Governance Steward  |       1        | Owner (OW-08)                                | Packet sign-off          |
-| **TOTAL**                 |     **36**     |                                              |                          |
+| Assigned owner            | Items total | In progress | Assigned | Primary workstream       |
+| ------------------------- | :---------: | :---------: | :------: | ------------------------ |
+| Axiom Treasury Lead       |      8      |      2      |    6     | Custody diligence        |
+| Axiom Risk Lead           |      6      |      0      |    6     | Re-scoring and closeout  |
+| Axiom Liquidity Lead      |      6      |      1      |    5     | Liquidity bootstrap      |
+| Axiom Protocol Engineer   |      5      |      1      |    4     | Oracle verification      |
+| Axiom Compliance Lead     |      4      |      0      |    4     | Reserve standards check  |
+| Axiom GC Coordinator      |      3      |      1      |    2     | Legal review             |
+| Axiom Communications Lead |      3      |      0      |    3     | Disclosure language      |
+| Axiom Governance Steward  |      1      |      0      |    1     | Packet sign-off          |
+| **TOTAL**                 |    **36**   |    **5**    |  **31**  |                          |
 
-### Reviewer assignments (cross-checks)
+### Reviewer assignments
 
 | Workstream            | Owner                     | Reviewer                  |
 | --------------------- | ------------------------- | ------------------------- |
@@ -197,73 +198,109 @@ Total items assigned to each owner role. These counts update as items advance or
 | Re-scoring run        | Axiom Risk Lead           | Axiom Compliance Lead     |
 | Packet sign-off       | Axiom Governance Steward  | Board / Operator (named)  |
 
-No workstream owner reviews their own items. Every workstream has a distinct reviewer.
-
 ---
 
 ## Section 9 — Critical Path
 
-The two dimensions that scored 3 in Stage 1 (Custody and Liquidity) form the critical path. No re-scoring run may be executed until every item in both groups is CLOSED. All other workstreams (Oracle, Reserve, Regulatory, Process) may run in parallel but do not gate the critical path directly.
+The two dimensions that scored 3 in Stage 1 (Custody and Liquidity) form the critical path. No re-scoring run may be executed until every item in both groups is CLOSED.
 
 ### Priority 1 — Critical Path: Custody (C-01 to C-07)
 
-Assigned to: **Axiom Treasury Lead**
-Reviewer: Axiom Compliance Lead
-Gate: All 7 items CLOSED before re-scoring (P-03) can proceed.
-Sequential dependencies: C-01 → C-02 → C-03 → {C-04, C-05, C-07} → C-06
-
-| Item ID | Requirement (short form)                              | Depends on    | Priority   |
-| ------- | ----------------------------------------------------- | ------------- | :--------: |
-| C-01    | Custody RFP final                                     | —             | PRIORITY 1 |
-| C-02    | RFP responses tabulated                               | C-01          | PRIORITY 1 |
-| C-03    | Custodian selected (Path A / B / fallback)            | C-02          | PRIORITY 1 |
-| C-04    | Term sheet drafted and attached                       | C-03          | PRIORITY 1 |
-| C-05    | Vault, segregation, insurance documented              | C-03          | PRIORITY 1 |
-| C-06    | Attestation cadence agreed in term sheet              | C-04          | PRIORITY 1 |
-| C-07    | Chain-of-custody model from refining to vault         | C-03          | PRIORITY 1 |
+| Item ID | Requirement (short form)                      | Depends on    | Status        | Priority   |
+| ------- | --------------------------------------------- | ------------- | :-----------: | :--------: |
+| C-01    | Custody RFP final                             | —             | IN PROGRESS   | PRIORITY 1 |
+| C-02    | RFP responses tabulated                       | C-01          | IN PROGRESS   | PRIORITY 1 |
+| C-03    | Custodian selected (Path A / B / fallback)    | C-02          | ASSIGNED      | PRIORITY 1 |
+| C-04    | Term sheet drafted and attached               | C-03          | ASSIGNED      | PRIORITY 1 |
+| C-05    | Vault, segregation, insurance documented      | C-03          | ASSIGNED      | PRIORITY 1 |
+| C-06    | Attestation cadence agreed in term sheet      | C-04          | ASSIGNED      | PRIORITY 1 |
+| C-07    | Chain-of-custody model from refining to vault | C-03          | ASSIGNED      | PRIORITY 1 |
 
 ### Priority 1 — Critical Path: Liquidity (L-01 to L-05)
 
-Assigned to: **Axiom Liquidity Lead**
-Reviewer: Axiom Treasury Lead
-Gate: All 5 items CLOSED before re-scoring (P-03) can proceed.
-Note: L-03 also depends on C-04 (custody term sheet) — liquidity and custody critical paths are linked at C-04 / L-03.
+| Item ID | Requirement (short form)                      | Depends on    | Status        | Priority   |
+| ------- | --------------------------------------------- | ------------- | :-----------: | :--------: |
+| L-01    | AMM bootstrap design document                 | —             | IN PROGRESS   | PRIORITY 1 |
+| L-02    | Market-maker arrangement documented           | L-01          | ASSIGNED      | PRIORITY 1 |
+| L-03    | Redemption SLA draft                          | C-04, L-01    | ASSIGNED      | PRIORITY 1 |
+| L-04    | Fallback redemption path documented           | L-03          | ASSIGNED      | PRIORITY 1 |
+| L-05    | Projected depth and turnover with assumptions | L-01, L-02    | ASSIGNED      | PRIORITY 1 |
 
-| Item ID | Requirement (short form)                              | Depends on    | Priority   |
-| ------- | ----------------------------------------------------- | ------------- | :--------: |
-| L-01    | AMM bootstrap design document                         | —             | PRIORITY 1 |
-| L-02    | Market-maker arrangement documented                   | L-01          | PRIORITY 1 |
-| L-03    | Redemption SLA draft                                  | C-04, L-01    | PRIORITY 1 |
-| L-04    | Fallback redemption path documented                   | L-03          | PRIORITY 1 |
-| L-05    | Projected depth and turnover with assumptions         | L-01, L-02    | PRIORITY 1 |
+### Priority 2 — Parallel tracks
 
-### Priority 2 — Parallel tracks (Oracle, Reserve, Regulatory)
+| Workstream  | Items      | Status of lead item     | Assigned owner            |
+| ----------- | ---------- | ----------------------- | ------------------------- |
+| Oracle      | O-01–O-04  | O-01 IN PROGRESS        | Axiom Protocol Engineer   |
+| Reserve     | R-01–R-03  | All ASSIGNED (R-01 on C-03) | Axiom Compliance Lead |
+| Regulatory  | REG-01–REG-04 | REG-01 IN PROGRESS   | Axiom GC Coord. / Comms  |
 
-These workstreams may run concurrently with the custody and liquidity critical paths. They do not gate each other, but all must be CLOSED before P-02 (packet review) can close.
+### Priority 3 — Process closeout
 
-| Workstream  | Items      | Assigned owner            | Depends on critical path? |
-| ----------- | ---------- | ------------------------- | :------------------------: |
-| Oracle      | O-01–O-04  | Axiom Protocol Engineer   | No (independent)           |
-| Reserve     | R-01–R-03  | Axiom Compliance Lead     | Yes — R-01 on C-03; R-02 on C-05, C-07 |
-| Regulatory  | REG-01–REG-04 | Axiom GC Coord. / Comms Lead | No (can start immediately) |
-
-### Priority 3 — Process closeout (P-01 to P-05)
-
-Process items are sequenced after all other workstreams. They are the closing artifacts of Stage 2.
-
-| Item ID | Requirement (short form)                  | Unblocked when                    |
-| ------- | ----------------------------------------- | --------------------------------- |
-| P-01    | Stage 1 scoring report attached           | Immediately (artifact exists)     |
-| P-02    | Packet completed and reviewed             | All C, L, O, R, REG items CLOSED |
-| P-03    | Re-scoring run executed                   | All 7 trigger conditions met      |
-| P-04    | Re-scoring result attached                | P-03 CLOSED                       |
-| P-05    | Governance scheduling decision recorded   | P-04 CLOSED, no dim ≥ 3          |
+| Item ID | Status     | Unblocked when                     |
+| ------- | :--------: | ---------------------------------- |
+| P-01    | ASSIGNED   | Immediately — artifact exists      |
+| P-02    | ASSIGNED   | All C, L, O, R, REG items CLOSED   |
+| P-03    | ASSIGNED   | All 7 re-scoring triggers met      |
+| P-04    | ASSIGNED   | P-03 CLOSED                        |
+| P-05    | ASSIGNED   | P-04 CLOSED; no dimension ≥ 3     |
 
 ---
 
-## Section 10 — Stage 2 Exit Criteria
+## Section 10 — Active Workstreams
 
-Stage 2 is complete only when **every one** of the following conditions is met. This section may not be marked complete by any individual — it requires dual sign-off (operator and governance steward, OW-08).
+All items currently IN PROGRESS as of 2026-05-01.
+
+| Item ID | Workstream  | Requirement (short form)                        | Owner                     | Dependency risk                                                                                                         |
+| ------- | ----------- | ----------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| C-01    | Custody     | Custody RFP final                               | Axiom Treasury Lead       | **HIGH** — The entire custody critical path (C-03 through C-07) is gated on the RFP output. Delay here cascades to L-03, R-01, R-02, and ultimately P-03. |
+| C-02    | Custody     | RFP responses tabulated (template pre-build)    | Axiom Treasury Lead       | **MEDIUM** — Runs parallel to C-01; tabulation template can be completed before responses arrive, reducing C-02 cycle time after C-01 closes. |
+| L-01    | Liquidity   | AMM bootstrap design document                  | Axiom Liquidity Lead      | **HIGH** — L-02, L-05 depend on L-01. L-03 additionally depends on C-04, which is itself blocked on C-03. Liquidity critical path will stall at L-03 until custody resolves. |
+| O-01    | Oracle      | XAG/USD Arbitrum One aggregator verified        | Axiom Protocol Engineer   | **MEDIUM** — If the Chainlink feed is absent on Arbitrum One, oracle score must be downgraded from 2 to 3+, which would raise the composite and potentially change the CONDITIONAL band outcome. Resolve quickly. |
+| REG-01  | Regulatory  | Legal opinion engagement letter signed          | Axiom GC Coordinator      | **HIGH** — No governance vote may be scheduled until the legal opinion is delivered. Engagement letter is the first gating step. Delay compounds through REG-02, REG-03, and REG-04. |
+
+Total IN PROGRESS: 5 items across 4 workstreams (Custody, Liquidity, Oracle, Regulatory).
+
+Items not yet activated (ASSIGNED, not IN PROGRESS):
+- **C-03 through C-07** — blocked on C-02 output
+- **L-02 through L-05** — blocked on L-01 output and C-04
+- **O-02 through O-04** — blocked on O-01 output
+- **R-01 through R-03** — R-01 and R-02 blocked on C-03; R-03 may begin independently
+- **REG-02 through REG-04** — blocked on REG-01
+- **P-01 through P-05** — all blocked on upstream workstreams
+
+---
+
+## Section 11 — Current Bottleneck
+
+The current primary bottleneck for Stage 2 is **C-03: Custodian Selection**.
+
+### C-03 — Custodian Selection
+
+| Field               | Detail                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| Item ID             | C-03                                                                                                    |
+| Workstream          | Custody                                                                                                 |
+| Owner               | Axiom Treasury Lead                                                                                     |
+| Current status      | ASSIGNED — blocked on C-02 (RFP responses)                                                              |
+| Why it is primary   | C-03 is the single node that unblocks C-04, C-05, and C-07 simultaneously, which in turn unblock C-06, L-03, R-01, and R-02. Until C-03 closes, the majority of the tracker remains frozen. |
+| Core difficulty     | No PAXG-equivalent regulated silver issuer exists today. Path A (on-chain receipt token) requires identifying or creating a new custodial relationship with a qualified custodian willing to issue a directly redeemable silver token. Path B (regulated custodian + quarterly PoR without on-chain receipt) is the expected path but still requires sourcing a willing counterparty. |
+| Items blocked by C-03 | C-04, C-05, C-07, C-06 (via C-04), L-03 (via C-04), L-04 (via L-03), R-01, R-02                      |
+| Cascade count       | 8 downstream items gated directly or indirectly on C-03                                                 |
+| Mitigation          | C-01 and C-02 are IN PROGRESS to deliver the RFP and response tabulation that feeds C-03. The sooner C-01 issues and C-02 receives responses, the sooner C-03 can close. |
+| Risk if delayed     | If C-03 is not resolved, re-scoring cannot proceed, AXAG remains in CONDITIONAL band, and governance vote cannot be scheduled. |
+
+### Secondary bottleneck awareness
+
+| Item    | Risk if delayed                                                                                           |
+| ------- | --------------------------------------------------------------------------------------------------------- |
+| O-01    | If Chainlink XAG/USD feed is absent on Arbitrum One, oracle score rises from 2 to 3+, raising composite and potentially widening the remediation requirement before Stage 3. |
+| REG-01  | Legal opinion delivery is on the governance vote critical path. Engagement letter must be signed now to allow adequate time for counsel's analysis before Stage 3 scheduling. |
+
+---
+
+## Section 12 — Stage 2 Exit Criteria
+
+Stage 2 is complete only when **every one** of the following conditions is met. This section requires dual sign-off (operator and governance steward, OW-08).
 
 ### Evidence checklist closure
 
@@ -280,48 +317,48 @@ Stage 2 is complete only when **every one** of the following conditions is met. 
 
 ### Re-scoring closure
 
-- [ ] Re-scoring run has been executed by the risk lead (P-03 CLOSED)
-- [ ] Re-scoring JSON artifact is attached (P-04 CLOSED)
+- [ ] Re-scoring run executed by risk lead (P-03 CLOSED)
+- [ ] Re-scoring JSON artifact attached (P-04 CLOSED)
 - [ ] Re-scoring result shows no dimension scoring 3 or above
-- [ ] Re-scoring result is reviewed and accepted by the compliance lead
+- [ ] Re-scoring result reviewed and accepted by compliance lead
 
 ### Governance scheduling closure
 
-- [ ] Governance vote scheduling decision is recorded (P-05 CLOSED)
-- [ ] Scheduling memo is published to the governance forum
+- [ ] Governance vote scheduling decision recorded (P-05 CLOSED)
+- [ ] Scheduling memo published to the governance forum
 
 ### Dual sign-off
 
-- [ ] Operator (named individual, OW-08) has signed off on Stage 2 exit
-- [ ] Governance steward has signed off on Stage 2 exit
+- [ ] Operator (named individual, OW-08) signed off on Stage 2 exit
+- [ ] Governance steward signed off on Stage 2 exit
 - [ ] Date of dual sign-off recorded here: _______________
 
 When all boxes above are checked and dual sign-off is recorded, Stage 2 is formally closed and AXAG advances to Stage 3 (Governance Vote) per the Commodity Expansion Framework v1.0.0, Section 7.
 
 ---
 
-## Section 11 — Tracker Summary
+## Section 13 — Tracker Summary
 
-| Workstream        | Total items | OPEN | ASSIGNED | IN PROGRESS | BLOCKED | CLOSED |
-| ----------------- | :---------: | :--: | :------: | :---------: | :-----: | :----: |
-| Custody           |      7      |  0   |    7     |      0      |    0    |   0    |
-| Liquidity         |      5      |  0   |    5     |      0      |    0    |   0    |
-| Oracle            |      4      |  0   |    4     |      0      |    0    |   0    |
-| Reserve           |      3      |  0   |    3     |      0      |    0    |   0    |
-| Regulatory        |      4      |  0   |    4     |      0      |    0    |   0    |
-| Process           |      5      |  0   |    5     |      0      |    0    |   0    |
-| Owner assignments |      8      |  0   |    8     |      0      |    0    |   0    |
-| **TOTAL**         |   **36**    | **0** | **36**  |    **0**    |  **0**  | **0**  |
+| Workstream        | Total | OPEN | ASSIGNED | IN PROGRESS | BLOCKED | CLOSED |
+| ----------------- | :---: | :--: | :------: | :---------: | :-----: | :----: |
+| Custody           |   7   |  0   |    5     |      2      |    0    |   0    |
+| Liquidity         |   5   |  0   |    4     |      1      |    0    |   0    |
+| Oracle            |   4   |  0   |    3     |      1      |    0    |   0    |
+| Reserve           |   3   |  0   |    3     |      0      |    0    |   0    |
+| Regulatory        |   4   |  0   |    3     |      1      |    0    |   0    |
+| Process           |   5   |  0   |    5     |      0      |    0    |   0    |
+| Owner assignments |   8   |  0   |    8     |      0      |    0    |   0    |
+| **TOTAL**         | **36**| **0**| **31**   |    **5**    |  **0**  | **0**  |
 
 Last updated: 2026-05-01. Update this table each time an item changes status.
 
 ---
 
-## Section 12 — Explicit Statement
+## Section 14 — Explicit Statement
 
 **AXAG IS NOT LIVE AND IS NOT APPROVED FOR DEPLOYMENT.**
 
-This tracker is a governance and evidence-management document only. Assigning owners to items in this tracker does not authorize, schedule, or initiate any deployment, contract publication, token mint, swap pool creation, or banking integration. Closing every item in this tracker does not constitute approval of any AXAG instrument. Final deployment authority rests with a completed governance vote and a passing Stage 4 launch readiness gate, in that order, and not with this document.
+Moving items to IN PROGRESS in this tracker means diligence work has begun on documentation and evidence collection only. It does not authorize, schedule, or initiate any deployment, contract publication, token mint, swap pool creation, or banking integration. Closing every item in this tracker does not constitute approval of any AXAG instrument. Final deployment authority rests with a completed governance vote and a passing Stage 4 launch readiness gate, in that order, and not with this document.
 
 No contract has been deployed. No token has been minted. No swap pool has been opened. No banking rail has been enabled. No public claim of AXAG availability is made or implied.
 
