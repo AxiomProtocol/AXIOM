@@ -398,7 +398,7 @@ Although slippage and pool depth are not modeled at Phase 2 (see Section 8.3), t
 | HEALTHY band ceiling (deviation before WATCH classification) | 100 bps | 100 bps | Deviation within 100 bps of NAV is considered normal for a production instrument |
 | THIN / WATCH band ceiling | 200 bps | 200 bps | Deviation between 100 and 200 bps raises WATCH; arbitrage opportunity may exist |
 | CRITICAL band threshold | 200 bps+ | 200 bps | Deviation above 200 bps indicates a systemic dislocation requiring operator review |
-| Assumed notional per simulated route | 1,000 AXAUSD equivalent | 1,000 AXUSD | Route simulation uses this notional; actual execution size may differ |
+| Assumed notional per simulated route | 1,000 AXUSD equivalent | 1,000 AXUSD | Route simulation uses this notional; actual execution size may differ |
 | Minimum assumed reserve pool depth (simulation floor) | 10,000 AXUSD equivalent | Not modeled | Notional floor used only for route feasibility classification; actual depth not measured |
 | Assumed slippage for simulation-only outputs | 0 bps (no slippage modeled) | 0 bps | All simulation outputs must carry the transparency fields from Section 8.3 |
 
@@ -650,6 +650,8 @@ AXAU is not a prototype. It is a live, production instrument operating on Arbitr
 ### 13.2 AXAU's live system as the baseline
 
 All standards in this framework are expressed in terms that AXAU currently meets or exceeds. Any future commodity instrument must meet all of the same standards. The specific values used by AXAU's system (oracle staleness threshold, coverage ratio floor, buffer minimum, liquidity health thresholds) are defaults — future instruments may adopt different values subject to governance approval and Technical Diligence Report justification.
+
+All contract addresses, threshold values, and operational constants cited in this document reflect the Axiom Protocol system state as of the effective date (2026-05-01). These values are subject to change through governance votes or protocol upgrades. When evaluating a future commodity candidate, always verify current deployed addresses and threshold values against the live on-chain system — not against the static values recorded here. If any value has been updated after this document's effective date, the updated value governs for operational purposes; this document should be revised in the next framework version update (Appendix A).
 
 The relevant AXAU system components are:
 
