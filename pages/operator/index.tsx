@@ -21,6 +21,7 @@ import {
 } from '../../lib/capinfra/risk/integrityAlerts';
 import { AssetIntegrityAlertsPanel } from '../../components/operator/AssetIntegrityAlertsPanel';
 import { IntegrityPagerStatusBanner } from '../../components/operator/IntegrityPagerStatusBanner';
+import { LiveMonitorPanel } from '../../components/operator/LiveMonitorPanel';
 import {
   getIntegrityPagerStatus,
   type IntegrityPagerStatus,
@@ -191,6 +192,8 @@ export default function OperatorDashboard(props: DashboardProps) {
 
         <IntegrityPagerStatusBanner status={props.pagerStatus} />
 
+        <LiveMonitorPanel />
+
         <AssetIntegrityAlertsPanel
           alerts={props.integrityAlerts}
           failedPagesCount={props.failedPagesCount}
@@ -286,12 +289,15 @@ export default function OperatorDashboard(props: DashboardProps) {
         </section>
 
         <section className="border border-dl-border p-4 mb-6">
-          <h2 className="font-serif text-lg mb-3">Launch Readiness</h2>
+          <h2 className="font-serif text-lg mb-3">Launch Attestations — LIVE</h2>
+          <p className="text-sm text-dl-muted mb-2">
+            AXAU crypto-native launch is LIVE as of 2026-04-30. Active rails: Stripe, Coinbase Onramp, Arbitrum One (AXUSD/AXAU settlement), BitGo CaaS custody.
+          </p>
           <p className="text-sm text-dl-muted mb-3">
-            Key rotation attestations and runbook acknowledgments for AXAU crypto-native, non-ACH launch. Active rails: Stripe, Coinbase Onramp, Arbitrum One, BitGo CaaS. ACH, wires, and bank payouts are deferred.
+            Deferred: ACH, wires, virtual accounts, direct deposit, fiat redemption. Redemption returns PAXG.
           </p>
           <Link href="/operator/attestations" className="text-sm underline">
-            Open attestations console →
+            Open attestations log →
           </Link>
         </section>
 

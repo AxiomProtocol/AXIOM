@@ -33,6 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/system-map', label: 'System Map' },
       { href: '/axau', label: 'AXAU Reserve' },
       { href: '/axau-early-access', label: 'AXAU Early Access' },
+      { href: '/axau-buy', label: 'AXAU Mint Terminal' },
       { href: '/axusd-3643', label: 'AXUSD Settlement Rail' },
       { href: '/earn/axusd', label: 'Earn AXUSD (Bootstrap)' },
       { href: '/dex', label: 'Protocol Exchange' },
