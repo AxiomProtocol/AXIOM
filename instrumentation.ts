@@ -7731,7 +7731,460 @@ END $seed$`, 'seed dp_listings');
       )`, 'table cap_loss_coverage_claim_events');
       await exec(`CREATE INDEX IF NOT EXISTS cap_lcc_events_claim_idx ON cap_loss_coverage_claim_events(claim_id, created_at)`, 'index cap_lcc_events_claim_idx');
 
-      // ── Auto-apply numbered SQL migrations (./migrations/*.sql) ──
+      // ─────────────────────────────────────────────────────────────────────
+        // ── DRIFT SYNC (auto-generated 2026-05-01) ──
+        // The following enum types, value additions, tables, and indexes existed
+        // in the development DB but were missing from this file. Adding them
+        // here ensures fresh deployments (esp. serverless cold starts on Vercel)
+        // can boot without depending on disk-resident migration files.
+        //
+        // Counts: 97 new enums, 6 enum value additions,
+        //         22 new tables, 42 new indexes.
+        // ─────────────────────────────────────────────────────────────────────
+
+        // ── Drift: missing enum types ──
+        await exec(enumSafe('acquisition_pool_status', ['forming','active','paused','complete','dissolved']), 'enum acquisition_pool_status');
+      await exec(enumSafe('ag_agent_mode', ['ADVISORY','CONSTRAINED']), 'enum ag_agent_mode');
+      await exec(enumSafe('ag_agent_status', ['ACTIVE','SUSPENDED']), 'enum ag_agent_status');
+      await exec(enumSafe('ag_audit_entity_type', ['INTENT','DECISION','EXECUTION','POLICY','REGIME','AGENT','BUDGET']), 'enum ag_audit_entity_type');
+      await exec(enumSafe('ag_decision', ['APPROVE','REJECT','THROTTLE','DOWNGRADE','HALT']), 'enum ag_decision');
+      await exec(enumSafe('ag_execution_action', ['BUY','SELL','NOOP']), 'enum ag_execution_action');
+      await exec(enumSafe('ag_execution_mode', ['PAPER','LIVE']), 'enum ag_execution_mode');
+      await exec(enumSafe('ag_execution_status', ['SIMULATED','SUBMITTED','FILLED','FAILED','SKIPPED']), 'enum ag_execution_status');
+      await exec(enumSafe('ag_intent_status', ['PENDING','APPROVED','REJECTED','EXECUTED','SIMULATED']), 'enum ag_intent_status');
+      await exec(enumSafe('ag_intent_type', ['TRADE','UNDERWRITE','PARAM_CHANGE_PROPOSAL','REPORT']), 'enum ag_intent_type');
+      await exec(enumSafe('ag_policy_status', ['DRAFT','ACTIVE','DEPRECATED']), 'enum ag_policy_status');
+      await exec(enumSafe('cap_collateral_class', ['GREEN','YELLOW','RED']), 'enum cap_collateral_class');
+      await exec(enumSafe('contract_actor_type', ['admin','operator','system','investor']), 'enum contract_actor_type');
+      await exec(enumSafe('contract_domain', ['field_intelligence','real_estate']), 'enum contract_domain');
+      await exec(enumSafe('contract_entity_type', ['inspection_session','property','deal']), 'enum contract_entity_type');
+      await exec(enumSafe('contract_event_type', ['status_changed','approval_requested','approval_granted','approval_rejected','comment_added','assignment_changed']), 'enum contract_event_type');
+      await exec(enumSafe('contract_status', ['draft','intake','under_review','approved','in_execution','completed','blocked','rejected','archived']), 'enum contract_status');
+      await exec(enumSafe('crowdfunding_status', ['draft','pending_review','active','funded','closed','cancelled']), 'enum crowdfunding_status');
+      await exec(enumSafe('dao_account_status', ['pending_review','approved','active','rejected']), 'enum dao_account_status');
+      await exec(enumSafe('dp_api_tier', ['free','starter','pro','enterprise']), 'enum dp_api_tier');
+      await exec(enumSafe('dp_distress_type', ['foreclosure','tax_lien','reo','wholesale','short_sale','auction','government','pre_foreclosure','lis_pendens']), 'enum dp_distress_type');
+      await exec(enumSafe('dp_listing_status', ['active','under_contract','sold','expired','pending_review']), 'enum dp_listing_status');
+      await exec(enumSafe('dp_source', ['hud','fannie_mae','freddie_mac','usda','wholesaler','tax_sale','manual','attom','courthouse']), 'enum dp_source');
+      await exec(enumSafe('dp_submission_status', ['pending','approved','rejected','expired']), 'enum dp_submission_status');
+      await exec(enumSafe('field_condition', ['good','light_rehab','medium_rehab','full_replace','not_inspected']), 'enum field_condition');
+      await exec(enumSafe('field_inspection_status', ['draft','in_progress','submitted','verified','archived']), 'enum field_inspection_status');
+      await exec(enumSafe('grant_category', ['development','marketing','community','infrastructure','research','education','partnerships','other']), 'enum grant_category');
+      await exec(enumSafe('grant_status', ['draft','voting','approved','rejected','funded','completed','cancelled']), 'enum grant_status');
+      await exec(enumSafe('keygrow_enrollment_status', ['pending','active','paused','completed','defaulted','cancelled']), 'enum keygrow_enrollment_status');
+      await exec(enumSafe('keygrow_payment_status', ['pending','confirmed','failed','refunded']), 'enum keygrow_payment_status');
+      await exec(enumSafe('keygrow_property_status', ['draft','pending_review','available','enrolled','tokenized','fully_owned','suspended','withdrawn']), 'enum keygrow_property_status');
+      await exec(enumSafe('keygrow_seller_status', ['pending','verified','suspended','rejected']), 'enum keygrow_seller_status');
+      await exec(enumSafe('land_candidate_stage', ['candidate','sourced','steward_assigned','under_evaluation','vote_pending','approved','acquisition_in_progress','acquired','archived','under_review','ready_for_vote']), 'enum land_candidate_stage');
+      await exec(enumSafe('node_chain_sync_status', ['SYNCED','PENDING','FAILED']), 'enum node_chain_sync_status');
+      await exec(enumSafe('note_payment_event_type', ['scheduled_payment','principal','interest','prepayment','late_fee','adjustment']), 'enum note_payment_event_type');
+      await exec(enumSafe('pilot_asset_type', ['multifamily','mixed_use','commercial','industrial','warehouse','farmland']), 'enum pilot_asset_type');
+      await exec(enumSafe('pilot_audit_action', ['contribution_received','contribution_confirmed','distribution_calculated','distribution_approved','distribution_paid','reserve_allocation','capital_call_issued','capital_call_funded','asset_purchased','valuation_updated','document_uploaded','investor_onboarded','report_generated','configuration_changed']), 'enum pilot_audit_action');
+      await exec(enumSafe('pilot_capital_call_status', ['draft','issued','partially_funded','fully_funded','closed']), 'enum pilot_capital_call_status');
+      await exec(enumSafe('pilot_contribution_status', ['pledged','called','received','confirmed','returned']), 'enum pilot_contribution_status');
+      await exec(enumSafe('pilot_distribution_type', ['cash_flow','appreciation','return_of_capital','special']), 'enum pilot_distribution_type');
+      await exec(enumSafe('pilot_doc_category', ['offering','operating_agreement','spv_formation','inspection','appraisal','title','insurance','financial_report','tax','legal','other']), 'enum pilot_doc_category');
+      await exec(enumSafe('pilot_investor_status', ['invited','onboarding','committed','funded','active','exited']), 'enum pilot_investor_status');
+      await exec(enumSafe('pilot_notification_type', ['report_published','distribution_processed','capital_call_issued','valuation_updated','document_added','general_update']), 'enum pilot_notification_type');
+      await exec(enumSafe('pilot_report_type', ['monthly_balance_sheet','monthly_income','monthly_reserves','quarterly_valuation','quarterly_risk','annual_summary']), 'enum pilot_report_type');
+      await exec(enumSafe('pilot_spv_status', ['formation','active','distributing','winding_down','closed']), 'enum pilot_spv_status');
+      await exec(enumSafe('private_credit_note_status', ['draft','active','current','delinquent','paid_off','defaulted','cancelled']), 'enum private_credit_note_status');
+      await exec(enumSafe('purpose_pool_status', ['draft','open','paused','closed','executing']), 'enum purpose_pool_status');
+      await exec(enumSafe('sec_accreditation_status', ['not_verified','pending','verified','expired','rejected']), 'enum sec_accreditation_status');
+      await exec(enumSafe('sec_actor_type', ['investor','issuer','admin','compliance_officer','system','broker']), 'enum sec_actor_type');
+      await exec(enumSafe('sec_aml_status', ['clear','flagged','blocked','pending_review']), 'enum sec_aml_status');
+      await exec(enumSafe('sec_analytics_event_type', ['listing_created','listing_activated','interest_submitted','bid_submitted','bid_accepted','trade_matched','approval_granted','approval_rejected','settlement_funded','settlement_completed','settlement_failed','transfer_blocked','capital_redeployed','position_viewed','series_viewed']), 'enum sec_analytics_event_type');
+      await exec(enumSafe('sec_approval_status', ['pending','approved','rejected','overridden','expired']), 'enum sec_approval_status');
+      await exec(enumSafe('sec_approval_type', ['issuer_approval','admin_approval','compliance_approval']), 'enum sec_approval_type');
+      await exec(enumSafe('sec_asset_class', ['fund_interest','private_credit','mortgage_note','dscr_loan','fix_flip_debt','rent_stream','land_interest','treasury_yield']), 'enum sec_asset_class');
+      await exec(enumSafe('sec_auth_provider', ['siwe','email','auth0']), 'enum sec_auth_provider');
+      await exec(enumSafe('sec_bid_status', ['submitted','counter_offered','accepted','rejected','withdrawn','expired']), 'enum sec_bid_status');
+      await exec(enumSafe('sec_buyer_interest_status', ['submitted','acknowledged','converted_to_bid','withdrawn','declined']), 'enum sec_buyer_interest_status');
+      await exec(enumSafe('sec_compliance_decision', ['eligible','conditionally_eligible','manual_review_required','blocked']), 'enum sec_compliance_decision');
+      await exec(enumSafe('sec_distribution_frequency', ['none','monthly','quarterly','semi_annual','annual','event_driven']), 'enum sec_distribution_frequency');
+      await exec(enumSafe('sec_entity_type', ['individual','llc','lp','corporation','trust','family_office','fund']), 'enum sec_entity_type');
+      await exec(enumSafe('sec_fee_type', ['platform_fee','transfer_fee','issuer_fee','broker_fee','settlement_fee']), 'enum sec_fee_type');
+      await exec(enumSafe('sec_investor_category', ['accredited_individual','accredited_entity','qualified_purchaser','qualified_institutional_buyer','non_accredited','unverified']), 'enum sec_investor_category');
+      await exec(enumSafe('sec_investor_status', ['pending','active','restricted','suspended','offboarded']), 'enum sec_investor_status');
+      await exec(enumSafe('sec_kyb_status', ['not_required','not_started','pending','approved','rejected','manual_review']), 'enum sec_kyb_status');
+      await exec(enumSafe('sec_kyc_status', ['not_started','pending','approved','rejected','expired','manual_review']), 'enum sec_kyc_status');
+      await exec(enumSafe('sec_listing_status', ['draft','active','under_review','paused','matched','cancelled','expired']), 'enum sec_listing_status');
+      await exec(enumSafe('sec_listing_type', ['direct_transfer','bulletin_board','issuer_assisted','broker_assisted']), 'enum sec_listing_type');
+      await exec(enumSafe('sec_lot_source_type', ['primary_subscription','secondary_purchase','distribution_reinvestment','transfer_in']), 'enum sec_lot_source_type');
+      await exec(enumSafe('sec_matched_trade_status', ['matched','awaiting_approvals','approved','settlement_pending','settling','settled','failed','cancelled']), 'enum sec_matched_trade_status');
+      await exec(enumSafe('sec_nav_method', ['cost_basis','appraisal','mark_to_model','mark_to_market','par']), 'enum sec_nav_method');
+      await exec(enumSafe('sec_nav_status', ['current','stale','provisional','final']), 'enum sec_nav_status');
+      await exec(enumSafe('sec_object_type', ['wallet','compliance_profile','position','listing','bid','matched_trade','transfer_request','approval_request','settlement_instruction','beneficial_ownership_record','series','offering']), 'enum sec_object_type');
+      await exec(enumSafe('sec_offering_status', ['draft','structuring','raising','funded','closed','active','winding_down','dissolved']), 'enum sec_offering_status');
+      await exec(enumSafe('sec_payment_confirmation_status', ['pending','confirmed','failed','refunded']), 'enum sec_payment_confirmation_status');
+      await exec(enumSafe('sec_position_status', ['active','partially_transferred','fully_transferred','redeemed','frozen']), 'enum sec_position_status');
+      await exec(enumSafe('sec_price_type', ['fixed','negotiable','minimum_ask']), 'enum sec_price_type');
+      await exec(enumSafe('sec_reconciliation_status', ['reconciled','discrepancy','pending']), 'enum sec_reconciliation_status');
+      await exec(enumSafe('sec_registry_status', ['current','superseded','pending_update']), 'enum sec_registry_status');
+      await exec(enumSafe('sec_risk_tier', ['low','medium','high','very_high']), 'enum sec_risk_tier');
+      await exec(enumSafe('sec_role_code', ['investor','issuer','admin','compliance_officer','broker']), 'enum sec_role_code');
+      await exec(enumSafe('sec_sanctions_status', ['clear','flagged','blocked']), 'enum sec_sanctions_status');
+      await exec(enumSafe('sec_series_status', ['draft','active','paused','closed','redeemed']), 'enum sec_series_status');
+      await exec(enumSafe('sec_settlement_asset_type', ['axusd','usdc','usdt','manual_wire']), 'enum sec_settlement_asset_type');
+      await exec(enumSafe('sec_settlement_status', ['instruction_created','awaiting_funding','funded','delivery_in_progress','ownership_updated','funds_released','settled','failed','refunded','cancelled']), 'enum sec_settlement_status');
+      await exec(enumSafe('sec_token_standard', ['erc20','erc1155','erc3643','erc4626','off_chain']), 'enum sec_token_standard');
+      await exec(enumSafe('sec_trade_mark_status', ['confirmed','pending','voided']), 'enum sec_trade_mark_status');
+      await exec(enumSafe('sec_transfer_check_result', ['pass','fail','warning','review_required']), 'enum sec_transfer_check_result');
+      await exec(enumSafe('sec_transfer_check_type', ['available_units','buyer_eligibility','wallet_verification','sanctions_aml','hold_period','registry_reconciliation','concentration_limit','nav_discount_threshold','series_transferability','jurisdiction']), 'enum sec_transfer_check_type');
+      await exec(enumSafe('sec_transfer_request_status', ['draft','submitted','checks_running','blocked','awaiting_buyer','awaiting_pricing','awaiting_approvals','approved','settlement_pending','settling','settled','rejected','cancelled','failed']), 'enum sec_transfer_request_status');
+      await exec(enumSafe('sec_transfer_request_type', ['direct','listing','issuer_assisted','broker_assisted']), 'enum sec_transfer_request_type');
+      await exec(enumSafe('sec_transferability_status', ['not_transferable','issuer_approval_required','compliance_only','open_within_platform']), 'enum sec_transferability_status');
+      await exec(enumSafe('sec_user_status', ['active','suspended','pending_verification','deactivated']), 'enum sec_user_status');
+      await exec(enumSafe('sec_visibility_scope', ['all_eligible','invited_only','issuer_curated','admin_curated']), 'enum sec_visibility_scope');
+      await exec(enumSafe('sec_wallet_verification_status', ['unverified','pending','verified','revoked']), 'enum sec_wallet_verification_status');
+      await exec(enumSafe('strategy_type', ['light_turn','classic_value_add','heavy_reposition','systems_only_stabilization','premium_interior_upgrade','exterior_common_reposition']), 'enum strategy_type');
+      await exec(enumSafe('verification_status', ['submitted','under_review','approved','rejected']), 'enum verification_status');
+      await exec(enumSafe('wealth_practice_loan_status', ['pending','open','funded','repaying','closed','defaulted']), 'enum wealth_practice_loan_status');
+
+        // ── Drift: enum value additions (ALTER TYPE ADD VALUE) ──
+        await exec(`ALTER TYPE sentinel_action_type ADD VALUE IF NOT EXISTS 'EULER_EARN_REBALANCE'`, 'enum sentinel_action_type += EULER_EARN_REBALANCE');
+      await exec(`ALTER TYPE system_type ADD VALUE IF NOT EXISTS 'roof'`, 'enum system_type += roof');
+      await exec(`ALTER TYPE system_type ADD VALUE IF NOT EXISTS 'foundation'`, 'enum system_type += foundation');
+      await exec(`ALTER TYPE system_type ADD VALUE IF NOT EXISTS 'garage'`, 'enum system_type += garage');
+      await exec(`ALTER TYPE system_type ADD VALUE IF NOT EXISTS 'landscaping'`, 'enum system_type += landscaping');
+      await exec(`ALTER TYPE cap_action_type ADD VALUE IF NOT EXISTS 'BORROW'`, 'enum cap_action_type += BORROW');
+
+  
+        // ── Drift: sequences required by table DDLs below ──
+        await exec(`CREATE SEQUENCE IF NOT EXISTS axusd_oracle_fallback_events_id_seq`, 'sequence axusd_oracle_fallback_events_id_seq');
+      await exec(`CREATE SEQUENCE IF NOT EXISTS integrity_pager_wiring_check_runs_id_seq`, 'sequence integrity_pager_wiring_check_runs_id_seq');
+      await exec(`CREATE SEQUENCE IF NOT EXISTS launch_attestations_id_seq`, 'sequence launch_attestations_id_seq');
+      await exec(`CREATE SEQUENCE IF NOT EXISTS nft_balances_id_seq`, 'sequence nft_balances_id_seq');
+      await exec(`CREATE SEQUENCE IF NOT EXISTS nft_burned_txs_id_seq`, 'sequence nft_burned_txs_id_seq');
+      await exec(`CREATE SEQUENCE IF NOT EXISTS nft_mint_eligibility_id_seq`, 'sequence nft_mint_eligibility_id_seq');
+      await exec(`CREATE SEQUENCE IF NOT EXISTS nft_tokens_id_seq`, 'sequence nft_tokens_id_seq');
+      await exec(`CREATE SEQUENCE IF NOT EXISTS oracle_fallback_prune_history_id_seq`, 'sequence oracle_fallback_prune_history_id_seq');
+      await exec(`CREATE SEQUENCE IF NOT EXISTS prune_alert_log_id_seq`, 'sequence prune_alert_log_id_seq');
+      await exec(`CREATE SEQUENCE IF NOT EXISTS prune_alert_log_cleanup_history_id_seq`, 'sequence prune_alert_log_cleanup_history_id_seq');
+      await exec(`CREATE SEQUENCE IF NOT EXISTS savings_positions_id_seq`, 'sequence savings_positions_id_seq');
+  
+      // ── Drift: missing tables ──
+        await exec(`CREATE TABLE IF NOT EXISTS axusd_oracle_fallback_events (
+        id integer NOT NULL DEFAULT nextval('axusd_oracle_fallback_events_id_seq'::regclass),
+        occurred_at timestamp NOT NULL DEFAULT now(),
+        caller varchar(255) NOT NULL,
+        loan_id varchar(255),
+        principal_usd numeric(28,8),
+        reason text,
+        PRIMARY KEY (id)
+      )`, 'table axusd_oracle_fallback_events');
+      await exec(`CREATE TABLE IF NOT EXISTS cap_card_deposit_webhook_events (
+        id varchar(40) NOT NULL,
+        stripe_event_id varchar(200) NOT NULL,
+        event_type varchar(80) NOT NULL,
+        deposit_id varchar(40),
+        payload_json jsonb,
+        processed_at timestamp NOT NULL DEFAULT now(),
+        stripe_account_id varchar(64),
+        PRIMARY KEY (id)
+      )`, 'table cap_card_deposit_webhook_events');
+      await exec(`CREATE TABLE IF NOT EXISTS cap_card_deposits (
+        id varchar(40) NOT NULL,
+        user_id varchar(40),
+        intent varchar(32) NOT NULL,
+        amount_cents integer NOT NULL,
+        currency varchar(8) NOT NULL DEFAULT 'usd'::character varying,
+        stripe_session_id varchar(200),
+        stripe_payment_intent_id varchar(200),
+        stripe_payout_id varchar(200),
+        increase_transfer_id varchar(200),
+        mint_tx_hash varchar(80),
+        status varchar(32) NOT NULL,
+        target_wallet_address varchar(80),
+        buyer_email varchar(200),
+        idempotency_key varchar(200) NOT NULL,
+        metadata_json jsonb,
+        error_reason text,
+        created_at timestamp NOT NULL DEFAULT now(),
+        updated_at timestamp NOT NULL DEFAULT now(),
+        stripe_account_id varchar(64),
+        PRIMARY KEY (id)
+      )`, 'table cap_card_deposits');
+      await exec(`CREATE TABLE IF NOT EXISTS cap_plaid_accounts (
+        id varchar(40) NOT NULL,
+        item_id varchar(40) NOT NULL,
+        plaid_account_id varchar(200) NOT NULL,
+        account_name varchar(200),
+        mask varchar(8),
+        account_type varchar(32),
+        account_subtype varchar(32),
+        routing_number_encrypted text,
+        account_number_encrypted text,
+        routing_mask varchar(8),
+        removed_at timestamp,
+        created_at timestamp NOT NULL DEFAULT now(),
+        updated_at timestamp NOT NULL DEFAULT now(),
+        PRIMARY KEY (id)
+      )`, 'table cap_plaid_accounts');
+      await exec(`CREATE TABLE IF NOT EXISTS cap_plaid_items (
+        id varchar(40) NOT NULL,
+        user_ref varchar(80) NOT NULL,
+        plaid_item_id varchar(200) NOT NULL,
+        access_token_encrypted text NOT NULL,
+        institution_id varchar(80),
+        institution_name varchar(200),
+        environment varchar(16) NOT NULL,
+        removed_at timestamp,
+        created_at timestamp NOT NULL DEFAULT now(),
+        updated_at timestamp NOT NULL DEFAULT now(),
+        PRIMARY KEY (id)
+      )`, 'table cap_plaid_items');
+      await exec(`CREATE TABLE IF NOT EXISTS contract_event_outbox (
+        id uuid NOT NULL DEFAULT gen_random_uuid(),
+        event_id uuid NOT NULL,
+        contract_entity_id uuid NOT NULL,
+        event_type contract_event_type NOT NULL,
+        payload jsonb NOT NULL,
+        publish_attempts integer NOT NULL DEFAULT 0,
+        last_error text,
+        published_at timestamp,
+        created_at timestamp NOT NULL DEFAULT now(),
+        PRIMARY KEY (id)
+      )`, 'table contract_event_outbox');
+      await exec(`CREATE TABLE IF NOT EXISTS contract_events (
+        id uuid NOT NULL DEFAULT gen_random_uuid(),
+        contract_entity_id uuid NOT NULL,
+        event_id uuid NOT NULL DEFAULT gen_random_uuid(),
+        event_type contract_event_type NOT NULL,
+        payload jsonb NOT NULL,
+        correlation_id varchar(255) NOT NULL,
+        occurred_at timestamp NOT NULL DEFAULT now(),
+        created_at timestamp NOT NULL DEFAULT now(),
+        PRIMARY KEY (id)
+      )`, 'table contract_events');
+      await exec(`CREATE TABLE IF NOT EXISTS contract_financial_payloads (
+        id uuid NOT NULL DEFAULT gen_random_uuid(),
+        contract_entity_id uuid NOT NULL,
+        payload_type varchar(80) NOT NULL,
+        payload_version integer NOT NULL DEFAULT 1,
+        payload jsonb NOT NULL,
+        created_at timestamp NOT NULL DEFAULT now(),
+        updated_at timestamp NOT NULL DEFAULT now(),
+        PRIMARY KEY (id)
+      )`, 'table contract_financial_payloads');
+      await exec(`CREATE TABLE IF NOT EXISTS dao_account_applications (
+        id uuid NOT NULL DEFAULT gen_random_uuid(),
+        entity_name varchar(300) NOT NULL,
+        entity_ein varchar(20) NOT NULL,
+        entity_address text NOT NULL,
+        signer_name varchar(300) NOT NULL,
+        signer_dob date NOT NULL,
+        signer_country varchar(3) NOT NULL,
+        signer_id_type varchar(50) NOT NULL,
+        signer_id_number varchar(100) NOT NULL,
+        increase_account_id varchar(200),
+        increase_account_number varchar(50),
+        increase_routing_number varchar(20),
+        account_token_hash varchar(256),
+        status dao_account_status NOT NULL DEFAULT 'pending_review'::dao_account_status,
+        created_at timestamp NOT NULL DEFAULT now(),
+        updated_at timestamp NOT NULL DEFAULT now(),
+        PRIMARY KEY (id)
+      )`, 'table dao_account_applications');
+      await exec(`CREATE TABLE IF NOT EXISTS handwritten_migrations (
+        filename text NOT NULL,
+        checksum text NOT NULL,
+        applied_at timestamptz NOT NULL DEFAULT now(),
+        PRIMARY KEY (filename)
+      )`, 'table handwritten_migrations');
+      await exec(`CREATE TABLE IF NOT EXISTS integrity_pager_wiring_check_runs (
+        id bigint NOT NULL DEFAULT nextval('integrity_pager_wiring_check_runs_id_seq'::regclass),
+        ran_at timestamptz NOT NULL DEFAULT now(),
+        ok boolean NOT NULL,
+        expected_channels text[] NOT NULL DEFAULT '{}'::text[],
+        channels_paged text[] NOT NULL DEFAULT '{}'::text[],
+        pager_errors text[] NOT NULL DEFAULT '{}'::text[],
+        missing_channels text[] NOT NULL DEFAULT '{}'::text[],
+        owner_notified boolean NOT NULL DEFAULT false,
+        owner_notify_error text,
+        owner_email_configured boolean NOT NULL DEFAULT false,
+        skipped_reason text,
+        triggered_by text NOT NULL DEFAULT 'scheduler'::text,
+        PRIMARY KEY (id)
+      )`, 'table integrity_pager_wiring_check_runs');
+      await exec(`CREATE TABLE IF NOT EXISTS launch_attestations (
+        id integer NOT NULL DEFAULT nextval('launch_attestations_id_seq'::regclass),
+        kind varchar(32) NOT NULL,
+        ref varchar(200) NOT NULL,
+        acked_by varchar(200) NOT NULL,
+        acked_at timestamp NOT NULL DEFAULT now(),
+        hash varchar(128),
+        notes text,
+        metadata jsonb,
+        PRIMARY KEY (id)
+      )`, 'table launch_attestations');
+      await exec(`CREATE TABLE IF NOT EXISTS nft_balances (
+        id integer NOT NULL DEFAULT nextval('nft_balances_id_seq'::regclass),
+        token_id integer NOT NULL,
+        contract_address varchar(42) NOT NULL,
+        holder_address varchar(42) NOT NULL,
+        balance integer NOT NULL DEFAULT 0,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now(),
+        PRIMARY KEY (id)
+      )`, 'table nft_balances');
+      await exec(`CREATE TABLE IF NOT EXISTS nft_burned_txs (
+        id integer NOT NULL DEFAULT nextval('nft_burned_txs_id_seq'::regclass),
+        tx_hash varchar(66) NOT NULL,
+        used_by varchar(42) NOT NULL,
+        token_id integer,
+        contract_address varchar(42),
+        created_at timestamptz NOT NULL DEFAULT now(),
+        PRIMARY KEY (id)
+      )`, 'table nft_burned_txs');
+      await exec(`CREATE TABLE IF NOT EXISTS nft_mint_eligibility (
+        id integer NOT NULL DEFAULT nextval('nft_mint_eligibility_id_seq'::regclass),
+        wallet_address varchar(42) NOT NULL,
+        collection varchar(20) NOT NULL DEFAULT 'founder'::character varying,
+        eligible boolean NOT NULL DEFAULT true,
+        minted boolean NOT NULL DEFAULT false,
+        minted_token_id integer,
+        minted_tx_hash varchar(66),
+        reason text,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now(),
+        PRIMARY KEY (id)
+      )`, 'table nft_mint_eligibility');
+      await exec(`CREATE TABLE IF NOT EXISTS nft_tokens (
+        id integer NOT NULL DEFAULT nextval('nft_tokens_id_seq'::regclass),
+        token_id integer NOT NULL,
+        contract_address varchar(42) NOT NULL,
+        contract_type varchar(20) NOT NULL DEFAULT 'ERC721'::character varying,
+        owner_address varchar(42),
+        trait_seed varchar(66),
+        rarity_tier varchar(20),
+        rarity_score integer,
+        traits_json jsonb,
+        image_cid text,
+        animation_cid text,
+        metadata_cid text,
+        minted_at timestamptz,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now(),
+        image_data text,
+        PRIMARY KEY (id)
+      )`, 'table nft_tokens');
+      await exec(`CREATE TABLE IF NOT EXISTS oracle_fallback_prune_history (
+        id bigint NOT NULL DEFAULT nextval('oracle_fallback_prune_history_id_seq'::regclass),
+        pruned_at timestamptz NOT NULL DEFAULT now(),
+        deleted_count bigint NOT NULL,
+        retention_days integer NOT NULL,
+        triggered_by text NOT NULL DEFAULT 'pg_cron'::text,
+        PRIMARY KEY (id)
+      )`, 'table oracle_fallback_prune_history');
+      await exec(`CREATE TABLE IF NOT EXISTS partner_integrations (
+        id varchar NOT NULL DEFAULT gen_random_uuid(),
+        partner_name varchar(100) NOT NULL,
+        integration_type varchar(100) NOT NULL,
+        status varchar(30) NOT NULL DEFAULT 'configured'::character varying,
+        production_enabled boolean DEFAULT false,
+        sandbox_enabled boolean DEFAULT false,
+        last_sync_at timestamp,
+        metadata jsonb,
+        created_at timestamp NOT NULL DEFAULT now(),
+        updated_at timestamp NOT NULL DEFAULT now(),
+        PRIMARY KEY (id)
+      )`, 'table partner_integrations');
+      await exec(`CREATE TABLE IF NOT EXISTS partner_treasury_transactions (
+        id varchar NOT NULL DEFAULT gen_random_uuid(),
+        treasury_account_id varchar(100),
+        direction varchar(30) NOT NULL,
+        asset_symbol varchar(20) NOT NULL,
+        amount numeric(28,8) NOT NULL,
+        usd_value numeric(20,2),
+        external_tx_id varchar(300),
+        tx_hash varchar(100),
+        source_provider varchar(50),
+        source_type varchar(50),
+        counterparty varchar(255),
+        purpose text,
+        classification varchar(50),
+        occurred_at timestamp,
+        metadata jsonb,
+        created_at timestamp NOT NULL DEFAULT now(),
+        updated_at timestamp NOT NULL DEFAULT now(),
+        PRIMARY KEY (id)
+      )`, 'table partner_treasury_transactions');
+      await exec(`CREATE TABLE IF NOT EXISTS prune_alert_log (
+        id bigint NOT NULL DEFAULT nextval('prune_alert_log_id_seq'::regclass),
+        sent_at timestamptz NOT NULL DEFAULT now(),
+        alert_status text NOT NULL DEFAULT 'stale'::text,
+        channels text[] NOT NULL DEFAULT '{}'::text[],
+        PRIMARY KEY (id)
+      )`, 'table prune_alert_log');
+      await exec(`CREATE TABLE IF NOT EXISTS prune_alert_log_cleanup_history (
+        id bigint NOT NULL DEFAULT nextval('prune_alert_log_cleanup_history_id_seq'::regclass),
+        ran_at timestamptz NOT NULL DEFAULT now(),
+        deleted_count bigint NOT NULL DEFAULT 0,
+        retention_days integer NOT NULL,
+        triggered_by text NOT NULL DEFAULT 'pg_cron'::text,
+        PRIMARY KEY (id)
+      )`, 'table prune_alert_log_cleanup_history');
+      await exec(`CREATE TABLE IF NOT EXISTS savings_positions (
+        id integer NOT NULL DEFAULT nextval('savings_positions_id_seq'::regclass),
+        wallet_address varchar(42) NOT NULL,
+        deposit_amount_axusd numeric(36,18) NOT NULL DEFAULT '0'::numeric,
+        current_balance_axusd numeric(36,18) NOT NULL DEFAULT '0'::numeric,
+        yield_earned_axusd numeric(36,18) NOT NULL DEFAULT '0'::numeric,
+        vault_shares numeric(36,18) NOT NULL DEFAULT '0'::numeric,
+        tx_hash varchar(66),
+        operation varchar(20) NOT NULL DEFAULT 'deposit'::character varying,
+        status varchar(20) NOT NULL DEFAULT 'pending'::character varying,
+        last_updated_at timestamp NOT NULL DEFAULT now(),
+        created_at timestamp NOT NULL DEFAULT now(),
+        PRIMARY KEY (id)
+      )`, 'table savings_positions');
+
+        // ── Drift: missing indexes ──
+        await exec(`CREATE INDEX IF NOT EXISTS axusd_oracle_fallback_caller_idx ON public.axusd_oracle_fallback_events USING btree (caller)`, 'index axusd_oracle_fallback_caller_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS axusd_oracle_fallback_occurred_at_idx ON public.axusd_oracle_fallback_events USING btree (occurred_at)`, 'index axusd_oracle_fallback_occurred_at_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_card_deposit_webhook_events_deposit_idx ON public.cap_card_deposit_webhook_events USING btree (deposit_id)`, 'index cap_card_deposit_webhook_events_deposit_idx');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_card_deposit_webhook_events_stripe_event_uq ON public.cap_card_deposit_webhook_events USING btree (stripe_event_id)`, 'index cap_card_deposit_webhook_events_stripe_event_uq');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_card_deposits_idem_uq ON public.cap_card_deposits USING btree (idempotency_key)`, 'index cap_card_deposits_idem_uq');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_card_deposits_intent_idx ON public.cap_card_deposits USING btree (intent, created_at)`, 'index cap_card_deposits_intent_idx');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_card_deposits_session_uq ON public.cap_card_deposits USING btree (stripe_session_id)`, 'index cap_card_deposits_session_uq');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_card_deposits_status_idx ON public.cap_card_deposits USING btree (status, created_at)`, 'index cap_card_deposits_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_plaid_accounts_item_idx ON public.cap_plaid_accounts USING btree (item_id, removed_at)`, 'index cap_plaid_accounts_item_idx');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_plaid_accounts_plaid_account_uq ON public.cap_plaid_accounts USING btree (plaid_account_id)`, 'index cap_plaid_accounts_plaid_account_uq');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS cap_plaid_items_plaid_item_uq ON public.cap_plaid_items USING btree (plaid_item_id)`, 'index cap_plaid_items_plaid_item_uq');
+      await exec(`CREATE INDEX IF NOT EXISTS cap_plaid_items_user_idx ON public.cap_plaid_items USING btree (user_ref, removed_at)`, 'index cap_plaid_items_user_idx');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS contract_event_outbox_event_id_idx ON public.contract_event_outbox USING btree (event_id)`, 'index contract_event_outbox_event_id_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS contract_event_outbox_unpublished_idx ON public.contract_event_outbox USING btree (published_at, created_at)`, 'index contract_event_outbox_unpublished_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS contract_events_entity_occurred_idx ON public.contract_events USING btree (contract_entity_id, occurred_at)`, 'index contract_events_entity_occurred_idx');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS contract_events_event_id_idx ON public.contract_events USING btree (event_id)`, 'index contract_events_event_id_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS contract_financial_payloads_entity_payload_idx ON public.contract_financial_payloads USING btree (contract_entity_id, payload_type)`, 'index contract_financial_payloads_entity_payload_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS integrity_pager_wiring_check_runs_ran_at_desc_idx ON public.integrity_pager_wiring_check_runs USING btree (ran_at DESC)`, 'index integrity_pager_wiring_check_runs_ran_at_desc_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS launch_attestations_acked_at_idx ON public.launch_attestations USING btree (acked_at)`, 'index launch_attestations_acked_at_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS launch_attestations_kind_ref_idx ON public.launch_attestations USING btree (kind, ref)`, 'index launch_attestations_kind_ref_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_nft_balances_holder ON public.nft_balances USING btree (holder_address)`, 'index idx_nft_balances_holder');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_nft_balances_token ON public.nft_balances USING btree (token_id, contract_address)`, 'index idx_nft_balances_token');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS nft_balances_token_id_contract_address_holder_address_key ON public.nft_balances USING btree (token_id, contract_address, holder_address)`, 'index nft_balances_token_id_contract_address_holder_address_key');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_nft_burned_txs_hash ON public.nft_burned_txs USING btree (tx_hash)`, 'index idx_nft_burned_txs_hash');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS nft_burned_txs_tx_hash_key ON public.nft_burned_txs USING btree (tx_hash)`, 'index nft_burned_txs_tx_hash_key');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_nft_eligibility_wallet ON public.nft_mint_eligibility USING btree (wallet_address)`, 'index idx_nft_eligibility_wallet');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS nft_mint_eligibility_wallet_address_key ON public.nft_mint_eligibility USING btree (wallet_address)`, 'index nft_mint_eligibility_wallet_address_key');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_nft_tokens_contract ON public.nft_tokens USING btree (contract_address)`, 'index idx_nft_tokens_contract');
+      await exec(`CREATE INDEX IF NOT EXISTS idx_nft_tokens_owner ON public.nft_tokens USING btree (owner_address)`, 'index idx_nft_tokens_owner');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS nft_tokens_token_id_contract_address_key ON public.nft_tokens USING btree (token_id, contract_address)`, 'index nft_tokens_token_id_contract_address_key');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS partner_integrations_partner_name_key ON public.partner_integrations USING btree (partner_name)`, 'index partner_integrations_partner_name_key');
+      await exec(`CREATE INDEX IF NOT EXISTS pi_status_idx ON public.partner_integrations USING btree (status)`, 'index pi_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS pttx_account_idx ON public.partner_treasury_transactions USING btree (treasury_account_id)`, 'index pttx_account_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS pttx_asset_idx ON public.partner_treasury_transactions USING btree (asset_symbol)`, 'index pttx_asset_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS pttx_class_idx ON public.partner_treasury_transactions USING btree (classification)`, 'index pttx_class_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS pttx_occurred_idx ON public.partner_treasury_transactions USING btree (occurred_at)`, 'index pttx_occurred_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS pttx_provider_idx ON public.partner_treasury_transactions USING btree (source_provider)`, 'index pttx_provider_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS prune_alert_log_sent_at_desc_idx ON public.prune_alert_log USING btree (sent_at DESC)`, 'index prune_alert_log_sent_at_desc_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS prune_alert_log_cleanup_history_ran_at_desc_idx ON public.prune_alert_log_cleanup_history USING btree (ran_at DESC)`, 'index prune_alert_log_cleanup_history_ran_at_desc_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS savings_positions_created_at_idx ON public.savings_positions USING btree (created_at)`, 'index savings_positions_created_at_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS savings_positions_tx_hash_idx ON public.savings_positions USING btree (tx_hash) WHERE (tx_hash IS NOT NULL)`, 'index savings_positions_tx_hash_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS savings_positions_wallet_idx ON public.savings_positions USING btree (wallet_address)`, 'index savings_positions_wallet_idx');
+
+        // ── Auto-apply numbered SQL migrations (./migrations/*.sql) ──
       // When the migrations directory is present on disk (local dev / CI clone,
       // not a serverless Vercel deployment), apply every unapplied numbered
       // migration so the DB schema stays in sync without manual intervention.
