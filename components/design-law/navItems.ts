@@ -32,7 +32,8 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { href: '/system-map', label: 'System Map' },
       { href: '/real-assets', label: 'Real Assets (Overview)' },
-      { href: '/axau', label: 'AXAU Reserve' },
+      { href: '/axau', label: 'AXAU — Gold Reserve' },
+      { href: '/commodities/kag', label: 'Silver Reserve (KAG)' },
       { href: '/axau-early-access', label: 'AXAU Early Access' },
       { href: '/axau-buy', label: 'AXAU Mint Terminal' },
       { href: '/axusd-3643', label: 'AXUSD Settlement Rail' },
@@ -43,7 +44,6 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/escrow/new', label: 'Escrow' },
       { href: '/depin/denet', label: 'DePIN Network' },
       { href: '/commodity-framework', label: 'Tokenized Commodities' },
-      { href: '/commodities/kag', label: 'Kinesis Silver (KAG)' },
     ],
   },
   {

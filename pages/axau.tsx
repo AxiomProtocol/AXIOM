@@ -462,6 +462,60 @@ function LiveDashboard() {
   );
 }
 
+// ─── Silver Sleeve — Phase 2 ──────────────────────────────────────────────────
+
+function SilverSleeveSection() {
+  return (
+    <section style={{ borderBottom: `1px solid ${C.border}`, padding: '48px 0' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 32, alignItems: 'center' }}>
+        <div>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: '#5c7a8f', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Phase 2 — In Design</p>
+          <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(22px, 3.5vw, 32px)', fontWeight: 600, color: C.navy, marginBottom: 14, lineHeight: 1.2 }}>
+            Silver Sleeve — KAG as Reserve Component
+          </h2>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, lineHeight: 1.75 }}>
+            AXAU was built from the start as a multi-commodity reserve. The Phase 2 design target adds silver
+            as a governance-admitted basket sleeve. KAG (Kinesis Silver — 1 gram LBMA 999 Ag per token)
+            enters the vault alongside PAXG. AXAU holders gain monetary metals backing — gold and silver together —
+            without a new token or new disclosure regime.
+          </p>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7, marginTop: 10 }}>
+            Activation requires an AXM governance vote, reserve KAG acquisition, and an external audit of the silver vault contract.
+            The vault design and oracle contracts are staged in the protocol repository.
+          </p>
+        </div>
+        <div>
+          <div style={{ border: `1px solid #5c7a8f30`, background: '#f4f7f9', padding: '20px' }}>
+            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#5c7a8f', letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 14 }}>Silver Sleeve Parameters (Design Target)</p>
+            {[
+              { label: 'Reserve asset',    value: 'KAG (Kinesis Silver — 1 g LBMA 999 Ag)' },
+              { label: 'Denomination',     value: '1 KAG = 1 gram fine silver' },
+              { label: 'Reserve haircut',  value: '8% (Tier 1 liquid commodity)' },
+              { label: 'Max basket weight', value: '30% of total AXAU reserve' },
+              { label: 'Oracle',           value: 'Chainlink XAG/USD ÷ 31.1035 g/toz' },
+              { label: 'Coverage floor',   value: '105% — same as gold sleeve' },
+              { label: 'Status',           value: 'Governance vote required' },
+            ].map(row => (
+              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: `1px solid #dde4ea` }}>
+                <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{row.label}</span>
+                <span style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.navy, fontWeight: 600, textAlign: 'right' }}>{row.value}</span>
+              </div>
+            ))}
+            <a href="/commodities/kag" style={{
+              display: 'block', textAlign: 'center', marginTop: 18, padding: '11px',
+              border: `1px solid #5c7a8f`, color: '#3d5a6f',
+              fontFamily: '"Courier New", monospace', fontSize: 10, letterSpacing: '0.14em',
+              textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700, background: '#fff',
+            }}>
+              VIEW SILVER RESERVE PAGE →
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Purchase Terminal ────────────────────────────────────────────────────────
 
 function MintTerminal() {
@@ -591,23 +645,38 @@ function ReserveArchitecture() {
           <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 14 }}>Reserve Layers</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
-              { phase: 'Phase 1', name: 'Gold (XAU)', asset: 'On-chain gold reserve — Arbitrum One', status: 'LIVE', active: true },
-              { phase: 'Phase 2', name: 'Land (Real Estate)', asset: 'Appraised US real estate', status: 'CONFIGURED', active: false },
-              { phase: 'Phase 3', name: 'Silver (XAG)', asset: 'Physical silver via LBMA', status: 'PLANNED', active: false },
-              { phase: 'Phase 4+', name: 'Additional Commodities', asset: 'Governance-approved assets', status: 'PLANNED', active: false },
+              { phase: 'Phase 1', name: 'Gold (XAU) — PAXG',       asset: 'On-chain gold reserve — Arbitrum One',              status: 'LIVE',      active: true,  silver: false },
+              { phase: 'Phase 2', name: 'Silver (XAG) — KAG',      asset: 'Silver sleeve · governance vote required',           status: 'IN DESIGN', active: false, silver: true  },
+              { phase: 'Phase 3', name: 'Land (Real Property)',     asset: 'Appraised US real estate via acquisition pipeline',  status: 'PLANNED',   active: false, silver: false },
+              { phase: 'Phase 4+', name: 'Additional Commodities',  asset: 'Governance-approved reserve assets',                 status: 'PLANNED',   active: false, silver: false },
             ].map(layer => (
-              <div key={layer.phase} style={{ border: `1px solid ${layer.active ? C.gold : C.border}`, background: layer.active ? C.bgGold : C.bg, padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div key={layer.phase} style={{
+                border: `1px solid ${layer.active ? C.gold : layer.silver ? '#5c7a8f50' : C.border}`,
+                background: layer.active ? C.bgGold : layer.silver ? '#f4f7f9' : C.bg,
+                padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start',
+              }}>
                 <div style={{
-                  width: 32, height: 32, flexShrink: 0, borderRadius: '50%',
-                  background: layer.active ? 'radial-gradient(ellipse at 35% 30%, #FFE07A, #C9913A, #7A5010)' : C.bgAlt,
-                  border: `1px solid ${layer.active ? C.gold : C.border}`,
+                  width: 32, height: 32, flexShrink: 0,
+                  background: layer.active
+                    ? 'radial-gradient(ellipse at 35% 30%, #FFE07A, #C9913A, #7A5010)'
+                    : layer.silver
+                      ? 'radial-gradient(ellipse at 35% 30%, #c8d8e8, #5c7a8f, #3d5a6f)'
+                      : C.bgAlt,
+                  border: `1px solid ${layer.active ? C.gold : layer.silver ? '#5c7a8f' : C.border}`,
                 }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 14, color: C.navy, fontWeight: 600 }}>{layer.name}</span>
-                    <span style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: layer.active ? C.green : C.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{layer.status}</span>
+                    <span style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: layer.active ? C.green : layer.silver ? '#3d5a6f' : C.muted, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: layer.silver ? 700 : 400 }}>{layer.status}</span>
                   </div>
                   <span style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: C.muted }}>{layer.asset}</span>
+                  {layer.silver && (
+                    <div style={{ marginTop: 4 }}>
+                      <a href="/commodities/kag" style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.navy, letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', borderBottom: `1px solid ${C.border}` }}>
+                        Silver Reserve page →
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -764,6 +833,7 @@ export default function AxauPage() {
       <ReserveFlow />
       <HowItWorks />
       <LiveDashboard />
+      <SilverSleeveSection />
       <CollateralClassificationSection />
       <MintTerminal />
       <ReserveArchitecture />
