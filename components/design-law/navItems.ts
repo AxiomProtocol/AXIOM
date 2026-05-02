@@ -35,6 +35,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/axau', label: 'AXAU — Gold Reserve' },
       { href: '/commodities/kag', label: 'Silver Reserve (KAG)' },
       { href: '/assets', label: 'Supported Assets' },
+      { href: '/assets/dashboard', label: 'Asset Dashboard' },
       { href: '/axau-early-access', label: 'AXAU Early Access' },
       { href: '/axau-buy', label: 'AXAU Mint Terminal' },
       { href: '/axusd-3643', label: 'AXUSD Settlement Rail' },
