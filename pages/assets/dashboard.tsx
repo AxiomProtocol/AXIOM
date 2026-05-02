@@ -144,21 +144,69 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async () => {
     };
   });
 
-  // AXAU implied per-token (PAX-Gold reference) for gold comparison
+  // AXAU implied per-token (LBMA gold reference) for gold comparison.
+  //
+  // AXAU's token model is ≈1 troy ounce of gold per token, so the implied USD
+  // per AXAU equals the LBMA gold spot. Three honest sources, in order:
+  //   1. Direct CoinGecko pax-gold via the dedicated AXAU helper (cached 60s).
+  //   2. PAXG spot already fetched in this SSR pass (same underlying: 1 token =
+  //      1 troy oz LBMA gold, identical reference number).
+  //   3. XAUT spot already fetched in this SSR pass (Tether Gold = 1 troy oz
+  //      LBMA gold, equivalent reference).
+  // If all three are unavailable, return null with a structured error — never
+  // a synthetic value.
   let axauSpot: AxauSpot;
   try {
     const a = await portfolioInternal.getAxauUsdPerToken();
-    axauSpot = {
-      usdPerTroyOz: a.usd,
-      source: a.source,
-      ...(a.error ? { error: a.error } : {}),
-    };
+    if (a.usd !== null && isFinite(a.usd) && a.usd > 0) {
+      axauSpot = {
+        usdPerTroyOz: a.usd,
+        source: a.source,
+        ...(a.error ? { error: a.error } : {}),
+      };
+    } else {
+      const paxgRow = spots.find((s) => s.symbol === 'PAXG');
+      const xautRow = spots.find((s) => s.symbol === 'XAUT');
+      if (paxgRow && paxgRow.unitPriceUsd && paxgRow.unitPriceUsd > 0) {
+        axauSpot = {
+          usdPerTroyOz: paxgRow.unitPriceUsd,
+          source: 'Implied from PAXG spot (1 token ≈ 1 troy oz LBMA gold)',
+        };
+      } else if (xautRow && xautRow.unitPriceUsd && xautRow.unitPriceUsd > 0) {
+        axauSpot = {
+          usdPerTroyOz: xautRow.unitPriceUsd,
+          source: 'Implied from XAUT spot (1 token ≈ 1 troy oz LBMA gold)',
+        };
+      } else {
+        axauSpot = {
+          usdPerTroyOz: null,
+          source: a.source,
+          error:
+            a.error ??
+            'AXAU reference USD price unavailable and no LBMA gold reference (PAXG/XAUT) was retrievable. No fallback used.',
+        };
+      }
+    }
   } catch (err) {
-    axauSpot = {
-      usdPerTroyOz: null,
-      source: 'unavailable',
-      error: err instanceof Error ? err.message : 'AXAU spot failed',
-    };
+    const paxgRow = spots.find((s) => s.symbol === 'PAXG');
+    const xautRow = spots.find((s) => s.symbol === 'XAUT');
+    if (paxgRow && paxgRow.unitPriceUsd && paxgRow.unitPriceUsd > 0) {
+      axauSpot = {
+        usdPerTroyOz: paxgRow.unitPriceUsd,
+        source: 'Implied from PAXG spot (1 token ≈ 1 troy oz LBMA gold)',
+      };
+    } else if (xautRow && xautRow.unitPriceUsd && xautRow.unitPriceUsd > 0) {
+      axauSpot = {
+        usdPerTroyOz: xautRow.unitPriceUsd,
+        source: 'Implied from XAUT spot (1 token ≈ 1 troy oz LBMA gold)',
+      };
+    } else {
+      axauSpot = {
+        usdPerTroyOz: null,
+        source: 'unavailable',
+        error: err instanceof Error ? err.message : 'AXAU spot failed',
+      };
+    }
   }
 
   return {
