@@ -72,11 +72,13 @@ export const KAG_ARBITRUM_STATUS = {
 export const GRAMS_PER_TROY_OZ = 31.1035;
 
 /**
- * Chainlink XAG/USD on Arbitrum One — planned oracle for AXAG.
+ * Chainlink XAG/USD on Arbitrum One — sole planned oracle source for AXAG.
  *
  * STATUS: O-01 OPEN — not yet confirmed operational.
- * Phase 1 price reads use Alpha Vantage as the active source.
- * Chainlink will be the primary oracle once O-01 is closed.
+ * Phase 1 behavior while O-01 is open: price reads return null with an
+ * explicit O-01 PENDING note. NO fallback price source is used; no
+ * non-canonical pricing is permitted during a blocker state.
+ * Once O-01 closes, Chainlink becomes the live primary (and only) oracle.
  */
 export const CHAINLINK_XAG_USD_STATUS = {
   plannedAddress: '0x66a35534126b4B0845A2Aa03825B95dfaAA88A4F',
@@ -85,15 +87,14 @@ export const CHAINLINK_XAG_USD_STATUS = {
   blocker: 'O-01',
   note:
     'Chainlink XAG/USD aggregator on Arbitrum One has not been confirmed operational. ' +
-    'Phase 1 price reads fall back to Alpha Vantage CURRENCY_EXCHANGE_RATE (XAG/USD). ' +
-    'Once O-01 closes, Chainlink becomes the primary oracle source.',
+    'While O-01 is OPEN, Phase 1 price reads return null with an O-01 PENDING note. ' +
+    'No fallback price source is used. Once O-01 closes, Chainlink is the sole oracle source.',
 };
 
 const ERC20_ABI = ['function balanceOf(address owner) view returns (uint256)'];
 
 const ALCHEMY_KEY =
   process.env.ALCHEMY_API_KEY ?? process.env.NEXT_PUBLIC_ALCHEMY_API_KEY ?? '';
-const ALPHA_VANTAGE_KEY = process.env.ALPHA_VANTAGE_API_KEY ?? '';
 
 const ETH_MAINNET_RPC = `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`;
 
@@ -487,8 +488,8 @@ export async function getKagBalance(walletAddress: string): Promise<KagBalanceRe
  * getKagUsdValue
  *
  * Convenience: returns USD-denominated spot value for a gram quantity of KAG.
- * Phase 1 price source: Alpha Vantage XAG/USD (per troy oz) ÷ 31.1035.
- * READ-ONLY.
+ * Phase 1 price source: Chainlink XAG/USD on Arbitrum One (per troy oz) ÷ 31.1035.
+ * Returns null pricing fields while O-01 is OPEN. READ-ONLY.
  */
 export async function getKagUsdValue(grams: number): Promise<{
   grams: number;
