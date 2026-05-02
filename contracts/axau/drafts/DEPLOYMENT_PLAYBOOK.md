@@ -13,13 +13,14 @@
 
 ## Pre-Deployment Checklist
 
-- [ ] G-01 AXM governance vote passed and timelock elapsed
+- [ ] G-01 Gnosis Safe quorum reached for `addComponent("XAG", ...)` call — replaces AXM token holder vote (waived for silver sleeve; see AXAG-AUDIT-001 § 5)
 - [ ] G-02 Internal regulatory interpretation memo reviewed and accepted (AXAG-REG-MEMO-001) ✓ CLOSED
 - [ ] G-03 KAG bridged from Ethereum mainnet to Arbitrum One via bridge.arbitrum.io — confirm bridged KAG balance in deployer wallet
-- [ ] G-04 KAG arb-mapped ERC-20 address on Arbitrum One recorded (confirm via Arbiscan after bridge)
-- [ ] G-05 Audit complete (`AXSilverVault.sol` + `XagPerGramOracle.sol`), all critical/high findings remediated
+- [ ] G-04a KAG arb-mapped ERC-20 address on Arbitrum One recorded (confirm via Arbiscan after bridge)
+- [ ] G-04b KAG `decimals()` returns 18 and `transfer()` is not fee-on-transfer — verify on Etherscan source (see AXAG-AUDIT-001 F-05)
+- [ ] G-05 Internal audit complete ✓ CLOSED — AXAG-AUDIT-001 (1 blocker remediated in playbook, 1 medium accepted, NatSpec fix applied)
 - [ ] G-06 Reserve KAG balance staged in deployer wallet (minimum: target initial reserve)
-- [ ] G-07 All disclosure surfaces staged and ready to flip (single PR, 5 items per AXAG-REG-MEMO-001 § 7)
+- [ ] G-07 All disclosure surfaces staged and ready to flip (single PR, 6 items — 5 from AXAG-REG-MEMO-001 § 7 + redemption vault disclosure per AXAG-AUDIT-001 § 4)
 - [ ] Deployer wallet has sufficient ETH on Arbitrum for ~6 contract deployments + wiring txs
 
 ---
@@ -110,26 +111,74 @@ npx hardhat run scripts/deploy-silver.ts --network arbitrumOne
 
 ---
 
+## Step 2.5 — Update NAVEngine Oracle Staleness Guard (REQUIRED — audit finding F-01)
+
+**This step must be executed before Step 3. Skipping it will cause all AXAU minting and
+redemption to revert after the first ~1 hour following silver component registration.**
+
+**Why:** NAVEngine's global `oracleStaleSecs` is initialized to 3600s (1 hour). The Chainlink
+XAG/USD feed has a 24-hour heartbeat. Under normal market conditions, the feed updates at most
+once per 24 hours. After the first hour following a feed update, NAVEngine would revert on
+every call to `totalBackingUsdWad()`, blocking all mint/redeem operations.
+
+**Fix:** One Gnosis Safe transaction:
+```
+NAVEngine.setOracleStaleSecs(97200)
+```
+`97200 seconds = 24 hours + 1 hour buffer = 25 hours` (matches MintRedeemController's existing
+`oracleStaleness = 97_200` which was already correctly set for 24h-heartbeat feeds).
+
+**Verify after execution:**
+- Call `NAVEngine.oracleStaleSecs()` — must return `97200`
+- Call `NAVEngine.totalBackingUsdWad()` — must return a positive value (gold sleeve still priced)
+- Confirm gold sleeve is still priced correctly after the staleness window change
+
+**Note:** This change loosens the gold oracle guard from 1h to 25h. The XAU/USD feed has a
+1-hour heartbeat and updates continuously — a 25-hour stale guard remains conservative for
+a treasury reserve instrument where gold prices cannot move discontinuously for 24 hours
+without a Chainlink update. The MintRedeemController already used 27h for this reason.
+See AXAG-AUDIT-001 F-01 and F-08 for full analysis.
+
+---
+
 ## Step 3 — Register Silver Component in CommodityRegistry
 
-Call `registerComponent()` on the existing live `CommodityRegistry` with:
+Call `addComponent()` on the existing live `CommodityRegistry`. Function signature:
+
+```solidity
+function addComponent(
+    string  calldata sym,
+    address vault,
+    address oracle,
+    uint256 haircutBps,
+    uint256 maxWeightBps,
+    bool    isLiquid,
+    uint8   phase
+) external onlyGovernor
+```
+
+Arguments for the silver sleeve:
 
 ```
-ComponentConfig {
-  vault:          <SILVER_VAULT>
-  oracle:         <XAGPERGRAM_ORACLE>
-  haircutBps:     800          // 8% — Tier 1 liquid commodity per spec
-  isLiquid:       true
-  symbol:         "XAG"
-  oracleDecimals: 8
-  assetDecimals:  18           // KAG is 18-decimal ERC-20
-  phase:          2
-  maxWeightBps:   3000         // 30% maximum weight per sleeve spec
-}
+sym:          "XAG"
+vault:        <SILVER_VAULT>
+oracle:       <XAGPERGRAM_ORACLE>
+haircutBps:   800              // 8% — Tier 1 liquid commodity per spec
+maxWeightBps: 3000             // 30% maximum weight per sleeve spec
+isLiquid:     true
+phase:        2
 ```
+
+The registry will automatically call:
+- `oracle.decimals()` → must return 8 ✓
+- `vault.reserveAsset()` → returns bridged KAG address ✓
+- `kagErc20.decimals()` → must return 18 (verify per G-04b) ✓
+
+Any of these reverting means a misconfiguration exists — no funds are at risk; fix and retry.
 
 **Verify after registration:**
-- Call `getComponent("XAG")` on CommodityRegistry — returns the config above
+- Call `getComponent(keccak256("XAG"))` on CommodityRegistry — all fields populated
+- Call `componentCount()` — should increase by 1
 
 ---
 

@@ -199,7 +199,12 @@ contract XagPerGramOracle is AggregatorV3Interface {
 
     /**
      * @notice Returns the raw (troy-ounce) price from the underlying Chainlink feed.
-     *         Bypasses the sequencer check — diagnostic use only.
+     * @dev    WARNING: BYPASSES THE L2 SEQUENCER UPTIME CHECK. Do NOT use this value
+     *         in any on-chain computation. This function is for off-chain diagnostic
+     *         comparison only (e.g. monitoring dashboards, alerting). The returned
+     *         price may have been generated while the Arbitrum sequencer was down
+     *         or within the grace period. Use latestRoundData() or gramPrice() for
+     *         all on-chain consumption. (See audit finding F-03, AXAG-AUDIT-001.)
      */
     function rawTroyOzPrice() external view returns (int256 troyOzAnswer, uint256 updatedAt) {
         uint80 _r; uint256 _s; uint80 _a;
