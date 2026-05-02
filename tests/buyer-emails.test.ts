@@ -67,6 +67,7 @@ const {
   sendAxauEarlyAccessConfirmation,
   sendInboundAchNotification,
   sendAxauPurchaseRequestConfirmation,
+  sendEscrowCounterpartyInvitation,
 } = await import('../lib/email/resend');
 
 // ─── Shared test fixtures ────────────────────────────────────────────────────
@@ -246,6 +247,36 @@ describe('sendAxauPurchaseRequestConfirmation — snapshot', () => {
     expect(sent.html).toContain('1000.00 AXUSD');
     expect(sent.html).toContain('0.5423 AXAU');
     expect(sent.html).toMatchSnapshot('axau-purchase-request-no-price-html');
+  });
+});
+
+// ─── sendEscrowCounterpartyInvitation ───────────────────────────────────────
+
+describe('sendEscrowCounterpartyInvitation — snapshot', () => {
+  const ESCROW_PARAMS = {
+    counterpartyName: 'Bob Smith',
+    initiatorName: 'Alice Johnson',
+    amountUsd: '5000.00',
+    purpose: 'security_deposit',
+    escrowUrl: 'https://axiomprotocol.app/escrow/abc123',
+    counterpartyToken: 'cptoken-xyz-9876543210',
+  };
+
+  it('renders the all-params-present body with escrow URL, counterparty token, initiator name, and purpose label', async () => {
+    await sendEscrowCounterpartyInvitation('counterparty@example.com', ESCROW_PARAMS);
+
+    const sent = captured();
+    expect(sent.to).toEqual(['counterparty@example.com']);
+    expect(sent.from).toBe('noreply@axiomprotocol.app');
+    expect(sent.subject).toMatchInlineSnapshot(
+      `"Escrow Invitation: Alice Johnson has opened a Security Deposit escrow with you"`,
+    );
+    expect(sent.html).toContain('Alice Johnson');
+    expect(sent.html).toContain('Security Deposit');
+    expect(sent.html).toContain('https://axiomprotocol.app/escrow/abc123');
+    expect(sent.html).toContain('cptoken-xyz-9876543210');
+    expect(sent.html).toContain('$5,000.00');
+    expect(sent.html).toMatchSnapshot('escrow-counterparty-invitation-html');
   });
 });
 
