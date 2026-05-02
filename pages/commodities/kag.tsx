@@ -1,21 +1,31 @@
 /**
- * /commodities/kag — Kinesis Silver (KAG) External Asset Page
+ * /commodities/kag — Kinesis Silver (KAG) Direct Support Page
  *
- * Phase 1: Read-only external asset recognition.
+ * Phase 1: Direct KAG support inside Axiom — read-only.
  *
  * Hard rules:
- *   - No AXAG token. No KAG vault. No smart contract deployment.
+ *   - No AXAG token. No KAG vault. No wrapper token. No smart contract deployment.
  *   - No custody. No lending. No swaps. No banking rails.
- *   - Axiom does not issue KAG. Axiom does not custody KAG or underlying silver.
- *   - AXAG is not live and is not being issued.
+ *   - Axiom does not issue KAG. Axiom does not custody the underlying silver.
+ *   - AXAG is not live and is not issued.
  */
 
 import Head from 'next/head';
 import Link from 'next/link';
+import { useState } from 'react';
 import type { GetServerSideProps } from 'next';
 import { DesignLawLayout, SectionHeading } from '../../components/design-law';
-import { getKagAssetMetadata, getKagDisclosure, getKagUsdValue } from '../../lib/commodities/kagService';
-import type { KagAssetMetadata, KagDisclosure } from '../../lib/commodities/kagService';
+import {
+  getKagAssetMetadata,
+  getKagDisclosure,
+  getKagRiskSummary,
+  getKagUsdValue,
+} from '../../lib/commodities/kagService';
+import type {
+  KagAssetMetadata,
+  KagDisclosure,
+  KagRiskSummary,
+} from '../../lib/commodities/kagService';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -30,13 +40,29 @@ interface SpotData {
 interface PageProps {
   metadata: KagAssetMetadata;
   disclosure: KagDisclosure;
+  risk: KagRiskSummary;
   spot: SpotData;
+}
+
+interface PortfolioBalance {
+  walletAddress: string;
+  formattedBalance: string;
+  grams: number;
+  troyOunces: number;
+  estimatedUsdValue: number | null;
+  kagUsdPerGram: number | null;
+  oracleSource: string;
+  warnings: string[];
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
-  const isWarning = status === 'UNVERIFIED' || status === 'UNCONFIRMED';
+  const isOk = status === 'VERIFIED' || status === 'EXTERNAL_SUPPORTED';
+  const isDeferred = status === 'DEFERRED' || status === 'NOT_USED_PHASE_1';
+  const isWarn = status === 'UNVERIFIED' || status === 'UNCONFIRMED';
+  const color = isOk ? '#2d5a27' : isDeferred ? '#555' : isWarn ? '#b8941a' : '#1a1a2e';
+  const bg = isOk ? '#f0f7f0' : isDeferred ? '#f4f1eb' : isWarn ? '#fffbf0' : '#fff';
   return (
     <span
       style={{
@@ -45,9 +71,10 @@ function StatusBadge({ status }: { status: string }) {
         fontSize: '11px',
         fontFamily: 'monospace',
         letterSpacing: '0.05em',
-        border: `1px solid ${isWarning ? '#b8941a' : '#2d5a27'}`,
-        color: isWarning ? '#b8941a' : '#2d5a27',
-        backgroundColor: isWarning ? '#fffbf0' : '#f0f7f0',
+        border: `1px solid ${color}`,
+        color,
+        backgroundColor: bg,
+        marginLeft: '6px',
       }}
     >
       {status}
@@ -55,21 +82,23 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function BlockerBadge({ id }: { id: string }) {
+function RiskLevelBadge({ level }: { level: 'LOW' | 'MEDIUM' | 'HIGH' }) {
+  const color = level === 'LOW' ? '#2d5a27' : level === 'MEDIUM' ? '#b8941a' : '#8b1a1a';
+  const bg = level === 'LOW' ? '#f0f7f0' : level === 'MEDIUM' ? '#fffbf0' : '#fff8f8';
   return (
     <span
       style={{
         display: 'inline-block',
-        padding: '1px 6px',
+        padding: '2px 8px',
         fontSize: '11px',
         fontFamily: 'monospace',
-        border: '1px solid #8b1a1a',
-        color: '#8b1a1a',
-        backgroundColor: '#fff8f8',
-        marginLeft: '6px',
+        letterSpacing: '0.05em',
+        border: `1px solid ${color}`,
+        color,
+        backgroundColor: bg,
       }}
     >
-      {id} OPEN
+      {level}
     </span>
   );
 }
@@ -87,16 +116,188 @@ function InfoRow({ label, value, mono = false }: { label: string; value: React.R
   );
 }
 
+// ─── Portfolio panel ──────────────────────────────────────────────────────────
+
+function PortfolioPanel() {
+  const [address, setAddress] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<PortfolioBalance | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function lookup() {
+    setError(null);
+    setResult(null);
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      setError('Invalid Ethereum address. Must be 0x followed by 40 hex characters.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/commodities/kag/balance?address=${encodeURIComponent(address)}`,
+      );
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || `HTTP ${res.status}`);
+      }
+      const json = await res.json();
+      const d = json.data;
+      setResult({
+        walletAddress: d.walletAddress,
+        formattedBalance: d.formattedBalance,
+        grams: d.grams,
+        troyOunces: d.troyOunces,
+        estimatedUsdValue: d.estimatedUsdValue,
+        kagUsdPerGram: d.kagUsdPerGram,
+        oracleSource: d.oracleSource,
+        warnings: d.warnings ?? [],
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Lookup failed');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={{ border: '1px solid #d8d0c0', backgroundColor: '#fafaf6', padding: '20px' }}>
+      <div
+        style={{
+          fontSize: '12px',
+          fontFamily: 'monospace',
+          color: '#666',
+          marginBottom: '12px',
+          letterSpacing: '0.05em',
+        }}
+      >
+        READ-ONLY — ETHEREUM MAINNET — ERC-20 balanceOf
+      </div>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          value={address}
+          onChange={(e) => setAddress(e.target.value.trim())}
+          placeholder="0x..."
+          spellCheck={false}
+          style={{
+            flex: '1 1 360px',
+            minWidth: '280px',
+            padding: '10px 12px',
+            border: '1px solid #c8c0b0',
+            fontFamily: 'monospace',
+            fontSize: '13px',
+            background: '#fff',
+          }}
+        />
+        <button
+          onClick={lookup}
+          disabled={loading || !address}
+          style={{
+            padding: '10px 18px',
+            border: '1px solid #1a1a2e',
+            background: loading ? '#888' : '#1a1a2e',
+            color: '#fff',
+            fontFamily: 'monospace',
+            fontSize: '13px',
+            cursor: loading || !address ? 'not-allowed' : 'pointer',
+            letterSpacing: '0.05em',
+          }}
+        >
+          {loading ? 'LOADING…' : 'LOOK UP KAG BALANCE'}
+        </button>
+      </div>
+
+      {error && (
+        <div
+          style={{
+            marginTop: '12px',
+            padding: '10px 14px',
+            border: '1px solid #8b1a1a',
+            background: '#fff8f8',
+            color: '#8b1a1a',
+            fontSize: '13px',
+            fontFamily: 'monospace',
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      {result && (
+        <div style={{ marginTop: '16px' }}>
+          <dl style={{ margin: 0, padding: 0 }}>
+            <InfoRow label="Wallet" value={<span style={{ fontFamily: 'monospace' }}>{result.walletAddress}</span>} />
+            <InfoRow
+              label="KAG balance"
+              value={
+                <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>
+                  {result.formattedBalance} KAG ({result.grams} grams / {result.troyOunces} troy oz)
+                </span>
+              }
+            />
+            <InfoRow
+              label="Estimated USD value"
+              value={
+                <span style={{ fontFamily: 'monospace' }}>
+                  {result.estimatedUsdValue !== null
+                    ? `$${result.estimatedUsdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : '— (oracle unavailable)'}
+                </span>
+              }
+            />
+            <InfoRow
+              label="Oracle source"
+              value={<span style={{ fontFamily: 'monospace', fontSize: '12px' }}>{result.oracleSource}</span>}
+            />
+          </dl>
+          {result.warnings.length > 0 && (
+            <div
+              style={{
+                marginTop: '12px',
+                padding: '10px 14px',
+                border: '1px solid #d8c870',
+                background: '#fffbf0',
+                color: '#7a6010',
+                fontSize: '12px',
+                lineHeight: '1.6',
+              }}
+            >
+              {result.warnings.map((w, i) => (
+                <div key={i}>• {w}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ marginTop: '12px', fontSize: '12px', color: '#888', lineHeight: '1.6' }}>
+        Read-only ERC-20 balance lookup. No deposit. No transfer. No custody. No internal ledgering.
+        Axiom never holds your KAG. Spot price via CoinGecko.
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
-export default function KagPage({ metadata, disclosure, spot }: PageProps) {
+export default function KagPage({ metadata, disclosure, risk, spot }: PageProps) {
+  const riskRows: { key: keyof KagRiskSummary; label: string }[] = [
+    { key: 'custodyRisk', label: 'Custody risk' },
+    { key: 'reserveRisk', label: 'Reserve risk' },
+    { key: 'redemptionRisk', label: 'Redemption risk' },
+    { key: 'regulatoryRisk', label: 'Regulatory risk' },
+    { key: 'oracleRisk', label: 'Oracle risk' },
+    { key: 'liquidityRisk', label: 'Liquidity risk' },
+    { key: 'axiomScopeRisk', label: 'Axiom scope risk' },
+  ];
+
   return (
     <DesignLawLayout>
       <Head>
-        <title>Kinesis Silver (KAG) — External Asset | Axiom Protocol</title>
+        <title>Kinesis Silver (KAG) — Supported Commodity Asset | Axiom Protocol</title>
         <meta
           name="description"
-          content="Kinesis Silver (KAG) external asset recognition. Phase 1 read-only integration. Axiom does not issue KAG."
+          content="Kinesis Silver (KAG) direct support on Ethereum mainnet. Read-only. Axiom does not issue KAG. AXAG is not live and is not issued."
         />
       </Head>
 
@@ -112,26 +313,25 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
         }}
       >
         <strong style={{ fontFamily: 'monospace', display: 'block', marginBottom: '4px', color: '#8b1a1a' }}>
-          AXAG IS NOT LIVE AND IS NOT APPROVED FOR DEPLOYMENT
+          AXAG IS NOT LIVE AND IS NOT ISSUED
         </strong>
-        This page describes KAG (Kinesis Silver) as an external asset recognized by Axiom Protocol for
-        research and integration planning only. No AXAG token has been minted. No AXAG token is being issued.
-        Axiom does not issue KAG. Axiom does not custody KAG or the physical silver underlying KAG in Phase 1.
+        Axiom supports KAG as an external commodity asset. Axiom does not issue KAG.
+        Axiom does not issue AXAG in this phase. Axiom does not directly custody the
+        underlying silver. Any redemption rights depend on KMS Labs / Kinesis terms.
       </div>
 
       {/* ── Title ── */}
       <div style={{ marginBottom: '32px' }}>
         <div style={{ fontFamily: 'monospace', fontSize: '12px', color: '#888', marginBottom: '8px', letterSpacing: '0.08em' }}>
-          EXTERNAL COMMODITY ASSET — PHASE 1 READ-ONLY
+          SUPPORTED EXTERNAL COMMODITY ASSET — PHASE 1 DIRECT SUPPORT (READ-ONLY)
         </div>
         <h1 style={{ fontSize: '2rem', fontFamily: 'Georgia, serif', fontWeight: 700, color: '#1a1a2e', margin: '0 0 8px' }}>
           Kinesis Silver (KAG)
         </h1>
-        <p style={{ color: '#555', fontSize: '15px', maxWidth: '680px', lineHeight: '1.6' }}>
-          KAG is an ERC-20 silver-backed token issued by KMS Labs AG (Kinesis Money),
-          representing 1 gram of LBMA Good Delivery 999 fine silver. Axiom Protocol
-          recognizes KAG as an external commodity asset in Phase 1 — read-only, no custody,
-          no issuance.
+        <p style={{ color: '#555', fontSize: '15px', maxWidth: '720px', lineHeight: '1.6' }}>
+          KAG is an ERC-20 silver-backed token issued by KMS Labs within the Kinesis ecosystem,
+          representing 1 gram of LBMA Good Delivery 999 fine silver. Axiom supports KAG as an
+          external commodity asset on Ethereum mainnet — read-only, no custody, no issuance.
         </p>
       </div>
 
@@ -149,25 +349,20 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
         }}
       >
         <div>
-          <div style={{ fontSize: '11px', fontFamily: 'monospace', color: '#888', marginBottom: '4px' }}>XAG / USD (per troy oz)</div>
-          <div style={{ fontSize: '20px', fontFamily: 'monospace', fontWeight: 700, color: '#1a1a2e' }}>
-            {spot.xagUsdPerTroyOz != null ? `$${spot.xagUsdPerTroyOz.toFixed(3)}` : '—'}
-          </div>
-        </div>
-        <div>
           <div style={{ fontSize: '11px', fontFamily: 'monospace', color: '#888', marginBottom: '4px' }}>KAG / USD (per gram)</div>
           <div style={{ fontSize: '20px', fontFamily: 'monospace', fontWeight: 700, color: '#1a1a2e' }}>
             {spot.kagUsdPerGram != null ? `$${spot.kagUsdPerGram.toFixed(4)}` : '—'}
           </div>
         </div>
-        <div style={{ fontSize: '12px', color: '#888', fontFamily: 'monospace' }}>
-          <div>
-            Oracle:{' '}
-            {spot.oracleSource === 'oracle-pending'
-              ? 'Chainlink XAG/USD (Arbitrum One) — O-01 PENDING'
-              : spot.oracleSource}
+        <div>
+          <div style={{ fontSize: '11px', fontFamily: 'monospace', color: '#888', marginBottom: '4px' }}>XAG / USD (per troy oz, derived)</div>
+          <div style={{ fontSize: '20px', fontFamily: 'monospace', fontWeight: 700, color: '#1a1a2e' }}>
+            {spot.xagUsdPerTroyOz != null ? `$${spot.xagUsdPerTroyOz.toFixed(3)}` : '—'}
           </div>
-          <div>Conversion: ÷ 31.1035 g/troy oz</div>
+        </div>
+        <div style={{ fontSize: '12px', color: '#888', fontFamily: 'monospace' }}>
+          <div>Oracle: {spot.oracleSource}</div>
+          <div>Conversion: × 31.1035 g/troy oz</div>
           {spot.error && (
             <div style={{ color: '#b8941a', maxWidth: '380px', lineHeight: '1.4' }}>
               {spot.error}
@@ -176,6 +371,17 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
           <div>As of: {spot.fetchedAt.slice(0, 19).replace('T', ' ')} UTC</div>
         </div>
       </div>
+
+      {/* ── Section: Portfolio integration ── */}
+      <section style={{ marginBottom: '48px' }}>
+        <SectionHeading>Portfolio — Your KAG Balance</SectionHeading>
+        <p style={{ fontSize: '13px', color: '#666', marginBottom: '16px', lineHeight: '1.6' }}>
+          KAG is tracked as a supported external commodity asset in Axiom. Look up the
+          KAG balance and estimated USD value held by any Ethereum mainnet wallet. This
+          is a read-only on-chain read — no deposits, no transfers, no Axiom-side ledger.
+        </p>
+        <PortfolioPanel />
+      </section>
 
       {/* ── Section 1: Asset definition ── */}
       <section style={{ marginBottom: '48px' }}>
@@ -186,6 +392,14 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
           <InfoRow label="Unit" value={metadata.unit} />
           <InfoRow label="Unit note" value={metadata.unitNote} />
           <InfoRow label="Reserve standard" value={metadata.reserveStandard} />
+          <InfoRow
+            label="Status"
+            value={
+              <span>
+                External supported asset <StatusBadge status="EXTERNAL_SUPPORTED" />
+              </span>
+            }
+          />
           <InfoRow label="Integration phase" value={metadata.integrationPhase} />
           <InfoRow label="Integration scope" value={metadata.integrationScope} />
         </dl>
@@ -210,10 +424,8 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
               </a>
             }
           />
-          <InfoRow
-            label="Axiom role"
-            value="Axiom Protocol is NOT the issuer of KAG. Axiom is a third-party recognizing KAG as an external asset for research and planning."
-          />
+          <InfoRow label="Axiom role" value={disclosure.axiomSupportStatement} />
+          <InfoRow label="Axiom issuance" value={disclosure.axiomIssuanceStatement} />
         </dl>
 
         <div
@@ -249,9 +461,15 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
             label="Contract address"
             value={
               <span style={{ fontFamily: 'monospace' }}>
-                {metadata.contractAddress}{' '}
+                <a
+                  href={`https://etherscan.io/token/${metadata.contractAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#2d5a8e' }}
+                >
+                  {metadata.contractAddress}
+                </a>{' '}
                 <StatusBadge status={metadata.contractVerificationStatus} />
-                <BlockerBadge id={metadata.contractVerificationBlocker} />
               </span>
             }
           />
@@ -259,40 +477,27 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
             label="Arbitrum One"
             value={
               <span>
-                Not confirmed{' '}
-                <StatusBadge status="UNCONFIRMED" />
-                <BlockerBadge id="KIN-02" />
+                Not in scope for Phase 1 <StatusBadge status="DEFERRED" />
               </span>
             }
           />
-          <InfoRow
-            label="Contract standard"
-            value="ERC-20 (Ethereum mainnet)"
-          />
-          <InfoRow
-            label="Decimals"
-            value={<span style={{ fontFamily: 'monospace' }}>18</span>}
-          />
+          <InfoRow label="Contract standard" value="ERC-20 (Ethereum mainnet)" />
+          <InfoRow label="Decimals" value={<span style={{ fontFamily: 'monospace' }}>18</span>} />
         </dl>
 
         <div
           style={{
             marginTop: '16px',
             padding: '12px 16px',
-            border: '1px solid #d8c870',
-            backgroundColor: '#fffbf0',
+            border: '1px solid #c8d8c8',
+            backgroundColor: '#f8fbf8',
             fontSize: '13px',
             lineHeight: '1.6',
-            color: '#7a6010',
           }}
         >
-          <strong>KIN-01 OPEN:</strong> The official KAG ERC-20 contract address has not been confirmed
-          from a canonical KMS Labs source. The address shown above is a placeholder pending KIN-01 resolution.
-          Do not rely on this address for financial decisions until it is confirmed from{' '}
-          <a href="https://kinesis.money" target="_blank" rel="noopener noreferrer" style={{ color: '#7a6010' }}>
-            kinesis.money
-          </a>{' '}
-          developer documentation.
+          KAG ERC-20 contract on Ethereum mainnet is verified. Axiom interacts with
+          this contract via read-only ERC-20 <code>balanceOf</code> calls only.
+          Arbitrum-native KAG support is deferred for Phase 1.
         </div>
       </section>
 
@@ -301,7 +506,7 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
         <SectionHeading>Reserve Model</SectionHeading>
         <dl style={{ margin: 0, padding: 0 }}>
           <InfoRow label="Reserve description" value={metadata.reserveModel} />
-          <InfoRow label="Physical custody holder" value="KMS Labs AG (not Axiom Protocol)" />
+          <InfoRow label="Physical custody holder" value="KMS Labs (vault partners) — not Axiom Protocol" />
           <InfoRow label="Vault standard" value="LBMA Good Delivery — KMS Labs vault network" />
           <InfoRow
             label="Proof of reserves"
@@ -316,10 +521,7 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
                 >
                   kinesis.money/reserves
                 </a>
-                .{' '}
-                <StatusBadge status="UNCONFIRMED" />
-                <BlockerBadge id="KIN-05" />
-                {' '}Attestation cadence and auditor identity pending confirmation.
+                .
               </span>
             }
           />
@@ -354,16 +556,11 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
           />
           <InfoRow
             label="Axiom controls"
-            value="Phase 1: nothing. Axiom has no redemption role in Phase 1."
+            value="Phase 1: nothing. Axiom has no redemption role."
           />
           <InfoRow
             label="Minimum quantity"
-            value={
-              <span>
-                Minimum gram threshold applies. Exact minimum pending KMS Labs terms review.{' '}
-                <BlockerBadge id="KIN-04" />
-              </span>
-            }
+            value="Minimum gram threshold set by KMS Labs. Verify current minimums at kinesis.money/terms."
           />
           <InfoRow
             label="KYC required"
@@ -383,8 +580,8 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
             }
           />
           <InfoRow
-            label="Fiat redemption"
-            value="Not supported by Axiom Protocol. Available through KMS Labs platform subject to their terms."
+            label="Fiat redemption via Axiom"
+            value="Not supported. Available through KMS Labs platform subject to their terms."
           />
         </dl>
       </section>
@@ -403,7 +600,7 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
           }}
         >
           <div style={{ fontFamily: 'monospace', fontWeight: 700, color: '#8b1a1a', marginBottom: '8px', fontSize: '13px' }}>
-            AXAG IS NOT LIVE AND IS NOT APPROVED FOR DEPLOYMENT
+            AXAG IS NOT LIVE AND IS NOT ISSUED
           </div>
           {disclosure.axagStatement}
         </div>
@@ -415,29 +612,48 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
               value={<span style={{ color: '#8b1a1a', fontWeight: 600 }}>Does not exist. Not minted. Not issued.</span>}
             />
             <InfoRow
-              label="AXAG governance vote"
-              value="Not scheduled. Required before any AXAG issuance."
-            />
-            <InfoRow
-              label="Open blockers"
-              value={
-                <span>
-                  KIN-01 through KIN-08 — all ASSIGNED, none CLOSED.{' '}
-                  <Link href="/commodity-framework" style={{ color: '#2d5a8e' }}>
-                    View framework
-                  </Link>
-                </span>
-              }
+              label="Wrapper-token path"
+              value={<span>Deferred <StatusBadge status="DEFERRED" /></span>}
             />
             <InfoRow
               label="Smart contract work"
-              value="Has not begun. Cannot begin until KIN-01 through KIN-06 are resolved."
+              value="None in Phase 1. Phase 1 is direct KAG support only — no Axiom-side contract."
+            />
+            <InfoRow
+              label="Active path"
+              value="Direct KAG support on Ethereum mainnet (this page)."
             />
           </dl>
         </div>
       </section>
 
-      {/* ── Section 7: Risk notes ── */}
+      {/* ── Section 7: Risk summary ── */}
+      <section style={{ marginBottom: '48px' }}>
+        <SectionHeading>Risk Summary</SectionHeading>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #1a1a2e', textAlign: 'left' }}>
+              <th style={{ padding: '8px 12px', fontWeight: 700, width: '180px' }}>Risk dimension</th>
+              <th style={{ padding: '8px 12px', fontWeight: 700, width: '90px' }}>Level</th>
+              <th style={{ padding: '8px 12px', fontWeight: 700 }}>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {riskRows.map((row) => {
+              const r = risk[row.key];
+              return (
+                <tr key={row.key} style={{ borderBottom: '1px solid #e8e4dc' }}>
+                  <td style={{ padding: '10px 12px', fontWeight: 600, color: '#444' }}>{row.label}</td>
+                  <td style={{ padding: '10px 12px' }}><RiskLevelBadge level={r.level} /></td>
+                  <td style={{ padding: '10px 12px', color: '#333', lineHeight: '1.6' }}>{r.note}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </section>
+
+      {/* ── Section 8: Risk notes ── */}
       <section style={{ marginBottom: '48px' }}>
         <SectionHeading>Risk Notes</SectionHeading>
         <ul style={{ margin: 0, padding: '0 0 0 20px', lineHeight: '1.8', fontSize: '14px', color: '#333' }}>
@@ -447,57 +663,6 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
             </li>
           ))}
         </ul>
-      </section>
-
-      {/* ── Section 8: Open blockers ── */}
-      <section style={{ marginBottom: '48px' }}>
-        <SectionHeading>Open Blockers (KIN Series)</SectionHeading>
-        <p style={{ fontSize: '13px', color: '#666', marginBottom: '16px' }}>
-          The following blockers must be resolved before any AXAG issuance or smart contract work begins.
-          Source: <Link href="/commodity-framework" style={{ color: '#2d5a8e' }}>AXAG Stage 2 Evidence Tracker, Section 16</Link>.
-        </p>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #1a1a2e', textAlign: 'left' }}>
-              <th style={{ padding: '8px 12px', fontWeight: 700 }}>Blocker</th>
-              <th style={{ padding: '8px 12px', fontWeight: 700 }}>Requirement</th>
-              <th style={{ padding: '8px 12px', fontWeight: 700 }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              { id: 'KIN-01', req: 'Official KAG ERC-20 contract address confirmed from KMS Labs', priority: 'CRITICAL' },
-              { id: 'KIN-02', req: 'KAG on Arbitrum One availability confirmed (native or approved bridge)', priority: 'CRITICAL' },
-              { id: 'KIN-03', req: 'KMS Labs Terms review — wrapper token and vault-holding permission', priority: 'CRITICAL' },
-              { id: 'KIN-04', req: 'Redemption terms documented — minimums, KYC, timeline', priority: 'HIGH' },
-              { id: 'KIN-05', req: 'KAG proof-of-reserves cadence, auditor, and format confirmed', priority: 'HIGH' },
-              { id: 'KIN-06', req: 'Legal opinion: KMS Labs TVTG qualifies as CEF Custody Risk score ≤ 2', priority: 'HIGH' },
-              { id: 'KIN-07', req: 'Chainlink XAG/USD on Arbitrum One operational (shared with O-01)', priority: 'HIGH' },
-              { id: 'KIN-08', req: 'Architecture specification approved before smart contract drafting begins', priority: 'GATE' },
-            ].map((b) => (
-              <tr key={b.id} style={{ borderBottom: '1px solid #e8e4dc' }}>
-                <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: 700, color: '#8b1a1a' }}>
-                  {b.id}
-                </td>
-                <td style={{ padding: '10px 12px', color: '#333' }}>{b.req}</td>
-                <td style={{ padding: '10px 12px' }}>
-                  <span
-                    style={{
-                      fontFamily: 'monospace',
-                      fontSize: '11px',
-                      padding: '2px 7px',
-                      border: '1px solid #8b1a1a',
-                      color: '#8b1a1a',
-                      backgroundColor: '#fff8f8',
-                    }}
-                  >
-                    ASSIGNED
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </section>
 
       {/* ── Section 9: Disclosure links ── */}
@@ -547,7 +712,7 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
         </div>
       </section>
 
-      {/* ── Footer: effective date and API links ── */}
+      {/* Footer: effective date and API links */}
       <div
         style={{
           borderTop: '1px solid #d8d0c0',
@@ -563,14 +728,14 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
       >
         <div>
           Effective date: {metadata.effectiveDate} &nbsp;|&nbsp;
-          Phase 1 — Read-Only External Asset Recognition
+          Phase 1 — Direct KAG Support (Read-Only)
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <a
-            href="/api/commodities/kag/status"
-            target="_blank"
-            style={{ color: '#888' }}
-          >
+          <a href="/api/commodities" target="_blank" style={{ color: '#888' }}>
+            /api/commodities
+          </a>
+          <span>|</span>
+          <a href="/api/commodities/kag/status" target="_blank" style={{ color: '#888' }}>
             /api/commodities/kag/status
           </a>
           <span>|</span>
@@ -590,9 +755,10 @@ export default function KagPage({ metadata, disclosure, spot }: PageProps) {
 // ─── Data fetching ─────────────────────────────────────────────────────────────
 
 export const getServerSideProps: GetServerSideProps<PageProps> = async () => {
-  const [metadata, disclosure, spotRaw] = await Promise.all([
+  const [metadata, disclosure, risk, spotRaw] = await Promise.all([
     Promise.resolve(getKagAssetMetadata()),
     Promise.resolve(getKagDisclosure()),
+    Promise.resolve(getKagRiskSummary()),
     getKagUsdValue(1),
   ]);
 
@@ -604,5 +770,5 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async () => {
     ...(spotRaw.error ? { error: spotRaw.error } : {}),
   };
 
-  return { props: { metadata, disclosure, spot } };
+  return { props: { metadata, disclosure, risk, spot } };
 };

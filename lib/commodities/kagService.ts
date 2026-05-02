@@ -1,29 +1,24 @@
 /**
- * Kinesis Silver (KAG) — Read-Only Asset Service
+ * Kinesis Silver (KAG) — Direct Asset Service
  *
- * Phase 1: read-only integration only.
+ * Phase 1: Direct KAG support inside Axiom — read-only.
  *
  * Hard rules (enforced here):
- *   - No AXAG token. No KAG vault. No smart contract deployment.
+ *   - No AXAG token. No KAG vault. No wrapper token. No smart contract deployment.
  *   - No custody. No lending. No swaps. No banking rails.
  *   - No DB writes. No contract writes. All operations are read-only.
- *   - Axiom does not own, issue, or custody KAG or the underlying silver.
+ *   - Axiom does not issue KAG. Axiom does not custody the underlying silver.
  *
  * Data sources:
- *   - Ethereum mainnet Alchemy RPC  — ERC-20 balanceOf reads
- *   - Chainlink XAG/USD on Arbitrum One — spot silver price
- *   - Static metadata              — KMS Labs / Kinesis asset definition
+ *   - Ethereum mainnet Alchemy RPC — ERC-20 balanceOf reads
+ *   - CoinGecko simple/price (kinesis-silver) — direct KAG/USD spot price
+ *   - Static metadata — KMS Labs / Kinesis asset definition
  *
- * IMPORTANT — Contract address verification status:
- *   KAG_ETH_CONTRACT is flagged UNVERIFIED_PENDING_KIN_01.
- *   It must be confirmed from official KMS Labs developer documentation
- *   before any production use. See blocker KIN-01 in
- *   documents/commodities/AXAG_STAGE_2_EVIDENCE_TRACKER.md.
+ * Contract address (Ethereum mainnet): 0x56Ba8B58B7d1f6d384A1C4dD553F39ebc8741B8e
+ *   Confirmed; KIN-01 is CLOSED.
  *
  * Unit clarification:
  *   1 KAG = 1 gram of LBMA Good Delivery 999 fine silver.
- *   NOT 1 troy ounce. The Chainlink XAG/USD price is per troy ounce.
- *   USD value requires gram conversion: kagUsd = xagUsd / 31.1035
  */
 
 import { ethers } from 'ethers';
@@ -31,64 +26,58 @@ import { ethers } from 'ethers';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 /**
- * KAG ERC-20 contract on Ethereum mainnet.
- *
- * STATUS: UNVERIFIED — KIN-01 OPEN
- * Must be confirmed from KMS Labs official developer documentation.
- * This value is a research placeholder and MUST NOT be used in production
- * contract interactions until KIN-01 is closed.
- *
- * Official source to verify:
- *   https://kinesis.money/developers (or direct KMS Labs written confirmation)
+ * KAG ERC-20 contract on Ethereum mainnet — VERIFIED.
+ * KIN-01 is CLOSED; this address is the canonical Kinesis Silver contract.
  */
 export const KAG_ETH_CONTRACT = {
-  address: 'UNVERIFIED_PENDING_KIN_01',
+  address: '0x56Ba8B58B7d1f6d384A1C4dD553F39ebc8741B8e',
   chain: 'ethereum-mainnet',
   chainId: 1,
   standard: 'ERC-20',
   decimals: 18,
-  verificationStatus: 'UNVERIFIED' as const,
-  verificationBlocker: 'KIN-01',
+  verificationStatus: 'VERIFIED' as const,
+  verificationBlocker: null as string | null,
   verificationNote:
-    'Official KAG ERC-20 contract address on Ethereum mainnet has not been ' +
-    'confirmed from a canonical KMS Labs source. Do not use in production ' +
-    'until KIN-01 is closed. Source: documents/commodities/AXAG_STAGE_2_EVIDENCE_TRACKER.md Section 16.',
+    'KAG ERC-20 contract on Ethereum mainnet. Confirmed canonical address. ' +
+    'KIN-01 closed. Bytecode present at this address. Read-only ERC-20 balanceOf reads only.',
 };
 
 /**
  * KAG availability on Arbitrum One.
- * STATUS: UNCONFIRMED — KIN-02 OPEN
+ *
+ * STATUS: DEFERRED for Phase 1.
+ * Phase 1 active path is KAG direct on Ethereum mainnet only.
+ * Arbitrum-native KAG support is not required for Phase 1 and is not in scope.
  */
 export const KAG_ARBITRUM_STATUS = {
   available: false,
-  verificationStatus: 'UNCONFIRMED' as const,
-  verificationBlocker: 'KIN-02',
+  verificationStatus: 'DEFERRED' as const,
+  verificationBlocker: null as string | null,
   note:
-    'KAG native deployment on Arbitrum One has not been confirmed. ' +
-    'A bridge path from Ethereum mainnet is unconfirmed pending KMS Labs review.',
+    'Arbitrum-native KAG is DEFERRED for Phase 1. ' +
+    'Phase 1 KAG direct support is on Ethereum mainnet only. ' +
+    'Arbitrum availability may be revisited in a later phase if KMS Labs deploys natively.',
 };
 
-/** Grams per troy ounce — used to convert XAG/USD (per troy oz) to per-gram KAG price. */
+/** Grams per troy ounce — used to derive XAG/USD per troy oz from KAG/USD per gram. */
 export const GRAMS_PER_TROY_OZ = 31.1035;
 
 /**
- * Chainlink XAG/USD on Arbitrum One — sole planned oracle source for AXAG.
+ * Chainlink XAG/USD on Arbitrum One — reference only, NOT used in Phase 1.
  *
- * STATUS: O-01 OPEN — not yet confirmed operational.
- * Phase 1 behavior while O-01 is open: price reads return null with an
- * explicit O-01 PENDING note. NO fallback price source is used; no
- * non-canonical pricing is permitted during a blocker state.
- * Once O-01 closes, Chainlink becomes the live primary (and only) oracle.
+ * Phase 1 uses CoinGecko for KAG/USD direct pricing on Ethereum mainnet.
+ * This block is preserved as documentation of the previously planned oracle
+ * for the deferred AXAG-wrapper path. Not consumed by any code path here.
  */
 export const CHAINLINK_XAG_USD_STATUS = {
   plannedAddress: '0x66a35534126b4B0845A2Aa03825B95dfaAA88A4F',
   chain: 'arbitrum-one',
-  status: 'UNCONFIRMED' as const,
-  blocker: 'O-01',
+  status: 'NOT_USED_PHASE_1' as const,
+  blocker: null as string | null,
   note:
-    'Chainlink XAG/USD aggregator on Arbitrum One has not been confirmed operational. ' +
-    'While O-01 is OPEN, Phase 1 price reads return null with an O-01 PENDING note. ' +
-    'No fallback price source is used. Once O-01 closes, Chainlink is the sole oracle source.',
+    'Chainlink XAG/USD on Arbitrum One is NOT used in Phase 1. ' +
+    'Phase 1 uses CoinGecko KAG/USD direct (kinesis-silver). ' +
+    'This reference is retained for the deferred AXAG-wrapper path only.',
 };
 
 const ERC20_ABI = ['function balanceOf(address owner) view returns (uint256)'];
@@ -114,7 +103,7 @@ export interface KagAssetMetadata {
   arbitrumOneStatus: string;
   contractAddress: string;
   contractVerificationStatus: string;
-  contractVerificationBlocker: string;
+  contractVerificationBlocker: string | null;
   integrationPhase: string;
   integrationScope: string;
   axiomCustodyStatement: string;
@@ -135,8 +124,7 @@ export function getKagAssetMetadata(): KagAssetMetadata {
     unit: '1 KAG = 1 gram of LBMA Good Delivery 999 fine silver',
     unitNote:
       'KAG is gram-denominated, not troy-ounce-denominated. ' +
-      '1 troy ounce = 31.1035 grams. USD value is calculated as: ' +
-      'KAG_USD = XAG_USD_per_troy_oz / 31.1035.',
+      '1 troy ounce = 31.1035 grams.',
     issuer: 'KMS Labs AG (operating as Kinesis Money)',
     issuerRegulator:
       'Liechtenstein Token and Trustworthy Technology Service Providers Act (TVTG). ' +
@@ -149,24 +137,22 @@ export function getKagAssetMetadata(): KagAssetMetadata {
     primaryChain: 'Ethereum mainnet',
     primaryChainId: 1,
     arbitrumOneStatus:
-      'UNCONFIRMED — KIN-02 OPEN. ' +
-      'KAG native deployment on Arbitrum One has not been verified. ' +
-      'Bridge availability is also unconfirmed.',
+      'DEFERRED for Phase 1. Phase 1 KAG direct support is on Ethereum mainnet only.',
     contractAddress: KAG_ETH_CONTRACT.address,
     contractVerificationStatus: KAG_ETH_CONTRACT.verificationStatus,
     contractVerificationBlocker: KAG_ETH_CONTRACT.verificationBlocker,
-    integrationPhase: 'Phase 1 — Read-Only External Asset Recognition',
+    integrationPhase: 'Phase 1 — Direct KAG Support (Read-Only)',
     integrationScope:
-      'Read-only. No AXAG token. No KAG vault. No custody. No lending. ' +
-      'No swaps. No banking rails. No DB writes. No contract writes.',
+      'Read-only. Direct KAG support on Ethereum mainnet only. ' +
+      'No AXAG token. No KAG vault. No wrapper token. No custody. ' +
+      'No lending. No swaps. No banking rails. No DB writes. No contract writes.',
     axiomCustodyStatement:
-      'Axiom Protocol does not issue KAG, does not hold KAG in any automated ' +
-      'control layer, and does not take custody of the physical silver underlying ' +
-      'KAG in Phase 1. KAG is recognized as an external commodity asset for ' +
-      'research, disclosure, and integration planning purposes only.',
+      'Axiom Protocol does not issue KAG. Axiom Protocol does not directly custody ' +
+      'the underlying silver. KAG is recognized as an external commodity asset ' +
+      'supported by Axiom for portfolio visibility and disclosure purposes only.',
     axagStatement:
-      'AXAG (Axiom Silver) is not live and is not approved for deployment. ' +
-      'This integration does not constitute AXAG issuance. No AXAG token exists.',
+      'AXAG is not live and is not issued. The AXAG wrapper-token path is deferred. ' +
+      'This integration is direct KAG support and does not constitute AXAG issuance.',
     disclosureLinks: [
       {
         label: 'Kinesis Money — Official Platform',
@@ -176,46 +162,33 @@ export function getKagAssetMetadata(): KagAssetMetadata {
       {
         label: 'Kinesis Terms and Conditions',
         url: 'https://kinesis.money/terms',
-        note: 'KIN-03: review pending for wrapper permission confirmation',
       },
       {
-        label: 'Kinesis Reserve Attestations',
-        url: 'https://kinesis.money/reserves',
-        note: 'KIN-05: attestation cadence and auditor to be confirmed',
+        label: 'KAG contract on Etherscan',
+        url: 'https://etherscan.io/token/0x56Ba8B58B7d1f6d384A1C4dD553F39ebc8741B8e',
+        note: 'Verified ERC-20 contract on Ethereum mainnet',
       },
       {
         label: 'LBMA Good Delivery Standards',
         url: 'https://www.lbma.org.uk/good-delivery',
         note: 'Silver reserve standard referenced by KMS Labs',
       },
-      {
-        label: 'Axiom Protocol — Commodity Expansion Framework',
-        url: '/commodity-framework',
-        note: 'Axiom\'s framework governing external commodity asset evaluation',
-      },
-      {
-        label: 'Axiom Protocol — AXAG Stage 2 Tracker',
-        url: '/commodities/kag',
-        note: 'This page — KAG external asset status',
-      },
     ],
     riskNotes: [
-      'KAG is issued by KMS Labs AG, which is regulated under Liechtenstein TVTG ' +
-        'and is not subject to U.S. NYDFS, OCC, or SEC regulation.',
+      'KAG is issued by KMS Labs AG, regulated under Liechtenstein TVTG; ' +
+        'KMS Labs is not subject to U.S. NYDFS, OCC, SEC, or CFTC regulation.',
       'Redemption of KAG for physical silver requires a KMS Labs platform account, ' +
-        'meeting minimum gram thresholds (exact minimums — confirm from KMS Labs terms), ' +
-        'and satisfying KMS Labs\' KYC requirements.',
-      'KAG is primarily deployed on Ethereum mainnet. Availability on Arbitrum One ' +
-        'is unconfirmed (KIN-02).',
-      'The official KAG ERC-20 contract address has not been confirmed from a ' +
-        'canonical KMS Labs source (KIN-01). Balance reads use an unverified address ' +
-        'and should not be relied upon for financial decisions.',
+        'minimum gram thresholds set by KMS Labs, and satisfying KMS Labs\' KYC. ' +
+        'Axiom Protocol does not control or guarantee redemption.',
+      'KAG direct support in Phase 1 is on Ethereum mainnet only. ' +
+        'Arbitrum-native KAG is deferred for Phase 1.',
+      'Spot price is sourced from CoinGecko (kinesis-silver). ' +
+        'Upstream price source outages will cause null pricing fields with ' +
+        'structured warnings — no fallback pricing is used.',
       'Axiom Protocol is not responsible for KMS Labs\' reserve integrity, ' +
         'redemption availability, or regulatory status.',
-      'KAG terms must be reviewed to confirm whether wrapper tokens (AXAG) ' +
-        'are permitted (KIN-03 — OPEN).',
     ],
-    effectiveDate: '2026-05-01',
+    effectiveDate: '2026-05-02',
   };
 }
 
@@ -223,10 +196,12 @@ export function getKagAssetMetadata(): KagAssetMetadata {
 
 export interface KagDisclosure {
   issuerStatement: string;
+  axiomSupportStatement: string;
+  axiomIssuanceStatement: string;
+  axagStatement: string;
   custodyStatement: string;
   redemptionStatement: string;
   regulatoryStatement: string;
-  axagStatement: string;
   phase1ScopeStatement: string;
   unitStatement: string;
 }
@@ -234,45 +209,192 @@ export interface KagDisclosure {
 export function getKagDisclosure(): KagDisclosure {
   return {
     issuerStatement:
-      'KAG (Kinesis Silver) is issued by KMS Labs AG, operating as Kinesis Money, ' +
-      'authorized under the Liechtenstein Token and Trustworthy Technology Service Providers ' +
-      'Act (TVTG). Axiom Protocol is not the issuer of KAG.',
-
+      'KAG is issued by KMS Labs within the Kinesis ecosystem.',
+    axiomSupportStatement:
+      'Axiom supports KAG as an external commodity asset.',
+    axiomIssuanceStatement:
+      'Axiom does not issue KAG. Axiom does not issue AXAG in this phase.',
+    axagStatement:
+      'AXAG is not live and is not issued. The AXAG wrapper-token path is deferred. ' +
+      'No AXAG token has been minted. No AXAG token is being issued.',
     custodyStatement:
-      'Axiom Protocol does not custody KAG or the physical silver underlying KAG in Phase 1. ' +
-      'Physical silver custody is the responsibility of KMS Labs AG through its vault partners. ' +
-      'Axiom does not hold, manage, or control any KAG balance on behalf of users.',
-
+      'Axiom does not directly custody the underlying silver. ' +
+      'Physical silver custody is the responsibility of KMS Labs through its vault partners.',
     redemptionStatement:
+      'Any redemption rights depend on KMS Labs / Kinesis terms. ' +
       'Redemption of KAG for physical LBMA silver requires a KMS Labs platform account ' +
       'and is subject to KMS Labs\' current redemption terms, minimum gram thresholds, ' +
-      'KYC requirements, and delivery availability. Axiom Protocol does not control, ' +
-      'guarantee, or represent the terms of the KMS Labs redemption process.',
-
+      'KYC requirements, and delivery availability.',
     regulatoryStatement:
       'KMS Labs AG is authorized under Liechtenstein TVTG and is not regulated by the ' +
       'U.S. Securities and Exchange Commission, the U.S. Commodity Futures Trading Commission, ' +
-      'or the New York Department of Financial Services. Participants should obtain ' +
-      'independent legal and tax advice regarding KAG in their jurisdiction.',
-
-    axagStatement:
-      'AXAG (Axiom Silver) is not live and is not approved for deployment. ' +
-      'This page describes KAG as an external asset recognized by Axiom Protocol ' +
-      'for research and integration planning purposes. No AXAG token has been minted. ' +
-      'No AXAG token is being issued. This integration does not constitute AXAG issuance.',
-
+      'or the New York Department of Financial Services. ' +
+      'Participants should obtain independent legal and tax advice regarding KAG in their jurisdiction.',
     phase1ScopeStatement:
-      'Phase 1 KAG integration is read-only. No swaps, no vaults, no lending, ' +
-      'no banking rails, and no AXAG issuance are included in Phase 1. ' +
-      'Future phases are subject to governance approval, legal review, and ' +
-      'completion of all required KIN-series blockers.',
-
+      'Phase 1 is direct KAG support, read-only. ' +
+      'No swaps, no vaults, no lending, no banking rails, no AXAG issuance, ' +
+      'and no wrapper-token issuance are included in Phase 1.',
     unitStatement:
       '1 KAG = 1 gram of LBMA Good Delivery 999 fine silver. ' +
-      'KAG is gram-denominated, not troy-ounce-denominated. ' +
-      'USD price per KAG is derived from the Chainlink XAG/USD price feed ' +
-      '(per troy ounce) divided by 31.1035 (grams per troy ounce).',
+      'KAG is gram-denominated, not troy-ounce-denominated.',
   };
+}
+
+// ─── Risk summary ─────────────────────────────────────────────────────────────
+
+export interface KagRiskSummary {
+  custodyRisk: { level: 'LOW' | 'MEDIUM' | 'HIGH'; note: string };
+  reserveRisk: { level: 'LOW' | 'MEDIUM' | 'HIGH'; note: string };
+  redemptionRisk: { level: 'LOW' | 'MEDIUM' | 'HIGH'; note: string };
+  regulatoryRisk: { level: 'LOW' | 'MEDIUM' | 'HIGH'; note: string };
+  oracleRisk: { level: 'LOW' | 'MEDIUM' | 'HIGH'; note: string };
+  liquidityRisk: { level: 'LOW' | 'MEDIUM' | 'HIGH'; note: string };
+  axiomScopeRisk: { level: 'LOW' | 'MEDIUM' | 'HIGH'; note: string };
+}
+
+export function getKagRiskSummary(): KagRiskSummary {
+  return {
+    custodyRisk: {
+      level: 'MEDIUM',
+      note:
+        'Physical silver is custodied by KMS Labs vault partners, not by Axiom. ' +
+        'Custody risk is the risk of vault operator failure, theft, or insolvency. ' +
+        'KMS Labs publishes attestations; cadence and auditor identity should be ' +
+        'verified directly from kinesis.money before reliance.',
+    },
+    reserveRisk: {
+      level: 'MEDIUM',
+      note:
+        'Reserves are LBMA Good Delivery 999 fine silver. ' +
+        'Reserve risk is the risk that physical silver does not match circulating KAG ' +
+        'at all times. Verify current attestations from kinesis.money.',
+    },
+    redemptionRisk: {
+      level: 'MEDIUM',
+      note:
+        'Redemption depends entirely on KMS Labs / Kinesis terms — minimum gram ' +
+        'thresholds, KYC, delivery geography, and timeline. Axiom does not control ' +
+        'or guarantee any redemption.',
+    },
+    regulatoryRisk: {
+      level: 'MEDIUM',
+      note:
+        'KMS Labs is regulated under Liechtenstein TVTG. KAG is not registered with ' +
+        'the U.S. SEC, CFTC, OCC, or NYDFS. Participants must obtain independent legal ' +
+        'and tax advice for their jurisdiction.',
+    },
+    oracleRisk: {
+      level: 'LOW',
+      note:
+        'Spot price is sourced from CoinGecko (kinesis-silver) direct. On upstream ' +
+        'failure, pricing fields return null with structured warnings — no fallback ' +
+        'pricing is used and no synthetic value is shown.',
+    },
+    liquidityRisk: {
+      level: 'MEDIUM',
+      note:
+        'KAG secondary-market liquidity varies by venue. The Kinesis platform is the ' +
+        'primary issuance and redemption venue. Axiom does not provide a KAG market.',
+    },
+    axiomScopeRisk: {
+      level: 'LOW',
+      note:
+        'Phase 1 Axiom integration is read-only. No Axiom-side custody, no wrapper ' +
+        'token, no vault, no swap pool, no banking rail. Axiom-side scope risk is ' +
+        'limited to data display and portfolio visibility.',
+    },
+  };
+}
+
+// ─── Spot price (CoinGecko KAG/USD direct) ────────────────────────────────────
+
+function formatUnits(raw: string, decimals: number): string {
+  const n = BigInt(raw);
+  const divisor = BigInt(10 ** decimals);
+  const whole = n / divisor;
+  const frac = n % divisor;
+  if (frac === 0n) return whole.toString();
+  const fracStr = frac
+    .toString()
+    .padStart(decimals, '0')
+    .replace(/0+$/, '')
+    .slice(0, 8);
+  return `${whole}.${fracStr}`;
+}
+
+/**
+ * fetchKagUsdPrice
+ *
+ * Phase 1 spot price source: CoinGecko simple/price (kinesis-silver, USD).
+ * Returns USD per 1 KAG (per 1 gram of LBMA silver) directly.
+ * Returns null with a structured error message if upstream is unavailable —
+ * NO fallback pricing is used.
+ *
+ * In-process cache: a successful fetch is reused for KAG_PRICE_TTL_MS to
+ * avoid CoinGecko free-tier rate-limiting (HTTP 429). On 429 / network error,
+ * a stale cached value is reused if it exists and is younger than
+ * KAG_PRICE_STALE_MS, with a warning attached. If no usable cache exists,
+ * pricing returns null and a structured error is surfaced.
+ */
+const KAG_PRICE_TTL_MS = 60_000;
+const KAG_PRICE_STALE_MS = 10 * 60_000;
+
+let kagPriceCache: { kagUsdPerGram: number; source: string; fetchedAt: number } | null = null;
+
+async function fetchKagUsdPrice(): Promise<{
+  kagUsdPerGram: number | null;
+  source: string;
+  error?: string;
+}> {
+  const now = Date.now();
+  if (kagPriceCache && now - kagPriceCache.fetchedAt < KAG_PRICE_TTL_MS) {
+    return {
+      kagUsdPerGram: kagPriceCache.kagUsdPerGram,
+      source: `${kagPriceCache.source} (cached)`,
+    };
+  }
+
+  try {
+    const url =
+      'https://api.coingecko.com/api/v3/simple/price' +
+      '?ids=kinesis-silver&vs_currencies=usd';
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error(`CoinGecko HTTP ${res.status}`);
+    const json = (await res.json()) as Record<string, { usd?: number }>;
+    const usd = json?.['kinesis-silver']?.usd;
+    if (typeof usd !== 'number' || !isFinite(usd) || usd <= 0) {
+      throw new Error('CoinGecko: kinesis-silver USD price not present in response');
+    }
+    kagPriceCache = {
+      kagUsdPerGram: usd,
+      source: 'CoinGecko (kinesis-silver, USD)',
+      fetchedAt: now,
+    };
+    return {
+      kagUsdPerGram: usd,
+      source: kagPriceCache.source,
+    };
+  } catch (err) {
+    if (kagPriceCache && now - kagPriceCache.fetchedAt < KAG_PRICE_STALE_MS) {
+      const ageSec = Math.round((now - kagPriceCache.fetchedAt) / 1000);
+      return {
+        kagUsdPerGram: kagPriceCache.kagUsdPerGram,
+        source: `${kagPriceCache.source} (stale ${ageSec}s, upstream unavailable)`,
+        error:
+          'CoinGecko upstream unavailable; serving stale cached price within 10-minute window. ' +
+          'Detail: ' + (err instanceof Error ? err.message : 'unknown error'),
+      };
+    }
+    return {
+      kagUsdPerGram: null,
+      source: 'CoinGecko (unavailable)',
+      error:
+        'Spot price unavailable from CoinGecko. ' +
+        'Pricing fields are null until the upstream source returns. ' +
+        'No fallback pricing is used. Detail: ' +
+        (err instanceof Error ? err.message : 'unknown error'),
+    };
+  }
 }
 
 // ─── Balance reads ─────────────────────────────────────────────────────────────
@@ -296,110 +418,17 @@ export interface KagBalanceResult {
   warnings: string[];
 }
 
-function formatUnits(raw: string, decimals: number): string {
-  const n = BigInt(raw);
-  const divisor = BigInt(10 ** decimals);
-  const whole = n / divisor;
-  const frac = n % divisor;
-  if (frac === 0n) return whole.toString();
-  const fracStr = frac
-    .toString()
-    .padStart(decimals, '0')
-    .replace(/0+$/, '')
-    .slice(0, 8);
-  return `${whole}.${fracStr}`;
-}
-
-/**
- * fetchXagUsdPrice
- *
- * Phase 1: On-chain Chainlink XAG/USD oracle on Arbitrum One.
- * Oracle verification status is O-01 OPEN — pending confirmation.
- *
- * Returns XAG/USD price per troy ounce.
- * Returns null with oracleStatus note if the oracle is unavailable.
- */
-async function fetchXagUsdPrice(): Promise<{
-  price: number | null;
-  source: string;
-  oracleStatus: string;
-  error?: string;
-}> {
-  const ORACLE_PENDING_NOTE =
-    'O-01 OPEN: Chainlink XAG/USD on Arbitrum One not yet confirmed operational. ' +
-    'Price feed unavailable in Phase 1 until O-01 closes.';
-
-  if (!ALCHEMY_KEY) {
-    return {
-      price: null,
-      source: 'oracle-pending',
-      oracleStatus: 'UNCONFIRMED',
-      error: ORACLE_PENDING_NOTE + ' Alchemy key also not configured.',
-    };
-  }
-
-  try {
-    const CHAINLINK_ABI = [
-      'function latestRoundData() view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)',
-      'function decimals() view returns (uint8)',
-    ];
-    const ARB_RPC = `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`;
-    const provider = new ethers.JsonRpcProvider(ARB_RPC);
-    const feed = new ethers.Contract(
-      CHAINLINK_XAG_USD_STATUS.plannedAddress,
-      CHAINLINK_ABI,
-      provider
-    );
-    const [, answer] = await feed.latestRoundData();
-    const decimals: number = await feed.decimals();
-    const price = Number(answer) / 10 ** decimals;
-    return {
-      price,
-      source: `Chainlink XAG/USD (Arbitrum One) — ${CHAINLINK_XAG_USD_STATUS.plannedAddress}`,
-      oracleStatus: 'LIVE',
-    };
-  } catch {
-    return {
-      price: null,
-      source: 'oracle-pending',
-      oracleStatus: 'UNCONFIRMED',
-      error: ORACLE_PENDING_NOTE,
-    };
-  }
-}
-
 /**
  * getKagBalance
  *
  * Reads ERC-20 KAG balance for a wallet on Ethereum mainnet.
- * READ-ONLY — no writes, no custody, no transactions.
- *
- * NOTE: Returns a warning if contract address is UNVERIFIED (KIN-01 open).
- * Balance result should not be relied upon for financial decisions until
- * KIN-01 is closed and the contract address is confirmed.
+ * READ-ONLY — view call only, no writes, no transactions.
  */
 export async function getKagBalance(walletAddress: string): Promise<KagBalanceResult> {
   const warnings: string[] = [];
   const fetchedAt = new Date().toISOString();
 
-  if (KAG_ETH_CONTRACT.verificationStatus === 'UNVERIFIED') {
-    warnings.push(
-      'KIN-01 OPEN: KAG contract address is UNVERIFIED. ' +
-        'Balance result is not reliable until the official contract address ' +
-        'is confirmed from KMS Labs documentation.'
-    );
-  }
-
-  const xagResult = await fetchXagUsdPrice();
-
-  if (xagResult.error) {
-    warnings.push(`Oracle: ${xagResult.error}`);
-  }
-
-  const kagUsdPerGram =
-    xagResult.price !== null ? xagResult.price / GRAMS_PER_TROY_OZ : null;
-
-  if (KAG_ETH_CONTRACT.address === 'UNVERIFIED_PENDING_KIN_01') {
+  if (!ethers.isAddress(walletAddress)) {
     return {
       walletAddress,
       chain: 'ethereum-mainnet',
@@ -409,23 +438,27 @@ export async function getKagBalance(walletAddress: string): Promise<KagBalanceRe
       formattedBalance: '0',
       grams: 0,
       troyOunces: 0,
-      usdValueNote:
-        'Balance read skipped — KAG contract address unverified (KIN-01 OPEN). ' +
-        'Confirm official address from KMS Labs before balance reads are meaningful.',
-      kagUsdPerGram,
+      usdValueNote: 'Invalid wallet address',
+      kagUsdPerGram: null,
       estimatedUsdValue: null,
-      xagUsdPerTroyOz: xagResult.price,
-      oracleSource: xagResult.source,
+      xagUsdPerTroyOz: null,
+      oracleSource: 'not-fetched',
       readOnly: true,
       fetchedAt,
-      warnings,
+      warnings: ['Invalid Ethereum address — balance not read'],
     };
   }
 
+  const priceResult = await fetchKagUsdPrice();
+  if (priceResult.error) warnings.push(priceResult.error);
+
+  const kagUsdPerGram = priceResult.kagUsdPerGram;
+  const xagUsdPerTroyOz = kagUsdPerGram !== null ? kagUsdPerGram * GRAMS_PER_TROY_OZ : null;
+
   try {
     if (!ALCHEMY_KEY) {
-      warnings.push('Alchemy API key not configured — balance read skipped');
-      throw new Error('Alchemy API key not configured');
+      warnings.push('Alchemy RPC key not configured — balance read skipped');
+      throw new Error('Alchemy RPC key not configured');
     }
 
     const provider = new ethers.JsonRpcProvider(ETH_MAINNET_RPC);
@@ -448,13 +481,13 @@ export async function getKagBalance(walletAddress: string): Promise<KagBalanceRe
       troyOunces: Number(troyOunces.toFixed(6)),
       usdValueNote:
         kagUsdPerGram !== null
-          ? `Estimated: ${grams} grams × $${kagUsdPerGram.toFixed(4)}/gram (XAG/USD ÷ 31.1035)`
-          : 'USD value unavailable — price not fetched',
+          ? `${grams} grams × $${kagUsdPerGram.toFixed(4)}/gram (CoinGecko KAG/USD)`
+          : 'USD value unavailable — spot price not fetched',
       kagUsdPerGram,
       estimatedUsdValue:
         estimatedUsdValue !== null ? Number(estimatedUsdValue.toFixed(2)) : null,
-      xagUsdPerTroyOz: xagResult.price,
-      oracleSource: xagResult.source,
+      xagUsdPerTroyOz,
+      oracleSource: priceResult.source,
       readOnly: true,
       fetchedAt,
       warnings,
@@ -475,8 +508,8 @@ export async function getKagBalance(walletAddress: string): Promise<KagBalanceRe
       usdValueNote: 'Balance read failed — see warnings',
       kagUsdPerGram,
       estimatedUsdValue: null,
-      xagUsdPerTroyOz: xagResult.price,
-      oracleSource: xagResult.source,
+      xagUsdPerTroyOz,
+      oracleSource: priceResult.source,
       readOnly: true,
       fetchedAt,
       warnings,
@@ -487,9 +520,9 @@ export async function getKagBalance(walletAddress: string): Promise<KagBalanceRe
 /**
  * getKagUsdValue
  *
- * Convenience: returns USD-denominated spot value for a gram quantity of KAG.
- * Phase 1 price source: Chainlink XAG/USD on Arbitrum One (per troy oz) ÷ 31.1035.
- * Returns null pricing fields while O-01 is OPEN. READ-ONLY.
+ * Returns USD-denominated spot value for a gram quantity of KAG.
+ * Phase 1 price source: CoinGecko (kinesis-silver) direct.
+ * Returns null pricing fields if upstream is unavailable. READ-ONLY.
  */
 export async function getKagUsdValue(grams: number): Promise<{
   grams: number;
@@ -501,15 +534,15 @@ export async function getKagUsdValue(grams: number): Promise<{
   fetchedAt: string;
   error?: string;
 }> {
-  const { price, source, oracleStatus: _os, error } = await fetchXagUsdPrice();
-  const kagUsdPerGram = price !== null ? price / GRAMS_PER_TROY_OZ : null;
+  const { kagUsdPerGram, source, error } = await fetchKagUsdPrice();
+  const xagUsdPerTroyOz = kagUsdPerGram !== null ? kagUsdPerGram * GRAMS_PER_TROY_OZ : null;
   const estimatedUsdValue =
     kagUsdPerGram !== null ? Number((grams * kagUsdPerGram).toFixed(2)) : null;
 
   return {
     grams,
     troyOunces: Number((grams / GRAMS_PER_TROY_OZ).toFixed(6)),
-    xagUsdPerTroyOz: price,
+    xagUsdPerTroyOz: xagUsdPerTroyOz !== null ? Number(xagUsdPerTroyOz.toFixed(4)) : null,
     kagUsdPerGram,
     estimatedUsdValue,
     oracleSource: source,

@@ -7,7 +7,7 @@ Stage: 2 — Technical Diligence
 Tracker status: EXECUTION ACTIVE — 4 IN PROGRESS, 30 ASSIGNED, 1 CLOSED
 Source packet: documents/commodities/AXAG_STAGE_2_DILIGENCE_PACKET.md
 Effective date: 2026-05-01
-Last updated: 2026-05-01 (Phase 1 KAG read-only integration deployed — lib/commodities/kagService.ts, pages/api/commodities/kag/status.ts, pages/api/commodities/kag/balance.ts, pages/commodities/kag.tsx; KAG registered as supported external asset path in Section 16.7; Kinesis/KAG alternative reserve path added — Section 16; KIN-01–KIN-08 blockers registered)
+Last updated: 2026-05-02 (Phase 1 pivoted to **direct KAG support** with confirmed Ethereum mainnet contract `0x56Ba8B58B7d1f6d384A1C4dD553F39ebc8741B8e`; KIN-01 CLOSED; KIN-02/KIN-07/KIN-08 DEFERRED for Phase 1; wrapper-token AXAG path DEFERRED; spot price source switched to CoinGecko `kinesis-silver` direct; commodities registry added at `lib/commodities/registry.ts` and `/api/commodities`; portfolio balance lookup added to `/commodities/kag`; AXAG remains NOT LIVE AND NOT ISSUED)
 
 ---
 
@@ -444,16 +444,16 @@ All items are ASSIGNED. None may be marked CLOSED without the specified evidence
 
 | Item ID | Workstream    | Requirement                                                                                        | Owner role                                       | Status     | Evidence link | Blocker notes                                                                                                                                                                                              | Target date | Last updated |
 | ------- | ------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------ | :--------: | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------ |
-| KIN-01  | Kinesis/KAG   | Official KAG ERC-20 contract address confirmed from KMS Labs canonical source                     | Treasury operations lead                         | ASSIGNED   |               | **CRITICAL — gate on all KAG options.** Without the confirmed contract address, no integration design or smart contract work can begin. Source: KMS Labs developer documentation or direct written confirmation. |             | 2026-05-01   |
-| KIN-02  | Kinesis/KAG   | KAG availability on Arbitrum One confirmed (native deployment or approved bridge path)             | Treasury operations lead                         | ASSIGNED   |               | **CRITICAL.** If no native Arbitrum One deployment exists, a bridge architecture must be evaluated. Bridge path requires KMS Labs permission (see KIN-03) and bridge security confirmation. Source: KMS Labs developer documentation. |             | 2026-05-01   |
-| KIN-03  | Kinesis/KAG   | KMS Labs Terms and Conditions reviewed: wrapper token permission, vault-holding permission, IP restrictions | General counsel coordinator / Compliance lead    | ASSIGNED   |               | **CRITICAL — if KIN-03 resolves negatively (wrapper not permitted), all KAG-backed options fail.** Requires legal counsel review of current KMS Labs Terms and Conditions. Direct written confirmation from KMS Labs recommended. |             | 2026-05-01   |
+| KIN-01  | Kinesis/KAG   | Official KAG ERC-20 contract address confirmed from KMS Labs canonical source                     | Treasury operations lead                         | **CLOSED** | `0x56Ba8B58B7d1f6d384A1C4dD553F39ebc8741B8e` (Ethereum mainnet, ERC-20, 18 decimals; on-chain bytecode verified via Alchemy `eth_getCode`) | **CLOSED 2026-05-02.** Confirmed canonical KAG ERC-20 address on Ethereum mainnet. Direct KAG support active in Phase 1 (read-only). Wired into `KAG_ETH_CONTRACT.address` in `lib/commodities/kagService.ts`. | 2026-05-02 | 2026-05-02 |
+| KIN-02  | Kinesis/KAG   | KAG availability on Arbitrum One confirmed (native deployment or approved bridge path)             | Treasury operations lead                         | **DEFERRED** |               | **DEFERRED for Phase 1.** Phase 1 direct KAG support is on Ethereum mainnet only. Arbitrum-native KAG support is not required for Phase 1 and is not in scope. May be revisited in a later phase if KMS Labs deploys natively. | n/a (Phase 1) | 2026-05-02 |
+| KIN-03  | Kinesis/KAG   | KMS Labs Terms and Conditions reviewed: wrapper token permission, vault-holding permission, IP restrictions | General counsel coordinator / Compliance lead    | ASSIGNED   |               | **Wrapper-token path is DEFERRED in Phase 1** — no AXAG, no Axiom-side wrapper, no vault. KIN-03 review remains required only if/when wrapper-token path is reactivated in a later phase. Phase 1 direct support does not depend on wrapper permission. | n/a (Phase 1) | 2026-05-02 |
 | KIN-04  | Kinesis/KAG   | KMS Labs redemption terms documented: minimum gram thresholds, KYC requirements, delivery timeline | Treasury operations lead                         | ASSIGNED   |               | Required for disclosure language (Section 7 of go-live path) and L-03 redemption SLA (two-step flow). Source: current KMS Labs Terms and Conditions; direct platform review.                               |             | 2026-05-01   |
 | KIN-05  | Kinesis/KAG   | KAG proof-of-reserves / audit cadence, auditor identity, and report format confirmed               | Treasury operations lead / Compliance lead       | ASSIGNED   |               | Directly determines Custody Risk score (1, 2, or 3) under CEF rubric. Required for launch readiness gate HB-04. Source: KMS Labs published attestation reports; direct confirmation from KMS Labs.         |             | 2026-05-01   |
-| KIN-06  | Kinesis/KAG   | Legal opinion: KMS Labs TVTG authorization qualifies as CEF Custody Risk score 1 or 2             | General counsel coordinator                      | ASSIGNED   |               | Controls the re-scoring outcome for the KAG path. Must be addressed within REG-01/REG-02 scope expansion. No smart contract work begins without this opinion.                                              |             | 2026-05-01   |
-| KIN-07  | Kinesis/KAG   | Oracle verification: Chainlink XAG/USD on Arbitrum One confirmed (shared with O-01)               | Protocol engineering lead                        | ASSIGNED   |               | Shared with the direct silver path blocker O-01 (currently IN PROGRESS). Closes when O-01 closes. Documented separately for the KAG path for completeness.                                                |             | 2026-05-01   |
-| KIN-08  | Kinesis/KAG   | Smart contract architecture specification approved before any contract drafting begins             | Treasury operations lead / Protocol engineering  | ASSIGNED   |               | **Gate on smart contract work.** No AXSilverVault or AXAGToken contract drafting, testing, or deployment may begin until KIN-01 through KIN-06 are all CLOSED and architecture specification is approved by Treasury Lead and Compliance Lead. |             | 2026-05-01   |
+| KIN-06  | Kinesis/KAG   | Legal opinion: KMS Labs TVTG authorization qualifies as CEF Custody Risk score 1 or 2             | General counsel coordinator                      | ASSIGNED   |               | Controls the re-scoring outcome for the wrapper-token (AXAG) path. Required only if wrapper-token path is reactivated. Phase 1 direct KAG support does not require this opinion. | n/a (Phase 1) | 2026-05-02 |
+| KIN-07  | Kinesis/KAG   | Oracle verification: Chainlink XAG/USD on Arbitrum One confirmed (shared with O-01)               | Protocol engineering lead                        | **DEFERRED** |               | **DEFERRED for Phase 1.** Phase 1 spot price uses CoinGecko `kinesis-silver` direct (USD per gram of KAG) — no Chainlink Arbitrum dependency. Chainlink XAG/USD is retained as a reference for the deferred wrapper-token path only. | n/a (Phase 1) | 2026-05-02 |
+| KIN-08  | Kinesis/KAG   | Smart contract architecture specification approved before any contract drafting begins             | Treasury operations lead / Protocol engineering  | ASSIGNED   |               | **DEFERRED for Phase 1 — no Axiom-side contract is being drafted.** No AXSilverVault or AXAGToken work in Phase 1. Required only when wrapper-token path is reactivated. | n/a (Phase 1) | 2026-05-02 |
 
-Section subtotal: 8 items — 0 IN PROGRESS, 8 ASSIGNED
+Section subtotal: 8 items — 1 CLOSED (KIN-01), 3 DEFERRED in Phase 1 (KIN-02, KIN-07, KIN-08), 4 ASSIGNED conditional on wrapper-token reactivation (KIN-03, KIN-04, KIN-05, KIN-06)
 
 ### 16.5 Relationship to existing tracker items
 
@@ -482,24 +482,29 @@ If any of the following is true, the KAG path is abandoned and direct physical s
 
 ---
 
-### 16.7 Phase 1 read-only integration — deployment record
+### 16.7 Phase 1 — Direct KAG support — deployment record
 
 | Item | Detail |
 | ---- | ------ |
-| Deployed | 2026-05-02 |
-| Scope | Phase 1 — read-only, no custody, no issuance, no vault, no smart contract |
-| Service | `lib/commodities/kagService.ts` — `getKagAssetMetadata()`, `getKagBalance()`, `getKagUsdValue()`, `getKagDisclosure()` |
-| API: status | `pages/api/commodities/kag/status.ts` — GET /api/commodities/kag/status — schema `kag-status-v1` |
+| Deployed | 2026-05-02 (initial); 2026-05-02 pivoted to **direct KAG support** with confirmed contract |
+| Scope | Phase 1 — **direct KAG support, read-only**. No AXAG. No wrapper. No vault. No custody. No banking rails. No swaps. No lending. No DB writes. No contract writes. |
+| Active path | Direct KAG on Ethereum mainnet (verified contract). |
+| Deferred paths | Wrapper-token (AXAG) issuance — DEFERRED. Arbitrum-native KAG — DEFERRED. KAG vault, lending, swaps, banking rails — out of scope. |
+| KAG contract | `0x56Ba8B58B7d1f6d384A1C4dD553F39ebc8741B8e` — Ethereum mainnet, ERC-20, 18 decimals, **VERIFIED** (KIN-01 CLOSED) |
+| Service | `lib/commodities/kagService.ts` — `getKagAssetMetadata()`, `getKagBalance()`, `getKagUsdValue()`, `getKagDisclosure()`, `getKagRiskSummary()` |
+| Registry | `lib/commodities/registry.ts` — `SUPPORTED_COMMODITIES`, `listSupportedCommodities()`, `getSupportedCommodity()` |
+| API: list | `pages/api/commodities/index.ts` — GET /api/commodities — schema `commodities-list-v1` |
+| API: status | `pages/api/commodities/kag/status.ts` — GET /api/commodities/kag/status — schema `kag-status-v2` |
 | API: balance | `pages/api/commodities/kag/balance.ts` — GET /api/commodities/kag/balance?address= — read-only ERC-20 `balanceOf` |
-| Public page | `pages/commodities/kag.tsx` — `/commodities/kag` — DesignLawLayout, "AXAG IS NOT LIVE" banner, full disclosure, blocker register |
-| Nav | `/commodities/kag` added to Stack dropdown in `components/design-law/navItems.ts` |
-| Price source | Chainlink XAG/USD (Arbitrum One) — O-01 OPEN; price returns null until O-01 closes |
-| Oracle block | `/api/commodities/kag/status` → `oracle` field documents planned address, blocker O-01, note |
-| KAG registered as | Supported external asset path — Phase 1 read-only integration active |
-| AXAG statement | "AXAG IS NOT LIVE AND IS NOT APPROVED FOR DEPLOYMENT" — displayed on page and in every API response |
-| No-custody confirmed | All endpoints confirm Axiom does not hold, issue, or custody KAG or underlying silver |
+| Public page | `pages/commodities/kag.tsx` — `/commodities/kag` — DesignLawLayout, "AXAG IS NOT LIVE AND IS NOT ISSUED" banner, portfolio balance lookup, full disclosure, risk summary table |
+| Portfolio integration | KAG registered in `SUPPORTED_COMMODITIES`; on-page wallet-address balance lookup with structured warnings; no Axiom-side ledgering, no synthetic balances |
+| Nav | `/commodities/kag` in Stack dropdown (`components/design-law/navItems.ts`) |
+| Price source | **CoinGecko `kinesis-silver` direct (USD per gram of KAG)**. No fallback. Returns null + structured warning on upstream outage. |
+| AXAG statement | "AXAG IS NOT LIVE AND IS NOT ISSUED" — displayed on page and in every API response |
+| Disclosure language (verbatim) | "KAG is issued by KMS Labs within the Kinesis ecosystem." / "Axiom supports KAG as an external commodity asset." / "Axiom does not issue KAG. Axiom does not issue AXAG in this phase." / "Axiom does not directly custody the underlying silver." / "Any redemption rights depend on KMS Labs / Kinesis terms." |
+| No-custody confirmed | All endpoints confirm Axiom does not hold, issue, or custody KAG or underlying silver. Read-only `balanceOf` calls only. |
 
-**Status: Phase 1 read-only integration DEPLOYED.** KIN-01–KIN-08 blockers remain ASSIGNED. No Phase 2 or Phase 3 work may begin until blockers are closed per Sections 16.3 and 16.4.
+**Status: Phase 1 direct KAG support DEPLOYED and ACTIVE.** KIN-01 CLOSED. KIN-02 / KIN-07 / KIN-08 DEFERRED for Phase 1. KIN-03 / KIN-04 / KIN-05 / KIN-06 remain ASSIGNED but are conditional on a future wrapper-token (AXAG) reactivation; they do not gate Phase 1 direct support. Wrapper-token path remains DEFERRED. AXAG remains NOT LIVE AND NOT ISSUED.
 
 ---
 

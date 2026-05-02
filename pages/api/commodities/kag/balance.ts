@@ -5,15 +5,14 @@
  *
  * Returns:
  *   - KAG balance in raw units, formatted grams, and troy ounces
- *   - Estimated USD value via Chainlink XAG/USD (Arbitrum One) + gram conversion
- *   - Contract address and verification status
- *   - All warnings, including KIN-01 unverified contract status
+ *   - Estimated USD value via CoinGecko KAG/USD (kinesis-silver, direct)
+ *   - Contract address (verified, KIN-01 closed) and verification status
+ *   - Structured warnings if upstream price is unavailable — no fake data
  *
  * Hard rules:
  *   - GET only. No DB writes. No contract writes. No transactions.
  *   - Read-only: only eth_call balanceOf — no state-changing operations.
- *   - No AXAG issuance. No swaps. No custody.
- *   - Balance result is informational only while KIN-01 is open.
+ *   - No AXAG issuance. No wrapper token. No custody. No swaps.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
