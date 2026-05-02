@@ -471,7 +471,7 @@ function Phase2Roadmap() {
 
         {/* Left: Roadmap explanation */}
         <div>
-          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: S.silver, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Phase 2 Design Target</p>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: S.silver, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Phase 2 — Deployment Ready · Pending Execution</p>
           <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(22px, 3.5vw, 34px)', fontWeight: 600, color: S.navy, marginBottom: 16, lineHeight: 1.2 }}>
             Silver Sleeve Inside AXAU
           </h2>
@@ -483,16 +483,26 @@ function Phase2Roadmap() {
             A silver sleeve adds silver exposure to AXAU holders without creating a second token, second audit surface, or second disclosure flip.
             AXAU becomes the reserve unit backed by both gold and silver — the monetary metals pairing that has anchored reserve systems for centuries.
           </p>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: S.muted, lineHeight: 1.75, marginTop: 12 }}>
+            KAG holders accrue a 0.45% annualised yield while KAG remains on deposit inside the Kinesis ecosystem.
+            When KAG is held in the AXSilverVault, this yield compounds into additional KAG reserve — increasing the silver backing per AXAU over time without any protocol action.
+          </p>
 
           {/* Governance gate callout */}
           <div style={{ marginTop: 20, padding: '14px 18px', border: `1px solid ${S.silver}50`, background: S.silverBg }}>
-            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: S.silverDk, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 6px' }}>Required to Activate</p>
+            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: S.silverDk, letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 6px' }}>Remaining Deployment Gates</p>
             <ul style={{ margin: 0, padding: '0 0 0 16px', fontFamily: 'Georgia, serif', fontSize: 13, color: S.muted, lineHeight: 1.7 }}>
-              <li>AXM governance vote approving silver admission</li>
-              <li>KAG-on-Arbitrum or cross-chain bridge resolution</li>
+              <li>Gnosis Safe quorum — replaces AXM token-holder vote (silver sleeve is an operational collateral admission, not a protocol change)</li>
+              <li>KAG bridge execution — Arbitrum canonical bridge, Kinesis 2.0 EVM expansion ongoing</li>
               <li>Reserve KAG acquisition and vault deposit</li>
-              <li>External audit of the silver vault contract</li>
+              <li>Disclosure flip — six disclosures activated in a single release</li>
             </ul>
+            <div style={{ marginTop: 10, padding: '8px 12px', border: `1px solid ${S.silver}40`, background: S.bg }}>
+              <p style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: S.silverDk, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 3px' }}>Internal Audit</p>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 11, color: S.muted, margin: 0, lineHeight: 1.6 }}>
+                AXAG-AUDIT-001 complete. 8 findings — 1 blocker remediated (NAVEngine oracle staleness, no redeployment), 1 medium accepted, NatSpec corrected, 4 info. Both vault and oracle contracts cleared for deployment.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -512,8 +522,8 @@ function Phase2Roadmap() {
               {
                 phase: 'Phase 2',
                 name:   'Silver (XAG) — KAG',
-                asset:  'Silver sleeve · governance vote required',
-                status: 'IN DESIGN',
+                asset:  'Silver sleeve · Gnosis Safe deployment pending',
+                status: 'DEPLOYMENT READY',
                 active: false,
                 color:  S.silver,
                 current: true,
@@ -655,7 +665,7 @@ function Disclosures({ metadata, disclosure }: Pick<PageProps, 'metadata' | 'dis
             'Axiom does not custody the underlying physical silver. Custody is managed by KMS Labs.',
             'Silver market prices (XAG/USD) fluctuate. The USD value of KAG may increase or decrease.',
             'Redemption of KAG for physical silver is subject entirely to KMS Labs terms and conditions.',
-            'AXAG is not live and is not issued. Phase 2 is a silver sleeve design target inside AXAU, pending governance vote.',
+            'AXAG is not live and is not issued. Phase 2 is a silver sleeve inside AXAU — deployment ready, pending Gnosis Safe execution and reserve KAG acquisition.',
             disclosure.regulatoryStatement,
           ].map((notice, i) => (
             <p key={i} style={{ fontFamily: 'Georgia, serif', fontSize: 11, color: S.muted, lineHeight: 1.6, paddingLeft: 12, borderLeft: `2px solid ${S.borderAlt}` }}>
@@ -693,7 +703,7 @@ export default function KagPage({ metadata, disclosure, risk, spot }: PageProps)
         <title>Silver Reserve — Kinesis KAG · Axiom Supported | Axiom Protocol</title>
         <meta
           name="description"
-          content="KAG is Axiom's primary silver exposure layer — 1 KAG = 1 gram LBMA 999 fine silver, issued by KMS Labs on Ethereum mainnet. Phase 2 silver sleeve in AXAU pending governance vote. AXAG is not live and is not issued."
+          content="KAG is Axiom's primary silver exposure layer — 1 KAG = 1 gram LBMA 999 fine silver, issued by KMS Labs on Ethereum mainnet. Phase 2 silver sleeve in AXAU is deployment ready, pending Gnosis Safe execution. AXAG is not live and is not issued."
         />
       </Head>
 

@@ -469,24 +469,27 @@ function SilverSleeveSection() {
     <section style={{ borderBottom: `1px solid ${C.border}`, padding: '48px 0' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 32, alignItems: 'center' }}>
         <div>
-          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: '#5c7a8f', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Phase 2 — In Design</p>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 10, color: '#5c7a8f', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Phase 2 — Deployment Ready · Pending Execution</p>
           <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 'clamp(22px, 3.5vw, 32px)', fontWeight: 600, color: C.navy, marginBottom: 14, lineHeight: 1.2 }}>
             Silver Sleeve — KAG as Reserve Component
           </h2>
           <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, lineHeight: 1.75 }}>
-            AXAU was built from the start as a multi-commodity reserve. The Phase 2 design target adds silver
-            as a governance-admitted basket sleeve. KAG (Kinesis Silver — 1 gram LBMA 999 Ag per token)
-            enters the vault alongside PAXG. AXAU holders gain monetary metals backing — gold and silver together —
+            AXAU was built from the start as a multi-commodity reserve. Phase 2 adds silver
+            as a Gnosis Safe-admitted basket sleeve. KAG (Kinesis Silver — 1 gram LBMA 999 Ag per token)
+            enters the AXSilverVault alongside PAXG. AXAU holders gain monetary metals backing — gold and silver together —
             without a new token or new disclosure regime.
           </p>
           <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7, marginTop: 10 }}>
-            Activation requires an AXM governance vote, reserve KAG acquisition, and an external audit of the silver vault contract.
-            The vault design and oracle contracts are staged in the protocol repository.
+            The AXM governance vote is waived — the silver sleeve is an operational collateral admission executed via Gnosis Safe quorum.
+            Vault and oracle contracts have passed internal audit (AXAG-AUDIT-001). Remaining gates: Gnosis Safe execution, reserve KAG acquisition via Arbitrum bridge, and disclosure flip.
+          </p>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.7, marginTop: 10 }}>
+            When the silver sleeve activates, redemption returns PAXG from the gold vault or KAG from the silver vault — per the vault the holder selects at the time of redemption.
           </p>
         </div>
         <div>
           <div style={{ border: `1px solid #5c7a8f30`, background: '#f4f7f9', padding: '20px' }}>
-            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#5c7a8f', letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 14 }}>Silver Sleeve Parameters (Design Target)</p>
+            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#5c7a8f', letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 14 }}>Silver Sleeve Parameters</p>
             {[
               { label: 'Reserve asset',    value: 'KAG (Kinesis Silver — 1 g LBMA 999 Ag)' },
               { label: 'Denomination',     value: '1 KAG = 1 gram fine silver' },
@@ -494,7 +497,9 @@ function SilverSleeveSection() {
               { label: 'Max basket weight', value: '30% of total AXAU reserve' },
               { label: 'Oracle',           value: 'Chainlink XAG/USD ÷ 31.1035 g/toz' },
               { label: 'Coverage floor',   value: '105% — same as gold sleeve' },
-              { label: 'Status',           value: 'Governance vote required' },
+              { label: 'KAG yield',        value: '0.45% annualised · compounds into reserve' },
+              { label: 'Redemption',       value: 'AXAU → KAG (silver vault) or PAXG (gold vault)' },
+              { label: 'Status',           value: 'Deployment ready · Gnosis Safe pending' },
             ].map(row => (
               <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: `1px solid #dde4ea` }}>
                 <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{row.label}</span>
@@ -646,7 +651,7 @@ function ReserveArchitecture() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
               { phase: 'Phase 1', name: 'Gold (XAU) — PAXG',       asset: 'On-chain gold reserve — Arbitrum One',              status: 'LIVE',      active: true,  silver: false },
-              { phase: 'Phase 2', name: 'Silver (XAG) — KAG',      asset: 'Silver sleeve · governance vote required',           status: 'IN DESIGN', active: false, silver: true  },
+              { phase: 'Phase 2', name: 'Silver (XAG) — KAG',      asset: 'Silver sleeve · Gnosis Safe deployment pending',     status: 'DEPLOYMENT READY', active: false, silver: true  },
               { phase: 'Phase 3', name: 'Land (Real Property)',     asset: 'Appraised US real estate via acquisition pipeline',  status: 'PLANNED',   active: false, silver: false },
               { phase: 'Phase 4+', name: 'Additional Commodities',  asset: 'Governance-approved reserve assets',                 status: 'PLANNED',   active: false, silver: false },
             ].map(layer => (
@@ -708,7 +713,7 @@ function FAQ() {
     },
     {
       q: 'What is AXAU backed by?',
-      a: 'AXAU is backed by on-chain gold reserves held in the protocol vault on Arbitrum One. The reserve value and coverage ratio are publicly verifiable on-chain at all times. The protocol enforces a minimum coverage ratio of ≥105%.',
+      a: 'AXAU is currently backed by on-chain gold reserves (PAXG) held in the GoldVault contract on Arbitrum One. The reserve value and coverage ratio are publicly verifiable on-chain at all times. The protocol enforces a minimum coverage ratio of ≥105%. A Phase 2 silver sleeve (KAG — Kinesis Silver) is deployment ready, pending Gnosis Safe execution and reserve KAG acquisition. When activated, redemption will return PAXG from the gold vault or KAG from the silver vault, per the holder\'s selection.',
     },
     {
       q: 'Is there any risk of losing my gold?',
