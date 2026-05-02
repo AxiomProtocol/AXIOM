@@ -40,6 +40,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       schemaVersion: 'commodity-insights-v1',
       readOnly: true,
       referenceOnly: true,
+      noCustodyStatement:
+        'Axiom Protocol does not issue or custody any of the external assets ' +
+        'referenced in this response (KAG and external supported assets such as ' +
+        'USDC, PAXG, XAUT, WBTC, cbETH). All values are reference-only. ' +
+        'AXAG is not live and is not issued.',
       data: insights,
     });
   } catch (err) {

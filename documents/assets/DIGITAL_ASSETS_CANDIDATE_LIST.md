@@ -144,4 +144,38 @@ Recorded so future review starts from a known position.
 
 ---
 
+## Activation Log — 2026-05-02 (Phase 2D, Wave 1)
+
+The first batch of low-friction external assets has been activated as
+`EXTERNAL_SUPPORTED` (read-only). Implementation lives in
+`lib/assets/externalAssetService.ts` (generalized from the KAG pattern), with
+public API surface under `/api/assets/*` and `/api/portfolio/external`, and
+public pages at `/assets` and `/assets/[symbol]`.
+
+| Symbol | Name | Category | Chain | Issuer | Status |
+| ------ | ---- | -------- | ----- | ------ | :----: |
+| USDC | USD Coin | Reserve-grade stable | Arbitrum One | Circle Internet Financial | LIVE — read-only |
+| PAXG | PAX Gold | Gold | Ethereum mainnet | Paxos Trust Company (NYDFS) | LIVE — read-only |
+| XAUT | Tether Gold | Gold | Ethereum mainnet | TG Commodities Limited (BVI) | LIVE — read-only |
+| WBTC | Wrapped Bitcoin | BTC reference | Ethereum mainnet | BitGo Trust Company | LIVE — read-only |
+| cbETH | Coinbase Wrapped Staked ETH | Yield-bearing staked ETH | Ethereum mainnet | Coinbase, Inc. (Coinbase Custody Trust, NYDFS) | LIVE — read-only |
+
+Truth statements preserved in this activation:
+
+- Axiom does not issue any of these assets.
+- Axiom does not custody any of the underlying reserves.
+- No swaps, no lending, no deposits, no withdrawals, no banking rails are offered for these assets.
+- Read-only support only: metadata, balance reads, reference USD valuation, disclosure, portfolio inclusion, insights inclusion.
+- Redemption rights for any asset depend on the underlying issuer's terms.
+- AXAG remains not live and is not issued. The silver path inside Axiom is (a) KAG external support, live; and (b) the silver sleeve inside AXAU (Option B), in diligence.
+- AXAU remains the Axiom-issued gold rail; PAXG and XAUT are independent.
+- AXUSD remains the Axiom-issued stable layer; USDC is independent.
+- cbETH is a yield-bearing wrapper — the cbETH/ETH ratio increases over time as Coinbase staking rewards accrue. cbETH is NOT a 1:1 ETH wrapper. No yield is offered or implied by Axiom.
+
+Future activations follow the same pattern: add metadata to
+`lib/assets/externalAssetService.ts`, add an entry to `lib/assets/registry.ts`,
+and append to this Activation Log. No additional surfaces are required.
+
+---
+
 *End of Candidate List v1.0 — Maintained alongside `lib/assets/registry.ts`*

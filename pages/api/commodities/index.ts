@@ -25,11 +25,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   return res.status(200).json({
     schemaVersion: 'commodities-list-v1',
     asOf: new Date().toISOString(),
+    readOnly: true,
     count: commodities.length,
     commodities,
     disclosure:
       'These are external commodity assets recognized by Axiom for portfolio ' +
       'visibility and disclosure purposes. Axiom does not issue or custody these ' +
       'assets unless explicitly noted by axiomIssues / axiomCustodies fields.',
+    noCustodyStatement:
+      'Axiom Protocol does not issue or custody any of the external commodity ' +
+      'assets listed in this response. AXAG is not live and is not issued.',
   });
 }

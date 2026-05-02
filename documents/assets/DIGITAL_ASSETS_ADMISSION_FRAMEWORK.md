@@ -250,4 +250,27 @@ Things this Framework cannot authorize, regardless of admission tier:
 
 ---
 
+## 12. Implementation — Generalized External Asset Service
+
+The KAG pattern has been generalized into a reusable per-asset service:
+`lib/assets/externalAssetService.ts`. New external assets are added by
+declaring a typed metadata entry — disclosure, risk summary, balance reads,
+and reference USD valuation are all derived from the metadata.
+
+Public surface activated 2026-05-02 (Phase 2D, Wave 1):
+
+- `GET /api/assets` — directory of supported external assets.
+- `GET /api/assets/[symbol]/status` — metadata, disclosure, risk, spot price.
+- `GET /api/assets/[symbol]/balance?address=…` — read-only ERC-20 balanceOf.
+- `GET /api/portfolio/external?address=…` — composed wallet view across all supported assets.
+- `/assets` — public directory page (DesignLawLayout).
+- `/assets/[symbol]` — per-asset disclosure page (DesignLawLayout).
+
+All endpoints are GET-only, schema-versioned, return `readOnly: true`, and
+include a `noCustodyStatement`. Hard boundaries from Section 11 apply
+verbatim — the implementation contains no write paths, no swap paths, no
+custody paths, and no banking-rail integration for any registered asset.
+
+---
+
 *End of Digital Assets Admission Framework v1.0*
