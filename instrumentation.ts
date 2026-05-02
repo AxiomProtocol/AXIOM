@@ -39,6 +39,65 @@ export async function register() {
       return;
     }
 
+    // ── Startup environment preflight ────────────────────────────────────────
+    // Non-fatal warnings for missing service credentials. Operators see these
+    // in dev logs before a request ever hits an API route. Fatal-flagged vars
+    // emit console.error in all environments; non-fatal vars emit console.warn.
+    // Production missing-fatals are aggregated into one summary line.
+    const REQUIRED_RUNTIME_VARS: Array<{ key: string; service: string; fatal?: boolean }> = [
+      { key: 'ALCHEMY_API_KEY',             service: 'Alchemy RPC (Arbitrum One)',         fatal: true  },
+      { key: 'ADMIN_SOLVENCY_KEY',          service: 'Solvency console auth',              fatal: true  },
+      { key: 'DEPLOYER_PRIVATE_KEY',        service: 'On-chain deployer signer',           fatal: true  },
+      { key: 'STRIPE_SECRET_KEY',           service: 'Stripe payments'                                  },
+      { key: 'STRIPE_WEBHOOK_SECRET',       service: 'Stripe webhook verification'                      },
+      { key: 'BITGO_API_URL',               service: 'BitGo CaaS custody'                              },
+      { key: 'BITGO_ENTERPRISE_ID',         service: 'BitGo enterprise ID'                             },
+      { key: 'INCREASE_API_KEY',            service: 'Increase banking'                                 },
+      { key: 'STELLAR_SIGNING_SECRET_KEY',  service: 'Axiom Rail (Stellar SEP)'                        },
+      { key: 'GEMINI_API_KEY',              service: 'Gemini AI (memo builder)'                        },
+      { key: 'RENTCAST_API_KEY',            service: 'RentCast property data'                          },
+      { key: 'ALPHA_VANTAGE_API_KEY',       service: 'Alpha Vantage market data'                       },
+      { key: 'PINATA_JWT',                  service: 'Pinata IPFS storage'                             },
+    ];
+
+    const missingFatal: string[] = [];
+    for (const { key, service, fatal } of REQUIRED_RUNTIME_VARS) {
+      if (!process.env[key]) {
+        if (fatal) {
+          console.error(`[instrumentation] [MISSING-FATAL] ${key} — ${service} will not function`);
+          missingFatal.push(key);
+        } else {
+          console.warn(`[instrumentation] [MISSING] ${key} — ${service} unavailable`);
+        }
+      }
+    }
+    if (missingFatal.length > 0 && process.env.NODE_ENV === 'production') {
+      console.error('[instrumentation] CRITICAL: Fatal env vars absent in production:', missingFatal.join(', '));
+    }
+
+    // ── Startup state banner ─────────────────────────────────────────────────
+    // Snapshot of runtime topology printed once per cold-start. Values that
+    // carry secrets are replaced by boolean presence flags.
+    const startupBanner = {
+      NODE_ENV:               process.env.NODE_ENV              || 'unknown',
+      AXIOM_ENV:              process.env.AXIOM_ENV             || 'unset',
+      LAUNCH_MODE:            process.env.LAUNCH_MODE           || 'unset',
+      INCREASE_ENVIRONMENT:   process.env.INCREASE_ENVIRONMENT  || 'unset',
+      BANKING_PROVIDER:       process.env.BANKING_PROVIDER      || 'unset',
+      EVM_ADAPTER_MODE:       process.env.EVM_ADAPTER_MODE      || 'unset',
+      // Presence flags — never log actual key values
+      alchemy_ok:     !!process.env.ALCHEMY_API_KEY,
+      redis_ok:       !!process.env.REDIS_URL,
+      stripe_ok:      !!process.env.STRIPE_SECRET_KEY,
+      bitgo_ok:       !!(process.env.BITGO_API_URL && process.env.BITGO_ENTERPRISE_ID),
+      stellar_ok:     !!process.env.STELLAR_SIGNING_SECRET_KEY,
+      increase_ok:    !!process.env.INCREASE_API_KEY,
+      deployer_ok:    !!process.env.DEPLOYER_PRIVATE_KEY,
+      gemini_ok:      !!process.env.GEMINI_API_KEY,
+      solvency_ok:    !!process.env.ADMIN_SOLVENCY_KEY,
+    };
+    console.log('[instrumentation] Startup state:', JSON.stringify(startupBanner));
+
     try {
       const { Pool } = await import('pg');
 
@@ -8342,6 +8401,32 @@ END $seed$`, 'seed dp_listings');
       }
 
       console.log('[instrumentation] Database setup complete');
+
+      // ── Redis warm-up ─────────────────────────────────────────────────────
+      // Fire a PING against the cache layer so the first real request doesn't
+      // pay the connection-establishment cost. Fully non-fatal: if Redis is
+      // absent or unreachable the app continues with the in-memory fallback
+      // defined in lib/cache.ts.
+      if (process.env.REDIS_URL) {
+        try {
+          const { default: Redis } = await import('ioredis');
+          const warmClient = new Redis(process.env.REDIS_URL, {
+            maxRetriesPerRequest: 1,
+            connectTimeout: 5000,
+            enableOfflineQueue: false,
+            lazyConnect: true,
+          });
+          await warmClient.connect();
+          const pong = await warmClient.ping();
+          warmClient.disconnect();
+          console.log(`[instrumentation] Redis warm-up OK (${pong})`);
+        } catch (redisErr: unknown) {
+          const msg = redisErr instanceof Error ? redisErr.message : String(redisErr);
+          console.warn('[instrumentation] Redis warm-up skipped (non-fatal):', msg);
+        }
+      } else {
+        console.log('[instrumentation] REDIS_URL not set — using in-memory cache fallback');
+      }
 
       await pool.end();
     } catch (err) {
