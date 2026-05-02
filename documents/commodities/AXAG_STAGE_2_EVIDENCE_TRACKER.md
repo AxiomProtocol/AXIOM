@@ -7,7 +7,7 @@ Stage: 2 — Technical Diligence
 Tracker status: EXECUTION ACTIVE — 4 IN PROGRESS, 30 ASSIGNED, 1 CLOSED
 Source packet: documents/commodities/AXAG_STAGE_2_DILIGENCE_PACKET.md
 Effective date: 2026-05-01
-Last updated: 2026-05-01 (options package + RFP response tracker initialized; C-02 and C-03 notes updated; L-03 redemption model note added)
+Last updated: 2026-05-01 (Kinesis/KAG alternative reserve path added — Section 16; KIN-01–KIN-08 blockers registered; options package + RFP tracker initialized; C-02/C-03/L-03 notes updated)
 
 ---
 
@@ -387,7 +387,10 @@ Stage 2 is complete only when **every one** of the following conditions is met. 
 | Regulatory        |   4   |  0   |    3     |      1      |    0    |   0    |
 | Process           |   5   |  0   |    5     |      0      |    0    |   0    |
 | Owner assignments |   8   |  0   |    8     |      0      |    0    |   0    |
-| **TOTAL**         | **36**| **0**| **30**   |    **4**    |  **0**  | **1**  |
+| Kinesis/KAG path  |   8   |  0   |    8     |      0      |    0    |   0    |
+| **TOTAL**         | **44**| **0**| **38**   |    **4**    |  **0**  | **1**  |
+
+Note: Kinesis/KAG blockers (KIN-01–KIN-08) are ASSIGNED and tracked in Section 16. They run in parallel with the primary custody and liquidity workstreams and do not replace them.
 
 Last updated: 2026-05-01.
 
@@ -400,6 +403,82 @@ Last updated: 2026-05-01.
 Advancing items to IN PROGRESS or CLOSED in this tracker means diligence work has begun or a diligence artifact has been produced. It does not authorize, schedule, or initiate any deployment, contract publication, token mint, swap pool creation, or banking integration. Closing every item in this tracker does not constitute approval of any AXAG instrument. Final deployment authority rests with a completed governance vote and a passing Stage 4 launch readiness gate, in that order, and not with this document.
 
 No contract has been deployed. No token has been minted. No swap pool has been opened. No banking rail has been enabled. No public claim of AXAG availability is made or implied.
+
+---
+
+## Section 16 — Kinesis / KAG Alternative Reserve Path
+
+Source: documents/commodities/AXAG_KINESIS_GO_LIVE_PATH.md
+Prepared: 2026-05-01
+Status: RESEARCH AND PLANNING — parallel track to direct physical silver path
+
+### 16.1 What this path is
+
+The Kinesis / KAG path is an alternative reserve architecture in which AXAG is backed by KAG (Kinesis Silver), an ERC-20 token issued by KMS Labs AG, rather than by directly Axiom-custodied physical silver bars. KAG represents 1 gram of LBMA Good Delivery 999 fine silver held by KMS Labs in its vault network.
+
+This path is structurally analogous to the AXAU/PAXG model: KMS Labs (issuer) plays the role of Paxos Trust; KAG plays the role of PAXG; AXSilverVault plays the role of AXGoldVault. The primary difference is that KMS Labs is regulated under Liechtenstein TVTG rather than NYDFS.
+
+**This path does NOT replace the direct physical silver custody path (Options 1–3 in AXAG_STAGE_2_OPTIONS_PACKAGE.md).** Both paths are evaluated in parallel. The path with the better legal, scoring, and operational outcome is selected at C-03.
+
+### 16.2 Architecture options assessed
+
+| Option | Description | Best for |
+| ------ | ----------- | -------- |
+| A | Standalone AXAG wrapper vault backed 1:1 by KAG ERC-20 | Pure-silver instrument; mirrors AXAU/PAXG exactly |
+| B | No AXAG token; KAG admitted as AXAU Phase 2 reserve component | Fastest path; enriches AXAU basket; no new token |
+| C | Hybrid — KAG now, direct physical silver later via custody upgrade | Maximizes optionality; two governance votes required |
+
+### 16.3 Scoring impact if KAG path proceeds
+
+| Scenario | Composite | Band |
+| -------- | :-------: | :--: |
+| Current (no change) | 11 | CONDITIONAL |
+| KAG base case (custody 2, liquidity 2) | **9** | **APPROVED** |
+| KAG best case (custody 1, liquidity 2) | **8** | **APPROVED** |
+| KAG adverse (custody 3 — no improvement) | 11 | CONDITIONAL |
+
+### 16.4 Kinesis/KAG blocker register
+
+Owner role for all KIN items: Treasury operations lead (primary); Compliance lead (reviewer); General counsel coordinator (KIN-03, KIN-06).
+All items are ASSIGNED. None may be marked CLOSED without the specified evidence.
+
+| Item ID | Workstream    | Requirement                                                                                        | Owner role                                       | Status     | Evidence link | Blocker notes                                                                                                                                                                                              | Target date | Last updated |
+| ------- | ------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------ | :--------: | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------ |
+| KIN-01  | Kinesis/KAG   | Official KAG ERC-20 contract address confirmed from KMS Labs canonical source                     | Treasury operations lead                         | ASSIGNED   |               | **CRITICAL — gate on all KAG options.** Without the confirmed contract address, no integration design or smart contract work can begin. Source: KMS Labs developer documentation or direct written confirmation. |             | 2026-05-01   |
+| KIN-02  | Kinesis/KAG   | KAG availability on Arbitrum One confirmed (native deployment or approved bridge path)             | Treasury operations lead                         | ASSIGNED   |               | **CRITICAL.** If no native Arbitrum One deployment exists, a bridge architecture must be evaluated. Bridge path requires KMS Labs permission (see KIN-03) and bridge security confirmation. Source: KMS Labs developer documentation. |             | 2026-05-01   |
+| KIN-03  | Kinesis/KAG   | KMS Labs Terms and Conditions reviewed: wrapper token permission, vault-holding permission, IP restrictions | General counsel coordinator / Compliance lead    | ASSIGNED   |               | **CRITICAL — if KIN-03 resolves negatively (wrapper not permitted), all KAG-backed options fail.** Requires legal counsel review of current KMS Labs Terms and Conditions. Direct written confirmation from KMS Labs recommended. |             | 2026-05-01   |
+| KIN-04  | Kinesis/KAG   | KMS Labs redemption terms documented: minimum gram thresholds, KYC requirements, delivery timeline | Treasury operations lead                         | ASSIGNED   |               | Required for disclosure language (Section 7 of go-live path) and L-03 redemption SLA (two-step flow). Source: current KMS Labs Terms and Conditions; direct platform review.                               |             | 2026-05-01   |
+| KIN-05  | Kinesis/KAG   | KAG proof-of-reserves / audit cadence, auditor identity, and report format confirmed               | Treasury operations lead / Compliance lead       | ASSIGNED   |               | Directly determines Custody Risk score (1, 2, or 3) under CEF rubric. Required for launch readiness gate HB-04. Source: KMS Labs published attestation reports; direct confirmation from KMS Labs.         |             | 2026-05-01   |
+| KIN-06  | Kinesis/KAG   | Legal opinion: KMS Labs TVTG authorization qualifies as CEF Custody Risk score 1 or 2             | General counsel coordinator                      | ASSIGNED   |               | Controls the re-scoring outcome for the KAG path. Must be addressed within REG-01/REG-02 scope expansion. No smart contract work begins without this opinion.                                              |             | 2026-05-01   |
+| KIN-07  | Kinesis/KAG   | Oracle verification: Chainlink XAG/USD on Arbitrum One confirmed (shared with O-01)               | Protocol engineering lead                        | ASSIGNED   |               | Shared with the direct silver path blocker O-01 (currently IN PROGRESS). Closes when O-01 closes. Documented separately for the KAG path for completeness.                                                |             | 2026-05-01   |
+| KIN-08  | Kinesis/KAG   | Smart contract architecture specification approved before any contract drafting begins             | Treasury operations lead / Protocol engineering  | ASSIGNED   |               | **Gate on smart contract work.** No AXSilverVault or AXAGToken contract drafting, testing, or deployment may begin until KIN-01 through KIN-06 are all CLOSED and architecture specification is approved by Treasury Lead and Compliance Lead. |             | 2026-05-01   |
+
+Section subtotal: 8 items — 0 IN PROGRESS, 8 ASSIGNED
+
+### 16.5 Relationship to existing tracker items
+
+| Existing item | Relationship to KAG path |
+| ------------- | ------------------------ |
+| C-02 | KAG path is an alternative evaluated under C-02 alongside direct physical silver candidates |
+| C-03 | Custodian selection (C-03) will consider both direct physical silver path and KAG path. If KAG path resolves affirmatively (KIN-01–KIN-06 closed), KMS Labs / KAG becomes a C-03 candidate |
+| O-01 | KIN-07 shares the same oracle verification. O-01 closing closes KIN-07. |
+| REG-01 / REG-02 | KIN-06 requires expansion of REG-01/REG-02 scope to include KMS Labs TVTG custody analysis |
+| L-03 | KIN-04 (redemption terms) feeds directly into L-03 (redemption SLA) under the KAG path |
+
+### 16.6 No-go conditions for the KAG path
+
+If any of the following is true, the KAG path is abandoned and direct physical silver custody (Options 1–3) becomes the sole active path:
+
+| No-go | Condition |
+| ----- | --------- |
+| KNG-01 | KMS Labs terms prohibit wrapper tokens or vault holding of KAG by a third party |
+| KNG-02 | KAG does not exist as an ERC-20 on any supported network |
+| KNG-03 | No viable path to KAG on Arbitrum One (no native; no permitted bridge) |
+| KNG-04 | Legal opinion: KMS Labs TVTG does not satisfy CEF Custody Risk score 2 or better |
+| KNG-05 | KMS Labs PoR attestation fails CEF Minimum Custody Standard MC-04 (quarterly or better) |
+| KNG-06 | KMS Labs suspends KAG redemptions or is subject to regulatory enforcement |
+
+**Do not mark AXAG approved. Do not close C-03 based on this section alone. C-03 remains ASSIGNED pending resolution of both the direct silver path (C-02 RFP responses) and the KAG path (KIN-01–KIN-06).**
 
 ---
 
