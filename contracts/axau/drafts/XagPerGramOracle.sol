@@ -7,11 +7,11 @@ pragma solidity 0.8.24;
  *  Status:        DRAFT — not deployed, not used in production.
  *  Document path: contracts/axau/drafts/XagPerGramOracle.sol
  *  Source spec:   documents/commodities/AXAG_KINESIS_GO_LIVE_PATH.md § 5.3
- *  Stage:         2 — Technical Diligence (architectural draft only)
+ *  Last updated:  2026-05-02 — corrected oracle address + L2 sequencer check
  *
  *  PURPOSE
  *  ───────
- *  Chainlink's XAG/USD feed (Arbitrum One: 0x66a35534126b4B0845A2Aa03825B95dfaAA88A4F)
+ *  Chainlink's XAG/USD feed (Arbitrum One: 0xC56765f04B248394CF1619D20dB8082Edbfa75b1)
  *  returns USD per troy ounce with 8 decimal places.
  *
  *  KAG (Kinesis Silver) represents 1 GRAM of silver, NOT 1 troy ounce.
@@ -38,28 +38,47 @@ pragma solidity 0.8.24;
  *    Max plausible XAG/USD: $10,000/toz → answer = 1_000_000_000_000 (1e12 @8dec)
  *    After × 1_000_000:       1e18 — well within int256 (max ≈ 1.15e77) ✓
  *
+ *  L2 SEQUENCER UPTIME CHECK
+ *  ──────────────────────────
+ *  On Arbitrum One, the sequencer can go offline. When it does, Chainlink feeds
+ *  can return stale data that appears fresh. Arbitrum mandates an additional
+ *  check against the Sequencer Uptime Feed before trusting any price feed.
+ *
+ *  Sequencer uptime feed (Arbitrum One): 0xFdB631F5EE196F0ed6FAa767959853A9F217697D
+ *  Grace period: 3600 seconds (1 hour) after sequencer restart.
+ *  If sequencer is down or in grace period, latestRoundData() reverts — the
+ *  NAVEngine's own circuit-breaker handles the revert and pauses operations.
+ *
+ *  VERIFIED FEED ADDRESSES (Arbitrum One)
+ *  ───────────────────────────────────────
+ *    XAG/USD feed:          0xC56765f04B248394CF1619D20dB8082Edbfa75b1
+ *    Sequencer uptime feed: 0xFdB631F5EE196F0ed6FAa767959853A9F217697D
+ *    Source: docs.chain.link/data-feeds/price-feeds/addresses?network=arbitrum
+ *    Verified: 2026-05-02
+ *
  *  DEPLOYMENT PREDICATES (same as AXSilverVault.sol — all must be satisfied):
  *    See contracts/axau/drafts/README.md for the full gate list.
- *
- *  FEED ADDRESS TO SUPPLY AT DEPLOYMENT
- *    Arbitrum One: 0x66a35534126b4B0845A2Aa03825B95dfaAA88A4F  (verify at data.chain.link)
- *    Ethereum:     N/A — use Arbitrum feed or bridge-sync approach
  * ─────────────────────────────────────────────────────────────────────────── */
 
 import "../interfaces/IAXAU.sol";
 
 /**
  * @title XagPerGramOracle
- * @notice Wraps a Chainlink XAG/USD (troy-ounce) feed and exposes it as a
- *         per-gram price feed. Implements AggregatorV3Interface so the existing
- *         NAVEngine requires no modifications.
+ * @notice Wraps the Chainlink XAG/USD (troy-ounce) feed on Arbitrum One and
+ *         exposes it as a per-gram price feed with L2 sequencer uptime safety.
+ *         Implements AggregatorV3Interface so the existing NAVEngine requires
+ *         no modifications.
  *
- * @dev The wrapped feed must be a Chainlink AggregatorV3Interface-compatible
- *      feed with 8 decimal places. The wrapper always returns 8 decimal places.
+ * @dev The wrapped XAG/USD feed address on Arbitrum One is:
+ *         0xC56765f04B248394CF1619D20dB8082Edbfa75b1
+ *      The L2 sequencer uptime feed on Arbitrum One is:
+ *         0xFdB631F5EE196F0ed6FAa767959853A9F217697D
+ *      Both addresses must be supplied at deploy time and verified on Arbiscan.
  *
- * @dev IMPORTANT — staleness is NOT re-checked here; the NAVEngine's own
- *      `oracleStaleSecs` guard applies to `updatedAt` returned from this wrapper,
- *      which is passed through unchanged from the underlying feed.
+ * @dev Staleness beyond the 24-hour heartbeat is caught by the NAVEngine's
+ *      own `oracleStaleSecs` guard, which evaluates the `updatedAt` value
+ *      passed through from the underlying feed. This contract does not
+ *      duplicate that check.
  */
 contract XagPerGramOracle is AggregatorV3Interface {
 
@@ -72,23 +91,61 @@ contract XagPerGramOracle is AggregatorV3Interface {
     /// @notice Scaling factor applied before integer division to preserve precision.
     int256 public constant SCALE = 1_000_000;
 
+    /// @notice Grace period after sequencer restart before the feed is trusted.
+    ///         Arbitrum recommends a minimum of 3600 seconds (1 hour).
+    uint256 public constant SEQUENCER_GRACE_PERIOD = 3600;
+
     // ── Immutables ────────────────────────────────────────────────────────────
 
     /// @notice The underlying Chainlink XAG/USD (troy-ounce) feed.
+    ///         Arbitrum One: 0xC56765f04B248394CF1619D20dB8082Edbfa75b1
     AggregatorV3Interface public immutable underlyingFeed;
 
+    /// @notice Chainlink L2 Sequencer Uptime Feed for Arbitrum One.
+    ///         Arbitrum One: 0xFdB631F5EE196F0ed6FAa767959853A9F217697D
+    AggregatorV3Interface public immutable sequencerUptimeFeed;
+
+    // ── Errors ────────────────────────────────────────────────────────────────
+
+    error SequencerDown();
+    error GracePeriodNotOver(uint256 restartedAt, uint256 gracePeriodEndsAt);
+
     // ── Events ────────────────────────────────────────────────────────────────
+
     event UnderlyingFeedSet(address indexed feed);
+    event SequencerFeedSet(address indexed feed);
 
     // ── Constructor ───────────────────────────────────────────────────────────
+
     /**
-     * @param underlyingFeed_  Address of the Chainlink XAG/USD AggregatorV3 feed.
-     *                         On Arbitrum One: 0x66a35534126b4B0845A2Aa03825B95dfaAA88A4F
+     * @param underlyingFeed_     Chainlink XAG/USD AggregatorV3 feed.
+     *                            Arbitrum One: 0xC56765f04B248394CF1619D20dB8082Edbfa75b1
+     * @param sequencerUptimeFeed_ Chainlink L2 Sequencer Uptime Feed.
+     *                            Arbitrum One: 0xFdB631F5EE196F0ed6FAa767959853A9F217697D
      */
-    constructor(address underlyingFeed_) {
+    constructor(address underlyingFeed_, address sequencerUptimeFeed_) {
         require(underlyingFeed_ != address(0), "XagPerGramOracle: zero feed");
+        require(sequencerUptimeFeed_ != address(0), "XagPerGramOracle: zero sequencer feed");
         underlyingFeed = AggregatorV3Interface(underlyingFeed_);
+        sequencerUptimeFeed = AggregatorV3Interface(sequencerUptimeFeed_);
         emit UnderlyingFeedSet(underlyingFeed_);
+        emit SequencerFeedSet(sequencerUptimeFeed_);
+    }
+
+    // ── Internal ──────────────────────────────────────────────────────────────
+
+    /**
+     * @dev Reverts if the Arbitrum sequencer is down or within the grace period.
+     *      Must be called before reading any price data.
+     *      answer == 0 means sequencer is UP; answer == 1 means sequencer is DOWN.
+     */
+    function _checkSequencer() internal view {
+        (, int256 sequencerAnswer, uint256 startedAt,,) = sequencerUptimeFeed.latestRoundData();
+        if (sequencerAnswer != 0) revert SequencerDown();
+        uint256 gracePeriodEndsAt = startedAt + SEQUENCER_GRACE_PERIOD;
+        if (block.timestamp < gracePeriodEndsAt) {
+            revert GracePeriodNotOver(startedAt, gracePeriodEndsAt);
+        }
     }
 
     // ── AggregatorV3Interface ─────────────────────────────────────────────────
@@ -103,6 +160,7 @@ contract XagPerGramOracle is AggregatorV3Interface {
 
     /**
      * @notice Returns the XAG/USD price in USD per GRAM (8 decimal places).
+     *         Reverts if the Arbitrum sequencer is down or in the grace period.
      *         All fields except `answer` are passed through from the underlying feed.
      *
      * @return roundId         Underlying round ID.
@@ -123,19 +181,17 @@ contract XagPerGramOracle is AggregatorV3Interface {
             uint80 answeredInRound
         )
     {
+        _checkSequencer();
+
         int256 troyOzAnswer;
         (roundId, troyOzAnswer, startedAt, updatedAt, answeredInRound) =
             underlyingFeed.latestRoundData();
 
-        // Guard: non-positive price from the underlying feed is propagated as-is.
-        // The NAVEngine's own non-positive check will handle it.
         if (troyOzAnswer <= 0) {
             answer = troyOzAnswer;
             return (roundId, answer, startedAt, updatedAt, answeredInRound);
         }
 
-        // Convert troy-ounce price to per-gram price.
-        // troyOzAnswer × 1_000_000 / 31_103_500 ≡ troyOzAnswer / 31.1035
         answer = (troyOzAnswer * SCALE) / TROY_OZ_PER_GRAM_SCALED;
     }
 
@@ -143,7 +199,7 @@ contract XagPerGramOracle is AggregatorV3Interface {
 
     /**
      * @notice Returns the raw (troy-ounce) price from the underlying Chainlink feed.
-     *         Use for diagnostic comparison against the converted gram price.
+     *         Bypasses the sequencer check — diagnostic use only.
      */
     function rawTroyOzPrice() external view returns (int256 troyOzAnswer, uint256 updatedAt) {
         uint80 _r; uint256 _s; uint80 _a;
@@ -151,12 +207,28 @@ contract XagPerGramOracle is AggregatorV3Interface {
     }
 
     /**
-     * @notice Returns the per-gram price as a convenience read (same math as latestRoundData).
+     * @notice Returns the per-gram price (same math as latestRoundData).
+     *         Reverts if the sequencer is down or in the grace period.
      */
     function gramPrice() external view returns (int256 usdPerGram8dec) {
+        _checkSequencer();
         uint80 _r; int256 troy; uint256 _s; uint256 _u; uint80 _a;
         (_r, troy, _s, _u, _a) = underlyingFeed.latestRoundData();
         if (troy <= 0) return troy;
         return (troy * SCALE) / TROY_OZ_PER_GRAM_SCALED;
+    }
+
+    /**
+     * @notice Returns true if the sequencer is currently up and past the grace period.
+     *         Safe to call any time — does not revert.
+     */
+    function sequencerIsLive() external view returns (bool) {
+        try sequencerUptimeFeed.latestRoundData() returns (
+            uint80, int256 seqAnswer, uint256 startedAt, uint256, uint80
+        ) {
+            return seqAnswer == 0 && block.timestamp >= startedAt + SEQUENCER_GRACE_PERIOD;
+        } catch {
+            return false;
+        }
     }
 }
