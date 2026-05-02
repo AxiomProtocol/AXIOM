@@ -31,6 +31,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Stack',
     children: [
       { href: '/system-map', label: 'System Map' },
+      { href: '/real-assets', label: 'Real Assets (Overview)' },
       { href: '/axau', label: 'AXAU Reserve' },
       { href: '/axau-early-access', label: 'AXAU Early Access' },
       { href: '/axau-buy', label: 'AXAU Mint Terminal' },
