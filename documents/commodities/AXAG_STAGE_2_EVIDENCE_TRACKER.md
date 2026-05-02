@@ -7,7 +7,7 @@ Stage: 2 — Technical Diligence
 Tracker status: EXECUTION ACTIVE — 4 IN PROGRESS, 30 ASSIGNED, 1 CLOSED
 Source packet: documents/commodities/AXAG_STAGE_2_DILIGENCE_PACKET.md
 Effective date: 2026-05-01
-Last updated: 2026-05-01 (Kinesis/KAG alternative reserve path added — Section 16; KIN-01–KIN-08 blockers registered; options package + RFP tracker initialized; C-02/C-03/L-03 notes updated)
+Last updated: 2026-05-01 (Phase 1 KAG read-only integration deployed — lib/commodities/kagService.ts, pages/api/commodities/kag/status.ts, pages/api/commodities/kag/balance.ts, pages/commodities/kag.tsx; KAG registered as supported external asset path in Section 16.7; Kinesis/KAG alternative reserve path added — Section 16; KIN-01–KIN-08 blockers registered)
 
 ---
 
@@ -479,6 +479,27 @@ If any of the following is true, the KAG path is abandoned and direct physical s
 | KNG-06 | KMS Labs suspends KAG redemptions or is subject to regulatory enforcement |
 
 **Do not mark AXAG approved. Do not close C-03 based on this section alone. C-03 remains ASSIGNED pending resolution of both the direct silver path (C-02 RFP responses) and the KAG path (KIN-01–KIN-06).**
+
+---
+
+### 16.7 Phase 1 read-only integration — deployment record
+
+| Item | Detail |
+| ---- | ------ |
+| Deployed | 2026-05-02 |
+| Scope | Phase 1 — read-only, no custody, no issuance, no vault, no smart contract |
+| Service | `lib/commodities/kagService.ts` — `getKagAssetMetadata()`, `getKagBalance()`, `getKagUsdValue()`, `getKagDisclosure()` |
+| API: status | `pages/api/commodities/kag/status.ts` — GET /api/commodities/kag/status — schema `kag-status-v1` |
+| API: balance | `pages/api/commodities/kag/balance.ts` — GET /api/commodities/kag/balance?address= — read-only ERC-20 `balanceOf` |
+| Public page | `pages/commodities/kag.tsx` — `/commodities/kag` — DesignLawLayout, "AXAG IS NOT LIVE" banner, full disclosure, blocker register |
+| Nav | `/commodities/kag` added to Stack dropdown in `components/design-law/navItems.ts` |
+| Price source | Chainlink XAG/USD (Arbitrum One) — O-01 OPEN; price returns null until O-01 closes |
+| Oracle block | `/api/commodities/kag/status` → `oracle` field documents planned address, blocker O-01, note |
+| KAG registered as | Supported external asset path — Phase 1 read-only integration active |
+| AXAG statement | "AXAG IS NOT LIVE AND IS NOT APPROVED FOR DEPLOYMENT" — displayed on page and in every API response |
+| No-custody confirmed | All endpoints confirm Axiom does not hold, issue, or custody KAG or underlying silver |
+
+**Status: Phase 1 read-only integration DEPLOYED.** KIN-01–KIN-08 blockers remain ASSIGNED. No Phase 2 or Phase 3 work may begin until blockers are closed per Sections 16.3 and 16.4.
 
 ---
 

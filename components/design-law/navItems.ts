@@ -42,6 +42,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/escrow/new', label: 'Escrow' },
       { href: '/depin/denet', label: 'DePIN Network' },
       { href: '/commodity-framework', label: 'Tokenized Commodities' },
+      { href: '/commodities/kag', label: 'Kinesis Silver (KAG)' },
     ],
   },
   {
