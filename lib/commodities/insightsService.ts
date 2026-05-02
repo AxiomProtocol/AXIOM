@@ -19,6 +19,12 @@ import {
   isValidEvmAddress,
   _internal as portfolioInternal,
 } from '../portfolio/realAssetsPortfolio';
+import {
+  getAssetUsdValue,
+  getAssetMetadata,
+  SUPPORTED_SYMBOLS,
+  type SupportedSymbol,
+} from '../assets/externalAssetService';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -58,6 +64,25 @@ export interface PortfolioContext {
   };
 }
 
+export interface ExternalAssetIntelligence {
+  symbol: string;
+  productStatus: 'EXTERNAL_SUPPORTED';
+  category: string;
+  issuer: string;
+  unitPriceUsd: number | null;
+  source: string;
+  note: string;
+  axiomIssued: false;
+  axiomCustodies: false;
+  error?: string;
+}
+
+export interface AssetComparison {
+  label: string;
+  members: string[];
+  note: string;
+}
+
 export interface CommodityInsights {
   goldSpot: SpotMetric;
   silverSpot: SpotMetric;
@@ -65,6 +90,8 @@ export interface CommodityInsights {
   axau: AssetIntelligence;
   kag: AssetIntelligence;
   axag: AssetIntelligence;
+  externalSupported: ExternalAssetIntelligence[];
+  comparisons: AssetComparison[];
   comparison: { summary: string; axauVsKag: string };
   oracleHealth: { label: RiskLabel; note: string };
   productMaturity: Array<{ symbol: string; status: string; note: string }>;
@@ -84,6 +111,9 @@ const COMMODITY_DISCLOSURES: string[] = [
   'Axiom does not directly custody the underlying silver.',
   'Any redemption rights depend on KMS Labs / Kinesis terms.',
   'AXAG is not live and is not issued.',
+  'External supported assets (USDC, PAXG, XAUT, WBTC, cbETH) are not issued or ' +
+    'custodied by Axiom. Read-only support only — no swaps, no lending, no deposits, ' +
+    'no withdrawals, no banking rails. Redemption rights depend on each issuer.',
 ];
 
 // ─── Public entrypoint ─────────────────────────────────────────────────────────
@@ -97,13 +127,18 @@ export async function getCommodityInsights(
     isValidEvmAddress(options.walletAddress);
 
   // Parallel fan-out
-  const [kagPriceRes, axauPriceRes, portfolioRes] = await Promise.allSettled([
+  const settled = await Promise.allSettled([
     getKagUsdValue(1),
     portfolioInternal.getAxauUsdPerToken(),
     includePortfolio
       ? getRealAssetsPortfolio(options.walletAddress as string)
       : Promise.resolve(null),
+    ...SUPPORTED_SYMBOLS.map((s) => getAssetUsdValue(s, 1)),
   ]);
+  const kagPriceRes = settled[0] as PromiseSettledResult<Awaited<ReturnType<typeof getKagUsdValue>>>;
+  const axauPriceRes = settled[1] as PromiseSettledResult<Awaited<ReturnType<typeof portfolioInternal.getAxauUsdPerToken>>>;
+  const portfolioRes = settled[2] as PromiseSettledResult<Awaited<ReturnType<typeof getRealAssetsPortfolio>> | null>;
+  const externalPriceResults = settled.slice(3) as PromiseSettledResult<Awaited<ReturnType<typeof getAssetUsdValue>>>[];
 
   // ── Silver spot (from KAG) ────────────────────────────────────────────────
   let silverSpot: SpotMetric;
@@ -302,6 +337,106 @@ export async function getCommodityInsights(
     // portfolioContext null. The page renders an empty state.
   }
 
+  // ── External supported assets intelligence rows ──────────────────────────
+  const categoryLabelOf = (c: string): string => {
+    switch (c) {
+      case 'STABLE': return 'Reserve-grade stable';
+      case 'GOLD': return 'Gold';
+      case 'BTC': return 'BTC reference';
+      case 'STAKED_ETH': return 'Staked ETH (yield-bearing)';
+      default: return c;
+    }
+  };
+
+  const externalSupported: ExternalAssetIntelligence[] = SUPPORTED_SYMBOLS.map(
+    (sym: SupportedSymbol, idx: number) => {
+      const meta = getAssetMetadata(sym);
+      const r = externalPriceResults[idx];
+      const baseNote =
+        sym === 'cbETH'
+          ? '1 cbETH represents an evolving claim on staked ETH; cbETH/ETH ratio increases over time. Reference USD shown is CoinGecko spot. Axiom does not issue or custody cbETH; no yield is offered or implied by Axiom.'
+          : sym === 'WBTC'
+          ? '1 WBTC is intended to represent 1 BTC under the WBTC custodial model. Reference USD shown is CoinGecko spot. Axiom does not issue or custody WBTC.'
+          : sym === 'USDC'
+          ? '1 USDC = 1 USD reference. Issued by Circle. Axiom does not issue USDC; AXUSD is the Axiom-issued stable layer and is independent of USDC.'
+          : sym === 'PAXG'
+          ? '1 PAXG ≈ 1 troy ounce of LBMA gold (Paxos / NYDFS). Axiom does not issue PAXG; AXAU is the Axiom-issued gold rail and is independent of PAXG.'
+          : sym === 'XAUT'
+          ? '1 XAUT ≈ 1 troy ounce of LBMA gold (TG Commodities, BVI). Axiom does not issue XAUT.'
+          : '';
+
+      if (r.status === 'fulfilled') {
+        return {
+          symbol: sym,
+          productStatus: 'EXTERNAL_SUPPORTED' as const,
+          category: categoryLabelOf(meta.category),
+          issuer: meta.issuer,
+          unitPriceUsd: r.value.unitPriceUsd,
+          source: r.value.oracleSource,
+          note: baseNote,
+          axiomIssued: false as const,
+          axiomCustodies: false as const,
+          ...(r.value.error ? { error: r.value.error } : {}),
+        };
+      }
+      return {
+        symbol: sym,
+        productStatus: 'EXTERNAL_SUPPORTED' as const,
+        category: categoryLabelOf(meta.category),
+        issuer: meta.issuer,
+        unitPriceUsd: null,
+        source: 'unavailable',
+        note: baseNote,
+        axiomIssued: false as const,
+        axiomCustodies: false as const,
+        error: `Reference USD price unavailable: ${r.reason instanceof Error ? r.reason.message : 'unknown error'}`,
+      };
+    },
+  );
+
+  // ── Cross-asset comparisons (reference only — not advice) ────────────────
+  const comparisons: AssetComparison[] = [
+    {
+      label: 'Gold rails: AXAU vs PAXG vs XAUT',
+      members: ['AXAU', 'PAXG', 'XAUT'],
+      note:
+        'AXAU is the Axiom-issued gold rail on Arbitrum One with on-chain NAV via NAVEngine. ' +
+        'PAXG (Paxos / NYDFS) and XAUT (TG Commodities / BVI) are external gold tokens, each ' +
+        '~1 troy ounce of LBMA gold. Different issuers, jurisdictions, custody models, and ' +
+        'redemption terms — reference comparison only.',
+    },
+    {
+      label: 'Stable layer: AXUSD vs USDC',
+      members: ['AXUSD', 'USDC'],
+      note:
+        'AXUSD is the Axiom-issued, ERC-3643 compliant stable layer used for protocol settlement. ' +
+        'USDC is Circle\u2019s USD-referenced stablecoin, supported by Axiom as an external read-only ' +
+        'asset. Different issuers, reserve compositions, regulatory frameworks — reference only.',
+    },
+    {
+      label: 'BTC reference benchmark: WBTC',
+      members: ['WBTC'],
+      note:
+        'WBTC is the BTC reference benchmark used for portfolio sizing and disclosure. ' +
+        'Custody is held by BitGo Trust Company; Axiom does not issue or custody WBTC.',
+    },
+    {
+      label: 'Yield-bearing staked-ETH benchmark: cbETH',
+      members: ['cbETH'],
+      note:
+        'cbETH is the yield-bearing staked-ETH benchmark; the cbETH/ETH ratio changes over time ' +
+        'as Coinbase staking rewards accrue. cbETH is NOT a 1:1 ETH wrapper. ' +
+        'Axiom does not issue, custody, or stake cbETH, and does not offer or imply any yield.',
+    },
+    {
+      label: 'Silver benchmark: KAG',
+      members: ['KAG'],
+      note:
+        'KAG remains the silver benchmark — 1 KAG = 1 gram of LBMA Good Delivery 999 fine silver, ' +
+        'issued by KMS Labs in the Kinesis ecosystem. Axiom does not issue KAG. AXAG is not live.',
+    },
+  ];
+
   return {
     goldSpot,
     silverSpot,
@@ -309,6 +444,8 @@ export async function getCommodityInsights(
     axau,
     kag,
     axag,
+    externalSupported,
+    comparisons,
     comparison: { summary, axauVsKag },
     oracleHealth,
     productMaturity,

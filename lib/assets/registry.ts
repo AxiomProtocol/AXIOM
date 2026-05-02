@@ -626,6 +626,120 @@ export const EXTERNAL_ASSETS: ExternalAsset[] = [
     effectiveDate: '2026-05-02',
   },
 
+  // ── Live: XAUT (Tether Gold) ────────────────────────────────────────────────
+  // External-supported gold rail; BVI-issued, Swiss-vaulted LBMA gold.
+  // Read-only, served via the generalized externalAssetService.
+  {
+    symbol: 'XAUT',
+    name: 'Tether Gold',
+    category: 'DIGITAL_COMMODITY',
+    issuer: 'TG Commodities Limited (Tether Gold)',
+    issuerRegulator:
+      'British Virgin Islands. Not regulated by U.S. SEC, CFTC, OCC, or NYDFS. ' +
+      'Tether publishes periodic attestations; verify directly from gold.tether.to.',
+    chain: 'ethereum-mainnet',
+    chainId: 1,
+    contractAddress: '0x68749665FF8D2d112Fa859AA293F07A622782F38',
+    contractConfirmed: true,
+    contractStandard: 'ERC-20',
+    decimals: 6,
+    pricingSource: 'CoinGecko (tether-gold, USD per token ≈ per troy oz)',
+    pricingSourceTier: 'COINGECKO_PRIMARY',
+    pricingSourceVerified: true,
+    custodyModel:
+      'Physical LBMA Good Delivery 995+ fine gold held in a Swiss vault by ' +
+      'TG Commodities Limited. Each XAUT represents one troy ounce of gold ' +
+      'with a specific bar serial-number reference.',
+    redeemabilityClarity: 'CONDITIONAL',
+    productStatus: 'EXTERNAL_SUPPORTED',
+    disclosureStatus: 'PUBLISHED',
+    admissionStatus: 'NEEDS_DILIGENCE',
+    riskLabel: 'TIER_2_REVIEWED',
+    readOnlySupported: true,
+    axiomCustodies: false,
+    axiomIssues: false,
+    readinessScore: {
+      d1IssuerVerification: 2, // BVI; not U.S.-regulated
+      d2ContractConfirmation: 0,
+      d3MarketData: 0,
+      d4CustodyRedeemability: 1,
+      d5RegulatoryClarity: 2, // BVI vs U.S. issuer profile
+      d6DisclosureCompatibility: 1,
+    },
+    detailRoute: '/assets/xaut',
+    disclosureLinks: [
+      { label: 'Tether Gold — Official Site', url: 'https://gold.tether.to' },
+      {
+        label: 'XAUT contract on Etherscan',
+        url: 'https://etherscan.io/token/0x68749665FF8D2d112Fa859AA293F07A622782F38',
+      },
+    ],
+    notes:
+      'External-supported gold rail. Direct read-only support via ' +
+      'lib/assets/externalAssetService.ts — metadata, balance, USD reference, ' +
+      'disclosure, portfolio. No swaps, no lending, no banking rails. ' +
+      'AXAU remains the Axiom-issued gold rail; XAUT is independent.',
+    effectiveDate: '2026-05-02',
+  },
+
+  // ── Live: cbETH (Coinbase Wrapped Staked ETH) ───────────────────────────────
+  // Yield-bearing wrapper — rate changes over time as Coinbase staking rewards
+  // accrue. NOT a 1:1 ETH wrapper. Read-only, no Axiom yield offered or implied.
+  {
+    symbol: 'cbETH',
+    name: 'Coinbase Wrapped Staked ETH',
+    category: 'STRATEGIC_CRYPTO',
+    issuer: 'Coinbase, Inc. (cbETH issuer; Coinbase Custody Trust as custodian)',
+    issuerRegulator:
+      'Coinbase Custody Trust Company is a New York limited purpose trust company ' +
+      'regulated by NYDFS. ETH staking products operate under the evolving U.S. ' +
+      'staking regulatory framework; verify product status from coinbase.com.',
+    chain: 'ethereum-mainnet',
+    chainId: 1,
+    contractAddress: '0xBe9895146f7AF43049ca1c1AE358B0541Ea49704',
+    contractConfirmed: true,
+    contractStandard: 'ERC-20',
+    decimals: 18,
+    pricingSource: 'CoinGecko (coinbase-wrapped-staked-eth, USD)',
+    pricingSourceTier: 'COINGECKO_PRIMARY',
+    pricingSourceVerified: true,
+    custodyModel:
+      'cbETH represents an evolving claim on ETH staked on the Coinbase staking ' +
+      'platform. Underlying ETH is held in Coinbase Custody. cbETH/ETH conversion ' +
+      'rate is published on-chain and increases over time as staking rewards accrue.',
+    redeemabilityClarity: 'CONDITIONAL',
+    productStatus: 'EXTERNAL_SUPPORTED',
+    disclosureStatus: 'PUBLISHED',
+    admissionStatus: 'NEEDS_DILIGENCE',
+    riskLabel: 'TIER_3_RESTRICTED',
+    readOnlySupported: true,
+    axiomCustodies: false,
+    axiomIssues: false,
+    readinessScore: {
+      d1IssuerVerification: 1, // NYDFS-regulated custodian
+      d2ContractConfirmation: 0,
+      d3MarketData: 0,
+      d4CustodyRedeemability: 2, // Staking unwind queue dependency
+      d5RegulatoryClarity: 2, // U.S. staking framework still evolving
+      d6DisclosureCompatibility: 2, // Yield-bearing wrapper requires explicit disclosure
+    },
+    detailRoute: '/assets/cbeth',
+    disclosureLinks: [
+      { label: 'Coinbase — cbETH', url: 'https://www.coinbase.com/cbeth' },
+      {
+        label: 'cbETH contract on Etherscan',
+        url: 'https://etherscan.io/token/0xBe9895146f7AF43049ca1c1AE358B0541Ea49704',
+      },
+    ],
+    notes:
+      'Yield-bearing staked-ETH wrapper. cbETH/ETH ratio changes over time. ' +
+      'Read-only support via lib/assets/externalAssetService.ts — metadata, ' +
+      'balance, USD reference, disclosure, portfolio. No yield is offered or ' +
+      'implied by Axiom — staking rewards accrue from the Coinbase staking ' +
+      'platform, not from Axiom. No swaps, no lending, no staking, no banking rails.',
+    effectiveDate: '2026-05-02',
+  },
+
   // ── OUT OF SCOPE: AXAG ──────────────────────────────────────────────────────
   // Recorded explicitly so the registry truth matches the public truth.
   {
