@@ -1,54 +1,77 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { pool } from '../../../server/db';
+
+export interface TreasurySection {
+  dataStatus: 'ok' | 'empty' | 'error';
+  asOfUtc: string | null;
+  snapshotId: string | null;
+  treasuryTotalUsd: number;
+  treasuryLiquidUsd: number;
+  reservesTotalUsd: number;
+  liabilitiesTotalUsd: number;
+  reserveRatio: number;
+  coverageRatio: number;
+  lossBufferUsd: number;
+  policyMode: string;
+  regimeState: string;
+  hardBrake: string;
+  gateStatus: string;
+  composition: { label: string; valueUsd: number; pct: number }[];
+}
+
+export interface AmeSection {
+  dataStatus: 'ok' | 'empty' | 'error';
+  policyMode: string | null;
+  hardBrakeArmed: boolean;
+  activeRegimeBand: string | null;
+  evaluationId: string | null;
+  recordedAt: string | null;
+  triggerMetric: string | null;
+  triggerValue: number | null;
+}
+
+export interface SentinelSection {
+  dataStatus: 'ok' | 'error';
+  regime: string;
+  regimeConfidence: number;
+  systemStance: string;
+  approvedLast7d: number;
+  deniedLast7d: number;
+  totalSignals: number;
+  qualifiedSignals: number;
+  decisions: {
+    id: string;
+    scope: string;
+    action_type: string;
+    subject: string;
+    max_notional: string;
+    decision: string;
+    reason_code: string;
+    plain_language: string | null;
+    created_at: string;
+  }[];
+}
 
 export interface ProtocolIntelligenceData {
   generatedAt: string;
-  treasury: {
-    dataStatus: 'ok' | 'empty' | 'error';
-    asOfUtc: string | null;
-    snapshotId: string | null;
-    treasuryTotalUsd: number;
-    treasuryLiquidUsd: number;
-    reservesTotalUsd: number;
-    liabilitiesTotalUsd: number;
-    reserveRatio: number;
-    coverageRatio: number;
-    lossBufferUsd: number;
-    policyMode: string;
-    regimeState: string;
-    hardBrake: string;
-    gateStatus: string;
-    composition: { label: string; valueUsd: number; pct: number }[];
-  };
-  ame: {
-    dataStatus: 'ok' | 'empty' | 'error';
-    policyMode: string | null;
-    hardBrakeActive: boolean;
-    evaluationId: string | null;
-    recordedAt: string | null;
-    meta: Record<string, unknown> | null;
-  };
-  sentinel: {
-    dataStatus: 'ok' | 'error';
-    regime: string;
-    regimeConfidence: number;
-    systemStance: string;
-    approvedLast7d: number;
-    deniedLast7d: number;
-    totalSignals: number;
-    qualifiedSignals: number;
-    decisions: {
-      id: string;
-      scope: string;
-      action_type: string;
-      subject: string;
-      max_notional: string;
-      decision: string;
-      reason_code: string;
-      plain_language: string | null;
-      created_at: string;
-    }[];
-  };
+  treasury: TreasurySection;
+  ame: AmeSection;
+  sentinel: SentinelSection;
+}
+
+function baseUrl(req: NextApiRequest): string {
+  const host = req.headers.host ?? 'localhost:5000';
+  const proto = host.startsWith('localhost') || host.startsWith('127.') ? 'http' : 'https';
+  return `${proto}://${host}`;
+}
+
+async function safeFetch<T>(url: string, fallback: T): Promise<T> {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return fallback;
+    return (await r.json()) as T;
+  } catch {
+    return fallback;
+  }
 }
 
 export default async function handler(
@@ -58,65 +81,53 @@ export default async function handler(
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
-
   res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
 
-  const [treasuryResult, ameResult, sentinelResult] = await Promise.all([
-    fetchTreasury(),
-    fetchAme(),
-    fetchSentinel(),
+  const base = baseUrl(req);
+
+  const [metricsRaw, ameRaw, overviewRaw, decisionsRaw] = await Promise.all([
+    safeFetch<Record<string, unknown>>(`${base}/api/solvency/metrics`, {}),
+    safeFetch<Record<string, unknown>>(`${base}/api/solvency/ame/latest`, {}),
+    safeFetch<Record<string, unknown>>(`${base}/api/sentinel/overview`, {}),
+    safeFetch<Record<string, unknown>>(`${base}/api/sentinel/decisions?limit=20`, {}),
   ]);
 
   return res.status(200).json({
     generatedAt: new Date().toISOString(),
-    treasury: treasuryResult,
-    ame: ameResult,
-    sentinel: sentinelResult,
+    treasury: buildTreasury(metricsRaw),
+    ame: buildAme(ameRaw),
+    sentinel: buildSentinel(overviewRaw, decisionsRaw),
   });
 }
 
-async function fetchTreasury(): Promise<ProtocolIntelligenceData['treasury']> {
-  try {
-    const result = await pool.query(
-      `SELECT id, as_of_utc, payload_json, checksum
-       FROM solvency_snapshots
-       ORDER BY created_at DESC
-       LIMIT 1`
-    );
-    if (result.rows.length === 0) {
-      return emptyTreasury('empty');
-    }
-    const row = result.rows[0];
-    const payload: Record<string, any> =
-      typeof row.payload_json === 'string'
-        ? JSON.parse(row.payload_json)
-        : row.payload_json ?? {};
-
-    return {
-      dataStatus: 'ok',
-      asOfUtc: row.as_of_utc ?? null,
-      snapshotId: row.id ?? null,
-      treasuryTotalUsd: Number(payload.treasuryTotalUsd ?? 0),
-      treasuryLiquidUsd: Number(payload.treasuryLiquidUsd ?? 0),
-      reservesTotalUsd: Number(payload.reservesTotalUsd ?? 0),
-      liabilitiesTotalUsd: Number(payload.liabilitiesTotalUsd ?? 0),
-      reserveRatio: Number(payload.reserveRatio ?? 0),
-      coverageRatio: Number(payload.coverageRatio ?? 0),
-      lossBufferUsd: Number(payload.lossBufferUsd ?? 0),
-      policyMode: String(payload.policyMode ?? 'BOOTSTRAP'),
-      regimeState: String(payload.regimeState ?? 'UNKNOWN'),
-      hardBrake: String(payload.hardBrake ?? 'OFF'),
-      gateStatus: String(payload.gateStatus ?? 'OPEN'),
-      composition: Array.isArray(payload.composition) ? payload.composition : [],
-    };
-  } catch {
+function buildTreasury(raw: Record<string, unknown>): TreasurySection {
+  if (!raw || typeof raw !== 'object' || Object.keys(raw).length === 0) {
     return emptyTreasury('error');
   }
+  const status = raw.dataStatus as string | undefined;
+  if (status === 'empty') return emptyTreasury('empty');
+  if (status && status !== 'ok' && status !== 'partial') return emptyTreasury('error');
+
+  return {
+    dataStatus: 'ok',
+    asOfUtc: (raw.asOfUtc as string | null) ?? null,
+    snapshotId: (raw.snapshotId as string | null) ?? null,
+    treasuryTotalUsd: Number(raw.treasuryTotalUsd ?? 0),
+    treasuryLiquidUsd: Number(raw.treasuryLiquidUsd ?? 0),
+    reservesTotalUsd: Number(raw.reservesTotalUsd ?? 0),
+    liabilitiesTotalUsd: Number(raw.liabilitiesTotalUsd ?? 0),
+    reserveRatio: Number(raw.reserveRatio ?? 0),
+    coverageRatio: Number(raw.coverageRatio ?? 0),
+    lossBufferUsd: Number(raw.lossBufferUsd ?? 0),
+    policyMode: String(raw.policyMode ?? 'BOOTSTRAP'),
+    regimeState: String(raw.regimeState ?? 'UNKNOWN'),
+    hardBrake: String(raw.hardBrake ?? 'OFF'),
+    gateStatus: String(raw.gateStatus ?? 'OPEN'),
+    composition: Array.isArray(raw.composition) ? (raw.composition as { label: string; valueUsd: number; pct: number }[]) : [],
+  };
 }
 
-function emptyTreasury(
-  status: 'empty' | 'error'
-): ProtocolIntelligenceData['treasury'] {
+function emptyTreasury(status: 'empty' | 'error'): TreasurySection {
   return {
     dataStatus: status,
     asOfUtc: null,
@@ -136,73 +147,53 @@ function emptyTreasury(
   };
 }
 
-async function fetchAme(): Promise<ProtocolIntelligenceData['ame']> {
-  try {
-    const result = await pool.query(
-      `SELECT id, policy_mode, evaluation_id, created_at, trigger_metric, trigger_value, notes
-       FROM ame_policy_state
-       ORDER BY created_at DESC
-       LIMIT 1`
-    );
-    if (result.rows.length === 0) {
-      return { dataStatus: 'empty', policyMode: null, hardBrakeActive: false, evaluationId: null, recordedAt: null, meta: null };
-    }
-    const row = result.rows[0];
-    return {
-      dataStatus: 'ok',
-      policyMode: row.policy_mode ?? null,
-      hardBrakeActive: false,
-      evaluationId: row.evaluation_id ?? null,
-      recordedAt: row.created_at ? new Date(row.created_at).toISOString() : null,
-      meta: row.notes ? { notes: row.notes, triggerMetric: row.trigger_metric, triggerValue: row.trigger_value } : null,
-    };
-  } catch {
-    return { dataStatus: 'error', policyMode: null, hardBrakeActive: false, evaluationId: null, recordedAt: null, meta: null };
+function buildAme(raw: Record<string, unknown>): AmeSection {
+  if (!raw || Object.keys(raw).length === 0) {
+    return { dataStatus: 'error', policyMode: null, hardBrakeArmed: false, activeRegimeBand: null, evaluationId: null, recordedAt: null, triggerMetric: null, triggerValue: null };
   }
+  const amDataStatus = raw.dataStatus as string | undefined;
+  if (amDataStatus === 'empty') {
+    return { dataStatus: 'empty', policyMode: null, hardBrakeArmed: false, activeRegimeBand: null, evaluationId: null, recordedAt: null, triggerMetric: null, triggerValue: null };
+  }
+
+  const ps = raw.policyState as Record<string, unknown> | null ?? null;
+  const ms = raw.metricSnapshot as Record<string, unknown> | null ?? null;
+
+  return {
+    dataStatus: 'ok',
+    policyMode: ps ? String(ps.policyMode ?? 'BOOTSTRAP') : null,
+    hardBrakeArmed: Boolean(raw.hardBrakeArmed ?? false),
+    activeRegimeBand: ms ? (String(ms.regimeBand ?? '') || null) : null,
+    evaluationId: ps ? (String(ps.evaluationId ?? '') || null) : null,
+    recordedAt: ps && ps.createdAt ? new Date(ps.createdAt as string).toISOString() : null,
+    triggerMetric: ps ? (String(ps.triggerMetric ?? '') || null) : null,
+    triggerValue: ps && ps.triggerValue !== null && ps.triggerValue !== undefined ? Number(ps.triggerValue) : null,
+  };
 }
 
-async function fetchSentinel(): Promise<ProtocolIntelligenceData['sentinel']> {
-  try {
-    const [regimeRes, approvedRes, deniedRes, totalRes, qualRes, decisionsRes] =
-      await Promise.all([
-        pool.query(`SELECT regime, confidence FROM sentinel_regime_snapshots ORDER BY created_at DESC LIMIT 1`),
-        pool.query(`SELECT COUNT(*) as n FROM sentinel_decisions WHERE decision='APPROVED' AND created_at >= NOW() - INTERVAL '7 days'`),
-        pool.query(`SELECT COUNT(*) as n FROM sentinel_decisions WHERE decision='DENIED'  AND created_at >= NOW() - INTERVAL '7 days'`),
-        pool.query(`SELECT COUNT(*) as n FROM sentinel_signals`),
-        pool.query(`SELECT COUNT(*) as n FROM sentinel_signals WHERE qualified=true`),
-        pool.query(`SELECT id, scope, action_type, subject, max_notional, decision, reason_code, plain_language, created_at FROM sentinel_decisions ORDER BY created_at DESC LIMIT 20`),
-      ]);
-
-    const regime = regimeRes.rows[0];
-    const regimeLabel = regime?.regime ?? 'RANGE_LOW_VOL';
-    const stanceMap: Record<string, string> = {
-      TREND_UP: 'RISK_ON',
-      TREND_DOWN: 'DEFENSIVE',
-      HIGH_VOL_DISLOCATION: 'HALTED',
-    };
-
-    return {
-      dataStatus: 'ok',
-      regime: regimeLabel,
-      regimeConfidence: regime?.confidence ? Math.round(parseFloat(regime.confidence) * 100) : 0,
-      systemStance: stanceMap[regimeLabel] ?? 'NEUTRAL',
-      approvedLast7d: parseInt(approvedRes.rows[0]?.n ?? '0', 10),
-      deniedLast7d: parseInt(deniedRes.rows[0]?.n ?? '0', 10),
-      totalSignals: parseInt(totalRes.rows[0]?.n ?? '0', 10),
-      qualifiedSignals: parseInt(qualRes.rows[0]?.n ?? '0', 10),
-      decisions: decisionsRes.rows,
-    };
-  } catch {
-    return {
-      dataStatus: 'error',
-      regime: 'UNKNOWN',
-      regimeConfidence: 0,
-      systemStance: 'UNKNOWN',
-      approvedLast7d: 0,
-      deniedLast7d: 0,
-      totalSignals: 0,
-      qualifiedSignals: 0,
-      decisions: [],
-    };
+function buildSentinel(
+  overview: Record<string, unknown>,
+  decisions: Record<string, unknown>
+): SentinelSection {
+  if (!overview || Object.keys(overview).length === 0 || (overview as { error?: string }).error) {
+    return { dataStatus: 'error', regime: 'UNKNOWN', regimeConfidence: 0, systemStance: 'UNKNOWN', approvedLast7d: 0, deniedLast7d: 0, totalSignals: 0, qualifiedSignals: 0, decisions: [] };
   }
+
+  const regime = overview.regime as Record<string, unknown> | null ?? null;
+  const signalCounts = overview.signalCounts as { total: number; qualified: number } | null ?? null;
+  const decisionCounts = overview.decisionCounts as { approved: number; denied: number } | null ?? null;
+
+  return {
+    dataStatus: 'ok',
+    regime: regime ? String(regime.regime ?? 'RANGE_LOW_VOL') : 'RANGE_LOW_VOL',
+    regimeConfidence: regime?.confidence ? Math.round(parseFloat(String(regime.confidence)) * 100) : 0,
+    systemStance: String(overview.systemStance ?? 'NEUTRAL'),
+    approvedLast7d: Number(decisionCounts?.approved ?? 0),
+    deniedLast7d: Number(decisionCounts?.denied ?? 0),
+    totalSignals: Number(signalCounts?.total ?? 0),
+    qualifiedSignals: Number(signalCounts?.qualified ?? 0),
+    decisions: Array.isArray(decisions.decisions)
+      ? (decisions.decisions as SentinelSection['decisions'])
+      : [],
+  };
 }

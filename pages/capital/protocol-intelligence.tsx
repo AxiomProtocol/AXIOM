@@ -334,11 +334,11 @@ export default function ProtocolIntelligencePage() {
                   Current Engine State
                 </p>
 
-                {a?.dataStatus === 'error' ? (
+                {!a || a.dataStatus === 'error' ? (
                   <p className="text-sm text-dl-gray font-dl-mono">
                     AME state unavailable — retry in progress.
                   </p>
-                ) : a?.dataStatus === 'empty' || a?.policyMode === null ? (
+                ) : a.dataStatus === 'empty' || a.policyMode === null ? (
                   <p className="text-sm text-dl-gray font-dl-mono">
                     No evaluation recorded yet. AME will populate on first automated cycle.
                   </p>
@@ -346,14 +346,22 @@ export default function ProtocolIntelligencePage() {
                   <dl className="space-y-4">
                     <div>
                       <dt className="text-xs text-dl-gray mb-1">Policy Mode</dt>
-                      <dd className={`font-dl-mono text-xl font-semibold ${policyColor(a.policyMode!)}`}>
+                      <dd className={`font-dl-mono text-xl font-semibold ${policyColor(a.policyMode)}`}>
                         {a.policyMode}
                       </dd>
                     </div>
+                    {a.activeRegimeBand && (
+                      <div>
+                        <dt className="text-xs text-dl-gray mb-1">Active Regime Band</dt>
+                        <dd className={`font-dl-mono text-sm font-semibold ${regimeColor(a.activeRegimeBand)}`}>
+                          {a.activeRegimeBand}
+                        </dd>
+                      </div>
+                    )}
                     <div>
                       <dt className="text-xs text-dl-gray mb-1">Hard Brake</dt>
-                      <dd className={`font-dl-mono text-sm font-semibold ${a.hardBrakeActive ? 'text-dl-error' : 'text-dl-forest'}`}>
-                        {a.hardBrakeActive ? 'ARMED' : 'RELEASED'}
+                      <dd className={`font-dl-mono text-sm font-semibold ${a.hardBrakeArmed ? 'text-dl-error' : 'text-dl-forest'}`}>
+                        {a.hardBrakeArmed ? 'ARMED' : 'RELEASED'}
                       </dd>
                     </div>
                     {a.recordedAt && (
@@ -468,7 +476,10 @@ export default function ProtocolIntelligencePage() {
                 </div>
 
                 {/* Decisions table via shared component */}
-                <DecisionsPanel decisions={s?.decisions ?? []} />
+                <DecisionsPanel decisions={(s?.decisions ?? []).map(d => ({
+                  ...d,
+                  plain_language: d.plain_language ?? undefined,
+                }))} />
 
                 <p className="font-dl-mono text-xs text-dl-gray mt-3">
                   Showing 20 most recent decisions. Full audit trail available at{' '}
