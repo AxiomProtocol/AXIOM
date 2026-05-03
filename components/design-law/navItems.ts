@@ -51,6 +51,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Capital',
     children: [
+      { href: '/capital/protocol-intelligence', label: 'Protocol Intelligence' },
       { href: '/pilot', label: 'Capital Program' },
       { href: '/lending-fund', label: 'Lending Fund' },
       { href: '/syndication', label: 'Syndication' },
