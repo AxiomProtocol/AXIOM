@@ -1,6 +1,6 @@
 # Axiom Protocol — Public Education Guide
 
-**Version 1.0 | May 2026**
+**Version 1.1 | May 2026**
 **For general audiences. Not investment advice. No outcomes are guaranteed.**
 
 ---
@@ -28,16 +28,15 @@ This document explains every page and tool in plain language. It is organized in
 5. [Community and Wealth Building](#5-community-and-wealth-building)
 6. [Capital and Lending](#6-capital-and-lending)
 7. [Treasury and Protocol Finance](#7-treasury-and-protocol-finance)
-8. [Trust, Transparency, and Governance](#8-trust-transparency-and-governance)
-9. [Disclosure and Policy Documents](#9-disclosure-and-policy-documents)
-10. [Infrastructure and Technology](#10-infrastructure-and-technology)
-11. [Intelligence and Risk Systems](#11-intelligence-and-risk-systems)
-12. [Escrow and Payment Tools](#12-escrow-and-payment-tools)
-13. [Real Estate and Property Tools](#13-real-estate-and-property-tools)
-14. [Payments, Payroll, and Rent](#14-payments-payroll-and-rent)
-15. [Pilot Fund and Investor Portal](#15-pilot-fund-and-investor-portal)
-16. [Operator and Admin Tools](#16-operator-and-admin-tools)
-17. [Plain-English Glossary](#17-plain-english-glossary)
+8. [Trust, Transparency, Governance, and Disclosure](#8-trust-transparency-governance-and-disclosure)
+9. [Infrastructure and Technology](#9-infrastructure-and-technology)
+10. [Intelligence and Risk Systems](#10-intelligence-and-risk-systems)
+11. [Escrow and Payment Tools](#11-escrow-and-payment-tools)
+12. [Real Estate and Property Tools](#12-real-estate-and-property-tools)
+13. [Payments, Payroll, and Rent](#13-payments-payroll-and-rent)
+14. [Pilot Fund and Investor Portal](#14-pilot-fund-and-investor-portal)
+15. [Operator and Admin Tools](#15-operator-and-admin-tools)
+16. [Plain-English Glossary](#16-plain-english-glossary)
 
 ---
 
@@ -327,7 +326,7 @@ AXUSD is the stable-value token that moves through the protocol. Think of it as 
 
 ### AXUSD Settlement Rail — `/axusd-3643`
 
-**What it is:** The technical product page for Unified AXUSD, the ERC-3643 compliant version of the stablecoin. ERC-3643 is the on-chain identity standard that embeds compliance rules directly into the token — meaning transfers that violate policy rules are rejected at the contract level automatically, without any human having to intervene.
+**What it is:** The technical product page for Unified AXUSD, the ERC-3643 compliant version of the stablecoin. ERC-3643 is the on-chain identity standard that embeds compliance rules directly into the token — meaning transfers that violate policy rules are rejected at the automated control layer automatically, without any human having to intervene.
 
 **What you can do here:**
 - Read the full token specification, PSM mechanics, and identity architecture.
@@ -397,7 +396,7 @@ AXUSD is the stable-value token that moves through the protocol. Think of it as 
 
 ### Card Onramp — `/onramp`
 
-**What it is:** The fiat entry point for the protocol. Use a debit or credit card to purchase USDC via Coinbase Onramp, which then flows through the PSM (Peg Stability Module) into AXUSD at a 1:1 rate, or directly into AXAU. This is the "crypto-native launch" path — Stripe and Coinbase Onramp are active; ACH and wire rails are deferred.
+**What it is:** The fiat entry point for the protocol. Use a debit or credit card to purchase USDC via Coinbase Onramp, which then flows through the PSM (Peg Stability Module) into AXUSD at a 1:1 rate, or directly into AXAU. This is the crypto-native launch path — Stripe and Coinbase Onramp are active; ACH and wire rails are deferred.
 
 **What you can do here:**
 - Buy AXUSD or AXAU using a credit or debit card.
@@ -508,7 +507,7 @@ This section covers the community entry layer — the tools designed for people 
 
 ### The Wealth Practice — `/wealth-practice`
 
-**What it is:** The platform for Axiom's structured community savings program. Rooted in the traditional SUSU/partner savings concept, The Wealth Practice upgrades it with on-chain audit trails, deterministic contribution cycles, and a three-stage trust pipeline: Interest Hub → Purpose Group → On-Chain Pool. Each completed cycle advances your GEF Score.
+**What it is:** The platform for Axiom's structured community savings program. Rooted in the traditional partner savings concept, The Wealth Practice upgrades it with on-chain audit trails, deterministic contribution cycles, and a three-stage trust pipeline: Interest Hub → Purpose Group → On-Chain Pool. Each completed cycle advances your GEF Score.
 
 **What you can do here:**
 - Join an existing Wealth Practice group or browse active groups.
@@ -654,7 +653,7 @@ This section covers the structured capital products — bridge loans, LP investm
 
 ### Crypto-Backed Credit — `/credit`
 
-**What it is:** A crypto-collateralized credit line where Bitcoin and Ethereum holdings serve as collateral for an AXUSD credit line. No credit check required — the system monitors collateral health in real time and triggers a margin call if the ratio drops below the policy threshold. No taxable event when you borrow (consult your tax advisor).
+**What it is:** A crypto-collateralized credit line where Bitcoin and Ethereum holdings serve as collateral for an AXUSD credit line. No credit check required — the system monitors collateral health in real time and triggers a margin call if the ratio drops below the policy threshold.
 
 **What you can do here:**
 - Open an AXUSD credit line against BTC or ETH collateral.
@@ -724,7 +723,7 @@ This section covers the structured capital products — bridge loans, LP investm
 
 ### Secondary — Marketplace — `/secondary/marketplace`
 
-**What it is:** The active order book and listing page for the secondary market. Shows all listed positions with price, seller, and position details.
+**What it is:** The active listing page for the secondary market. Shows all listed positions with price, seller, and position details.
 
 **What you can do here:**
 - Browse all active listings.
@@ -902,14 +901,14 @@ The treasury section covers how Axiom's own capital is managed, reported, and de
 - Read the AI oracle interpretation of current protocol health.
 - Switch between Allocator, Clearinghouse, and Regulatory views.
 
-**Share Hook:** Axiom's solvency console is the most transparent institutional dashboard in the space — live ratio, six stress tests, and an AI interpretation, all public.
+**Share Hook:** Axiom's solvency console is a live institutional dashboard — live ratio, six stress tests, and an AI interpretation, all public.
 `#SolvencyConsole` `#AxiomProtocol` `#Transparency`
 
 ---
 
-## 8. Trust, Transparency, and Governance
+## 8. Trust, Transparency, Governance, and Disclosure
 
-These pages document how Axiom is governed, audited, and held accountable. Governance decisions are recorded on-chain. Audit history is publicly accessible. Security architecture is disclosed in plain language.
+These pages document how Axiom is governed, audited, held accountable, and formally disclosed. Governance decisions are recorded on-chain. Audit history is publicly accessible. Security architecture and all formal policies are disclosed in plain language.
 
 ---
 
@@ -943,7 +942,7 @@ These pages document how Axiom is governed, audited, and held accountable. Gover
 
 ### Audits — `/trust/audits`
 
-**What it is:** The public audit history for Axiom Protocol. Documents completed audits, auditors used, findings, and remediation status. A third-party smart contract audit is on the development roadmap.
+**What it is:** The public audit history for Axiom Protocol. Documents completed audits, auditors used, findings, and remediation status. A third-party automated control layer audit is on the development roadmap.
 
 **What you can do here:**
 - Review the audit history and status.
@@ -957,7 +956,7 @@ These pages document how Axiom is governed, audited, and held accountable. Gover
 
 ### Security Architecture — `/trust/security`
 
-**What it is:** A plain-language explanation of Axiom's security design — multi-party authorization controls, fail-closed contract design, privacy-by-default data handling, and on-chain access control registries. Explains how each layer prevents unauthorized access or fund movements.
+**What it is:** A plain-language explanation of Axiom's security design — multi-party authorization controls, fail-closed control layer design, privacy-by-default data handling, and on-chain access control registries. Explains how each layer prevents unauthorized access or fund movements.
 
 **What you can do here:**
 - Understand how the protocol is secured at each layer.
@@ -984,7 +983,7 @@ These pages document how Axiom is governed, audited, and held accountable. Gover
 
 ### No-Bridge Architecture — `/trust/no-bridges`
 
-**What it is:** A documentation page explaining why Axiom does not use cross-chain bridges for asset movement. Bridges have been the source of the largest DeFi hacks in history. Axiom's architecture uses native Arbitrum One assets and settlement paths instead, eliminating bridge risk entirely.
+**What it is:** A documentation page explaining why Axiom does not use cross-chain bridges for asset movement. Bridges have been the source of some of the largest on-chain financial rail exploits in history. Axiom's architecture uses native Arbitrum One assets and settlement paths instead, eliminating bridge risk entirely.
 
 **What you can do here:**
 - Read the technical and risk rationale for the no-bridge design.
@@ -1065,12 +1064,6 @@ These pages document how Axiom is governed, audited, and held accountable. Gover
 
 ---
 
-## 9. Disclosure and Policy Documents
-
-These are the formal policy and disclosure pages — written for compliance review, institutional due diligence, and public record. Each policy is dated and versioned.
-
----
-
 ### Institutional Disclosure — `/disclosure`
 
 **What it is:** The master institutional disclosure document covering protocol structure, reserve composition, solvency snapshot, policy mode, contract registry, approved vocabulary (automated control layers, multi-party authorization, etc.), and a GENIUS Act alignment notice. The canonical public record for the entire protocol.
@@ -1137,7 +1130,7 @@ These are the formal policy and disclosure pages — written for compliance revi
 
 ---
 
-## 10. Infrastructure and Technology
+## 9. Infrastructure and Technology
 
 These pages explain the technical plumbing — the blockchain network, payment rails, storage infrastructure, and banking connections that make the protocol work. Written in plain language for non-technical readers.
 
@@ -1242,11 +1235,11 @@ These pages explain the technical plumbing — the blockchain network, payment r
 
 ### CDP Wallets — `/cdp-wallets`
 
-**What it is:** An overview of the Circle Developer Platform (CDP) wallet integration used to provision custodial smart wallets for participants who prefer a managed wallet experience over self-custody.
+**What it is:** An overview of the Circle Developer Platform (CDP) wallet integration used to provision managed custodial wallets for participants who prefer a managed wallet experience over full self-custody.
 
 **What you can do here:**
 - Learn about the CDP wallet option.
-- Provision a Circle-managed smart wallet if preferred.
+- Provision a Circle-managed wallet if preferred.
 - Understand the custody model difference versus a self-custody MetaMask wallet.
 
 **Share Hook:** Not ready for full self-custody? Axiom's CDP wallet integration gives you a managed option with the same on-chain transparency.
@@ -1320,7 +1313,7 @@ These pages explain the technical plumbing — the blockchain network, payment r
 
 ---
 
-## 11. Intelligence and Risk Systems
+## 10. Intelligence and Risk Systems
 
 These are the advisory and monitoring tools — they read data, compute scores, and surface recommendations. None of them execute trades or deploy capital automatically. All outputs require human confirmation.
 
@@ -1514,7 +1507,7 @@ These are the advisory and monitoring tools — they read data, compute scores, 
 
 ---
 
-## 12. Escrow and Payment Tools
+## 11. Escrow and Payment Tools
 
 The escrow system allows two parties to lock capital into a trustless holding contract until pre-defined conditions are met. Unlike a traditional escrow company, there is no third-party holding your funds — the automated control layer on Arbitrum One holds them and releases them when conditions are verified.
 
@@ -1561,7 +1554,7 @@ The escrow system allows two parties to lock capital into a trustless holding co
 
 ---
 
-## 13. Real Estate and Property Tools
+## 12. Real Estate and Property Tools
 
 These are the working tools for real estate investors — from finding distressed properties to running full underwriting analysis to generating institutional-grade acquisition memos. All data is sourced from RentCast, Walk Score, and AI analysis — no hardcoded estimates.
 
@@ -1623,7 +1616,7 @@ These are the working tools for real estate investors — from finding distresse
 
 ### Deal Intelligence Workspace — `/deal-intelligence`
 
-**What it is:** The AI-powered underwriting workspace for real estate deal analysis. Enter a property address or select from the distressed feed, and the system runs eight exit-strategy scenarios (fix-and-flip, BRRRR, wholesale, buy-and-hold, etc.) using live market data, the Craftsman National Cost Estimator for repair costs, and Gemini AI for the acquisition memo. Outputs a full institutional underwriting report.
+**What it is:** The AI-powered underwriting workspace for real estate deal analysis. Enter a property address or select from the distressed feed, and the system runs eight exit-strategy scenarios (fix-and-flip, BRRRR, wholesale, buy-and-hold, etc.) using live market data, the Craftsman National Cost Estimator for repair costs, and Gemini AI for the acquisition memo.
 
 **What you can do here:**
 - Analyze any property across eight exit strategies simultaneously.
@@ -1744,7 +1737,7 @@ These are the working tools for real estate investors — from finding distresse
 
 ---
 
-## 14. Payments, Payroll, and Rent
+## 13. Payments, Payroll, and Rent
 
 Operational payment tools for protocol participants managing real property, running a DAO payroll, or collecting rent from tenants.
 
@@ -1852,6 +1845,7 @@ Operational payment tools for protocol participants managing real property, runn
 
 **What you can do here:**
 - Pay rent via a unique tenant-specific payment link.
+- Bookmark the link for quick access every month.
 
 **Share Hook:** Your unique rent payment link — bookmark it, click it every month, done.
 `#RentPay` `#AxiomProtocol` `#SimplePayment`
@@ -1872,7 +1866,7 @@ Operational payment tools for protocol participants managing real property, runn
 
 ---
 
-## 15. Pilot Fund and Investor Portal
+## 14. Pilot Fund and Investor Portal
 
 The Capital Program (referred to as the Pilot Fund) is the structured investment vehicle — a dual-SPV Regulation D 506(c) fund for accredited investors. These pages cover the fund overview, investor onboarding, performance, and reporting.
 
@@ -1988,135 +1982,290 @@ The Capital Program (referred to as the Pilot Fund) is the structured investment
 
 ---
 
-## 16. Operator and Admin Tools
+## 15. Operator and Admin Tools
 
-These tools are for verified protocol operators, founders, and administrators. They require special authorization. General users will not see these pages in the navigation. They are included here for completeness and transparency.
+These tools are for verified protocol operators, founders, and administrators. They require special authorization. General users will not see these pages in the navigation. They are included here for completeness and public accountability — so the community can see exactly what controls exist and who operates them.
 
-> **Note:** All operator and admin pages require verified authorization. If you are not a protocol operator, you will not be able to access these pages. They are documented here so the public can understand what operational controls exist.
+> **Note for general readers:** You cannot access these pages without verified operator credentials. They are documented here so the public can understand what operational safeguards are in place.
 
 ---
 
 ### Operator Dashboard — `/operator`
 
-**What it is:** The main operator control center for verified protocol operators. Shows pending actions, system health, and quick access to all operator tools.
+**What it is:** The main operator control center for verified protocol operators. Shows pending action items, system health alerts, and quick navigation to all operator-level tools.
 
 **What you can do here (operators only):**
-- View the current system state and pending items.
-- Navigate to specific operator functions.
+- View all pending operational items requiring action.
+- Monitor system health and threshold alerts.
+- Navigate to any specific operator function from one central view.
+
+**Share Hook:** Axiom's operator dashboard exists — and it is documented here so the public knows exactly what controls operators have access to.
+`#OperatorTools` `#AxiomProtocol` `#PublicAccountability`
 
 ---
 
 ### Operator Login — `/operator/login`
 
-**What it is:** The authentication page for accessing the operator control center. Requires operator-level credentials.
+**What it is:** The authentication page for the operator control center. Requires multi-party authorization credentials and is separate from standard participant authentication.
+
+**What you can do here (operators only):**
+- Authenticate to the operator control center.
+- Use your operator-level credentials to access authorized functions.
+
+**Share Hook:** Operator access is separate, credentialed, and logged — every login is recorded for accountability.
+`#OperatorAccess` `#AxiomProtocol` `#MultiPartyAuth`
 
 ---
 
 ### Operator Reserve Management — `/operator/reserve`
 
-**What it is:** The reserve management interface — used to monitor and adjust reserve positions, execute vault operations, and manage coverage ratio within policy limits. All actions are logged.
+**What it is:** The reserve management interface for monitoring and adjusting reserve positions, executing vault operations, and managing the AXAU coverage ratio within policy limits. Every action is logged on-chain.
+
+**What you can do here (operators only):**
+- Monitor current reserve position and coverage ratio.
+- Execute authorized vault operations within policy limits.
+- View the full on-chain action log for all reserve operations.
+
+**Share Hook:** Reserve operations on Axiom require operator authorization and are logged on-chain — every vault action is on the permanent record.
+`#ReserveManagement` `#AxiomProtocol` `#VaultOps`
 
 ---
 
 ### Operator Integrity Check — `/operator/integrity`
 
-**What it is:** A real-time contract integrity verification tool that checks key contracts on Arbitrum One against their expected state. Flags any deviation from expected values.
+**What it is:** A real-time verification tool that checks all key automated control layers on Arbitrum One against their expected state. Any deviation from expected values is flagged immediately for operator review.
+
+**What you can do here (operators only):**
+- Run a live integrity check against all protocol contracts.
+- Review flagged deviations and their severity.
+- Initiate remediation steps if deviations are detected.
+
+**Share Hook:** Axiom runs real-time integrity checks on every protocol contract — any deviation is flagged and logged before any human can miss it.
+`#IntegrityCheck` `#AxiomProtocol` `#FailClosed`
 
 ---
 
 ### Operator Attestations — `/operator/attestations`
 
-**What it is:** The interface for creating and signing on-chain attestations — periodic signed statements by operators confirming that specific conditions (reserves held, policies followed) are true. Attestations are recorded on-chain and publicly readable.
+**What it is:** The interface for creating and signing on-chain attestations — periodic signed statements by operators confirming that specific conditions (reserves held, policies followed) are true as of the attestation date. Attestations are recorded on-chain and publicly readable by anyone.
+
+**What you can do here (operators only):**
+- Create and sign a new on-chain attestation.
+- Review the history of all signed attestations.
+- View the public attestation record for any period.
+
+**Share Hook:** Operator attestations are signed on-chain — anyone can read whether the protocol is in good standing, not just the people running it.
+`#Attestations` `#AxiomProtocol` `#OnChainCompliance`
 
 ---
 
 ### Operator Policy Decisions — `/operator/policy/decisions`
 
-**What it is:** The interface for reviewing and executing governance-approved policy decisions — such as risk parameter changes, reserve policy updates, and access control modifications.
+**What it is:** The interface for reviewing and executing governance-approved policy decisions — risk parameter changes, reserve policy updates, and access control modifications. Decisions only appear here after the community governance vote has passed.
+
+**What you can do here (operators only):**
+- Review pending governance-approved policy decisions.
+- Execute approved decisions within the authorized window.
+- View the execution log for completed policy changes.
+
+**Share Hook:** Policy changes only reach the operator execution queue after a governance vote passes — the community decides, operators execute.
+`#PolicyDecisions` `#AxiomProtocol` `#GovernanceFirst`
 
 ---
 
 ### Operator Notifications — `/operator/notifications`
 
-**What it is:** The notification management system for operator alerts — threshold breaches, coverage warnings, governance proposals requiring action, and system health alerts.
+**What it is:** The alert management system for operator-level notifications — coverage threshold breaches, oracle staleness warnings, governance proposals requiring action, and system health degradation events.
+
+**What you can do here (operators only):**
+- View and acknowledge active alerts.
+- Configure alert thresholds for specific conditions.
+- Review resolved alert history.
+
+**Share Hook:** When a coverage threshold is breached or an oracle goes stale, the operator notification system flags it immediately — nothing slips through undetected.
+`#OperatorAlerts` `#AxiomProtocol` `#SystemHealth`
 
 ---
 
 ### Operator Adapters — Increase — `/operator/adapters/increase`
 
-**What it is:** Integration management for the Increase.com banking API adapter — used for ACH and wire banking operations when the banking rail is active.
+**What it is:** Integration management for the Increase.com banking API adapter — used to manage ACH and wire banking rail connectivity when the banking rail is active and restored.
+
+**What you can do here (operators only):**
+- View the current status of the Increase banking adapter.
+- Manage API keys and webhook configuration.
+- Monitor pending and failed banking transactions.
+
+**Share Hook:** Axiom's banking adapter integrations are managed at the operator level with full status visibility — no hidden infrastructure.
+`#BankingAdapter` `#AxiomProtocol` `#InfraOps`
 
 ---
 
 ### Operator Adapters — Stellar — `/operator/adapters/stellar`
 
-**What it is:** Integration management for the Stellar payment rail adapter — monitoring anchor health, active corridors, and SEP compliance status.
+**What it is:** Integration management for the Stellar payment rail adapter — monitoring anchor health, active payment corridors, and SEP standards compliance status.
+
+**What you can do here (operators only):**
+- Monitor the Stellar anchor connection and corridor status.
+- Review SEP compliance for active payment flows.
+- Manage Stellar adapter configuration.
+
+**Share Hook:** The Stellar payment rail adapter is operator-managed and status-monitored — here is how Axiom keeps the cross-border rail healthy.
+`#StellarAdapter` `#AxiomProtocol` `#PaymentRailOps`
 
 ---
 
 ### Operator Stabilization — `/operator/axau-stabilization`
 
-**What it is:** The AXAU coverage stabilization interface — used when coverage approaches the policy floor to execute authorized reserve operations.
+**What it is:** The AXAU coverage stabilization interface — used when the coverage ratio approaches the policy floor (105%). Operators can execute authorized reserve operations to restore coverage without exceeding their governance-defined authority.
+
+**What you can do here (operators only):**
+- Review current coverage ratio and proximity to the policy floor.
+- Execute an authorized stabilization reserve operation.
+- View the stabilization action log.
+
+**Share Hook:** If AXAU coverage approaches the floor, this is the operator interface that triggers the stabilization response — documented, governed, and logged.
+`#AXAUStabilization` `#AxiomProtocol` `#CoverageProtection`
 
 ---
 
 ### Operator Commodity Risk Score — `/operator/commodity-risk-score`
 
-**What it is:** A scoring tool for evaluating new commodity candidates against the Commodity Expansion Framework criteria — used internally before a governance proposal is submitted.
+**What it is:** An internal scoring tool for evaluating new commodity candidates against the Commodity Expansion Framework criteria. Used before a governance proposal is submitted to ensure candidates meet the oracle, custody, liquidity, and regulatory evidence requirements.
+
+**What you can do here (operators only):**
+- Score a candidate commodity across all five risk dimensions.
+- Generate a pre-governance report for community review.
+- View historical scores for previously evaluated commodities.
+
+**Share Hook:** Before any new reserve asset goes to a governance vote, it gets scored here — oracle, custody, liquidity, and regulatory evidence all required.
+`#CommodityRiskScore` `#AxiomProtocol` `#GovernancePipeline`
 
 ---
 
 ### Operator Instructions — `/operator/instructions`
 
-**What it is:** The operator instruction queue — a list of pending operational tasks generated by Sentinel, governance votes, or system alerts that require operator execution.
+**What it is:** The operator instruction queue — a list of pending operational tasks generated by Sentinel, governance vote outcomes, or system alerts that require operator-level execution. Each instruction includes context, authority reference, and the required action.
+
+**What you can do here (operators only):**
+- View all pending operator instructions in priority order.
+- Read the authority reference for each instruction.
+- Execute and log completion for each item.
+
+**Share Hook:** Axiom's operator instruction queue is how governance decisions become executed actions — every instruction has an authority reference and a completion log.
+`#OperatorInstructions` `#AxiomProtocol` `#GovernanceExecution`
 
 ---
 
 ### Operator Instructions Detail — `/operator/instructions/[id]`
 
-**What it is:** The detail view for a specific operator instruction — showing the required action, context, and execution interface.
+**What it is:** The detail view for a specific operator instruction — showing the full required action, the governance authority that generated it, relevant context, and the execution interface.
+
+**What you can do here (operators only):**
+- Read the full instruction and its authority source.
+- Execute the action and record completion.
+- Add notes to the instruction record.
+
+**Share Hook:** Every operator action traces back to an authority source — governance vote, Sentinel signal, or policy trigger — documented on this page.
+`#InstructionDetail` `#AxiomProtocol` `#AuthorityChain`
 
 ---
 
-### Operator Property Reports (Stuck) — `/operator/property-reports/stuck`
+### Operator Property Reports — Stuck — `/operator/property-reports/stuck`
 
-**What it is:** A monitoring tool for property analysis reports that are stuck in generation — allowing operators to diagnose and retry failed report generation.
+**What it is:** A monitoring tool for property analysis reports that are stuck in generation — allowing operators to diagnose generation failures and retry or escalate stuck reports so participants are not left waiting.
+
+**What you can do here (operators only):**
+- View all reports currently stuck in the generation queue.
+- Diagnose the failure reason for each stuck report.
+- Retry or escalate stuck reports.
+
+**Share Hook:** Axiom monitors its own report generation queue for failures — stuck reports are caught by operators, not left for participants to wonder about.
+`#ReportOps` `#AxiomProtocol` `#ParticipantService`
 
 ---
 
 ### Operator Treasury — Card Deposits — `/operator/treasury/card-deposits`
 
-**What it is:** The operator view of pending card deposit transactions from the treasury funding flow — showing Stripe payment statuses and conversion confirmations.
+**What it is:** The operator view of pending card deposit transactions from the treasury funding flow — showing Stripe payment statuses, Coinbase conversion confirmations, and on-chain routing completions for each deposit.
+
+**What you can do here (operators only):**
+- View all pending and recently completed card deposit transactions.
+- Investigate failed or stuck card deposits.
+- Confirm on-chain routing for completed deposits.
+
+**Share Hook:** Every card deposit into the Axiom treasury is tracked end to end — Stripe, Coinbase, and on-chain routing all visible to operators.
+`#CardDeposits` `#AxiomProtocol` `#TreasuryOps`
 
 ---
 
 ### Operator Trust — Loss Coverage Claims — `/operator/trust/loss-coverage-claims`
 
-**What it is:** The operator interface for reviewing and processing loss coverage claims submitted by participants.
+**What it is:** The operator interface for reviewing, verifying, and processing loss coverage reserve claims submitted by participants. Operators review documentation, verify eligibility, and approve or reject claims according to published policy.
+
+**What you can do here (operators only):**
+- Review submitted loss coverage claims.
+- Verify supporting documentation and eligibility.
+- Approve or reject claims with recorded rationale.
+
+**Share Hook:** Loss coverage claims are reviewed by credentialed operators following published policy — approvals and rejections are both logged permanently.
+`#LossCoverage` `#AxiomProtocol` `#ClaimsReview`
 
 ---
 
 ### Operator Webhooks — Quarantine — `/operator/webhooks/quarantine`
 
-**What it is:** A management interface for quarantined webhook events — payment notifications, banking events, or blockchain events that could not be automatically processed and require operator review.
+**What it is:** A management interface for webhook events that could not be automatically processed — including payment notifications, banking events, or blockchain events that failed validation and were quarantined for manual review.
+
+**What you can do here (operators only):**
+- View all quarantined webhook events.
+- Review the failure reason for each event.
+- Manually process or discard quarantined events.
+
+**Share Hook:** Failed webhook events do not disappear at Axiom — they land in quarantine for operator review, so nothing is silently dropped.
+`#WebhookQuarantine` `#AxiomProtocol` `#EventIntegrity`
 
 ---
 
 ### Founder Ops — `/founder-ops`
 
-**What it is:** The founder operations dashboard — a personal workspace for the founding team showing operational logs, pending review items, and quick access to founder-level controls. Requires founder-level authentication.
+**What it is:** The founder operations dashboard — a personal workspace for the founding team showing operational logs, pending review items, and quick access to founder-level controls. Requires founder-level authentication and multi-party authorization for sensitive actions.
+
+**What you can do here (founders only):**
+- View the operational activity log for the founding team.
+- Review pending items requiring founder-level decision.
+- Access founder-level controls within governance authority.
+
+**Share Hook:** The founding team has a documented operational log — actions, decisions, and pending items, all recorded for accountability.
+`#FounderOps` `#AxiomProtocol` `#FounderAccountability`
 
 ---
 
 ### Founder Ops — Playbook — `/founder-ops/playbook`
 
-**What it is:** The founder operational playbook — a living document of standard operating procedures for each recurring operational task the founding team performs.
+**What it is:** The founder operational playbook — a living document of standard operating procedures for every recurring operational task the founding team performs. Keeps operations consistent and auditable even as the team grows.
+
+**What you can do here (founders only):**
+- Read the SOP for any operational task.
+- Update the playbook with new or revised procedures.
+- Reference the playbook before executing any founder-level action.
+
+**Share Hook:** Axiom's founding team operates from a documented playbook — every recurring task has a written procedure, not tribal knowledge.
+`#FounderPlaybook` `#AxiomProtocol` `#SOPs`
 
 ---
 
 ### Founder Ops — Lending Review — `/founder-ops/lending-review`
 
-**What it is:** The founder review queue for loan applications — allowing the founding team to review underwritten deals before final approval and funding.
+**What it is:** The founder review queue for bridge loan applications — the final review step before an underwritten loan application is approved and funded. Founders review the Deal Intelligence underwriting package and make the funding decision.
+
+**What you can do here (founders only):**
+- Review underwritten loan applications in the queue.
+- Read the full Deal Intelligence package for each deal.
+- Approve, reject, or request more information before funding.
+
+**Share Hook:** Every loan Axiom funds goes through a founder review — Deal Intelligence package read, decision recorded, rationale logged.
+`#LendingReview` `#AxiomProtocol` `#LoanDecisions`
 
 ---
 
@@ -2150,17 +2299,29 @@ These tools are for verified protocol operators, founders, and administrators. T
 
 ### Admin — AXAU Growth — `/admin/axau-growth`
 
-**What it is:** An internal admin tool for monitoring AXAU supply growth, mint/redeem velocity, and slot utilization over time. Used by the administrative team to manage the cohort rollout.
+**What it is:** An internal admin tool for monitoring AXAU supply growth, mint and redeem velocity, and cohort slot utilization over time. Used by the administrative team to manage the phased cohort rollout and ensure coverage headroom.
 
-> This page is for authorized administrators only.
+**What you can do here (admins only):**
+- View AXAU supply growth trends and velocity metrics.
+- Monitor cohort slot utilization.
+- Identify coverage headroom as a function of supply growth.
+
+**Share Hook:** AXAU supply growth is monitored by admins against documented coverage headroom — controlled, measured, and publicly explainable.
+`#AXAUGrowth` `#AxiomProtocol` `#CohortManagement`
 
 ---
 
 ### Admin — Oracle Fallbacks — `/admin/oracle-fallbacks`
 
-**What it is:** An internal admin tool for managing oracle fallback configurations — defining what happens when a primary oracle (e.g., Chainlink XAU/USD) is unavailable. Fallback behavior is set to null (not a synthetic price) by default.
+**What it is:** An internal admin tool for managing oracle fallback configurations — defining what happens when a primary oracle (Chainlink XAU/USD, XAG/USD) becomes temporarily unavailable. Fallback behavior is set to return null rather than a synthetic or assumed price.
 
-> This page is for authorized administrators only.
+**What you can do here (admins only):**
+- Review and configure oracle fallback behavior.
+- Confirm that null-return is set as the default (not a synthetic price).
+- Test fallback behavior in a sandboxed environment.
+
+**Share Hook:** When Axiom's price oracle goes dark, the system returns null — not a made-up number. That fallback is configurable here and the policy is documented.
+`#OracleFallback` `#AxiomProtocol` `#NullNotFake`
 
 ---
 
@@ -2190,13 +2351,13 @@ These tools are for verified protocol operators, founders, and administrators. T
 
 ---
 
-## 17. Plain-English Glossary
+## 16. Plain-English Glossary
 
 The following terms appear throughout this guide and the Axiom Protocol platform. Each definition is written for a general audience.
 
 ---
 
-**Automated Control Layer** — A program on a public blockchain that runs financial rules automatically without a middleman. Instead of a bank officer approving a transaction, the code verifies the conditions and either executes or rejects the operation. In traditional finance, this would be called a "smart contract" — Axiom uses "automated control layer" to make the institutional posture clear.
+**Automated Control Layer** — A program on a public blockchain that runs financial rules automatically without a middleman. Instead of a bank officer approving a transaction, the program verifies the conditions and either executes or rejects the operation. Axiom uses this term to make the institutional function clear — the layer enforces rules the same way a compliance policy does, except it runs in code on a public network.
 
 **AXM** — The Axiom Protocol governance token. Holders of AXM can vote on protocol rules, treasury policy, risk parameters, and upgrades. AXM is an ERC-20 token on Arbitrum One.
 
@@ -2204,9 +2365,9 @@ The following terms appear throughout this guide and the Axiom Protocol platform
 
 **AXUSD** — Axiom's settlement stablecoin. Pegged to the US dollar, backed by documented reserves, and issued on Arbitrum One under the ERC-3643 identity standard. Used for settlement, savings, lending, and treasury operations within the protocol.
 
-**Arbitrum One** — The Layer 2 blockchain network where Axiom Protocol runs. Arbitrum One is built on top of Ethereum, runs at much lower cost and higher speed, and inherits Ethereum's security. All Axiom contracts, tokens, and governance records live on Arbitrum One.
+**Arbitrum One** — The Layer 2 blockchain network where Axiom Protocol runs. Built on top of Ethereum, Arbitrum One operates at much lower cost and higher speed while inheriting Ethereum's security. All Axiom contracts, tokens, and governance records live on Arbitrum One.
 
-**Asset Onboarding / Issuance** — The process of bringing a real-world asset (gold, silver, real estate) onto the blockchain in a documented, auditable way. Axiom uses this term instead of "tokenization" to emphasize the compliance and documentation discipline involved.
+**Asset Onboarding / Issuance** — The process of bringing a real-world asset (gold, silver, real estate) onto the blockchain in a documented, auditable way. Axiom uses this term to emphasize the compliance and documentation discipline involved.
 
 **Collateral** — An asset you pledge as security for a loan or credit line. If you borrow AXUSD against Bitcoin, your Bitcoin is the collateral. If the value of the collateral falls below a threshold, the system may liquidate it to repay the loan.
 
@@ -2216,47 +2377,43 @@ The following terms appear throughout this guide and the Axiom Protocol platform
 
 **ERC-20** — The standard technical specification for fungible tokens on Ethereum and compatible networks. AXM, PAXG, USDC, and most crypto tokens follow ERC-20. It means the token behaves in a predictable, interoperable way across all wallets and exchanges.
 
-**ERC-3643 / T-REX** — An advanced token standard that embeds identity and compliance rules directly into the token. Transfers that violate the rules (e.g., sending to an unverified wallet) are rejected automatically by the contract. AXAU and AXUSD use ERC-3643.
-
-**ERC-4626** — A vault standard for yield-bearing tokens. Axiom's Lending Fund uses ERC-4626, which means investors deposit capital into a vault and receive shares representing their proportional claim on the vault's assets.
+**ERC-3643 / T-REX** — An advanced token standard that embeds identity and compliance rules directly into the token. Transfers that violate the rules (for example, sending to an unverified wallet) are rejected automatically by the automated control layer. AXAU and AXUSD use ERC-3643.
 
 **GEF Score (Group Economics Framework Score)** — Your participation record on Axiom Protocol. Built by completing Wealth Practice cycles, repaying credit on time, and contributing consistently. Higher GEF tiers unlock higher credit limits, lending fund access, and syndication eligibility.
 
 **Governance Token** — A token whose primary utility is voting on protocol decisions. AXM is Axiom's governance token. Holding AXM gives you a vote on treasury policy, risk parameters, and protocol upgrades.
 
-**Hard-Brake** — A safety mechanism on the Sentinel system. When the hard-brake is armed, all new capital deployment is paused until conditions improve. The hard-brake cannot be overridden by any single operator — it requires governance approval to release.
+**Hard-Brake** — A safety mechanism on the Sentinel system. When the hard-brake is armed, all new capital deployment is paused until conditions improve. It cannot be overridden by any single operator — it requires governance approval to release.
 
 **IVCEE Score** — Investment Value, Condition, Economic Environment score. A composite underwriting score for real estate deals that weighs the property's investment merit, physical condition, and surrounding economic indicators. Generated by the RE Intelligence system.
 
-**KAG / Kinesis Silver** — A silver token issued by Kinesis Money and traded primarily on the Ethereum blockchain. Each KAG represents one gram of physical silver in allocated storage. Axiom supports KAG as a read-only reference asset — Axiom does not issue or custody KAG.
+**KAG / Kinesis Silver** — A silver token issued by Kinesis Money. Each KAG represents one gram of physical silver in allocated storage. Axiom supports KAG as a read-only reference asset — Axiom does not issue or custody KAG.
 
 **KYC / AML** — Know Your Customer and Anti-Money Laundering. The identity verification processes required by financial regulations. Axiom uses on-chain identity credentials (ERC-3643) to fulfill these requirements in a privacy-preserving way.
 
-**MIRDT** — Market Intelligence Regime and Decision Terminal. Axiom's nine-dimension advisory signal engine that produces a Protocol Readiness Score (PRS). Advisory only — no automated execution.
+**MIRDT** — Market Intelligence Regime and Decision Terminal. Axiom's nine-dimension advisory signal engine that produces a Protocol Readiness Score (PRS, 0–10). Advisory only — no automated execution.
 
 **Multi-Party Authorization** — A security design where no single person or wallet can approve a critical operation alone. Multiple authorized parties must all sign off for the action to proceed. Axiom uses this for high-value vault operations, reserve movements, and role assignments.
 
 **NAV (Net Asset Value)** — The value of an asset or fund calculated from its underlying holdings. For AXAU, NAV per token is the value of the PAXG backing divided by the total supply of AXAU.
 
-**On-Chain Financial Rails** — Payment and settlement systems that run on a public blockchain rather than through banks. Instead of ACH or SWIFT, value moves through automated control layers on Arbitrum One. Axiom uses this term instead of "DeFi."
+**On-Chain Financial Rails** — Payment and settlement systems that run on a public blockchain rather than through banks. Instead of ACH or SWIFT, value moves through automated control layers on Arbitrum One. Axiom uses this term in place of finance industry slang to be precise about what the rails actually are.
 
-**Oracle** — A data feed that brings real-world information (like the gold price or the Bitcoin price) onto the blockchain. Axiom uses Chainlink oracles for gold (XAU/USD), silver (XAG/USD), and other reference prices. If an oracle goes dark, the value returns null — Axiom never fabricates a fallback price.
+**Oracle** — A data feed that brings real-world information (like the gold price or the Bitcoin price) onto the blockchain. Axiom uses Chainlink oracles for gold (XAU/USD) and silver (XAG/USD). If an oracle goes dark, the value returns null — Axiom never fabricates a fallback price.
 
 **PAXG (Paxos Gold)** — A gold token issued by Paxos. Each PAXG represents one troy ounce of LBMA-grade physical gold stored in Brinks vaults in London. AXAU reserves are denominated in PAXG. PAXG is the reserve asset — AXAU is Axiom's issued instrument backed by it.
 
-**Participation Lockup** — Capital committed to a protocol pool, group, or vault for a defined period or cycle. Axiom uses this term instead of "staking" to be precise about the mechanics — your capital is in a structured pool with defined terms, not being used to validate blockchain transactions.
+**Participation Lockup** — Capital committed to a protocol pool, group, or vault for a defined period or cycle. Axiom uses this term to be precise about the mechanics — your capital is in a structured pool with defined terms.
 
 **PPM (Private Placement Memorandum)** — The legal disclosure document for a private securities offering under Reg D. Axiom's Capital Program issues a PPM that describes the fund structure, risks, use of proceeds, and investor rights.
 
-**Protocol Readiness Score (PRS)** — The composite 0-to-10 score produced by MIRDT. It synthesizes nine data dimensions into a single indicator of whether the protocol is in a healthy state for capital operations. Advisory only.
+**Protocol Readiness Score (PRS)** — The composite 0-to-10 score produced by MIRDT. It synthesizes nine data dimensions into a single indicator of whether the protocol is in a healthy state for capital operations. Advisory only — not a guarantee of performance.
 
-**PSM (Peg Stability Module)** — The mechanism that maintains the AXUSD dollar peg by allowing 1:1 swaps between AXUSD and approved reserve stablecoins (USDC). When AXUSD trades above $1, arbitrageurs sell USDC into the PSM for AXUSD. When it trades below $1, they do the reverse. This keeps the peg stable without a central counterparty.
+**PSM (Peg Stability Module)** — The mechanism that maintains the AXUSD dollar peg by allowing 1:1 swaps between AXUSD and approved reserve stablecoins (USDC). When AXUSD trades above $1, the PSM creates arbitrage pressure to bring it back. When it trades below $1, the same mechanism works in reverse.
 
-**Reg D 506(c)** — A US Securities and Exchange Commission exemption that allows companies to raise capital from accredited investors without registering the offering publicly. Allows general solicitation (public advertising) but requires verification that all investors are accredited. Axiom's Capital Program and Lending Fund are structured under Reg D 506(c).
+**Reg D 506(c)** — A US Securities and Exchange Commission exemption that allows companies to raise capital from accredited investors without registering the offering publicly. Allows general solicitation but requires verification that all investors are accredited. Axiom's Capital Program and Lending Fund are structured under Reg D 506(c).
 
-**Reg CF** — SEC Regulation Crowdfunding. Allows companies to raise capital from the general public (not just accredited investors) up to $5 million per year through an approved online platform. Axiom's Land Acquisition Pipeline targets Reg CF for community land crowdfunding.
-
-**Regime Band** — A classification of the current capital market environment — from conservative (preserve capital, no new deployment) to aggressive (full deployment authorized). Sentinel reads regime band from MIRDT signals and the Solvency Console to determine its authorization recommendations.
+**Regime Band** — A classification of the current capital market environment — from conservative (preserve capital, no new deployment) to active (full deployment authorized). Sentinel reads regime band from MIRDT signals and the Solvency Console to determine its authorization recommendations.
 
 **Sentinel** — Axiom's advisory capital decision layer. Reads intelligence signals and produces policy-based authorization recommendations with cryptographic audit trails. Advisory-only — no execution without human approval and governance authorization.
 
@@ -2266,19 +2423,13 @@ The following terms appear throughout this guide and the Axiom Protocol platform
 
 **Stablecoin** — A token designed to maintain a stable value, typically pegged to the US dollar. AXUSD is a stablecoin. Unlike volatile tokens, stablecoins are designed to hold their dollar value through reserves and mechanisms like the PSM.
 
-**The Wealth Practice** — Axiom's structured community savings program. Groups of participants pool contributions in deterministic cycles with on-chain audit trails. Rooted in the traditional West African SUSU concept, upgraded with blockchain transparency and governance controls.
+**The Wealth Practice** — Axiom's structured community savings program. Groups of participants pool contributions in deterministic cycles with on-chain audit trails. Rooted in the traditional partner savings concept, upgraded with blockchain transparency and governance controls.
 
 **Treasury Allocation Policy (35/35/20/10)** — The fixed rule governing how every dollar raised by Axiom is deployed: 35% to property equity, 35% to debt service, 20% to operating reserve, and 10% to protocol development. Enforced programmatically — not discretionary.
 
 **USDC** — USD Coin, issued by Circle. A widely used dollar-pegged stablecoin. Axiom supports USDC as one of the five external reference assets and uses it as a reserve backing for AXUSD through the PSM.
 
-**WBTC (Wrapped Bitcoin)** — An ERC-20 token on Ethereum and Arbitrum One that represents one Bitcoin held in custody by BitGo. WBTC allows Bitcoin holders to use their BTC in on-chain financial rails without moving it to a different chain natively.
-
-**cbETH (Coinbase Staked Ethereum)** — A liquid staking token issued by Coinbase. Each cbETH represents one ETH plus accumulated staking rewards. It is yield-bearing by nature, with the value increasing relative to ETH over time.
-
-**XAU** — The international market symbol for gold. Used by Chainlink for the XAU/USD price feed (gold price in US dollars). AXAU's coverage ratio is computed using the Chainlink XAU/USD oracle.
-
-**XAG** — The international market symbol for silver. Used by Chainlink for the XAG/USD price feed (silver price in US dollars). KAG's implied USD value is computed using the Chainlink XAG/USD oracle.
+**WBTC (Wrapped Bitcoin)** — An ERC-20 token on Ethereum and Arbitrum One that represents one Bitcoin held in custody. WBTC allows Bitcoin holders to use their BTC in on-chain financial rails without moving it to a different chain natively.
 
 ---
 
