@@ -3,6 +3,8 @@
 **Version 1.1 | May 2026**
 **For general audiences. Not investment advice. No outcomes are guaranteed.**
 
+> **Route Coverage Note:** This guide was produced by scanning the full Next.js page-file inventory of the Axiom Protocol application as of May 2026. It covers all 166 discovered route paths across 15 functional domains. Dynamic routes (e.g., `/assets/[symbol]`, `/syndication/offerings/[id]`) are documented once per pattern and include representative examples. Index-route aliases (e.g., `/operator` as the root of the operator section) are counted once. This note is included to make coverage auditable against the source file inventory.
+
 ---
 
 ## What Is Axiom Protocol?
@@ -445,7 +447,7 @@ Axiom tracks five external assets as read-only references — USDC, PAXG, XAUT (
 
 ### Per-Asset Disclosure — `/assets/[symbol]`
 
-**What it is:** A dedicated disclosure page for each of the five external supported assets — `/assets/USDC`, `/assets/PAXG`, `/assets/XAUT`, `/assets/WBTC`, `/assets/cbETH`. Each page documents issuer, regulator, oracle source, custody pattern, redemption pathway, and a structured risk summary.
+**What it is:** A dedicated disclosure page for each of the five external supported assets — `/assets/usdc`, `/assets/paxg`, `/assets/xaut`, `/assets/wbtc`, `/assets/cbeth`. Each page documents issuer, regulator, oracle source, custody pattern, redemption pathway, and a structured risk summary.
 
 **What you can do here:**
 - Read the complete disclosure for any individual supported asset.
