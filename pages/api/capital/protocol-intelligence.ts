@@ -85,17 +85,18 @@ export default async function handler(
 
   const base = baseUrl(req);
 
-  const [metricsRaw, ameRaw, overviewRaw, decisionsRaw] = await Promise.all([
+  const [metricsRaw, ameRaw, overviewRaw, decisionsRaw, regimesRaw] = await Promise.all([
     safeFetch<Record<string, unknown>>(`${base}/api/solvency/metrics`, {}),
     safeFetch<Record<string, unknown>>(`${base}/api/solvency/ame/latest`, {}),
     safeFetch<Record<string, unknown>>(`${base}/api/sentinel/overview`, {}),
     safeFetch<Record<string, unknown>>(`${base}/api/sentinel/decisions?limit=20`, {}),
+    safeFetch<Record<string, unknown>>(`${base}/api/sentinel/regimes?limit=1`, {}),
   ]);
 
   return res.status(200).json({
     generatedAt: new Date().toISOString(),
     treasury: buildTreasury(metricsRaw),
-    ame: buildAme(ameRaw),
+    ame: buildAme(ameRaw, regimesRaw),
     sentinel: buildSentinel(overviewRaw, decisionsRaw),
   });
 }
@@ -147,28 +148,46 @@ function emptyTreasury(status: 'empty' | 'error'): TreasurySection {
   };
 }
 
-function buildAme(raw: Record<string, unknown>): AmeSection {
-  if (!raw || Object.keys(raw).length === 0) {
-    return { dataStatus: 'error', policyMode: null, hardBrakeArmed: false, activeRegimeBand: null, evaluationId: null, recordedAt: null, triggerMetric: null, triggerValue: null };
-  }
+function buildAme(raw: Record<string, unknown>, regimesRaw: Record<string, unknown>): AmeSection {
+  const nullResult = (status: AmeSection['dataStatus']): AmeSection => ({
+    dataStatus: status,
+    policyMode: null,
+    hardBrakeArmed: false,
+    activeRegimeBand: extractRegimeBand(regimesRaw),
+    evaluationId: null,
+    recordedAt: null,
+    triggerMetric: null,
+    triggerValue: null,
+  });
+
+  if (!raw || Object.keys(raw).length === 0) return nullResult('error');
+
   const amDataStatus = raw.dataStatus as string | undefined;
-  if (amDataStatus === 'empty') {
-    return { dataStatus: 'empty', policyMode: null, hardBrakeArmed: false, activeRegimeBand: null, evaluationId: null, recordedAt: null, triggerMetric: null, triggerValue: null };
-  }
+  if (amDataStatus === 'empty') return nullResult('empty');
 
   const ps = raw.policyState as Record<string, unknown> | null ?? null;
-  const ms = raw.metricSnapshot as Record<string, unknown> | null ?? null;
 
   return {
     dataStatus: 'ok',
     policyMode: ps ? String(ps.policyMode ?? 'BOOTSTRAP') : null,
     hardBrakeArmed: Boolean(raw.hardBrakeArmed ?? false),
-    activeRegimeBand: ms ? (String(ms.regimeBand ?? '') || null) : null,
+    activeRegimeBand: extractRegimeBand(regimesRaw),
     evaluationId: ps ? (String(ps.evaluationId ?? '') || null) : null,
     recordedAt: ps && ps.createdAt ? new Date(ps.createdAt as string).toISOString() : null,
     triggerMetric: ps ? (String(ps.triggerMetric ?? '') || null) : null,
     triggerValue: ps && ps.triggerValue !== null && ps.triggerValue !== undefined ? Number(ps.triggerValue) : null,
   };
+}
+
+function extractRegimeBand(regimesRaw: Record<string, unknown>): string | null {
+  if (!regimesRaw || Object.keys(regimesRaw).length === 0) return null;
+  const current = regimesRaw.current as Record<string, unknown> | null;
+  if (current?.regime) return String(current.regime);
+  const regimes = regimesRaw.regimes as Record<string, unknown>[] | null;
+  if (Array.isArray(regimes) && regimes.length > 0 && regimes[0].regime) {
+    return String(regimes[0].regime);
+  }
+  return null;
 }
 
 function buildSentinel(
