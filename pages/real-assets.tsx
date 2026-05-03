@@ -15,6 +15,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
+import { PageVisualSuite } from '../components/visual';
 
 // ─── Static product truth ──────────────────────────────────────────────────────
 
@@ -138,6 +139,7 @@ const DISCLOSURES: string[] = [
 export default function RealAssetsLandingPage() {
   return (
     <DesignLawLayout>
+      <PageVisualSuite preset="real-assets" />
       <Head>
         <title>Real Assets | Axiom Protocol</title>
         <meta

@@ -25,6 +25,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { GetServerSideProps } from 'next';
 import { DesignLawLayout, SectionHeading } from '../../components/design-law';
+import { PageVisualSuite } from '../../components/visual';
 import {
   getAssetMetadata,
   getAssetUsdValue,
@@ -304,6 +305,7 @@ export default function AssetsDashboard({ assets, spots, axauSpot, fetchedAt }: 
 
   return (
     <DesignLawLayout>
+      <PageVisualSuite preset="assets-dashboard" />
       <Head>
         <title>Asset Dashboard — Supported External Assets · Axiom Protocol</title>
         <meta

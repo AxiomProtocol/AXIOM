@@ -558,6 +558,78 @@ uri = "file://public/og/nft-land-collection.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "MuXghCekNaOsBlg09ZQsg"
+uri = "file://public/visuals/commodities/hero-commodities.png"
+type = "image"
+title = "tokenized commodities hero"
+
+[[generated]]
+id = "jRdJYmJ7n_S0Zzl4_etVJ"
+uri = "file://public/visuals/commodities/hero-axau.png"
+type = "image"
+title = "axau gold reserve hero"
+
+[[generated]]
+id = "GOk7Djyk2f2rg3UnCFNBu"
+uri = "file://public/visuals/commodities/hero-kag-silver.png"
+type = "image"
+title = "silver kag hero"
+
+[[generated]]
+id = "YbBFhkFuofMmC6WPWGG8n"
+uri = "file://public/visuals/commodities/hero-real-assets.png"
+type = "image"
+title = "real assets land hero"
+
+[[generated]]
+id = "CVkThpZg921TpOF73eC1E"
+uri = "file://public/visuals/commodities/hero-portfolio.png"
+type = "image"
+title = "portfolio dashboard hero"
+
+[[generated]]
+id = "xBeTDbXqyHyqmVBZQlCXY"
+uri = "file://public/visuals/commodities/hero-disclosure.png"
+type = "image"
+title = "axau disclosure hero"
+
+[[generated]]
+id = "PyMjp111Am4n56jDaXTpk"
+uri = "file://public/visuals/icons-3d/icon-gold-bar.png"
+type = "image"
+title = "3d gold bar icon"
+
+[[generated]]
+id = "gV11e8uQNVpIyld0HpwRv"
+uri = "file://public/visuals/icons-3d/icon-silver-bar.png"
+type = "image"
+title = "3d silver bar icon"
+
+[[generated]]
+id = "rvVbQeaquwWXss6lj9Mtm"
+uri = "file://public/visuals/icons-3d/icon-vault.png"
+type = "image"
+title = "3d vault door icon"
+
+[[generated]]
+id = "k3CBlj4Vgec7vM2vDr40g"
+uri = "file://public/visuals/icons-3d/icon-certificate.png"
+type = "image"
+title = "3d certificate seal icon"
+
+[[generated]]
+id = "BkGYkwOtrsjO5lVlQ4e-l"
+uri = "file://public/visuals/icons-3d/icon-chart.png"
+type = "image"
+title = "3d candlestick chart icon"
+
+[[generated]]
+id = "CaEs_Uv4Zype1TiRqPfWK"
+uri = "file://public/visuals/icons-3d/icon-network.png"
+type = "image"
+title = "3d network nodes icon"
+
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
 uri = "file://documents/Axiom_Protocol_Master_Brand_Document.md"
@@ -809,3 +881,33 @@ id = "GughU1tIlOcVdV9N6BHg8"
 uri = "file://public/downloads/axau-early-access-notebooklm.md"
 type = "text"
 title = "AXAU Early Access — NotebookLM Source Brief"
+
+[[outputs]]
+id = "puVH680Yfea_DsAYpA1dC"
+uri = "file://attached_assets/stock_images/gold-macro.jpg"
+type = "image"
+title = "Close-up macro of pure gold bullion surface texture catching warm light, museum quality photography"
+
+[[outputs]]
+id = "ztEuZ_B3LsJN58wDmg0Np"
+uri = "file://attached_assets/stock_images/vault-interior.jpg"
+type = "image"
+title = "Modern institutional bank vault interior with rows of safety deposit boxes and dramatic lighting"
+
+[[outputs]]
+id = "k9f0jLq17t7XFJVUJ8W-T"
+uri = "file://attached_assets/stock_images/data-center.jpg"
+type = "image"
+title = "Sleek modern data center server room with blue LED lights and clean architecture"
+
+[[outputs]]
+id = "xrMNO_4diX5tE0fLii7fE"
+uri = "file://attached_assets/stock_images/city-skyline.jpg"
+type = "image"
+title = "New York City Manhattan financial district skyline buildings sunset"
+
+[[outputs]]
+id = "k2ZEIvea427ZmBDI4a5FA"
+uri = "file://attached_assets/stock_images/agricultural-land.jpg"
+type = "image"
+title = "aerial view green agricultural land fields landscape"

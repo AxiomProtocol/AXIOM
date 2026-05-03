@@ -13,6 +13,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import type { GetServerSideProps } from 'next';
 import { DesignLawLayout, SectionHeading } from '../../components/design-law';
+import { PageVisualSuite } from '../../components/visual';
 import {
   getAssetMetadata,
   getAssetDisclosure,
@@ -111,6 +112,7 @@ export default function AssetDetailPage({ metadata, disclosure, risk, spot }: Pa
 
   return (
     <DesignLawLayout>
+      <PageVisualSuite preset="assets-symbol" />
       <Head>
         <title>{metadata.symbol} — {metadata.name} · External Supported Asset · Axiom</title>
         <meta

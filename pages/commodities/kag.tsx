@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { GetServerSideProps } from 'next';
 import { DesignLawLayout } from '../../components/design-law';
+import { PageVisualSuite } from '../../components/visual';
 import {
   getKagAssetMetadata,
   getKagDisclosure,
@@ -699,6 +700,7 @@ function Disclosures({ metadata, disclosure }: Pick<PageProps, 'metadata' | 'dis
 export default function KagPage({ metadata, disclosure, risk, spot }: PageProps) {
   return (
     <DesignLawLayout>
+      <PageVisualSuite preset="commodities-kag" />
       <Head>
         <title>Silver Reserve — Kinesis KAG · Axiom Supported | Axiom Protocol</title>
         <meta

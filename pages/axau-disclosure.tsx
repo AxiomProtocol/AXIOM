@@ -9,6 +9,7 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
+import { PageVisualSuite } from '../components/visual';
 import type {
   CommodityDisclosure,
   RiskLabel,
@@ -131,6 +132,7 @@ export default function AxauDisclosurePage() {
         />
       </Head>
       <DesignLawLayout>
+        <PageVisualSuite preset="axau-disclosure" />
         <SectionHeading>AXAU Commodity Status Console</SectionHeading>
         <p className="text-sm text-dl-gray font-dl-mono -mt-2">
           Live health surface for the AXAU reserve instrument. Crypto-native, read-only —

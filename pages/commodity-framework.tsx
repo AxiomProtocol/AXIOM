@@ -12,6 +12,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import type { GetStaticProps } from 'next';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
+import { PageVisualSuite } from '../components/visual';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -367,6 +368,7 @@ export default function CommodityFrameworkPage({ effectiveDate }: PageProps) {
       </Head>
 
       <DesignLawLayout>
+        <PageVisualSuite preset="commodity-framework" />
 
         {/* ── Breadcrumb & title ──────────────────────────────────────────── */}
         <div className="mb-6">

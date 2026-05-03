@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { GetServerSideProps } from 'next';
 import { DesignLawLayout, SectionHeading } from '../../components/design-law';
+import { PageVisualSuite } from '../../components/visual';
 import {
   getCommodityInsights,
   type CommodityInsights,
@@ -120,6 +121,7 @@ export default function CommodityInsightsPage({ initialInsights }: PageProps) {
 
   return (
     <DesignLawLayout>
+      <PageVisualSuite preset="commodities-insights" />
       <Head>
         <title>Commodity Insights | Axiom Protocol</title>
         <meta

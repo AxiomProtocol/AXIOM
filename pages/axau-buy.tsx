@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAccount, useWalletClient } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
+import { PageVisualSuite } from '../components/visual';
 
 const PaymasterToggle = dynamic(
   () => import('../components/circle/PaymasterToggle'),
@@ -903,6 +904,7 @@ export default function AxauBuyPage() {
 
   return (
     <DesignLawLayout>
+      <PageVisualSuite preset="axau-buy" />
       <Head>
         <title>AXAU Reserve — Layer 02 Mint Terminal | Axiom Protocol</title>
         <meta name="description" content="Mint AXAU directly from PAXG in one on-chain transaction, redeem AXAU for PAXG, or submit an assisted mint request using AXUSD. ERC-3643 identity credential required. Coverage ratio enforced on-chain before every mint. Arbitrum One." />

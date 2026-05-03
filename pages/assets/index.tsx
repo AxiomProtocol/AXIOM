@@ -15,6 +15,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import type { GetServerSideProps } from 'next';
 import { DesignLawLayout, SectionHeading } from '../../components/design-law';
+import { PageVisualSuite } from '../../components/visual';
 import {
   listSupportedAssets,
   type AssetMetadata,
@@ -94,6 +95,7 @@ export default function AssetsIndex({ assets, fetchedAt }: PageProps) {
 
   return (
     <DesignLawLayout>
+      <PageVisualSuite preset="assets-index" />
       <Head>
         <title>Supported Assets — Axiom Protocol</title>
         <meta

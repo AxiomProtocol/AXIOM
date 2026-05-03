@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useAccount } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
+import { PageVisualSuite } from '../components/visual';
 import { trackAxauEvent } from '../lib/analytics/axauTracker';
 
 const CircleWalletEntry = dynamic(
@@ -526,6 +527,7 @@ export default function AxauAccessPage() {
 
   return (
     <DesignLawLayout>
+      <PageVisualSuite preset="axau-early-access" />
       <Head>
         <title>AXAU Early Access — Axiom Protocol</title>
         <meta name="description" content="Join the first 100 verified participants in AXAU — an identity-gated reserve unit structured around PAXG-backed reserve infrastructure on Arbitrum One. Founding cohort status included." />

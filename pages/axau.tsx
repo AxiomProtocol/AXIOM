@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
+import { PageVisualSuite } from '../components/visual';
 import { CollateralClassificationPanel } from '../components/disclosure/CollateralClassificationPanel';
 import { ChevronDown } from 'lucide-react';
 
@@ -829,6 +830,7 @@ function Disclosures() {
 export default function AxauPage() {
   return (
     <DesignLawLayout>
+      <PageVisualSuite preset="axau" />
       <Head>
         <title>AXAU — Layer 02 Gold Reserve Infrastructure | Axiom Protocol</title>
         <meta name="description" content="AXAU is the Axiom Protocol's Layer 02 reserve unit on Arbitrum One — backed by on-chain PAXG (Paxos Gold), governed by a live coverage ratio, and accessible via direct on-chain mint or ops-assisted fulfillment. ERC-3643 identity credential required." />
