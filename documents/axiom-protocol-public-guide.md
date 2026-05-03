@@ -597,7 +597,7 @@ This section covers the structured capital products — bridge loans, LP investm
 
 ### Lending Fund — `/lending-fund`
 
-**What it is:** Axiom's bridge loan fund, designed to align with SEC Regulation D 506(c). It originates fix-and-flip loans and DSCR rental loans secured by real property. The fund uses an ERC-4626 vault structure (an on-chain standard for yield-bearing vaults), ERC-721 loan receipt NFTs for each loan, and on-chain governance-controlled risk parameters.
+**What it is:** Axiom's bridge loan fund, structured under SEC Regulation D 506(c). It originates fix-and-flip loans and DSCR rental loans secured by real property. The fund uses an ERC-4626 vault structure (an on-chain standard for yield-bearing vaults), ERC-721 loan receipt NFTs for each loan, and on-chain governance-controlled risk parameters.
 
 **What you can do here:**
 - Read the full fund structure, mandate, and risk parameters.
