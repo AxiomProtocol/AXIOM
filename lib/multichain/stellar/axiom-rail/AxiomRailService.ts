@@ -309,7 +309,8 @@ export function signRailJwt(account: string): string {
     exp: now + 86400,
   })).toString('base64url');
 
-  const secret = process.env.STELLAR_SIGNING_SECRET_KEY ?? 'axiom-rail-dev-secret';
+  const secret = process.env.STELLAR_SIGNING_SECRET_KEY;
+  if (!secret) throw new Error('STELLAR_SIGNING_SECRET_KEY is not configured — cannot sign Rail JWT');
   const { createHmac } = require('crypto');
   const sig = createHmac('sha256', secret).update(`${header}.${payload}`).digest('base64url');
   return `${header}.${payload}.${sig}`;
@@ -318,7 +319,8 @@ export function signRailJwt(account: string): string {
 export function verifyRailJwt(token: string): { account: string; valid: boolean } {
   try {
     const [header, payload, sig] = token.split('.');
-    const secret = process.env.STELLAR_SIGNING_SECRET_KEY ?? 'axiom-rail-dev-secret';
+    const secret = process.env.STELLAR_SIGNING_SECRET_KEY;
+    if (!secret) return { account: '', valid: false };
     const { createHmac } = require('crypto');
     const expected = createHmac('sha256', secret).update(`${header}.${payload}`).digest('base64url');
     if (sig !== expected) return { account: '', valid: false };

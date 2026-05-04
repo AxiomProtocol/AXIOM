@@ -1,6 +1,15 @@
 // YieldDashboardEngine.js
 // Full staking yield system with chart integration, filtering, and export
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 import { soloPlanWallets } from './SoloPlanWallets.js';
 
 const simulatedYieldLedger = [];
@@ -109,9 +118,9 @@ function renderYieldUI(containerId = 'yield-dashboard') {
     <h4>Add Yield Entry</h4>
     <form id="yield-entry-form">
       <label>Date: <input type="date" name="date" required /></label><br>
-      <label>Wallet: 
+      <label>Wallet:
         <select name="walletLabel">
-          ${soloPlanWallets.map(w => `<option value="${w.name}">${w.name}</option>`).join('')}
+          ${soloPlanWallets.map(w => `<option value="${escapeHtml(w.name)}">${escapeHtml(w.name)}</option>`).join('')}
         </select>
       </label><br>
       <label>Amount SWF: <input type="number" name="amountSWF" step="0.01" required /></label><br>
@@ -125,10 +134,10 @@ function renderYieldUI(containerId = 'yield-dashboard') {
     <label>Filter by Wallet:</label>
     <select id="wallet-filter">
       <option value="">All Wallets</option>
-      ${soloPlanWallets.map(w => `<option value="${w.name}" ${w.name === selectedWallet ? 'selected' : ''}>${w.name}</option>`).join('')}
+      ${soloPlanWallets.map(w => `<option value="${escapeHtml(w.name)}" ${w.name === selectedWallet ? 'selected' : ''}>${escapeHtml(w.name)}</option>`).join('')}
     </select>
-    <label>From: <input type="date" id="from-date" value="${selectedFrom}" /></label>
-    <label>To: <input type="date" id="to-date" value="${selectedTo}" /></label>
+    <label>From: <input type="date" id="from-date" value="${escapeHtml(selectedFrom)}" /></label>
+    <label>To: <input type="date" id="to-date" value="${escapeHtml(selectedTo)}" /></label>
     <button id="apply-filters">Apply Filters</button>
   `;
 
@@ -137,13 +146,13 @@ function renderYieldUI(containerId = 'yield-dashboard') {
       <tr><th>Wallet</th><th>Address</th><th>SWF Earned</th></tr>
       ${report.map(r => `
         <tr>
-          <td>${r.wallet}</td>
-          <td style="font-size:0.8em">${r.address}</td>
-          <td><strong>${r.totalSWF.toFixed(2)}</strong></td>
+          <td>${escapeHtml(r.wallet)}</td>
+          <td style="font-size:0.8em">${escapeHtml(r.address)}</td>
+          <td><strong>${escapeHtml(r.totalSWF.toFixed(2))}</strong></td>
         </tr>
       `).join('')}
     </table>
-    <p style="margin-top:10px;font-size:0.9em;">Total Distributed: <strong>${getTotalYieldedSWF(report).toFixed(2)} SWF</strong></p>
+    <p style="margin-top:10px;font-size:0.9em;">Total Distributed: <strong>${escapeHtml(getTotalYieldedSWF(report).toFixed(2))} SWF</strong></p>
     <button id="export-csv" style="margin-right:10px;margin-top:8px">Export CSV</button>
     <button id="export-json">Export JSON</button>
     <canvas id="yield-chart" height="200" style="margin-top:20px;"></canvas>
