@@ -317,7 +317,8 @@
   },
   "pnpm": {
     "overrides": {
-      "inngest": "^3.54.0"
+      "inngest": "^3.54.0",
+      "protobufjs@<=8.0.1": "8.0.1"
     }
   }
 }
