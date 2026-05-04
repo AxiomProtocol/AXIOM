@@ -61,35 +61,40 @@ interface PresetConfig {
 
 // ─── Reusable image paths ────────────────────────────────────────────────────
 const HERO = {
-  commodities: '/visuals/commodities/hero-commodities.png',
-  axau: '/visuals/commodities/hero-axau.png',
-  silver: '/visuals/commodities/hero-kag-silver.png',
-  realAssets: '/visuals/commodities/hero-real-assets.png',
-  portfolio: '/visuals/commodities/hero-portfolio.png',
-  disclosure: '/visuals/commodities/hero-disclosure.png',
+  commodityFramework: '/visuals/commodities/hero-commodity-framework.png',
+  axau:               '/visuals/commodities/hero-axau.png',
+  axauBuy:            '/visuals/commodities/hero-axau-buy.png',
+  axauEarlyAccess:    '/visuals/commodities/hero-axau-early-access.png',
+  axauDisclosure:     '/visuals/commodities/hero-axau-disclosure.png',
+  silver:             '/visuals/commodities/hero-commodities-kag.png',
+  realAssets:         '/visuals/commodities/hero-real-assets.png',
+  portfolio:          '/visuals/commodities/hero-portfolio.png',
+  assetsIndex:        '/visuals/commodities/hero-assets-index.png',
+  assetsDashboard:    '/visuals/commodities/hero-assets-dashboard.png',
+  insights:           '/visuals/commodities/hero-commodities-insights.png',
 };
 const ICON = {
-  goldBar: '/visuals/icons-3d/icon-gold-bar.png',
-  silverBar: '/visuals/icons-3d/icon-silver-bar.png',
-  vault: '/visuals/icons-3d/icon-vault.png',
-  certificate: '/visuals/icons-3d/icon-certificate.png',
-  chart: '/visuals/icons-3d/icon-chart.png',
-  network: '/visuals/icons-3d/icon-network.png',
+  goldBar:     '/visuals/icons-3d/icon-gold-bar.png',
+  silverBar:   '/visuals/icons-3d/icon-silver-bar.png',
+  vault:       '/visuals/icons-3d/icon-vault-door.png',
+  certificate: '/visuals/icons-3d/icon-certificate-seal.png',
+  chart:       '/visuals/icons-3d/icon-candlestick.png',
+  network:     '/visuals/icons-3d/icon-network-nodes.png',
 };
 const STOCK = {
-  skyline: '/visuals/stock/stock-skyline.jpg',
-  goldMacro: '/visuals/stock/stock-gold-macro.jpg',
-  silverMacro: '/visuals/stock/stock-silver-macro.jpg',
-  farmland: '/visuals/stock/stock-farmland.jpg',
-  vault: '/visuals/stock/stock-vault.jpg',
-  dataCenter: '/visuals/stock/stock-data-center.jpg',
+  skyline:     '/visuals/stock/stock-financial-skyline.png',
+  goldMacro:   '/visuals/stock/stock-gold-closeup.png',
+  silverMacro: '/visuals/stock/stock-silver-vault.png',
+  farmland:    '/visuals/stock/stock-farmland.jpg',
+  vault:       '/visuals/stock/stock-vault.jpg',
+  dataCenter:  '/visuals/stock/stock-trading-desk.png',
 };
 
 // ─── Preset configurations (one per page) ────────────────────────────────────
 const PRESETS: Record<Preset, PresetConfig> = {
   'commodity-framework': {
     hero: {
-      imageSrc: HERO.commodities,
+      imageSrc: HERO.commodityFramework,
       imageAlt: 'Institutional gold bullion vault with stacked LBMA bars',
       eyebrow: 'Tokenized Commodities · Governance Framework',
       title: 'A disciplined path from commodity candidate to on-chain reserve',
@@ -246,8 +251,8 @@ const PRESETS: Record<Preset, PresetConfig> = {
 
   'axau-buy': {
     hero: {
-      imageSrc: HERO.axau,
-      imageAlt: 'AXAU mint workflow context image',
+      imageSrc: HERO.axauBuy,
+      imageAlt: 'AXAU mint terminal — gold bars and blockchain settlement',
       eyebrow: 'AXAU · Mint Workflow',
       title: 'A reviewed mint path, not a one-click swap',
       subtitle:
@@ -295,8 +300,8 @@ const PRESETS: Record<Preset, PresetConfig> = {
 
   'axau-disclosure': {
     hero: {
-      imageSrc: HERO.disclosure,
-      imageAlt: 'Editorial photo of a fountain pen on a navy leather portfolio with a certificate seal',
+      imageSrc: HERO.axauDisclosure,
+      imageAlt: 'Glass-walled institutional data center — transparency and audit documentation',
       eyebrow: 'AXAU · Disclosure Surface',
       title: 'The plain-language record of what AXAU is and is not',
       subtitle:
@@ -344,8 +349,8 @@ const PRESETS: Record<Preset, PresetConfig> = {
 
   'axau-early-access': {
     hero: {
-      imageSrc: HERO.axau,
-      imageAlt: 'AXAU early access cohort context image',
+      imageSrc: HERO.axauEarlyAccess,
+      imageAlt: 'Ornate vault door open to golden glow — exclusive early access',
       eyebrow: 'AXAU · Early Access',
       title: 'A capacity-managed cohort, not an open mint',
       subtitle:
@@ -393,8 +398,8 @@ const PRESETS: Record<Preset, PresetConfig> = {
 
   'commodities-insights': {
     hero: {
-      imageSrc: HERO.portfolio,
-      imageAlt: 'Institutional trading desk with portfolio analytics on monitors',
+      imageSrc: HERO.insights,
+      imageAlt: 'Commodity market intelligence — gold and silver price charts on dark Bloomberg-style terminal',
       eyebrow: 'Commodities · Insights',
       title: 'A single read-only window into the commodity layer',
       subtitle:
@@ -491,8 +496,8 @@ const PRESETS: Record<Preset, PresetConfig> = {
 
   'assets-index': {
     hero: {
-      imageSrc: HERO.portfolio,
-      imageAlt: 'Institutional asset overview context image',
+      imageSrc: HERO.assetsIndex,
+      imageAlt: 'Multi-asset portfolio — gold, silver, bitcoin and ethereum tokens on institutional surface',
       eyebrow: 'Supported Assets · Read-Only',
       title: 'Five external assets, documented end to end',
       subtitle:
@@ -540,8 +545,8 @@ const PRESETS: Record<Preset, PresetConfig> = {
 
   'assets-dashboard': {
     hero: {
-      imageSrc: HERO.portfolio,
-      imageAlt: 'Composed institutional analytics dashboard context image',
+      imageSrc: HERO.assetsDashboard,
+      imageAlt: 'Institutional analytics dashboard — portfolio allocation on large monitors',
       eyebrow: 'Asset Dashboard · Composed View',
       title: 'The five external assets, composed into one read-only surface',
       subtitle:

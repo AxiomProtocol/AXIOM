@@ -580,7 +580,7 @@ title = "silver kag hero"
 id = "YbBFhkFuofMmC6WPWGG8n"
 uri = "file://public/visuals/commodities/hero-real-assets.png"
 type = "image"
-title = "real assets land hero"
+title = "real assets hero gold silver"
 
 [[generated]]
 id = "CVkThpZg921TpOF73eC1E"
@@ -598,13 +598,13 @@ title = "axau disclosure hero"
 id = "PyMjp111Am4n56jDaXTpk"
 uri = "file://public/visuals/icons-3d/icon-gold-bar.png"
 type = "image"
-title = "3d gold bar icon"
+title = "3D gold bar icon"
 
 [[generated]]
 id = "gV11e8uQNVpIyld0HpwRv"
 uri = "file://public/visuals/icons-3d/icon-silver-bar.png"
 type = "image"
-title = "3d silver bar icon"
+title = "3D silver bar icon"
 
 [[generated]]
 id = "rvVbQeaquwWXss6lj9Mtm"
@@ -629,6 +629,102 @@ id = "CaEs_Uv4Zype1TiRqPfWK"
 uri = "file://public/visuals/icons-3d/icon-network.png"
 type = "image"
 title = "3d network nodes icon"
+
+[[generated]]
+id = "e525uotKLPvYk3ZDmNN3H"
+uri = "file://public/visuals/commodities/hero-commodity-framework.png"
+type = "image"
+title = "commodity framework hero"
+
+[[generated]]
+id = "syIrWJNo9rT1VG-IsQhyt"
+uri = "file://public/visuals/commodities/hero-axau-buy.png"
+type = "image"
+title = "AXAU mint terminal hero"
+
+[[generated]]
+id = "MmP-B6z933Q_NhM64UqE-"
+uri = "file://public/visuals/commodities/hero-axau-early-access.png"
+type = "image"
+title = "AXAU early access vault door hero"
+
+[[generated]]
+id = "tfgx_hTo1xwlH8-Ox_yhR"
+uri = "file://public/visuals/commodities/hero-axau-disclosure.png"
+type = "image"
+title = "AXAU disclosure transparency hero"
+
+[[generated]]
+id = "P5yOkmQci2Hz1CAUZFvn5"
+uri = "file://public/visuals/commodities/hero-commodities-insights.png"
+type = "image"
+title = "commodity insights data hero"
+
+[[generated]]
+id = "E4fBZtpOM3BY2PyX1PnIM"
+uri = "file://public/visuals/commodities/hero-commodities-kag.png"
+type = "image"
+title = "silver KAG reserve hero"
+
+[[generated]]
+id = "H2oavjt2rJZc9hhvvGZev"
+uri = "file://public/visuals/commodities/hero-assets-index.png"
+type = "image"
+title = "multi-asset portfolio hero"
+
+[[generated]]
+id = "zuqg1vi9hHv8xOwAws50s"
+uri = "file://public/visuals/commodities/hero-assets-dashboard.png"
+type = "image"
+title = "asset dashboard analytics hero"
+
+[[generated]]
+id = "bpgAuwwOPlHsBQop_kdXa"
+uri = "file://public/visuals/icons-3d/icon-vault-door.png"
+type = "image"
+title = "3D vault door icon"
+
+[[generated]]
+id = "eKzzPtw77HOiHpQchd-LV"
+uri = "file://public/visuals/icons-3d/icon-certificate-seal.png"
+type = "image"
+title = "3D certificate seal icon"
+
+[[generated]]
+id = "Mf0asREYtHOo3P0x-Gzhu"
+uri = "file://public/visuals/icons-3d/icon-candlestick.png"
+type = "image"
+title = "3D candlestick chart icon"
+
+[[generated]]
+id = "62r10JjJqSs4IMkHHSU1C"
+uri = "file://public/visuals/icons-3d/icon-network-nodes.png"
+type = "image"
+title = "3D network nodes icon"
+
+[[generated]]
+id = "poSsN8xq194t4mjPkEC4R"
+uri = "file://public/visuals/stock/stock-gold-closeup.png"
+type = "image"
+title = "gold bar editorial closeup"
+
+[[generated]]
+id = "87VanNd2gNJW3XO3qmKA7"
+uri = "file://public/visuals/stock/stock-silver-vault.png"
+type = "image"
+title = "silver bars vault editorial"
+
+[[generated]]
+id = "b55kSFdX5ewcKRw36rhq2"
+uri = "file://public/visuals/stock/stock-trading-desk.png"
+type = "image"
+title = "institutional trading desk night"
+
+[[generated]]
+id = "b6EPNh4O81QFfp1Fs6TKX"
+uri = "file://public/visuals/stock/stock-financial-skyline.png"
+type = "image"
+title = "financial district skyline golden hour"
 
 [[outputs]]
 id = "tL1EpEhSaHtM21rjEYEfD"
