@@ -1,4 +1,30 @@
-import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-export function exportToCSV(history){const ws=XLSX.utils.json_to_sheet(history);const csv=XLSX.utils.sheet_to_csv(ws);saveAs(new Blob([csv],{type:"text/csv;charset=utf-8;"}),"reserves_history.csv");}
-export function exportToExcel(history){const ws=XLSX.utils.json_to_sheet(history);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"ReservesHistory");const buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});saveAs(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),"reserves_history.xlsx");}
+
+function toCSVString(history) {
+  if (!history || history.length === 0) return "";
+  const headers = Object.keys(history[0]);
+  const escape = (val) => {
+    const s = val === null || val === undefined ? "" : String(val);
+    return s.includes(",") || s.includes('"') || s.includes("\n")
+      ? '"' + s.replace(/"/g, '""') + '"'
+      : s;
+  };
+  const rows = [
+    headers.join(","),
+    ...history.map((row) => headers.map((h) => escape(row[h])).join(","))
+  ];
+  return rows.join("\r\n");
+}
+
+export function exportToCSV(history) {
+  const csv = toCSVString(history);
+  saveAs(new Blob([csv], { type: "text/csv;charset=utf-8;" }), "reserves_history.csv");
+}
+
+export function exportToExcel(history) {
+  const csv = toCSVString(history);
+  saveAs(
+    new Blob([csv], { type: "application/vnd.ms-excel;charset=utf-8;" }),
+    "reserves_history.xlsx"
+  );
+}
