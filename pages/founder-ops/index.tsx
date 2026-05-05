@@ -3481,9 +3481,58 @@ export default function FounderOpsPage() {
                 {reservesData && (
                   <>
                     {/* Totals strip */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-6 bg-dl-bg-alt">
-                      {[
-                        { label: 'Total Reserve Value', value: reservesData.totals.totalValueUsdFormatted, color: 'text-dl-navy' },
+                    {(() => {
+                      // ── 7D change % from snapshot history ──────────────────
+                      // Sum usdValue across all symbols per snapshot_hour bucket,
+                      // then compare the oldest bucket total to the newest.
+                      let sevenDayChange: number | null = null;
+                      const histSymbols = Object.values(reservesHistory);
+                      if (histSymbols.length > 0) {
+                        const buckets: Record<string, number> = {};
+                        for (const pts of histSymbols) {
+                          for (const pt of pts) {
+                            if (pt.usdValue != null) {
+                              buckets[pt.t] = (buckets[pt.t] ?? 0) + pt.usdValue;
+                            }
+                          }
+                        }
+                        const sortedTimes = Object.keys(buckets).sort();
+                        if (sortedTimes.length >= 2) {
+                          const oldest = buckets[sortedTimes[0]];
+                          const latest = buckets[sortedTimes[sortedTimes.length - 1]];
+                          if (oldest > 0) sevenDayChange = ((latest - oldest) / oldest) * 100;
+                        }
+                      }
+
+                      // ── HEALTHY vs ALERT asset count from live data ─────────
+                      const assets = (reservesData.assets as any[]);
+                      const healthyCount = assets.filter((a: any) => a.status === 'OK').length;
+                      const alertCount   = assets.filter((a: any) => a.status !== 'OK').length;
+
+                      const items = [
+                        {
+                          label: 'Total Reserve Value',
+                          value: reservesData.totals.totalValueUsdFormatted,
+                          color: 'text-dl-navy',
+                        },
+                        {
+                          label: '7D USD Change',
+                          value: sevenDayChange !== null
+                            ? `${sevenDayChange >= 0 ? '+' : ''}${sevenDayChange.toFixed(2)}%`
+                            : reservesHistoryLoading ? 'Loading…' : '—',
+                          color: sevenDayChange === null
+                            ? 'text-dl-gray'
+                            : sevenDayChange > 0.01
+                              ? 'text-dl-forest'
+                              : sevenDayChange < -0.01
+                                ? 'text-dl-error'
+                                : 'text-dl-gray',
+                        },
+                        {
+                          label: 'Asset Health',
+                          value: `${healthyCount} OK · ${alertCount} ALERT`,
+                          color: alertCount > 0 ? 'text-dl-error' : 'text-dl-forest',
+                        },
                         {
                           label: 'ETH Gas Reserve',
                           value: reservesData.totals.ethStatus === 'LOW' ? 'LOW' : 'NOMINAL',
@@ -3499,13 +3548,19 @@ export default function FounderOpsPage() {
                           value: reservesData.totals.mintPaused ? 'PAUSED' : 'ACTIVE',
                           color: reservesData.totals.mintPaused ? 'text-dl-error' : 'text-dl-forest',
                         },
-                      ].map((item, i) => (
-                        <div key={i} className="p-4 border-r border-dl-border last:border-r-0">
-                          <p className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider mb-1">{item.label}</p>
-                          <p className={`font-dl-mono text-sm font-bold ${item.color}`}>{item.value}</p>
+                      ];
+
+                      return (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-0 border border-dl-border mb-6 bg-dl-bg-alt">
+                          {items.map((item, i) => (
+                            <div key={i} className="p-4 border-r border-dl-border last:border-r-0 border-b md:border-b-0">
+                              <p className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider mb-1">{item.label}</p>
+                              <p className={`font-dl-mono text-sm font-bold ${item.color}`}>{item.value}</p>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })()}
 
                     {/* Reserve composition breakdown bar */}
                     {reservesData.totals.totalValueUsd > 0 && (() => {
