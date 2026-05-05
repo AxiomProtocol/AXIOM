@@ -10,11 +10,16 @@
  * the `reserve_alerts` PostgreSQL table — each condition fires at most
  * once per active episode (cleared when the condition resolves).
  *
- * Auth (same pattern as /api/cron/refresh-solvency):
- *   1. Authorization: Bearer <CRON_SECRET>    — preferred for hosted cron
- *   2. x-cron-secret: <CRON_SECRET>           — alternative header
- *   3. ?key=<CRON_SECRET>                     — query string fallback
- *   4. x-vercel-cron: 1 header on Vercel env  — accepted when CRON_SECRET unset
+ * Auth: secret required on every call — no bypass paths.
+ *   CRON_SECRET (preferred) or ADMIN_SOLVENCY_KEY must be present and match
+ *   one of: Authorization: Bearer <secret>, x-cron-secret: <secret>, or ?key=<secret>.
+ *   When CRON_SECRET is set in Vercel env vars, Vercel's scheduler automatically
+ *   sends Authorization: Bearer <CRON_SECRET> on every invocation.
+ *
+ * NOTE: x-vercel-cron bypass is intentionally omitted here. Unlike purely
+ * read-only cron routes, this endpoint fans out outbound email and Discord
+ * notifications. Accepting an unauthenticated spoofable header would allow
+ * any public caller to trigger operational noise/spam.
  *
  * Schedule: every 10 minutes (see vercel.json crons block)
  */
@@ -56,11 +61,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const queryKey  = (req.query.key as string) || '';
   const provided  = bearer || headerKey || queryKey;
 
-  const isVercelCron   = req.headers['x-vercel-cron'] === '1';
-  const isVercelEnv    = !!process.env.VERCEL;
-  const vercelCronBypass = isVercelCron && isVercelEnv;
-
-  if (!vercelCronBypass && (!provided || !safeEqualStr(provided, expected))) {
+  // No x-vercel-cron bypass — this endpoint sends outbound notifications and
+  // must never be reachable by unauthenticated public callers.
+  // Set CRON_SECRET in Vercel env vars; the scheduler sends it automatically.
+  if (!provided || !safeEqualStr(provided, expected)) {
     return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
 

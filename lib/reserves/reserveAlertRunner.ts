@@ -59,24 +59,6 @@ function getPool(): Pool {
   return _pool;
 }
 
-async function ensureTable(): Promise<void> {
-  await getPool().query(`
-    CREATE TABLE IF NOT EXISTS reserve_alerts (
-      id                    VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-      alert_key             VARCHAR(100) NOT NULL,
-      condition_active      BOOLEAN NOT NULL DEFAULT FALSE,
-      last_sent_at          TIMESTAMPTZ,
-      condition_first_seen_at TIMESTAMPTZ,
-      condition_cleared_at  TIMESTAMPTZ,
-      last_value_snapshot   TEXT,
-      channels_paged        TEXT,
-      updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      CONSTRAINT ra_alert_key_uniq UNIQUE (alert_key)
-    )
-  `);
-}
-
 interface AlertRow {
   id: string;
   alert_key: string;
@@ -360,12 +342,7 @@ export interface ReserveAlertRunResult {
 export async function runReserveAlerts(): Promise<ReserveAlertRunResult> {
   const checkedAt = new Date().toISOString();
 
-  // ── 1. Ensure table exists ───────────────────────────────────────────────
-  if (process.env.DATABASE_URL) {
-    try { await ensureTable(); } catch (e) { console.warn(`${LOG} ensureTable failed`, e); }
-  }
-
-  // ── 2. Fetch live reserve data (in-process, no HTTP self-call) ───────────
+  // ── 1. Fetch live reserve data (in-process, no HTTP self-call) ───────────
   const ALCHEMY_KEY  = process.env.ALCHEMY_API_KEY ?? '';
   const ARBITRUM_RPC = ALCHEMY_KEY
     ? `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`
