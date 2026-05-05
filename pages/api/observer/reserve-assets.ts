@@ -284,7 +284,17 @@ export default async function handler(
     const axauBalSource = vault
       ? 'AXAUFulfillmentService.getVaultBuffer() (deployer buffer)'
       : 'Deployer EOA on-chain balanceOf (getVaultBuffer unavailable)';
-    const axauValue = xauPrice !== null ? axauBal * xauPrice : null;
+
+    // Price: Approximate Mint NAV from AXAUFulfillmentService (~$1.15/AXAU).
+    // AXAU is NOT priced at the full XAU/USD gold troy-ounce price — it is a
+    // reserve instrument whose NAV is computed internally by the fulfillment
+    // service. Using XAU/USD here would overstate the value by ~4000×.
+    const axauNavPerToken = vault && axauBal > 0
+      ? parseFloat(vault.axauValueUsd) / axauBal
+      : 1.15;
+    const axauValue = vault
+      ? parseFloat(vault.axauValueUsd)
+      : axauBal * 1.15;
 
     // ── AXM ───────────────────────────────────────────────────────────────
     const axmTreasury = Number(ethers.formatUnits(axmTreasuryRaw as bigint, 18));
@@ -352,18 +362,16 @@ export default async function handler(
         label:            'AXAU — Gold Reserve Instrument',
         balance:          fmtBal(axauBal, 6),
         balanceSource:    axauBalSource,
-        price:            xauPrice !== null ? fmtBal(xauPrice, 2) : null,
-        price24hChangePct: xau24hPct !== null ? xau24hPct.toFixed(2) : null,
-        price24hChangeUsd: change24hUsd(xauPrice, xau24hPct),
-        valueUsd:         axauValue !== null ? fmtUsd(axauValue) : null,
-        priceSource:      vault
-          ? 'Chainlink XAU/USD · Arbitrum One (backing price, via getVaultBuffer)'
-          : 'CoinGecko pax-gold/usd (Chainlink fallback)',
-        priceHistoryNote: paxgSparkline ? null : '30-day chart uses XAU/USD proxy (PAXG = 1 troy oz gold)',
+        price:            axauNavPerToken.toFixed(4),
+        price24hChangePct: null,
+        price24hChangeUsd: null,
+        valueUsd:         fmtUsd(axauValue),
+        priceSource:      'Approximate Mint NAV (AXAUFulfillmentService · ~$1.15/AXAU) — not XAU/USD spot',
+        priceHistoryNote: 'AXAU is priced at its internal Mint NAV (~$1.15/token), not the XAU/USD gold price. It is a reserve instrument backed by gold/land NAV, not a direct troy-ounce equivalent. No secondary market price feed exists.',
         location:         'Deployer EOA (fulfillment buffer)',
         contracts:        [DEPLOYER_ADDRESS, AXAU_ADDRESS],
         arbiscanUrls:     [arbiUrl(DEPLOYER_ADDRESS), arbiUrl(AXAU_ADDRESS)],
-        sparkline:        paxgSparkline,
+        sparkline:        null,
       },
       {
         symbol:           'AXM',
