@@ -40,8 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const adminKey = (req.headers['x-admin-key'] as string) ?? '';
-  if (!validateAdminKey(adminKey)) {
+  if (!validateAdminKey(req)) {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 

@@ -28,11 +28,8 @@ function safeEqualStr(a: string, b: string): boolean {
 }
 
 function isAuthorized(req: NextApiRequest): boolean {
-  // Vercel cron scheduler — safe to accept because this route is write-only (no outbound notifications)
-  if (req.headers['x-vercel-cron'] === '1') return true;
-
-  const cronSecret   = process.env.CRON_SECRET ?? '';
-  const solvencyKey  = process.env.ADMIN_SOLVENCY_KEY ?? '';
+  const cronSecret  = process.env.CRON_SECRET ?? '';
+  const solvencyKey = process.env.ADMIN_SOLVENCY_KEY ?? '';
   const validSecrets = [cronSecret, solvencyKey].filter(Boolean);
   if (validSecrets.length === 0) return false;
 
