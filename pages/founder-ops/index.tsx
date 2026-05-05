@@ -3707,8 +3707,18 @@ export default function FounderOpsPage() {
                                   </div>
                                   <button
                                     onClick={topUpAxauBuffer}
-                                    disabled={reservesTopUpLoading || !!asset.mintPaused || !reservesAdminKey}
-                                    title={asset.mintPaused ? 'Mint is paused on-chain' : !reservesAdminKey ? 'Admin key required' : 'Mint AXAU from PAXG into deployer buffer'}
+                                    disabled={reservesTopUpLoading || !!asset.mintPaused || !reservesAdminKey || (() => {
+                                      const paxg = (reservesData?.assets as any[])?.find((a: any) => a.symbol === 'PAXG');
+                                      return !paxg || paxg.balance <= 0;
+                                    })()}
+                                    title={
+                                      asset.mintPaused ? 'Mint is paused on-chain' :
+                                      !reservesAdminKey ? 'Admin key required' :
+                                      (() => {
+                                        const paxg = (reservesData?.assets as any[])?.find((a: any) => a.symbol === 'PAXG');
+                                        return (!paxg || paxg.balance <= 0) ? 'No PAXG balance detected in deployer EOA' : 'Mint AXAU from PAXG into deployer buffer';
+                                      })()
+                                    }
                                     className="font-dl-mono text-[9px] border border-dl-navy text-dl-navy px-3 py-1.5 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50 transition-colors"
                                   >
                                     {reservesTopUpLoading ? 'Submitting…' : 'Trigger Buffer Mint'}
@@ -3725,7 +3735,7 @@ export default function FounderOpsPage() {
                             {/* AXUSD — Inline Mint Form */}
                             {asset.symbol === 'AXUSD' && (
                               <div className="px-5 py-3 border-t border-dl-border">
-                                <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-2">Mint AXUSD (MINTER_ROLE · Deployer EOA)</p>
+                                <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-2">Deposit Action — Mint AXUSD (MINTER_ROLE · Deployer EOA)</p>
                                 <div className="flex gap-2 flex-wrap items-center">
                                   <input
                                     type="number"
