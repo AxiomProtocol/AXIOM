@@ -47,6 +47,12 @@ export interface SnapshotRunResult {
 export async function runReserveSnapshot(): Promise<SnapshotRunResult> {
   const adminKey = process.env.ADMIN_SOLVENCY_KEY ?? '';
   if (!adminKey) {
+    // Log at startup so operators see the misconfiguration immediately in cron logs
+    console.error(
+      '[reserveSnapshotRunner] ADMIN_SOLVENCY_KEY is not set. ' +
+      'The snapshot cron will fail until this env var is configured. ' +
+      'Set it alongside CRON_SECRET in Vercel environment settings.',
+    );
     throw new Error('ADMIN_SOLVENCY_KEY is not set — cannot call reserve-positions API');
   }
 

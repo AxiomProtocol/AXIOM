@@ -5,10 +5,15 @@
  * `reserve_balance_snapshots`. The data powers the 7-day trend sparklines
  * on the Reserves tab.
  *
- * Auth: Vercel's cron scheduler sends `x-vercel-cron: 1` on every invocation,
- * which is accepted here because this route has no outbound notification
- * side-effects (DB write only). External callers must supply a matching
- * CRON_SECRET or ADMIN_SOLVENCY_KEY.
+ * Auth: secret always required — no bypass paths.
+ *   CRON_SECRET (preferred) or ADMIN_SOLVENCY_KEY must be present and match
+ *   one of: Authorization: Bearer <secret>, x-cron-secret: <secret>, or
+ *   ?key=<secret>. When CRON_SECRET is set in Vercel env vars, the scheduler
+ *   automatically sends Authorization: Bearer <CRON_SECRET>.
+ *
+ * Note: the snapshot runner also requires ADMIN_SOLVENCY_KEY internally to
+ *   call /api/founder/reserve-positions. Both env vars must be configured for
+ *   the cron to complete successfully.
  *
  * Schedule: every hour on the hour (see vercel.json crons block)
  */
