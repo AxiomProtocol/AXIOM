@@ -213,15 +213,20 @@ export default async function handler(
     const ethStatus: 'OK' | 'LOW' = ethBal < ETH_LOW_THRESHOLD ? 'LOW' : 'OK';
 
     // ── PAXG ───────────────────────────────────────────────────────────────
-    const bitgoPaxg    = (bitgo?.positions ?? []).find(p => p.assetSymbol === 'PAXG');
-    const paxgBal      = bitgoPaxg && bitgoPaxg.quantity > 0
-      ? bitgoPaxg.quantity
+    const bitgoPaxg     = (bitgo?.positions ?? []).find(p => p.assetSymbol === 'PAXG');
+    const paxgViaBitgo  = !!(bitgoPaxg && bitgoPaxg.quantity > 0);
+    const paxgBal       = paxgViaBitgo
+      ? bitgoPaxg!.quantity
       : (vault ? parseFloat(vault.paxgBalanceFormatted) : 0);
-    const xauPrice     = vault ? parseFloat(vault.xauUsdPrice) : null;
-    const paxgValue    = xauPrice !== null ? paxgBal * xauPrice : null;
-    const paxgBalSrc   = bitgoPaxg && bitgoPaxg.quantity > 0
-      ? 'BitGo CaaS (custodian-reported)'
-      : 'Deployer EOA on-chain balanceOf (BitGo unavailable)';
+    const xauPrice      = vault ? parseFloat(vault.xauUsdPrice) : null;
+    const paxgValue     = xauPrice !== null ? paxgBal * xauPrice : null;
+    // When BitGo holds PAXG, the on-chain deposit address is the deployer EOA
+    // (used by MintRedeemController as collateral source).  The true custodial
+    // wallet is managed by BitGo CaaS; its address is not exposed here.
+    const paxgDepositAddr  = DEPLOYER_EOA;
+    const paxgDepositLabel = paxgViaBitgo
+      ? 'Deployer EOA (MintRedeemController collateral source) — primary custody via BitGo CaaS'
+      : 'Deployer EOA — on-chain PAXG balance (BitGo CaaS unavailable)';
 
     // ── AXAU ───────────────────────────────────────────────────────────────
     const axauBal          = vault ? parseFloat(vault.axauBalanceFormatted) : 0;
@@ -297,13 +302,15 @@ export default async function handler(
           : 'Chainlink unavailable — no price',
         status:          paxgBal > 0 ? 'OK' : 'ZERO',
         statusDetail:    paxgBal > 0
-          ? `${fmtBal(paxgBal, 4)} PAXG in custody${bitgoPaxg ? ' (BitGo CaaS)' : ' (EOA fallback)'}`
-          : 'No PAXG balance detected in BitGo or deployer EOA',
-        depositAddress:    DEPLOYER_EOA,
-        depositLabel:      'Deployer EOA — PAXG on Arbitrum One (custodied via BitGo CaaS)',
-        depositArbiscanUrl: arbiUrl(DEPLOYER_EOA),
+          ? `${fmtBal(paxgBal, 4)} PAXG — source: ${paxgViaBitgo ? 'BitGo CaaS custodian-reported' : 'Deployer EOA on-chain (BitGo unavailable)'}`
+          : 'No PAXG balance detected — check BitGo CaaS and deployer EOA',
+        depositAddress:    paxgDepositAddr,
+        depositLabel:      paxgDepositLabel,
+        depositArbiscanUrl: arbiUrl(paxgDepositAddr),
         locationBreakdown: [{
-          label:           paxgBal > 0 ? paxgBalSrc : 'BitGo CaaS Custody (Arbitrum One)',
+          label:           paxgViaBitgo
+            ? 'Deployer EOA (collateral source — BitGo CaaS is primary custodian)'
+            : 'Deployer EOA (on-chain balance — BitGo CaaS unavailable)',
           address:         DEPLOYER_EOA,
           balance:         paxgBal,
           balanceFormatted: fmtBal(paxgBal, 6) + ' PAXG',
@@ -326,8 +333,8 @@ export default async function handler(
           ? `Buffer: ${vault.bufferCapacity} · ${vault.pendingOrdersCount} pending order(s) · Covers orders: ${vault.axauCoversOrders ? 'YES' : 'NO'}${mintPaused ? ' · MINT PAUSED' : ''}`
           : 'Vault buffer unavailable — check DEPLOYER_PRIVATE_KEY config',
         depositAddress:    DEPLOYER_EOA,
-        depositLabel:      'Send AXAU or PAXG to deployer EOA on Arbitrum One',
-        depositArbiscanUrl: arbiUrl(AXAU_ADDRESS),
+        depositLabel:      'Deployer EOA — send AXAU (PATH A) or trigger PAXG mint (PATH B) via Arbitrum One',
+        depositArbiscanUrl: arbiUrl(DEPLOYER_EOA),
         locationBreakdown: [{
           label:           'Deployer EOA (fulfillment buffer)',
           address:         DEPLOYER_EOA,
