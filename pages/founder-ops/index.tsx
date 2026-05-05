@@ -3496,7 +3496,9 @@ export default function FounderOpsPage() {
                             }
                           }
                         }
-                        const sortedTimes = Object.keys(buckets).sort();
+                        const sortedTimes = Object.keys(buckets).sort(
+                          (a, b) => new Date(a).getTime() - new Date(b).getTime(),
+                        );
                         if (sortedTimes.length >= 2) {
                           const oldest = buckets[sortedTimes[0]];
                           const latest = buckets[sortedTimes[sortedTimes.length - 1]];
@@ -3505,13 +3507,14 @@ export default function FounderOpsPage() {
                       }
 
                       // ── HEALTHY vs ALERT asset count from live data ─────────
-                      const assets = (reservesData.assets as any[]);
-                      const healthyCount = assets.filter((a: any) => a.status === 'OK').length;
-                      const alertCount   = assets.filter((a: any) => a.status !== 'OK').length;
+                      type AssetStatus = { status: string };
+                      const assets = reservesData.assets as AssetStatus[];
+                      const healthyCount = assets.filter(a => a.status === 'OK').length;
+                      const alertCount   = assets.filter(a => a.status !== 'OK').length;
 
                       const items = [
                         {
-                          label: 'Total Reserve Value',
+                          label: 'Total Reserve USD Value',
                           value: reservesData.totals.totalValueUsdFormatted,
                           color: 'text-dl-navy',
                         },
@@ -3530,7 +3533,7 @@ export default function FounderOpsPage() {
                         },
                         {
                           label: 'Asset Health',
-                          value: `${healthyCount} OK · ${alertCount} ALERT`,
+                          value: `${healthyCount} HEALTHY · ${alertCount} ALERT`,
                           color: alertCount > 0 ? 'text-dl-error' : 'text-dl-forest',
                         },
                         {
