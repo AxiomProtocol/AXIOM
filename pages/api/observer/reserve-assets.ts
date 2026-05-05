@@ -153,6 +153,7 @@ export interface PriceMovingAsset {
   price24hChangeUsd: string | null;
   valueUsd: string | null;
   priceSource: string;
+  priceHistoryNote: string | null;
   location: string;
   contracts: string[];
   arbiscanUrls: string[];
@@ -322,6 +323,7 @@ export default async function handler(
         price24hChangeUsd: change24hUsd(ethPrice, eth24hPct),
         valueUsd:         ethValue !== null ? fmtUsd(ethValue) : null,
         priceSource:      'CoinGecko (ethereum/usd)',
+        priceHistoryNote: ethSparkline ? null : 'Historical chart sourced from Alchemy Historical Prices API',
         location:         'Deployer EOA',
         contracts:        [DEPLOYER_ADDRESS],
         arbiscanUrls:     [arbiUrl(DEPLOYER_ADDRESS)],
@@ -339,6 +341,7 @@ export default async function handler(
         priceSource:      vault
           ? 'Chainlink XAU/USD · Arbitrum One (via AXAUFulfillmentService)'
           : 'CoinGecko pax-gold/usd (Chainlink fallback)',
+        priceHistoryNote: paxgSparkline ? null : '30-day chart sourced from Alchemy Historical Prices API (PAXG symbol)',
         location:         'BitGo CaaS Custody',
         contracts:        [DEPLOYER_ADDRESS, PAXG_ARBITRUM],
         arbiscanUrls:     [arbiUrl(DEPLOYER_ADDRESS), arbiUrl(PAXG_ARBITRUM)],
@@ -356,6 +359,7 @@ export default async function handler(
         priceSource:      vault
           ? 'Chainlink XAU/USD · Arbitrum One (backing price, via getVaultBuffer)'
           : 'CoinGecko pax-gold/usd (Chainlink fallback)',
+        priceHistoryNote: paxgSparkline ? null : '30-day chart uses XAU/USD proxy (PAXG = 1 troy oz gold)',
         location:         'Deployer EOA (fulfillment buffer)',
         contracts:        [DEPLOYER_ADDRESS, AXAU_ADDRESS],
         arbiscanUrls:     [arbiUrl(DEPLOYER_ADDRESS), arbiUrl(AXAU_ADDRESS)],
@@ -370,7 +374,8 @@ export default async function handler(
         price24hChangePct: null,
         price24hChangeUsd: null,
         valueUsd:         axmValue !== null ? fmtUsd(axmValue) : null,
-        priceSource:      'On-chain EulerSwap pool reserve ratio (AXUSD/AXM) — spot, no oracle',
+        priceSource:      'On-chain EulerSwap pool reserve ratio (AXUSD/AXM) — spot price only, no oracle',
+        priceHistoryNote: 'AXM is not listed on any public price index (CoinGecko, Alchemy, etc.). 24h change and 30-day sparkline are unavailable. Spot price is derived from the live AXUSD/AXM EulerSwap pool reserve ratio and reflects the current on-chain exchange rate only.',
         location:         'Treasury Revenue + Staking Emissions',
         contracts:        [CORE_CONTRACTS.TREASURY_REVENUE, CORE_CONTRACTS.STAKING_EMISSIONS],
         arbiscanUrls:     [arbiUrl(CORE_CONTRACTS.TREASURY_REVENUE), arbiUrl(CORE_CONTRACTS.STAKING_EMISSIONS)],

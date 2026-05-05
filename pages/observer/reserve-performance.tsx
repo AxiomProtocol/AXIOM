@@ -33,6 +33,63 @@ function ObserverNav({ current }: { current: string }) {
   );
 }
 
+// ─── Composition bar ─────────────────────────────────────────────────────────
+// Flat horizontal stacked bar — Design Law compliant (solid colors, no gradients/animations)
+
+const COMP_COLORS: Record<string, string> = {
+  AXAU:  '#C8A84B',
+  PAXG:  '#9A7C0F',
+  ETH:   '#1B3A5E',
+  AXM:   '#2E5E47',
+  USDC:  '#4A6E8E',
+  AXUSD: '#5D8AA0',
+};
+
+interface CompositionEntry { symbol: string; valueUsd: number }
+
+function CompositionBar({ entries, total }: { entries: CompositionEntry[]; total: number }) {
+  if (total <= 0) return null;
+  const sorted = [...entries].sort((a, b) => b.valueUsd - a.valueUsd);
+  return (
+    <div className="border border-dl-border p-5 mb-8">
+      <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide mb-3">Reserve Composition</p>
+      <div className="flex w-full h-6 overflow-hidden border border-dl-border mb-3">
+        {sorted.map(e => {
+          const pct = (e.valueUsd / total) * 100;
+          if (pct < 0.05) return null;
+          return (
+            <div
+              key={e.symbol}
+              style={{ width: `${pct.toFixed(2)}%`, backgroundColor: COMP_COLORS[e.symbol] ?? '#888' }}
+              title={`${e.symbol}: $${e.valueUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pct.toFixed(1)}%)`}
+            />
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+        {sorted.map(e => {
+          const pct = (e.valueUsd / total) * 100;
+          if (pct < 0.05) return null;
+          return (
+            <div key={e.symbol} className="flex items-center gap-1.5">
+              <div
+                className="w-3 h-3 shrink-0"
+                style={{ backgroundColor: COMP_COLORS[e.symbol] ?? '#888' }}
+              />
+              <span className="font-dl-mono text-xs text-dl-gray">
+                {e.symbol} <span className="text-dl-navy font-medium">{pct.toFixed(1)}%</span>
+                <span className="ml-1 text-dl-gray">
+                  (${e.valueUsd.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })})
+                </span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Sparkline ────────────────────────────────────────────────────────────────
 
 function Sparkline({ data, width = 140, height = 36 }: { data: number[]; width?: number; height?: number }) {
@@ -47,7 +104,7 @@ function Sparkline({ data, width = 140, height = 36 }: { data: number[]; width?:
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     })
     .join(' ');
-  const isUp  = data[data.length - 1] >= data[0];
+  const isUp = data[data.length - 1] >= data[0];
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="block">
       <polyline
@@ -65,12 +122,11 @@ function Sparkline({ data, width = 140, height = 36 }: { data: number[]; width?:
 
 function ChangeBadge({ pct, usd }: { pct: string | null; usd: string | null }) {
   if (!pct) return <span className="font-dl-mono text-xs text-dl-gray">24h: —</span>;
-  const n     = parseFloat(pct);
-  const isUp  = n >= 0;
-  const sign  = isUp ? '+' : '';
-  const color = isUp ? 'text-dl-forest' : 'text-red-700';
+  const n    = parseFloat(pct);
+  const isUp = n >= 0;
+  const sign = isUp ? '+' : '';
   return (
-    <div className={`font-dl-mono text-xs ${color}`}>
+    <div className={`font-dl-mono text-xs ${isUp ? 'text-dl-forest' : 'text-red-700'}`}>
       {sign}{pct}% 24h
       {usd && (
         <span className="text-dl-gray ml-1">
@@ -91,12 +147,13 @@ const SYMBOL_COLOR: Record<string, string> = {
 };
 
 function PriceMovingCard({ asset }: { asset: PriceMovingAsset }) {
-  const color = SYMBOL_COLOR[asset.symbol] ?? 'text-dl-navy';
-  const balNum = parseFloat(asset.balance);
+  const color   = SYMBOL_COLOR[asset.symbol] ?? 'text-dl-navy';
+  const balNum  = parseFloat(asset.balance);
   const priceNum = asset.price ? parseFloat(asset.price) : null;
+  const hasHistory = asset.sparkline !== null || asset.price24hChangePct !== null;
 
   return (
-    <div className="border border-dl-border p-5">
+    <div className="border border-dl-border p-5 flex flex-col">
       <div className="flex items-start justify-between mb-4">
         <div>
           <span className={`font-dl-mono text-xl font-bold ${color}`}>{asset.symbol}</span>
@@ -107,18 +164,20 @@ function PriceMovingCard({ asset }: { asset: PriceMovingAsset }) {
         )}
       </div>
 
-      <div className="space-y-2 mb-4">
+      <div className="space-y-2 mb-4 flex-1">
         <div className="flex justify-between items-baseline">
           <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide">Balance</span>
           <span className="font-dl-mono text-sm text-dl-navy font-medium">
             {balNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} {asset.symbol}
           </span>
         </div>
-        <div className="flex justify-between items-baseline">
-          <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide">Mark Price</span>
+        <div className="flex justify-between items-start">
+          <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide mt-0.5">Mark Price</span>
           <div className="text-right">
             <div className="font-dl-mono text-sm text-dl-gray">
-              {priceNum ? `$${priceNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+              {priceNum
+                ? `$${priceNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : '—'}
             </div>
             <ChangeBadge pct={asset.price24hChangePct} usd={asset.price24hChangeUsd} />
           </div>
@@ -130,6 +189,14 @@ function PriceMovingCard({ asset }: { asset: PriceMovingAsset }) {
           </span>
         </div>
       </div>
+
+      {/* AXM explicit unavailability notice */}
+      {!hasHistory && asset.priceHistoryNote && (
+        <div className="border border-dl-border bg-dl-bg-alt px-3 py-2 mb-3">
+          <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide mb-0.5">Price History</p>
+          <p className="text-xs text-dl-gray leading-relaxed">{asset.priceHistoryNote}</p>
+        </div>
+      )}
 
       <div className="pt-3 border-t border-dl-border space-y-1">
         <p className="font-dl-mono text-xs text-dl-gray">
@@ -228,12 +295,14 @@ function StableTable({ asset }: { asset: StableAsset }) {
 
 // ─── Metric strip ─────────────────────────────────────────────────────────────
 
-function Metric({ label, value, sub, highlight }: { label: string; value: string; sub?: string; highlight?: boolean }) {
+function Metric({ label, value, sub, highlight }: {
+  label: string; value: string; sub?: string; highlight?: boolean
+}) {
   return (
     <div className="border border-dl-border p-4">
       <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide">{label}</p>
       <p className={`font-dl-mono text-2xl font-bold mt-1 ${highlight ? 'text-dl-gold' : 'text-dl-navy'}`}>{value}</p>
-      {sub && <p className="text-xs text-dl-gray mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-dl-gray mt-0.5 leading-snug">{sub}</p>}
     </div>
   );
 }
@@ -272,7 +341,18 @@ export default function ReservePerformance() {
   const stableTotal = data?.stable
     .map(a => parseFloat(a.totalValueUsd.replace(/,/g, '')))
     .reduce((a, b) => a + b, 0) ?? 0;
+  const totalNum = priceMovTotal + stableTotal;
   const priceMovCount = data?.priceMov.filter(a => a.valueUsd).length ?? 0;
+
+  const compositionEntries: CompositionEntry[] = data
+    ? [
+        ...data.priceMov
+          .filter(a => a.valueUsd)
+          .map(a => ({ symbol: a.symbol, valueUsd: parseFloat(a.valueUsd!.replace(/,/g, '')) })),
+        ...data.stable
+          .map(a => ({ symbol: a.symbol, valueUsd: parseFloat(a.totalValueUsd.replace(/,/g, '')) })),
+      ]
+    : [];
 
   return (
     <DesignLawLayout>
@@ -294,8 +374,9 @@ export default function ReservePerformance() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[0, 1, 2, 3].map(n => <div key={n} className="border border-dl-border h-20 bg-dl-bg-alt" />)}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4">
-            {[0, 1, 2, 3].map(n => <div key={n} className="border border-dl-border h-52 bg-dl-bg-alt" />)}
+          <div className="border border-dl-border h-20 bg-dl-bg-alt" />
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            {[0, 1, 2, 3].map(n => <div key={n} className="border border-dl-border h-64 bg-dl-bg-alt" />)}
           </div>
         </div>
       )}
@@ -311,8 +392,8 @@ export default function ReservePerformance() {
 
       {!loading && data && (
         <>
-          {/* ── Summary metrics ───────────────────────────────────────────── */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {/* ── Summary metrics ─────────────────────────────────────────── */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <Metric
               label="Total Reserve Value"
               value={`$${data.totals.totalValueUsd}`}
@@ -336,12 +417,15 @@ export default function ReservePerformance() {
             />
           </div>
 
-          {/* ── Price-Moving Assets ───────────────────────────────────────── */}
+          {/* ── Composition bar ─────────────────────────────────────────── */}
+          <CompositionBar entries={compositionEntries} total={totalNum} />
+
+          {/* ── Price-Moving Assets ──────────────────────────────────────── */}
           <div className="mb-8">
             <SectionHeading>Price-Moving Positions</SectionHeading>
             <p className="text-xs text-dl-gray mb-4">
-              Assets whose USD value fluctuates with market price — ETH, gold-backed instruments, and governance token.
-              24h change sourced from CoinGecko. Sparklines show 30-day daily price via Alchemy Historical.
+              Assets whose USD value fluctuates with market price. 24h change from CoinGecko.
+              30-day sparklines via Alchemy Historical Prices API. AXM historical data unavailable — see card note.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               {data.priceMov.map(asset => (
@@ -350,11 +434,12 @@ export default function ReservePerformance() {
             </div>
           </div>
 
-          {/* ── Stable Positions ──────────────────────────────────────────── */}
+          {/* ── Stable Positions ────────────────────────────────────────── */}
           <div className="mb-8">
             <SectionHeading>Stable Positions</SectionHeading>
             <p className="text-xs text-dl-gray mb-4">
-              USD-pegged assets held across PSM contracts, backstop vault, and treasury contracts. No mark-price risk.
+              USD-pegged assets held across PSM contracts, backstop vault, and treasury contracts.
+              No mark-price risk. Balances reflect on-chain state at request time.
             </p>
             <div className="space-y-4">
               {data.stable.map(asset => (
@@ -363,29 +448,27 @@ export default function ReservePerformance() {
             </div>
           </div>
 
-          {/* ── Data Sources ──────────────────────────────────────────────── */}
+          {/* ── Data Sources ─────────────────────────────────────────────── */}
           <div className="border border-dl-border p-6">
             <SectionHeading>Data Sources & Methodology</SectionHeading>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 text-sm text-dl-gray">
               <div>
-                <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide mb-2">Price Oracles</p>
+                <p className="font-dl-mono text-xs uppercase tracking-wide mb-2">Price Oracles</p>
                 <ul className="space-y-1.5">
                   <li><span className="font-dl-mono text-dl-navy">ETH</span> — CoinGecko free API (ethereum/usd) · 24h change included</li>
-                  <li><span className="font-dl-mono text-dl-navy">PAXG / AXAU</span> — Chainlink XAU/USD on Arbitrum One (
-                    <a href="https://arbiscan.io/address/0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2c" target="_blank" rel="noopener noreferrer" className="font-dl-mono text-xs underline">0x1F95…a2c</a>
-                  ) via AXAUFulfillmentService · 24h % from CoinGecko pax-gold</li>
-                  <li><span className="font-dl-mono text-dl-navy">AXM</span> — On-chain EulerSwap AXUSD/AXM pool reserve ratio (spot)</li>
-                  <li><span className="font-dl-mono text-dl-navy">USDC / AXUSD</span> — $1.00 stable peg (no oracle required)</li>
+                  <li><span className="font-dl-mono text-dl-navy">PAXG / AXAU</span> — Chainlink XAU/USD on Arbitrum One via AXAUFulfillmentService · 24h % from CoinGecko pax-gold</li>
+                  <li><span className="font-dl-mono text-dl-navy">AXM</span> — EulerSwap AXUSD/AXM pool reserve ratio (spot) · no index listing, no 24h/30d history</li>
+                  <li><span className="font-dl-mono text-dl-navy">USDC / AXUSD</span> — $1.00 stable peg</li>
                 </ul>
               </div>
               <div>
-                <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide mb-2">Balance Sources</p>
+                <p className="font-dl-mono text-xs uppercase tracking-wide mb-2">Balance Sources</p>
                 <ul className="space-y-1.5">
-                  <li><span className="font-dl-mono text-dl-navy">ETH</span> — Deployer EOA eth_getBalance</li>
+                  <li><span className="font-dl-mono text-dl-navy">ETH</span> — Deployer EOA eth_getBalance on Arbitrum One</li>
                   <li><span className="font-dl-mono text-dl-navy">PAXG</span> — BitGoTreasuryExtension.getReserveAssetBalances() (custodian DB)</li>
                   <li><span className="font-dl-mono text-dl-navy">AXAU</span> — AXAUFulfillmentService.getVaultBuffer() (deployer buffer)</li>
                   <li><span className="font-dl-mono text-dl-navy">AXM</span> — Treasury Revenue + Staking Emissions ERC-20 balanceOf</li>
-                  <li><span className="font-dl-mono text-dl-navy">USDC</span> — 4 contracts: Canonical PSM + Legacy PSM + Backstop + Deployer EOA</li>
+                  <li><span className="font-dl-mono text-dl-navy">USDC</span> — Canonical PSM + Legacy PSM + Backstop + Deployer EOA (4 sources)</li>
                   <li><span className="font-dl-mono text-dl-navy">AXUSD</span> — Treasury Revenue contract ERC-20 balanceOf</li>
                 </ul>
               </div>
@@ -395,7 +478,7 @@ export default function ReservePerformance() {
                 Network: Arbitrum One (Chain ID 42161) · Deployer EOA: 0x8d7892CF226B43d48B6e3ce988A1274e6D114C96
               </p>
               <p className="font-dl-mono text-xs text-dl-gray">
-                All balances fetched live at request time. No caching applied. AXAU price is backing XAU/USD — actual NAV may differ.
+                All balances fetched live at request time. No caching. AXAU price is backing XAU/USD — actual NAV may differ.
               </p>
               {fetchedAt && (
                 <p className="font-dl-mono text-xs text-dl-gray">
