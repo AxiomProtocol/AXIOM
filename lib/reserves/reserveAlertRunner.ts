@@ -282,6 +282,8 @@ async function fanOut(p: AlertPayload): Promise<{ channelsPaged: string[]; error
 interface ConditionResult {
   alertKey: string;
   triggered: boolean;
+  /** True when the underlying data fetch failed — all dedup transitions are skipped. */
+  dataUnavailable: boolean;
   valueSnapshot: string;
   payload: AlertPayload;
 }
@@ -291,6 +293,7 @@ async function checkEthLow(ethBalance: number): Promise<ConditionResult> {
   return {
     alertKey: 'eth_low',
     triggered,
+    dataUnavailable: false,
     valueSnapshot: `${ethBalance.toFixed(6)} ETH`,
     payload: {
       alertKey: 'eth_low',
@@ -309,10 +312,15 @@ async function checkEthLow(ethBalance: number): Promise<ConditionResult> {
 }
 
 async function checkAxauDepleted(bufferCapacity: string | null): Promise<ConditionResult> {
+  // null means the vault fetch failed — treat as UNKNOWN, not as "not depleted".
+  // Returning dataUnavailable=true prevents the runner from clearing an active
+  // alert just because a transient RPC failure returned no data.
+  const dataUnavailable = bufferCapacity === null;
   const triggered = bufferCapacity === 'DEPLETED';
   return {
     alertKey: 'axau_depleted',
     triggered,
+    dataUnavailable,
     valueSnapshot: bufferCapacity ?? 'UNKNOWN',
     payload: {
       alertKey: 'axau_depleted',
@@ -343,6 +351,7 @@ export interface ReserveAlertRunResult {
     channelsPaged: string[];
     errors: string[];
     skipped: boolean;
+    dataUnavailable: boolean;
   }>;
   totalAlertsSent: number;
   totalAlertsCleared: number;
@@ -414,7 +423,7 @@ export async function runReserveAlerts(): Promise<ReserveAlertRunResult> {
         action = 'sent';
         totalAlertsSent++;
       }
-      conditions.push({ alertKey: cond.alertKey, triggered: cond.triggered, wasActive, action, channelsPaged, errors, skipped });
+      conditions.push({ alertKey: cond.alertKey, triggered: cond.triggered, wasActive, action, channelsPaged, errors, skipped, dataUnavailable: cond.dataUnavailable });
       continue;
     }
 
@@ -422,7 +431,13 @@ export async function runReserveAlerts(): Promise<ReserveAlertRunResult> {
       const row = await getOrCreateRow(cond.alertKey);
       wasActive = row.condition_active;
 
-      if (cond.triggered && !wasActive) {
+      if (cond.dataUnavailable) {
+        // Data fetch failed — skip all dedup transitions to avoid falsely
+        // clearing an active alert when the underlying service is temporarily
+        // unavailable. Next cron run will re-evaluate once data is available.
+        action = 'no_change';
+        console.warn(`${LOG} data unavailable for ${cond.alertKey}; skipping dedup transition`);
+      } else if (cond.triggered && !wasActive) {
         // New trigger: fire alert
         if (anyChannelConfigured) {
           const result = await fanOut(cond.payload);
@@ -446,7 +461,7 @@ export async function runReserveAlerts(): Promise<ReserveAlertRunResult> {
           console.warn(`${LOG} condition ${cond.alertKey} triggered but no notification channels configured`);
         }
       } else if (!cond.triggered && wasActive) {
-        // Condition cleared: reset so future re-trigger fires fresh alert
+        // Condition confirmed clear with fresh data: reset so future re-trigger fires fresh alert
         await markCleared(cond.alertKey);
         action = 'cleared';
         totalAlertsCleared++;
@@ -458,7 +473,7 @@ export async function runReserveAlerts(): Promise<ReserveAlertRunResult> {
       errors.push(`db: ${(e as Error).message}`);
     }
 
-    conditions.push({ alertKey: cond.alertKey, triggered: cond.triggered, wasActive, action, channelsPaged, errors, skipped });
+    conditions.push({ alertKey: cond.alertKey, triggered: cond.triggered, wasActive, action, channelsPaged, errors, skipped, dataUnavailable: cond.dataUnavailable });
   }
 
   return { checkedAt, ethBalance, axauBufferCapacity, conditions, totalAlertsSent, totalAlertsCleared };
