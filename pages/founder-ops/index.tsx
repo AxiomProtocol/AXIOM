@@ -315,6 +315,10 @@ export default function FounderOpsPage() {
   const [reservesTopUpLoading, setReservesTopUpLoading] = useState(false);
   const [reservesTopUpResult, setReservesTopUpResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
+  type SnapshotPoint = { t: string; balance: number; usdValue: number | null };
+  const [reservesHistory, setReservesHistory] = useState<Record<string, SnapshotPoint[]>>({});
+  const [reservesHistoryLoading, setReservesHistoryLoading] = useState(false);
+
   useEffect(() => {
     Promise.all([
       fetch('/api/founder-ops/overview').then(r => r.json()).catch(() => null),
@@ -819,6 +823,24 @@ export default function FounderOpsPage() {
     }
   };
 
+  const loadReservesHistory = async (key: string) => {
+    if (!key) return;
+    setReservesHistoryLoading(true);
+    try {
+      const res = await fetch('/api/founder/reserve-snapshot-history?days=7', {
+        headers: { 'x-admin-key': key },
+      });
+      const json = await res.json();
+      if (res.ok && json.success && json.history) {
+        setReservesHistory(json.history);
+      }
+    } catch {
+      // Non-critical — sparklines simply remain empty
+    } finally {
+      setReservesHistoryLoading(false);
+    }
+  };
+
   const loadReserves = async (key?: string) => {
     const k = key ?? reservesAdminKey;
     if (!k) { setReservesError('Enter admin key and click Refresh.'); return; }
@@ -833,6 +855,8 @@ export default function FounderOpsPage() {
         setReservesError(json.error ?? 'Failed to load reserve positions');
       } else {
         setReservesData(json);
+        // Fetch snapshot history concurrently — non-blocking for the live view
+        loadReservesHistory(k);
       }
     } catch (e) {
       setReservesError(String(e));
@@ -3575,6 +3599,87 @@ export default function FounderOpsPage() {
                                 </p>
                               )}
                             </div>
+
+                            {/* 7-day balance sparkline */}
+                            {(() => {
+                              const pts = reservesHistory[asset.symbol] ?? [];
+                              if (pts.length < 2 && !reservesHistoryLoading) return null;
+                              if (reservesHistoryLoading && pts.length === 0) {
+                                return (
+                                  <div className="px-5 py-2 border-b border-dl-border">
+                                    <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">7D Trend — loading…</p>
+                                  </div>
+                                );
+                              }
+                              if (pts.length < 2) return null;
+                              const values = pts.map(p => p.balance);
+                              const minVal = Math.min(...values);
+                              const maxVal = Math.max(...values);
+                              const range = maxVal - minVal || 1;
+                              const W = 200;
+                              const H = 28;
+                              const PAD = 2;
+                              const drawH = H - PAD * 2;
+                              const points = pts.map((p, i) => {
+                                const x = (i / (pts.length - 1)) * W;
+                                const y = PAD + drawH - ((p.balance - minVal) / range) * drawH;
+                                return `${x.toFixed(1)},${y.toFixed(1)}`;
+                              }).join(' ');
+                              const latest = pts[pts.length - 1];
+                              const oldest = pts[0];
+                              const pctChange = oldest.balance !== 0
+                                ? ((latest.balance - oldest.balance) / oldest.balance) * 100
+                                : 0;
+                              const trend = pctChange > 0.01 ? 'up' : pctChange < -0.01 ? 'down' : 'flat';
+                              const trendColor = trend === 'up' ? '#166534' : trend === 'down' ? '#991b1b' : '#64748b';
+                              const firstHour = new Date(oldest.t);
+                              const lastHour  = new Date(latest.t);
+                              const daySpan = Math.round((lastHour.getTime() - firstHour.getTime()) / 86400000);
+                              return (
+                                <div className="px-5 py-2 border-b border-dl-border bg-dl-bg">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">
+                                      {daySpan}D Balance Trend · {pts.length} snapshots
+                                    </p>
+                                    <p className="font-dl-mono text-[8px]" style={{ color: trendColor }}>
+                                      {pctChange >= 0 ? '+' : ''}{pctChange.toFixed(2)}%
+                                    </p>
+                                  </div>
+                                  <svg
+                                    viewBox={`0 0 ${W} ${H}`}
+                                    width="100%"
+                                    height={H}
+                                    preserveAspectRatio="none"
+                                    aria-label={`${asset.symbol} ${daySpan}-day balance trend`}
+                                  >
+                                    <polyline
+                                      points={points}
+                                      fill="none"
+                                      stroke={trendColor}
+                                      strokeWidth="1.2"
+                                      strokeLinejoin="round"
+                                      strokeLinecap="round"
+                                      vectorEffect="non-scaling-stroke"
+                                    />
+                                    <circle
+                                      cx={(((pts.length - 1) / (pts.length - 1)) * W).toFixed(1)}
+                                      cy={(PAD + drawH - ((latest.balance - minVal) / range) * drawH).toFixed(1)}
+                                      r="2"
+                                      fill={trendColor}
+                                      vectorEffect="non-scaling-stroke"
+                                    />
+                                  </svg>
+                                  <div className="flex items-center justify-between mt-0.5">
+                                    <p className="font-dl-mono text-[7px] text-dl-gray opacity-60">
+                                      {firstHour.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                    </p>
+                                    <p className="font-dl-mono text-[7px] text-dl-gray opacity-60">
+                                      {lastHour.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })()}
 
                             {/* Location breakdown */}
                             {(asset.locationBreakdown as any[]).length > 1 && (

@@ -10,6 +10,7 @@ import * as onrampSchema from '../shared/onrampSchema';
 import * as capInfraSchema from '../shared/capInfraSchema';
 import * as launchAttestationsSchema from '../shared/launchAttestationsSchema';
 import * as reserveAlertsSchema from '../shared/reserveAlertsSchema';
+import * as reserveSnapshotsSchema from '../shared/reserveSnapshotsSchema';
 import {
   index,
   pgTable,
@@ -37,6 +38,7 @@ const dbSchema = {
   ...capInfraSchema,
   ...launchAttestationsSchema,
   ...reserveAlertsSchema,
+  ...reserveSnapshotsSchema,
 };
 
 function getPool(): Pool {
