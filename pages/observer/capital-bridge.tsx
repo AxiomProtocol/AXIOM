@@ -45,6 +45,7 @@ const OBSERVER_TABS = [
   { id: 'reports', label: 'Reports', href: '/observer/reports' },
   { id: 'capital-bridge', label: 'Capital Bridge', href: '/observer/capital-bridge' },
   { id: 'node-economy', label: 'Node Economy', href: '/observer/node-economy' },
+  { id: 'reserve-performance', label: 'Reserve Performance', href: '/observer/reserve-performance' },
 ];
 
 function ObserverNav({ current }: { current: string }) {
