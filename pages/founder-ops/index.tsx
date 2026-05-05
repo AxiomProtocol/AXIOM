@@ -307,6 +307,13 @@ export default function FounderOpsPage() {
   const [reservesError, setReservesError] = useState<string | null>(null);
   const [reservesAdminKey, setReservesAdminKey] = useState('');
   const [reservesCopied, setReservesCopied] = useState<string | null>(null);
+  const [reservesMintAmount, setReservesMintAmount] = useState('');
+  const [reservesMintTo, setReservesMintTo] = useState('');
+  const [reservesMintLoading, setReservesMintLoading] = useState(false);
+  const [reservesMintResult, setReservesMintResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [reservesTopUpAmount, setReservesTopUpAmount] = useState('0.01');
+  const [reservesTopUpLoading, setReservesTopUpLoading] = useState(false);
+  const [reservesTopUpResult, setReservesTopUpResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -831,6 +838,56 @@ export default function FounderOpsPage() {
       setReservesError(String(e));
     } finally {
       setReservesLoading(false);
+    }
+  };
+
+  const mintAxusd = async () => {
+    if (!reservesMintAmount || !reservesMintTo) {
+      setReservesMintResult({ ok: false, msg: 'Amount and recipient address are required' });
+      return;
+    }
+    setReservesMintLoading(true);
+    setReservesMintResult(null);
+    try {
+      const r = await fetch('/api/erc3643/admin/mint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': reservesAdminKey },
+        body: JSON.stringify({ toAddress: reservesMintTo, amountAxusd: reservesMintAmount, reason: 'Founder Ops reserves replenishment' }),
+      });
+      const j = await r.json();
+      if (!r.ok) { setReservesMintResult({ ok: false, msg: j.error ?? 'Mint failed' }); return; }
+      setReservesMintResult({
+        ok: true,
+        msg: `${reservesMintAmount} AXUSD minted — ${j.data?.status === 'pending_safe' ? 'Safe proposal created (≥10k AXUSD)' : 'tx: ' + (j.data?.txHash ?? 'confirmed')}`,
+      });
+    } catch (e: any) {
+      setReservesMintResult({ ok: false, msg: String(e) });
+    } finally {
+      setReservesMintLoading(false);
+    }
+  };
+
+  const topUpAxauBuffer = async () => {
+    const amt = parseFloat(reservesTopUpAmount);
+    if (isNaN(amt) || amt <= 0) {
+      setReservesTopUpResult({ ok: false, msg: 'Enter a valid PAXG amount greater than 0' });
+      return;
+    }
+    setReservesTopUpLoading(true);
+    setReservesTopUpResult(null);
+    try {
+      const r = await fetch('/api/founder/top-up-axau-buffer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': reservesAdminKey },
+        body: JSON.stringify({ paxgAmountFloat: amt }),
+      });
+      const j = await r.json();
+      if (!r.ok) { setReservesTopUpResult({ ok: false, msg: j.error ?? 'Buffer top-up failed' }); return; }
+      setReservesTopUpResult({ ok: true, msg: j.message ?? `Buffer top-up submitted — tx: ${j.txHash}` });
+    } catch (e: any) {
+      setReservesTopUpResult({ ok: false, msg: String(e) });
+    } finally {
+      setReservesTopUpLoading(false);
     }
   };
 
@@ -3426,6 +3483,44 @@ export default function FounderOpsPage() {
                       ))}
                     </div>
 
+                    {/* Reserve composition breakdown bar */}
+                    {reservesData.totals.totalValueUsd > 0 && (() => {
+                      const ASSET_COLORS: Record<string, string> = {
+                        ETH: 'bg-blue-400', PAXG: 'bg-yellow-500', AXAU: 'bg-amber-600',
+                        AXM: 'bg-emerald-600', USDC: 'bg-green-400', AXUSD: 'bg-teal-500',
+                      };
+                      const valued = (reservesData.assets as any[]).filter((a: any) => a.usdValue !== null && a.usdValue > 0);
+                      return (
+                        <div className="mb-6">
+                          <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-2">Reserve Composition</p>
+                          <div className="flex h-5 w-full overflow-hidden border border-dl-border">
+                            {valued.map((a: any) => {
+                              const pct = ((a.usdValue as number) / reservesData.totals.totalValueUsd) * 100;
+                              return (
+                                <div
+                                  key={a.symbol}
+                                  className={ASSET_COLORS[a.symbol] ?? 'bg-dl-gray'}
+                                  style={{ width: `${pct}%` }}
+                                  title={`${a.symbol}: ${pct.toFixed(1)}% ($${(a.usdValue as number).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
+                                />
+                              );
+                            })}
+                          </div>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5">
+                            {valued.map((a: any) => {
+                              const pct = ((a.usdValue as number) / reservesData.totals.totalValueUsd) * 100;
+                              return (
+                                <div key={a.symbol} className="flex items-center gap-1">
+                                  <span className={`inline-block w-2 h-2 flex-shrink-0 ${ASSET_COLORS[a.symbol] ?? 'bg-dl-gray'}`} />
+                                  <span className="font-dl-mono text-[9px] text-dl-gray">{a.symbol} {pct.toFixed(1)}%</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {/* Asset cards — 2-column grid on desktop */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                       {(reservesData.assets as any[]).map((asset: any) => {
@@ -3472,6 +3567,11 @@ export default function FounderOpsPage() {
                                     ? asset.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                                     : (asset.price as number).toFixed(6)
                                   } · {asset.priceSource}
+                                </p>
+                              )}
+                              {asset.lastUpdatedAt && (
+                                <p className="font-dl-mono text-[8px] text-dl-gray mt-1 opacity-60">
+                                  Updated: {new Date(asset.lastUpdatedAt).toLocaleTimeString()}
                                 </p>
                               )}
                             </div>
@@ -3582,9 +3682,82 @@ export default function FounderOpsPage() {
                                     </span>
                                   )}
                                   <span className="font-dl-mono text-[9px] text-dl-gray">
-                                    To top up: send AXAU (PATH A) or PAXG (PATH B) to deployer EOA on Arbitrum One
+                                    PATH A: send AXAU direct · PATH B: trigger mint below
                                   </span>
                                 </div>
+                              </div>
+                            )}
+
+                            {/* AXAU — Trigger Buffer Mint from PAXG (PATH B) */}
+                            {asset.symbol === 'AXAU' && (
+                              <div className="px-5 py-3 border-t border-dl-border">
+                                <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-2">Trigger Buffer Top-Up · PATH B (PAXG → AXAU)</p>
+                                <div className="flex gap-2 items-center flex-wrap">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-dl-mono text-[9px] text-dl-gray">PAXG:</span>
+                                    <input
+                                      type="number"
+                                      value={reservesTopUpAmount}
+                                      onChange={e => setReservesTopUpAmount(e.target.value)}
+                                      className="font-dl-mono text-xs border border-dl-border px-2 py-1.5 bg-white w-24 outline-none"
+                                      min="0.001"
+                                      step="0.01"
+                                      placeholder="0.01"
+                                    />
+                                  </div>
+                                  <button
+                                    onClick={topUpAxauBuffer}
+                                    disabled={reservesTopUpLoading || !!asset.mintPaused || !reservesAdminKey}
+                                    title={asset.mintPaused ? 'Mint is paused on-chain' : !reservesAdminKey ? 'Admin key required' : 'Mint AXAU from PAXG into deployer buffer'}
+                                    className="font-dl-mono text-[9px] border border-dl-navy text-dl-navy px-3 py-1.5 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50 transition-colors"
+                                  >
+                                    {reservesTopUpLoading ? 'Submitting…' : 'Trigger Buffer Mint'}
+                                  </button>
+                                </div>
+                                {reservesTopUpResult && (
+                                  <p className={`font-dl-mono text-[9px] mt-2 leading-relaxed break-all ${reservesTopUpResult.ok ? 'text-dl-forest' : 'text-dl-error'}`}>
+                                    {reservesTopUpResult.msg}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* AXUSD — Inline Mint Form */}
+                            {asset.symbol === 'AXUSD' && (
+                              <div className="px-5 py-3 border-t border-dl-border">
+                                <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-2">Mint AXUSD (MINTER_ROLE · Deployer EOA)</p>
+                                <div className="flex gap-2 flex-wrap items-center">
+                                  <input
+                                    type="number"
+                                    placeholder="Amount"
+                                    value={reservesMintAmount}
+                                    onChange={e => setReservesMintAmount(e.target.value)}
+                                    className="font-dl-mono text-xs border border-dl-border px-2 py-1.5 bg-white w-28 outline-none"
+                                    min="0"
+                                    step="100"
+                                  />
+                                  <input
+                                    type="text"
+                                    placeholder="Recipient 0x…"
+                                    value={reservesMintTo}
+                                    onChange={e => setReservesMintTo(e.target.value)}
+                                    className="font-dl-mono text-xs border border-dl-border px-2 py-1.5 bg-white w-44 outline-none"
+                                  />
+                                  <button
+                                    onClick={mintAxusd}
+                                    disabled={reservesMintLoading || !reservesAdminKey}
+                                    title={!reservesAdminKey ? 'Admin key required' : 'Mint AXUSD to recipient via deployer EOA (direct) or Safe proposal (≥10k)'}
+                                    className="font-dl-mono text-[9px] border border-dl-navy text-dl-navy px-3 py-1.5 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50 transition-colors"
+                                  >
+                                    {reservesMintLoading ? 'Minting…' : 'Mint AXUSD'}
+                                  </button>
+                                </div>
+                                <p className="font-dl-mono text-[8px] text-dl-gray mt-1.5 opacity-70">Under 10,000 AXUSD executes directly · 10,000+ creates a Safe proposal</p>
+                                {reservesMintResult && (
+                                  <p className={`font-dl-mono text-[9px] mt-2 leading-relaxed break-all ${reservesMintResult.ok ? 'text-dl-forest' : 'text-dl-error'}`}>
+                                    {reservesMintResult.msg}
+                                  </p>
+                                )}
                               </div>
                             )}
                           </div>

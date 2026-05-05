@@ -76,6 +76,7 @@ export interface ReserveAssetPosition {
   actionUrl?: string;
   bufferCapacity?: 'SUFFICIENT' | 'PARTIAL' | 'DEPLETED';
   mintPaused?: boolean;
+  lastUpdatedAt: string;
 }
 
 export interface ReservePositionsResponse {
@@ -299,14 +300,14 @@ export default async function handler(
           ? `${fmtBal(paxgBal, 4)} PAXG in custody${bitgoPaxg ? ' (BitGo CaaS)' : ' (EOA fallback)'}`
           : 'No PAXG balance detected in BitGo or deployer EOA',
         depositAddress:    DEPLOYER_EOA,
-        depositLabel:      'Managed via BitGo CaaS — send PAXG to BitGo wallet',
-        depositArbiscanUrl: arbiUrl(PAXG_ARBITRUM),
+        depositLabel:      'Deployer EOA — PAXG on Arbitrum One (custodied via BitGo CaaS)',
+        depositArbiscanUrl: arbiUrl(DEPLOYER_EOA),
         locationBreakdown: [{
-          label:           paxgBal > 0 ? paxgBalSrc : 'BitGo CaaS Custody',
-          address:         PAXG_ARBITRUM,
+          label:           paxgBal > 0 ? paxgBalSrc : 'BitGo CaaS Custody (Arbitrum One)',
+          address:         DEPLOYER_EOA,
           balance:         paxgBal,
           balanceFormatted: fmtBal(paxgBal, 6) + ' PAXG',
-          arbiscanUrl:     arbiUrl(PAXG_ARBITRUM),
+          arbiscanUrl:     arbiUrl(DEPLOYER_EOA),
         }],
         actionType:  'open_bitgo',
         actionLabel: 'Open BitGo Dashboard',
@@ -446,10 +447,14 @@ export default async function handler(
       },
     ];
 
+    // Stamp every asset with the same fetch timestamp
+    const batchFetchedAt = new Date().toISOString();
+    const stampedAssets  = assets.map(a => ({ ...a, lastUpdatedAt: batchFetchedAt }));
+
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({
       success: true,
-      assets,
+      assets:  stampedAssets,
       totals: {
         totalValueUsd,
         totalValueUsdFormatted: '$' + totalValueUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
