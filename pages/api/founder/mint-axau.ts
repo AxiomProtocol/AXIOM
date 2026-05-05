@@ -135,7 +135,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       paxgSpent:  paxgAmountFloat,
       axauMinted: quotedAxauFormatted,
       gasUsed:    receipt?.gasUsed?.toString() ?? null,
-      message:    `Mint submitted — ${paxgAmountFloat} PAXG → AXGoldVault, ~${quotedAxauFormatted} minted to deployer buffer.`,
+      message:    `Mint submitted — ${paxgAmountFloat} PAXG → AXGoldVault, ~${quotedAxauFormatted} minted to deployer buffer. TX: ${mintTx.hash}`,
     });
   } catch (err: unknown) {
     const e = err as { message?: string };

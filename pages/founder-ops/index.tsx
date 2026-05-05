@@ -3715,13 +3715,14 @@ export default function FounderOpsPage() {
                                   </div>
                                   <button
                                     onClick={topUpAxauBuffer}
-                                    disabled={reservesTopUpLoading || !!asset.mintPaused || !!asset.oracleStale || !reservesAdminKey || (() => {
+                                    disabled={reservesTopUpLoading || !!asset.mintPaused || !!asset.oracleStale || asset.bufferCapacity === 'DEPLETED' || !reservesAdminKey || (() => {
                                       const paxg = (reservesData?.assets as any[])?.find((a: any) => a.symbol === 'PAXG');
                                       return !paxg || paxg.balance <= 0;
                                     })()}
                                     title={
                                       !!asset.oracleStale ? `Chainlink XAU/USD oracle is stale (${asset.oracleAgeSeconds !== null && asset.oracleAgeSeconds !== undefined ? Math.floor(asset.oracleAgeSeconds / 3600) + 'h' : '?'} old) — mint gated until oracle updates` :
                                       asset.mintPaused ? 'Mint is paused on-chain (MintRedeemController.mintPaused = true)' :
+                                      asset.bufferCapacity === 'DEPLETED' ? 'AXAU buffer is DEPLETED — replenish buffer before triggering another mint' :
                                       !reservesAdminKey ? 'Admin key required' :
                                       (() => {
                                         const paxg = (reservesData?.assets as any[])?.find((a: any) => a.symbol === 'PAXG');
