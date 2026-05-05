@@ -45,16 +45,23 @@ export interface SnapshotRunResult {
 }
 
 export async function runReserveSnapshot(): Promise<SnapshotRunResult> {
-  const adminKey = process.env.ADMIN_SOLVENCY_KEY ?? '';
-  if (!adminKey) {
-    // Log at startup so operators see the misconfiguration immediately in cron logs
+  const adminKey   = process.env.ADMIN_SOLVENCY_KEY ?? '';
+  const cronSecret = process.env.CRON_SECRET ?? '';
+
+  if (!adminKey && !cronSecret) {
     console.error(
-      '[reserveSnapshotRunner] ADMIN_SOLVENCY_KEY is not set. ' +
-      'The snapshot cron will fail until this env var is configured. ' +
-      'Set it alongside CRON_SECRET in Vercel environment settings.',
+      '[reserveSnapshotRunner] Neither ADMIN_SOLVENCY_KEY nor CRON_SECRET is set. ' +
+      'The snapshot cron will fail until at least one of these env vars is configured ' +
+      'in Vercel environment settings.',
     );
-    throw new Error('ADMIN_SOLVENCY_KEY is not set — cannot call reserve-positions API');
+    throw new Error('Neither ADMIN_SOLVENCY_KEY nor CRON_SECRET is set — cannot call reserve-positions API');
   }
+
+  // Prefer ADMIN_SOLVENCY_KEY (x-admin-key header); fall back to CRON_SECRET (Bearer token).
+  // The reserve-positions endpoint accepts both.
+  const requestHeaders: Record<string, string> = adminKey
+    ? { 'x-admin-key': adminKey }
+    : { 'Authorization': `Bearer ${cronSecret}` };
 
   const snapshotHour = currentSnapshotHour();
   const written: string[] = [];
@@ -67,7 +74,7 @@ export async function runReserveSnapshot(): Promise<SnapshotRunResult> {
 
   try {
     const res = await fetch(url, {
-      headers: { 'x-admin-key': adminKey },
+      headers: requestHeaders,
       signal: AbortSignal.timeout(55_000),
     });
     const json = await res.json() as ReservePositionsResponse;

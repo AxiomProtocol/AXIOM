@@ -170,7 +170,12 @@ export default async function handler(
     });
   }
 
-  if (!validateAdminKey(req)) {
+  const cronSecret = process.env.CRON_SECRET ?? '';
+  const bearerToken = (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
+  const cronHeader  = (req.headers['x-cron-secret'] as string) ?? '';
+  const validCron   = !!(cronSecret && (bearerToken === cronSecret || cronHeader === cronSecret));
+
+  if (!validateAdminKey(req) && !validCron) {
     return res.status(401).json({
       ...EMPTY,
       fetchedAt: new Date().toISOString(),

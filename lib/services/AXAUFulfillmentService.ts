@@ -22,6 +22,7 @@ import {
   assertOracleFresh,
   isOracleFresh,
 } from './AXAUContractService';
+import { DEPLOYER_EOA } from '../../src/config/adminRoles';
 import { db } from '../../server/db';
 import { axauPurchaseRequests } from '../../shared/axauSchema';
 import { adminActionLog } from '../../shared/erc3643Schema';
@@ -214,7 +215,6 @@ export interface VaultBufferState {
 }
 
 export async function getVaultBuffer(): Promise<VaultBufferState> {
-  const signer   = getSigner();
   const provider = getProvider();
 
   const [reserveAssetAddress, xauPrice, mintPausedRaw] = await Promise.all([
@@ -227,9 +227,10 @@ export async function getVaultBuffer(): Promise<VaultBufferState> {
   const paxg     = new ethers.Contract(reserveAssetAddress, ERC20_ABI, provider);
   const axauToken = new ethers.Contract(AXAU_ADDRESSES.AXAUTokenLite3643, ERC20_ABI, provider);
 
+  // Read balances held by the deployer EOA — no private key needed for view calls.
   const [paxgBalance, axauBalance] = await Promise.all([
-    paxg.balanceOf(signer.address).then((b: bigint) => BigInt(b)),
-    axauToken.balanceOf(signer.address).then((b: bigint) => BigInt(b)),
+    paxg.balanceOf(DEPLOYER_EOA).then((b: bigint) => BigInt(b)),
+    axauToken.balanceOf(DEPLOYER_EOA).then((b: bigint) => BigInt(b)),
   ]);
 
   const pendingOrders = await db
@@ -256,7 +257,7 @@ export async function getVaultBuffer(): Promise<VaultBufferState> {
   else                                                                  bufferCapacity = 'PARTIAL';
 
   return {
-    deployerAddress:      signer.address,
+    deployerAddress:      DEPLOYER_EOA,
     paxgBalanceRaw:       paxgBalance.toString(),
     paxgBalanceFormatted: paxgBalanceFloat.toFixed(6),
     paxgValueUsd:         paxgValueUsd.toFixed(2),
