@@ -114,7 +114,8 @@ type TabId =
   | 'banking'
   | 'axauQueue'
   | 'axiomRail'
-  | 'daoAccounts';
+  | 'daoAccounts'
+  | 'reserves';
 
 const FRAMEWORK_PRINCIPLE = `This is not a personal budget. This is a disciplined capital deployment system designed to build a machine-verifiable operating record across Axiom's live rails. The objective is not to maximize short-term return. The objective is to systematically produce proof that Axiom's infrastructure is active, capitalized, measurable, and compounding across on-chain liquidity, real asset intelligence, and community coordination.`;
 
@@ -299,6 +300,13 @@ export default function FounderOpsPage() {
   const [axauVault, setAxauVault] = useState<any | null>(null);
   const [axauBuffer, setAxauBuffer] = useState<any | null>(null);
   const [axauBufferLoading, setAxauBufferLoading] = useState(false);
+
+  // Reserves tab state
+  const [reservesData, setReservesData] = useState<any | null>(null);
+  const [reservesLoading, setReservesLoading] = useState(false);
+  const [reservesError, setReservesError] = useState<string | null>(null);
+  const [reservesAdminKey, setReservesAdminKey] = useState('');
+  const [reservesCopied, setReservesCopied] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -804,6 +812,35 @@ export default function FounderOpsPage() {
     }
   };
 
+  const loadReserves = async (key?: string) => {
+    const k = key ?? reservesAdminKey;
+    if (!k) { setReservesError('Enter admin key and click Refresh.'); return; }
+    setReservesLoading(true);
+    setReservesError(null);
+    try {
+      const res = await fetch('/api/founder/reserve-positions', {
+        headers: { 'x-admin-key': k },
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setReservesError(json.error ?? 'Failed to load reserve positions');
+      } else {
+        setReservesData(json);
+      }
+    } catch (e) {
+      setReservesError(String(e));
+    } finally {
+      setReservesLoading(false);
+    }
+  };
+
+  const copyReserveAddr = (addr: string) => {
+    navigator.clipboard.writeText(addr).then(() => {
+      setReservesCopied(addr);
+      setTimeout(() => setReservesCopied(null), 2000);
+    }).catch(() => {});
+  };
+
   const loadVariances = async () => {
     setVarianceLoading(true);
     try {
@@ -909,6 +946,7 @@ export default function FounderOpsPage() {
     { id: 'axauQueue', label: `AXAU Queue${axauQueue.filter(r => r.status === 'pending').length > 0 ? ` (${axauQueue.filter(r => r.status === 'pending').length})` : ''}` },
     { id: 'axiomRail', label: `Axiom Rail${railSummary ? ` (${(railSummary.byStatus.pending_user_transfer_start ?? 0) + (railSummary.byStatus.pending_external ?? 0) + (railSummary.byStatus.pending_anchor ?? 0)} pending)` : ''}` },
     { id: 'daoAccounts', label: `DAO Accounts${daoAccounts.filter(a => a.status === 'pending_review').length > 0 ? ` (${daoAccounts.filter(a => a.status === 'pending_review').length} pending)` : ''}` },
+    { id: 'reserves', label: 'Reserves' },
   ];
 
   const primaryPool = pools.find(p => p.reserve0Label && p.reserve1Label) || pools[0] || null;
@@ -954,6 +992,7 @@ export default function FounderOpsPage() {
                     if (tab.id === 'axauQueue') { loadAxauQueue(); }
                     if (tab.id === 'axiomRail') { loadAxiomRailSettlements(); }
                     if (tab.id === 'daoAccounts') { loadDaoAccounts(); }
+                    if (tab.id === 'reserves') { loadReserves(); }
                   }}
                   className={`px-4 py-2 text-sm border-b-2 -mb-px ${
                     activeTab === tab.id
@@ -3296,6 +3335,292 @@ export default function FounderOpsPage() {
                     ))}
                   </div>
                 </div>
+              </>
+            )}
+
+            {/* ── TAB: RESERVES ──────────────────────────────────────── */}
+            {activeTab === 'reserves' && (
+              <>
+                <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+                  <div>
+                    <h2 className="font-dl-serif text-xl text-dl-navy mb-1">Reserve Asset Management</h2>
+                    <p className="font-dl-mono text-xs text-dl-gray">Live balances · Deposit addresses · Operational status — ETH, PAXG, AXAU, AXM, USDC, AXUSD</p>
+                  </div>
+                  <a
+                    href="/observer/reserve-performance"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy"
+                  >
+                    Public Performance View ↗
+                  </a>
+                </div>
+
+                {/* Admin key + Refresh */}
+                <div className="flex gap-3 items-center mb-5 flex-wrap">
+                  <input
+                    type="password"
+                    placeholder="Admin key"
+                    value={reservesAdminKey}
+                    onChange={e => setReservesAdminKey(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && loadReserves(reservesAdminKey)}
+                    className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-surface w-56 outline-none"
+                  />
+                  <button
+                    onClick={() => loadReserves(reservesAdminKey)}
+                    disabled={reservesLoading}
+                    className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 uppercase tracking-wider hover:bg-dl-navy hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    {reservesLoading ? 'Loading…' : 'Refresh'}
+                  </button>
+                  {reservesData?.fetchedAt && (
+                    <span className="font-dl-mono text-[9px] text-dl-gray">
+                      Last fetched: {new Date(reservesData.fetchedAt).toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
+
+                {reservesError && (
+                  <div className="border border-dl-error p-4 mb-4">
+                    <p className="font-dl-mono text-xs text-dl-error">{reservesError}</p>
+                  </div>
+                )}
+
+                {reservesLoading && !reservesData && (
+                  <p className="font-dl-mono text-xs text-dl-gray">Fetching reserve positions from Arbitrum One…</p>
+                )}
+
+                {!reservesLoading && !reservesData && !reservesError && (
+                  <div className="border border-dl-border p-8 text-center">
+                    <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">No data loaded</p>
+                    <p className="font-dl-serif text-sm text-dl-gray mt-2">Enter admin key and click Refresh to load live reserve balances.</p>
+                  </div>
+                )}
+
+                {reservesData && (
+                  <>
+                    {/* Totals strip */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-6 bg-dl-bg-alt">
+                      {[
+                        { label: 'Total Reserve Value', value: reservesData.totals.totalValueUsdFormatted, color: 'text-dl-navy' },
+                        {
+                          label: 'ETH Gas Reserve',
+                          value: reservesData.totals.ethStatus === 'LOW' ? 'LOW' : 'NOMINAL',
+                          color: reservesData.totals.ethStatus === 'LOW' ? 'text-dl-error' : 'text-dl-forest',
+                        },
+                        {
+                          label: 'AXAU Buffer',
+                          value: reservesData.totals.axauBufferCapacity === 'UNKNOWN' ? '—' : reservesData.totals.axauBufferCapacity,
+                          color: reservesData.totals.axauBufferCapacity === 'SUFFICIENT' ? 'text-dl-forest' : reservesData.totals.axauBufferCapacity === 'DEPLETED' ? 'text-dl-error' : reservesData.totals.axauBufferCapacity === 'PARTIAL' ? 'text-yellow-700' : 'text-dl-gray',
+                        },
+                        {
+                          label: 'AXAU Mint',
+                          value: reservesData.totals.mintPaused ? 'PAUSED' : 'ACTIVE',
+                          color: reservesData.totals.mintPaused ? 'text-dl-error' : 'text-dl-forest',
+                        },
+                      ].map((item, i) => (
+                        <div key={i} className="p-4 border-r border-dl-border last:border-r-0">
+                          <p className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider mb-1">{item.label}</p>
+                          <p className={`font-dl-mono text-sm font-bold ${item.color}`}>{item.value}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Asset cards — 2-column grid on desktop */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                      {(reservesData.assets as any[]).map((asset: any) => {
+                        const statusConfig: Record<string, { border: string; badge: string; text: string }> = {
+                          OK:       { border: 'border-dl-border',   badge: 'border-dl-forest text-dl-forest bg-green-50',  text: 'OK' },
+                          LOW:      { border: 'border-yellow-400',  badge: 'border-yellow-500 text-yellow-700 bg-yellow-50', text: 'LOW' },
+                          PARTIAL:  { border: 'border-yellow-400',  badge: 'border-yellow-500 text-yellow-700 bg-yellow-50', text: 'PARTIAL' },
+                          ZERO:     { border: 'border-dl-border',   badge: 'border-dl-gray text-dl-gray',                text: 'ZERO' },
+                          DEPLETED: { border: 'border-dl-error',    badge: 'border-dl-error text-dl-error bg-red-50',    text: 'DEPLETED' },
+                          UNKNOWN:  { border: 'border-dl-border',   badge: 'border-dl-gray text-dl-gray',                text: '—' },
+                        };
+                        const sc = statusConfig[asset.status] ?? statusConfig.UNKNOWN;
+                        const isDepositCopied = reservesCopied === asset.depositAddress;
+
+                        return (
+                          <div key={asset.symbol} className={`border ${sc.border} bg-dl-bg-alt`}>
+                            {/* Card header */}
+                            <div className="px-5 py-4 border-b border-dl-border flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-dl-mono text-base font-bold text-dl-navy">{asset.symbol}</span>
+                                  <span className={`font-dl-mono text-[9px] border px-1.5 py-0.5 uppercase tracking-wider ${sc.badge}`}>
+                                    {sc.text}
+                                  </span>
+                                </div>
+                                <p className="font-dl-mono text-[10px] text-dl-gray truncate">{asset.label}</p>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="font-dl-mono text-sm font-bold text-dl-navy">{asset.balanceFormatted}</p>
+                                <p className="font-dl-mono text-[10px] text-dl-gray mt-0.5">
+                                  {asset.usdValue !== null
+                                    ? '$' + (asset.usdValue as number).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                    : 'Price unavailable'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Status detail */}
+                            <div className="px-5 py-3 border-b border-dl-border">
+                              <p className="font-dl-mono text-[9px] text-dl-gray leading-relaxed">{asset.statusDetail}</p>
+                              {asset.price !== null && (
+                                <p className="font-dl-mono text-[9px] text-dl-gray mt-1">
+                                  Price: ${typeof asset.price === 'number' && asset.price > 100
+                                    ? asset.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                    : (asset.price as number).toFixed(6)
+                                  } · {asset.priceSource}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Location breakdown */}
+                            {(asset.locationBreakdown as any[]).length > 1 && (
+                              <div className="px-5 py-3 border-b border-dl-border">
+                                <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-2">Location Breakdown</p>
+                                <div className="space-y-1">
+                                  {(asset.locationBreakdown as any[]).map((loc: any) => (
+                                    <div key={loc.address} className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-1 min-w-0">
+                                        <a
+                                          href={loc.arbiscanUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="font-dl-mono text-[9px] text-dl-navy underline truncate max-w-[140px]"
+                                          title={loc.address}
+                                        >
+                                          {loc.label}
+                                        </a>
+                                      </div>
+                                      <span className="font-dl-mono text-[9px] text-dl-gray flex-shrink-0">{loc.balanceFormatted}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Deposit address + action */}
+                            <div className="px-5 py-3 flex items-start justify-between gap-3 flex-wrap">
+                              <div className="min-w-0 flex-1">
+                                <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-1">Deposit Address</p>
+                                <a
+                                  href={asset.depositArbiscanUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-dl-mono text-[10px] text-dl-navy underline break-all"
+                                  title={asset.depositLabel}
+                                >
+                                  {asset.depositAddress.slice(0, 10)}…{asset.depositAddress.slice(-8)}
+                                </a>
+                                <p className="font-dl-mono text-[8px] text-dl-gray mt-0.5">{asset.depositLabel}</p>
+                              </div>
+                              <div className="flex-shrink-0 flex flex-col gap-1.5">
+                                {/* Primary action */}
+                                {(asset.actionType === 'copy_address' || asset.actionType === 'axau_buffer') && (
+                                  <button
+                                    onClick={() => copyReserveAddr(asset.depositAddress)}
+                                    className={`font-dl-mono text-[9px] border px-3 py-1.5 uppercase tracking-wider transition-colors ${
+                                      isDepositCopied
+                                        ? 'border-dl-forest text-dl-forest bg-green-50'
+                                        : 'border-dl-navy text-dl-navy hover:bg-dl-navy hover:text-white'
+                                    }`}
+                                  >
+                                    {isDepositCopied ? 'Copied ✓' : asset.actionLabel}
+                                  </button>
+                                )}
+                                {(asset.actionType === 'open_bitgo' || asset.actionType === 'open_safe' || asset.actionType === 'open_contract') && asset.actionUrl && (
+                                  <a
+                                    href={asset.actionUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-dl-mono text-[9px] border border-dl-navy text-dl-navy px-3 py-1.5 uppercase tracking-wider hover:bg-dl-navy hover:text-white transition-colors text-center"
+                                  >
+                                    {asset.actionLabel} ↗
+                                  </a>
+                                )}
+                                {/* Secondary: view on Arbiscan */}
+                                <a
+                                  href={asset.depositArbiscanUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy text-center"
+                                >
+                                  View ↗
+                                </a>
+                                {/* AXAU buffer copy-also option */}
+                                {asset.actionType === 'axau_buffer' && (
+                                  <button
+                                    onClick={() => copyReserveAddr(asset.depositAddress)}
+                                    className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy"
+                                  >
+                                    Replenish: Send PAXG ↓
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* AXAU buffer-specific extra state */}
+                            {asset.symbol === 'AXAU' && asset.bufferCapacity && (
+                              <div className={`px-5 py-2 border-t border-dl-border ${
+                                asset.bufferCapacity === 'SUFFICIENT' ? 'bg-green-50' :
+                                asset.bufferCapacity === 'DEPLETED'   ? 'bg-red-50'   :
+                                'bg-yellow-50'
+                              }`}>
+                                <div className="flex items-center gap-3 flex-wrap">
+                                  <span className={`font-dl-mono text-[9px] border px-2 py-0.5 uppercase tracking-wider ${
+                                    asset.bufferCapacity === 'SUFFICIENT' ? 'border-dl-forest text-dl-forest' :
+                                    asset.bufferCapacity === 'DEPLETED'   ? 'border-dl-error text-dl-error' :
+                                    'border-yellow-500 text-yellow-700'
+                                  }`}>
+                                    {asset.bufferCapacity}
+                                  </span>
+                                  {asset.mintPaused && (
+                                    <span className="font-dl-mono text-[9px] border border-dl-error text-dl-error px-2 py-0.5 uppercase tracking-wider">
+                                      MINT PAUSED
+                                    </span>
+                                  )}
+                                  <span className="font-dl-mono text-[9px] text-dl-gray">
+                                    To top up: send AXAU (PATH A) or PAXG (PATH B) to deployer EOA on Arbitrum One
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Footer — addresses reference */}
+                    <div className="border-t border-dl-border pt-5">
+                      <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-3">Address Reference</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {[
+                          { label: 'Deployer EOA', addr: reservesData.deployer },
+                          { label: 'Governance Safe (3-of-5)', addr: reservesData.governanceSafe },
+                        ].map(item => (
+                          <div key={item.addr} className="flex items-center justify-between gap-3 border border-dl-border px-4 py-2 bg-dl-bg-alt">
+                            <div>
+                              <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">{item.label}</p>
+                              <p className="font-dl-mono text-[10px] text-dl-navy mt-0.5 break-all">{item.addr}</p>
+                            </div>
+                            <button
+                              onClick={() => copyReserveAddr(item.addr)}
+                              className={`font-dl-mono text-[9px] border px-2 py-1 uppercase tracking-wider flex-shrink-0 ${
+                                reservesCopied === item.addr
+                                  ? 'border-dl-forest text-dl-forest bg-green-50'
+                                  : 'border-dl-border text-dl-gray hover:text-dl-navy'
+                              }`}
+                            >
+                              {reservesCopied === item.addr ? 'Copied' : 'Copy'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </>
