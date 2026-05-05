@@ -21,11 +21,11 @@
  * Never throws — all errors are caught and returned in the result object.
  */
 
-import { Pool } from 'pg';
 import { ethers } from 'ethers';
 import { getResendClient } from '../email/resend';
 import { getVaultBuffer } from '../services/AXAUFulfillmentService';
 import { DEPLOYER_EOA } from '../../src/config/adminRoles';
+import { pool as sharedPool } from '../../server/db';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const ETH_LOW_THRESHOLD = 0.1;
@@ -51,14 +51,6 @@ function buildDashboardUrl(): string {
 }
 
 // ── DB helpers ─────────────────────────────────────────────────────────────
-let _pool: Pool | null = null;
-function getPool(): Pool {
-  if (!_pool) {
-    _pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  }
-  return _pool;
-}
-
 interface AlertRow {
   id: string;
   alert_key: string;
@@ -71,14 +63,13 @@ interface AlertRow {
 }
 
 async function getOrCreateRow(alertKey: string): Promise<AlertRow> {
-  const pool = getPool();
   // Upsert row on first encounter
-  await pool.query(
+  await sharedPool.query(
     `INSERT INTO reserve_alerts (alert_key) VALUES ($1)
      ON CONFLICT (alert_key) DO NOTHING`,
     [alertKey],
   );
-  const { rows } = await pool.query<AlertRow>(
+  const { rows } = await sharedPool.query<AlertRow>(
     `SELECT * FROM reserve_alerts WHERE alert_key = $1`,
     [alertKey],
   );
@@ -86,7 +77,7 @@ async function getOrCreateRow(alertKey: string): Promise<AlertRow> {
 }
 
 async function markActive(alertKey: string, valueSnapshot: string, channelsPaged: string): Promise<void> {
-  await getPool().query(
+  await sharedPool.query(
     `UPDATE reserve_alerts
      SET condition_active = TRUE,
          last_sent_at = NOW(),
@@ -101,7 +92,7 @@ async function markActive(alertKey: string, valueSnapshot: string, channelsPaged
 }
 
 async function markCleared(alertKey: string): Promise<void> {
-  await getPool().query(
+  await sharedPool.query(
     `UPDATE reserve_alerts
      SET condition_active = FALSE,
          condition_cleared_at = NOW(),
