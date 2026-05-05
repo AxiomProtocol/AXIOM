@@ -428,9 +428,18 @@ export async function runReserveAlerts(): Promise<ReserveAlertRunResult> {
           const result = await fanOut(cond.payload);
           channelsPaged = result.channelsPaged;
           errors = result.errors;
-          await markActive(cond.alertKey, cond.valueSnapshot, channelsPaged.join(','));
-          action = 'sent';
-          totalAlertsSent++;
+          if (channelsPaged.length > 0) {
+            // Only advance dedup state when at least one channel succeeded.
+            // If all channels failed, keep condition_active = false so the
+            // next cron run retries notification rather than silently suppressing it.
+            await markActive(cond.alertKey, cond.valueSnapshot, channelsPaged.join(','));
+            action = 'sent';
+            totalAlertsSent++;
+          } else {
+            // All channels failed — log and leave state inactive so we retry
+            console.error(`${LOG} all notification channels failed for ${cond.alertKey}; will retry on next run. Errors: ${errors.join('; ')}`);
+            action = 'no_change';
+          }
         } else {
           skipped = true;
           action = 'no_change';
