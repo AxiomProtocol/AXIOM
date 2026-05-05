@@ -26,7 +26,7 @@ import { validateAdminKey, GOVERNANCE_SAFE, DEPLOYER_EOA } from '../../../src/co
 import { CORE_CONTRACTS, AXUSD_GENIUS_CONTRACTS, STABLECOINS } from '../../../shared/contracts';
 import { ERC3643_CONTRACTS } from '../../../shared/contracts-3643';
 import { CANONICAL_PSM, EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, isEulerSwapDeployed } from '../../../src/config/activeContracts.generated';
-import { AXAU_ADDRESSES } from '../../../lib/services/AXAUContractService';
+import { AXAU_ADDRESSES, ORACLE_STALE_THRESHOLD_SECONDS } from '../../../lib/services/AXAUContractService';
 import { bitGoTreasuryExtension } from '../../../lib/services/BitGoTreasuryExtension';
 import { getVaultBuffer } from '../../../lib/services/AXAUFulfillmentService';
 
@@ -48,6 +48,9 @@ const POOL_ABI  = [
   'function getReserves() view returns (uint112,uint112,uint32)',
   'function getAssets() view returns (address,address)',
 ];
+const CHAINLINK_ABI = [
+  'function latestRoundData() view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)',
+] as const;
 const ZERO = '0x0000000000000000000000000000000000000000';
 const AXM_LC = AXM_ADDRESS.toLowerCase();
 
@@ -76,6 +79,9 @@ export interface ReserveAssetPosition {
   actionUrl?: string;
   bufferCapacity?: 'SUFFICIENT' | 'PARTIAL' | 'DEPLETED';
   mintPaused?: boolean;
+  oracleStale?: boolean;
+  oracleAgeSeconds?: number | null;
+  oracleThresholdSeconds?: number;
   lastUpdatedAt: string;
 }
 
@@ -179,6 +185,8 @@ export default async function handler(
     const axusd = new ethers.Contract(AXUSD_ADDRESS, ERC20_ABI, provider);
     const usdc  = new ethers.Contract(USDC_ADDRESS,  ERC20_ABI, provider);
 
+    const chainlink = new ethers.Contract(AXAU_ADDRESSES.ChainlinkXauUsd, CHAINLINK_ABI, provider);
+
     const [
       ethPrice,
       axmPrice,
@@ -192,6 +200,7 @@ export default async function handler(
       usdcLegacyRaw,
       usdcBackstopRaw,
       usdcDeployerRaw,
+      oracleRound,
     ] = await Promise.all([
       fetchEthPrice(),
       fetchAxmPrice(provider),
@@ -205,7 +214,14 @@ export default async function handler(
       usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.PSM).catch(() => 0n),
       usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC).catch(() => 0n),
       usdc.balanceOf(DEPLOYER_EOA).catch(() => 0n),
+      chainlink.latestRoundData().catch(() => null),
     ]);
+
+    // ── Oracle freshness ────────────────────────────────────────────────────
+    const nowSec          = Math.floor(Date.now() / 1000);
+    const oracleUpdatedAt = oracleRound ? Number(oracleRound[3]) : 0;
+    const oracleAgeSeconds: number | null = oracleUpdatedAt > 0 ? nowSec - oracleUpdatedAt : null;
+    const oracleStale     = oracleAgeSeconds !== null ? oracleAgeSeconds > ORACLE_STALE_THRESHOLD_SECONDS : true;
 
     // ── ETH ────────────────────────────────────────────────────────────────
     const ethBal   = Number(ethers.formatEther(ethBalRaw as bigint));
@@ -346,6 +362,9 @@ export default async function handler(
         actionLabel:     'Copy Deployer Address',
         bufferCapacity:  vault?.bufferCapacity,
         mintPaused,
+        oracleStale,
+        oracleAgeSeconds,
+        oracleThresholdSeconds: ORACLE_STALE_THRESHOLD_SECONDS,
       },
       {
         symbol:          'AXM',

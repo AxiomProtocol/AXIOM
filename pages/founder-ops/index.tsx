@@ -876,7 +876,7 @@ export default function FounderOpsPage() {
     setReservesTopUpLoading(true);
     setReservesTopUpResult(null);
     try {
-      const r = await fetch('/api/founder/top-up-axau-buffer', {
+      const r = await fetch('/api/founder/mint-axau', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': reservesAdminKey },
         body: JSON.stringify({ paxgAmountFloat: amt }),
@@ -3691,7 +3691,15 @@ export default function FounderOpsPage() {
                             {/* AXAU — Trigger Buffer Mint from PAXG (PATH B) */}
                             {asset.symbol === 'AXAU' && (
                               <div className="px-5 py-3 border-t border-dl-border">
-                                <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-2">Trigger Buffer Top-Up · PATH B (PAXG → AXAU)</p>
+                                <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-2">Trigger Mint from PAXG · PATH B</p>
+                                {asset.oracleStale && (
+                                  <div className="flex items-center gap-2 mb-2 px-2 py-1 border border-yellow-400 bg-yellow-50">
+                                    <span className="font-dl-mono text-[8px] border border-yellow-500 text-yellow-700 px-1.5 py-0.5 uppercase tracking-wider">Oracle Stale</span>
+                                    <span className="font-dl-mono text-[8px] text-yellow-700">
+                                      XAU/USD price stale ({asset.oracleAgeSeconds !== null && asset.oracleAgeSeconds !== undefined ? Math.floor(asset.oracleAgeSeconds / 3600) + 'h' : '?'} old · threshold {asset.oracleThresholdSeconds !== undefined ? Math.floor(asset.oracleThresholdSeconds / 3600) + 'h' : '27h'}) — mint disabled
+                                    </span>
+                                  </div>
+                                )}
                                 <div className="flex gap-2 items-center flex-wrap">
                                   <div className="flex items-center gap-1.5">
                                     <span className="font-dl-mono text-[9px] text-dl-gray">PAXG:</span>
@@ -3707,21 +3715,22 @@ export default function FounderOpsPage() {
                                   </div>
                                   <button
                                     onClick={topUpAxauBuffer}
-                                    disabled={reservesTopUpLoading || !!asset.mintPaused || !reservesAdminKey || (() => {
+                                    disabled={reservesTopUpLoading || !!asset.mintPaused || !!asset.oracleStale || !reservesAdminKey || (() => {
                                       const paxg = (reservesData?.assets as any[])?.find((a: any) => a.symbol === 'PAXG');
                                       return !paxg || paxg.balance <= 0;
                                     })()}
                                     title={
-                                      asset.mintPaused ? 'Mint is paused on-chain' :
+                                      !!asset.oracleStale ? `Chainlink XAU/USD oracle is stale (${asset.oracleAgeSeconds !== null && asset.oracleAgeSeconds !== undefined ? Math.floor(asset.oracleAgeSeconds / 3600) + 'h' : '?'} old) — mint gated until oracle updates` :
+                                      asset.mintPaused ? 'Mint is paused on-chain (MintRedeemController.mintPaused = true)' :
                                       !reservesAdminKey ? 'Admin key required' :
                                       (() => {
                                         const paxg = (reservesData?.assets as any[])?.find((a: any) => a.symbol === 'PAXG');
-                                        return (!paxg || paxg.balance <= 0) ? 'No PAXG balance detected in deployer EOA' : 'Mint AXAU from PAXG into deployer buffer';
+                                        return (!paxg || paxg.balance <= 0) ? 'No PAXG balance detected in deployer EOA' : 'Mint AXAU from PAXG into deployer buffer (PATH B)';
                                       })()
                                     }
                                     className="font-dl-mono text-[9px] border border-dl-navy text-dl-navy px-3 py-1.5 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50 transition-colors"
                                   >
-                                    {reservesTopUpLoading ? 'Submitting…' : 'Trigger Buffer Mint'}
+                                    {reservesTopUpLoading ? 'Submitting…' : 'Trigger Mint from PAXG'}
                                   </button>
                                 </div>
                                 {reservesTopUpResult && (
