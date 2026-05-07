@@ -13,7 +13,6 @@ import type { NextRequest } from 'next/server';
 
 const WALLET_ONLY_GATED_PAGE_PREFIXES: readonly string[] = [
   '/axiom-payment-rails',
-  '/axiom-rail',
   '/banking',
   '/credit',
   '/dao-payroll',

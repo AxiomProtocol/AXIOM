@@ -47,7 +47,6 @@ export const WALLET_ONLY_REASON =
  */
 export const WALLET_ONLY_GATED_PAGE_PREFIXES: readonly string[] = [
   '/axiom-payment-rails',
-  '/axiom-rail',          // /axiom-rail/deposit, /axiom-rail/withdraw
   '/banking',             // /banking, /banking/my-account, /banking/dao-account/*
   '/credit',
   '/dao-payroll',         // /dao-payroll, /dao-payroll/run
