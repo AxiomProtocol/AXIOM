@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import {
   DesignLawLayout,
@@ -318,6 +318,27 @@ export default function FounderOpsPage() {
   type SnapshotPoint = { t: string; balance: number; usdValue: number | null };
   const [reservesHistory, setReservesHistory] = useState<Record<string, SnapshotPoint[]>>({});
   const [reservesHistoryLoading, setReservesHistoryLoading] = useState(false);
+
+  // Aggregate reserve USD value per snapshot hour — shared by the 7D Change %
+  // cell in the totals strip AND the portfolio sparkline so both always reflect
+  // identical data without duplicating the summation logic.
+  const reservesAggregateBuckets = useMemo(() => {
+    const buckets: Record<string, number> = {};
+    for (const pts of Object.values(reservesHistory)) {
+      for (const pt of pts) {
+        if (pt.usdValue != null) {
+          buckets[pt.t] = (buckets[pt.t] ?? 0) + pt.usdValue;
+        }
+      }
+    }
+    return buckets;
+  }, [reservesHistory]);
+  const reservesAggregateSortedTimes = useMemo(
+    () => Object.keys(reservesAggregateBuckets).sort(
+      (a, b) => new Date(a).getTime() - new Date(b).getTime(),
+    ),
+    [reservesAggregateBuckets],
+  );
 
   useEffect(() => {
     Promise.all([
@@ -3482,28 +3503,12 @@ export default function FounderOpsPage() {
                   <>
                     {/* Totals strip */}
                     {(() => {
-                      // ── 7D change % from snapshot history ──────────────────
-                      // Sum usdValue across all symbols per snapshot_hour bucket,
-                      // then compare the oldest bucket total to the newest.
+                      // ── 7D change % from pre-computed aggregate buckets ─────
                       let sevenDayChange: number | null = null;
-                      const histSymbols = Object.values(reservesHistory);
-                      if (histSymbols.length > 0) {
-                        const buckets: Record<string, number> = {};
-                        for (const pts of histSymbols) {
-                          for (const pt of pts) {
-                            if (pt.usdValue != null) {
-                              buckets[pt.t] = (buckets[pt.t] ?? 0) + pt.usdValue;
-                            }
-                          }
-                        }
-                        const sortedTimes = Object.keys(buckets).sort(
-                          (a, b) => new Date(a).getTime() - new Date(b).getTime(),
-                        );
-                        if (sortedTimes.length >= 2) {
-                          const oldest = buckets[sortedTimes[0]];
-                          const latest = buckets[sortedTimes[sortedTimes.length - 1]];
-                          if (oldest > 0) sevenDayChange = ((latest - oldest) / oldest) * 100;
-                        }
+                      if (reservesAggregateSortedTimes.length >= 2) {
+                        const oldest = reservesAggregateBuckets[reservesAggregateSortedTimes[0]];
+                        const latest = reservesAggregateBuckets[reservesAggregateSortedTimes[reservesAggregateSortedTimes.length - 1]];
+                        if (oldest > 0) sevenDayChange = ((latest - oldest) / oldest) * 100;
                       }
 
                       // ── HEALTHY vs ALERT asset count from live data ─────────
@@ -3567,29 +3572,18 @@ export default function FounderOpsPage() {
 
                     {/* 7-day portfolio USD sparkline */}
                     {(() => {
-                      const histSymbols = Object.values(reservesHistory);
-                      if (reservesHistoryLoading && histSymbols.every(pts => pts.length === 0)) {
+                      if (reservesHistoryLoading && reservesAggregateSortedTimes.length === 0) {
                         return (
                           <div className="border border-dl-border mb-4 px-5 py-2 bg-dl-bg">
                             <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">7D Portfolio Trend — loading…</p>
                           </div>
                         );
                       }
-                      if (histSymbols.length === 0) return null;
+                      if (reservesAggregateSortedTimes.length < 2) return null;
 
-                      // Sum usdValue across all symbols per snapshot bucket
-                      const buckets: Record<string, number> = {};
-                      for (const pts of histSymbols) {
-                        for (const pt of pts) {
-                          if (pt.usdValue != null) {
-                            buckets[pt.t] = (buckets[pt.t] ?? 0) + pt.usdValue;
-                          }
-                        }
-                      }
-                      const sortedTimes = Object.keys(buckets).sort(
-                        (a, b) => new Date(a).getTime() - new Date(b).getTime(),
-                      );
-                      if (sortedTimes.length < 2) return null;
+                      // Use pre-computed aggregate buckets — identical source to 7D Change %
+                      const buckets = reservesAggregateBuckets;
+                      const sortedTimes = reservesAggregateSortedTimes;
 
                       const W = 600; const H = 40; const PAD = 3;
                       const drawH = H - PAD * 2;
