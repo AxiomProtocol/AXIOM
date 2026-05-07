@@ -29,8 +29,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ success: false, error: 'No extraction found for this document.' });
     }
     return res.status(200).json({ success: true, data: r.rows[0] });
-  } catch (err: any) {
-    console.error('[settlement-extraction]', err?.message);
-    return res.status(500).json({ success: false, error: err?.message ?? 'Lookup failed' });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Lookup failed';
+    console.error('[settlement-extraction]', msg);
+    return res.status(500).json({ success: false, error: msg });
   }
 }

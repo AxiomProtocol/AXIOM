@@ -626,7 +626,139 @@ export default function FounderOpsPage() {
     } catch { /* silent */ }
   };
 
+  // ── Settlement statement summary + lazy-loaded detail typings ────────────
+  type SettlementRow = {
+    order?: string | number | null;
+    date?: string | null;
+    description?: string | null;
+    amount?: number | string | null;
+    rate?: number | string | null;
+    miles?: number | string | null;
+    loaded_miles?: number | string | null;
+    empty_miles?: number | string | null;
+    type?: string | null;
+    origin?: string | null;
+    destination?: string | null;
+    dispatch_date?: string | null;
+    pickup_date?: string | null;
+    empty_date?: string | null;
+    ending_balance?: number | string | null;
+    balance_due?: number | string | null;
+  };
+  type SettlementPayload = {
+    statement_date?: string | null;
+    driver_name?: string | null;
+    driver_code?: string | null;
+    driver_address?: string | null;
+    driver_phone?: string | null;
+    driver_email?: string | null;
+    unit_number?: string | null;
+    total_miles?: number | string | null;
+    loaded_miles?: number | string | null;
+    empty_miles?: number | string | null;
+    miles_per_gallon?: number | string | null;
+    total_days_off?: number | string | null;
+    mileage_pay_rows?: SettlementRow[] | null;
+    mileage_pay_current?: number | string | null;
+    mileage_pay_ytd?: number | string | null;
+    mileage_pay_ltd?: number | string | null;
+    reimbursement_rows?: SettlementRow[] | null;
+    reimbursements_current?: number | string | null;
+    reimbursements_ytd?: number | string | null;
+    reimbursements_ltd?: number | string | null;
+    fuel_protection_rows?: SettlementRow[] | null;
+    fuel_protection_current?: number | string | null;
+    fuel_protection_ytd?: number | string | null;
+    fuel_protection_ltd?: number | string | null;
+    total_gross_pay_current?: number | string | null;
+    total_gross_pay_ytd?: number | string | null;
+    total_gross_pay_ltd?: number | string | null;
+    advances_rows?: SettlementRow[] | null;
+    advances_current?: number | string | null;
+    advances_ytd?: number | string | null;
+    advances_ltd?: number | string | null;
+    escrow_rows?: SettlementRow[] | null;
+    escrow_current?: number | string | null;
+    escrow_ytd?: number | string | null;
+    escrow_ltd?: number | string | null;
+    escrow_ending_balance?: number | string | null;
+    recurring_expense_rows?: SettlementRow[] | null;
+    recurring_expenses_current?: number | string | null;
+    recurring_expenses_ytd?: number | string | null;
+    recurring_expenses_ltd?: number | string | null;
+    truck_repair_rows?: SettlementRow[] | null;
+    truck_repairs_current?: number | string | null;
+    truck_repairs_ytd?: number | string | null;
+    truck_repairs_ltd?: number | string | null;
+    other_misc_rows?: SettlementRow[] | null;
+    other_misc_current?: number | string | null;
+    other_misc_ytd?: number | string | null;
+    other_misc_ltd?: number | string | null;
+    fuel_expense_rows?: SettlementRow[] | null;
+    fuel_expenses_current?: number | string | null;
+    fuel_expenses_ytd?: number | string | null;
+    fuel_expenses_ltd?: number | string | null;
+    total_deductions_current?: number | string | null;
+    total_deductions_ytd?: number | string | null;
+    total_deductions_ltd?: number | string | null;
+    previous_balance_due_current?: number | string | null;
+    total_net_pay_current?: number | string | null;
+    total_net_pay_ytd?: number | string | null;
+    total_net_pay_ltd?: number | string | null;
+  };
+  type SettlementListRow = {
+    id: string;
+    title: string;
+    description?: string | null;
+    file_name: string;
+    file_url: string;
+    created_at: string;
+    extraction_status?: 'extracted' | 'low_confidence' | 'failed' | null;
+    extraction_confidence?: number | null;
+    extraction_field_count?: number | null;
+    extraction_error?: string | null;
+    payload_statement_date?: string | null;
+    payload_unit_number?: string | null;
+    payload_driver_name?: string | null;
+    payload_total_miles?: string | number | null;
+    payload_loaded_miles?: string | number | null;
+    payload_empty_miles?: string | number | null;
+    payload_mileage_pay_current?: string | number | null;
+    payload_reimbursements_current?: string | number | null;
+    payload_fuel_protection_current?: string | number | null;
+    payload_total_gross_pay_current?: string | number | null;
+    payload_total_deductions_current?: string | number | null;
+    payload_total_net_pay_current?: string | number | null;
+    // Optional payload from in-session upload response
+    extraction?: { payload?: SettlementPayload | null } | null;
+  };
+  type DetailCacheEntry = { loading: boolean; payload: SettlementPayload | null; error: string | null };
   const [railExpandedDoc, setRailExpandedDoc] = useState<string | null>(null);
+  const [railDetailCache, setRailDetailCache] = useState<Record<string, DetailCacheEntry>>({});
+
+  const openSettlementDetail = async (docId: string, inlinePayload: SettlementPayload | null) => {
+    if (railExpandedDoc === docId) { setRailExpandedDoc(null); return; }
+    setRailExpandedDoc(docId);
+    if (railDetailCache[docId]?.payload) return;
+    if (inlinePayload) {
+      setRailDetailCache(prev => ({ ...prev, [docId]: { loading: false, payload: inlinePayload, error: null } }));
+      return;
+    }
+    setRailDetailCache(prev => ({ ...prev, [docId]: { loading: true, payload: null, error: null } }));
+    try {
+      const res = await fetch(`/api/founder/settlement-extraction?id=${encodeURIComponent(docId)}`, {
+        headers: { 'x-admin-key': railAdminKey },
+      });
+      const json = await res.json();
+      if (json.success) {
+        setRailDetailCache(prev => ({ ...prev, [docId]: { loading: false, payload: (json.data?.payload ?? null) as SettlementPayload | null, error: null } }));
+      } else {
+        setRailDetailCache(prev => ({ ...prev, [docId]: { loading: false, payload: null, error: json.error ?? 'Failed to load extraction' } }));
+      }
+    } catch {
+      setRailDetailCache(prev => ({ ...prev, [docId]: { loading: false, payload: null, error: 'Network error loading extraction' } }));
+    }
+  };
 
   const handleRailUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -3188,20 +3320,65 @@ export default function FounderOpsPage() {
                 )}
 
                 {/* Saved settlement statements */}
-                {railUploadDocs.length > 0 && (
+                {railUploadDocs.length > 0 && (() => {
+                  const fmt = (v: unknown): string => {
+                    if (v === null || v === undefined || v === '') return '—';
+                    const n = typeof v === 'number' ? v : Number(v);
+                    if (typeof v === 'string' && !Number.isFinite(n)) return v;
+                    if (!Number.isFinite(n)) return String(v);
+                    return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  };
+                  const fmtInt = (v: unknown): string => {
+                    if (v === null || v === undefined || v === '') return '—';
+                    const n = typeof v === 'number' ? v : Number(v);
+                    if (typeof v === 'string' && !Number.isFinite(n)) return v;
+                    if (!Number.isFinite(n)) return String(v);
+                    return Math.round(n).toLocaleString('en-US');
+                  };
+                  // Render a signed currency cell that preserves the underlying
+                  // numeric sign (escrow can legitimately be negative from
+                  // trailing-minus PDFs). For "deduction" rows we also show
+                  // positive values with a leading minus, since they reduce
+                  // gross pay.
+                  const signed = (raw: unknown, asDeduction = false): string => {
+                    if (raw === null || raw === undefined || raw === '') return '—';
+                    const n = Number(raw);
+                    if (!Number.isFinite(n)) return '—';
+                    if (n < 0) return `−$${fmt(Math.abs(n))}`;
+                    if (n > 0 && asDeduction) return `−$${fmt(n)}`;
+                    return `$${fmt(n)}`;
+                  };
+                  return (
                   <div className="border border-dl-border mb-6">
                     <div className="bg-dl-bg-alt border-b border-dl-border px-4 py-2">
                       <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray">Filed Settlement Statements ({railUploadDocs.length})</p>
                     </div>
                     <div className="divide-y divide-dl-border">
-                      {railUploadDocs.map((doc: any) => {
-                        const p = doc.extraction_payload || (doc.extraction && doc.extraction.payload) || null;
-                        const status = doc.extraction_status || (doc.extraction && doc.extraction.status) || null;
+                      {(railUploadDocs as SettlementListRow[]).map(doc => {
+                        const status = doc.extraction_status ?? null;
                         const isOpen = railExpandedDoc === doc.id;
-                        const fmt = (v: any) => (v === null || v === undefined || v === '') ? '—' :
-                          (typeof v === 'number' ? v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : String(v));
-                        const fmtInt = (v: any) => (v === null || v === undefined || v === '') ? '—' :
-                          (typeof v === 'number' ? v.toLocaleString('en-US') : String(v));
+                        const detail = railDetailCache[doc.id];
+                        // Inline payload (from in-session upload response) is
+                        // preferred when present; otherwise the lazy-loaded
+                        // detail cache supplies the full panel.
+                        const inlinePayload = doc.extraction?.payload ?? null;
+                        const detailPayload: SettlementPayload | null = detail?.payload ?? inlinePayload;
+                        // Summary metrics use the flattened payload_* columns
+                        // returned by the list endpoint, falling back to inline
+                        // payload when available.
+                        const sumStmtDate = doc.payload_statement_date ?? inlinePayload?.statement_date ?? null;
+                        const sumUnit     = doc.payload_unit_number    ?? inlinePayload?.unit_number    ?? null;
+                        const sumTotal    = doc.payload_total_miles    ?? inlinePayload?.total_miles    ?? null;
+                        const sumLoaded   = doc.payload_loaded_miles   ?? inlinePayload?.loaded_miles   ?? null;
+                        const sumEmpty    = doc.payload_empty_miles    ?? inlinePayload?.empty_miles    ?? null;
+                        const sumMileage  = doc.payload_mileage_pay_current     ?? inlinePayload?.mileage_pay_current     ?? null;
+                        const sumReimb    = doc.payload_reimbursements_current  ?? inlinePayload?.reimbursements_current  ?? null;
+                        const sumFuelPro  = doc.payload_fuel_protection_current ?? inlinePayload?.fuel_protection_current ?? null;
+                        const sumGross    = doc.payload_total_gross_pay_current ?? inlinePayload?.total_gross_pay_current ?? null;
+                        const sumDeduct   = doc.payload_total_deductions_current?? inlinePayload?.total_deductions_current?? null;
+                        const sumNet      = doc.payload_total_net_pay_current   ?? inlinePayload?.total_net_pay_current   ?? null;
+                        const reimbPlusFuel = (Number(sumReimb) || 0) + (Number(sumFuelPro) || 0);
+                        const hasSummary = status === 'extracted' || status === 'low_confidence';
                         return (
                           <div key={doc.id}>
                             <div className="px-4 py-3">
@@ -3211,8 +3388,8 @@ export default function FounderOpsPage() {
                                   {doc.description && <p className="font-dl-mono text-[9px] text-dl-gray mt-0.5">{doc.description}</p>}
                                   <p className="font-dl-mono text-[8px] text-dl-gray mt-0.5">
                                     Uploaded {new Date(doc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                    {p?.statement_date && <> · Statement {p.statement_date}</>}
-                                    {p?.unit_number && <> · Unit {p.unit_number}</>}
+                                    {sumStmtDate && <> · Statement {sumStmtDate}</>}
+                                    {sumUnit && <> · Unit {sumUnit}</>}
                                   </p>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
@@ -3220,7 +3397,7 @@ export default function FounderOpsPage() {
                                     <span className="font-dl-mono text-[8px] uppercase tracking-wider px-2 py-0.5 border border-dl-forest text-dl-forest">Extracted</span>
                                   )}
                                   {status === 'low_confidence' && (
-                                    <span className="font-dl-mono text-[8px] uppercase tracking-wider px-2 py-0.5 border border-yellow-700 text-yellow-700">Review manually</span>
+                                    <span className="font-dl-mono text-[8px] uppercase tracking-wider px-2 py-0.5 border border-yellow-700 text-yellow-700">Extraction incomplete — review manually</span>
                                   )}
                                   {status === 'failed' && (
                                     <span className="font-dl-mono text-[8px] uppercase tracking-wider px-2 py-0.5 border border-red-700 text-red-700">Extraction failed</span>
@@ -3228,9 +3405,9 @@ export default function FounderOpsPage() {
                                   {!status && (
                                     <span className="font-dl-mono text-[8px] uppercase tracking-wider px-2 py-0.5 border border-dl-border text-dl-gray">No extraction</span>
                                   )}
-                                  {p && (
+                                  {hasSummary && (
                                     <button
-                                      onClick={() => setRailExpandedDoc(isOpen ? null : doc.id)}
+                                      onClick={() => openSettlementDetail(doc.id, inlinePayload)}
                                       className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy"
                                     >
                                       {isOpen ? 'Hide details' : 'Open details'}
@@ -3247,194 +3424,189 @@ export default function FounderOpsPage() {
                                 </div>
                               </div>
 
-                              {p && (
+                              {hasSummary && (
                                 <div className="grid grid-cols-2 md:grid-cols-6 gap-px bg-dl-border mt-3 border border-dl-border">
                                   <div className="bg-dl-surface px-3 py-2">
                                     <p className="font-dl-mono text-[8px] uppercase tracking-wider text-dl-gray">Total Miles</p>
-                                    <p className="font-dl-mono text-xs text-dl-navy mt-0.5">{fmtInt(p.total_miles)}</p>
-                                    <p className="font-dl-mono text-[8px] text-dl-gray">L {fmtInt(p.loaded_miles)} / E {fmtInt(p.empty_miles)}</p>
+                                    <p className="font-dl-mono text-xs text-dl-navy mt-0.5">{fmtInt(sumTotal)}</p>
+                                    <p className="font-dl-mono text-[8px] text-dl-gray">L {fmtInt(sumLoaded)} / E {fmtInt(sumEmpty)}</p>
                                   </div>
                                   <div className="bg-dl-surface px-3 py-2">
                                     <p className="font-dl-mono text-[8px] uppercase tracking-wider text-dl-gray">Mileage Pay</p>
-                                    <p className="font-dl-mono text-xs text-dl-navy mt-0.5">${fmt(p.mileage_pay_current)}</p>
+                                    <p className="font-dl-mono text-xs text-dl-navy mt-0.5">${fmt(sumMileage)}</p>
                                   </div>
                                   <div className="bg-dl-surface px-3 py-2">
                                     <p className="font-dl-mono text-[8px] uppercase tracking-wider text-dl-gray">Reimburse + Fuel Pay</p>
-                                    <p className="font-dl-mono text-xs text-dl-navy mt-0.5">${fmt((Number(p.reimbursements_current) || 0) + (Number(p.fuel_protection_current) || 0))}</p>
+                                    <p className="font-dl-mono text-xs text-dl-navy mt-0.5">${fmt(reimbPlusFuel)}</p>
                                   </div>
                                   <div className="bg-dl-surface px-3 py-2">
                                     <p className="font-dl-mono text-[8px] uppercase tracking-wider text-dl-gray">Gross Pay</p>
-                                    <p className="font-dl-mono text-xs text-dl-navy mt-0.5">${fmt(p.total_gross_pay_current)}</p>
+                                    <p className="font-dl-mono text-xs text-dl-navy mt-0.5">${fmt(sumGross)}</p>
                                   </div>
                                   <div className="bg-dl-surface px-3 py-2">
                                     <p className="font-dl-mono text-[8px] uppercase tracking-wider text-dl-gray">Deductions</p>
-                                    <p className="font-dl-mono text-xs text-dl-navy mt-0.5">${fmt(p.total_deductions_current)}</p>
+                                    <p className="font-dl-mono text-xs text-dl-navy mt-0.5">${fmt(sumDeduct)}</p>
                                   </div>
                                   <div className="bg-dl-surface px-3 py-2">
                                     <p className="font-dl-mono text-[8px] uppercase tracking-wider text-dl-gray">Net Pay</p>
-                                    <p className="font-dl-mono text-xs text-dl-forest mt-0.5">${fmt(p.total_net_pay_current)}</p>
+                                    <p className="font-dl-mono text-xs text-dl-forest mt-0.5">${fmt(sumNet)}</p>
                                   </div>
                                 </div>
                               )}
                             </div>
 
-                            {isOpen && p && (
+                            {isOpen && (
                               <div className="px-4 pb-4 bg-dl-bg-alt border-t border-dl-border">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                                  <div className="border border-dl-border bg-dl-surface p-3">
-                                    <p className="font-dl-serif text-sm text-dl-navy mb-2">Driver</p>
-                                    <dl className="font-dl-mono text-[10px] space-y-1">
-                                      <div className="flex justify-between gap-3"><dt className="text-dl-gray">Name</dt><dd className="text-dl-navy text-right">{fmt(p.driver_name)}</dd></div>
-                                      <div className="flex justify-between gap-3"><dt className="text-dl-gray">Code</dt><dd className="text-dl-navy text-right">{fmt(p.driver_code)}</dd></div>
-                                      <div className="flex justify-between gap-3"><dt className="text-dl-gray">Unit</dt><dd className="text-dl-navy text-right">{fmt(p.unit_number)}</dd></div>
-                                      <div className="flex justify-between gap-3"><dt className="text-dl-gray">Address</dt><dd className="text-dl-navy text-right">{fmt(p.driver_address)}</dd></div>
-                                      <div className="flex justify-between gap-3"><dt className="text-dl-gray">Phone</dt><dd className="text-dl-navy text-right">{fmt(p.driver_phone)}</dd></div>
-                                      <div className="flex justify-between gap-3"><dt className="text-dl-gray">Email</dt><dd className="text-dl-navy text-right">{fmt(p.driver_email)}</dd></div>
-                                    </dl>
-                                  </div>
-                                  <div className="border border-dl-border bg-dl-surface p-3">
-                                    <p className="font-dl-serif text-sm text-dl-navy mb-2">Operations Summary</p>
-                                    <dl className="font-dl-mono text-[10px] space-y-1">
-                                      <div className="flex justify-between gap-3"><dt className="text-dl-gray">Statement date</dt><dd className="text-dl-navy text-right">{fmt(p.statement_date)}</dd></div>
-                                      <div className="flex justify-between gap-3"><dt className="text-dl-gray">Total miles</dt><dd className="text-dl-navy text-right">{fmtInt(p.total_miles)}</dd></div>
-                                      <div className="flex justify-between gap-3"><dt className="text-dl-gray">Loaded / Empty</dt><dd className="text-dl-navy text-right">{fmtInt(p.loaded_miles)} / {fmtInt(p.empty_miles)}</dd></div>
-                                      <div className="flex justify-between gap-3"><dt className="text-dl-gray">Miles per gallon</dt><dd className="text-dl-navy text-right">{fmt(p.miles_per_gallon)}</dd></div>
-                                      <div className="flex justify-between gap-3"><dt className="text-dl-gray">Days off</dt><dd className="text-dl-navy text-right">{fmtInt(p.total_days_off)}</dd></div>
-                                    </dl>
-                                  </div>
-                                </div>
-
-                                {/* Income / Deduction totals with C/Y/L */}
-                                <div className="border border-dl-border bg-dl-surface mt-4">
-                                  <table className="w-full font-dl-mono text-[10px]">
-                                    <thead className="bg-dl-bg-alt">
-                                      <tr>
-                                        <th className="text-left px-3 py-2 text-dl-gray uppercase tracking-wider text-[8px]">Section</th>
-                                        <th className="text-right px-3 py-2 text-dl-gray uppercase tracking-wider text-[8px]">Current</th>
-                                        <th className="text-right px-3 py-2 text-dl-gray uppercase tracking-wider text-[8px]">YTD</th>
-                                        <th className="text-right px-3 py-2 text-dl-gray uppercase tracking-wider text-[8px]">LTD</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-dl-border">
-                                      {[
-                                        { label: 'Mileage Pay',          c: p.mileage_pay_current,          y: p.mileage_pay_ytd,          l: p.mileage_pay_ltd },
-                                        { label: 'Reimbursements / Other', c: p.reimbursements_current,     y: p.reimbursements_ytd,       l: p.reimbursements_ltd },
-                                        { label: 'Fuel Protection Pay',  c: p.fuel_protection_current,      y: p.fuel_protection_ytd,      l: p.fuel_protection_ltd },
-                                        { label: 'Total Gross Pay',      c: p.total_gross_pay_current,      y: p.total_gross_pay_ytd,      l: p.total_gross_pay_ltd, bold: true },
-                                        { label: 'Advances',             c: p.advances_current,             y: p.advances_ytd,             l: p.advances_ltd, neg: true },
-                                        { label: 'Escrow',               c: p.escrow_current,               y: p.escrow_ytd,               l: p.escrow_ltd, neg: true },
-                                        { label: 'Recurring Expenses',   c: p.recurring_expenses_current,   y: p.recurring_expenses_ytd,   l: p.recurring_expenses_ltd, neg: true },
-                                        { label: 'Truck Repairs',        c: p.truck_repairs_current,        y: p.truck_repairs_ytd,        l: p.truck_repairs_ltd, neg: true },
-                                        { label: 'Other Misc Expenses',  c: p.other_misc_current,           y: p.other_misc_ytd,           l: p.other_misc_ltd, neg: true },
-                                        { label: 'Fuel Expenses',        c: p.fuel_expenses_current,        y: p.fuel_expenses_ytd,        l: p.fuel_expenses_ltd, neg: true },
-                                        { label: 'Total Deductions',     c: p.total_deductions_current,     y: p.total_deductions_ytd,     l: p.total_deductions_ltd, bold: true, neg: true },
-                                        { label: 'Previous Balance Due', c: p.previous_balance_due_current, y: null,                       l: null },
-                                        { label: 'Total Net Pay',        c: p.total_net_pay_current,        y: p.total_net_pay_ytd,        l: p.total_net_pay_ltd, bold: true, accent: true },
-                                      ].map((row, i) => {
-                                        // Render a signed currency cell that
-                                        // preserves the underlying numeric sign
-                                        // (escrow can legitimately be negative
-                                        // from trailing-minus PDFs).  For
-                                        // "deduction" rows (`row.neg`) we also
-                                        // show positive values with a leading
-                                        // minus, since they reduce gross pay.
-                                        const signed = (raw: any, asDeduction = false) => {
-                                          if (raw == null || raw === '') return '—';
-                                          const n = Number(raw);
-                                          if (!isFinite(n)) return '—';
-                                          if (n < 0) return `−$${fmt(Math.abs(n))}`;
-                                          if (n > 0 && asDeduction) return `−$${fmt(n)}`;
-                                          return `$${fmt(n)}`;
-                                        };
-                                        return (
-                                          <tr key={i}>
-                                            <td className={`px-3 py-1.5 ${row.bold ? 'text-dl-navy font-semibold' : 'text-dl-gray'}`}>{row.label}</td>
-                                            <td className={`px-3 py-1.5 text-right ${row.accent ? 'text-dl-forest' : row.bold ? 'text-dl-navy font-semibold' : 'text-dl-navy'}`}>{signed(row.c, !!row.neg)}</td>
-                                            <td className="px-3 py-1.5 text-right text-dl-gray">{signed(row.y, !!row.neg)}</td>
-                                            <td className="px-3 py-1.5 text-right text-dl-gray">{signed(row.l, !!row.neg)}</td>
-                                          </tr>
-                                        );
-                                      })}
-                                    </tbody>
-                                  </table>
-                                </div>
-
-                                {/* Mileage pay rows */}
-                                {Array.isArray(p.mileage_pay_rows) && p.mileage_pay_rows.length > 0 && (
-                                  <div className="border border-dl-border bg-dl-surface mt-4">
-                                    <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray px-3 py-2 border-b border-dl-border bg-dl-bg-alt">Mileage Pay Detail</p>
-                                    <div className="overflow-x-auto">
-                                      <table className="w-full font-dl-mono text-[10px]">
-                                        <thead className="bg-dl-bg-alt">
-                                          <tr>
-                                            {['Order','Disp','Pickup','Empty','Origin','Dest','Type','Rate','Loaded','Empty','Amount'].map(h => (
-                                              <th key={h} className="text-left px-2 py-1 text-dl-gray uppercase tracking-wider text-[8px]">{h}</th>
-                                            ))}
-                                          </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-dl-border">
-                                          {p.mileage_pay_rows.map((r: any, i: number) => (
-                                            <tr key={i}>
-                                              <td className="px-2 py-1 text-dl-navy">{fmt(r.order)}</td>
-                                              <td className="px-2 py-1 text-dl-gray">{fmt(r.dispatch_date)}</td>
-                                              <td className="px-2 py-1 text-dl-gray">{fmt(r.pickup_date)}</td>
-                                              <td className="px-2 py-1 text-dl-gray">{fmt(r.empty_date)}</td>
-                                              <td className="px-2 py-1 text-dl-gray">{fmt(r.origin)}</td>
-                                              <td className="px-2 py-1 text-dl-gray">{fmt(r.destination)}</td>
-                                              <td className="px-2 py-1 text-dl-gray">{fmt(r.type)}</td>
-                                              <td className="px-2 py-1 text-right text-dl-gray">{fmt(r.rate)}</td>
-                                              <td className="px-2 py-1 text-right text-dl-gray">{fmtInt(r.loaded_miles)}</td>
-                                              <td className="px-2 py-1 text-right text-dl-gray">{fmtInt(r.empty_miles)}</td>
-                                              <td className="px-2 py-1 text-right text-dl-navy">${fmt(r.amount)}</td>
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  </div>
+                                {detail?.loading && (
+                                  <p className="font-dl-mono text-[10px] text-dl-gray mt-3">Loading extracted detail…</p>
                                 )}
-
-                                {/* Generic line item sections */}
-                                {[
-                                  { key: 'reimbursement_rows',   label: 'Reimbursements & Other Pay' },
-                                  { key: 'fuel_protection_rows', label: 'Fuel Protection Pay' },
-                                  { key: 'advances_rows',        label: 'Advances' },
-                                  { key: 'escrow_rows',          label: 'Escrow' },
-                                  { key: 'recurring_expense_rows', label: 'Recurring Expenses' },
-                                  { key: 'truck_repair_rows',    label: 'Truck Repairs' },
-                                  { key: 'other_misc_rows',      label: 'Other Miscellaneous Expenses' },
-                                  { key: 'fuel_expense_rows',    label: 'Fuel Expenses' },
-                                ].map(section => {
-                                  const rows = (p as any)[section.key];
-                                  if (!Array.isArray(rows) || rows.length === 0) return null;
+                                {detail?.error && !detail.loading && (
+                                  <p className="font-dl-mono text-[10px] text-red-700 mt-3">{detail.error}</p>
+                                )}
+                                {detailPayload && (() => {
+                                  const dp = detailPayload;
+                                  const totalRows: ReadonlyArray<{ label: string; c: unknown; y: unknown; l: unknown; bold?: boolean; neg?: boolean; accent?: boolean }> = [
+                                    { label: 'Mileage Pay',            c: dp.mileage_pay_current,          y: dp.mileage_pay_ytd,          l: dp.mileage_pay_ltd },
+                                    { label: 'Reimbursements / Other', c: dp.reimbursements_current,       y: dp.reimbursements_ytd,       l: dp.reimbursements_ltd },
+                                    { label: 'Fuel Protection Pay',    c: dp.fuel_protection_current,      y: dp.fuel_protection_ytd,      l: dp.fuel_protection_ltd },
+                                    { label: 'Total Gross Pay',        c: dp.total_gross_pay_current,      y: dp.total_gross_pay_ytd,      l: dp.total_gross_pay_ltd, bold: true },
+                                    { label: 'Advances',               c: dp.advances_current,             y: dp.advances_ytd,             l: dp.advances_ltd, neg: true },
+                                    { label: 'Escrow',                 c: dp.escrow_current,               y: dp.escrow_ytd,               l: dp.escrow_ltd, neg: true },
+                                    { label: 'Recurring Expenses',     c: dp.recurring_expenses_current,   y: dp.recurring_expenses_ytd,   l: dp.recurring_expenses_ltd, neg: true },
+                                    { label: 'Truck Repairs',          c: dp.truck_repairs_current,        y: dp.truck_repairs_ytd,        l: dp.truck_repairs_ltd, neg: true },
+                                    { label: 'Other Misc Expenses',    c: dp.other_misc_current,           y: dp.other_misc_ytd,           l: dp.other_misc_ltd, neg: true },
+                                    { label: 'Fuel Expenses',          c: dp.fuel_expenses_current,        y: dp.fuel_expenses_ytd,        l: dp.fuel_expenses_ltd, neg: true },
+                                    { label: 'Total Deductions',       c: dp.total_deductions_current,     y: dp.total_deductions_ytd,     l: dp.total_deductions_ltd, bold: true, neg: true },
+                                    { label: 'Previous Balance Due',   c: dp.previous_balance_due_current, y: null,                        l: null },
+                                    { label: 'Total Net Pay',          c: dp.total_net_pay_current,        y: dp.total_net_pay_ytd,        l: dp.total_net_pay_ltd, bold: true, accent: true },
+                                  ];
+                                  const lineSections: ReadonlyArray<{ key: keyof SettlementPayload; label: string }> = [
+                                    { key: 'reimbursement_rows',     label: 'Reimbursements & Other Pay' },
+                                    { key: 'fuel_protection_rows',   label: 'Fuel Protection Pay' },
+                                    { key: 'advances_rows',          label: 'Advances' },
+                                    { key: 'escrow_rows',            label: 'Escrow' },
+                                    { key: 'recurring_expense_rows', label: 'Recurring Expenses' },
+                                    { key: 'truck_repair_rows',      label: 'Truck Repairs' },
+                                    { key: 'other_misc_rows',        label: 'Other Miscellaneous Expenses' },
+                                    { key: 'fuel_expense_rows',      label: 'Fuel Expenses' },
+                                  ];
                                   return (
-                                    <div key={section.key} className="border border-dl-border bg-dl-surface mt-4">
-                                      <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray px-3 py-2 border-b border-dl-border bg-dl-bg-alt">{section.label}</p>
-                                      <div className="overflow-x-auto">
+                                    <>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                        <div className="border border-dl-border bg-dl-surface p-3">
+                                          <p className="font-dl-serif text-sm text-dl-navy mb-2">Driver</p>
+                                          <dl className="font-dl-mono text-[10px] space-y-1">
+                                            <div className="flex justify-between gap-3"><dt className="text-dl-gray">Name</dt><dd className="text-dl-navy text-right">{fmt(dp.driver_name)}</dd></div>
+                                            <div className="flex justify-between gap-3"><dt className="text-dl-gray">Code</dt><dd className="text-dl-navy text-right">{fmt(dp.driver_code)}</dd></div>
+                                            <div className="flex justify-between gap-3"><dt className="text-dl-gray">Unit</dt><dd className="text-dl-navy text-right">{fmt(dp.unit_number)}</dd></div>
+                                            <div className="flex justify-between gap-3"><dt className="text-dl-gray">Address</dt><dd className="text-dl-navy text-right">{fmt(dp.driver_address)}</dd></div>
+                                            <div className="flex justify-between gap-3"><dt className="text-dl-gray">Phone</dt><dd className="text-dl-navy text-right">{fmt(dp.driver_phone)}</dd></div>
+                                            <div className="flex justify-between gap-3"><dt className="text-dl-gray">Email</dt><dd className="text-dl-navy text-right">{fmt(dp.driver_email)}</dd></div>
+                                          </dl>
+                                        </div>
+                                        <div className="border border-dl-border bg-dl-surface p-3">
+                                          <p className="font-dl-serif text-sm text-dl-navy mb-2">Operations Summary</p>
+                                          <dl className="font-dl-mono text-[10px] space-y-1">
+                                            <div className="flex justify-between gap-3"><dt className="text-dl-gray">Statement date</dt><dd className="text-dl-navy text-right">{fmt(dp.statement_date)}</dd></div>
+                                            <div className="flex justify-between gap-3"><dt className="text-dl-gray">Total miles</dt><dd className="text-dl-navy text-right">{fmtInt(dp.total_miles)}</dd></div>
+                                            <div className="flex justify-between gap-3"><dt className="text-dl-gray">Loaded / Empty</dt><dd className="text-dl-navy text-right">{fmtInt(dp.loaded_miles)} / {fmtInt(dp.empty_miles)}</dd></div>
+                                            <div className="flex justify-between gap-3"><dt className="text-dl-gray">Miles per gallon</dt><dd className="text-dl-navy text-right">{fmt(dp.miles_per_gallon)}</dd></div>
+                                            <div className="flex justify-between gap-3"><dt className="text-dl-gray">Days off</dt><dd className="text-dl-navy text-right">{fmtInt(dp.total_days_off)}</dd></div>
+                                          </dl>
+                                        </div>
+                                      </div>
+
+                                      <div className="border border-dl-border bg-dl-surface mt-4">
                                         <table className="w-full font-dl-mono text-[10px]">
                                           <thead className="bg-dl-bg-alt">
                                             <tr>
-                                              <th className="text-left px-2 py-1 text-dl-gray uppercase tracking-wider text-[8px]">Order</th>
-                                              <th className="text-left px-2 py-1 text-dl-gray uppercase tracking-wider text-[8px]">Date</th>
-                                              <th className="text-left px-2 py-1 text-dl-gray uppercase tracking-wider text-[8px]">Description</th>
-                                              <th className="text-right px-2 py-1 text-dl-gray uppercase tracking-wider text-[8px]">Amount</th>
+                                              <th className="text-left px-3 py-2 text-dl-gray uppercase tracking-wider text-[8px]">Section</th>
+                                              <th className="text-right px-3 py-2 text-dl-gray uppercase tracking-wider text-[8px]">Current</th>
+                                              <th className="text-right px-3 py-2 text-dl-gray uppercase tracking-wider text-[8px]">YTD</th>
+                                              <th className="text-right px-3 py-2 text-dl-gray uppercase tracking-wider text-[8px]">LTD</th>
                                             </tr>
                                           </thead>
                                           <tbody className="divide-y divide-dl-border">
-                                            {rows.map((r: any, i: number) => (
-                                              <tr key={i}>
-                                                <td className="px-2 py-1 text-dl-navy">{fmt(r.order)}</td>
-                                                <td className="px-2 py-1 text-dl-gray">{fmt(r.date)}</td>
-                                                <td className="px-2 py-1 text-dl-gray">{fmt(r.description)}</td>
-                                                <td className="px-2 py-1 text-right text-dl-navy">{r.amount == null || r.amount === '' ? '—' : `${Number(r.amount) < 0 ? '−' : ''}$${fmt(Math.abs(Number(r.amount) || 0))}`}</td>
+                                            {totalRows.map(row => (
+                                              <tr key={row.label}>
+                                                <td className={`px-3 py-1.5 ${row.bold ? 'text-dl-navy font-semibold' : 'text-dl-gray'}`}>{row.label}</td>
+                                                <td className={`px-3 py-1.5 text-right ${row.accent ? 'text-dl-forest' : row.bold ? 'text-dl-navy font-semibold' : 'text-dl-navy'}`}>{signed(row.c, !!row.neg)}</td>
+                                                <td className="px-3 py-1.5 text-right text-dl-gray">{signed(row.y, !!row.neg)}</td>
+                                                <td className="px-3 py-1.5 text-right text-dl-gray">{signed(row.l, !!row.neg)}</td>
                                               </tr>
                                             ))}
                                           </tbody>
                                         </table>
                                       </div>
-                                    </div>
+
+                                      {Array.isArray(dp.mileage_pay_rows) && dp.mileage_pay_rows.length > 0 && (
+                                        <div className="border border-dl-border bg-dl-surface mt-4">
+                                          <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray px-3 py-2 border-b border-dl-border bg-dl-bg-alt">Mileage Pay Detail</p>
+                                          <div className="overflow-x-auto">
+                                            <table className="w-full font-dl-mono text-[10px]">
+                                              <thead className="bg-dl-bg-alt">
+                                                <tr>
+                                                  {['Order','Disp','Pickup','Empty','Origin','Dest','Type','Rate','Loaded','Empty','Amount'].map(h => (
+                                                    <th key={h} className="text-left px-2 py-1 text-dl-gray uppercase tracking-wider text-[8px]">{h}</th>
+                                                  ))}
+                                                </tr>
+                                              </thead>
+                                              <tbody className="divide-y divide-dl-border">
+                                                {dp.mileage_pay_rows.map((r: SettlementRow, i: number) => (
+                                                  <tr key={`${r.order ?? 'row'}-${i}`}>
+                                                    <td className="px-2 py-1 text-dl-navy">{fmt(r.order)}</td>
+                                                    <td className="px-2 py-1 text-dl-gray">{fmt(r.dispatch_date)}</td>
+                                                    <td className="px-2 py-1 text-dl-gray">{fmt(r.pickup_date)}</td>
+                                                    <td className="px-2 py-1 text-dl-gray">{fmt(r.empty_date)}</td>
+                                                    <td className="px-2 py-1 text-dl-gray">{fmt(r.origin)}</td>
+                                                    <td className="px-2 py-1 text-dl-gray">{fmt(r.destination)}</td>
+                                                    <td className="px-2 py-1 text-dl-gray">{fmt(r.type)}</td>
+                                                    <td className="px-2 py-1 text-right text-dl-gray">{fmt(r.rate)}</td>
+                                                    <td className="px-2 py-1 text-right text-dl-gray">{fmtInt(r.loaded_miles)}</td>
+                                                    <td className="px-2 py-1 text-right text-dl-gray">{fmtInt(r.empty_miles)}</td>
+                                                    <td className="px-2 py-1 text-right text-dl-navy">{signed(r.amount)}</td>
+                                                  </tr>
+                                                ))}
+                                              </tbody>
+                                            </table>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {lineSections.map(section => {
+                                        const rows = dp[section.key] as SettlementRow[] | undefined | null;
+                                        if (!Array.isArray(rows) || rows.length === 0) return null;
+                                        return (
+                                          <div key={section.key as string} className="border border-dl-border bg-dl-surface mt-4">
+                                            <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray px-3 py-2 border-b border-dl-border bg-dl-bg-alt">{section.label}</p>
+                                            <div className="overflow-x-auto">
+                                              <table className="w-full font-dl-mono text-[10px]">
+                                                <thead className="bg-dl-bg-alt">
+                                                  <tr>
+                                                    <th className="text-left px-2 py-1 text-dl-gray uppercase tracking-wider text-[8px]">Order</th>
+                                                    <th className="text-left px-2 py-1 text-dl-gray uppercase tracking-wider text-[8px]">Date</th>
+                                                    <th className="text-left px-2 py-1 text-dl-gray uppercase tracking-wider text-[8px]">Description</th>
+                                                    <th className="text-right px-2 py-1 text-dl-gray uppercase tracking-wider text-[8px]">Amount</th>
+                                                  </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-dl-border">
+                                                  {rows.map((r: SettlementRow, i: number) => (
+                                                    <tr key={`${r.order ?? 'row'}-${r.date ?? i}-${i}`}>
+                                                      <td className="px-2 py-1 text-dl-navy">{fmt(r.order)}</td>
+                                                      <td className="px-2 py-1 text-dl-gray">{fmt(r.date)}</td>
+                                                      <td className="px-2 py-1 text-dl-gray">{fmt(r.description)}</td>
+                                                      <td className="px-2 py-1 text-right text-dl-navy">{signed(r.amount)}</td>
+                                                    </tr>
+                                                  ))}
+                                                </tbody>
+                                              </table>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </>
                                   );
-                                })}
+                                })()}
                               </div>
                             )}
                           </div>
@@ -3442,7 +3614,8 @@ export default function FounderOpsPage() {
                       })}
                     </div>
                   </div>
-                )}
+                  );
+                })()}
 
                 {/* Summary stats */}
                 {railSummary && (

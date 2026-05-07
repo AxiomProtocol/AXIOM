@@ -84,7 +84,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // Run extraction. Persist results (success or failure) but never fail the upload.
-    let extraction: any = null;
+    type SettlementPayload = Record<string, unknown>;
+    type ExtractionStatus = 'extracted' | 'low_confidence' | 'failed';
+    interface ExtractionSummary {
+      status: ExtractionStatus;
+      confidence: number | null;
+      field_count: number | null;
+      processing_time_ms: number | null;
+      payload: SettlementPayload | null;
+      error: string | null;
+    }
+
+    let extraction: ExtractionSummary | null = null;
     try {
       const buf = await fs.promises.readFile(destPath);
       const result = await extractFromDocument(buf, mime, 'settlement_statement', originalName);
@@ -93,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // an extraction as "low_confidence" (i.e. incomplete) when the model
       // returned a high-confidence result but is missing fields the operator
       // needs to act on the statement.
-      const REQUIRED_FIELDS = [
+      const REQUIRED_FIELDS: readonly string[] = [
         'statement_date',
         'driver_name',
         'unit_number',
@@ -102,14 +113,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         'total_deductions_current',
         'total_net_pay_current',
       ];
-      const missingRequired = result.success
+      const extractedPayload: SettlementPayload | null = result.success
+        ? (result.extractedData as SettlementPayload)
+        : null;
+      const missingRequired = extractedPayload
         ? REQUIRED_FIELDS.filter(k => {
-            const v = (result.extractedData as any)?.[k];
+            const v = extractedPayload[k];
             return v === null || v === undefined || v === '';
           })
-        : REQUIRED_FIELDS;
+        : REQUIRED_FIELDS.slice();
 
-      const status = !result.success
+      const status: ExtractionStatus = !result.success
         ? 'failed'
         : (result.confidence < 0.6 || missingRequired.length > 0)
           ? 'low_confidence'
@@ -143,25 +157,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         confidence:        result.confidence,
         field_count:       result.fieldCount,
         processing_time_ms: result.processingTimeMs,
-        payload:           result.success ? result.extractedData : null,
-        error:             result.success ? null : result.error,
+        payload:           extractedPayload,
+        error:             result.success ? null : (result.error ?? null),
       };
-    } catch (extractErr: any) {
-      console.error('[upload-settlement] extraction error', extractErr?.message);
+    } catch (extractErr) {
+      const errMsg = extractErr instanceof Error ? extractErr.message : 'Extraction crashed';
+      console.error('[upload-settlement] extraction error', errMsg);
       try {
         await extractionPool().query(
           `INSERT INTO pilot_settlement_extractions (document_id, status, error)
            VALUES ($1, 'failed', $2)
            ON CONFLICT (document_id) DO UPDATE SET status = 'failed', error = EXCLUDED.error, extracted_at = NOW()`,
-          [doc.id, extractErr?.message ?? 'Extraction crashed']
+          [doc.id, errMsg]
         );
-      } catch {}
-      extraction = { status: 'failed', error: extractErr?.message ?? 'Extraction crashed' };
+      } catch { /* ignore secondary failure */ }
+      extraction = {
+        status: 'failed',
+        confidence: null,
+        field_count: null,
+        processing_time_ms: null,
+        payload: null,
+        error: errMsg,
+      };
     }
 
     return res.status(201).json({ success: true, data: { ...doc, extraction } });
-  } catch (err: any) {
-    console.error('[upload-settlement]', err?.message);
-    return res.status(500).json({ success: false, error: err?.message ?? 'Upload failed' });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Upload failed';
+    console.error('[upload-settlement]', msg);
+    return res.status(500).json({ success: false, error: msg });
   }
 }
