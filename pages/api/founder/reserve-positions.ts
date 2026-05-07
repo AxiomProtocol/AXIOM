@@ -23,7 +23,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { validateAdminKey, GOVERNANCE_SAFE, DEPLOYER_EOA } from '../../../src/config/adminRoles';
-import { CORE_CONTRACTS, AXUSD_GENIUS_CONTRACTS, STABLECOINS } from '../../../shared/contracts';
+import { CORE_CONTRACTS, AXUSD_GENIUS_CONTRACTS, STABLECOINS, EULER_LENDING_CONTRACTS } from '../../../shared/contracts';
 import { ERC3643_CONTRACTS } from '../../../shared/contracts-3643';
 import { CANONICAL_PSM, EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, isEulerSwapDeployed } from '../../../src/config/activeContracts.generated';
 import { AXAU_ADDRESSES, ORACLE_STALE_THRESHOLD_SECONDS } from '../../../lib/services/AXAUContractService';
@@ -208,6 +208,7 @@ export default async function handler(
       axmTreasuryRaw,
       axmStakingRaw,
       axusdTreasuryRaw,
+      axusdEvkRaw,
       usdcCanonicalRaw,
       usdcLegacyRaw,
       usdcBackstopRaw,
@@ -223,6 +224,7 @@ export default async function handler(
         axm.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),
         axm.balanceOf(CORE_CONTRACTS.STAKING_EMISSIONS).catch(() => 0n),
         axusd.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),
+        axusd.balanceOf(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT).catch(() => 0n),
         usdc.balanceOf(CANONICAL_PSM).catch(() => 0n),
         usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.PSM).catch(() => 0n),
         usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC).catch(() => 0n),
@@ -288,9 +290,11 @@ export default async function handler(
 
     // ── AXUSD ──────────────────────────────────────────────────────────────
     const axusdTreasury = Number(ethers.formatUnits(axusdTreasuryRaw as bigint, 18));
+    const axusdEvk      = Number(ethers.formatUnits(axusdEvkRaw as bigint, 18));
+    const axusdTotal    = axusdTreasury + axusdEvk;
 
     // ── Totals ─────────────────────────────────────────────────────────────
-    const knownValues   = [ethValue, paxgValue, axauValueUsd, axmValue, usdcTotal, axusdTreasury]
+    const knownValues   = [ethValue, paxgValue, axauValueUsd, axmValue, usdcTotal, axusdTotal]
       .filter((v): v is number => v !== null);
     const totalValueUsd = knownValues.reduce((a, b) => a + b, 0);
 
@@ -466,27 +470,36 @@ export default async function handler(
       },
       {
         symbol:          'AXUSD',
-        label:           'AXUSD — Treasury Holding',
-        balance:         axusdTreasury,
-        balanceFormatted: fmtBal(axusdTreasury, 2) + ' AXUSD',
-        usdValue:        axusdTreasury,
+        label:           'AXUSD — Protocol Holdings',
+        balance:         axusdTotal,
+        balanceFormatted: fmtBal(axusdTotal, 2) + ' AXUSD',
+        usdValue:        axusdTotal,
         price:           1.0,
         priceSource:     'Stable peg — $1.00 AXUSD',
-        status:          axusdTreasury > 0 ? 'OK' : 'ZERO',
-        statusDetail:    `${fmtBal(axusdTreasury, 2)} AXUSD held in Treasury Revenue Hub`,
+        status:          axusdTotal > 0 ? 'OK' : 'ZERO',
+        statusDetail:    `${fmtBal(axusdTreasury, 2)} in Treasury + ${fmtBal(axusdEvk, 2)} in Euler EVK Vault`,
         depositAddress:    CORE_CONTRACTS.TREASURY_REVENUE,
-        depositLabel:      'Treasury Revenue Hub — AXUSD protocol reserve',
+        depositLabel:      'Treasury Revenue Hub — send AXUSD here on Arbitrum One',
         depositArbiscanUrl: arbiUrl(CORE_CONTRACTS.TREASURY_REVENUE),
-        locationBreakdown: [{
-          label:           'Treasury Revenue Hub',
-          address:         CORE_CONTRACTS.TREASURY_REVENUE,
-          balance:         axusdTreasury,
-          balanceFormatted: fmtBal(axusdTreasury, 2) + ' AXUSD',
-          arbiscanUrl:     arbiUrl(CORE_CONTRACTS.TREASURY_REVENUE),
-        }],
+        locationBreakdown: [
+          {
+            label:           'Treasury Revenue Hub',
+            address:         CORE_CONTRACTS.TREASURY_REVENUE,
+            balance:         axusdTreasury,
+            balanceFormatted: fmtBal(axusdTreasury, 2) + ' AXUSD',
+            arbiscanUrl:     arbiUrl(CORE_CONTRACTS.TREASURY_REVENUE),
+          },
+          {
+            label:           'Euler EVK Open Market Vault (eAXUSD-6)',
+            address:         EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT,
+            balance:         axusdEvk,
+            balanceFormatted: fmtBal(axusdEvk, 2) + ' AXUSD',
+            arbiscanUrl:     arbiUrl(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT),
+          },
+        ],
         actionType:  'open_contract',
-        actionLabel: 'View Treasury Contract',
-        actionUrl:   arbiUrl(CORE_CONTRACTS.TREASURY_REVENUE),
+        actionLabel: 'View EVK Vault',
+        actionUrl:   arbiUrl(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT),
       },
     ];
 
