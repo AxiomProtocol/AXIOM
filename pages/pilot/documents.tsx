@@ -89,8 +89,7 @@ export default function DocumentsPage() {
   const [formSpvId, setFormSpvId] = useState('');
   const [formCategory, setFormCategory] = useState('other');
   const [formDescription, setFormDescription] = useState('');
-  const [formFileUrl, setFormFileUrl] = useState('');
-  const [formFileName, setFormFileName] = useState('');
+  const [formFile, setFormFile] = useState<File | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -134,20 +133,17 @@ export default function DocumentsPage() {
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
+    if (!formFile) { alert('Please select a PDF file.'); return; }
     setSubmitting(true);
     try {
-      const res = await fetch('/api/pilot/documents', {
+      const fd = new FormData();
+      fd.append('file', formFile);
+      fd.append('title', formTitle);
+      fd.append('note', formDescription);
+      const res = await fetch('/api/founder/upload-settlement', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: formTitle,
-          spvId: formSpvId || null,
-          category: formCategory,
-          description: formDescription || null,
-          fileUrl: formFileUrl,
-          fileName: formFileName,
-          uploadedBy: 'admin',
-        }),
+        headers: { 'x-admin-key': 'Promote9' },
+        body: fd,
       });
       const result = await res.json();
       if (result.success) {
@@ -157,8 +153,7 @@ export default function DocumentsPage() {
         setFormSpvId('');
         setFormCategory('other');
         setFormDescription('');
-        setFormFileUrl('');
-        setFormFileName('');
+        setFormFile(null);
       } else {
         alert(result.error || 'Failed to upload document');
       }
@@ -347,26 +342,17 @@ export default function DocumentsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-dl-navy mb-1">File URL</label>
+                <label className="block text-sm font-medium text-dl-navy mb-1">PDF File *</label>
                 <input
-                  type="url"
-                  value={formFileUrl}
-                  onChange={(e) => setFormFileUrl(e.target.value)}
+                  type="file"
+                  accept="application/pdf,.pdf"
                   required
-                  placeholder="https://..."
-                  className="w-full border border-dl-border px-3 py-2 text-sm text-dl-navy bg-dl-bg"
+                  onChange={(e) => setFormFile(e.target.files?.[0] ?? null)}
+                  className="w-full border border-dl-border px-3 py-2 text-sm text-dl-navy bg-dl-bg file:mr-3 file:border-0 file:bg-dl-navy file:text-white file:px-3 file:py-1 file:text-xs file:cursor-pointer"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-dl-navy mb-1">File Name</label>
-                <input
-                  type="text"
-                  value={formFileName}
-                  onChange={(e) => setFormFileName(e.target.value)}
-                  required
-                  placeholder="document.pdf"
-                  className="w-full border border-dl-border px-3 py-2 text-sm text-dl-navy bg-dl-bg"
-                />
+                {formFile && (
+                  <p className="text-xs text-dl-forest mt-1">{formFile.name} — {(formFile.size / 1024).toFixed(0)} KB</p>
+                )}
               </div>
               <div className="flex gap-3 pt-2">
                 <button

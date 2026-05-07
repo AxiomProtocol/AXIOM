@@ -290,7 +290,7 @@ export default function FounderOpsPage() {
   const [railMonitorResult, setRailMonitorResult] = useState<any | null>(null);
   const [railUploadOpen, setRailUploadOpen] = useState(false);
   const [railUploadTitle, setRailUploadTitle] = useState('');
-  const [railUploadUrl, setRailUploadUrl] = useState('');
+  const [railUploadFile, setRailUploadFile] = useState<File | null>(null);
   const [railUploadNote, setRailUploadNote] = useState('');
   const [railUploadSubmitting, setRailUploadSubmitting] = useState(false);
   const [railUploadDocs, setRailUploadDocs] = useState<any[]>([]);
@@ -627,27 +627,24 @@ export default function FounderOpsPage() {
 
   const handleRailUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!railUploadTitle || !railUploadUrl) return;
+    if (!railUploadTitle || !railUploadFile) return;
     setRailUploadSubmitting(true);
     try {
-      const res = await fetch('/api/pilot/documents', {
+      const fd = new FormData();
+      fd.append('file', railUploadFile);
+      fd.append('title', railUploadTitle);
+      if (railUploadNote) fd.append('note', railUploadNote);
+      const res = await fetch('/api/founder/upload-settlement', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: railUploadTitle,
-          category: 'settlement_statement',
-          description: railUploadNote || null,
-          fileUrl: railUploadUrl,
-          fileName: railUploadUrl.split('/').pop() ?? 'statement',
-          uploadedBy: 'operator',
-        }),
+        headers: { 'x-admin-key': railAdminKey },
+        body: fd,
       });
       const json = await res.json();
       if (json.success) {
         setRailUploadDocs(prev => [json.data, ...prev]);
         setRailUploadOpen(false);
         setRailUploadTitle('');
-        setRailUploadUrl('');
+        setRailUploadFile(null);
         setRailUploadNote('');
       } else {
         alert(json.error ?? 'Upload failed');
@@ -3145,15 +3142,17 @@ export default function FounderOpsPage() {
                         />
                       </div>
                       <div>
-                        <label className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray block mb-1">Document URL * (Google Drive, Dropbox, IPFS, etc.)</label>
+                        <label className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray block mb-1">PDF File *</label>
                         <input
-                          type="url"
+                          type="file"
+                          accept="application/pdf,.pdf"
                           required
-                          placeholder="https://..."
-                          value={railUploadUrl}
-                          onChange={e => setRailUploadUrl(e.target.value)}
-                          className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-surface w-full outline-none"
+                          onChange={e => setRailUploadFile(e.target.files?.[0] ?? null)}
+                          className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-surface w-full outline-none file:mr-3 file:border-0 file:bg-dl-navy file:text-white file:px-3 file:py-1 file:font-dl-mono file:text-[9px] file:uppercase file:tracking-wider file:cursor-pointer"
                         />
+                        {railUploadFile && (
+                          <p className="font-dl-mono text-[9px] text-dl-forest mt-1">{railUploadFile.name} — {(railUploadFile.size / 1024).toFixed(0)} KB</p>
+                        )}
                       </div>
                       <div>
                         <label className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray block mb-1">Notes (optional)</label>
