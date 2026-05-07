@@ -30,15 +30,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         e.payload->>'statement_date'           AS payload_statement_date,
         e.payload->>'unit_number'              AS payload_unit_number,
         e.payload->>'driver_name'              AS payload_driver_name,
-        (e.payload->>'total_miles')::numeric            AS payload_total_miles,
-        (e.payload->>'loaded_miles')::numeric           AS payload_loaded_miles,
-        (e.payload->>'empty_miles')::numeric            AS payload_empty_miles,
-        (e.payload->>'mileage_pay_current')::numeric    AS payload_mileage_pay_current,
-        (e.payload->>'reimbursements_current')::numeric AS payload_reimbursements_current,
-        (e.payload->>'fuel_protection_current')::numeric AS payload_fuel_protection_current,
-        (e.payload->>'total_gross_pay_current')::numeric AS payload_total_gross_pay_current,
-        (e.payload->>'total_deductions_current')::numeric AS payload_total_deductions_current,
-        (e.payload->>'total_net_pay_current')::numeric  AS payload_total_net_pay_current
+        -- Numeric projections are guarded with a regex so that empty strings,
+        -- comma-formatted, trailing-minus, or any other non-canonical numeric
+        -- text returned by low-confidence extractions cannot crash the cast.
+        -- Anything that does not match a clean signed decimal is exposed as NULL,
+        -- which the UI renders as "—".
+        CASE WHEN e.payload->>'total_miles'              ~ '^-?[0-9]+(\.[0-9]+)?$' THEN (e.payload->>'total_miles')::numeric              END AS payload_total_miles,
+        CASE WHEN e.payload->>'loaded_miles'             ~ '^-?[0-9]+(\.[0-9]+)?$' THEN (e.payload->>'loaded_miles')::numeric             END AS payload_loaded_miles,
+        CASE WHEN e.payload->>'empty_miles'              ~ '^-?[0-9]+(\.[0-9]+)?$' THEN (e.payload->>'empty_miles')::numeric              END AS payload_empty_miles,
+        CASE WHEN e.payload->>'mileage_pay_current'      ~ '^-?[0-9]+(\.[0-9]+)?$' THEN (e.payload->>'mileage_pay_current')::numeric      END AS payload_mileage_pay_current,
+        CASE WHEN e.payload->>'reimbursements_current'   ~ '^-?[0-9]+(\.[0-9]+)?$' THEN (e.payload->>'reimbursements_current')::numeric   END AS payload_reimbursements_current,
+        CASE WHEN e.payload->>'fuel_protection_current'  ~ '^-?[0-9]+(\.[0-9]+)?$' THEN (e.payload->>'fuel_protection_current')::numeric  END AS payload_fuel_protection_current,
+        CASE WHEN e.payload->>'total_gross_pay_current'  ~ '^-?[0-9]+(\.[0-9]+)?$' THEN (e.payload->>'total_gross_pay_current')::numeric  END AS payload_total_gross_pay_current,
+        CASE WHEN e.payload->>'total_deductions_current' ~ '^-?[0-9]+(\.[0-9]+)?$' THEN (e.payload->>'total_deductions_current')::numeric END AS payload_total_deductions_current,
+        CASE WHEN e.payload->>'total_net_pay_current'    ~ '^-?[0-9]+(\.[0-9]+)?$' THEN (e.payload->>'total_net_pay_current')::numeric    END AS payload_total_net_pay_current
       FROM pilot_documents d
       LEFT JOIN pilot_settlement_extractions e ON e.document_id = d.id
       WHERE d.category = 'settlement_statement'

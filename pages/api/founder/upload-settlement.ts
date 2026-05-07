@@ -113,8 +113,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         'total_deductions_current',
         'total_net_pay_current',
       ];
+      // Normalize numeric-looking string fields before persistence so the
+      // settlement-list endpoint can safely cast `payload->>'field'` to
+      // numeric. Handles empty strings, thousands commas, parenthesized
+      // negatives, currency symbols, and trailing-minus PDF semantics
+      // (e.g. "1,014.74-" → "-1014.74"). Non-numeric strings (driver name,
+      // dates, etc.) are left untouched. Nested arrays of row objects are
+      // walked one level deep.
+      const NUMERIC_KEY_RE = /(_current|_ytd|_ltd|_miles|_balance|_due|miles_per_gallon|_amount|_rate|amount|rate|loaded_miles|empty_miles|miles|ending_balance)$/i;
+      const normalizeValue = (v: unknown): unknown => {
+        if (typeof v !== 'string') return v;
+        const trimmed = v.trim();
+        if (trimmed === '') return null;
+        // Strip $, commas, spaces; convert (123.45) → -123.45 and 123.45- → -123.45
+        let s = trimmed.replace(/[$,\s]/g, '');
+        if (/^\(.+\)$/.test(s)) s = '-' + s.slice(1, -1);
+        if (/^[0-9]+(\.[0-9]+)?-$/.test(s)) s = '-' + s.slice(0, -1);
+        return /^-?[0-9]+(\.[0-9]+)?$/.test(s) ? s : trimmed;
+      };
+      const normalizePayload = (raw: SettlementPayload): SettlementPayload => {
+        const out: Record<string, unknown> = { ...raw };
+        for (const [k, v] of Object.entries(out)) {
+          if (Array.isArray(v)) {
+            out[k] = v.map(item => {
+              if (item && typeof item === 'object') {
+                const row: Record<string, unknown> = { ...(item as Record<string, unknown>) };
+                for (const [rk, rv] of Object.entries(row)) {
+                  row[rk] = normalizeValue(rv);
+                }
+                return row;
+              }
+              return item;
+            });
+          } else if (NUMERIC_KEY_RE.test(k) || typeof v === 'string') {
+            // Always run string scalars through normalizeValue — it leaves
+            // non-numeric strings (driver names, dates) untouched.
+            out[k] = normalizeValue(v);
+          }
+        }
+        return out as SettlementPayload;
+      };
       const extractedPayload: SettlementPayload | null = result.success
-        ? (result.extractedData as SettlementPayload)
+        ? normalizePayload(result.extractedData as SettlementPayload)
         : null;
       const missingRequired = extractedPayload
         ? REQUIRED_FIELDS.filter(k => {
