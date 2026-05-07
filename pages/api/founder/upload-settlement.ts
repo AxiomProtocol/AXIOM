@@ -89,7 +89,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const buf = await fs.promises.readFile(destPath);
       const result = await extractFromDocument(buf, mime, 'settlement_statement', originalName);
 
-      const status = result.success ? (result.confidence >= 0.6 ? 'extracted' : 'low_confidence') : 'failed';
+      // Required fields per the settlement_statement template — used to mark
+      // an extraction as "low_confidence" (i.e. incomplete) when the model
+      // returned a high-confidence result but is missing fields the operator
+      // needs to act on the statement.
+      const REQUIRED_FIELDS = [
+        'statement_date',
+        'driver_name',
+        'unit_number',
+        'mileage_pay_current',
+        'total_gross_pay_current',
+        'total_deductions_current',
+        'total_net_pay_current',
+      ];
+      const missingRequired = result.success
+        ? REQUIRED_FIELDS.filter(k => {
+            const v = (result.extractedData as any)?.[k];
+            return v === null || v === undefined || v === '';
+          })
+        : REQUIRED_FIELDS;
+
+      const status = !result.success
+        ? 'failed'
+        : (result.confidence < 0.6 || missingRequired.length > 0)
+          ? 'low_confidence'
+          : 'extracted';
 
       await extractionPool().query(
         `INSERT INTO pilot_settlement_extractions

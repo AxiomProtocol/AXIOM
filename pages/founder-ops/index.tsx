@@ -3330,14 +3330,31 @@ export default function FounderOpsPage() {
                                         { label: 'Total Deductions',     c: p.total_deductions_current,     y: p.total_deductions_ytd,     l: p.total_deductions_ltd, bold: true, neg: true },
                                         { label: 'Previous Balance Due', c: p.previous_balance_due_current, y: null,                       l: null },
                                         { label: 'Total Net Pay',        c: p.total_net_pay_current,        y: p.total_net_pay_ytd,        l: p.total_net_pay_ltd, bold: true, accent: true },
-                                      ].map((row, i) => (
-                                        <tr key={i}>
-                                          <td className={`px-3 py-1.5 ${row.bold ? 'text-dl-navy font-semibold' : 'text-dl-gray'}`}>{row.label}</td>
-                                          <td className={`px-3 py-1.5 text-right ${row.accent ? 'text-dl-forest' : row.bold ? 'text-dl-navy font-semibold' : 'text-dl-navy'}`}>{row.c == null || row.c === '' ? '—' : `${row.neg && Number(row.c) > 0 ? '−' : ''}$${fmt(Math.abs(Number(row.c) || 0))}`}</td>
-                                          <td className="px-3 py-1.5 text-right text-dl-gray">{row.y == null || row.y === '' ? '—' : `$${fmt(row.y)}`}</td>
-                                          <td className="px-3 py-1.5 text-right text-dl-gray">{row.l == null || row.l === '' ? '—' : `$${fmt(row.l)}`}</td>
-                                        </tr>
-                                      ))}
+                                      ].map((row, i) => {
+                                        // Render a signed currency cell that
+                                        // preserves the underlying numeric sign
+                                        // (escrow can legitimately be negative
+                                        // from trailing-minus PDFs).  For
+                                        // "deduction" rows (`row.neg`) we also
+                                        // show positive values with a leading
+                                        // minus, since they reduce gross pay.
+                                        const signed = (raw: any, asDeduction = false) => {
+                                          if (raw == null || raw === '') return '—';
+                                          const n = Number(raw);
+                                          if (!isFinite(n)) return '—';
+                                          if (n < 0) return `−$${fmt(Math.abs(n))}`;
+                                          if (n > 0 && asDeduction) return `−$${fmt(n)}`;
+                                          return `$${fmt(n)}`;
+                                        };
+                                        return (
+                                          <tr key={i}>
+                                            <td className={`px-3 py-1.5 ${row.bold ? 'text-dl-navy font-semibold' : 'text-dl-gray'}`}>{row.label}</td>
+                                            <td className={`px-3 py-1.5 text-right ${row.accent ? 'text-dl-forest' : row.bold ? 'text-dl-navy font-semibold' : 'text-dl-navy'}`}>{signed(row.c, !!row.neg)}</td>
+                                            <td className="px-3 py-1.5 text-right text-dl-gray">{signed(row.y, !!row.neg)}</td>
+                                            <td className="px-3 py-1.5 text-right text-dl-gray">{signed(row.l, !!row.neg)}</td>
+                                          </tr>
+                                        );
+                                      })}
                                     </tbody>
                                   </table>
                                 </div>
