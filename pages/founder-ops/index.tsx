@@ -288,6 +288,12 @@ export default function FounderOpsPage() {
   const [railAdminKey, setRailAdminKey] = useState('');
   const [railMonitorRunning, setRailMonitorRunning] = useState(false);
   const [railMonitorResult, setRailMonitorResult] = useState<any | null>(null);
+  const [railUploadOpen, setRailUploadOpen] = useState(false);
+  const [railUploadTitle, setRailUploadTitle] = useState('');
+  const [railUploadUrl, setRailUploadUrl] = useState('');
+  const [railUploadNote, setRailUploadNote] = useState('');
+  const [railUploadSubmitting, setRailUploadSubmitting] = useState(false);
+  const [railUploadDocs, setRailUploadDocs] = useState<any[]>([]);
 
   // AXAU Queue tab state
   const [axauQueue, setAxauQueue] = useState<any[]>([]);
@@ -606,6 +612,50 @@ export default function FounderOpsPage() {
       setRailMonitorResult({ success: false, error: String(e) });
     } finally {
       setRailMonitorRunning(false);
+    }
+  };
+
+  const loadRailSettlementDocs = async () => {
+    try {
+      const res = await fetch('/api/pilot/documents');
+      const json = await res.json();
+      if (json.success) {
+        setRailUploadDocs((json.data ?? []).filter((d: any) => d.category === 'settlement_statement'));
+      }
+    } catch { /* silent */ }
+  };
+
+  const handleRailUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!railUploadTitle || !railUploadUrl) return;
+    setRailUploadSubmitting(true);
+    try {
+      const res = await fetch('/api/pilot/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: railUploadTitle,
+          category: 'settlement_statement',
+          description: railUploadNote || null,
+          fileUrl: railUploadUrl,
+          fileName: railUploadUrl.split('/').pop() ?? 'statement',
+          uploadedBy: 'operator',
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setRailUploadDocs(prev => [json.data, ...prev]);
+        setRailUploadOpen(false);
+        setRailUploadTitle('');
+        setRailUploadUrl('');
+        setRailUploadNote('');
+      } else {
+        alert(json.error ?? 'Upload failed');
+      }
+    } catch {
+      alert('Failed to connect to server');
+    } finally {
+      setRailUploadSubmitting(false);
     }
   };
 
@@ -1092,7 +1142,7 @@ export default function FounderOpsPage() {
                     if (tab.id === 'governance') { loadGovernanceStatus(); loadAdminActions(outcomeAdminKey || undefined); }
                     if (tab.id === 'banking') { loadBankingData(); }
                     if (tab.id === 'axauQueue') { loadAxauQueue(); }
-                    if (tab.id === 'axiomRail') { loadAxiomRailSettlements(); }
+                    if (tab.id === 'axiomRail') { loadAxiomRailSettlements(); loadRailSettlementDocs(); }
                     if (tab.id === 'daoAccounts') { loadDaoAccounts(); }
                     if (tab.id === 'reserves') { loadReserves(); }
                   }}
@@ -3069,8 +3119,99 @@ export default function FounderOpsPage() {
                       className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy">
                       Deposit UI ↗
                     </a>
+                    <button
+                      onClick={() => setRailUploadOpen(o => !o)}
+                      className="font-dl-mono text-[9px] border border-dl-forest text-dl-forest px-3 py-1.5 uppercase tracking-wider hover:bg-dl-forest hover:text-white transition-colors"
+                    >
+                      + Upload Settlement Statement
+                    </button>
                   </div>
                 </div>
+
+                {/* Weekly settlement statement upload */}
+                {railUploadOpen && (
+                  <div className="border border-dl-border bg-dl-bg-alt p-5 mb-6">
+                    <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray mb-4">Upload Weekly Settlement Statement</p>
+                    <form onSubmit={handleRailUpload} className="space-y-3">
+                      <div>
+                        <label className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray block mb-1">Statement Title *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Week of May 5, 2026 — Axiom Rail Settlement"
+                          value={railUploadTitle}
+                          onChange={e => setRailUploadTitle(e.target.value)}
+                          className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-surface w-full outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray block mb-1">Document URL * (Google Drive, Dropbox, IPFS, etc.)</label>
+                        <input
+                          type="url"
+                          required
+                          placeholder="https://..."
+                          value={railUploadUrl}
+                          onChange={e => setRailUploadUrl(e.target.value)}
+                          className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-surface w-full outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray block mb-1">Notes (optional)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Includes 3 completed rail transfers"
+                          value={railUploadNote}
+                          onChange={e => setRailUploadNote(e.target.value)}
+                          className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-surface w-full outline-none"
+                        />
+                      </div>
+                      <div className="flex gap-3 pt-1">
+                        <button
+                          type="submit"
+                          disabled={railUploadSubmitting}
+                          className="font-dl-mono text-[9px] border border-dl-navy text-dl-navy px-4 py-2 uppercase tracking-wider hover:bg-dl-navy hover:text-white transition-colors disabled:opacity-50"
+                        >
+                          {railUploadSubmitting ? 'Saving…' : 'Save Statement'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRailUploadOpen(false)}
+                          className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-4 py-2 uppercase tracking-wider hover:text-dl-navy transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* Saved settlement statements */}
+                {railUploadDocs.length > 0 && (
+                  <div className="border border-dl-border mb-6">
+                    <div className="bg-dl-bg-alt border-b border-dl-border px-4 py-2">
+                      <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray">Filed Settlement Statements ({railUploadDocs.length})</p>
+                    </div>
+                    <div className="divide-y divide-dl-border">
+                      {railUploadDocs.map((doc: any) => (
+                        <div key={doc.id} className="px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
+                          <div>
+                            <p className="font-dl-mono text-xs text-dl-navy">{doc.title}</p>
+                            {doc.description && <p className="font-dl-mono text-[9px] text-dl-gray mt-0.5">{doc.description}</p>}
+                            <p className="font-dl-mono text-[8px] text-dl-gray mt-0.5">{new Date(doc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                          </div>
+                          <a
+                            href={doc.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy shrink-0"
+                          >
+                            View ↗
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Summary stats */}
                 {railSummary && (

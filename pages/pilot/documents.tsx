@@ -32,6 +32,7 @@ const CATEGORIES = [
   { value: 'title', label: 'Title' },
   { value: 'insurance', label: 'Insurance' },
   { value: 'financial_report', label: 'Financial Report' },
+  { value: 'settlement_statement', label: 'Settlement Statement' },
   { value: 'tax', label: 'Tax' },
   { value: 'legal', label: 'Legal' },
   { value: 'other', label: 'Other' },
