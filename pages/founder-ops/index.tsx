@@ -3565,6 +3565,105 @@ export default function FounderOpsPage() {
                       );
                     })()}
 
+                    {/* 7-day portfolio USD sparkline */}
+                    {(() => {
+                      const histSymbols = Object.values(reservesHistory);
+                      if (reservesHistoryLoading && histSymbols.every(pts => pts.length === 0)) {
+                        return (
+                          <div className="border border-dl-border mb-4 px-5 py-2 bg-dl-bg">
+                            <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">7D Portfolio Trend — loading…</p>
+                          </div>
+                        );
+                      }
+                      if (histSymbols.length === 0) return null;
+
+                      // Sum usdValue across all symbols per snapshot bucket
+                      const buckets: Record<string, number> = {};
+                      for (const pts of histSymbols) {
+                        for (const pt of pts) {
+                          if (pt.usdValue != null) {
+                            buckets[pt.t] = (buckets[pt.t] ?? 0) + pt.usdValue;
+                          }
+                        }
+                      }
+                      const sortedTimes = Object.keys(buckets).sort(
+                        (a, b) => new Date(a).getTime() - new Date(b).getTime(),
+                      );
+                      if (sortedTimes.length < 2) return null;
+
+                      const W = 600; const H = 40; const PAD = 3;
+                      const drawH = H - PAD * 2;
+                      const values = sortedTimes.map(t => buckets[t]);
+                      const minVal = Math.min(...values);
+                      const maxVal = Math.max(...values);
+                      const range = maxVal - minVal || 1;
+
+                      const points = sortedTimes.map((t, i) => {
+                        const x = (i / (sortedTimes.length - 1)) * W;
+                        const y = PAD + drawH - ((buckets[t] - minVal) / range) * drawH;
+                        return `${x.toFixed(1)},${y.toFixed(1)}`;
+                      }).join(' ');
+
+                      const oldest    = sortedTimes[0];
+                      const latest    = sortedTimes[sortedTimes.length - 1];
+                      const latestVal = buckets[latest];
+                      const oldestVal = buckets[oldest];
+                      const pctChange = oldestVal > 0 ? ((latestVal - oldestVal) / oldestVal) * 100 : 0;
+                      const trend     = pctChange > 0.01 ? 'up' : pctChange < -0.01 ? 'down' : 'flat';
+                      const trendColor = trend === 'up' ? '#166534' : trend === 'down' ? '#991b1b' : '#64748b';
+                      const daySpan   = Math.round((new Date(latest).getTime() - new Date(oldest).getTime()) / 86400000);
+                      const dotX      = W.toFixed(1);
+                      const dotY      = (PAD + drawH - ((latestVal - minVal) / range) * drawH).toFixed(1);
+                      const fmtDate   = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      const fmtUsd    = (v: number) => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                      return (
+                        <div className="border border-dl-border mb-4 px-5 py-3 bg-dl-bg">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">
+                              {daySpan > 0 ? `${daySpan}D` : 'Intraday'} Portfolio Trend · {sortedTimes.length} snapshot{sortedTimes.length !== 1 ? 's' : ''}
+                            </p>
+                            <div className="flex items-center gap-3">
+                              <span className="font-dl-mono text-[8px]" style={{ color: trendColor }}>
+                                {pctChange >= 0 ? '+' : ''}{pctChange.toFixed(2)}%
+                              </span>
+                              <span className="font-dl-mono text-[8px] text-dl-navy font-bold">
+                                {fmtUsd(latestVal)}
+                              </span>
+                            </div>
+                          </div>
+                          <svg
+                            viewBox={`0 0 ${W} ${H}`}
+                            width="100%"
+                            height={H}
+                            preserveAspectRatio="none"
+                            aria-label={`${daySpan > 0 ? `${daySpan}-day` : 'intraday'} total reserve portfolio trend`}
+                          >
+                            <polyline
+                              points={points}
+                              fill="none"
+                              stroke={trendColor}
+                              strokeWidth="1.5"
+                              strokeLinejoin="round"
+                              strokeLinecap="round"
+                              vectorEffect="non-scaling-stroke"
+                            />
+                            <circle
+                              cx={dotX}
+                              cy={dotY}
+                              r="2.5"
+                              fill={trendColor}
+                              vectorEffect="non-scaling-stroke"
+                            />
+                          </svg>
+                          <div className="flex items-center justify-between mt-0.5">
+                            <p className="font-dl-mono text-[7px] text-dl-gray opacity-60">{fmtDate(oldest)}</p>
+                            <p className="font-dl-mono text-[7px] text-dl-gray opacity-60">{fmtDate(latest)}</p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {/* Reserve composition breakdown bar */}
                     {reservesData.totals.totalValueUsd > 0 && (() => {
                       const ASSET_COLORS: Record<string, string> = {
