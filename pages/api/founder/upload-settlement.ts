@@ -187,7 +187,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           result.confidence,
           result.fieldCount,
           result.processingTimeMs,
-          result.success ? JSON.stringify(result.extractedData) : null,
+          extractedPayload ? JSON.stringify(extractedPayload) : null,
           result.success ? null : (result.error ?? 'Unknown extraction error'),
         ]
       );

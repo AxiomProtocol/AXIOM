@@ -730,7 +730,7 @@ export default function FounderOpsPage() {
     payload_total_deductions_current?: string | number | null;
     payload_total_net_pay_current?: string | number | null;
     // Optional payload from in-session upload response
-    extraction?: { payload?: SettlementPayload | null } | null;
+    extraction?: { status?: 'extracted' | 'low_confidence' | 'failed' | null; payload?: SettlementPayload | null } | null;
   };
   type DetailCacheEntry = { loading: boolean; payload: SettlementPayload | null; error: string | null };
   const [railExpandedDoc, setRailExpandedDoc] = useState<string | null>(null);
@@ -3355,7 +3355,13 @@ export default function FounderOpsPage() {
                     </div>
                     <div className="divide-y divide-dl-border">
                       {(railUploadDocs as SettlementListRow[]).map(doc => {
-                        const status = doc.extraction_status ?? null;
+                        // Status comes from either the list endpoint
+                        // (`extraction_status`) or, for rows just inserted
+                        // by the in-session upload response, the nested
+                        // `extraction.status`. Without this fallback,
+                        // freshly uploaded rows would render as
+                        // "No extraction" until a manual refresh.
+                        const status = doc.extraction_status ?? doc.extraction?.status ?? null;
                         const isOpen = railExpandedDoc === doc.id;
                         const detail = railDetailCache[doc.id];
                         // Inline payload (from in-session upload response) is
