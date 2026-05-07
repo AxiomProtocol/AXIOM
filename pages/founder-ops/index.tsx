@@ -3896,6 +3896,15 @@ export default function FounderOpsPage() {
                                     {asset.actionLabel} ↗
                                   </a>
                                 )}
+                                {/* Purchase link — shown when asset has a purchaseUrl (e.g. AXM → Protocol Exchange) */}
+                                {asset.purchaseUrl && (
+                                  <a
+                                    href={asset.purchaseUrl}
+                                    className="font-dl-mono text-[9px] border border-dl-forest text-dl-forest px-3 py-1.5 uppercase tracking-wider hover:bg-dl-forest hover:text-white transition-colors text-center"
+                                  >
+                                    Buy AXM ↗
+                                  </a>
+                                )}
                                 {/* Secondary external link for copy_address assets that also have an actionUrl (e.g. AXM → Governance Safe) */}
                                 {asset.actionType === 'copy_address' && asset.actionUrl && (
                                   <a
