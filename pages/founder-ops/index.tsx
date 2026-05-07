@@ -3896,6 +3896,17 @@ export default function FounderOpsPage() {
                                     {asset.actionLabel} ↗
                                   </a>
                                 )}
+                                {/* Secondary external link for copy_address assets that also have an actionUrl (e.g. AXM → Governance Safe) */}
+                                {asset.actionType === 'copy_address' && asset.actionUrl && (
+                                  <a
+                                    href={asset.actionUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy transition-colors text-center"
+                                  >
+                                    Governance Safe ↗
+                                  </a>
+                                )}
                                 {/* Secondary: view on Arbiscan */}
                                 <a
                                   href={asset.depositArbiscanUrl}

@@ -383,9 +383,9 @@ export default async function handler(
           : 'Price unavailable — pool reserve ratio failed',
         status:          axmTotal > 0 ? 'OK' : 'ZERO',
         statusDetail:    `${fmtBal(axmTreasury, 2)} AXM in Treasury + ${fmtBal(axmStaking, 2)} AXM in Staking Emissions`,
-        depositAddress:    GOVERNANCE_SAFE,
-        depositLabel:      'Governance Safe (3-of-5) — AXM governance reserve',
-        depositArbiscanUrl: arbiUrl(GOVERNANCE_SAFE),
+        depositAddress:    CORE_CONTRACTS.TREASURY_REVENUE,
+        depositLabel:      'Treasury Revenue Hub — send AXM here on Arbitrum One',
+        depositArbiscanUrl: arbiUrl(CORE_CONTRACTS.TREASURY_REVENUE),
         locationBreakdown: [
           {
             label:           'Treasury Revenue Hub',
@@ -402,8 +402,8 @@ export default async function handler(
             arbiscanUrl:     arbiUrl(CORE_CONTRACTS.STAKING_EMISSIONS),
           },
         ],
-        actionType:  'open_safe',
-        actionLabel: 'Open Governance Safe',
+        actionType:  'copy_address',
+        actionLabel: 'Copy Treasury Address',
         actionUrl:   `https://app.safe.global/home?safe=arb1:${GOVERNANCE_SAFE}`,
       },
       {
