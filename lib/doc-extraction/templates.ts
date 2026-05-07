@@ -11,6 +11,7 @@ export type DocType =
   | 'lease_abstract'
   | 'title_report'
   | 'environmental_report'
+  | 'settlement_statement'
   | 'other';
 
 export interface ExtractionTemplate {
@@ -210,6 +211,93 @@ Ensure income and expense line items are accurately captured. Distinguish betwee
       { name: 'sqft_leased', type: 'number', description: 'Square footage leased', required: false },
       { name: 'renewal_options', type: 'string', description: 'Renewal option terms', required: false },
       { name: 'termination_clause', type: 'string', description: 'Early termination provisions', required: false },
+    ],
+  },
+
+  settlement_statement: {
+    docType: 'settlement_statement',
+    label: 'Independent Contractor Settlement Statement',
+    description: 'Weekly trucking driver settlement / pay statement with mileage pay, reimbursements, fuel protection, and deduction sections.',
+    systemPrompt: `You are a payroll-and-settlement analyst processing an Independent Contractor Settlement Statement
+for a trucking driver. The PDF spans multiple pages and contains income sections (Mileage Pay, Reimbursements
+and Other Pay, Fuel Protection Pay), a Total Gross Pay line, deduction sections (Advances, Escrow, Recurring
+Expenses, Truck Repairs, Other Miscellaneous Expenses, Fuel Expenses), Total Deductions, Previous Balance Due,
+Total Net Pay, and a final Independent Contractor Summary page. Negative values may be shown with a trailing
+minus sign (e.g. "1,014.74-") — preserve the negative sign in the number. All currency values must be returned
+as plain numbers (no $, no commas). Each total row has Current, YTD, and LTD columns; capture all three.`,
+    fields: [
+      { name: 'statement_date',  type: 'date',     description: 'Statement date in the page header (e.g. 5/07/26 → 2026-05-07)', required: true },
+      { name: 'driver_name',     type: 'string',   description: 'Driver / contractor full name as printed (e.g. "CLARENCE FUQUA JR.")', required: true },
+      { name: 'driver_code',     type: 'string',   description: 'Driver code suffix (e.g. "FUQC")', required: false },
+      { name: 'driver_address',  type: 'string',   description: 'Driver mailing address, single line', required: false },
+      { name: 'driver_phone',    type: 'string',   description: 'Driver phone number', required: false },
+      { name: 'driver_email',    type: 'string',   description: 'Driver email address', required: false },
+      { name: 'unit_number',     type: 'string',   description: 'Unit / truck number from "UNIT SUMMARY:" line', required: true },
+
+      { name: 'total_miles',         type: 'number', description: 'Total dispatched miles for the period', required: false },
+      { name: 'loaded_miles',        type: 'number', description: 'Loaded miles for the period', required: false },
+      { name: 'empty_miles',         type: 'number', description: 'Empty / deadhead miles for the period', required: false },
+      { name: 'miles_per_gallon',    type: 'number', description: 'Miles per gallon (current period) from the summary table', required: false },
+      { name: 'total_days_off',      type: 'number', description: 'Total days off in the current period', required: false },
+
+      { name: 'mileage_pay_rows', type: 'array', description: 'One object per mileage-pay line item: { order, dispatch_date, pickup_date, empty_date, origin, destination, type ("L" or "E"), rate, loaded_miles, empty_miles, amount }. Repeat the order number for continuation rows even if blank in the PDF.', required: false },
+      { name: 'mileage_pay_current', type: 'currency', description: 'Total Mileage Pay — Current column', required: true },
+      { name: 'mileage_pay_ytd',     type: 'currency', description: 'Total Mileage Pay — YTD column', required: false },
+      { name: 'mileage_pay_ltd',     type: 'currency', description: 'Total Mileage Pay — LTD column', required: false },
+
+      { name: 'reimbursement_rows', type: 'array', description: 'One object per reimbursement / other pay line: { order (or null), date, description, amount }', required: false },
+      { name: 'reimbursements_current', type: 'currency', description: 'Total Reimbursements and Other Pay — Current', required: false },
+      { name: 'reimbursements_ytd',     type: 'currency', description: 'Total Reimbursements and Other Pay — YTD', required: false },
+      { name: 'reimbursements_ltd',     type: 'currency', description: 'Total Reimbursements and Other Pay — LTD', required: false },
+
+      { name: 'fuel_protection_rows', type: 'array', description: 'One object per fuel protection / surcharge line: { order, date, description, rate, loaded_miles, empty_miles, amount }', required: false },
+      { name: 'fuel_protection_current', type: 'currency', description: 'Total Fuel Protection Pay — Current', required: false },
+      { name: 'fuel_protection_ytd',     type: 'currency', description: 'Total Fuel Protection Pay — YTD', required: false },
+      { name: 'fuel_protection_ltd',     type: 'currency', description: 'Total Fuel Protection Pay — LTD', required: false },
+
+      { name: 'total_gross_pay_current', type: 'currency', description: 'Total Gross Pay — Current', required: true },
+      { name: 'total_gross_pay_ytd',     type: 'currency', description: 'Total Gross Pay — YTD', required: false },
+      { name: 'total_gross_pay_ltd',     type: 'currency', description: 'Total Gross Pay — LTD', required: false },
+
+      { name: 'advances_rows', type: 'array', description: 'One object per advance line: { order, date, description, amount }', required: false },
+      { name: 'advances_current', type: 'currency', description: 'Total Advances — Current', required: false },
+      { name: 'advances_ytd',     type: 'currency', description: 'Total Advances — YTD', required: false },
+      { name: 'advances_ltd',     type: 'currency', description: 'Total Advances — LTD', required: false },
+
+      { name: 'escrow_rows', type: 'array', description: 'One object per escrow line: { date, description, rate, miles, amount, ending_balance }. Negative amounts (trailing "-") must be returned as negative numbers.', required: false },
+      { name: 'escrow_current', type: 'currency', description: 'Total Escrow — Current. May be negative (trailing minus in PDF).', required: false },
+      { name: 'escrow_ytd',     type: 'currency', description: 'Total Escrow — YTD', required: false },
+      { name: 'escrow_ltd',     type: 'currency', description: 'Total Escrow — LTD', required: false },
+      { name: 'escrow_ending_balance', type: 'currency', description: 'Escrow ending balance shown to the right of the section header', required: false },
+
+      { name: 'recurring_expense_rows', type: 'array', description: 'One object per recurring expense line: { date, description, rate, miles, amount, balance_due }', required: false },
+      { name: 'recurring_expenses_current', type: 'currency', description: 'Total Recurring Expenses — Current', required: false },
+      { name: 'recurring_expenses_ytd',     type: 'currency', description: 'Total Recurring Expenses — YTD', required: false },
+      { name: 'recurring_expenses_ltd',     type: 'currency', description: 'Total Recurring Expenses — LTD', required: false },
+
+      { name: 'truck_repair_rows', type: 'array', description: 'One object per truck repair line: { date, description, amount }', required: false },
+      { name: 'truck_repairs_current', type: 'currency', description: 'Total Truck Repairs — Current', required: false },
+      { name: 'truck_repairs_ytd',     type: 'currency', description: 'Total Truck Repairs — YTD', required: false },
+      { name: 'truck_repairs_ltd',     type: 'currency', description: 'Total Truck Repairs — LTD', required: false },
+
+      { name: 'other_misc_rows', type: 'array', description: 'One object per other miscellaneous expense line: { order (or null), date, description, amount, balance_due }', required: false },
+      { name: 'other_misc_current', type: 'currency', description: 'Total Other Miscellaneous Expenses — Current', required: false },
+      { name: 'other_misc_ytd',     type: 'currency', description: 'Total Other Miscellaneous Expenses — YTD', required: false },
+      { name: 'other_misc_ltd',     type: 'currency', description: 'Total Other Miscellaneous Expenses — LTD', required: false },
+
+      { name: 'fuel_expense_rows', type: 'array', description: 'One object per fuel expense line: { order, date, description, amount }', required: false },
+      { name: 'fuel_expenses_current', type: 'currency', description: 'Total Fuel Expenses — Current', required: false },
+      { name: 'fuel_expenses_ytd',     type: 'currency', description: 'Total Fuel Expenses — YTD', required: false },
+      { name: 'fuel_expenses_ltd',     type: 'currency', description: 'Total Fuel Expenses — LTD', required: false },
+
+      { name: 'total_deductions_current', type: 'currency', description: 'Total Deductions — Current', required: true },
+      { name: 'total_deductions_ytd',     type: 'currency', description: 'Total Deductions — YTD', required: false },
+      { name: 'total_deductions_ltd',     type: 'currency', description: 'Total Deductions — LTD', required: false },
+
+      { name: 'previous_balance_due_current', type: 'currency', description: 'Previous Balance Due — Current', required: false },
+      { name: 'total_net_pay_current', type: 'currency', description: 'Total Net Pay — Current', required: true },
+      { name: 'total_net_pay_ytd',     type: 'currency', description: 'Total Net Pay — YTD', required: false },
+      { name: 'total_net_pay_ltd',     type: 'currency', description: 'Total Net Pay — LTD', required: false },
     ],
   },
 

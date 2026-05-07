@@ -4,6 +4,14 @@ import fs from 'fs';
 import path from 'path';
 import { pilotService } from '../../../server/services/pilot/PilotService';
 import { validateAdminKey } from '../../../src/config/adminRoles';
+import { extractFromDocument } from '../../../lib/doc-extraction/engine';
+import { Pool } from 'pg';
+
+let _extractionPool: Pool | null = null;
+function extractionPool(): Pool {
+  if (!_extractionPool) _extractionPool = new Pool({ connectionString: process.env.DATABASE_URL });
+  return _extractionPool;
+}
 
 export const config = {
   api: { bodyParser: false },
@@ -30,8 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const adminKey = req.headers['x-admin-key'] as string | undefined;
-  if (!adminKey || !validateAdminKey(adminKey)) {
+  if (!validateAdminKey(req)) {
     return res.status(401).json({ success: false, error: 'Unauthorized — x-admin-key required' });
   }
 
@@ -76,7 +83,59 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       isPublic:    false,
     });
 
-    return res.status(201).json({ success: true, data: doc });
+    // Run extraction. Persist results (success or failure) but never fail the upload.
+    let extraction: any = null;
+    try {
+      const buf = await fs.promises.readFile(destPath);
+      const result = await extractFromDocument(buf, mime, 'settlement_statement', originalName);
+
+      const status = result.success ? (result.confidence >= 0.6 ? 'extracted' : 'low_confidence') : 'failed';
+
+      await extractionPool().query(
+        `INSERT INTO pilot_settlement_extractions
+           (document_id, status, confidence, field_count, processing_time_ms, payload, error)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (document_id) DO UPDATE SET
+           status              = EXCLUDED.status,
+           confidence          = EXCLUDED.confidence,
+           field_count         = EXCLUDED.field_count,
+           processing_time_ms  = EXCLUDED.processing_time_ms,
+           payload             = EXCLUDED.payload,
+           error               = EXCLUDED.error,
+           extracted_at        = NOW()`,
+        [
+          doc.id,
+          status,
+          result.confidence,
+          result.fieldCount,
+          result.processingTimeMs,
+          result.success ? JSON.stringify(result.extractedData) : null,
+          result.success ? null : (result.error ?? 'Unknown extraction error'),
+        ]
+      );
+
+      extraction = {
+        status,
+        confidence:        result.confidence,
+        field_count:       result.fieldCount,
+        processing_time_ms: result.processingTimeMs,
+        payload:           result.success ? result.extractedData : null,
+        error:             result.success ? null : result.error,
+      };
+    } catch (extractErr: any) {
+      console.error('[upload-settlement] extraction error', extractErr?.message);
+      try {
+        await extractionPool().query(
+          `INSERT INTO pilot_settlement_extractions (document_id, status, error)
+           VALUES ($1, 'failed', $2)
+           ON CONFLICT (document_id) DO UPDATE SET status = 'failed', error = EXCLUDED.error, extracted_at = NOW()`,
+          [doc.id, extractErr?.message ?? 'Extraction crashed']
+        );
+      } catch {}
+      extraction = { status: 'failed', error: extractErr?.message ?? 'Extraction crashed' };
+    }
+
+    return res.status(201).json({ success: true, data: { ...doc, extraction } });
   } catch (err: any) {
     console.error('[upload-settlement]', err?.message);
     return res.status(500).json({ success: false, error: err?.message ?? 'Upload failed' });
