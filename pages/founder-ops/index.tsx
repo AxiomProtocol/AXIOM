@@ -3902,7 +3902,15 @@ export default function FounderOpsPage() {
                                     href={asset.purchaseUrl}
                                     className="font-dl-mono text-[9px] border border-dl-forest text-dl-forest px-3 py-1.5 uppercase tracking-wider hover:bg-dl-forest hover:text-white transition-colors text-center"
                                   >
-                                    Buy AXM ↗
+                                    {asset.purchaseLabel ?? `Buy ${asset.symbol}`} ↗
+                                  </a>
+                                )}
+                                {asset.secondFundingUrl && (
+                                  <a
+                                    href={asset.secondFundingUrl}
+                                    className="font-dl-mono text-[9px] border border-dl-forest text-dl-forest px-3 py-1.5 uppercase tracking-wider hover:bg-dl-forest hover:text-white transition-colors text-center"
+                                  >
+                                    {asset.secondFundingLabel ?? 'Fund'} ↗
                                   </a>
                                 )}
                                 {/* Secondary external link for copy_address assets that also have an actionUrl (e.g. AXM → Governance Safe) */}

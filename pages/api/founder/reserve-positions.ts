@@ -497,9 +497,13 @@ export default async function handler(
             arbiscanUrl:     arbiUrl(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT),
           },
         ],
-        actionType:  'open_contract',
-        actionLabel: 'View EVK Vault',
-        actionUrl:   arbiUrl(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT),
+        actionType:         'open_contract',
+        actionLabel:        'View EVK Vault',
+        actionUrl:          arbiUrl(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT),
+        purchaseUrl:        '/onramp',
+        purchaseLabel:      'Fund via Card (USD → AXUSD)',
+        secondFundingUrl:   '/dex',
+        secondFundingLabel: 'Swap USDC → AXUSD',
       },
     ];
 
