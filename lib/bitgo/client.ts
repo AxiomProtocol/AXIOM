@@ -43,6 +43,7 @@ export async function bitGoRequest<T = unknown>(
       Authorization: `Bearer ${BITGO_ACCESS_TOKEN}`,
       'Content-Type': 'application/json',
     },
+    signal: AbortSignal.timeout(8_000),
   };
 
   if (body && method !== 'GET') {

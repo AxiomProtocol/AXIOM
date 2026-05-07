@@ -118,12 +118,16 @@ let _lastPathAStaleWarnAt = 0;
 
 // ─── Provider / Signer ────────────────────────────────────────────────────────
 
+const PAXG_ARBITRUM = '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429';
+
 function getProvider(): ethers.JsonRpcProvider {
   const key = process.env.ALCHEMY_API_KEY ?? '';
   const url = key
     ? `https://arb-mainnet.g.alchemy.com/v2/${key}`
     : process.env.ARBITRUM_RPC_URL ?? 'https://arb1.arbitrum.io/rpc';
-  return new ethers.JsonRpcProvider(url);
+  const req = new ethers.FetchRequest(url);
+  req.timeout = 10_000;
+  return new ethers.JsonRpcProvider(req);
 }
 
 function getSigner(): ethers.Wallet {
@@ -215,20 +219,20 @@ export interface VaultBufferState {
 }
 
 export async function getVaultBuffer(): Promise<VaultBufferState> {
-  const provider = getProvider();
-
-  const [reserveAssetAddress, xauPrice, mintPausedRaw] = await Promise.all([
-    getReserveAsset(provider),
-    getXauPriceFloat(provider),
-    new ethers.Contract(AXAU_ADDRESSES.MintRedeemController, ['function mintPaused() view returns (bool)'], provider)
-      .mintPaused(),
-  ]);
-
-  const paxg     = new ethers.Contract(reserveAssetAddress, ERC20_ABI, provider);
+  const provider  = getProvider();
+  const paxg      = new ethers.Contract(PAXG_ARBITRUM, ERC20_ABI, provider);
   const axauToken = new ethers.Contract(AXAU_ADDRESSES.AXAUTokenLite3643, ERC20_ABI, provider);
+  const controller = new ethers.Contract(
+    AXAU_ADDRESSES.MintRedeemController,
+    ['function mintPaused() view returns (bool)'],
+    provider,
+  );
 
-  // Read balances held by the deployer EOA — no private key needed for view calls.
-  const [paxgBalance, axauBalance] = await Promise.all([
+  // Single parallel round — PAXG address on Arbitrum is a known constant so we
+  // skip the extra getReserveAsset() on-chain read that caused a sequential wait.
+  const [xauPrice, mintPausedRaw, paxgBalance, axauBalance] = await Promise.all([
+    getXauPriceFloat(provider),
+    controller.mintPaused(),
     paxg.balanceOf(DEPLOYER_EOA).then((b: bigint) => BigInt(b)),
     axauToken.balanceOf(DEPLOYER_EOA).then((b: bigint) => BigInt(b)),
   ]);

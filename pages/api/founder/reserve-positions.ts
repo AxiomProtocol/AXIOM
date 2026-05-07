@@ -184,13 +184,20 @@ export default async function handler(
   }
 
   try {
-    const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
+    const rpcReq = new ethers.FetchRequest(ARBITRUM_RPC);
+    rpcReq.timeout = 10_000;
+    const provider = new ethers.JsonRpcProvider(rpcReq);
 
     const axm   = new ethers.Contract(AXM_ADDRESS,   ERC20_ABI, provider);
     const axusd = new ethers.Contract(AXUSD_ADDRESS, ERC20_ABI, provider);
     const usdc  = new ethers.Contract(USDC_ADDRESS,  ERC20_ABI, provider);
 
     const chainlink = new ethers.Contract(AXAU_ADDRESSES.ChainlinkXauUsd, CHAINLINK_ABI, provider);
+
+    const FETCH_DEADLINE_MS = 14_000;
+    const deadline = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('reserve-positions fetch deadline exceeded')), FETCH_DEADLINE_MS),
+    );
 
     const [
       ethPrice,
@@ -206,20 +213,23 @@ export default async function handler(
       usdcBackstopRaw,
       usdcDeployerRaw,
       oracleRound,
-    ] = await Promise.all([
-      fetchEthPrice(),
-      fetchAxmPrice(provider),
-      getVaultBuffer().catch(() => null),
-      bitGoTreasuryExtension.getReserveAssetBalances().catch(() => null),
-      provider.getBalance(DEPLOYER_EOA).catch(() => 0n),
-      axm.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),
-      axm.balanceOf(CORE_CONTRACTS.STAKING_EMISSIONS).catch(() => 0n),
-      axusd.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),
-      usdc.balanceOf(CANONICAL_PSM).catch(() => 0n),
-      usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.PSM).catch(() => 0n),
-      usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC).catch(() => 0n),
-      usdc.balanceOf(DEPLOYER_EOA).catch(() => 0n),
-      chainlink.latestRoundData().catch(() => null),
+    ] = await Promise.race([
+      Promise.all([
+        fetchEthPrice(),
+        fetchAxmPrice(provider),
+        getVaultBuffer().catch(() => null),
+        bitGoTreasuryExtension.getReserveAssetBalances().catch(() => null),
+        provider.getBalance(DEPLOYER_EOA).catch(() => 0n),
+        axm.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),
+        axm.balanceOf(CORE_CONTRACTS.STAKING_EMISSIONS).catch(() => 0n),
+        axusd.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),
+        usdc.balanceOf(CANONICAL_PSM).catch(() => 0n),
+        usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.PSM).catch(() => 0n),
+        usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC).catch(() => 0n),
+        usdc.balanceOf(DEPLOYER_EOA).catch(() => 0n),
+        chainlink.latestRoundData().catch(() => null),
+      ]),
+      deadline,
     ]);
 
     // ── Oracle freshness ────────────────────────────────────────────────────
