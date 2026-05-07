@@ -112,6 +112,14 @@ function fmtBal(n: number, decimals = 6): string {
   });
 }
 
+/** Resolves with fallback if the promise doesn't settle within `ms` milliseconds. */
+function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>(resolve => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 async function fetchAxmPrice(provider: ethers.JsonRpcProvider): Promise<number | null> {
   const poolAddr = EULER_SWAP_AXUSD_AXM_POOL_ADDRESS;
   if (!isEulerSwapDeployed() || !poolAddr || poolAddr === ZERO) return null;
@@ -134,7 +142,7 @@ async function fetchEthPrice(): Promise<number | null> {
     const url = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd';
     const res = await fetch(url, {
       headers: { accept: 'application/json' },
-      signal: AbortSignal.timeout(8_000),
+      signal: AbortSignal.timeout(5_000),
     });
     if (!res.ok) return null;
     const json = await res.json() as { ethereum?: { usd?: number } };
@@ -185,7 +193,7 @@ export default async function handler(
 
   try {
     const rpcReq = new ethers.FetchRequest(ARBITRUM_RPC);
-    rpcReq.timeout = 10_000;
+    rpcReq.timeout = 5_000;
     const provider = new ethers.JsonRpcProvider(rpcReq);
 
     const axm   = new ethers.Contract(AXM_ADDRESS,   ERC20_ABI, provider);
@@ -194,7 +202,7 @@ export default async function handler(
 
     const chainlink = new ethers.Contract(AXAU_ADDRESSES.ChainlinkXauUsd, CHAINLINK_ABI, provider);
 
-    const FETCH_DEADLINE_MS = 14_000;
+    const FETCH_DEADLINE_MS = 20_000;
     const deadline = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('reserve-positions fetch deadline exceeded')), FETCH_DEADLINE_MS),
     );
@@ -216,20 +224,20 @@ export default async function handler(
       oracleRound,
     ] = await Promise.race([
       Promise.all([
-        fetchEthPrice(),
-        fetchAxmPrice(provider),
-        getVaultBuffer().catch(() => null),
-        bitGoTreasuryExtension.getReserveAssetBalances().catch(() => null),
-        provider.getBalance(DEPLOYER_EOA).catch(() => 0n),
-        axm.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),
-        axm.balanceOf(CORE_CONTRACTS.STAKING_EMISSIONS).catch(() => 0n),
-        axusd.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),
-        axusd.balanceOf(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT).catch(() => 0n),
-        usdc.balanceOf(CANONICAL_PSM).catch(() => 0n),
-        usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.PSM).catch(() => 0n),
-        usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC).catch(() => 0n),
-        usdc.balanceOf(DEPLOYER_EOA).catch(() => 0n),
-        chainlink.latestRoundData().catch(() => null),
+        withTimeout(fetchEthPrice(),                                                           6_000, null),
+        withTimeout(fetchAxmPrice(provider),                                                   6_000, null),
+        withTimeout(getVaultBuffer().catch(() => null),                                        6_000, null),
+        withTimeout(bitGoTreasuryExtension.getReserveAssetBalances().catch(() => null),        6_000, null),
+        withTimeout(provider.getBalance(DEPLOYER_EOA).catch(() => 0n),                        6_000, 0n),
+        withTimeout(axm.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),           6_000, 0n),
+        withTimeout(axm.balanceOf(CORE_CONTRACTS.STAKING_EMISSIONS).catch(() => 0n),          6_000, 0n),
+        withTimeout(axusd.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),         6_000, 0n),
+        withTimeout(axusd.balanceOf(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT).catch(() => 0n), 6_000, 0n),
+        withTimeout(usdc.balanceOf(CANONICAL_PSM).catch(() => 0n),                            6_000, 0n),
+        withTimeout(usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.PSM).catch(() => 0n),               6_000, 0n),
+        withTimeout(usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC).catch(() => 0n), 6_000, 0n),
+        withTimeout(usdc.balanceOf(DEPLOYER_EOA).catch(() => 0n),                             6_000, 0n),
+        withTimeout(chainlink.latestRoundData().catch(() => null),                             6_000, null),
       ]),
       deadline,
     ]);
