@@ -626,6 +626,144 @@ export default function FounderOpsPage() {
     } catch { /* silent */ }
   };
 
+  // ── Allocation policy + AI alternative state ─────────────────────────────
+  type AllocAssetKey = 'axau'|'kag'|'paxg'|'axusd'|'usdc'|'wbtc'|'cbeth'|'cash_reserve'|'operating_spend';
+  type AllocWeights = Record<AllocAssetKey, number>;
+  type AllocAsset = { key: AllocAssetKey; label: string; category: string; note: string };
+  type AllocPolicyRow = { scope: 'driver' | 'treasury'; share_pct: number; weights: AllocWeights; updated_at: string; updated_by: string | null };
+  type AllocAiResult = { weights: AllocWeights; rationale: string; net_pay: number; share_pct: number; scope_amount: number; warnings?: string[] };
+  const ALLOC_ASSET_FALLBACK: ReadonlyArray<AllocAsset> = [
+    { key: 'axau',            label: 'AXAU',            category: 'reserve',    note: 'Axiom gold reserve instrument' },
+    { key: 'kag',             label: 'KAG',             category: 'reserve',    note: 'Silver reserve' },
+    { key: 'paxg',            label: 'PAXG',            category: 'reserve',    note: 'Paxos gold (AXAU underlying)' },
+    { key: 'axusd',           label: 'AXUSD',           category: 'stablecoin', note: 'Axiom unified stablecoin' },
+    { key: 'usdc',            label: 'USDC',            category: 'stablecoin', note: 'Circle USD' },
+    { key: 'wbtc',            label: 'WBTC',            category: 'crypto',     note: 'Wrapped Bitcoin' },
+    { key: 'cbeth',           label: 'cbETH',           category: 'crypto',     note: 'Coinbase staked ETH' },
+    { key: 'cash_reserve',    label: 'Cash reserve',    category: 'fiat',       note: 'Off-chain emergency buffer' },
+    { key: 'operating_spend', label: 'Operating spend', category: 'fiat',       note: 'Kept in checking for weekly bills' },
+  ];
+  const [allocAssets, setAllocAssets]       = useState<ReadonlyArray<AllocAsset>>(ALLOC_ASSET_FALLBACK);
+  const [allocPolicies, setAllocPolicies]   = useState<{ driver: AllocPolicyRow | null; treasury: AllocPolicyRow | null }>({ driver: null, treasury: null });
+  const [allocPolicyOpen, setAllocPolicyOpen] = useState(false);
+  const [allocPolicyDraft, setAllocPolicyDraft] = useState<{ driver: AllocPolicyRow; treasury: AllocPolicyRow } | null>(null);
+  const [allocPolicySaving, setAllocPolicySaving] = useState(false);
+  const [allocPolicyError, setAllocPolicyError] = useState<string | null>(null);
+  // Per-doc + per-scope AI cache: keyed `${docId}:${scope}`
+  const [allocAiCache, setAllocAiCache] = useState<Record<string, { loading: boolean; result: AllocAiResult | null; error: string | null }>>({});
+
+  // Latest settlement (used by Reserves tab to drive the allocation panel)
+  type LatestSettlement = { document_id: string; title: string | null; statement_date: string | null; driver_name: string | null; net_pay: number | null; status: string | null };
+  const [allocLatestSettlement, setAllocLatestSettlement] = useState<LatestSettlement | null>(null);
+  const [allocLatestLoading, setAllocLatestLoading] = useState(false);
+
+  const loadAllocPolicy = async (keyArg?: string) => {
+    const adminKey = keyArg ?? reservesAdminKey ?? railAdminKey;
+    if (!adminKey) return;
+    try {
+      const res = await fetch('/api/founder/allocation-policy', { headers: { 'x-admin-key': adminKey } });
+      const json = await res.json();
+      if (json.success) {
+        const driver   = (json.data as AllocPolicyRow[]).find(r => r.scope === 'driver')   ?? null;
+        const treasury = (json.data as AllocPolicyRow[]).find(r => r.scope === 'treasury') ?? null;
+        setAllocPolicies({ driver, treasury });
+        if (Array.isArray(json.assets) && json.assets.length > 0) setAllocAssets(json.assets as AllocAsset[]);
+      }
+    } catch { /* silent */ }
+  };
+
+  const beginEditPolicy = () => {
+    if (!allocPolicies.driver || !allocPolicies.treasury) return;
+    setAllocPolicyDraft({
+      driver:   { ...allocPolicies.driver,   weights: { ...allocPolicies.driver.weights } },
+      treasury: { ...allocPolicies.treasury, weights: { ...allocPolicies.treasury.weights } },
+    });
+    setAllocPolicyError(null);
+    setAllocPolicyOpen(true);
+  };
+
+  const loadLatestSettlement = async (keyArg?: string) => {
+    const adminKey = keyArg ?? reservesAdminKey ?? railAdminKey;
+    if (!adminKey) return;
+    setAllocLatestLoading(true);
+    try {
+      const res = await fetch('/api/founder/settlement-list?limit=10', { headers: { 'x-admin-key': adminKey } });
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        type ListRow = { document_id: string; title: string | null; statement_date: string | null; driver_name: string | null; total_net_pay_current: number | string | null; status: string | null };
+        const rows = json.data as ListRow[];
+        const extracted = rows.find(r => (r.status === 'extracted' || r.status === 'low_confidence') && r.total_net_pay_current != null);
+        if (extracted) {
+          const np = Number(extracted.total_net_pay_current);
+          setAllocLatestSettlement({
+            document_id: extracted.document_id,
+            title: extracted.title,
+            statement_date: extracted.statement_date,
+            driver_name: extracted.driver_name,
+            net_pay: Number.isFinite(np) ? np : null,
+            status: extracted.status,
+          });
+        } else {
+          setAllocLatestSettlement(null);
+        }
+      }
+    } catch { /* silent */ }
+    finally { setAllocLatestLoading(false); }
+  };
+
+  const savePolicy = async () => {
+    if (!allocPolicyDraft) return;
+    const adminKey = reservesAdminKey || railAdminKey;
+    setAllocPolicySaving(true);
+    setAllocPolicyError(null);
+    try {
+      const res = await fetch('/api/founder/allocation-policy', {
+        method: 'PUT',
+        headers: { 'x-admin-key': adminKey, 'content-type': 'application/json' },
+        body: JSON.stringify({
+          driver:   { share_pct: allocPolicyDraft.driver.share_pct,   weights: allocPolicyDraft.driver.weights },
+          treasury: { share_pct: allocPolicyDraft.treasury.share_pct, weights: allocPolicyDraft.treasury.weights },
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        setAllocPolicyError(json.error || 'Save failed');
+      } else {
+        const driver   = (json.data as AllocPolicyRow[]).find(r => r.scope === 'driver')   ?? null;
+        const treasury = (json.data as AllocPolicyRow[]).find(r => r.scope === 'treasury') ?? null;
+        setAllocPolicies({ driver, treasury });
+        setAllocPolicyOpen(false);
+        setAllocPolicyDraft(null);
+        setAllocAiCache({}); // invalidate AI alternatives — baseline changed
+      }
+    } catch (e) {
+      setAllocPolicyError(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setAllocPolicySaving(false);
+    }
+  };
+
+  const generateAllocationAi = async (docId: string, scope: 'driver' | 'treasury') => {
+    const key = `${docId}:${scope}`;
+    const adminKey = reservesAdminKey || railAdminKey;
+    setAllocAiCache(prev => ({ ...prev, [key]: { loading: true, result: null, error: null } }));
+    try {
+      const res = await fetch('/api/founder/allocation-ai', {
+        method: 'POST',
+        headers: { 'x-admin-key': adminKey, 'content-type': 'application/json' },
+        body: JSON.stringify({ documentId: docId, scope }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setAllocAiCache(prev => ({ ...prev, [key]: { loading: false, result: { weights: json.weights, rationale: json.rationale ?? '', net_pay: json.net_pay, share_pct: json.share_pct, scope_amount: json.scope_amount, warnings: json.warnings }, error: null } }));
+      } else {
+        setAllocAiCache(prev => ({ ...prev, [key]: { loading: false, result: null, error: json.error || 'AI failed' } }));
+      }
+    } catch (e) {
+      setAllocAiCache(prev => ({ ...prev, [key]: { loading: false, result: null, error: e instanceof Error ? e.message : 'AI failed' } }));
+    }
+  };
+
   // ── Settlement statement summary + lazy-loaded detail typings ────────────
   type SettlementRow = {
     order?: string | number | null;
@@ -1274,9 +1412,9 @@ export default function FounderOpsPage() {
                     if (tab.id === 'governance') { loadGovernanceStatus(); loadAdminActions(outcomeAdminKey || undefined); }
                     if (tab.id === 'banking') { loadBankingData(); }
                     if (tab.id === 'axauQueue') { loadAxauQueue(); }
-                    if (tab.id === 'axiomRail') { loadAxiomRailSettlements(); loadRailSettlementDocs(); }
+                    if (tab.id === 'axiomRail') { loadAxiomRailSettlements(); loadRailSettlementDocs(); loadAllocPolicy(); }
                     if (tab.id === 'daoAccounts') { loadDaoAccounts(); }
-                    if (tab.id === 'reserves') { loadReserves(); }
+                    if (tab.id === 'reserves') { loadReserves(); loadAllocPolicy(); loadLatestSettlement(); }
                   }}
                   className={`px-4 py-2 text-sm border-b-2 -mb-px ${
                     activeTab === tab.id
@@ -4020,7 +4158,7 @@ export default function FounderOpsPage() {
                     className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-surface w-56 outline-none"
                   />
                   <button
-                    onClick={() => loadReserves(reservesAdminKey)}
+                    onClick={() => { loadReserves(reservesAdminKey); loadAllocPolicy(reservesAdminKey); loadLatestSettlement(reservesAdminKey); }}
                     disabled={reservesLoading}
                     className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 uppercase tracking-wider hover:bg-dl-navy hover:text-white transition-colors disabled:opacity-50"
                   >
@@ -4649,6 +4787,221 @@ export default function FounderOpsPage() {
                     </div>
                   </>
                 )}
+
+                {/* ─────────────────────────────────────────────────────────────
+                    ALLOCATION GUIDANCE — fixed-policy split of latest weekly
+                    settlement net pay across reserves + AI alternative.
+                    Lives on Reserves tab because these are reserve allocations.
+                ───────────────────────────────────────────────────────────────── */}
+                {reservesAdminKey && (() => {
+                  const fmtUsd = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+                  const dp = allocPolicies.driver;
+                  const tp = allocPolicies.treasury;
+                  const latest = allocLatestSettlement;
+                  const netPay = latest?.net_pay ?? null;
+                  const driverAmount   = (netPay != null && dp) ? (netPay * dp.share_pct) / 100 : null;
+                  const treasuryAmount = (netPay != null && tp) ? (netPay * tp.share_pct) / 100 : null;
+
+                  const renderColumn = (
+                    scope: 'driver' | 'treasury',
+                    policy: AllocPolicyRow | null,
+                    scopeAmount: number | null,
+                  ) => {
+                    const aiKey = latest ? `${latest.document_id}:${scope}` : '';
+                    const ai = aiKey ? allocAiCache[aiKey] : undefined;
+                    return (
+                      <div className="border border-dl-border bg-white">
+                        <div className="px-4 py-2.5 border-b border-dl-border bg-dl-bg-alt flex items-center justify-between">
+                          <div>
+                            <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray">{scope === 'driver' ? 'Driver Allocation (FUQC personal)' : 'Treasury Allocation (Protocol)'}</p>
+                            <p className="font-dl-mono text-[10px] text-dl-navy mt-0.5">
+                              {policy ? `${policy.share_pct}% of net pay` : '—'} {scopeAmount != null && <span className="text-dl-forest">· {fmtUsd(scopeAmount)}</span>}
+                            </p>
+                          </div>
+                          {latest && (
+                            <button
+                              onClick={() => generateAllocationAi(latest.document_id, scope)}
+                              disabled={ai?.loading}
+                              className="font-dl-mono text-[9px] border border-dl-navy text-dl-navy px-2.5 py-1 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50 transition-colors"
+                            >
+                              {ai?.loading ? 'Thinking…' : ai?.result ? 'Regenerate AI' : 'Generate AI alternative'}
+                            </button>
+                          )}
+                        </div>
+                        <table className="w-full">
+                          <thead className="bg-dl-bg-alt">
+                            <tr>
+                              <th className="text-left font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray px-3 py-1.5">Asset</th>
+                              <th className="text-right font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray px-3 py-1.5">Policy %</th>
+                              <th className="text-right font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray px-3 py-1.5">Policy $</th>
+                              {ai?.result && <>
+                                <th className="text-right font-dl-mono text-[9px] uppercase tracking-wider text-dl-forest px-3 py-1.5">AI %</th>
+                                <th className="text-right font-dl-mono text-[9px] uppercase tracking-wider text-dl-forest px-3 py-1.5">AI $</th>
+                              </>}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {allocAssets.map(a => {
+                              const pPct = policy?.weights[a.key] ?? 0;
+                              const pAmt = scopeAmount != null ? (scopeAmount * pPct) / 100 : null;
+                              const aPct = ai?.result?.weights[a.key] ?? 0;
+                              const aAmt = ai?.result ? (ai.result.scope_amount * aPct) / 100 : null;
+                              const delta = ai?.result ? aPct - pPct : 0;
+                              const isHidden = pPct === 0 && aPct === 0;
+                              if (isHidden) return null;
+                              return (
+                                <tr key={a.key} className="border-t border-dl-border">
+                                  <td className="px-3 py-1.5">
+                                    <p className="font-dl-mono text-[11px] text-dl-navy">{a.label}</p>
+                                    <p className="font-dl-mono text-[8px] text-dl-gray">{a.note}</p>
+                                  </td>
+                                  <td className="text-right font-dl-mono text-[11px] text-dl-navy px-3 py-1.5">{pPct}%</td>
+                                  <td className="text-right font-dl-mono text-[11px] text-dl-navy px-3 py-1.5">{pAmt != null ? fmtUsd(pAmt) : '—'}</td>
+                                  {ai?.result && <>
+                                    <td className={`text-right font-dl-mono text-[11px] px-3 py-1.5 ${delta > 0 ? 'text-dl-forest' : delta < 0 ? 'text-dl-error' : 'text-dl-gray'}`}>
+                                      {aPct}% {delta !== 0 && <span className="text-[8px]">({delta > 0 ? '+' : ''}{delta})</span>}
+                                    </td>
+                                    <td className="text-right font-dl-mono text-[11px] text-dl-navy px-3 py-1.5">{aAmt != null ? fmtUsd(aAmt) : '—'}</td>
+                                  </>}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        {ai?.error && <p className="font-dl-mono text-[10px] text-dl-error px-3 py-2 border-t border-dl-border">{ai.error}</p>}
+                        {ai?.result?.rationale && (
+                          <div className="border-t border-dl-border px-3 py-2 bg-dl-bg-alt">
+                            <p className="font-dl-mono text-[8px] uppercase tracking-wider text-dl-gray mb-1">AI Rationale</p>
+                            <p className="font-dl-serif text-xs text-dl-navy leading-relaxed">{ai.result.rationale}</p>
+                            {ai.result.warnings && ai.result.warnings.length > 0 && (
+                              <p className="font-dl-mono text-[9px] text-dl-error mt-1">⚠ {ai.result.warnings.join(' · ')}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  };
+
+                  return (
+                    <div className="mt-8 border-t border-dl-border pt-6">
+                      <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+                        <div>
+                          <h3 className="font-dl-serif text-lg text-dl-navy mb-1">Net-Pay Allocation Guidance</h3>
+                          <p className="font-dl-mono text-[10px] text-dl-gray">
+                            Splits the most recent weekly settlement net pay across reserve assets · Driver vs Treasury side-by-side · Fixed policy + AI alternative
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => allocPolicyOpen ? setAllocPolicyOpen(false) : beginEditPolicy()}
+                          disabled={!dp || !tp}
+                          className="font-dl-mono text-[10px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy disabled:opacity-50"
+                        >
+                          {allocPolicyOpen ? 'Close Policy Editor' : 'Edit Allocation Policy'}
+                        </button>
+                      </div>
+
+                      {/* Latest settlement context */}
+                      <div className="border border-dl-border bg-dl-bg-alt px-4 py-3 mb-4">
+                        {allocLatestLoading && <p className="font-dl-mono text-[10px] text-dl-gray">Looking up latest settlement…</p>}
+                        {!allocLatestLoading && !latest && (
+                          <p className="font-dl-mono text-[10px] text-dl-gray">
+                            No extracted settlement found. Upload a weekly statement on the Axiom Rail tab to enable allocation guidance.
+                          </p>
+                        )}
+                        {latest && (
+                          <div className="flex items-center justify-between gap-4 flex-wrap">
+                            <div>
+                              <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray">Latest Settlement</p>
+                              <p className="font-dl-mono text-[11px] text-dl-navy mt-0.5">
+                                {latest.driver_name ?? 'Driver —'} · {latest.statement_date ?? '—'}
+                                {latest.title && <span className="text-dl-gray"> · {latest.title}</span>}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray">Net Pay</p>
+                              <p className="font-dl-mono text-base text-dl-forest mt-0.5">{netPay != null ? fmtUsd(netPay) : '—'}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Policy editor (collapsible) */}
+                      {allocPolicyOpen && allocPolicyDraft && (
+                        <div className="border border-dl-navy bg-white p-4 mb-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="font-dl-mono text-[10px] uppercase tracking-wider text-dl-navy">Edit Allocation Policy</p>
+                            <p className="font-dl-mono text-[9px] text-dl-gray">Driver share + Treasury share must sum to 100 · Each scope&apos;s asset weights must sum to 100</p>
+                          </div>
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {(['driver', 'treasury'] as const).map(scope => {
+                              const draft = allocPolicyDraft[scope];
+                              const sum = allocAssets.reduce((s, a) => s + (Number(draft.weights[a.key]) || 0), 0);
+                              return (
+                                <div key={scope} className="border border-dl-border p-3">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <label className="font-dl-mono text-[10px] uppercase tracking-wider text-dl-navy">{scope === 'driver' ? 'Driver' : 'Treasury'} share of net pay (%)</label>
+                                    <input
+                                      type="number"
+                                      min={0} max={100} step={1}
+                                      value={draft.share_pct}
+                                      onChange={e => setAllocPolicyDraft(prev => prev ? { ...prev, [scope]: { ...prev[scope], share_pct: Number(e.target.value) } } : prev)}
+                                      className="font-dl-mono text-xs border border-dl-border px-2 py-1 w-20 text-right outline-none"
+                                    />
+                                  </div>
+                                  <table className="w-full">
+                                    <tbody>
+                                      {allocAssets.map(a => (
+                                        <tr key={a.key} className="border-t border-dl-border">
+                                          <td className="font-dl-mono text-[10px] text-dl-navy py-1.5">{a.label}</td>
+                                          <td className="py-1.5 text-right">
+                                            <input
+                                              type="number"
+                                              min={0} max={100} step={1}
+                                              value={draft.weights[a.key]}
+                                              onChange={e => setAllocPolicyDraft(prev => prev ? { ...prev, [scope]: { ...prev[scope], weights: { ...prev[scope].weights, [a.key]: Number(e.target.value) } } } : prev)}
+                                              className="font-dl-mono text-xs border border-dl-border px-2 py-1 w-16 text-right outline-none"
+                                            />
+                                            <span className="font-dl-mono text-[9px] text-dl-gray ml-1">%</span>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                      <tr className="border-t border-dl-navy">
+                                        <td className="font-dl-mono text-[10px] uppercase text-dl-navy py-1.5">Sum</td>
+                                        <td className={`font-dl-mono text-xs text-right py-1.5 pr-6 ${Math.abs(sum - 100) < 0.5 ? 'text-dl-forest' : 'text-dl-error'}`}>{sum}%</td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {allocPolicyError && <p className="font-dl-mono text-[10px] text-dl-error mt-3">{allocPolicyError}</p>}
+                          <div className="flex gap-2 mt-3">
+                            <button
+                              onClick={savePolicy}
+                              disabled={allocPolicySaving}
+                              className="font-dl-mono text-[10px] border border-dl-navy bg-dl-navy text-white px-4 py-1.5 uppercase tracking-wider hover:bg-dl-navy-dark disabled:opacity-50"
+                            >{allocPolicySaving ? 'Saving…' : 'Save Policy'}</button>
+                            <button
+                              onClick={() => { setAllocPolicyOpen(false); setAllocPolicyDraft(null); setAllocPolicyError(null); }}
+                              className="font-dl-mono text-[10px] border border-dl-border text-dl-gray px-4 py-1.5 uppercase tracking-wider hover:text-dl-navy"
+                            >Cancel</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Side-by-side allocation columns */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {renderColumn('driver',   dp, driverAmount)}
+                        {renderColumn('treasury', tp, treasuryAmount)}
+                      </div>
+
+                      <p className="font-dl-mono text-[8px] text-dl-gray mt-3 leading-relaxed">
+                        Amounts shown in USD. Unit conversion to oz / tokens at execution time uses live oracle prices (PAXG/XAU for AXAU, KAG for silver, Camelot pool for AXUSD/AXM). The AI alternative may diverge from policy when the week shows abnormal escrow movement, large deductions, or other risk signals from the settlement payload.
+                      </p>
+                    </div>
+                  );
+                })()}
               </>
             )}
           </>
