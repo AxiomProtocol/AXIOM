@@ -80,6 +80,13 @@ interface HealthData {
   lastHealthCheckAt: string | null;
 }
 
+interface SubInfo {
+  status: 'active' | 'past_due' | 'canceled' | 'none';
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+}
+
 const REGIME_COLORS: Record<string, string> = {
   TREND_UP: 'text-dl-forest',
   TREND_DOWN: 'text-dl-error',
@@ -94,7 +101,6 @@ const FOOTER_DISCLOSURE =
   'Axiom Protocol does not provide investment advice. Guard Rail #5: Advisory only until post-public governance vote.';
 
 type TabId = 'dashboard' | 'education';
-
 type OpStatus = 'idle' | 'running' | 'success' | 'error';
 
 interface OpState {
@@ -109,6 +115,167 @@ const AUTO_REFRESH_OPTIONS = [
   { value: 300, label: '5 min' },
   { value: 900, label: '15 min' },
 ];
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function SubscriptionPanel({
+  walletAddress,
+  sub,
+  onSubChange,
+}: {
+  walletAddress: string | null;
+  sub: SubInfo | null;
+  onSubChange: () => void;
+}) {
+  const [email, setEmail] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const handleSubscribe = async () => {
+    if (!walletAddress) { setMsg('Connect your wallet first.'); return; }
+    setBusy(true); setMsg('');
+    try {
+      const res = await fetch('/api/sentinel/subscription/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress, email: email || undefined }),
+      });
+      const data = await res.json();
+      if (data.url) { window.location.href = data.url; }
+      else setMsg(data.error || 'Could not create checkout session.');
+    } catch { setMsg('Network error. Please try again.'); }
+    finally { setBusy(false); }
+  };
+
+  const handleCancel = async () => {
+    if (!walletAddress) return;
+    if (!confirm('Cancel your Sentinel Advisory subscription at period end?')) return;
+    setBusy(true); setMsg('');
+    try {
+      const res = await fetch('/api/sentinel/subscription/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress }),
+      });
+      const data = await res.json();
+      if (data.ok) { setMsg('Subscription will end at the current period close.'); onSubChange(); }
+      else setMsg(data.error || 'Cancel failed.');
+    } catch { setMsg('Network error.'); }
+    finally { setBusy(false); }
+  };
+
+  const status = sub?.status ?? 'none';
+  const isActive = status === 'active';
+  const isPastDue = status === 'past_due';
+  const isCanceling = isActive && sub?.cancelAtPeriodEnd;
+
+  return (
+    <div className="border border-dl-border mb-6">
+      <div className="border-b border-dl-border px-5 py-3 bg-dl-bg-alt flex items-center justify-between">
+        <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest">Sentinel Advisory — Subscription</p>
+        <span className={`text-xs font-dl-mono px-2 py-0.5 border ${
+          isActive ? 'border-dl-forest text-dl-forest' :
+          isPastDue ? 'border-dl-gold text-dl-gold' :
+          status === 'canceled' ? 'border-dl-gray text-dl-gray' :
+          'border-dl-border text-dl-gray'
+        }`}>
+          {isActive && isCanceling ? 'CANCELING' :
+           isActive ? 'ACTIVE' :
+           isPastDue ? 'PAST DUE' :
+           status === 'canceled' ? 'CANCELED' : 'INACTIVE'}
+        </span>
+      </div>
+
+      <div className="px-5 py-5">
+        {(isActive || isPastDue) ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div>
+              <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wide mb-1">Current Period</p>
+              <p className="font-dl-mono text-sm text-dl-navy">
+                {formatDate(sub!.currentPeriodStart)} – {formatDate(sub!.currentPeriodEnd)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wide mb-1">Plan</p>
+              <p className="font-dl-mono text-sm text-dl-navy">Sentinel Advisory — Monthly</p>
+            </div>
+            <div>
+              <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wide mb-1">Access</p>
+              <p className="font-dl-mono text-sm text-dl-forest">Full Dashboard Unlocked</p>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-4">
+            <p className="font-dl-serif text-base text-dl-navy mb-1">Sentinel Advisory Access</p>
+            <p className="text-sm text-dl-gray leading-relaxed mb-4">
+              Subscribe to unlock the full Sentinel dashboard — regime history, qualified signals, capital
+              authorization decisions, and export tools. All outputs are advisory intelligence only. No
+              automated execution authority is implied or granted.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 max-w-md">
+              <input
+                type="email"
+                placeholder="Email for receipt (optional)"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="flex-1 px-3 py-2 border border-dl-border bg-dl-bg font-dl-mono text-sm text-dl-navy"
+              />
+              <button
+                onClick={handleSubscribe}
+                disabled={busy}
+                className="px-5 py-2 bg-dl-navy text-white font-dl-mono text-xs disabled:bg-dl-gray whitespace-nowrap"
+              >
+                {busy ? 'LOADING...' : 'SUBSCRIBE TO SENTINEL'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isActive && !isCanceling && (
+          <button
+            onClick={handleCancel}
+            disabled={busy}
+            className="text-xs font-dl-mono text-dl-gray underline disabled:no-underline"
+          >
+            {busy ? 'Processing...' : 'Cancel subscription at period end'}
+          </button>
+        )}
+
+        {isCanceling && (
+          <p className="text-xs font-dl-mono text-dl-gold">
+            Access continues until {formatDate(sub!.currentPeriodEnd)}. No further charges.
+          </p>
+        )}
+
+        {msg && (
+          <p className="text-xs font-dl-mono text-dl-error mt-2">{msg}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LockedOverlay({ onSubscribe }: { onSubscribe: () => void }) {
+  return (
+    <div className="border border-dl-border p-8 text-center mb-8">
+      <p className="font-dl-serif text-lg text-dl-navy mb-2">Sentinel Advisory Subscription Required</p>
+      <p className="text-sm text-dl-gray leading-relaxed mb-4 max-w-lg mx-auto">
+        Regime history, qualified signals, and capital authorization decisions are available to active
+        Sentinel Advisory subscribers. All outputs are informational — advisory-only mode is active
+        during proof-of-concept.
+      </p>
+      <button
+        onClick={onSubscribe}
+        className="px-6 py-2 bg-dl-navy text-white font-dl-mono text-xs"
+      >
+        SUBSCRIBE TO SENTINEL ADVISORY
+      </button>
+    </div>
+  );
+}
 
 export default function SentinelIndex() {
   const [overview, setOverview] = useState<Overview | null>(null);
@@ -127,6 +294,52 @@ export default function SentinelIndex() {
   const [signalsOp, setSignalsOp] = useState<OpState>({ status: 'idle', message: '', lastRun: '' });
   const [fullCycleOp, setFullCycleOp] = useState<OpState>({ status: 'idle', message: '', lastRun: '' });
 
+  // Subscription state
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [sub, setSub] = useState<SubInfo | null>(null);
+  const [subLoading, setSubLoading] = useState(false);
+  const subscriptionPanelRef = useRef<HTMLDivElement>(null);
+
+  // Detect connected wallet from window.ethereum
+  useEffect(() => {
+    const detect = async () => {
+      try {
+        const eth = (window as any).ethereum;
+        if (!eth) return;
+        const accounts: string[] = await eth.request({ method: 'eth_accounts' });
+        if (accounts[0]) setWalletAddress(accounts[0]);
+        eth.on('accountsChanged', (accs: string[]) => setWalletAddress(accs[0] ?? null));
+      } catch {}
+    };
+    detect();
+  }, []);
+
+  const fetchSubStatus = useCallback(async (wallet: string) => {
+    setSubLoading(true);
+    try {
+      const res = await fetch(`/api/sentinel/subscription/status?wallet=${encodeURIComponent(wallet)}`);
+      if (res.ok) setSub(await res.json());
+    } catch {}
+    finally { setSubLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    if (walletAddress) fetchSubStatus(walletAddress);
+    else setSub(null);
+  }, [walletAddress, fetchSubStatus]);
+
+  // Handle ?subscribed=1 return from Stripe Checkout
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscribed') === '1' && walletAddress) {
+      fetchSubStatus(walletAddress);
+      window.history.replaceState({}, '', '/sentinel');
+    }
+  }, [walletAddress, fetchSubStatus]);
+
+  const isSubscribed = sub?.status === 'active' || sub?.status === 'past_due';
+
   const fetchData = useCallback(() => {
     setLoading(true);
     setError(null);
@@ -139,10 +352,7 @@ export default function SentinelIndex() {
       fetch('/api/sentinel/health').then((r) => r.json()),
     ])
       .then(([overviewData, signalsData, decisionsData, regimesData, healthData]) => {
-        if (overviewData.error) {
-          setError(overviewData.error);
-          return;
-        }
+        if (overviewData.error) { setError(overviewData.error); return; }
         const raw = overviewData as OverviewRaw;
         setOverview({
           regime: raw.regime?.regime || '—',
@@ -163,23 +373,14 @@ export default function SentinelIndex() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData, refreshKey]);
+  useEffect(() => { fetchData(); }, [fetchData, refreshKey]);
 
   useEffect(() => {
-    if (autoRefreshRef.current) {
-      clearInterval(autoRefreshRef.current);
-      autoRefreshRef.current = null;
-    }
+    if (autoRefreshRef.current) { clearInterval(autoRefreshRef.current); autoRefreshRef.current = null; }
     if (autoRefreshSec > 0) {
-      autoRefreshRef.current = setInterval(() => {
-        setRefreshKey(k => k + 1);
-      }, autoRefreshSec * 1000);
+      autoRefreshRef.current = setInterval(() => setRefreshKey(k => k + 1), autoRefreshSec * 1000);
     }
-    return () => {
-      if (autoRefreshRef.current) clearInterval(autoRefreshRef.current);
-    };
+    return () => { if (autoRefreshRef.current) clearInterval(autoRefreshRef.current); };
   }, [autoRefreshSec]);
 
   const runOperation = async (
@@ -198,61 +399,44 @@ export default function SentinelIndex() {
       const data = await res.json();
       if (res.ok && data.success !== false) {
         let details = 'Complete';
-        if (label === 'Signal Generation') {
-          details = `Generated ${data.signalsGenerated || 0} signals`;
-        } else if (label === 'Full Cycle') {
+        if (label === 'Signal Generation') details = `Generated ${data.signalsGenerated || 0} signals`;
+        else if (label === 'Full Cycle') {
           const results = data.results || [];
           details = results.map((r: any) => `${r.step}: ${r.success ? 'OK' : 'FAIL'}`).join(' | ');
         }
-        setter({
-          status: 'success',
-          message: details,
-          lastRun: new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'),
-        });
+        setter({ status: 'success', message: details, lastRun: new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC') });
         setRefreshKey(k => k + 1);
       } else {
-        setter({
-          status: 'error',
-          message: data.error || `${label} failed`,
-          lastRun: new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'),
-        });
+        setter({ status: 'error', message: data.error || `${label} failed`, lastRun: new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC') });
       }
     } catch (err: any) {
-      setter({
-        status: 'error',
-        message: err.message || 'Network error',
-        lastRun: new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'),
-      });
+      setter({ status: 'error', message: err.message || 'Network error', lastRun: new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC') });
     }
   };
 
   const exportCSV = () => {
     if (!signals.length) return;
     const headers = ['Symbol', 'Asset Type', 'Direction', 'Entry Mid', 'Final Score', 'Regime', 'Qualified', 'Created'];
-    const rows = signals.map((s) => [
-      s.symbol, s.asset_type, s.direction, s.entry_mid,
-      s.final_score != null ? String(s.final_score) : '',
-      s.regime_state, s.qualified ? 'YES' : 'NO', s.created_at,
-    ]);
+    const rows = signals.map((s) => [s.symbol, s.asset_type, s.direction, s.entry_mid, s.final_score != null ? String(s.final_score) : '', s.regime_state, s.qualified ? 'YES' : 'NO', s.created_at]);
     const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
+    const a = document.createElement('a'); a.href = url;
     a.download = `sentinel-signals-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    a.click(); URL.revokeObjectURL(url);
   };
 
   const exportJSON = () => {
     const payload = { overview, signals, decisions, regimes, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
+    const a = document.createElement('a'); a.href = url;
     a.download = `sentinel-export-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  const scrollToSubscribe = () => {
+    subscriptionPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
@@ -262,6 +446,7 @@ export default function SentinelIndex() {
         subtitle="Capital Authorization Layer — the gate between intelligence and deployment. MIRDT reads the regime. Sentinel decides what moves."
         disclosure={FOOTER_DISCLOSURE}
       >
+        {/* Architecture overview — always visible */}
         <div className="border border-dl-border mb-6">
           <div className="border-b border-dl-border px-5 py-3 bg-dl-bg-alt">
             <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest">Authorization Architecture — Intelligence → Authorization → Execution</p>
@@ -295,78 +480,121 @@ export default function SentinelIndex() {
             </div>
           </div>
         </div>
-        <div className="border border-dl-border bg-dl-bg p-4 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <SectionHeading>Operations</SectionHeading>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-dl-mono text-dl-gray">AUTO-REFRESH</span>
-              <select
-                value={autoRefreshSec}
-                onChange={(e) => setAutoRefreshSec(Number(e.target.value))}
-                className="px-2 py-1 border border-dl-border bg-dl-bg text-dl-navy font-dl-mono text-xs"
-              >
-                {AUTO_REFRESH_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-              {autoRefreshSec > 0 && (
-                <span className="text-xs font-dl-mono text-dl-forest">ACTIVE</span>
-              )}
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="border border-dl-border p-3">
-              <p className="text-xs font-dl-mono text-dl-gray mb-2">FULL CYCLE (SCAN + SIGNALS)</p>
-              <button
-                onClick={() => runOperation('/api/ops/trigger', setFullCycleOp, 'Full Cycle', { operation: 'full-cycle' })}
-                disabled={fullCycleOp.status === 'running'}
-                className="w-full px-3 py-2 bg-dl-navy text-white font-dl-mono text-xs disabled:bg-dl-gray"
-              >
-                {fullCycleOp.status === 'running' ? 'RUNNING...' : 'RUN FULL CYCLE'}
-              </button>
-              {fullCycleOp.message && (
-                <p className={`text-xs mt-1 font-dl-mono ${fullCycleOp.status === 'error' ? 'text-dl-error' : fullCycleOp.status === 'success' ? 'text-dl-forest' : 'text-dl-gray'}`}>
-                  {fullCycleOp.message}
-                </p>
-              )}
-            </div>
-
-            <div className="border border-dl-border p-3">
-              <p className="text-xs font-dl-mono text-dl-gray mb-2">GENERATE SIGNALS</p>
-              <button
-                onClick={() => runOperation('/api/ops/trigger', setSignalsOp, 'Signal Generation', { operation: 'run-signals' })}
-                disabled={signalsOp.status === 'running'}
-                className="w-full px-3 py-2 bg-dl-navy text-white font-dl-mono text-xs disabled:bg-dl-gray"
-              >
-                {signalsOp.status === 'running' ? 'GENERATING...' : 'RUN SIGNALS'}
-              </button>
-              {signalsOp.message && (
-                <p className={`text-xs mt-1 font-dl-mono ${signalsOp.status === 'error' ? 'text-dl-error' : signalsOp.status === 'success' ? 'text-dl-forest' : 'text-dl-gray'}`}>
-                  {signalsOp.message}
-                </p>
-              )}
-            </div>
-
-            <div className="border border-dl-border p-3">
-              <p className="text-xs font-dl-mono text-dl-gray mb-2">REFRESH DISPLAY</p>
-              <button
-                onClick={() => setRefreshKey(k => k + 1)}
-                className="w-full px-3 py-2 bg-dl-navy text-white font-dl-mono text-xs"
-              >
-                REFRESH DATA
-              </button>
-              {lastUpdated && (
-                <p className="text-xs mt-1 font-dl-mono text-dl-gray">
-                  Last: {lastUpdated}
-                </p>
-              )}
-            </div>
-          </div>
+        {/* Subscription panel */}
+        <div ref={subscriptionPanelRef}>
+          <SubscriptionPanel
+            walletAddress={walletAddress}
+            sub={sub}
+            onSubChange={() => walletAddress && fetchSubStatus(walletAddress)}
+          />
         </div>
+
+        {/* Operations panel — only for subscribers */}
+        {isSubscribed && (
+          <div className="border border-dl-border bg-dl-bg p-4 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <SectionHeading>Operations</SectionHeading>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-dl-mono text-dl-gray">AUTO-REFRESH</span>
+                <select
+                  value={autoRefreshSec}
+                  onChange={(e) => setAutoRefreshSec(Number(e.target.value))}
+                  className="px-2 py-1 border border-dl-border bg-dl-bg text-dl-navy font-dl-mono text-xs"
+                >
+                  {AUTO_REFRESH_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+                {autoRefreshSec > 0 && <span className="text-xs font-dl-mono text-dl-forest">ACTIVE</span>}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="border border-dl-border p-3">
+                <p className="text-xs font-dl-mono text-dl-gray mb-2">FULL CYCLE (SCAN + SIGNALS)</p>
+                <button
+                  onClick={() => runOperation('/api/ops/trigger', setFullCycleOp, 'Full Cycle', { operation: 'full-cycle' })}
+                  disabled={fullCycleOp.status === 'running'}
+                  className="w-full px-3 py-2 bg-dl-navy text-white font-dl-mono text-xs disabled:bg-dl-gray"
+                >
+                  {fullCycleOp.status === 'running' ? 'RUNNING...' : 'RUN FULL CYCLE'}
+                </button>
+                {fullCycleOp.message && (
+                  <p className={`text-xs mt-1 font-dl-mono ${fullCycleOp.status === 'error' ? 'text-dl-error' : fullCycleOp.status === 'success' ? 'text-dl-forest' : 'text-dl-gray'}`}>
+                    {fullCycleOp.message}
+                  </p>
+                )}
+              </div>
+              <div className="border border-dl-border p-3">
+                <p className="text-xs font-dl-mono text-dl-gray mb-2">GENERATE SIGNALS</p>
+                <button
+                  onClick={() => runOperation('/api/ops/trigger', setSignalsOp, 'Signal Generation', { operation: 'run-signals' })}
+                  disabled={signalsOp.status === 'running'}
+                  className="w-full px-3 py-2 bg-dl-navy text-white font-dl-mono text-xs disabled:bg-dl-gray"
+                >
+                  {signalsOp.status === 'running' ? 'GENERATING...' : 'RUN SIGNALS'}
+                </button>
+                {signalsOp.message && (
+                  <p className={`text-xs mt-1 font-dl-mono ${signalsOp.status === 'error' ? 'text-dl-error' : signalsOp.status === 'success' ? 'text-dl-forest' : 'text-dl-gray'}`}>
+                    {signalsOp.message}
+                  </p>
+                )}
+              </div>
+              <div className="border border-dl-border p-3">
+                <p className="text-xs font-dl-mono text-dl-gray mb-2">REFRESH DISPLAY</p>
+                <button onClick={() => setRefreshKey(k => k + 1)} className="w-full px-3 py-2 bg-dl-navy text-white font-dl-mono text-xs">
+                  REFRESH DATA
+                </button>
+                {lastUpdated && <p className="text-xs mt-1 font-dl-mono text-dl-gray">Last: {lastUpdated}</p>}
+              </div>
+            </div>
+          </div>
+        )}
 
         {health && health.operationalState !== 'NORMAL' && (
           <CircuitBreakerBanner state={health.operationalState} />
+        )}
+
+        {/* Public stat strip — always visible */}
+        {!loading && !error && overview && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div className="border border-dl-border-light p-4">
+              <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">MARKET REGIME</p>
+              <p className={`font-dl-serif text-xl ${REGIME_COLORS[overview.regime] || 'text-dl-navy'}`}>{overview.regime}</p>
+              <p className="font-dl-mono text-xs text-dl-gray mt-1">
+                {overview.regime_confidence != null ? `${overview.regime_confidence.toFixed(0)}% confidence` : ''}
+              </p>
+            </div>
+            <div className="border border-dl-border-light p-4">
+              <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">SYSTEM STANCE</p>
+              <p className="font-dl-serif text-xl text-dl-navy">{overview.stance}</p>
+              <p className="font-dl-mono text-xs text-dl-gray mt-1">{health?.operationalState || 'NORMAL'}</p>
+            </div>
+            <div className="border border-dl-border-light p-4">
+              <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">SIGNALS</p>
+              {isSubscribed ? (
+                <p className="font-dl-serif text-xl text-dl-navy">
+                  {overview.qualified_signals} <span className="text-sm text-dl-gray">/ {overview.total_signals}</span>
+                </p>
+              ) : (
+                <p className="font-dl-serif text-xl text-dl-gray">—</p>
+              )}
+              <p className="text-xs text-dl-gray mt-1">qualified / total</p>
+            </div>
+            <div className="border border-dl-border-light p-4">
+              <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">DECISIONS</p>
+              {isSubscribed ? (
+                <p className="font-dl-serif text-xl text-dl-navy">
+                  <span className="text-dl-forest">{overview.approved_count}</span>
+                  {' / '}
+                  <span className="text-dl-error">{overview.denied_count}</span>
+                </p>
+              ) : (
+                <p className="font-dl-serif text-xl text-dl-gray">—</p>
+              )}
+              <p className="text-xs text-dl-gray mt-1">approved / denied</p>
+            </div>
+          </div>
         )}
 
         {loading ? (
@@ -384,9 +612,7 @@ export default function SentinelIndex() {
                   aria-controls={`panel-${tab}`}
                   onClick={() => setActiveTab(tab)}
                   className={`px-6 py-3 text-sm font-dl-mono uppercase tracking-wider border-b-2 ${
-                    activeTab === tab
-                      ? 'border-dl-navy text-dl-navy font-medium'
-                      : 'border-transparent text-dl-gray'
+                    activeTab === tab ? 'border-dl-navy text-dl-navy font-medium' : 'border-transparent text-dl-gray'
                   }`}
                 >
                   {tab === 'dashboard' ? 'Dashboard' : 'Education & Risk'}
@@ -396,86 +622,41 @@ export default function SentinelIndex() {
 
             {activeTab === 'dashboard' && (
               <div id="panel-dashboard" role="tabpanel" aria-labelledby="dashboard">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                  <div className="border border-dl-border-light p-4">
-                    <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">MARKET REGIME</p>
-                    <p className={`font-dl-serif text-xl ${REGIME_COLORS[overview?.regime || ''] || 'text-dl-navy'}`}>
-                      {overview?.regime || '—'}
-                    </p>
-                    <p className="font-dl-mono text-xs text-dl-gray mt-1">
-                      {overview?.regime_confidence != null ? `${overview.regime_confidence.toFixed(0)}% confidence` : ''}
-                    </p>
-                  </div>
-                  <div className="border border-dl-border-light p-4">
-                    <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">SYSTEM STANCE</p>
-                    <p className="font-dl-serif text-xl text-dl-navy">{overview?.stance || '—'}</p>
-                    <p className="font-dl-mono text-xs text-dl-gray mt-1">
-                      {health?.operationalState || 'NORMAL'}
-                    </p>
-                  </div>
-                  <div className="border border-dl-border-light p-4">
-                    <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">SIGNALS</p>
-                    <p className="font-dl-serif text-xl text-dl-navy">
-                      {overview?.qualified_signals ?? '—'} <span className="text-sm text-dl-gray">/ {overview?.total_signals ?? '—'}</span>
-                    </p>
-                    <p className="text-xs text-dl-gray mt-1">qualified / total</p>
-                  </div>
-                  <div className="border border-dl-border-light p-4">
-                    <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">DECISIONS</p>
-                    <p className="font-dl-serif text-xl text-dl-navy">
-                      <span className="text-dl-forest">{overview?.approved_count ?? 0}</span>
-                      {' / '}
-                      <span className="text-dl-error">{overview?.denied_count ?? 0}</span>
-                    </p>
-                    <p className="text-xs text-dl-gray mt-1">approved / denied</p>
-                  </div>
-                </div>
+                {!isSubscribed ? (
+                  <LockedOverlay onSubscribe={scrollToSubscribe} />
+                ) : (
+                  <>
+                    <div className="mb-8"><RegimeLegend /></div>
 
-                <div className="mb-8">
-                  <RegimeLegend />
-                </div>
-
-                <div className="mb-8">
-                  <SectionHeading>Regime History</SectionHeading>
-                  <RegimeTimeline entries={regimes} />
-                </div>
-
-                <div className="mb-8">
-                  <div className="flex items-center justify-between mb-2">
-                    <SectionHeading>Signals</SectionHeading>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={exportCSV}
-                        className="px-3 py-1 border border-dl-border text-xs font-dl-mono text-dl-navy bg-dl-bg"
-                      >
-                        Export CSV
-                      </button>
-                      <button
-                        onClick={exportJSON}
-                        className="px-3 py-1 border border-dl-border text-xs font-dl-mono text-dl-navy bg-dl-bg"
-                      >
-                        Export JSON
-                      </button>
+                    <div className="mb-8">
+                      <SectionHeading>Regime History</SectionHeading>
+                      <RegimeTimeline entries={regimes} />
                     </div>
-                  </div>
-                  <EnhancedSignalsTable signals={signals} />
-                </div>
 
-                <div className="mb-8">
-                  <SectionHeading>Recent Decisions</SectionHeading>
-                  <DecisionsPanel decisions={decisions} />
-                </div>
+                    <div className="mb-8">
+                      <div className="flex items-center justify-between mb-2">
+                        <SectionHeading>Signals</SectionHeading>
+                        <div className="flex gap-2">
+                          <button onClick={exportCSV} className="px-3 py-1 border border-dl-border text-xs font-dl-mono text-dl-navy bg-dl-bg">Export CSV</button>
+                          <button onClick={exportJSON} className="px-3 py-1 border border-dl-border text-xs font-dl-mono text-dl-navy bg-dl-bg">Export JSON</button>
+                        </div>
+                      </div>
+                      <EnhancedSignalsTable signals={signals} />
+                    </div>
 
-                <div className="flex items-center justify-between border-t border-dl-border pt-4">
-                  <Link href="/sentinel/audit" className="text-sm text-dl-navy underline">
-                    View Full Audit Trail →
-                  </Link>
-                  {lastUpdated && (
-                    <p className="font-dl-mono text-xs text-dl-gray">
-                      Last updated: {lastUpdated}
-                    </p>
-                  )}
-                </div>
+                    <div className="mb-8">
+                      <SectionHeading>Recent Decisions</SectionHeading>
+                      <DecisionsPanel decisions={decisions} />
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-dl-border pt-4">
+                      <Link href="/sentinel/audit" className="text-sm text-dl-navy underline">
+                        View Full Audit Trail →
+                      </Link>
+                      {lastUpdated && <p className="font-dl-mono text-xs text-dl-gray">Last updated: {lastUpdated}</p>}
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
