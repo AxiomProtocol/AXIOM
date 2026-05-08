@@ -225,9 +225,9 @@ export const sentinelBilling = {
 
         await pool.query(
           `UPDATE sentinel_subscriptions
-           SET status = 'canceled', updated_at = NOW()
-           WHERE stripe_customer_id = $1`,
-          [customerId],
+           SET status = 'canceled', stripe_account_id = $1, updated_at = NOW()
+           WHERE stripe_customer_id = $2`,
+          [stripeAccountId, customerId],
         );
 
         const row = await pool.query(
@@ -251,9 +251,10 @@ export const sentinelBilling = {
            SET status = 'active',
                current_period_start = $1,
                current_period_end = $2,
+               stripe_account_id = $3,
                updated_at = NOW()
-           WHERE stripe_subscription_id = $3`,
-          [new Date(sub.current_period_start * 1000), new Date(sub.current_period_end * 1000), subscriptionId],
+           WHERE stripe_subscription_id = $4`,
+          [new Date(sub.current_period_start * 1000), new Date(sub.current_period_end * 1000), stripeAccountId, subscriptionId],
         );
         break;
       }
@@ -265,9 +266,9 @@ export const sentinelBilling = {
 
         await pool.query(
           `UPDATE sentinel_subscriptions
-           SET status = 'past_due', updated_at = NOW()
-           WHERE stripe_subscription_id = $1`,
-          [subscriptionId],
+           SET status = 'past_due', stripe_account_id = $1, updated_at = NOW()
+           WHERE stripe_subscription_id = $2`,
+          [stripeAccountId, subscriptionId],
         );
 
         const row = await pool.query(
