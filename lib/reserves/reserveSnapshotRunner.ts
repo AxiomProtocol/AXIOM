@@ -23,7 +23,7 @@ import type { ReservePositionsResponse } from '../../pages/api/founder/reserve-p
 function internalBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  // Fallback for local dev / Replit dev server
+  if (process.env.REPLIT_DEV_DOMAIN) return `https://${process.env.REPLIT_DEV_DOMAIN}`;
   return `http://localhost:${process.env.PORT ?? 5000}`;
 }
 
