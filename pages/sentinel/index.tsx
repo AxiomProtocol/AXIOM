@@ -19,8 +19,6 @@ import {
   DecisionsPanel,
 } from '../../components/sentinel';
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
 interface RegimeData { regime: string; confidence: string }
 interface OverviewRaw {
   regime: RegimeData | null;
@@ -78,7 +76,9 @@ interface SubInfo {
   cancelAtPeriodEnd: boolean;
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+type TabId = 'dashboard' | 'education';
+type OpStatus = 'idle' | 'running' | 'success' | 'error';
+interface OpState { status: OpStatus; message: string; lastRun: string }
 
 const REGIME_COLORS: Record<string, string> = {
   TREND_UP: 'text-dl-forest',
@@ -93,10 +93,6 @@ const FOOTER_DISCLOSURE =
   'quantitative models. Past regime classifications and signal scores do not guarantee future accuracy. ' +
   'Axiom Protocol does not provide investment advice. Guard Rail #5: Advisory only until post-public governance vote.';
 
-type TabId = 'dashboard' | 'education';
-type OpStatus = 'idle' | 'running' | 'success' | 'error';
-interface OpState { status: OpStatus; message: string; lastRun: string }
-
 const AUTO_REFRESH_OPTIONS = [
   { value: 0, label: 'Off' },
   { value: 60, label: '1 min' },
@@ -104,14 +100,11 @@ const AUTO_REFRESH_OPTIONS = [
   { value: 900, label: '15 min' },
 ];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-/** Construct an EIP-4361 SIWE message string without requiring the siwe package on the client. */
 function buildSiweMessage(params: {
   domain: string;
   address: string;
@@ -133,41 +126,31 @@ function buildSiweMessage(params: {
   );
 }
 
-/** Perform the full SIWE sign-in flow. Returns true on success. */
 async function performSiweSignIn(walletAddress: string): Promise<{ ok: boolean; error?: string }> {
   const eth = (window as { ethereum?: { request: (a: { method: string; params?: unknown[] }) => Promise<unknown> } }).ethereum;
   if (!eth) return { ok: false, error: 'No wallet found. Please connect MetaMask.' };
 
-  // 1. Get nonce
   const nonceRes = await fetch('/api/auth/siwe/nonce');
   if (!nonceRes.ok) return { ok: false, error: 'Failed to get sign-in nonce.' };
   const { nonce } = await nonceRes.json() as { nonce: string };
 
-  // 2. Build SIWE message
-  const domain = window.location.host;
-  const issuedAt = new Date().toISOString();
   const message = buildSiweMessage({
-    domain,
+    domain: window.location.host,
     address: walletAddress,
     uri: window.location.origin,
     chainId: 42161,
     nonce,
-    issuedAt,
+    issuedAt: new Date().toISOString(),
     statement: 'Sign in to Axiom Sentinel Advisory.',
   });
 
-  // 3. Request personal_sign from wallet
   let signature: string;
   try {
-    signature = await eth.request({
-      method: 'personal_sign',
-      params: [message, walletAddress],
-    }) as string;
+    signature = await eth.request({ method: 'personal_sign', params: [message, walletAddress] }) as string;
   } catch {
     return { ok: false, error: 'Signature rejected by wallet.' };
   }
 
-  // 4. Verify with server
   const verifyRes = await fetch('/api/auth/siwe/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -180,15 +163,7 @@ async function performSiweSignIn(walletAddress: string): Promise<{ ok: boolean; 
   return { ok: true };
 }
 
-// ── SiweSignInBanner ─────────────────────────────────────────────────────────
-
-function SiweSignInBanner({
-  walletAddress,
-  onSuccess,
-}: {
-  walletAddress: string;
-  onSuccess: () => void;
-}) {
+function SiweSignInBanner({ walletAddress, onSuccess }: { walletAddress: string; onSuccess: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -196,11 +171,8 @@ function SiweSignInBanner({
     setBusy(true);
     setError('');
     const result = await performSiweSignIn(walletAddress);
-    if (result.ok) {
-      onSuccess();
-    } else {
-      setError(result.error ?? 'Sign-in failed.');
-    }
+    if (result.ok) onSuccess();
+    else setError(result.error ?? 'Sign-in failed.');
     setBusy(false);
   };
 
@@ -222,8 +194,6 @@ function SiweSignInBanner({
     </div>
   );
 }
-
-// ── SubscriptionPanel ─────────────────────────────────────────────────────────
 
 function SubscriptionPanel({
   walletAddress,
@@ -309,7 +279,6 @@ function SubscriptionPanel({
            status === 'canceled' ? 'CANCELED' : 'INACTIVE'}
         </span>
       </div>
-
       <div className="px-5 py-5">
         {(isActive || isPastDue) ? (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
@@ -354,7 +323,6 @@ function SubscriptionPanel({
             </div>
           </div>
         )}
-
         {isActive && !isCanceling && (
           <button
             onClick={handleCancel}
@@ -364,20 +332,16 @@ function SubscriptionPanel({
             {busy ? 'Processing...' : 'Cancel subscription at period end'}
           </button>
         )}
-
         {isCanceling && (
           <p className="text-xs font-dl-mono text-dl-gold">
             Access continues until {formatDate(sub!.currentPeriodEnd)}. No further charges.
           </p>
         )}
-
         {msg && <p className="text-xs font-dl-mono text-dl-error mt-2">{msg}</p>}
       </div>
     </div>
   );
 }
-
-// ── LockedOverlay ─────────────────────────────────────────────────────────────
 
 function LockedOverlay({ onSubscribe }: { onSubscribe: () => void }) {
   return (
@@ -388,17 +352,12 @@ function LockedOverlay({ onSubscribe }: { onSubscribe: () => void }) {
         Sentinel Advisory subscribers. All outputs are informational — advisory-only mode is active
         during proof-of-concept.
       </p>
-      <button
-        onClick={onSubscribe}
-        className="px-6 py-2 bg-dl-navy text-white font-dl-mono text-xs"
-      >
+      <button onClick={onSubscribe} className="px-6 py-2 bg-dl-navy text-white font-dl-mono text-xs">
         SUBSCRIBE TO SENTINEL ADVISORY
       </button>
     </div>
   );
 }
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function SentinelIndex() {
   const [overview, setOverview] = useState<Overview | null>(null);
@@ -413,17 +372,13 @@ export default function SentinelIndex() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [autoRefreshSec, setAutoRefreshSec] = useState(0);
   const autoRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const [signalsOp, setSignalsOp] = useState<OpState>({ status: 'idle', message: '', lastRun: '' });
   const [fullCycleOp, setFullCycleOp] = useState<OpState>({ status: 'idle', message: '', lastRun: '' });
-
-  // Wallet + subscription state
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [sub, setSub] = useState<SubInfo | null>(null);
   const [siweRequired, setSiweRequired] = useState(false);
   const subscriptionPanelRef = useRef<HTMLDivElement>(null);
 
-  // Detect connected wallet from window.ethereum
   useEffect(() => {
     const detect = async () => {
       try {
@@ -432,7 +387,7 @@ export default function SentinelIndex() {
         const accounts = await eth.request({ method: 'eth_accounts' });
         if (accounts[0]) setWalletAddress(accounts[0]);
         eth.on('accountsChanged', (accs: string[]) => setWalletAddress(accs[0] ?? null));
-      } catch { /* wallet not available */ }
+      } catch { /* wallet unavailable */ }
     };
     detect();
   }, []);
@@ -447,19 +402,14 @@ export default function SentinelIndex() {
       }
       setSiweRequired(false);
       if (res.ok) setSub(await res.json() as SubInfo);
-    } catch { /* network failure — leave existing state */ }
+    } catch { /* leave existing state */ }
   }, []);
 
   useEffect(() => {
-    if (walletAddress) {
-      fetchSubStatus(walletAddress);
-    } else {
-      setSub(null);
-      setSiweRequired(false);
-    }
+    if (walletAddress) fetchSubStatus(walletAddress);
+    else { setSub(null); setSiweRequired(false); }
   }, [walletAddress, fetchSubStatus]);
 
-  // Handle ?subscribed=1 return from Stripe Checkout
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
@@ -469,21 +419,15 @@ export default function SentinelIndex() {
     }
   }, [walletAddress, fetchSubStatus]);
 
-  // Only status === 'active' unlocks the dashboard; past_due loses access
   const isSubscribed = sub?.status === 'active';
 
-  // Dashboard data fetch — premium endpoints (signals/decisions/regimes) are only
-  // called when the wallet holds an active subscription; the server also enforces
-  // this gate independently via requireActiveSubscription().
   const fetchData = useCallback((activeSubscription: boolean) => {
     setLoading(true);
     setError(null);
-
     const publicFetches: Promise<unknown>[] = [
       fetch('/api/sentinel/overview').then(r => r.json()),
       fetch('/api/sentinel/health').then(r => r.json()),
     ];
-
     const premiumFetches: Promise<unknown>[] = activeSubscription
       ? [
           fetch('/api/sentinel/signals?limit=50').then(r => r.json()),
@@ -495,7 +439,6 @@ export default function SentinelIndex() {
           Promise.resolve({ decisions: [] }),
           Promise.resolve({ regimes: [] }),
         ];
-
     Promise.all([...publicFetches, ...premiumFetches])
       .then(([overviewData, healthData, signalsData, decisionsData, regimesData]) => {
         if ((overviewData as { error?: string }).error) {
@@ -550,28 +493,21 @@ export default function SentinelIndex() {
       if (res.ok && data.success !== false) {
         let details = 'Complete';
         if (label === 'Signal Generation') details = `Generated ${data.signalsGenerated || 0} signals`;
-        else if (label === 'Full Cycle') {
-          details = (data.results || []).map(r => `${r.step}: ${r.success ? 'OK' : 'FAIL'}`).join(' | ');
-        }
+        else if (label === 'Full Cycle') details = (data.results || []).map(r => `${r.step}: ${r.success ? 'OK' : 'FAIL'}`).join(' | ');
         setter({ status: 'success', message: details, lastRun: ts });
         setRefreshKey(k => k + 1);
       } else {
         setter({ status: 'error', message: data.error || `${label} failed`, lastRun: ts });
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Network error';
-      setter({ status: 'error', message, lastRun: '' });
+      setter({ status: 'error', message: err instanceof Error ? err.message : 'Network error', lastRun: '' });
     }
   };
 
   const exportCSV = () => {
     if (!signals.length) return;
     const headers = ['Symbol', 'Asset Type', 'Direction', 'Entry Mid', 'Final Score', 'Regime', 'Qualified', 'Created'];
-    const rows = signals.map(s => [
-      s.symbol, s.asset_type, s.direction, s.entry_mid,
-      s.final_score != null ? String(s.final_score) : '',
-      s.regime_state, s.qualified ? 'YES' : 'NO', s.created_at,
-    ]);
+    const rows = signals.map(s => [s.symbol, s.asset_type, s.direction, s.entry_mid, s.final_score != null ? String(s.final_score) : '', s.regime_state, s.qualified ? 'YES' : 'NO', s.created_at]);
     const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     const a = document.createElement('a');
@@ -587,10 +523,6 @@ export default function SentinelIndex() {
     a.click(); URL.revokeObjectURL(url);
   };
 
-  const scrollToSubscribe = () => {
-    subscriptionPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   return (
     <DesignLawLayout>
       <PageShell
@@ -598,7 +530,6 @@ export default function SentinelIndex() {
         subtitle="Capital Authorization Layer — the gate between intelligence and deployment. MIRDT reads the regime. Sentinel decides what moves."
         disclosure={FOOTER_DISCLOSURE}
       >
-        {/* Authorization architecture — always visible */}
         <div className="border border-dl-border mb-6">
           <div className="border-b border-dl-border px-5 py-3 bg-dl-bg-alt">
             <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-widest">
@@ -635,18 +566,13 @@ export default function SentinelIndex() {
           </div>
         </div>
 
-        {/* SIWE sign-in banner — shown when wallet is connected but not SIWE-authenticated */}
         {walletAddress && siweRequired && (
           <SiweSignInBanner
             walletAddress={walletAddress}
-            onSuccess={() => {
-              setSiweRequired(false);
-              fetchSubStatus(walletAddress);
-            }}
+            onSuccess={() => { setSiweRequired(false); fetchSubStatus(walletAddress); }}
           />
         )}
 
-        {/* Subscription panel */}
         <div ref={subscriptionPanelRef}>
           <SubscriptionPanel
             walletAddress={walletAddress}
@@ -655,7 +581,6 @@ export default function SentinelIndex() {
           />
         </div>
 
-        {/* Operations panel — subscribers only */}
         {isSubscribed && (
           <div className="border border-dl-border bg-dl-bg p-4 mb-6">
             <div className="flex items-center justify-between mb-3">
@@ -685,10 +610,9 @@ export default function SentinelIndex() {
                   {fullCycleOp.status === 'running' ? 'RUNNING...' : 'RUN FULL CYCLE'}
                 </button>
                 {fullCycleOp.message && (
-                  <p className={`text-xs mt-1 font-dl-mono ${
-                    fullCycleOp.status === 'error' ? 'text-dl-error' :
-                    fullCycleOp.status === 'success' ? 'text-dl-forest' : 'text-dl-gray'
-                  }`}>{fullCycleOp.message}</p>
+                  <p className={`text-xs mt-1 font-dl-mono ${fullCycleOp.status === 'error' ? 'text-dl-error' : fullCycleOp.status === 'success' ? 'text-dl-forest' : 'text-dl-gray'}`}>
+                    {fullCycleOp.message}
+                  </p>
                 )}
               </div>
               <div className="border border-dl-border p-3">
@@ -701,10 +625,9 @@ export default function SentinelIndex() {
                   {signalsOp.status === 'running' ? 'GENERATING...' : 'RUN SIGNALS'}
                 </button>
                 {signalsOp.message && (
-                  <p className={`text-xs mt-1 font-dl-mono ${
-                    signalsOp.status === 'error' ? 'text-dl-error' :
-                    signalsOp.status === 'success' ? 'text-dl-forest' : 'text-dl-gray'
-                  }`}>{signalsOp.message}</p>
+                  <p className={`text-xs mt-1 font-dl-mono ${signalsOp.status === 'error' ? 'text-dl-error' : signalsOp.status === 'success' ? 'text-dl-forest' : 'text-dl-gray'}`}>
+                    {signalsOp.message}
+                  </p>
                 )}
               </div>
               <div className="border border-dl-border p-3">
@@ -725,14 +648,11 @@ export default function SentinelIndex() {
           <CircuitBreakerBanner state={health.operationalState} />
         )}
 
-        {/* Public stat strip — regime/stance always; signals/decisions gated */}
         {!loading && !error && overview && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             <div className="border border-dl-border-light p-4">
               <p className="text-xs uppercase tracking-wider text-dl-gray mb-1">MARKET REGIME</p>
-              <p className={`font-dl-serif text-xl ${REGIME_COLORS[overview.regime] || 'text-dl-navy'}`}>
-                {overview.regime}
-              </p>
+              <p className={`font-dl-serif text-xl ${REGIME_COLORS[overview.regime] || 'text-dl-navy'}`}>{overview.regime}</p>
               <p className="font-dl-mono text-xs text-dl-gray mt-1">
                 {overview.regime_confidence ? `${overview.regime_confidence.toFixed(0)}% confidence` : ''}
               </p>
@@ -775,7 +695,6 @@ export default function SentinelIndex() {
           <p className="text-sm text-dl-error py-12 text-center">{error}</p>
         ) : (
           <>
-            {/* Tab bar */}
             <div className="flex border-b border-dl-border mb-6" role="tablist" aria-label="Sentinel views">
               {(['dashboard', 'education'] as TabId[]).map(tab => (
                 <button
@@ -785,9 +704,7 @@ export default function SentinelIndex() {
                   aria-controls={`panel-${tab}`}
                   onClick={() => setActiveTab(tab)}
                   className={`px-6 py-3 text-sm font-dl-mono uppercase tracking-wider border-b-2 ${
-                    activeTab === tab
-                      ? 'border-dl-navy text-dl-navy font-medium'
-                      : 'border-transparent text-dl-gray'
+                    activeTab === tab ? 'border-dl-navy text-dl-navy font-medium' : 'border-transparent text-dl-gray'
                   }`}
                 >
                   {tab === 'dashboard' ? 'Dashboard' : 'Education & Risk'}
@@ -795,60 +712,42 @@ export default function SentinelIndex() {
               ))}
             </div>
 
-            {/* Dashboard tab */}
             {activeTab === 'dashboard' && (
               <div id="panel-dashboard" role="tabpanel">
                 {!isSubscribed ? (
-                  <LockedOverlay onSubscribe={scrollToSubscribe} />
+                  <LockedOverlay onSubscribe={() => subscriptionPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
                 ) : (
                   <>
                     <div className="mb-8"><RegimeLegend /></div>
-
                     <div className="mb-8">
                       <SectionHeading>Regime History</SectionHeading>
                       <RegimeTimeline entries={regimes} />
                     </div>
-
                     <div className="mb-8">
                       <div className="flex items-center justify-between mb-2">
                         <SectionHeading>Signals</SectionHeading>
                         <div className="flex gap-2">
-                          <button
-                            onClick={exportCSV}
-                            className="px-3 py-1 border border-dl-border text-xs font-dl-mono text-dl-navy bg-dl-bg"
-                          >
-                            Export CSV
-                          </button>
-                          <button
-                            onClick={exportJSON}
-                            className="px-3 py-1 border border-dl-border text-xs font-dl-mono text-dl-navy bg-dl-bg"
-                          >
-                            Export JSON
-                          </button>
+                          <button onClick={exportCSV} className="px-3 py-1 border border-dl-border text-xs font-dl-mono text-dl-navy bg-dl-bg">Export CSV</button>
+                          <button onClick={exportJSON} className="px-3 py-1 border border-dl-border text-xs font-dl-mono text-dl-navy bg-dl-bg">Export JSON</button>
                         </div>
                       </div>
                       <EnhancedSignalsTable signals={signals} />
                     </div>
-
                     <div className="mb-8">
                       <SectionHeading>Recent Decisions</SectionHeading>
                       <DecisionsPanel decisions={decisions} />
                     </div>
-
                     <div className="flex items-center justify-between border-t border-dl-border pt-4">
                       <Link href="/sentinel/audit" className="text-sm text-dl-navy underline">
                         View Full Audit Trail →
                       </Link>
-                      {lastUpdated && (
-                        <p className="font-dl-mono text-xs text-dl-gray">Last updated: {lastUpdated}</p>
-                      )}
+                      {lastUpdated && <p className="font-dl-mono text-xs text-dl-gray">Last updated: {lastUpdated}</p>}
                     </div>
                   </>
                 )}
               </div>
             )}
 
-            {/* Education tab */}
             {activeTab === 'education' && (
               <div id="panel-education" role="tabpanel" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-6">

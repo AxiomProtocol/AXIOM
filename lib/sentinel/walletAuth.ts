@@ -52,14 +52,7 @@ export async function requireWalletOwnership(
   return { ok: true };
 }
 
-/**
- * Gate used by premium Sentinel API endpoints (signals, decisions, regimes).
- * Returns ok:true only when the request carries a valid SIWE session AND
- * that wallet holds an active (status = 'active') Sentinel subscription on
- * the current Stripe account. Rows stamped with a different stripe_account_id
- * (legacy accounts) are treated as non-entitling to prevent cross-account
- * data access after a Stripe account migration.
- */
+/** Returns ok:true only when the request has a valid SIWE session and the wallet holds an active subscription on the current Stripe account. */
 export async function requireActiveSubscription(
   req: IncomingMessage,
 ): Promise<{ ok: true; walletAddress: string } | { ok: false; status: 401 | 403; error: string }> {
