@@ -3,29 +3,13 @@
  *
  * Hourly reserve-balance snapshot writer.
  *
- * Calls the canonical /api/founder/reserve-positions handler (via internal
- * HTTP) so snapshot values are *identical* to what the Reserves tab shows —
- * ETH, PAXG, AXAU, AXM, USDC, AXUSD balances and USD values all come from
- * the same computation with the same address set and price sources.
- *
- * The INSERT uses ON CONFLICT DO NOTHING against the (symbol, snapshot_hour)
- * unique index, so running more than once inside the same clock-hour is safe.
- *
- * All DB access goes through `pool` from server/db.ts (inherits Neon SSL
- * config and the no-op proxy when DATABASE_URL is absent).
+ * Calls fetchReservePositions() directly — no internal HTTP self-call —
+ * so it works in any environment (Replit, Vercel, CI) without needing
+ * the dev server to be reachable via a public URL.
  */
 
 import { pool as sharedPool } from '../../server/db';
-import type { ReservePositionsResponse } from '../../pages/api/founder/reserve-positions';
-
-// ── App-URL resolution ──────────────────────────────────────────────────────
-
-function internalBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  if (process.env.REPLIT_DEV_DOMAIN) return `https://${process.env.REPLIT_DEV_DOMAIN}`;
-  return `http://localhost:${process.env.PORT ?? 5000}`;
-}
+import { fetchReservePositions } from './fetchReservePositions';
 
 // ── Snapshot hour helper ────────────────────────────────────────────────────
 
@@ -45,50 +29,13 @@ export interface SnapshotRunResult {
 }
 
 export async function runReserveSnapshot(): Promise<SnapshotRunResult> {
-  const adminKey   = process.env.ADMIN_SOLVENCY_KEY ?? '';
-  const cronSecret = process.env.CRON_SECRET ?? '';
-
-  if (!adminKey && !cronSecret) {
-    console.error(
-      '[reserveSnapshotRunner] Neither ADMIN_SOLVENCY_KEY nor CRON_SECRET is set. ' +
-      'The snapshot cron will fail until at least one of these env vars is configured ' +
-      'in Vercel environment settings.',
-    );
-    throw new Error('Neither ADMIN_SOLVENCY_KEY nor CRON_SECRET is set — cannot call reserve-positions API');
-  }
-
-  // Prefer ADMIN_SOLVENCY_KEY (x-admin-key header); fall back to CRON_SECRET (Bearer token).
-  // The reserve-positions endpoint accepts both.
-  const requestHeaders: Record<string, string> = adminKey
-    ? { 'x-admin-key': adminKey }
-    : { 'Authorization': `Bearer ${cronSecret}` };
+  const positions = await fetchReservePositions();
 
   const snapshotHour = currentSnapshotHour();
   const written: string[] = [];
   const skipped: string[] = [];
   const errors: Record<string, string> = {};
 
-  // ── Fetch live positions from the canonical handler ───────────────────────
-  const url = `${internalBaseUrl()}/api/founder/reserve-positions`;
-  let positions: ReservePositionsResponse;
-
-  try {
-    const res = await fetch(url, {
-      headers: requestHeaders,
-      signal: AbortSignal.timeout(55_000),
-    });
-    const json = await res.json() as ReservePositionsResponse;
-    if (!res.ok || !json.success) {
-      throw new Error(json.error ?? `HTTP ${res.status}`);
-    }
-    positions = json;
-  } catch (err: unknown) {
-    throw new Error(
-      `Failed to fetch reserve positions: ${err instanceof Error ? err.message : String(err)}`,
-    );
-  }
-
-  // ── Write one row per asset — ON CONFLICT (symbol, snapshot_hour) DO NOTHING
   for (const asset of positions.assets) {
     try {
       const result = await sharedPool.query(
@@ -103,11 +50,8 @@ export async function runReserveSnapshot(): Promise<SnapshotRunResult> {
           snapshotHour,
         ],
       );
-      if ((result.rowCount ?? 0) > 0) {
-        written.push(asset.symbol);
-      } else {
-        skipped.push(asset.symbol);
-      }
+      if ((result.rowCount ?? 0) > 0) written.push(asset.symbol);
+      else skipped.push(asset.symbol);
     } catch (err: unknown) {
       errors[asset.symbol] = err instanceof Error ? err.message : String(err);
     }
