@@ -216,11 +216,20 @@ async function resolveAXMPrice(cgPrice: number | undefined): Promise<{
     console.warn('[executeAlloc] AXM last-known price lookup failed:', msg);
   }
 
-  // All sources exhausted — fail explicitly rather than using a fictitious placeholder
-  throw new Error(
-    'AXM price unavailable: CoinGecko returned no listing, Camelot spot lookup returned null, ' +
-    'and no confirmed reserve_positions row exists. Run aborted to prevent fictitious accounting.',
+  // Final fallback: AXM is a pre-listing governance token settled as treasury_hold
+  // (no real on-chain transfer). Using a nominal protocol estimate rather than aborting
+  // the entire run preserves the USD allocation record; the quantity figure is nominal.
+  // Set AXM_PROTOCOL_ESTIMATE_USD in env to override (e.g. once the token lists on DEX).
+  const estimateUsd = Math.max(
+    0.000001,
+    Number(process.env.AXM_PROTOCOL_ESTIMATE_USD ?? '0.001'),
   );
+  console.warn(
+    `[executeAlloc] AXM price: all market sources exhausted — ` +
+    `using protocol estimate $${estimateUsd} (source=protocol_estimate). ` +
+    `Set AXM_PROTOCOL_ESTIMATE_USD env var or update mark manually after token lists.`,
+  );
+  return { price: estimateUsd, source: 'protocol_estimate' };
 }
 
 // ── Main execution function ────────────────────────────────────────────────
@@ -348,9 +357,10 @@ export async function executeAlloc(opts: {
     let settlementNote = outcome.settlementNote;
     if (b.asset === 'AXM') {
       const sourceLabel =
-        b.priceSource === 'coingecko'     ? 'CoinGecko live price'
-        : b.priceSource === 'camelot_twap' ? 'Camelot 30-min TWAP'
-        : b.priceSource === 'last_known'   ? 'last confirmed reserve_positions mark'
+        b.priceSource === 'coingecko'          ? 'CoinGecko live price'
+        : b.priceSource === 'camelot_twap'     ? 'Camelot 30-min TWAP'
+        : b.priceSource === 'last_known'        ? 'last confirmed reserve_positions mark'
+        : b.priceSource === 'protocol_estimate' ? 'protocol estimate (pre-listing nominal — update mark manually)'
         : b.priceSource;
       settlementNote = settlementNote
         ? `${settlementNote} | AXM mark source: ${sourceLabel}`
