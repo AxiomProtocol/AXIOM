@@ -9,7 +9,9 @@ import { desc, eq } from 'drizzle-orm';
  *
  * Returns the most recent N reserve_positions snapshots for a given asset,
  * including valuation_source so operators can track which price source the
- * allocation engine used over time (CoinGecko / camelot_twap / last_known).
+ * allocation engine used over time (coingecko / camelot_twap / last_known /
+ * placeholder). The placeholder source renders as a red badge in the UI to
+ * make fallback episodes immediately visible.
  *
  * Query params:
  *   asset  — asset symbol (default: AXM)

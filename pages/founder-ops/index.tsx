@@ -4927,11 +4927,13 @@ export default function FounderOpsPage() {
                                         source === 'coingecko'     ? 'text-emerald-700 border-emerald-600'
                                         : source === 'camelot_twap' ? 'text-dl-navy border-dl-navy'
                                         : source === 'last_known'   ? 'text-amber-700 border-amber-500'
+                                        : source === 'placeholder'  ? 'text-red-700 border-red-500'
                                         : 'text-dl-gray border-dl-border';
                                       const badgeLabel =
                                         source === 'coingecko'     ? 'CoinGecko'
                                         : source === 'camelot_twap' ? 'Camelot TWAP'
                                         : source === 'last_known'   ? 'Last Known'
+                                        : source === 'placeholder'  ? 'Placeholder'
                                         : source.replace(/_/g, ' ') || '—';
                                       const priceStr = row.mark_price !== null
                                         ? row.mark_price >= 1
