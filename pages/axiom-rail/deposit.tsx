@@ -14,10 +14,13 @@
  *  Token delivery — window.postMessage from the wallet with origin validation
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { isPostMessageOriginAllowed } from '../../lib/multichain/stellar/axiom-rail/corsUtils';
+
+const WALLET_KEY_STORAGE = 'axiom_wallet_fund_key';
+const TOPUP_PRESETS = [25, 50, 100, 250, 500];
 
 type Step = 'bank' | 'identity' | 'submitting' | 'done' | 'error';
 type IdType = 'ssn' | 'passport';
@@ -62,6 +65,48 @@ export default function AxiomRailDeposit() {
 
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
   const [accountInfoLoading, setAccountInfoLoading] = useState(true);
+
+  // ── Axiom wallet top-up (Stripe card) ──────────────────────────────────
+  const [walletAdminKey, setWalletAdminKey]         = useState('');
+  const [walletKeyInput, setWalletKeyInput]         = useState('');
+  const [walletPreset, setWalletPreset]             = useState<number>(100);
+  const [walletTopupLoading, setWalletTopupLoading] = useState(false);
+  const [walletTopupError, setWalletTopupError]     = useState<string | null>(null);
+  const [walletTopupDone, setWalletTopupDone]       = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(WALLET_KEY_STORAGE);
+      if (stored) { setWalletAdminKey(stored); setWalletKeyInput(stored); }
+    } catch { /* SSR / private browsing */ }
+  }, []);
+
+  const handleWalletTopup = useCallback(async () => {
+    const key = walletAdminKey || walletKeyInput.trim();
+    if (!key || walletTopupLoading) return;
+    if (walletAdminKey !== key) {
+      setWalletAdminKey(key);
+      try { sessionStorage.setItem(WALLET_KEY_STORAGE, key); } catch { /* ok */ }
+    }
+    setWalletTopupLoading(true);
+    setWalletTopupError(null);
+    setWalletTopupDone(false);
+    try {
+      const res  = await fetch('/api/wallet/topup/checkout', {
+        method: 'POST',
+        headers: { 'x-admin-key': key, 'content-type': 'application/json' },
+        body: JSON.stringify({ amount_cents: walletPreset * 100 }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error ?? `HTTP ${res.status}`);
+      window.open(json.checkout_url as string, '_blank', 'noopener');
+      setWalletTopupDone(true);
+    } catch (e) {
+      setWalletTopupError(e instanceof Error ? e.message : 'Checkout failed');
+    } finally {
+      setWalletTopupLoading(false);
+    }
+  }, [walletAdminKey, walletKeyInput, walletPreset, walletTopupLoading]);
 
   // ── Token delivery: postMessage with origin validation ──────────────────
   // The SEP-10 JWT is delivered exclusively via window.postMessage from the
@@ -265,6 +310,88 @@ export default function AxiomRailDeposit() {
                 >
                   Capital Stack Entry (Coinbase Pay)
                 </a>
+              </div>
+            </div>
+
+            {/* ── Axiom Balance top-up (Stripe) ─────────────────────────── */}
+            <div style={{ border: '1px solid #1e3a5f', marginBottom: '1.25rem', overflow: 'hidden' }}>
+              <div style={{ background: '#1e3a5f', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <p style={{ fontFamily: 'monospace', fontSize: 10, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: 1, margin: 0 }}>
+                  Fund Axiom Balance — Debit Card (Stripe)
+                </p>
+                <span style={{ fontFamily: 'monospace', fontSize: 9, color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: 1 }}>Instant</span>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '0.85rem 1rem' }}>
+                <p style={{ fontSize: 12, color: '#374151', margin: '0 0 0.75rem', lineHeight: 1.6 }}>
+                  Load USD into your internal Axiom balance with a debit card. Funds are credited the moment Stripe confirms payment and feed directly into the{' '}
+                  <strong>Reserves tab allocation engine</strong> on Founder Ops — no ACH delays.
+                </p>
+
+                {/* Amount presets */}
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                  {TOPUP_PRESETS.map(p => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setWalletPreset(p)}
+                      style={{
+                        fontFamily: 'monospace', fontSize: 12,
+                        padding: '0.3rem 0.75rem',
+                        border: `1px solid ${walletPreset === p ? '#1e3a5f' : '#d1d5db'}`,
+                        background: walletPreset === p ? '#1e3a5f' : '#fff',
+                        color: walletPreset === p ? '#fff' : '#1e3a5f',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ${p}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Admin key row — auto-filled from sessionStorage if available */}
+                {!walletAdminKey && (
+                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                    <input
+                      type="password"
+                      value={walletKeyInput}
+                      onChange={e => setWalletKeyInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleWalletTopup()}
+                      placeholder="Admin key"
+                      style={{ ...inputStyle, flex: 1, margin: 0, padding: '0.35rem 0.6rem', fontSize: 12 }}
+                    />
+                  </div>
+                )}
+
+                {walletTopupError && (
+                  <p style={{ fontFamily: 'monospace', fontSize: 11, color: '#b91c1c', margin: '0 0 0.5rem' }}>
+                    {walletTopupError}
+                  </p>
+                )}
+
+                {walletTopupDone && (
+                  <p style={{ fontFamily: 'monospace', fontSize: 11, color: '#166534', margin: '0 0 0.5rem' }}>
+                    Stripe checkout opened — complete payment to credit your balance.
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  disabled={walletTopupLoading || (!walletAdminKey && !walletKeyInput.trim())}
+                  onClick={handleWalletTopup}
+                  style={{
+                    fontFamily: 'monospace', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1,
+                    padding: '0.5rem 1.25rem',
+                    background: (walletTopupLoading || (!walletAdminKey && !walletKeyInput.trim())) ? '#9ca3af' : '#1e3a5f',
+                    color: '#fff', border: 'none', cursor: walletTopupLoading ? 'wait' : 'pointer',
+                    width: '100%',
+                  }}
+                >
+                  {walletTopupLoading ? 'Opening Stripe…' : `Load $${walletPreset} → Axiom Balance`}
+                </button>
+
+                <p style={{ fontSize: 10, color: '#9ca3af', margin: '0.5rem 0 0', lineHeight: 1.5 }}>
+                  Stripe card fee (≈2.9% + 30¢) applies. Funds appear in your balance within seconds of payment confirmation.
+                </p>
               </div>
             </div>
 
