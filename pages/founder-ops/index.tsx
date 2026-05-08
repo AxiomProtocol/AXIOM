@@ -336,6 +336,9 @@ export default function FounderOpsPage() {
   const [axmPriceHistory, setAxmPriceHistory] = useState<AxmPriceHistoryRow[]>([]);
   const [axmPriceHistoryLoading, setAxmPriceHistoryLoading] = useState(false);
 
+  const [snapshotBootstrapLoading, setSnapshotBootstrapLoading] = useState(false);
+  const [snapshotBootstrapResult, setSnapshotBootstrapResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
   // Aggregate reserve USD value per snapshot hour — shared by the 7D Change %
   // cell in the totals strip AND the portfolio sparkline so both always reflect
   // identical data without duplicating the summation logic.
@@ -1294,6 +1297,36 @@ export default function FounderOpsPage() {
       setAxmPriceHistory(axmResult.value.rows as AxmPriceHistoryRow[]);
     }
     setAxmPriceHistoryLoading(false);
+  };
+
+  const triggerSnapshotBootstrap = async (backfillHours = 48) => {
+    const key = reservesAdminKey || railAdminKey;
+    if (!key) return;
+    setSnapshotBootstrapLoading(true);
+    setSnapshotBootstrapResult(null);
+    try {
+      const res = await fetch('/api/founder/reserves/bootstrap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
+        body: JSON.stringify({ backfillHours }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        const written = json.current?.written ?? [];
+        const backfilled = json.backfill?.written ?? [];
+        setSnapshotBootstrapResult({
+          ok: true,
+          msg: `Snapshot written for: ${written.join(', ') || 'none'}. Backfilled ${backfillHours}h for: ${[...new Set(backfilled)].join(', ') || 'none'}.`,
+        });
+        loadReservesHistory(key);
+      } else {
+        setSnapshotBootstrapResult({ ok: false, msg: json.error ?? 'Bootstrap failed' });
+      }
+    } catch (e) {
+      setSnapshotBootstrapResult({ ok: false, msg: String(e) });
+    } finally {
+      setSnapshotBootstrapLoading(false);
+    }
   };
 
   const loadReserves = async (key?: string) => {
@@ -4287,9 +4320,24 @@ export default function FounderOpsPage() {
                   >
                     {reservesLoading ? 'Loading…' : 'Refresh'}
                   </button>
+                  {reservesAdminKey && (
+                    <button
+                      onClick={() => triggerSnapshotBootstrap(48)}
+                      disabled={snapshotBootstrapLoading}
+                      title="Write current balances as a snapshot and back-fill 48 past hours so sparklines render immediately"
+                      className="font-dl-mono text-xs border border-dl-border text-dl-gray px-4 py-2 uppercase tracking-wider hover:text-dl-navy hover:border-dl-navy transition-colors disabled:opacity-50"
+                    >
+                      {snapshotBootstrapLoading ? 'Seeding…' : 'Seed Sparklines'}
+                    </button>
+                  )}
                   {reservesData?.fetchedAt && (
                     <span className="font-dl-mono text-xs text-dl-gray">
                       Last fetched: {new Date(reservesData.fetchedAt).toLocaleTimeString()}
+                    </span>
+                  )}
+                  {snapshotBootstrapResult && (
+                    <span className={`font-dl-mono text-xs ${snapshotBootstrapResult.ok ? 'text-dl-forest' : 'text-dl-error'}`}>
+                      {snapshotBootstrapResult.msg}
                     </span>
                   )}
                 </div>
@@ -4832,15 +4880,31 @@ export default function FounderOpsPage() {
                             {/* 7-day balance sparkline */}
                             {(() => {
                               const pts = reservesHistory[asset.symbol] ?? [];
-                              if (pts.length < 2 && !reservesHistoryLoading) return null;
                               if (reservesHistoryLoading && pts.length === 0) {
                                 return (
                                   <div className="px-5 py-2 border-b border-dl-border">
-                                    <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">7D Trend — loading…</p>
+                                    <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">Balance Trend — loading…</p>
                                   </div>
                                 );
                               }
-                              if (pts.length < 2) return null;
+                              if (pts.length === 0) {
+                                return (
+                                  <div className="px-5 py-2 border-b border-dl-border bg-dl-bg">
+                                    <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">
+                                      Balance Trend — No snapshots yet · Click <span className="text-dl-navy">Seed Sparklines</span> to initialize
+                                    </p>
+                                  </div>
+                                );
+                              }
+                              if (pts.length === 1) {
+                                return (
+                                  <div className="px-5 py-2 border-b border-dl-border bg-dl-bg">
+                                    <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">
+                                      Balance Trend — 1 snapshot · Trend forming, check back after next hourly cron
+                                    </p>
+                                  </div>
+                                );
+                              }
                               const values = pts.map(p => p.balance);
                               const minVal = Math.min(...values);
                               const maxVal = Math.max(...values);
