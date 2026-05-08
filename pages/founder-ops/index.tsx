@@ -764,7 +764,11 @@ export default function FounderOpsPage() {
   useEffect(() => {
     const key = reservesAdminKey || railAdminKey;
     if (!key) return;
-    const t = setTimeout(() => { loadWalletBalance(key); loadLastAutoAlloc(key); }, 400);
+    const t = setTimeout(() => {
+      loadWalletBalance(key);
+      loadLastAutoAlloc(key);
+      loadReservesHistory(key);
+    }, 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reservesAdminKey, railAdminKey]);
