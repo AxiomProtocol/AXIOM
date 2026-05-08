@@ -2,8 +2,8 @@
  * Axiom — AI Auto-Allocation Service
  *
  * Triggered automatically after a wallet top-up credit is confirmed.
- * Uses Gemini to recommend a bucket split aligned with the configured
- * AllocationPolicy, then writes the result to treasury_allocations.
+ * Uses Gemini to recommend a split across the 6 canonical protocol asset
+ * buckets, aligned with the configured AllocationPolicy.
  *
  * Non-blocking: callers fire-and-forget. All failures are caught and
  * logged — they never block the wallet credit path.
@@ -29,14 +29,18 @@ import { customAlphabet } from 'nanoid';
 
 const nanoid8 = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 8);
 
-// Canonical bucket → primary asset mapping
-const BUCKET_ASSET: Record<string, string> = {
-  operating_cash:       'USD',
-  settlement_liquidity: 'USDC',
-  reserve:              'PAXG',
-  capital_deployment:   'USD',
-  protocol_ops:         'USD',
-};
+/**
+ * Six canonical treasury asset buckets.
+ * Used as the fallback when allocation_policies table is empty.
+ */
+const DEFAULT_BUCKETS = [
+  { bucketName: 'eth_reserve',    targetPct: 20, assetSymbol: 'ETH'   },
+  { bucketName: 'paxg_reserve',   targetPct: 25, assetSymbol: 'PAXG'  },
+  { bucketName: 'axau_reserve',   targetPct: 15, assetSymbol: 'AXAU'  },
+  { bucketName: 'axm_treasury',   targetPct: 10, assetSymbol: 'AXM'   },
+  { bucketName: 'axusd_liquidity',targetPct: 15, assetSymbol: 'AXUSD' },
+  { bucketName: 'usdc_operations',targetPct: 15, assetSymbol: 'USDC'  },
+] as const;
 
 export interface AutoAllocResult {
   runId: string;
@@ -46,7 +50,6 @@ export interface AutoAllocResult {
   source: 'AUTO_AI';
 }
 
-/** Parsed and validated bucket percentages returned by Gemini. */
 interface ValidatedAllocations {
   normalized: Record<string, number>;
   rationale: string;
@@ -54,9 +57,7 @@ interface ValidatedAllocations {
 
 /**
  * Validate and strictly enforce allocation invariants on raw AI output.
- *
- * Throws a descriptive Error if any invariant is violated — the caller's
- * catch block is responsible for emitting the failure audit event.
+ * Throws a descriptive Error on any violation.
  */
 function validateAiOutput(
   raw: unknown,
@@ -78,33 +79,22 @@ function validateAiOutput(
 
   for (const bucket of bucketNames) {
     const raw_val = alloc[bucket];
-
-    // Bucket must be present
     if (raw_val === undefined || raw_val === null) {
       throw new Error(`AI response missing required bucket: ${bucket}`);
     }
-
     const n = Number(raw_val);
-
-    // Must be a finite number
     if (!Number.isFinite(n)) {
       throw new Error(`Bucket "${bucket}" value is not a finite number: ${String(raw_val)}`);
     }
-
-    // Must be non-negative
     if (n < 0) {
       throw new Error(`Bucket "${bucket}" percentage is negative: ${n}`);
     }
-
-    // Must be an integer
     if (!Number.isInteger(n)) {
       throw new Error(`Bucket "${bucket}" percentage is not an integer: ${n}`);
     }
-
     normalized[bucket] = n;
   }
 
-  // Must sum to exactly 100
   const total = Object.values(normalized).reduce((s, v) => s + v, 0);
   if (total !== 100) {
     throw new Error(`Bucket percentages sum to ${total}, expected 100`);
@@ -119,13 +109,11 @@ function validateAiOutput(
 }
 
 /**
- * Run an AI-driven allocation for a wallet top-up deposit.
+ * Run an AI-driven allocation for a wallet top-up deposit across the
+ * 6 canonical asset buckets: ETH, PAXG, AXAU, AXM, AXUSD, USDC.
  *
  * Writes one treasury_allocations row per bucket and one success audit
  * event, all inside a single DB transaction.
- *
- * Throws on AI validation failure or DB error — the fire-and-forget caller
- * in creditTopUp catches and writes the failure audit event.
  */
 export async function runAutoAlloc(opts: {
   amountCents: number;
@@ -135,54 +123,60 @@ export async function runAutoAlloc(opts: {
   const amountUsd = amountCents / 100;
   const runId = `aa_${nanoid8()}`;
 
-  // 1. Load active policies (targets and bounds for each bucket)
-  const policies = await allocationPolicyService.getPolicies();
-  const activePolicies = policies.length > 0
-    ? policies
-    : [
-        { bucketName: 'operating_cash',       targetPct: '20.0000', assetSymbol: 'USD'  },
-        { bucketName: 'settlement_liquidity',  targetPct: '15.0000', assetSymbol: 'USDC' },
-        { bucketName: 'reserve',               targetPct: '40.0000', assetSymbol: 'PAXG' },
-        { bucketName: 'capital_deployment',    targetPct: '20.0000', assetSymbol: 'USD'  },
-        { bucketName: 'protocol_ops',          targetPct: '5.0000',  assetSymbol: 'USD'  },
-      ];
+  // 1. Load active policies from DB; fall back to canonical defaults
+  const dbPolicies = await allocationPolicyService.getPolicies();
+  const activePolicies = dbPolicies.length > 0
+    ? dbPolicies.map(p => ({
+        bucketName: p.bucketName,
+        targetPct: Number(p.targetPct),
+        assetSymbol: p.assetSymbol ?? 'USD',
+      }))
+    : DEFAULT_BUCKETS.map(b => ({ ...b, targetPct: b.targetPct }));
 
   const bucketNames = activePolicies.map(p => p.bucketName);
 
   const policyLines = activePolicies
-    .map(p => `  ${p.bucketName}: ${Number(p.targetPct).toFixed(1)}% → $${((amountUsd * Number(p.targetPct)) / 100).toFixed(2)}`)
+    .map(p => `  ${p.bucketName} (${p.assetSymbol}): ${p.targetPct.toFixed ? Number(p.targetPct).toFixed(0) : p.targetPct}% → $${((amountUsd * Number(p.targetPct)) / 100).toFixed(2)}`)
     .join('\n');
 
-  // 2. Build Gemini prompt
-  const prompt = `You are the allocation engine for Axiom Protocol — a sovereign digital-physical economy.
+  const bucketListForJson = bucketNames
+    .map(b => `    "${b}": <non-negative integer percentage>`)
+    .join(',\n');
 
-A $${amountUsd.toFixed(2)} USD deposit just arrived via debit card top-up. The configured allocation policy is:
+  // 2. Build Gemini prompt
+  const prompt = `You are the treasury allocation engine for Axiom Protocol — a sovereign digital-physical economy.
+
+A $${amountUsd.toFixed(2)} USD deposit just arrived via debit card. Allocate it across the 6 protocol asset buckets below based on their target weightings. You may adjust slightly from the targets based on deposit size (small deposits should favor liquid assets like USDC and AXUSD).
+
+Policy targets:
 ${policyLines}
 
-Recommend how to split $${amountUsd.toFixed(2)} across these buckets. You may adjust slightly from the baseline based on the deposit size (very small deposits should favor liquid buckets).
+Asset context:
+- ETH: gas reserve and on-chain infrastructure costs
+- PAXG: physical gold backing the AXAU reserve instrument
+- AXAU: the protocol's own gold reserve token (self-held)
+- AXM: governance token held in protocol treasury
+- AXUSD: stablecoin for settlement and redemption liquidity
+- USDC: off-chain operating liquidity and settlement rail
 
 Respond ONLY with valid JSON — no markdown, no prose:
 {
   "allocations": {
-    "operating_cash": <non-negative integer percentage>,
-    "settlement_liquidity": <non-negative integer percentage>,
-    "reserve": <non-negative integer percentage>,
-    "capital_deployment": <non-negative integer percentage>,
-    "protocol_ops": <non-negative integer percentage>
+${bucketListForJson}
   },
   "rationale": "<1-2 sentence justification>"
 }
 
 Strict rules:
-- All values must be non-negative integers (0 or greater, no decimals, no negatives)
+- All values must be non-negative integers (≥0, no decimals, no negatives)
 - Values MUST sum to exactly 100
-- All five bucket names must be present exactly as listed above`;
+- All six bucket names must appear exactly as listed above`;
 
   // 3. Call Gemini
   const raw = await generateText(prompt, { model: 'gemini-2.5-flash' });
   const jsonMatch = raw.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    throw new Error(`AI returned no JSON block — raw output: ${raw.slice(0, 300)}`);
+    throw new Error(`AI returned no JSON block — raw: ${raw.slice(0, 300)}`);
   }
 
   let parsed: unknown;
@@ -192,17 +186,15 @@ Strict rules:
   // 4. Strict validation — throws descriptively on any violation
   const { normalized, rationale } = validateAiOutput(parsed, bucketNames);
 
-  // 5. Build bucket results array (for audit payload)
+  // 5. Build bucket results
   const now = new Date();
   const bucketResults: AutoAllocResult['buckets'] = activePolicies.map(policy => {
     const pct = normalized[policy.bucketName] as number;
     const usdAmount = Math.round((amountUsd * pct) / 100 * 100) / 100;
-    const asset = BUCKET_ASSET[policy.bucketName] ?? (policy.assetSymbol || 'USD');
-    return { bucket: policy.bucketName, pct, usdAmount, asset };
+    return { bucket: policy.bucketName, pct, usdAmount, asset: policy.assetSymbol };
   });
 
-  // 6. Write all rows + success audit event inside a single transaction.
-  //    If any insert fails, the whole run is rolled back — no partial state.
+  // 6. Write all rows + audit event atomically
   await db.transaction(async (tx) => {
     for (const { bucket, pct, usdAmount, asset } of bucketResults) {
       await tx.insert(treasuryAllocations).values({

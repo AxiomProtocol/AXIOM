@@ -3,6 +3,18 @@ import { allocationPolicies, allocationActuals } from '../../shared/allocationPo
 import { treasuryAllocations } from '../../shared/treasurySchema';
 import { eq, sql, desc } from 'drizzle-orm';
 
+/**
+ * Six canonical treasury asset buckets.
+ * Each bucket maps 1-to-1 with a protocol asset.
+ *
+ * Targets sum to 100%:
+ *   ETH   20  — gas reserve + protocol infrastructure
+ *   PAXG  25  — gold backing for AXAU
+ *   AXAU  15  — protocol gold reserve instrument (self-held)
+ *   AXM   10  — governance token treasury reserve
+ *   AXUSD 15  — stablecoin settlement and redemption liquidity
+ *   USDC  15  — off-chain settlement rail and operating liquidity
+ */
 const DEFAULT_POLICIES: Array<{
   bucketName: string;
   targetPct: string;
@@ -12,55 +24,71 @@ const DEFAULT_POLICIES: Array<{
   notes: string;
 }> = [
   {
-    bucketName: 'operating_cash',
+    bucketName: 'eth_reserve',
     targetPct: '20.0000',
     minPct: '10.0000',
     maxPct: '35.0000',
-    assetSymbol: 'USD',
-    notes: 'Day-to-day operational expenses and payroll buffer',
+    assetSymbol: 'ETH',
+    notes: 'Gas reserve and on-chain protocol infrastructure',
   },
   {
-    bucketName: 'settlement_liquidity',
+    bucketName: 'paxg_reserve',
+    targetPct: '25.0000',
+    minPct: '15.0000',
+    maxPct: '45.0000',
+    assetSymbol: 'PAXG',
+    notes: 'Physical gold backing for AXAU reserve instrument',
+  },
+  {
+    bucketName: 'axau_reserve',
+    targetPct: '15.0000',
+    minPct: '5.0000',
+    maxPct: '30.0000',
+    assetSymbol: 'AXAU',
+    notes: 'Protocol self-held gold reserve instrument',
+  },
+  {
+    bucketName: 'axm_treasury',
+    targetPct: '10.0000',
+    minPct: '3.0000',
+    maxPct: '20.0000',
+    assetSymbol: 'AXM',
+    notes: 'Governance token protocol treasury reserve',
+  },
+  {
+    bucketName: 'axusd_liquidity',
+    targetPct: '15.0000',
+    minPct: '5.0000',
+    maxPct: '30.0000',
+    assetSymbol: 'AXUSD',
+    notes: 'AXUSD stablecoin settlement and redemption liquidity',
+  },
+  {
+    bucketName: 'usdc_operations',
     targetPct: '15.0000',
     minPct: '5.0000',
     maxPct: '30.0000',
     assetSymbol: 'USDC',
-    notes: 'AXUSD settlement and redemption liquidity',
-  },
-  {
-    bucketName: 'reserve',
-    targetPct: '40.0000',
-    minPct: '25.0000',
-    maxPct: '60.0000',
-    assetSymbol: 'PAXG',
-    notes: 'AXAU gold reserve backing via PAXG',
-  },
-  {
-    bucketName: 'capital_deployment',
-    targetPct: '20.0000',
-    minPct: '5.0000',
-    maxPct: '40.0000',
-    assetSymbol: 'USD',
-    notes: 'Real estate acquisition and investment deployment',
-  },
-  {
-    bucketName: 'protocol_ops',
-    targetPct: '5.0000',
-    minPct: '1.0000',
-    maxPct: '15.0000',
-    assetSymbol: 'USD',
-    notes: 'Protocol operations, compliance, and infrastructure',
+    notes: 'Off-chain settlement rail and day-to-day operating liquidity',
   },
 ];
 
 export class AllocationPolicyService {
-  async seedDefaultPolicies(): Promise<{ seeded: number; skipped: number }> {
+  /**
+   * Seeds the 6 canonical buckets into allocation_policies.
+   * Existing rows with a matching bucket_name are skipped (idempotent).
+   * Old buckets that are no longer in DEFAULT_POLICIES are deactivated.
+   */
+  async seedDefaultPolicies(): Promise<{ seeded: number; skipped: number; deactivated: number }> {
     const existing = await db.select().from(allocationPolicies);
     const existingNames = new Set(existing.map((p) => p.bucketName));
+    const canonicalNames = new Set(DEFAULT_POLICIES.map((p) => p.bucketName));
 
     let seeded = 0;
     let skipped = 0;
+    let deactivated = 0;
 
+    // Insert missing canonical buckets
     for (const policy of DEFAULT_POLICIES) {
       if (existingNames.has(policy.bucketName)) {
         skipped++;
@@ -74,7 +102,18 @@ export class AllocationPolicyService {
       seeded++;
     }
 
-    return { seeded, skipped };
+    // Deactivate any old buckets that are no longer canonical
+    for (const row of existing) {
+      if (!canonicalNames.has(row.bucketName) && row.isActive) {
+        await db
+          .update(allocationPolicies)
+          .set({ isActive: false, updatedAt: new Date() })
+          .where(eq(allocationPolicies.id, row.id));
+        deactivated++;
+      }
+    }
+
+    return { seeded, skipped, deactivated };
   }
 
   async getPolicies(): Promise<(typeof allocationPolicies.$inferSelect)[]> {
@@ -117,6 +156,7 @@ export class AllocationPolicyService {
   async getLatestActuals(): Promise<
     Array<{
       bucketName: string;
+      assetSymbol: string;
       targetPct: number;
       actualPct: number;
       variancePct: number;
@@ -126,7 +166,7 @@ export class AllocationPolicyService {
   > {
     const [policies, actuals] = await Promise.all([
       this.getPolicies(),
-      db.select().from(allocationActuals).orderBy(desc(allocationActuals.computedAt)).limit(20),
+      db.select().from(allocationActuals).orderBy(desc(allocationActuals.computedAt)).limit(30),
     ]);
 
     const latestActuals = new Map<string, (typeof allocationActuals.$inferSelect)>();
@@ -147,7 +187,15 @@ export class AllocationPolicyService {
       if (actualPct < minPct) status = 'under';
       else if (actualPct > maxPct) status = 'over';
 
-      return { bucketName: policy.bucketName, targetPct, actualPct, variancePct, usdValue, status };
+      return {
+        bucketName: policy.bucketName,
+        assetSymbol: policy.assetSymbol ?? 'USD',
+        targetPct,
+        actualPct,
+        variancePct,
+        usdValue,
+        status,
+      };
     });
   }
 }
