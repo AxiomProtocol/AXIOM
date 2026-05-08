@@ -4179,7 +4179,7 @@ export default function FounderOpsPage() {
                     href="/observer/reserve-performance"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy"
+                    className="font-dl-mono text-xs border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy"
                   >
                     Public Performance View ↗
                   </a>
@@ -4203,7 +4203,7 @@ export default function FounderOpsPage() {
                     {reservesLoading ? 'Loading…' : 'Refresh'}
                   </button>
                   {reservesData?.fetchedAt && (
-                    <span className="font-dl-mono text-[9px] text-dl-gray">
+                    <span className="font-dl-mono text-xs text-dl-gray">
                       Last fetched: {new Date(reservesData.fetchedAt).toLocaleTimeString()}
                     </span>
                   )}
@@ -4392,10 +4392,10 @@ export default function FounderOpsPage() {
                       ];
 
                       return (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-0 border border-dl-border mb-6 bg-dl-bg-alt">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-0 border border-dl-border mb-6 bg-white">
                           {items.map((item, i) => (
                             <div key={i} className="p-4 border-r border-dl-border last:border-r-0 border-b md:border-b-0">
-                              <p className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider mb-1">{item.label}</p>
+                              <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">{item.label}</p>
                               <p className={`font-dl-mono text-sm font-bold ${item.color}`}>{item.value}</p>
                             </div>
                           ))}
@@ -4447,14 +4447,14 @@ export default function FounderOpsPage() {
                       return (
                         <div className="border border-dl-border mb-4 px-5 py-3 bg-dl-bg">
                           <div className="flex items-center justify-between mb-1.5">
-                            <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">
+                            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">
                               {daySpan > 0 ? `${daySpan}D` : 'Intraday'} Portfolio Trend · {sortedTimes.length} snapshot{sortedTimes.length !== 1 ? 's' : ''}
                             </p>
                             <div className="flex items-center gap-3">
-                              <span className="font-dl-mono text-[8px]" style={{ color: trendColor }}>
+                              <span className="font-dl-mono text-xs font-semibold" style={{ color: trendColor }}>
                                 {pctChange >= 0 ? '+' : ''}{pctChange.toFixed(2)}%
                               </span>
-                              <span className="font-dl-mono text-[8px] text-dl-navy font-bold">
+                              <span className="font-dl-mono text-xs text-dl-navy font-bold">
                                 {fmtUsd(latestVal)}
                               </span>
                             </div>
@@ -4484,8 +4484,8 @@ export default function FounderOpsPage() {
                             />
                           </svg>
                           <div className="flex items-center justify-between mt-0.5">
-                            <p className="font-dl-mono text-[7px] text-dl-gray opacity-60">{fmtDate(oldest)}</p>
-                            <p className="font-dl-mono text-[7px] text-dl-gray opacity-60">{fmtDate(latest)}</p>
+                            <p className="font-dl-mono text-[10px] text-dl-gray opacity-70">{fmtDate(oldest)}</p>
+                            <p className="font-dl-mono text-[10px] text-dl-gray opacity-70">{fmtDate(latest)}</p>
                           </div>
                         </div>
                       );
@@ -4500,7 +4500,7 @@ export default function FounderOpsPage() {
                       const valued = (reservesData.assets as any[]).filter((a: any) => a.usdValue !== null && a.usdValue > 0);
                       return (
                         <div className="mb-6">
-                          <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-2">Reserve Composition</p>
+                          <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Reserve Composition</p>
                           <div className="flex h-5 w-full overflow-hidden border border-dl-border">
                             {valued.map((a: any) => {
                               const pct = ((a.usdValue as number) / reservesData.totals.totalValueUsd) * 100;
@@ -4520,7 +4520,7 @@ export default function FounderOpsPage() {
                               return (
                                 <div key={a.symbol} className="flex items-center gap-1">
                                   <span className={`inline-block w-2 h-2 flex-shrink-0 ${ASSET_COLORS[a.symbol] ?? 'bg-dl-gray'}`} />
-                                  <span className="font-dl-mono text-[9px] text-dl-gray">{a.symbol} {pct.toFixed(1)}%</span>
+                                  <span className="font-dl-mono text-xs text-dl-gray">{a.symbol} {pct.toFixed(1)}%</span>
                                 </div>
                               );
                             })}
@@ -4544,21 +4544,21 @@ export default function FounderOpsPage() {
                         const isDepositCopied = reservesCopied === asset.depositAddress;
 
                         return (
-                          <div key={asset.symbol} className={`border ${sc.border} bg-dl-bg-alt`}>
+                          <div key={asset.symbol} className={`border ${sc.border} bg-white`}>
                             {/* Card header */}
                             <div className="px-5 py-4 border-b border-dl-border flex items-start justify-between gap-3">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
                                   <span className="font-dl-mono text-base font-bold text-dl-navy">{asset.symbol}</span>
-                                  <span className={`font-dl-mono text-[9px] border px-1.5 py-0.5 uppercase tracking-wider ${sc.badge}`}>
+                                  <span className={`font-dl-mono text-xs border px-1.5 py-0.5 uppercase tracking-wider ${sc.badge}`}>
                                     {sc.text}
                                   </span>
                                 </div>
-                                <p className="font-dl-mono text-[10px] text-dl-gray truncate">{asset.label}</p>
+                                <p className="font-dl-mono text-xs text-dl-gray truncate">{asset.label}</p>
                               </div>
                               <div className="text-right flex-shrink-0">
                                 <p className="font-dl-mono text-sm font-bold text-dl-navy">{asset.balanceFormatted}</p>
-                                <p className="font-dl-mono text-[10px] text-dl-gray mt-0.5">
+                                <p className="font-dl-mono text-xs text-dl-gray mt-0.5">
                                   {asset.usdValue !== null
                                     ? '$' + (asset.usdValue as number).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                                     : 'Price unavailable'}
@@ -4568,9 +4568,9 @@ export default function FounderOpsPage() {
 
                             {/* Status detail */}
                             <div className="px-5 py-3 border-b border-dl-border">
-                              <p className="font-dl-mono text-[9px] text-dl-gray leading-relaxed">{asset.statusDetail}</p>
+                              <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">{asset.statusDetail}</p>
                               {asset.price !== null && (
-                                <p className="font-dl-mono text-[9px] text-dl-gray mt-1">
+                                <p className="font-dl-mono text-xs text-dl-gray mt-1">
                                   Price: ${typeof asset.price === 'number' && asset.price > 100
                                     ? asset.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                                     : (asset.price as number).toFixed(6)
@@ -4578,7 +4578,7 @@ export default function FounderOpsPage() {
                                 </p>
                               )}
                               {asset.lastUpdatedAt && (
-                                <p className="font-dl-mono text-[8px] text-dl-gray mt-1 opacity-60">
+                                <p className="font-dl-mono text-xs text-dl-gray mt-1 opacity-70">
                                   Updated: {new Date(asset.lastUpdatedAt).toLocaleTimeString()}
                                 </p>
                               )}
@@ -4622,10 +4622,10 @@ export default function FounderOpsPage() {
                               return (
                                 <div className="px-5 py-2 border-b border-dl-border bg-dl-bg">
                                   <div className="flex items-center justify-between mb-1">
-                                    <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">
+                                    <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">
                                       {daySpan}D Balance Trend · {pts.length} snapshots
                                     </p>
-                                    <p className="font-dl-mono text-[8px]" style={{ color: trendColor }}>
+                                    <p className="font-dl-mono text-xs font-semibold" style={{ color: trendColor }}>
                                       {pctChange >= 0 ? '+' : ''}{pctChange.toFixed(2)}%
                                     </p>
                                   </div>
@@ -4654,10 +4654,10 @@ export default function FounderOpsPage() {
                                     />
                                   </svg>
                                   <div className="flex items-center justify-between mt-0.5">
-                                    <p className="font-dl-mono text-[7px] text-dl-gray opacity-60">
+                                    <p className="font-dl-mono text-[10px] text-dl-gray opacity-70">
                                       {firstHour.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                     </p>
-                                    <p className="font-dl-mono text-[7px] text-dl-gray opacity-60">
+                                    <p className="font-dl-mono text-[10px] text-dl-gray opacity-70">
                                       {lastHour.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                     </p>
                                   </div>
@@ -4668,8 +4668,8 @@ export default function FounderOpsPage() {
                             {/* Location breakdown */}
                             {(asset.locationBreakdown as any[]).length > 1 && (
                               <div className="px-5 py-3 border-b border-dl-border">
-                                <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-2">Location Breakdown</p>
-                                <div className="space-y-1">
+                                <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Location Breakdown</p>
+                                <div className="space-y-1.5">
                                   {(asset.locationBreakdown as any[]).map((loc: any) => (
                                     <div key={loc.address} className="flex items-center justify-between gap-2">
                                       <div className="flex items-center gap-1 min-w-0">
@@ -4677,13 +4677,13 @@ export default function FounderOpsPage() {
                                           href={loc.arbiscanUrl}
                                           target="_blank"
                                           rel="noopener noreferrer"
-                                          className="font-dl-mono text-[9px] text-dl-navy underline truncate max-w-[140px]"
+                                          className="font-dl-mono text-xs text-dl-navy underline truncate max-w-[160px]"
                                           title={loc.address}
                                         >
                                           {loc.label}
                                         </a>
                                       </div>
-                                      <span className="font-dl-mono text-[9px] text-dl-gray flex-shrink-0">{loc.balanceFormatted}</span>
+                                      <span className="font-dl-mono text-xs text-dl-gray flex-shrink-0">{loc.balanceFormatted}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -4693,24 +4693,24 @@ export default function FounderOpsPage() {
                             {/* Deposit address + action */}
                             <div className="px-5 py-3 flex items-start justify-between gap-3 flex-wrap">
                               <div className="min-w-0 flex-1">
-                                <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-1">Deposit Address</p>
+                                <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Deposit Address</p>
                                 <a
                                   href={asset.depositArbiscanUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="font-dl-mono text-[10px] text-dl-navy underline break-all"
+                                  className="font-dl-mono text-xs text-dl-navy underline break-all"
                                   title={asset.depositLabel}
                                 >
                                   {asset.depositAddress.slice(0, 10)}…{asset.depositAddress.slice(-8)}
                                 </a>
-                                <p className="font-dl-mono text-[8px] text-dl-gray mt-0.5">{asset.depositLabel}</p>
+                                <p className="font-dl-mono text-xs text-dl-gray mt-0.5">{asset.depositLabel}</p>
                               </div>
                               <div className="flex-shrink-0 flex flex-col gap-1.5">
                                 {/* Primary action */}
                                 {(asset.actionType === 'copy_address' || asset.actionType === 'axau_buffer') && (
                                   <button
                                     onClick={() => copyReserveAddr(asset.depositAddress)}
-                                    className={`font-dl-mono text-[9px] border px-3 py-1.5 uppercase tracking-wider transition-colors ${
+                                    className={`font-dl-mono text-xs border px-3 py-1.5 uppercase tracking-wider transition-colors ${
                                       isDepositCopied
                                         ? 'border-dl-forest text-dl-forest bg-green-50'
                                         : 'border-dl-navy text-dl-navy hover:bg-dl-navy hover:text-white'
@@ -4724,7 +4724,7 @@ export default function FounderOpsPage() {
                                     href={asset.actionUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="font-dl-mono text-[9px] border border-dl-navy text-dl-navy px-3 py-1.5 uppercase tracking-wider hover:bg-dl-navy hover:text-white transition-colors text-center"
+                                    className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-3 py-1.5 uppercase tracking-wider hover:bg-dl-navy hover:text-white transition-colors text-center"
                                   >
                                     {asset.actionLabel} ↗
                                   </a>
@@ -4733,7 +4733,7 @@ export default function FounderOpsPage() {
                                 {asset.purchaseUrl && (
                                   <a
                                     href={asset.purchaseUrl}
-                                    className="font-dl-mono text-[9px] border border-dl-forest text-dl-forest px-3 py-1.5 uppercase tracking-wider hover:bg-dl-forest hover:text-white transition-colors text-center"
+                                    className="font-dl-mono text-xs border border-dl-forest text-dl-forest px-3 py-1.5 uppercase tracking-wider hover:bg-dl-forest hover:text-white transition-colors text-center"
                                   >
                                     {asset.purchaseLabel ?? `Buy ${asset.symbol}`} ↗
                                   </a>
@@ -4741,7 +4741,7 @@ export default function FounderOpsPage() {
                                 {asset.secondFundingUrl && (
                                   <a
                                     href={asset.secondFundingUrl}
-                                    className="font-dl-mono text-[9px] border border-dl-forest text-dl-forest px-3 py-1.5 uppercase tracking-wider hover:bg-dl-forest hover:text-white transition-colors text-center"
+                                    className="font-dl-mono text-xs border border-dl-forest text-dl-forest px-3 py-1.5 uppercase tracking-wider hover:bg-dl-forest hover:text-white transition-colors text-center"
                                   >
                                     {asset.secondFundingLabel ?? 'Fund'} ↗
                                   </a>
@@ -4752,7 +4752,7 @@ export default function FounderOpsPage() {
                                     href={asset.actionUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy transition-colors text-center"
+                                    className="font-dl-mono text-xs border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy transition-colors text-center"
                                   >
                                     Governance Safe ↗
                                   </a>
@@ -4762,7 +4762,7 @@ export default function FounderOpsPage() {
                                   href={asset.depositArbiscanUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy text-center"
+                                  className="font-dl-mono text-xs border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy text-center"
                                 >
                                   View ↗
                                 </a>
@@ -4770,7 +4770,7 @@ export default function FounderOpsPage() {
                                 {asset.actionType === 'axau_buffer' && (
                                   <button
                                     onClick={() => copyReserveAddr(asset.depositAddress)}
-                                    className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy"
+                                    className="font-dl-mono text-xs border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy"
                                   >
                                     Replenish: Send PAXG ↓
                                   </button>
@@ -4780,13 +4780,13 @@ export default function FounderOpsPage() {
 
                             {/* AXAU buffer-specific extra state */}
                             {asset.symbol === 'AXAU' && asset.bufferCapacity && (
-                              <div className={`px-5 py-2 border-t border-dl-border ${
+                              <div className={`px-5 py-3 border-t border-dl-border ${
                                 asset.bufferCapacity === 'SUFFICIENT' ? 'bg-green-50' :
                                 asset.bufferCapacity === 'DEPLETED'   ? 'bg-red-50'   :
                                 'bg-yellow-50'
                               }`}>
                                 <div className="flex items-center gap-3 flex-wrap">
-                                  <span className={`font-dl-mono text-[9px] border px-2 py-0.5 uppercase tracking-wider ${
+                                  <span className={`font-dl-mono text-xs border px-2 py-0.5 uppercase tracking-wider ${
                                     asset.bufferCapacity === 'SUFFICIENT' ? 'border-dl-forest text-dl-forest' :
                                     asset.bufferCapacity === 'DEPLETED'   ? 'border-dl-error text-dl-error' :
                                     'border-yellow-500 text-yellow-700'
@@ -4794,11 +4794,11 @@ export default function FounderOpsPage() {
                                     {asset.bufferCapacity}
                                   </span>
                                   {asset.mintPaused && (
-                                    <span className="font-dl-mono text-[9px] border border-dl-error text-dl-error px-2 py-0.5 uppercase tracking-wider">
+                                    <span className="font-dl-mono text-xs border border-dl-error text-dl-error px-2 py-0.5 uppercase tracking-wider">
                                       MINT PAUSED
                                     </span>
                                   )}
-                                  <span className="font-dl-mono text-[9px] text-dl-gray">
+                                  <span className="font-dl-mono text-xs text-dl-gray">
                                     PATH A: send AXAU direct · PATH B: trigger mint below
                                   </span>
                                 </div>
@@ -4808,18 +4808,18 @@ export default function FounderOpsPage() {
                             {/* AXAU — Trigger Buffer Mint from PAXG (PATH B) */}
                             {asset.symbol === 'AXAU' && (
                               <div className="px-5 py-3 border-t border-dl-border">
-                                <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-2">Trigger Mint from PAXG · PATH B</p>
+                                <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Trigger Mint from PAXG · PATH B</p>
                                 {asset.oracleStale && (
-                                  <div className="flex items-center gap-2 mb-2 px-2 py-1 border border-yellow-400 bg-yellow-50">
-                                    <span className="font-dl-mono text-[8px] border border-yellow-500 text-yellow-700 px-1.5 py-0.5 uppercase tracking-wider">Oracle Stale</span>
-                                    <span className="font-dl-mono text-[8px] text-yellow-700">
+                                  <div className="flex items-center gap-2 mb-2 px-2 py-1.5 border border-yellow-400 bg-yellow-50">
+                                    <span className="font-dl-mono text-xs border border-yellow-500 text-yellow-700 px-1.5 py-0.5 uppercase tracking-wider">Oracle Stale</span>
+                                    <span className="font-dl-mono text-xs text-yellow-700">
                                       XAU/USD price stale ({asset.oracleAgeSeconds !== null && asset.oracleAgeSeconds !== undefined ? Math.floor(asset.oracleAgeSeconds / 3600) + 'h' : '?'} old · threshold {asset.oracleThresholdSeconds !== undefined ? Math.floor(asset.oracleThresholdSeconds / 3600) + 'h' : '27h'}) — mint disabled
                                     </span>
                                   </div>
                                 )}
                                 <div className="flex gap-2 items-center flex-wrap">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="font-dl-mono text-[9px] text-dl-gray">PAXG:</span>
+                                    <span className="font-dl-mono text-xs text-dl-gray">PAXG:</span>
                                     <input
                                       type="number"
                                       value={reservesTopUpAmount}
@@ -4846,13 +4846,13 @@ export default function FounderOpsPage() {
                                         return (!paxg || paxg.balance <= 0) ? 'No PAXG balance detected in deployer EOA' : 'Mint AXAU from PAXG into deployer buffer (PATH B)';
                                       })()
                                     }
-                                    className="font-dl-mono text-[9px] border border-dl-navy text-dl-navy px-3 py-1.5 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50 transition-colors"
+                                    className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-3 py-1.5 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50 transition-colors"
                                   >
                                     {reservesTopUpLoading ? 'Submitting…' : 'Trigger Mint from PAXG'}
                                   </button>
                                 </div>
                                 {reservesTopUpResult && (
-                                  <p className={`font-dl-mono text-[9px] mt-2 leading-relaxed break-all ${reservesTopUpResult.ok ? 'text-dl-forest' : 'text-dl-error'}`}>
+                                  <p className={`font-dl-mono text-xs mt-2 leading-relaxed break-all ${reservesTopUpResult.ok ? 'text-dl-forest' : 'text-dl-error'}`}>
                                     {reservesTopUpResult.msg}
                                   </p>
                                 )}
@@ -4862,7 +4862,7 @@ export default function FounderOpsPage() {
                             {/* AXUSD — Inline Mint Form */}
                             {asset.symbol === 'AXUSD' && (
                               <div className="px-5 py-3 border-t border-dl-border">
-                                <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-2">Deposit Action — Mint AXUSD (MINTER_ROLE · Deployer EOA)</p>
+                                <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Deposit Action — Mint AXUSD (MINTER_ROLE · Deployer EOA)</p>
                                 <div className="flex gap-2 flex-wrap items-center">
                                   <input
                                     type="number"
@@ -4884,14 +4884,14 @@ export default function FounderOpsPage() {
                                     onClick={mintAxusd}
                                     disabled={reservesMintLoading || !reservesAdminKey}
                                     title={!reservesAdminKey ? 'Admin key required' : 'Mint AXUSD to recipient via deployer EOA (direct) or Safe proposal (≥10k)'}
-                                    className="font-dl-mono text-[9px] border border-dl-navy text-dl-navy px-3 py-1.5 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50 transition-colors"
+                                    className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-3 py-1.5 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50 transition-colors"
                                   >
                                     {reservesMintLoading ? 'Minting…' : 'Mint AXUSD'}
                                   </button>
                                 </div>
-                                <p className="font-dl-mono text-[8px] text-dl-gray mt-1.5 opacity-70">Under 10,000 AXUSD executes directly · 10,000+ creates a Safe proposal</p>
+                                <p className="font-dl-mono text-xs text-dl-gray mt-1.5 opacity-70">Under 10,000 AXUSD executes directly · 10,000+ creates a Safe proposal</p>
                                 {reservesMintResult && (
-                                  <p className={`font-dl-mono text-[9px] mt-2 leading-relaxed break-all ${reservesMintResult.ok ? 'text-dl-forest' : 'text-dl-error'}`}>
+                                  <p className={`font-dl-mono text-xs mt-2 leading-relaxed break-all ${reservesMintResult.ok ? 'text-dl-forest' : 'text-dl-error'}`}>
                                     {reservesMintResult.msg}
                                   </p>
                                 )}
@@ -4904,20 +4904,20 @@ export default function FounderOpsPage() {
 
                     {/* Footer — addresses reference */}
                     <div className="border-t border-dl-border pt-5">
-                      <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider mb-3">Address Reference</p>
+                      <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-3">Address Reference</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {[
                           { label: 'Deployer EOA', addr: reservesData.deployer },
                           { label: 'Governance Safe (3-of-5)', addr: reservesData.governanceSafe },
                         ].map(item => (
-                          <div key={item.addr} className="flex items-center justify-between gap-3 border border-dl-border px-4 py-2 bg-dl-bg-alt">
+                          <div key={item.addr} className="flex items-center justify-between gap-3 border border-dl-border px-4 py-3 bg-white">
                             <div>
-                              <p className="font-dl-mono text-[8px] text-dl-gray uppercase tracking-wider">{item.label}</p>
-                              <p className="font-dl-mono text-[10px] text-dl-navy mt-0.5 break-all">{item.addr}</p>
+                              <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider">{item.label}</p>
+                              <p className="font-dl-mono text-xs text-dl-navy mt-0.5 break-all">{item.addr}</p>
                             </div>
                             <button
                               onClick={() => copyReserveAddr(item.addr)}
-                              className={`font-dl-mono text-[9px] border px-2 py-1 uppercase tracking-wider flex-shrink-0 ${
+                              className={`font-dl-mono text-xs border px-2.5 py-1.5 uppercase tracking-wider flex-shrink-0 ${
                                 reservesCopied === item.addr
                                   ? 'border-dl-forest text-dl-forest bg-green-50'
                                   : 'border-dl-border text-dl-gray hover:text-dl-navy'
@@ -4964,18 +4964,18 @@ export default function FounderOpsPage() {
                     const ai = aiKey ? allocAiCache[aiKey] : undefined;
                     return (
                       <div className="border border-dl-border bg-white">
-                        <div className="px-4 py-2.5 border-b border-dl-border bg-dl-bg-alt flex items-center justify-between">
+                        <div className="px-4 py-3 border-b border-dl-border bg-dl-navy flex items-center justify-between">
                           <div>
-                            <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray">{scope === 'driver' ? 'Driver Allocation (FUQC personal)' : 'Treasury Allocation (Protocol)'}</p>
-                            <p className="font-dl-mono text-[10px] text-dl-navy mt-0.5">
-                              {policy ? `${policy.share_pct}% of net pay` : '—'} {scopeAmount != null && <span className="text-dl-forest">· {fmtUsd(scopeAmount)}</span>}
+                            <p className="font-dl-mono text-xs uppercase tracking-wider text-white font-bold">{scope === 'driver' ? 'Driver Allocation (FUQC personal)' : 'Treasury Allocation (Protocol)'}</p>
+                            <p className="font-dl-mono text-xs text-blue-200 mt-0.5">
+                              {policy ? `${policy.share_pct}% of net pay` : '—'} {scopeAmount != null && <span className="text-emerald-300 font-semibold">· {fmtUsd(scopeAmount)}</span>}
                             </p>
                           </div>
                           {latest && (
                             <button
                               onClick={() => generateAllocationAi(latest.document_id, scope)}
                               disabled={ai?.loading}
-                              className="font-dl-mono text-[9px] border border-dl-navy text-dl-navy px-2.5 py-1 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50 transition-colors"
+                              className="font-dl-mono text-xs border border-white text-white px-3 py-1.5 uppercase tracking-wider hover:bg-white hover:text-dl-navy disabled:opacity-50 transition-colors"
                             >
                               {ai?.loading ? 'Thinking…' : ai?.result ? 'Regenerate AI' : 'Generate AI alternative'}
                             </button>
@@ -4984,12 +4984,12 @@ export default function FounderOpsPage() {
                         <table className="w-full">
                           <thead className="bg-dl-bg-alt">
                             <tr>
-                              <th className="text-left font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray px-3 py-1.5">Asset</th>
-                              <th className="text-right font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray px-3 py-1.5">Policy %</th>
-                              <th className="text-right font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray px-3 py-1.5">Policy $</th>
+                              <th className="text-left font-dl-mono text-xs uppercase tracking-wider text-dl-gray px-3 py-2">Asset</th>
+                              <th className="text-right font-dl-mono text-xs uppercase tracking-wider text-dl-gray px-3 py-2">Policy %</th>
+                              <th className="text-right font-dl-mono text-xs uppercase tracking-wider text-dl-gray px-3 py-2">Policy $</th>
                               {ai?.result && <>
-                                <th className="text-right font-dl-mono text-[9px] uppercase tracking-wider text-dl-forest px-3 py-1.5">AI %</th>
-                                <th className="text-right font-dl-mono text-[9px] uppercase tracking-wider text-dl-forest px-3 py-1.5">AI $</th>
+                                <th className="text-right font-dl-mono text-xs uppercase tracking-wider text-dl-forest px-3 py-2">AI %</th>
+                                <th className="text-right font-dl-mono text-xs uppercase tracking-wider text-dl-forest px-3 py-2">AI $</th>
                               </>}
                             </tr>
                           </thead>
@@ -5004,30 +5004,30 @@ export default function FounderOpsPage() {
                               if (isHidden) return null;
                               return (
                                 <tr key={a.key} className="border-t border-dl-border">
-                                  <td className="px-3 py-1.5">
-                                    <p className="font-dl-mono text-[11px] text-dl-navy">{a.label}</p>
-                                    <p className="font-dl-mono text-[8px] text-dl-gray">{a.note}</p>
+                                  <td className="px-3 py-2">
+                                    <p className="font-dl-mono text-xs text-dl-navy font-semibold">{a.label}</p>
+                                    <p className="font-dl-mono text-[10px] text-dl-gray">{a.note}</p>
                                   </td>
-                                  <td className="text-right font-dl-mono text-[11px] text-dl-navy px-3 py-1.5">{pPct}%</td>
-                                  <td className="text-right font-dl-mono text-[11px] text-dl-navy px-3 py-1.5">{pAmt != null ? fmtUsd(pAmt) : '—'}</td>
+                                  <td className="text-right font-dl-mono text-xs text-dl-navy px-3 py-2">{pPct}%</td>
+                                  <td className="text-right font-dl-mono text-xs text-dl-navy px-3 py-2">{pAmt != null ? fmtUsd(pAmt) : '—'}</td>
                                   {ai?.result && <>
-                                    <td className={`text-right font-dl-mono text-[11px] px-3 py-1.5 ${delta > 0 ? 'text-dl-forest' : delta < 0 ? 'text-dl-error' : 'text-dl-gray'}`}>
-                                      {aPct}% {delta !== 0 && <span className="text-[8px]">({delta > 0 ? '+' : ''}{delta})</span>}
+                                    <td className={`text-right font-dl-mono text-xs px-3 py-2 ${delta > 0 ? 'text-dl-forest' : delta < 0 ? 'text-dl-error' : 'text-dl-gray'}`}>
+                                      {aPct}% {delta !== 0 && <span className="text-[10px]">({delta > 0 ? '+' : ''}{delta})</span>}
                                     </td>
-                                    <td className="text-right font-dl-mono text-[11px] text-dl-navy px-3 py-1.5">{aAmt != null ? fmtUsd(aAmt) : '—'}</td>
+                                    <td className="text-right font-dl-mono text-xs text-dl-navy px-3 py-2">{aAmt != null ? fmtUsd(aAmt) : '—'}</td>
                                   </>}
                                 </tr>
                               );
                             })}
                           </tbody>
                         </table>
-                        {ai?.error && <p className="font-dl-mono text-[10px] text-dl-error px-3 py-2 border-t border-dl-border">{ai.error}</p>}
+                        {ai?.error && <p className="font-dl-mono text-xs text-dl-error px-3 py-2 border-t border-dl-border">{ai.error}</p>}
                         {ai?.result?.rationale && (
-                          <div className="border-t border-dl-border px-3 py-2 bg-dl-bg-alt">
-                            <p className="font-dl-mono text-[8px] uppercase tracking-wider text-dl-gray mb-1">AI Rationale</p>
-                            <p className="font-dl-serif text-xs text-dl-navy leading-relaxed">{ai.result.rationale}</p>
+                          <div className="border-t border-dl-border px-3 py-3 bg-dl-bg-alt">
+                            <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-1">AI Rationale</p>
+                            <p className="font-dl-serif text-sm text-dl-navy leading-relaxed">{ai.result.rationale}</p>
                             {ai.result.warnings && ai.result.warnings.length > 0 && (
-                              <p className="font-dl-mono text-[9px] text-dl-error mt-1">⚠ {ai.result.warnings.join(' · ')}</p>
+                              <p className="font-dl-mono text-xs text-dl-error mt-1.5">⚠ {ai.result.warnings.join(' · ')}</p>
                             )}
                           </div>
                         )}
@@ -5040,39 +5040,39 @@ export default function FounderOpsPage() {
                       <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
                         <div>
                           <h3 className="font-dl-serif text-lg text-dl-navy mb-1">Net-Pay Allocation Guidance</h3>
-                          <p className="font-dl-mono text-[10px] text-dl-gray">
+                          <p className="font-dl-mono text-xs text-dl-gray">
                             Splits the most recent weekly settlement net pay across reserve assets · Driver vs Treasury side-by-side · Fixed policy + AI alternative
                           </p>
                         </div>
                         <button
                           onClick={() => allocPolicyOpen ? setAllocPolicyOpen(false) : beginEditPolicy()}
                           disabled={!dp || !tp}
-                          className="font-dl-mono text-[10px] border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy disabled:opacity-50"
+                          className="font-dl-mono text-xs border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy disabled:opacity-50"
                         >
                           {allocPolicyOpen ? 'Close Policy Editor' : 'Edit Allocation Policy'}
                         </button>
                       </div>
 
                       {/* Latest settlement context */}
-                      <div className="border border-dl-border bg-dl-bg-alt px-4 py-3 mb-4">
-                        {allocLatestLoading && <p className="font-dl-mono text-[10px] text-dl-gray">Looking up latest settlement…</p>}
+                      <div className="border border-dl-border bg-white px-4 py-3 mb-4">
+                        {allocLatestLoading && <p className="font-dl-mono text-xs text-dl-gray">Looking up latest settlement…</p>}
                         {!allocLatestLoading && !latest && (
-                          <p className="font-dl-mono text-[10px] text-dl-gray">
+                          <p className="font-dl-mono text-xs text-dl-gray">
                             No extracted settlement found. Upload a weekly statement on the Axiom Rail tab to enable allocation guidance.
                           </p>
                         )}
                         {latest && (
                           <div className="flex items-center justify-between gap-4 flex-wrap">
                             <div>
-                              <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray">Latest Settlement</p>
-                              <p className="font-dl-mono text-[11px] text-dl-navy mt-0.5">
+                              <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Latest Settlement</p>
+                              <p className="font-dl-mono text-sm text-dl-navy mt-0.5">
                                 {latest.driver_name ?? 'Driver —'} · {latest.statement_date ?? '—'}
                                 {latest.title && <span className="text-dl-gray"> · {latest.title}</span>}
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray">Net Pay</p>
-                              <p className="font-dl-mono text-base text-dl-forest mt-0.5">{netPay != null ? fmtUsd(netPay) : '—'}</p>
+                              <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Net Pay</p>
+                              <p className="font-dl-mono text-base font-semibold text-dl-forest mt-0.5">{netPay != null ? fmtUsd(netPay) : '—'}</p>
                             </div>
                           </div>
                         )}
@@ -5082,8 +5082,8 @@ export default function FounderOpsPage() {
                       {allocPolicyOpen && allocPolicyDraft && (
                         <div className="border border-dl-navy bg-white p-4 mb-4">
                           <div className="flex items-center justify-between mb-3">
-                            <p className="font-dl-mono text-[10px] uppercase tracking-wider text-dl-navy">Edit Allocation Policy</p>
-                            <p className="font-dl-mono text-[9px] text-dl-gray">Driver share + Treasury share must sum to 100 · Each scope&apos;s asset weights must sum to 100</p>
+                            <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-navy font-bold">Edit Allocation Policy</p>
+                            <p className="font-dl-mono text-xs text-dl-gray">Driver + Treasury shares must sum to 100 · Each scope&apos;s asset weights must sum to 100</p>
                           </div>
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {(['driver', 'treasury'] as const).map(scope => {
@@ -5092,7 +5092,7 @@ export default function FounderOpsPage() {
                               return (
                                 <div key={scope} className="border border-dl-border p-3">
                                   <div className="flex items-center justify-between mb-2">
-                                    <label className="font-dl-mono text-[10px] uppercase tracking-wider text-dl-navy">{scope === 'driver' ? 'Driver' : 'Treasury'} share of net pay (%)</label>
+                                    <label className="font-dl-mono text-xs uppercase tracking-wider text-dl-navy">{scope === 'driver' ? 'Driver' : 'Treasury'} share of net pay (%)</label>
                                     <input
                                       type="number"
                                       min={0} max={100} step={1}
@@ -5105,7 +5105,7 @@ export default function FounderOpsPage() {
                                     <tbody>
                                       {allocAssets.map(a => (
                                         <tr key={a.key} className="border-t border-dl-border">
-                                          <td className="font-dl-mono text-[10px] text-dl-navy py-1.5">{a.label}</td>
+                                          <td className="font-dl-mono text-xs text-dl-navy py-1.5">{a.label}</td>
                                           <td className="py-1.5 text-right">
                                             <input
                                               type="number"
@@ -5114,12 +5114,12 @@ export default function FounderOpsPage() {
                                               onChange={e => setAllocPolicyDraft(prev => prev ? { ...prev, [scope]: { ...prev[scope], weights: { ...prev[scope].weights, [a.key]: Number(e.target.value) } } } : prev)}
                                               className="font-dl-mono text-xs border border-dl-border px-2 py-1 w-16 text-right outline-none"
                                             />
-                                            <span className="font-dl-mono text-[9px] text-dl-gray ml-1">%</span>
+                                            <span className="font-dl-mono text-xs text-dl-gray ml-1">%</span>
                                           </td>
                                         </tr>
                                       ))}
                                       <tr className="border-t border-dl-navy">
-                                        <td className="font-dl-mono text-[10px] uppercase text-dl-navy py-1.5">Sum</td>
+                                        <td className="font-dl-mono text-xs uppercase text-dl-navy py-1.5 font-bold">Sum</td>
                                         <td className={`font-dl-mono text-xs text-right py-1.5 pr-6 ${Math.abs(sum - 100) < 0.5 ? 'text-dl-forest' : 'text-dl-error'}`}>{sum}%</td>
                                       </tr>
                                     </tbody>
@@ -5128,16 +5128,16 @@ export default function FounderOpsPage() {
                               );
                             })}
                           </div>
-                          {allocPolicyError && <p className="font-dl-mono text-[10px] text-dl-error mt-3">{allocPolicyError}</p>}
+                          {allocPolicyError && <p className="font-dl-mono text-xs text-dl-error mt-3">{allocPolicyError}</p>}
                           <div className="flex gap-2 mt-3">
                             <button
                               onClick={savePolicy}
                               disabled={allocPolicySaving}
-                              className="font-dl-mono text-[10px] border border-dl-navy bg-dl-navy text-white px-4 py-1.5 uppercase tracking-wider hover:bg-dl-navy-dark disabled:opacity-50"
+                              className="font-dl-mono text-xs border border-dl-navy bg-dl-navy text-white px-4 py-1.5 uppercase tracking-wider hover:bg-dl-navy-dark disabled:opacity-50"
                             >{allocPolicySaving ? 'Saving…' : 'Save Policy'}</button>
                             <button
                               onClick={() => { setAllocPolicyOpen(false); setAllocPolicyDraft(null); setAllocPolicyError(null); }}
-                              className="font-dl-mono text-[10px] border border-dl-border text-dl-gray px-4 py-1.5 uppercase tracking-wider hover:text-dl-navy"
+                              className="font-dl-mono text-xs border border-dl-border text-dl-gray px-4 py-1.5 uppercase tracking-wider hover:text-dl-navy"
                             >Cancel</button>
                           </div>
                         </div>
@@ -5149,7 +5149,7 @@ export default function FounderOpsPage() {
                         {renderColumn('treasury', tp, treasuryAmount)}
                       </div>
 
-                      <p className="font-dl-mono text-[8px] text-dl-gray mt-3 leading-relaxed">
+                      <p className="font-dl-mono text-xs text-dl-gray mt-3 leading-relaxed">
                         Amounts shown in USD. Unit conversion to oz / tokens at execution time uses live oracle prices (PAXG/XAU for AXAU, KAG for silver, Camelot pool for AXUSD/AXM). The AI alternative may diverge from policy when the week shows abnormal escrow movement, large deductions, or other risk signals from the settlement payload.
                       </p>
                     </div>
