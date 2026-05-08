@@ -17,7 +17,10 @@ export const config = {
   api: { bodyParser: false },
 };
 
-const STORAGE_DIR = path.join(process.cwd(), 'storage', 'settlement-statements');
+// Vercel production: process.cwd() is /var/task (read-only). Only /tmp is writable.
+const STORAGE_DIR = process.env.NODE_ENV === 'production'
+  ? '/tmp/settlement-statements'
+  : path.join(process.cwd(), 'storage', 'settlement-statements');
 const MAX_SIZE    = 20 * 1024 * 1024;
 
 function parseForm(req: NextApiRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> {

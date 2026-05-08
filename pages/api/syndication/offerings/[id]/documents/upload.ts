@@ -160,7 +160,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const storageDir = path.join(process.cwd(), 'storage', 'syndication', 'docs');
+    // Vercel production: process.cwd() is /var/task (read-only). Only /tmp is writable.
+    const storageDir = process.env.NODE_ENV === 'production'
+      ? '/tmp/syndication-docs'
+      : path.join(process.cwd(), 'storage', 'syndication', 'docs');
     await fs.promises.mkdir(storageDir, { recursive: true });
 
     const timestamp = Date.now();

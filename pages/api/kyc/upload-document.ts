@@ -6,7 +6,10 @@ import * as crypto from 'crypto';
 import { getVerifiedUserFromToken, getClientIp } from '../../../server/auth';
 import { pool } from '../../../server/db';
 
-const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'kyc');
+// Vercel production: process.cwd() is /var/task (read-only). Only /tmp is writable.
+const UPLOAD_DIR = process.env.NODE_ENV === 'production'
+  ? '/tmp/kyc'
+  : path.join(process.cwd(), 'uploads', 'kyc');
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = [
   'image/jpeg', 'image/png', 'image/webp', 'image/gif',

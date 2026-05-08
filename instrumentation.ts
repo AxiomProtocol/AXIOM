@@ -7113,6 +7113,16 @@ END $seed$`, 'seed dp_listings');
         updated_at TIMESTAMP DEFAULT NOW()
       )`, 'table reserve_positions');
 
+      // ── reserve_positions — settlement columns (migration 0058) ──────────────
+      // Added in dev via 0058_reserve_positions_settlement.sql. Idempotent ALTER
+      // statements ensure production databases are brought in sync on cold-start.
+      await exec(`ALTER TABLE reserve_positions ADD COLUMN IF NOT EXISTS tx_hash VARCHAR(66)`, 'alter reserve_positions.tx_hash');
+      await exec(`ALTER TABLE reserve_positions ADD COLUMN IF NOT EXISTS settlement_status VARCHAR(50)`, 'alter reserve_positions.settlement_status');
+      await exec(`ALTER TABLE reserve_positions ADD COLUMN IF NOT EXISTS settlement_ref VARCHAR(300)`, 'alter reserve_positions.settlement_ref');
+      await exec(`ALTER TABLE reserve_positions ADD COLUMN IF NOT EXISTS settlement_note TEXT`, 'alter reserve_positions.settlement_note');
+      await exec(`CREATE INDEX IF NOT EXISTS reserve_positions_tx_hash_idx ON reserve_positions(tx_hash)`, 'index reserve_positions_tx_hash_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS reserve_positions_settlement_status_idx ON reserve_positions(settlement_status)`, 'index reserve_positions_settlement_status_idx');
+
       await exec(`CREATE TABLE IF NOT EXISTS custody_wallet_registry (
         id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
         provider VARCHAR(50) NOT NULL,

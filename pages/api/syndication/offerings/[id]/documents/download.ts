@@ -112,7 +112,11 @@ function serveFile(res: NextApiResponse, doc: any) {
     return res.status(404).json({ success: false, error: 'File not available.' });
   }
 
-  const filePath = path.join(process.cwd(), 'storage', 'syndication', 'docs', storedFilename);
+  // Vercel production: process.cwd() is /var/task (read-only). Only /tmp is writable.
+  const storageRoot = process.env.NODE_ENV === 'production'
+    ? '/tmp/syndication-docs'
+    : path.join(process.cwd(), 'storage', 'syndication', 'docs');
+  const filePath = path.join(storageRoot, storedFilename);
 
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ success: false, error: 'File not found on disk.' });

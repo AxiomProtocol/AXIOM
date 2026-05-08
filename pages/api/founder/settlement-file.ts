@@ -2,7 +2,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
-const STORAGE_DIR = path.join(process.cwd(), 'storage', 'settlement-statements');
+// Vercel production: process.cwd() is /var/task (read-only). Only /tmp is writable.
+const STORAGE_DIR = process.env.NODE_ENV === 'production'
+  ? '/tmp/settlement-statements'
+  : path.join(process.cwd(), 'storage', 'settlement-statements');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { f } = req.query;
