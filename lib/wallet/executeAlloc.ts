@@ -178,13 +178,13 @@ async function resolveAXMPrice(cgPrice: number | undefined): Promise<{
   // 2. Camelot on-chain spot (AXM/USDC pool via factory discovery)
   try {
     const { camelotPoolService } = await import('../services/CamelotPoolService');
-    const camelotPrice = await camelotPoolService.getTokenPriceVsUsdc(
+    const camelotPrice = await camelotPoolService.getTokenTWAPVsUsdc(
       CORE_CONTRACTS.AXM_TOKEN,
       18,
     );
     if (camelotPrice !== null && camelotPrice > 0) {
-      console.log(`[executeAlloc] AXM price via Camelot spot: $${camelotPrice.toFixed(8)}`);
-      return { price: camelotPrice, source: 'camelot_spot' };
+      console.log(`[executeAlloc] AXM price via Camelot 30-min TWAP: $${camelotPrice.toFixed(8)}`);
+      return { price: camelotPrice, source: 'camelot_twap' };
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -323,8 +323,8 @@ export async function executeAlloc(opts: {
     let settlementNote = outcome.settlementNote;
     if (b.asset === 'AXM') {
       const sourceLabel =
-        b.priceSource === 'coingecko'    ? 'CoinGecko live price'
-        : b.priceSource === 'camelot_spot' ? 'Camelot on-chain spot price'
+        b.priceSource === 'coingecko'     ? 'CoinGecko live price'
+        : b.priceSource === 'camelot_twap' ? 'Camelot 30-min TWAP'
         : b.priceSource === 'last_known'   ? 'last confirmed reserve_positions mark'
         : b.priceSource;
       settlementNote = settlementNote

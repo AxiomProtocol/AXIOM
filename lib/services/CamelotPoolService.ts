@@ -364,27 +364,113 @@ class CamelotPoolService {
     }
   }
 
-  async getTokenPriceVsUsdc(tokenAddress: string, tokenDecimals: number = 18): Promise<number | null> {
+  /**
+   * Compute a time-weighted average price (TWAP) for `tokenAddress` vs USDC
+   * using the Uniswap-V2-compatible cumulative price accumulators stored on
+   * every Camelot V2 pair.
+   *
+   * Algorithm (identical to Uniswap V2 TWAP reference implementation):
+   *   1. Read price0CumulativeLast + reserves at the HISTORICAL block.
+   *   2. Read price0CumulativeLast + reserves at the CURRENT block, then
+   *      project the cumulative forward to the actual current timestamp by
+   *      adding  (currentSpotQ112 × timeElapsedSinceLastSync).
+   *   3. TWAP_Q112 = (effectiveCum_now − cum_hist) / timeDelta
+   *   4. Decode Q112 fixed-point to a USD float with decimal adjustment.
+   *
+   * Returns null if: pair does not exist, time window is zero, reserves are
+   * empty, or any RPC call fails.
+   *
+   * @param tokenAddress  checksummed address of the token to price
+   * @param tokenDecimals number of decimals for that token (default 18)
+   * @param twapWindowSecs TWAP observation window in seconds (default 1800 = 30 min)
+   */
+  async getTokenTWAPVsUsdc(
+    tokenAddress: string,
+    tokenDecimals: number = 18,
+    twapWindowSecs: number = 1_800,
+  ): Promise<number | null> {
     try {
       const provider = await this.getProvider();
       const pairAddress = await this.getPairAddress(tokenAddress, STABLECOINS.USDC);
       if (!pairAddress) return null;
 
-      const pairContract = new ethers.Contract(pairAddress, CAMELOT_PAIR_ABI, provider);
-      const [reserves, token0] = await Promise.all([
-        pairContract.getReserves(),
-        pairContract.token0(),
+      const pairABI = [
+        'function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)',
+        'function token0() external view returns (address)',
+        'function price0CumulativeLast() external view returns (uint256)',
+      ];
+      const pair = new ethers.Contract(pairAddress, pairABI, provider);
+
+      // Arbitrum One: ~4 blocks/second → 30-min window ≈ 7200 blocks
+      const BLOCKS_PER_SEC = 4;
+      const twapBlocks = Math.ceil(twapWindowSecs * BLOCKS_PER_SEC);
+      const currentBlock = await provider.getBlockNumber();
+      const historicalBlock = Math.max(1, currentBlock - twapBlocks);
+
+      // Fetch both observations and the current block timestamp in parallel
+      const [
+        reserves_now,
+        cum0_now,
+        token0Addr,
+        reserves_hist,
+        cum0_hist,
+        nowBlockData,
+      ] = await Promise.all([
+        pair.getReserves({ blockTag: currentBlock }),
+        pair.price0CumulativeLast({ blockTag: currentBlock }),
+        pair.token0(),
+        pair.getReserves({ blockTag: historicalBlock }),
+        pair.price0CumulativeLast({ blockTag: historicalBlock }),
+        provider.getBlock(currentBlock),
       ]);
 
-      const isToken0 = token0.toLowerCase() === tokenAddress.toLowerCase();
-      const tokenReserve: bigint = isToken0 ? reserves[0] : reserves[1];
-      const usdcReserve: bigint  = isToken0 ? reserves[1] : reserves[0];
+      const isToken0 = (token0Addr as string).toLowerCase() === tokenAddress.toLowerCase();
 
-      if (tokenReserve === 0n) return null;
+      const Q112 = 2n ** 112n;
+      // 12-decimal fixed-point for intermediate division to avoid float imprecision
+      const PRECISION = 10n ** 12n;
 
-      const tokenAmount = Number(tokenReserve) / Math.pow(10, tokenDecimals);
-      const usdcAmount  = Number(usdcReserve)  / 1e6;
-      return usdcAmount / tokenAmount;
+      const bTimestampNow  = BigInt(nowBlockData?.timestamp ?? Number(reserves_now[2]));
+      const bTimestampLastSyncNow = BigInt(reserves_now[2]);
+      const bTimestampHist = BigInt(reserves_hist[2]);
+
+      // Project cumulative forward from last-sync to actual current timestamp
+      const timeSinceSync = bTimestampNow > bTimestampLastSyncNow
+        ? bTimestampNow - bTimestampLastSyncNow
+        : 0n;
+
+      const r0_now: bigint = reserves_now[0];
+      const r1_now: bigint = reserves_now[1];
+      let effectiveCum0_now: bigint = cum0_now as bigint;
+      if (r0_now > 0n && timeSinceSync > 0n) {
+        effectiveCum0_now = (cum0_now as bigint) + (r1_now * Q112 / r0_now) * timeSinceSync;
+      }
+
+      const timeDelta = bTimestampNow - bTimestampHist;
+      if (timeDelta <= 0n) return null;
+
+      // TWAP price0 in Q112 (= token1_raw per token0_raw, time-averaged)
+      const cumulativeDiff = effectiveCum0_now - (cum0_hist as bigint);
+      // Compute in PRECISION fixed-point to preserve significance
+      const twapFixed = cumulativeDiff * PRECISION / (Q112 * timeDelta);
+      if (twapFixed === 0n) return null;
+
+      // Raw price: token1_raw / token0_raw (still in PRECISION fixed-point)
+      // Decimal-adjust: usdPrice = rawPrice * 10^tokenDecimals / 1e6
+      let usdPrice: number;
+      if (isToken0) {
+        // token0 = our token (AXM, 18 dec), token1 = USDC (6 dec)
+        // price0 = USDC_raw / AXM_raw  →  USD = price0 × 10^18 / 1e6
+        usdPrice = (Number(twapFixed) / 1e12) * Math.pow(10, tokenDecimals) / 1e6;
+      } else {
+        // token0 = USDC (6 dec), token1 = our token (AXM, 18 dec)
+        // price0 = AXM_raw / USDC_raw  →  USD = 1 / (price0 × 10^18 / 1e6)
+        const priceRaw = Number(twapFixed) / 1e12;
+        if (priceRaw <= 0) return null;
+        usdPrice = 1e6 / (priceRaw * Math.pow(10, tokenDecimals));
+      }
+
+      return usdPrice > 0 ? usdPrice : null;
     } catch {
       return null;
     }
