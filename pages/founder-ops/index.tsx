@@ -696,10 +696,12 @@ export default function FounderOpsPage() {
     finally { setWalletTopupLoading(false); }
   };
 
-  // Auto-load wallet balance whenever either admin key is populated
+  // Auto-load wallet balance when either admin key settles (debounced 400ms)
   useEffect(() => {
     const key = reservesAdminKey || railAdminKey;
-    if (key) loadWalletBalance(key);
+    if (!key) return;
+    const t = setTimeout(() => loadWalletBalance(key), 400);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reservesAdminKey, railAdminKey]);
 
