@@ -8458,6 +8458,294 @@ END $seed$`, 'seed dp_listings');
         console.warn('[instrumentation] Migration step failed (non-fatal):', msg);
       }
 
+      // ═══════════════════════════════════════════
+      //  RESERVE ALERTS (deduplication state)
+      // ═══════════════════════════════════════════
+      await exec(`CREATE TABLE IF NOT EXISTS reserve_alerts (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        alert_key VARCHAR(100) NOT NULL,
+        condition_active BOOLEAN NOT NULL DEFAULT FALSE,
+        last_sent_at TIMESTAMP,
+        condition_first_seen_at TIMESTAMP,
+        condition_cleared_at TIMESTAMP,
+        last_value_snapshot TEXT,
+        channels_paged TEXT,
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table reserve_alerts');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS ra_alert_key_uniq ON reserve_alerts(alert_key)`, 'index ra_alert_key_uniq');
+      await exec(`CREATE INDEX IF NOT EXISTS ra_active_idx ON reserve_alerts(condition_active)`, 'index ra_active_idx');
+
+      // ═══════════════════════════════════════════
+      //  RESERVE BALANCE SNAPSHOTS (hourly history)
+      // ═══════════════════════════════════════════
+      await exec(`CREATE TABLE IF NOT EXISTS reserve_balance_snapshots (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        symbol VARCHAR(20) NOT NULL,
+        balance NUMERIC(36,18) NOT NULL,
+        usd_value NUMERIC(28,8),
+        snapshot_hour TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`, 'table reserve_balance_snapshots');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS rbs_symbol_hour_idx ON reserve_balance_snapshots(symbol, snapshot_hour)`, 'index rbs_symbol_hour_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS rbs_symbol_time_idx ON reserve_balance_snapshots(symbol, snapshot_hour)`, 'index rbs_symbol_time_idx');
+
+      // ═══════════════════════════════════════════
+      //  KEYGROW DEPOSITS
+      // ═══════════════════════════════════════════
+      await exec(enumSafe('keygrow_deposit_status', ['pending','paid','staking','applied','refunded']), 'enum keygrow_deposit_status');
+      await exec(`CREATE TABLE IF NOT EXISTS keygrow_deposits (
+        id SERIAL PRIMARY KEY,
+        deposit_id VARCHAR(66) UNIQUE NOT NULL,
+        enrollment_id INTEGER REFERENCES keygrow_enrollments(id),
+        tenant_address VARCHAR(42) NOT NULL,
+        property_id INTEGER REFERENCES keygrow_properties(id),
+        deposit_amount_usd NUMERIC(18,2) NOT NULL DEFAULT 500,
+        deposit_amount_axm NUMERIC(28,8),
+        axm_price_at_deposit NUMERIC(18,8),
+        current_axm_balance NUMERIC(28,8),
+        staking_rewards_earned NUMERIC(28,8) NOT NULL DEFAULT 0,
+        staking_apr_percent NUMERIC(5,2) NOT NULL DEFAULT 8.0,
+        last_reward_calculation TIMESTAMP,
+        total_value_usd NUMERIC(18,2),
+        applied_to_down_payment BOOLEAN NOT NULL DEFAULT FALSE,
+        applied_at TIMESTAMP,
+        transaction_hash VARCHAR(66),
+        staking_contract_address VARCHAR(42),
+        status keygrow_deposit_status NOT NULL DEFAULT 'pending',
+        deposit_date TIMESTAMP NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table keygrow_deposits');
+      await exec(`CREATE INDEX IF NOT EXISTS keygrow_deposit_tenant_idx ON keygrow_deposits(tenant_address)`, 'index keygrow_deposit_tenant_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS keygrow_deposit_enrollment_idx ON keygrow_deposits(enrollment_id)`, 'index keygrow_deposit_enrollment_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS keygrow_deposit_status_idx ON keygrow_deposits(status)`, 'index keygrow_deposit_status_idx');
+
+      // ═══════════════════════════════════════════
+      //  VERIFIED EXECUTION OUTCOMES (Layer 2)
+      // ═══════════════════════════════════════════
+      await exec(enumSafe('verified_outcome_status', ['in_progress','completed','cancelled','disputed']), 'enum verified_outcome_status');
+
+      await exec(`CREATE TABLE IF NOT EXISTS verified_acquisitions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        property_id UUID NOT NULL,
+        predicted_purchase_price NUMERIC(14,2),
+        actual_purchase_price NUMERIC(14,2) NOT NULL,
+        predicted_closing_date TIMESTAMP,
+        actual_closing_date TIMESTAMP NOT NULL,
+        delay_days NUMERIC(5,0),
+        predicted_loan_amount NUMERIC(14,2),
+        actual_loan_amount NUMERIC(14,2),
+        predicted_interest_rate NUMERIC(5,3),
+        actual_interest_rate NUMERIC(5,3),
+        predicted_closing_cost NUMERIC(14,2),
+        actual_closing_cost NUMERIC(14,2),
+        inspection_findings_json JSONB,
+        title_issues_resolved BOOLEAN,
+        meta JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table verified_acquisitions');
+      await exec(`CREATE INDEX IF NOT EXISTS verified_acquisitions_deal_idx ON verified_acquisitions(deal_id)`, 'index verified_acquisitions_deal_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS verified_acquisitions_property_idx ON verified_acquisitions(property_id)`, 'index verified_acquisitions_property_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS verified_rehabilitations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        property_id UUID NOT NULL,
+        predicted_scope_json JSONB,
+        actual_scope_json JSONB,
+        predicted_rehab_cost NUMERIC(14,2),
+        actual_rehab_cost NUMERIC(14,2) NOT NULL,
+        cost_variance_percent NUMERIC(7,2),
+        predicted_rehab_start_date TIMESTAMP,
+        actual_rehab_start_date TIMESTAMP,
+        predicted_completion_date TIMESTAMP,
+        actual_completion_date TIMESTAMP NOT NULL,
+        days_overdue NUMERIC(5,0),
+        contractor_name TEXT,
+        contractor_performance_notes TEXT,
+        contractor_recommended BOOLEAN,
+        systems_completed_json JSONB,
+        quality_issues_json JSONB,
+        meta JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table verified_rehabilitations');
+      await exec(`CREATE INDEX IF NOT EXISTS verified_rehabilitations_deal_idx ON verified_rehabilitations(deal_id)`, 'index verified_rehabilitations_deal_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS verified_dispositions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        property_id UUID NOT NULL,
+        disposition_type TEXT NOT NULL,
+        predicted_sale_price NUMERIC(14,2),
+        actual_sale_price NUMERIC(14,2),
+        predicted_sale_date TIMESTAMP,
+        actual_sale_date TIMESTAMP,
+        selling_days_on_market NUMERIC(5,0),
+        predicted_refi_amount NUMERIC(14,2),
+        actual_refi_amount NUMERIC(14,2),
+        actual_refi_rate NUMERIC(5,3),
+        average_monthly_noi NUMERIC(14,2),
+        average_monthly_tenancy NUMERIC(5,2),
+        hold_duration_months NUMERIC(5,0),
+        note_principal_sold NUMERIC(14,2),
+        note_discount_percent NUMERIC(7,2),
+        meta JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table verified_dispositions');
+      await exec(`CREATE INDEX IF NOT EXISTS verified_dispositions_deal_idx ON verified_dispositions(deal_id)`, 'index verified_dispositions_deal_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS outcome_variance_analyses (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL,
+        property_id UUID NOT NULL,
+        predicted_cash_return NUMERIC(14,2),
+        actual_cash_return NUMERIC(14,2),
+        return_variance_percent NUMERIC(7,2),
+        predicted_time_to_exit NUMERIC(5,0),
+        actual_time_to_exit NUMERIC(5,0),
+        variance_root_causes_json JSONB,
+        lessons_learned_json JSONB,
+        operator_confidence_score NUMERIC(5,2),
+        repeatability_score NUMERIC(5,2),
+        status TEXT NOT NULL DEFAULT 'in_progress',
+        completed_at TIMESTAMP,
+        meta JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table outcome_variance_analyses');
+      await exec(`CREATE INDEX IF NOT EXISTS outcome_variance_deal_idx ON outcome_variance_analyses(deal_id)`, 'index outcome_variance_deal_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS outcome_variance_status_idx ON outcome_variance_analyses(status)`, 'index outcome_variance_status_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS operator_lessons_learned (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        operator_id UUID NOT NULL,
+        lesson_type TEXT NOT NULL,
+        market_area TEXT,
+        strategy_type TEXT,
+        property_type TEXT,
+        description TEXT NOT NULL,
+        impact_metrics_json JSONB,
+        recommended_mitigation TEXT,
+        occurrence_count NUMERIC(5,0) NOT NULL DEFAULT 1,
+        impact_score NUMERIC(5,2),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table operator_lessons_learned');
+      await exec(`CREATE INDEX IF NOT EXISTS operator_lessons_operator_idx ON operator_lessons_learned(operator_id)`, 'index operator_lessons_operator_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS operator_lessons_type_idx ON operator_lessons_learned(lesson_type)`, 'index operator_lessons_type_idx');
+
+      // ═══════════════════════════════════════════
+      //  OPERATOR STRATEGY — MARKET & VENDOR TABLES
+      // ═══════════════════════════════════════════
+      await exec(`CREATE TABLE IF NOT EXISTS operator_market_intelligence (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        operator_id UUID NOT NULL,
+        market_area TEXT NOT NULL,
+        average_property_price NUMERIC(14,2),
+        average_rehab_cost NUMERIC(14,2),
+        average_time_to_sale NUMERIC(5,0),
+        average_rent NUMERIC(10,2),
+        price_growth_trend_percent NUMERIC(7,2),
+        rent_growth_trend_percent NUMERIC(7,2),
+        opportunity_score_json JSONB,
+        last_updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table operator_market_intelligence');
+      await exec(`CREATE INDEX IF NOT EXISTS operator_market_intel_operator_idx ON operator_market_intelligence(operator_id)`, 'index operator_market_intel_operator_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS operator_market_intel_area_idx ON operator_market_intelligence(market_area)`, 'index operator_market_intel_area_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS operator_vendor_networks (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        operator_id UUID NOT NULL,
+        vendor_type TEXT NOT NULL,
+        preferred_vendors_json JSONB,
+        vendor_ratings_json JSONB,
+        average_first_response_time NUMERIC(5,0),
+        average_price_vs_market NUMERIC(7,2),
+        total_deals_with_vendors NUMERIC(5,0),
+        vendor_capacity_json JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table operator_vendor_networks');
+      await exec(`CREATE INDEX IF NOT EXISTS operator_vendor_networks_operator_idx ON operator_vendor_networks(operator_id)`, 'index operator_vendor_networks_operator_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS operator_vendor_networks_type_idx ON operator_vendor_networks(vendor_type)`, 'index operator_vendor_networks_type_idx');
+
+      // ═══════════════════════════════════════════
+      //  NETWORK INTELLIGENCE (Layer 6)
+      // ═══════════════════════════════════════════
+      await exec(`CREATE TABLE IF NOT EXISTS network_market_benchmarks (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        market_area TEXT NOT NULL,
+        property_type TEXT,
+        average_purchase_price NUMERIC(14,2),
+        median_purchase_price NUMERIC(14,2),
+        purchase_price_std_dev NUMERIC(14,2),
+        average_rehab_cost NUMERIC(14,2),
+        median_rehab_cost NUMERIC(14,2),
+        average_time_to_exit NUMERIC(5,0),
+        time_to_exit_range JSONB,
+        average_roi NUMERIC(7,2),
+        median_roi NUMERIC(7,2),
+        average_cash_on_cash NUMERIC(7,2),
+        strategy_performance_json JSONB,
+        number_deals_recorded NUMERIC(7,0),
+        success_rate_percent NUMERIC(5,2),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table network_market_benchmarks');
+      await exec(`CREATE INDEX IF NOT EXISTS network_market_benchmarks_area_idx ON network_market_benchmarks(market_area)`, 'index network_market_benchmarks_area_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS network_opportunity_signals (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        market_area TEXT NOT NULL,
+        signal_type TEXT NOT NULL,
+        confidence NUMERIC(5,2),
+        signal_strength_json JSONB,
+        predicted_opportunity_json JSONB,
+        recommended_strategies_json JSONB,
+        predicted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        actualized_at TIMESTAMP,
+        accuracy_score NUMERIC(5,2),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table network_opportunity_signals');
+      await exec(`CREATE INDEX IF NOT EXISTS network_opportunity_signals_area_idx ON network_opportunity_signals(market_area)`, 'index network_opportunity_signals_area_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS network_opportunity_signals_type_idx ON network_opportunity_signals(signal_type)`, 'index network_opportunity_signals_type_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS network_operator_benchmarks (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        percentile NUMERIC(5,2) NOT NULL,
+        strategy_type TEXT NOT NULL,
+        avg_roi NUMERIC(7,2),
+        avg_time_to_exit NUMERIC(5,0),
+        success_rate NUMERIC(5,2),
+        cost_accuracy NUMERIC(5,2),
+        timeline_accuracy NUMERIC(5,2),
+        description TEXT,
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table network_operator_benchmarks');
+      await exec(`CREATE INDEX IF NOT EXISTS network_operator_benchmarks_strategy_idx ON network_operator_benchmarks(strategy_type)`, 'index network_operator_benchmarks_strategy_idx');
+
+      await exec(`CREATE TABLE IF NOT EXISTS network_missed_opportunities (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        market_area TEXT NOT NULL,
+        strategy_type TEXT,
+        property_type TEXT,
+        pass_reason TEXT NOT NULL,
+        pass_reasons_json JSONB,
+        actual_outcome_json JSONB,
+        estimated_missed_return NUMERIC(14,2),
+        should_have_been_taken BOOLEAN,
+        frequency_score NUMERIC(5,2),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table network_missed_opportunities');
+      await exec(`CREATE INDEX IF NOT EXISTS network_missed_opportunities_area_idx ON network_missed_opportunities(market_area)`, 'index network_missed_opportunities_area_idx');
+
       console.log('[instrumentation] Database setup complete');
 
       // ── Redis warm-up ─────────────────────────────────────────────────────
