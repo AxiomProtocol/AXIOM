@@ -4519,16 +4519,17 @@ export default function FounderOpsPage() {
                   const settlementNetPay = allocLatestSettlement?.net_pay ?? null;
                   const walletAvailableUsd = walletBalance ? walletBalance.available_usd : null;
                   const customUsd = customFundingAmount !== '' ? Number(customFundingAmount) : null;
+                  const settlementFallback = walletFundingSource === 'settlement' && settlementNetPay == null && walletAvailableUsd != null;
                   const fundingAmount: number | null =
                     walletFundingSource === 'wallet'  ? walletAvailableUsd :
                     walletFundingSource === 'custom'  ? (customUsd != null && Number.isFinite(customUsd) && customUsd > 0 ? customUsd : null) :
-                    settlementNetPay;
+                    (settlementNetPay ?? walletAvailableUsd);
                   return (
                     <div className="border border-dl-navy mb-5">
                       <div className="px-4 py-3 border-b border-dl-navy bg-dl-navy flex items-center justify-between">
                         <p className="font-dl-mono text-xs uppercase tracking-widest text-white font-bold">Funding Source</p>
                         {fundingAmount != null && (
-                          <p className="font-dl-mono text-xs text-emerald-300 font-semibold">{fmtUsd(fundingAmount)} ready to allocate</p>
+                          <p className="font-dl-mono text-xs text-emerald-300 font-semibold">{fmtUsd(fundingAmount)} ready to allocate{settlementFallback ? ' (wallet fallback)' : ''}</p>
                         )}
                       </div>
                       <div className="px-4 py-4 bg-white flex flex-col gap-4">
@@ -4547,11 +4548,18 @@ export default function FounderOpsPage() {
 
                         {/* Settlement */}
                         {walletFundingSource === 'settlement' && (
-                          <div className="flex items-baseline gap-3">
-                            <p className="font-dl-mono text-xs text-dl-gray">Latest net pay:</p>
-                            <p className="font-dl-mono text-base text-dl-navy font-semibold">
-                              {settlementNetPay != null ? fmtUsd(settlementNetPay) : allocLatestLoading ? 'Loading…' : 'No settlement loaded'}
-                            </p>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-baseline gap-3">
+                              <p className="font-dl-mono text-xs text-dl-gray">Latest net pay:</p>
+                              <p className="font-dl-mono text-base text-dl-navy font-semibold">
+                                {settlementNetPay != null ? fmtUsd(settlementNetPay) : allocLatestLoading ? 'Loading…' : 'No settlement loaded'}
+                              </p>
+                            </div>
+                            {settlementFallback && (
+                              <p className="font-dl-mono text-[10px] text-amber-700">
+                                Using Axiom Balance ({fmtUsd(walletAvailableUsd!)}) as funding source — upload a settlement on the Axiom Rail tab to use net pay instead
+                              </p>
+                            )}
                           </div>
                         )}
 
@@ -5316,13 +5324,15 @@ export default function FounderOpsPage() {
                   const latest = allocLatestSettlement;
 
                   // Resolve funding amount from selected source
-                  const settlementNetPay = latest?.net_pay ?? null;
-                  const walletAvailableUsd = walletBalance ? walletBalance.available_usd : null;
-                  const customUsd = customFundingAmount !== '' ? Number(customFundingAmount) : null;
+                  // When settlement is selected but unavailable, fall back to wallet balance
+                  // so Policy $ column always shows real numbers.
+                  const settlementNetPay    = latest?.net_pay ?? null;
+                  const walletAvailableUsd  = walletBalance ? walletBalance.available_usd : null;
+                  const customUsd           = customFundingAmount !== '' ? Number(customFundingAmount) : null;
                   const fundingAmount: number | null =
-                    walletFundingSource === 'wallet'     ? walletAvailableUsd :
-                    walletFundingSource === 'custom'     ? (customUsd != null && Number.isFinite(customUsd) && customUsd > 0 ? customUsd : null) :
-                    settlementNetPay;
+                    walletFundingSource === 'wallet'  ? walletAvailableUsd :
+                    walletFundingSource === 'custom'  ? (customUsd != null && Number.isFinite(customUsd) && customUsd > 0 ? customUsd : null) :
+                    (settlementNetPay ?? walletAvailableUsd);
 
                   const driverAmount   = (fundingAmount != null && dp) ? (fundingAmount * dp.share_pct) / 100 : null;
                   const treasuryAmount = (fundingAmount != null && tp) ? (fundingAmount * tp.share_pct) / 100 : null;
