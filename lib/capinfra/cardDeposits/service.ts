@@ -35,7 +35,7 @@ import { generateId } from '../ids';
 import { centsToDecimalString, type UsdDecimalString } from '../money';
 import { maybeEmitDrainArchiveEmail } from './drainArchive';
 
-export type CardDepositIntent = 'TREASURY_FUND' | 'AXUSD_MINT' | 'AXAU_MINT';
+export type CardDepositIntent = 'TREASURY_FUND' | 'AXUSD_MINT' | 'AXAU_MINT' | 'WALLET_TOPUP';
 export type CardDepositStatus =
   | 'PENDING'
   | 'PAID'
@@ -46,7 +46,7 @@ export type CardDepositStatus =
   | 'REFUNDED';
 
 const VALID_INTENTS: ReadonlyArray<CardDepositIntent> = [
-  'TREASURY_FUND', 'AXUSD_MINT', 'AXAU_MINT',
+  'TREASURY_FUND', 'AXUSD_MINT', 'AXAU_MINT', 'WALLET_TOPUP',
 ];
 
 const MIN_AMOUNT_CENTS = 100;          // $1.00 — Stripe min for cards
@@ -60,6 +60,9 @@ export interface CreateCheckoutInput {
   targetWalletAddress?: string | null;
   idempotencyKey: string;
   baseUrl: string;
+  /** Override the success/cancel path (default: /treasury/fund/success|cancel) */
+  successPath?: string;
+  cancelPath?: string;
 }
 
 export interface CreateCheckoutResult {
@@ -85,6 +88,7 @@ function validateInput(input: CreateCheckoutInput): void {
       throw new Error('targetWalletAddress (0x...) is required for mint intents');
     }
   }
+  // WALLET_TOPUP: no wallet address required — balance is keyed to userId
   if (!input.idempotencyKey || input.idempotencyKey.length < 8) {
     throw new Error('idempotencyKey is required (min 8 chars)');
   }
@@ -97,8 +101,9 @@ function validateInput(input: CreateCheckoutInput): void {
 function intentLabel(intent: CardDepositIntent): string {
   switch (intent) {
     case 'TREASURY_FUND': return 'Axiom Treasury Funding (USD)';
-    case 'AXUSD_MINT': return 'AXUSD Purchase (1:1 USD)';
-    case 'AXAU_MINT': return 'AXAU Purchase';
+    case 'AXUSD_MINT':    return 'AXUSD Purchase (1:1 USD)';
+    case 'AXAU_MINT':     return 'AXAU Purchase';
+    case 'WALLET_TOPUP':  return 'Axiom Balance Top-Up';
   }
 }
 
@@ -170,8 +175,8 @@ export async function createCheckoutSession(
       ...(input.userId ? { userId: input.userId } : {}),
     },
     customer_email: input.buyerEmail || undefined,
-    success_url: `${input.baseUrl}/treasury/fund/success?dep_id=${id}&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${input.baseUrl}/treasury/fund/cancel?dep_id=${id}`,
+    success_url: `${input.baseUrl}${input.successPath ?? '/treasury/fund/success'}?dep_id=${id}&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url:  `${input.baseUrl}${input.cancelPath  ?? '/treasury/fund/cancel'}?dep_id=${id}`,
   }, {
     idempotencyKey: `cap-card-deposit-${input.idempotencyKey}`,
   });
@@ -339,7 +344,30 @@ export async function handleStripeWebhookEvent(
 
           // AXUSD mint hook only fires for the actor that won the
           // transition. tryMintAxusd is itself try/catch and never throws.
-          if (dep.intent === 'AXUSD_MINT' && dep.targetWalletAddress) {
+          if (dep.intent === 'WALLET_TOPUP' && dep.userId) {
+            // Credit the user's internal wallet balance.
+            try {
+              const { creditTopUp } = await import('../../wallet/service');
+              await creditTopUp({
+                userId: dep.userId,
+                amountCents: dep.amountCents,
+                referenceId: dep.id,
+                idempotencyKey: `wallet-topup-credit-${dep.id}`,
+                notes: `Stripe checkout ${dep.stripePaymentIntentId ?? dep.stripeSessionId}`,
+              });
+              await emitAudit({
+                eventType: 'card_deposit.wallet_credited',
+                aggregateId: dep.id,
+                payload: { userId: dep.userId, amountCents: dep.amountCents },
+              });
+            } catch (creditErr) {
+              await emitAudit({
+                eventType: 'card_deposit.wallet_credit_failed',
+                aggregateId: dep.id,
+                payload: { userId: dep.userId, error: creditErr instanceof Error ? creditErr.message : String(creditErr) },
+              });
+            }
+          } else if (dep.intent === 'AXUSD_MINT' && dep.targetWalletAddress) {
             await tryMintAxusd(dep.id, dep.targetWalletAddress, dep.amountCents);
           } else if (dep.intent === 'AXAU_MINT') {
             await emitAudit({
