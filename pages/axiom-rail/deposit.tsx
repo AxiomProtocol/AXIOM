@@ -96,7 +96,13 @@ export default function AxiomRailDeposit() {
         headers: { 'x-admin-key': key, 'content-type': 'application/json' },
         body: JSON.stringify({ amount_cents: walletPreset * 100 }),
       });
-      const json = await res.json();
+      const text = await res.text();
+      let json: { success?: boolean; error?: string; checkout_url?: string };
+      try {
+        json = JSON.parse(text) as typeof json;
+      } catch {
+        throw new Error(`Server error (${res.status}) — please try again or check server logs.`);
+      }
       if (!res.ok || !json.success) throw new Error(json.error ?? `HTTP ${res.status}`);
       window.open(json.checkout_url as string, '_blank', 'noopener');
       setWalletTopupDone(true);

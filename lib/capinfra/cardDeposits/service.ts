@@ -162,7 +162,9 @@ export async function createCheckoutSession(
             ? 'Funds Axiom Protocol USD treasury via Increase.'
             : input.intent === 'AXUSD_MINT'
               ? `Mints AXUSD to ${input.targetWalletAddress}.`
-              : `Purchases AXAU for ${input.targetWalletAddress}.`,
+              : input.intent === 'AXAU_MINT'
+                ? `Purchases AXAU for ${input.targetWalletAddress}.`
+                : 'Credits internal Axiom balance (USD). Allocation engine on Founder Ops.',
         },
         unit_amount: input.amountCents,
       },
