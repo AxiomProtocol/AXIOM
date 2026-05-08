@@ -72,6 +72,7 @@ export type SettlementStatus =
   | 'queued_oracle_stale'
   | 'queued_no_custody'
   | 'queued_no_role'
+  | 'insufficient_balance'
   | 'failed';
 
 export interface SettlementOutcome {
@@ -215,28 +216,27 @@ async function settleDirectTransfer(input: DispatchInput): Promise<SettlementOut
     if (input.asset === 'USDC') {
       const usdc    = new ethers.Contract(USDC_ARBITRUM, ERC20_ABI, signer);
       const balance = BigInt(await usdc.balanceOf(DEPLOYER_EOA));
-      if (balance === 0n) {
+      const needed  = ethers.parseUnits(input.quantity.toFixed(6), 6);
+
+      if (balance < needed) {
+        const have = ethers.formatUnits(balance, 6);
         return {
           txHash:           null,
-          settlementStatus: 'queued_no_buffer',
+          settlementStatus: 'insufficient_balance',
           settlementRef:    null,
-          settlementNote:   `Deployer USDC balance is zero — USDC transfer queued.`,
+          settlementNote:   `Deployer USDC balance insufficient — have ${have} USDC, need ${input.quantity.toFixed(6)} USDC for transfer to Governance Safe ${AXM_GOV_SAFE}. Top up deployer wallet to proceed.`,
         };
       }
-      const needed  = ethers.parseUnits(input.quantity.toFixed(6), 6);
-      const amount  = balance < needed ? balance : needed;
-      const partial = amount < needed;
 
-      const tx      = await usdc.transfer(AXM_GOV_SAFE, amount);
+      const tx      = await usdc.transfer(AXM_GOV_SAFE, needed);
       const receipt = await tx.wait(1);
       const txHash: string = receipt.hash;
-      const sent = ethers.formatUnits(amount, 6);
 
       return {
         txHash,
         settlementStatus: 'confirmed',
         settlementRef:    txHash,
-        settlementNote:   `${sent} USDC${partial ? ` (partial — allocated ${input.quantity.toFixed(6)} USDC)` : ''} transferred to Governance Safe ${AXM_GOV_SAFE}. Arbitrum tx: ${txHash}`,
+        settlementNote:   `${input.quantity.toFixed(6)} USDC transferred to Governance Safe ${AXM_GOV_SAFE} via ERC-20 transfer. Arbitrum tx: ${txHash}`,
       };
     }
 
