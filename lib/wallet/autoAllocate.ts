@@ -123,8 +123,18 @@ export async function runAutoAlloc(opts: {
   const amountUsd = amountCents / 100;
   const runId = `aa_${nanoid8()}`;
 
-  // 1. Load active policies from DB; fall back to canonical defaults
-  const dbPolicies = await allocationPolicyService.getPolicies();
+  // 1. Load active policies from DB; fall back to canonical defaults.
+  //    Wrapped in try/catch so a missing or empty allocation_policies table
+  //    in production (e.g. before first publish migration) never crashes
+  //    the allocation — DEFAULT_BUCKETS are always a safe fallback.
+  let dbPolicies: Awaited<ReturnType<typeof allocationPolicyService.getPolicies>> = [];
+  try {
+    dbPolicies = await allocationPolicyService.getPolicies();
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn('[autoAllocate] allocation_policies query failed — using DEFAULT_BUCKETS:', msg);
+  }
+
   const activePolicies = dbPolicies.length > 0
     ? dbPolicies.map(p => ({
         bucketName: p.bucketName,

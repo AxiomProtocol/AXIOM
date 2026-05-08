@@ -420,7 +420,16 @@ export async function executeAlloc(opts: {
     }
 
     // 7d. Debit internal wallet
+    //     Ensure the row exists first — on first run (e.g. 'operator_founder'
+    //     has never topped up) the row won't exist and the SELECT FOR UPDATE
+    //     would return nothing, causing the debit to be silently skipped.
     if (totalCents > 0) {
+      await tx.execute(
+        sql`INSERT INTO axiom_wallet_balances (user_id, available_cents, pending_cents, lifetime_deposited_cents, lifetime_allocated_cents)
+            VALUES (${resolvedUserId}, 0, 0, 0, 0)
+            ON CONFLICT (user_id) DO NOTHING`,
+      );
+
       const locked = await tx.execute(
         sql`SELECT available_cents FROM axiom_wallet_balances WHERE user_id = ${resolvedUserId} FOR UPDATE`,
       );
