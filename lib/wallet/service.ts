@@ -104,22 +104,44 @@ export async function creditTopUp(opts: {
     return { txn: txnRow, wasNew: true };
   });
 
-  // Fire-and-forget AI auto-allocation — only on a genuinely new credit,
-  // never on an idempotency replay. Non-blocking: never throws to caller.
+  // Fire-and-forget: AI allocation plan → immediate execution.
+  // Only runs on a genuinely new credit, never on an idempotency replay.
+  // Non-blocking: never throws to caller. Both stages share the same
+  // IIFE so execution always follows a successful plan.
   if (wasNew && txnRow) {
     (async () => {
+      let runId: string | undefined;
       try {
         const { runAutoAlloc } = await import('./autoAllocate');
-        await runAutoAlloc({ amountCents: opts.amountCents, depositId: opts.referenceId });
+        const allocResult = await runAutoAlloc({ amountCents: opts.amountCents, depositId: opts.referenceId });
+        runId = allocResult.runId;
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.error('[wallet] auto-alloc failed:', msg);
+        console.error('[wallet] auto-alloc plan failed:', msg);
         db.insert(capAuditEvents).values({
           id: generateId('ae'),
           eventType: 'card_deposit.auto_allocation_failed',
           aggregateType: 'card_deposit',
           aggregateId: opts.referenceId,
-          payloadJson: { error: msg, source: 'creditTopUp', amount_cents: opts.amountCents },
+          payloadJson: { error: msg, source: 'creditTopUp:plan', amount_cents: opts.amountCents },
+          actor: 'system',
+        }).onConflictDoNothing().catch(() => {});
+        return; // don't attempt execution if planning failed
+      }
+
+      // Stage 2 — execute the plan: fetch prices, write positions, debit wallet
+      try {
+        const { executeAlloc } = await import('./executeAlloc');
+        await executeAlloc({ runId, userId: opts.userId });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('[wallet] auto-alloc execution failed:', msg);
+        db.insert(capAuditEvents).values({
+          id: generateId('ae'),
+          eventType: 'treasury_allocation.execution_failed',
+          aggregateType: 'treasury_allocation',
+          aggregateId: runId,
+          payloadJson: { error: msg, source: 'creditTopUp:execute', run_id: runId, amount_cents: opts.amountCents },
           actor: 'system',
         }).onConflictDoNothing().catch(() => {});
       }

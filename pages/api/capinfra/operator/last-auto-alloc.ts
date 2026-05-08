@@ -58,6 +58,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const totalUsd = rows.reduce((s, r) => s + Number(r.usdValue ?? 0), 0);
     const firstMeta = parseMeta(rows[0]?.metadata);
 
+    // Derive overall execution status from the row statuses
+    const statuses = rows.map(r => r.status);
+    const executionStatus =
+      statuses.every(s => s === 'executed') ? 'executed' :
+      statuses.some(s => s === 'executing') ? 'executing' :
+      statuses.some(s => s === 'executed')  ? 'partial' :
+      'recorded';
+
     return res.status(200).json({
       success: true,
       data: {
@@ -66,6 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         amount_usd: totalUsd,
         bucket_count: rows.length,
         source_label: 'AUTO (AI)',
+        execution_status: executionStatus,
         rationale: firstMeta.rationale ?? null,
         deposit_id: firstMeta.deposit_id ?? null,
         buckets: rows.map(r => {
@@ -75,6 +84,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             asset: r.assetSymbol,
             usd_amount: Number(r.usdValue ?? 0),
             pct: m.pct ?? null,
+            status: r.status,
           };
         }),
       },

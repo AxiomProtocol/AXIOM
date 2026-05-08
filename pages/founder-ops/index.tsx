@@ -668,9 +668,14 @@ export default function FounderOpsPage() {
 
   // ── Last AI auto-allocation (Reserves tab notice) ──────────────────────
   type AutoAllocBucket = { bucket: string; asset: string; usd_amount: number; pct: number | null };
-  type LastAutoAlloc = { run_id: string; created_at: string; amount_usd: number; bucket_count: number; source_label: string; rationale: string | null; deposit_id: string | null; buckets: AutoAllocBucket[] };
+  type LastAutoAlloc = { run_id: string; created_at: string; amount_usd: number; bucket_count: number; source_label: string; rationale: string | null; deposit_id: string | null; execution_status: string | null; buckets: AutoAllocBucket[] };
+  type ExecBucket = { bucket: string; asset: string; usd_amount: number; pct: number; quantity: number; mark_price: number; execution_path: string; status: string };
+  type ExecAllocResult = { exec_id: string; run_id: string; amount_usd: number; bucket_count: number; executed_at: string; prices_fetched_at: string; buckets: ExecBucket[] };
   const [lastAutoAlloc, setLastAutoAlloc]               = useState<LastAutoAlloc | null>(null);
   const [lastAutoAllocLoading, setLastAutoAllocLoading] = useState(false);
+  const [execAllocLoading, setExecAllocLoading]         = useState(false);
+  const [execAllocResult, setExecAllocResult]           = useState<ExecAllocResult | null>(null);
+  const [execAllocError, setExecAllocError]             = useState<string | null>(null);
 
   const loadLastAutoAlloc = async (keyArg?: string) => {
     const adminKey = keyArg ?? reservesAdminKey ?? railAdminKey;
@@ -682,6 +687,34 @@ export default function FounderOpsPage() {
       if (json.success) setLastAutoAlloc(json.data ? json.data as LastAutoAlloc : null);
     } catch { /* silent */ }
     finally { setLastAutoAllocLoading(false); }
+  };
+
+  const executeAllocRun = async (runId: string) => {
+    const adminKey = reservesAdminKey ?? railAdminKey;
+    if (!adminKey) return;
+    setExecAllocLoading(true);
+    setExecAllocError(null);
+    setExecAllocResult(null);
+    try {
+      const res  = await fetch('/api/capinfra/operator/execute-alloc', {
+        method: 'POST',
+        headers: { 'x-admin-key': adminKey, 'content-type': 'application/json' },
+        body: JSON.stringify({ run_id: runId }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setExecAllocResult(json as ExecAllocResult);
+        loadLastAutoAlloc(adminKey);
+        loadWalletBalance(adminKey);
+        loadReserves(adminKey);
+      } else {
+        setExecAllocError(json.error ?? 'Execution failed');
+      }
+    } catch (e) {
+      setExecAllocError(String(e));
+    } finally {
+      setExecAllocLoading(false);
+    }
   };
 
   const loadWalletBalance = async (keyArg?: string) => {
@@ -4246,62 +4279,122 @@ export default function FounderOpsPage() {
                   )}
                 </div>
 
-                {/* ── Last AI Auto-Allocation notice ────────────────────── */}
+                {/* ── Last AI Auto-Allocation + Execution Panel ─────────── */}
                 {reservesAdminKey && (
-                  <div className="mb-4 border border-dl-border bg-dl-surface flex items-start gap-0">
-                    <div className="px-4 py-3 border-r border-dl-border bg-dl-bg-alt flex-none">
-                      <p className="font-dl-mono text-[10px] uppercase tracking-widest text-dl-gray whitespace-nowrap">Last Auto-Alloc</p>
-                    </div>
-                    <div className="px-4 py-3 flex-1 min-w-0">
-                      {lastAutoAllocLoading && (
-                        <p className="font-dl-mono text-xs text-dl-gray">Loading…</p>
-                      )}
-                      {!lastAutoAllocLoading && !lastAutoAlloc && (
-                        <div className="flex items-center gap-3">
-                          <p className="font-dl-mono text-xs text-dl-gray">No auto-allocation recorded yet.</p>
-                          <button
-                            onClick={() => loadLastAutoAlloc(reservesAdminKey)}
-                            className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-border px-3 py-1 text-dl-gray hover:text-dl-navy"
-                          >Check</button>
-                        </div>
-                      )}
-                      {!lastAutoAllocLoading && lastAutoAlloc && (() => {
-                        const fmtUsd = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
-                        const dt = new Date(lastAutoAlloc.created_at);
-                        const dtStr = dt.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                        return (
-                          <div className="flex flex-col gap-2">
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                              <p className="font-dl-mono text-xs text-dl-navy font-semibold">
-                                {fmtUsd(lastAutoAlloc.amount_usd)} distributed across {lastAutoAlloc.bucket_count} buckets
-                              </p>
-                              <p className="font-dl-mono text-[10px] text-dl-gray">{dtStr}</p>
-                              <span className="font-dl-mono text-[9px] uppercase tracking-wider text-emerald-700 border border-emerald-700 px-1.5 py-0.5">{lastAutoAlloc.source_label}</span>
-                              <button
-                                onClick={() => loadLastAutoAlloc(reservesAdminKey)}
-                                className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-border px-2 py-0.5 text-dl-gray hover:text-dl-navy"
-                              >Refresh</button>
-                            </div>
-                            {lastAutoAlloc.buckets.length > 0 && (
-                              <div className="flex flex-wrap gap-x-4 gap-y-1">
-                                {lastAutoAlloc.buckets.map(b => (
-                                  <span key={b.bucket} className="font-dl-mono text-[10px] text-dl-gray">
-                                    <span className="text-dl-navy font-semibold">{b.bucket.replace(/_/g, ' ')}</span>
-                                    {' '}
-                                    {fmtUsd(b.usd_amount)}
-                                    {b.pct != null ? ` (${b.pct}%)` : ''}
-                                    {' · '}<span className="text-dl-gray">{b.asset}</span>
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            {lastAutoAlloc.rationale && (
-                              <p className="font-dl-mono text-[10px] text-dl-gray italic border-l-2 border-dl-border pl-2">{lastAutoAlloc.rationale}</p>
-                            )}
+                  <div className="mb-4 border border-dl-border bg-dl-surface">
+                    {/* Header row */}
+                    <div className="flex items-start gap-0">
+                      <div className="px-4 py-3 border-r border-dl-border bg-dl-bg-alt flex-none">
+                        <p className="font-dl-mono text-[10px] uppercase tracking-widest text-dl-gray whitespace-nowrap">Allocation Cycle</p>
+                      </div>
+                      <div className="px-4 py-3 flex-1 min-w-0">
+                        {lastAutoAllocLoading && (
+                          <p className="font-dl-mono text-xs text-dl-gray">Loading…</p>
+                        )}
+                        {!lastAutoAllocLoading && !lastAutoAlloc && (
+                          <div className="flex items-center gap-3">
+                            <p className="font-dl-mono text-xs text-dl-gray">No auto-allocation recorded yet.</p>
+                            <button
+                              onClick={() => loadLastAutoAlloc(reservesAdminKey)}
+                              className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-border px-3 py-1 text-dl-gray hover:text-dl-navy"
+                            >Check</button>
                           </div>
-                        );
-                      })()}
+                        )}
+                        {!lastAutoAllocLoading && lastAutoAlloc && (() => {
+                          const fmtUsd = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+                          const dt = new Date(lastAutoAlloc.created_at);
+                          const dtStr = dt.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                          const isExecuted = lastAutoAlloc.execution_status === 'executed';
+                          return (
+                            <div className="flex flex-col gap-2">
+                              {/* Summary row */}
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                <p className="font-dl-mono text-xs text-dl-navy font-semibold">
+                                  {fmtUsd(lastAutoAlloc.amount_usd)} · {lastAutoAlloc.bucket_count} buckets
+                                </p>
+                                <p className="font-dl-mono text-[10px] text-dl-gray">{dtStr}</p>
+                                <span className="font-dl-mono text-[9px] uppercase tracking-wider text-emerald-700 border border-emerald-700 px-1.5 py-0.5">{lastAutoAlloc.source_label}</span>
+                                {isExecuted
+                                  ? <span className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-navy border border-dl-navy px-1.5 py-0.5">Executed</span>
+                                  : <button
+                                      onClick={() => executeAllocRun(lastAutoAlloc.run_id)}
+                                      disabled={execAllocLoading}
+                                      className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-navy bg-dl-navy text-white px-3 py-1 hover:opacity-80 disabled:opacity-40"
+                                    >{execAllocLoading ? 'Executing…' : 'Execute →'}</button>
+                                }
+                                <button
+                                  onClick={() => loadLastAutoAlloc(reservesAdminKey)}
+                                  className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-border px-2 py-0.5 text-dl-gray hover:text-dl-navy"
+                                >Refresh</button>
+                              </div>
+                              {/* Bucket chips */}
+                              {lastAutoAlloc.buckets.length > 0 && (
+                                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                  {lastAutoAlloc.buckets.map(b => (
+                                    <span key={b.bucket} className="font-dl-mono text-[10px] text-dl-gray">
+                                      <span className="text-dl-navy font-semibold">{b.bucket.replace(/_/g, ' ')}</span>
+                                      {' '}{fmtUsd(b.usd_amount)}{b.pct != null ? ` (${b.pct}%)` : ''}{' · '}
+                                      <span className="text-dl-gray">{b.asset}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              {/* Rationale */}
+                              {lastAutoAlloc.rationale && (
+                                <p className="font-dl-mono text-[10px] text-dl-gray italic border-l-2 border-dl-border pl-2">{lastAutoAlloc.rationale}</p>
+                              )}
+                              {/* Exec error */}
+                              {execAllocError && (
+                                <p className="font-dl-mono text-[10px] text-red-600 border-l-2 border-red-400 pl-2">Execution error: {execAllocError}</p>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </div>
+
+                    {/* ── Execution result — positions acquired ─────────── */}
+                    {execAllocResult && (
+                      <div className="border-t border-dl-border px-4 py-4">
+                        <p className="font-dl-mono text-[10px] uppercase tracking-widest text-dl-gray mb-3">
+                          Execution Complete — {new Date(execAllocResult.executed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                          &nbsp;·&nbsp;Prices as of {new Date(execAllocResult.prices_fetched_at).toLocaleTimeString()}
+                        </p>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="border-b border-dl-border">
+                                {['Bucket','Asset','USD Amount','Mark Price','Qty Acquired','Execution Path','Status'].map(h => (
+                                  <th key={h} className="font-dl-mono text-[9px] uppercase tracking-widest text-dl-gray pb-2 pr-4 whitespace-nowrap">{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {execAllocResult.buckets.map(b => (
+                                <tr key={b.bucket} className="border-b border-dl-border last:border-0">
+                                  <td className="font-dl-mono text-[10px] text-dl-navy py-2 pr-4 whitespace-nowrap">{b.bucket.replace(/_/g, ' ')}</td>
+                                  <td className="font-dl-mono text-[10px] font-semibold text-dl-navy py-2 pr-4">{b.asset}</td>
+                                  <td className="font-dl-mono text-[10px] text-dl-gray py-2 pr-4">${b.usd_amount.toFixed(2)}</td>
+                                  <td className="font-dl-mono text-[10px] text-dl-gray py-2 pr-4">
+                                    {b.mark_price >= 1 ? `$${b.mark_price.toLocaleString('en-US', { maximumFractionDigits: 2 })}` : `$${b.mark_price.toFixed(6)}`}
+                                  </td>
+                                  <td className="font-dl-mono text-[10px] text-dl-navy font-semibold py-2 pr-4">
+                                    {b.quantity < 0.001 ? b.quantity.toExponential(4) : b.quantity.toFixed(6)} {b.asset}
+                                  </td>
+                                  <td className="font-dl-mono text-[9px] text-dl-gray py-2 pr-4 whitespace-nowrap">{b.execution_path.replace(/_/g, ' ')}</td>
+                                  <td className="py-2 pr-4">
+                                    <span className="font-dl-mono text-[9px] uppercase tracking-wider text-emerald-700 border border-emerald-700 px-1.5 py-0.5">{b.status}</span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        <p className="font-dl-mono text-[9px] text-dl-gray mt-2">
+                          Exec ID: {execAllocResult.exec_id} · Run: {execAllocResult.run_id} · Reserve positions updated · Wallet debited
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 
