@@ -4381,6 +4381,7 @@ export default function FounderOpsPage() {
                                   if (ss === 'queued_oracle_stale') return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-orange-700 border border-orange-500 px-1.5 py-0.5">Queued · Oracle</span>;
                                   if (ss === 'queued_no_custody')   return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-orange-700 border border-orange-500 px-1.5 py-0.5">Queued · Custody</span>;
                                   if (ss.startsWith('queued'))      return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-orange-700 border border-orange-500 px-1.5 py-0.5">Queued</span>;
+                                  if (ss === 'insufficient_balance') return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-red-700 border border-red-500 px-1.5 py-0.5">Insufficient Balance</span>;
                                   if (ss === 'failed')              return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-red-700 border border-red-500 px-1.5 py-0.5">Failed</span>;
                                   return <span className="font-dl-mono text-[9px] text-dl-gray">{ss || '—'}</span>;
                                 })();
