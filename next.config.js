@@ -94,6 +94,13 @@ const nextConfig = {
       '@stellar/stellar-base',
       '@stellar/js-xdr',
       'eventsource',
+      // Stripe v18 uses node:crypto and native Node.js HTTP internals — must not
+      // be bundled by webpack or the Vercel serverless function crashes at cold
+      // start with FUNCTION_INVOCATION_FAILED.
+      'stripe',
+      // Resend uses the Replit connector runtime (REPL_IDENTITY / WEB_REPL_RENEWAL)
+      // which must be loaded from node_modules, not inlined into the webpack bundle.
+      'resend',
     ],
   },
 
