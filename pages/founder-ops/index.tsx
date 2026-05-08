@@ -668,7 +668,7 @@ export default function FounderOpsPage() {
 
   // ── Last AI auto-allocation (Reserves tab notice) ──────────────────────
   type AutoAllocBucket = { bucket: string; asset: string; usd_amount: number; pct: number | null };
-  type LastAutoAlloc = { run_id: string; created_at: string; amount_usd: number; bucket_count: number; rationale: string | null; deposit_id: string | null; buckets: AutoAllocBucket[] };
+  type LastAutoAlloc = { run_id: string; created_at: string; amount_usd: number; bucket_count: number; source_label: string; rationale: string | null; deposit_id: string | null; buckets: AutoAllocBucket[] };
   const [lastAutoAlloc, setLastAutoAlloc]               = useState<LastAutoAlloc | null>(null);
   const [lastAutoAllocLoading, setLastAutoAllocLoading] = useState(false);
 
@@ -718,7 +718,7 @@ export default function FounderOpsPage() {
   useEffect(() => {
     const key = reservesAdminKey || railAdminKey;
     if (!key) return;
-    const t = setTimeout(() => loadWalletBalance(key), 400);
+    const t = setTimeout(() => { loadWalletBalance(key); loadLastAutoAlloc(key); }, 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reservesAdminKey, railAdminKey]);
@@ -1489,7 +1489,7 @@ export default function FounderOpsPage() {
                     if (tab.id === 'axauQueue') { loadAxauQueue(); }
                     if (tab.id === 'axiomRail') { loadAxiomRailSettlements(); loadRailSettlementDocs(); loadAllocPolicy(); }
                     if (tab.id === 'daoAccounts') { loadDaoAccounts(); }
-                    if (tab.id === 'reserves') { loadReserves(); loadAllocPolicy(); loadLatestSettlement(); loadWalletBalance(); }
+                    if (tab.id === 'reserves') { loadReserves(); loadAllocPolicy(); loadLatestSettlement(); loadWalletBalance(); loadLastAutoAlloc(); }
                   }}
                   className={`px-4 py-2 text-sm border-b-2 -mb-px ${
                     activeTab === tab.id
@@ -4276,7 +4276,7 @@ export default function FounderOpsPage() {
                                 {fmtUsd(lastAutoAlloc.amount_usd)} distributed across {lastAutoAlloc.bucket_count} buckets
                               </p>
                               <p className="font-dl-mono text-[10px] text-dl-gray">{dtStr}</p>
-                              <span className="font-dl-mono text-[9px] uppercase tracking-wider text-emerald-700 border border-emerald-700 px-1.5 py-0.5">AI</span>
+                              <span className="font-dl-mono text-[9px] uppercase tracking-wider text-emerald-700 border border-emerald-700 px-1.5 py-0.5">{lastAutoAlloc.source_label}</span>
                               <button
                                 onClick={() => loadLastAutoAlloc(reservesAdminKey)}
                                 className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-border px-2 py-0.5 text-dl-gray hover:text-dl-navy"

@@ -2,7 +2,20 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { validateAdminKey } from '@/src/config/adminRoles';
 import { db } from '@/server/db';
 import { treasuryAllocations } from '@/shared/treasurySchema';
-import { eq, desc, and, sql } from 'drizzle-orm';
+import { desc, sql } from 'drizzle-orm';
+
+interface AutoAllocMeta {
+  source?: string;
+  run_id?: string;
+  deposit_id?: string;
+  pct?: number;
+  rationale?: string;
+}
+
+function parseMeta(raw: unknown): AutoAllocMeta {
+  if (raw && typeof raw === 'object') return raw as AutoAllocMeta;
+  return {};
+}
 
 /**
  * GET /api/capinfra/operator/last-auto-alloc
@@ -20,7 +33,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Find the most recent AUTO_AI run_id
     const latestRow = await db
       .select({
         runId: sql<string>`metadata->>'run_id'`,
@@ -37,7 +49,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const runId = latestRow[0].runId;
 
-    // Fetch all rows for this run
     const rows = await db
       .select()
       .from(treasuryAllocations)
@@ -45,6 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .orderBy(treasuryAllocations.allocationBucket);
 
     const totalUsd = rows.reduce((s, r) => s + Number(r.usdValue ?? 0), 0);
+    const firstMeta = parseMeta(rows[0]?.metadata);
 
     return res.status(200).json({
       success: true,
@@ -53,18 +65,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         created_at: latestRow[0].createdAt,
         amount_usd: totalUsd,
         bucket_count: rows.length,
-        rationale: (rows[0]?.metadata as any)?.rationale ?? null,
-        deposit_id: (rows[0]?.metadata as any)?.deposit_id ?? null,
-        buckets: rows.map(r => ({
-          bucket: r.allocationBucket,
-          asset: r.assetSymbol,
-          usd_amount: Number(r.usdValue ?? 0),
-          pct: (r.metadata as any)?.pct ?? null,
-        })),
+        source_label: 'AUTO (AI)',
+        rationale: firstMeta.rationale ?? null,
+        deposit_id: firstMeta.deposit_id ?? null,
+        buckets: rows.map(r => {
+          const m = parseMeta(r.metadata);
+          return {
+            bucket: r.allocationBucket,
+            asset: r.assetSymbol,
+            usd_amount: Number(r.usdValue ?? 0),
+            pct: m.pct ?? null,
+          };
+        }),
       },
     });
-  } catch (err: any) {
-    console.error('[last-auto-alloc]', err?.message ?? err);
-    return res.status(500).json({ success: false, error: err?.message ?? 'Failed' });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[last-auto-alloc]', msg);
+    return res.status(500).json({ success: false, error: msg });
   }
 }

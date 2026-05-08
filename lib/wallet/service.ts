@@ -53,14 +53,14 @@ export async function creditTopUp(opts: {
   if (!Number.isInteger(opts.amountCents) || opts.amountCents <= 0) {
     throw new Error('amountCents must be a positive integer');
   }
-  const txnRow = await db.transaction(async (tx) => {
+  const { txn: txnRow, wasNew } = await db.transaction(async (tx) => {
     // Idempotency check first — no-op if already credited.
     const existing = await tx
       .select()
       .from(axiomWalletTransactions)
       .where(eq(axiomWalletTransactions.idempotencyKey, opts.idempotencyKey))
       .limit(1);
-    if (existing[0]) return existing[0];
+    if (existing[0]) return { txn: existing[0], wasNew: false };
 
     // Ensure balance row exists, then lock it.
     await tx
@@ -101,23 +101,25 @@ export async function creditTopUp(opts: {
       })
       .where(eq(axiomWalletBalances.userId, opts.userId));
 
-    return txnRow;
+    return { txn: txnRow, wasNew: true };
   });
 
-  // Fire-and-forget AI auto-allocation — non-blocking, never throws to caller
-  if (txnRow) {
+  // Fire-and-forget AI auto-allocation — only on a genuinely new credit,
+  // never on an idempotency replay. Non-blocking: never throws to caller.
+  if (wasNew && txnRow) {
     (async () => {
       try {
         const { runAutoAlloc } = await import('./autoAllocate');
         await runAutoAlloc({ amountCents: opts.amountCents, depositId: opts.referenceId });
-      } catch (err: any) {
-        console.error('[wallet] auto-alloc failed:', err?.message ?? err);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('[wallet] auto-alloc failed:', msg);
         db.insert(capAuditEvents).values({
           id: generateId('ae'),
           eventType: 'card_deposit.auto_allocation_failed',
           aggregateType: 'card_deposit',
           aggregateId: opts.referenceId,
-          payloadJson: { error: err?.message ?? String(err), source: 'creditTopUp', amount_cents: opts.amountCents },
+          payloadJson: { error: msg, source: 'creditTopUp', amount_cents: opts.amountCents },
           actor: 'system',
         }).onConflictDoNothing().catch(() => {});
       }

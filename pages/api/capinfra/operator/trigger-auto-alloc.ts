@@ -20,9 +20,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { deposit_id, amount_cents } = req.body ?? {};
+  const body = req.body as Record<string, unknown> | null | undefined;
+  const deposit_id = typeof body?.deposit_id === 'string' ? body.deposit_id : undefined;
+  const raw_amount_cents = body?.amount_cents;
 
-  // Resolve amountCents and depositId
   let amountCents: number;
   let depositId: string;
 
@@ -38,8 +39,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     amountCents = dep.amountCents;
     depositId = dep.id;
-  } else if (amount_cents != null && Number.isInteger(Number(amount_cents)) && Number(amount_cents) > 0) {
-    amountCents = Number(amount_cents);
+  } else if (
+    raw_amount_cents != null &&
+    Number.isInteger(Number(raw_amount_cents)) &&
+    Number(raw_amount_cents) > 0
+  ) {
+    amountCents = Number(raw_amount_cents);
     depositId = `manual_${Date.now()}`;
   } else {
     return res.status(400).json({
@@ -57,11 +62,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       run_id: result.runId,
       amount_usd: result.amountUsd,
       bucket_count: result.buckets.length,
+      source_label: 'AUTO (AI)',
       buckets: result.buckets,
       rationale: result.rationale,
     });
-  } catch (err: any) {
-    const msg = err?.message ?? String(err);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     console.error('[trigger-auto-alloc]', msg);
 
     await db.insert(capAuditEvents).values({
