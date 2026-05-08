@@ -765,9 +765,10 @@ export default function FounderOpsPage() {
     const key = reservesAdminKey || railAdminKey;
     if (!key) return;
     const t = setTimeout(() => {
+      loadReserves(key);        // sets reservesData → unlocks portfolio trend; chains into loadReservesHistory
+      loadAllocPolicy(key);     // sets allocPolicies → populates Driver/Treasury columns
       loadWalletBalance(key);
       loadLastAutoAlloc(key);
-      loadReservesHistory(key);
     }, 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
