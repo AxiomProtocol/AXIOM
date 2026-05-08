@@ -689,6 +689,8 @@ export default function FounderOpsPage() {
   const [execAllocLoading, setExecAllocLoading]         = useState(false);
   const [execAllocResult, setExecAllocResult]           = useState<ExecAllocResult | null>(null);
   const [execAllocError, setExecAllocError]             = useState<string | null>(null);
+  const [triggerAllocLoading, setTriggerAllocLoading]   = useState(false);
+  const [triggerAllocError, setTriggerAllocError]       = useState<string | null>(null);
 
   const loadLastAutoAlloc = async (keyArg?: string) => {
     const adminKey = keyArg ?? reservesAdminKey ?? railAdminKey;
@@ -727,6 +729,37 @@ export default function FounderOpsPage() {
       setExecAllocError(String(e));
     } finally {
       setExecAllocLoading(false);
+    }
+  };
+
+  // Stage 1: Ask Gemini to build an allocation recommendation for a given dollar amount.
+  // fundingAmountUsd comes from whichever funding source is currently active in the UI.
+  const triggerAutoAlloc = async (fundingAmountUsd: number) => {
+    const adminKey = reservesAdminKey ?? railAdminKey;
+    if (!adminKey) return;
+    const amountCents = Math.round(fundingAmountUsd * 100);
+    if (amountCents < 1) return;
+    setTriggerAllocLoading(true);
+    setTriggerAllocError(null);
+    setExecAllocResult(null);
+    setExecAllocError(null);
+    try {
+      const res  = await fetch('/api/capinfra/operator/trigger-auto-alloc', {
+        method: 'POST',
+        headers: { 'x-admin-key': adminKey, 'content-type': 'application/json' },
+        body: JSON.stringify({ amount_cents: amountCents }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        // Reload the last-auto-alloc so the Execute button appears immediately
+        await loadLastAutoAlloc(adminKey);
+      } else {
+        setTriggerAllocError(json.error ?? 'AI trigger failed');
+      }
+    } catch (e) {
+      setTriggerAllocError(String(e));
+    } finally {
+      setTriggerAllocLoading(false);
     }
   };
 
@@ -4354,7 +4387,20 @@ export default function FounderOpsPage() {
                 </div>
 
                 {/* ── Last AI Auto-Allocation + Execution Panel ─────────── */}
-                {reservesAdminKey && (
+                {reservesAdminKey && (() => {
+                  // Compute funding amount here so the Run AI button can pass it to triggerAutoAlloc
+                  const fmtUsd = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+                  const _settlementNetPay   = allocLatestSettlement?.net_pay ?? null;
+                  const _walletAvailableUsd = walletBalance ? walletBalance.available_usd : null;
+                  const _customUsd = customFundingAmount !== '' ? Number(customFundingAmount) : null;
+                  const cycleAmount: number | null =
+                    walletFundingSource === 'wallet'  ? _walletAvailableUsd :
+                    walletFundingSource === 'custom'  ? (_customUsd != null && Number.isFinite(_customUsd) && _customUsd > 0 ? _customUsd : null) :
+                    (_settlementNetPay ?? _walletAvailableUsd);
+
+                  const canTrigger = cycleAmount != null && cycleAmount > 0 && !triggerAllocLoading && !lastAutoAllocLoading;
+
+                  return (
                   <div className="mb-4 border border-dl-border bg-dl-surface">
                     {/* Header row */}
                     <div className="flex items-start gap-0">
@@ -4362,20 +4408,34 @@ export default function FounderOpsPage() {
                         <p className="font-dl-mono text-[10px] uppercase tracking-widest text-dl-gray whitespace-nowrap">Allocation Cycle</p>
                       </div>
                       <div className="px-4 py-3 flex-1 min-w-0">
-                        {lastAutoAllocLoading && (
-                          <p className="font-dl-mono text-xs text-dl-gray">Loading…</p>
+                        {(lastAutoAllocLoading || triggerAllocLoading) && (
+                          <p className="font-dl-mono text-xs text-dl-gray">
+                            {triggerAllocLoading ? 'Running AI recommendation…' : 'Loading…'}
+                          </p>
                         )}
-                        {!lastAutoAllocLoading && !lastAutoAlloc && (
-                          <div className="flex items-center gap-3">
+                        {!lastAutoAllocLoading && !triggerAllocLoading && !lastAutoAlloc && (
+                          <div className="flex flex-wrap items-center gap-3">
                             <p className="font-dl-mono text-xs text-dl-gray">No auto-allocation recorded yet.</p>
+                            <button
+                              disabled={!canTrigger}
+                              onClick={() => cycleAmount != null && triggerAutoAlloc(cycleAmount)}
+                              className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-navy bg-dl-navy text-white px-4 py-1.5 hover:opacity-80 disabled:opacity-40"
+                            >
+                              {triggerAllocLoading ? 'Running AI…' : cycleAmount != null ? `Run AI — ${fmtUsd(cycleAmount)} →` : 'Run AI →'}
+                            </button>
                             <button
                               onClick={() => loadLastAutoAlloc(reservesAdminKey)}
                               className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-border px-3 py-1 text-dl-gray hover:text-dl-navy"
                             >Check</button>
+                            {triggerAllocError && (
+                              <p className="font-dl-mono text-[10px] text-red-600">Error: {triggerAllocError}</p>
+                            )}
+                            {cycleAmount == null && (
+                              <p className="font-dl-mono text-[10px] text-amber-700">Select a funding source below to enable the AI run.</p>
+                            )}
                           </div>
                         )}
-                        {!lastAutoAllocLoading && lastAutoAlloc && (() => {
-                          const fmtUsd = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+                        {!lastAutoAllocLoading && !triggerAllocLoading && lastAutoAlloc && (() => {
                           const dt = new Date(lastAutoAlloc.created_at);
                           const dtStr = dt.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                           const isExecuted = lastAutoAlloc.execution_status === 'executed';
@@ -4396,6 +4456,12 @@ export default function FounderOpsPage() {
                                       className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-navy bg-dl-navy text-white px-3 py-1 hover:opacity-80 disabled:opacity-40"
                                     >{execAllocLoading ? 'Executing…' : 'Execute →'}</button>
                                 }
+                                {/* Allow re-running the AI for a new amount even when a prior run exists */}
+                                <button
+                                  disabled={!canTrigger}
+                                  onClick={() => cycleAmount != null && triggerAutoAlloc(cycleAmount)}
+                                  className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-border px-3 py-1 text-dl-gray hover:text-dl-navy disabled:opacity-40"
+                                >New AI Run</button>
                                 <button
                                   onClick={() => loadLastAutoAlloc(reservesAdminKey)}
                                   className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-border px-2 py-0.5 text-dl-gray hover:text-dl-navy"
@@ -4417,7 +4483,10 @@ export default function FounderOpsPage() {
                               {lastAutoAlloc.rationale && (
                                 <p className="font-dl-mono text-[10px] text-dl-gray italic border-l-2 border-dl-border pl-2">{lastAutoAlloc.rationale}</p>
                               )}
-                              {/* Exec error */}
+                              {/* Trigger/exec errors */}
+                              {triggerAllocError && (
+                                <p className="font-dl-mono text-[10px] text-red-600 border-l-2 border-red-400 pl-2">AI run error: {triggerAllocError}</p>
+                              )}
                               {execAllocError && (
                                 <p className="font-dl-mono text-[10px] text-red-600 border-l-2 border-red-400 pl-2">Execution error: {execAllocError}</p>
                               )}
@@ -4511,7 +4580,8 @@ export default function FounderOpsPage() {
                       </div>
                     )}
                   </div>
-                )}
+                  );
+                })()}
 
                 {/* ── Funding Source — shown immediately after key is entered ── */}
                 {reservesAdminKey && (() => {
