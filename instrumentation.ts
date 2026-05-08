@@ -1047,6 +1047,20 @@ export async function register() {
         'idx property_report_webhook_events report_idx',
       );
 
+      // ── Sentinel subscription webhook idempotency (Task #457) ──
+      await exec(`CREATE TABLE IF NOT EXISTS sentinel_subscription_webhook_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        stripe_event_id VARCHAR(200) NOT NULL,
+        event_type VARCHAR(80) NOT NULL,
+        payload_json JSONB,
+        stripe_account_id VARCHAR(64),
+        processed_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sentinel_subscription_webhook_events');
+      await exec(
+        `CREATE UNIQUE INDEX IF NOT EXISTS sentinel_sub_webhook_stripe_event_uq ON sentinel_subscription_webhook_events (stripe_event_id)`,
+        'idx sentinel_sub_webhook_stripe_event_uq',
+      );
+
       // ═══════════════════════════════════════════
       //  COLUMN SAFETY: ADD MISSING COLUMNS
       // ═══════════════════════════════════════════

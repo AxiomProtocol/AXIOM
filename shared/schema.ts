@@ -9682,5 +9682,40 @@ export const savingsPositions = pgTable("savings_positions", {
 export type SavingsPosition = typeof savingsPositions.$inferSelect;
 export type InsertSavingsPosition = typeof savingsPositions.$inferInsert;
 
+// ── Sentinel subscription billing (Task #457) ──────────────────────────────
+export const sentinelSubscriptions = pgTable('sentinel_subscriptions', {
+  id: serial('id').primaryKey(),
+  walletAddress: varchar('wallet_address', { length: 42 }).notNull().unique(),
+  planKey: varchar('plan_key', { length: 50 }).notNull().default('sentinel_monthly'),
+  status: varchar('status', { length: 20 }).notNull().default('pending'),
+  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
+  stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
+  currentPeriodStart: timestamp('current_period_start'),
+  currentPeriodEnd: timestamp('current_period_end'),
+  cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false),
+  email: varchar('email', { length: 255 }),
+  stripeAccountId: varchar('stripe_account_id', { length: 64 }),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  walletIdx: index('sentinel_subscriptions_wallet_idx').on(table.walletAddress),
+  statusIdx: index('sentinel_subscriptions_status_idx').on(table.status),
+}));
+
+export const sentinelSubscriptionWebhookEvents = pgTable('sentinel_subscription_webhook_events', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  stripeEventId: varchar('stripe_event_id', { length: 200 }).notNull().unique(),
+  eventType: varchar('event_type', { length: 80 }).notNull(),
+  payloadJson: jsonb('payload_json'),
+  stripeAccountId: varchar('stripe_account_id', { length: 64 }),
+  processedAt: timestamp('processed_at').defaultNow(),
+}, (table) => ({
+  stripeEventIdx: index('sentinel_sub_webhook_stripe_event_idx').on(table.stripeEventId),
+}));
+
+export type SentinelSubscription = typeof sentinelSubscriptions.$inferSelect;
+export type InsertSentinelSubscription = typeof sentinelSubscriptions.$inferInsert;
+export type SentinelSubscriptionWebhookEvent = typeof sentinelSubscriptionWebhookEvents.$inferSelect;
+
 // launch_attestations moved to shared/launchAttestationsSchema.ts because the
 // SWC bundler dropped exports appended at the bottom of this 9700-line file.
