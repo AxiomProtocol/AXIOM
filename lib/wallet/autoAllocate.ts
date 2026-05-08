@@ -7,6 +7,16 @@
  *
  * Non-blocking: callers fire-and-forget. All failures are caught and
  * logged — they never block the wallet credit path.
+ *
+ * Invariants enforced before any DB write:
+ *  - Every expected bucket must be present in the AI response.
+ *  - All percentages must be non-negative integers.
+ *  - Percentages must sum to exactly 100.
+ *  - If any invariant fails, the function throws — the caller's catch
+ *    block writes a card_deposit.auto_allocation_failed audit event.
+ *
+ * All per-run DB writes (treasury_allocations rows + success audit event)
+ * are wrapped in a single transaction to prevent partial persistence.
  */
 
 import { db } from '../../server/db';
@@ -36,9 +46,86 @@ export interface AutoAllocResult {
   source: 'AUTO_AI';
 }
 
+/** Parsed and validated bucket percentages returned by Gemini. */
+interface ValidatedAllocations {
+  normalized: Record<string, number>;
+  rationale: string;
+}
+
+/**
+ * Validate and strictly enforce allocation invariants on raw AI output.
+ *
+ * Throws a descriptive Error if any invariant is violated — the caller's
+ * catch block is responsible for emitting the failure audit event.
+ */
+function validateAiOutput(
+  raw: unknown,
+  bucketNames: string[],
+): ValidatedAllocations {
+  if (!raw || typeof raw !== 'object') {
+    throw new Error('AI response is not an object');
+  }
+
+  const resp = raw as Record<string, unknown>;
+  const allocations = resp.allocations;
+
+  if (!allocations || typeof allocations !== 'object') {
+    throw new Error('AI response missing "allocations" object');
+  }
+
+  const alloc = allocations as Record<string, unknown>;
+  const normalized: Record<string, number> = {};
+
+  for (const bucket of bucketNames) {
+    const raw_val = alloc[bucket];
+
+    // Bucket must be present
+    if (raw_val === undefined || raw_val === null) {
+      throw new Error(`AI response missing required bucket: ${bucket}`);
+    }
+
+    const n = Number(raw_val);
+
+    // Must be a finite number
+    if (!Number.isFinite(n)) {
+      throw new Error(`Bucket "${bucket}" value is not a finite number: ${String(raw_val)}`);
+    }
+
+    // Must be non-negative
+    if (n < 0) {
+      throw new Error(`Bucket "${bucket}" percentage is negative: ${n}`);
+    }
+
+    // Must be an integer
+    if (!Number.isInteger(n)) {
+      throw new Error(`Bucket "${bucket}" percentage is not an integer: ${n}`);
+    }
+
+    normalized[bucket] = n;
+  }
+
+  // Must sum to exactly 100
+  const total = Object.values(normalized).reduce((s, v) => s + v, 0);
+  if (total !== 100) {
+    throw new Error(`Bucket percentages sum to ${total}, expected 100`);
+  }
+
+  const rationale =
+    typeof resp.rationale === 'string' && resp.rationale.trim().length > 0
+      ? resp.rationale.trim()
+      : 'AI allocation applied.';
+
+  return { normalized, rationale };
+}
+
 /**
  * Run an AI-driven allocation for a wallet top-up deposit.
- * Writes one treasury_allocations row per bucket and one audit event.
+ *
+ * Writes one treasury_allocations row per bucket and one success audit
+ * event, all inside a single DB transaction.
+ *
+ * Throws on AI validation failure or DB error — the fire-and-forget caller
+ * in creditTopUp catches and writes the failure audit event.
  */
 export async function runAutoAlloc(opts: {
   amountCents: number;
@@ -60,11 +147,11 @@ export async function runAutoAlloc(opts: {
         { bucketName: 'protocol_ops',          targetPct: '5.0000',  assetSymbol: 'USD'  },
       ];
 
+  const bucketNames = activePolicies.map(p => p.bucketName);
+
   const policyLines = activePolicies
     .map(p => `  ${p.bucketName}: ${Number(p.targetPct).toFixed(1)}% → $${((amountUsd * Number(p.targetPct)) / 100).toFixed(2)}`)
     .join('\n');
-
-  const bucketNames = activePolicies.map(p => p.bucketName);
 
   // 2. Build Gemini prompt
   const prompt = `You are the allocation engine for Axiom Protocol — a sovereign digital-physical economy.
@@ -77,86 +164,81 @@ Recommend how to split $${amountUsd.toFixed(2)} across these buckets. You may ad
 Respond ONLY with valid JSON — no markdown, no prose:
 {
   "allocations": {
-    "operating_cash": <pct as integer>,
-    "settlement_liquidity": <pct as integer>,
-    "reserve": <pct as integer>,
-    "capital_deployment": <pct as integer>,
-    "protocol_ops": <pct as integer>
+    "operating_cash": <non-negative integer percentage>,
+    "settlement_liquidity": <non-negative integer percentage>,
+    "reserve": <non-negative integer percentage>,
+    "capital_deployment": <non-negative integer percentage>,
+    "protocol_ops": <non-negative integer percentage>
   },
   "rationale": "<1-2 sentence justification>"
 }
 
-Rules:
-- All percentages must be non-negative integers
-- They MUST sum to exactly 100
-- Use the exact bucket names listed above`;
+Strict rules:
+- All values must be non-negative integers (0 or greater, no decimals, no negatives)
+- Values MUST sum to exactly 100
+- All five bucket names must be present exactly as listed above`;
 
   // 3. Call Gemini
   const raw = await generateText(prompt, { model: 'gemini-2.5-flash' });
   const jsonMatch = raw.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error(`AI returned no JSON: ${raw.slice(0, 200)}`);
-
-  let parsed: { allocations?: Record<string, number>; rationale?: string };
-  try { parsed = JSON.parse(jsonMatch[0]); }
-  catch { throw new Error('AI JSON parse failed'); }
-
-  const allocations = parsed.allocations ?? {};
-  const rationale = typeof parsed.rationale === 'string' ? parsed.rationale : 'AI allocation applied.';
-
-  // 4. Validate + normalize to sum to 100
-  let total = bucketNames.reduce((s, b) => s + (Number(allocations[b]) || 0), 0);
-  if (total <= 0) total = 100;
-  const normalized = Object.fromEntries(
-    bucketNames.map(b => [b, Math.round(((Number(allocations[b]) || 0) / total) * 100)])
-  );
-  // Assign any rounding remainder to the first bucket
-  const sum = Object.values(normalized).reduce((s, v) => s + v, 0);
-  if (sum !== 100 && bucketNames[0]) normalized[bucketNames[0]] += (100 - sum);
-
-  // 5. Write treasury_allocations rows
-  const bucketResults: AutoAllocResult['buckets'] = [];
-  const now = new Date();
-
-  for (const policy of activePolicies) {
-    const pct = normalized[policy.bucketName] ?? 0;
-    const usdAmount = Math.round((amountUsd * pct) / 100 * 100) / 100;
-    const asset = BUCKET_ASSET[policy.bucketName] ?? (policy.assetSymbol || 'USD');
-
-    await db.insert(treasuryAllocations).values({
-      allocationBucket: policy.bucketName,
-      assetSymbol: asset,
-      amount: usdAmount.toFixed(8),
-      usdValue: usdAmount.toFixed(2),
-      status: 'recorded',
-      notes: `AUTO_AI · ${rationale}`,
-      effectiveAt: now,
-      metadata: {
-        source: 'AUTO_AI',
-        run_id: runId,
-        deposit_id: depositId,
-        pct,
-        rationale,
-      },
-    });
-
-    bucketResults.push({ bucket: policy.bucketName, pct, usdAmount, asset });
+  if (!jsonMatch) {
+    throw new Error(`AI returned no JSON block — raw output: ${raw.slice(0, 300)}`);
   }
 
-  // 6. Write success audit event
-  await db.insert(capAuditEvents).values({
-    id: generateId('ae'),
-    eventType: 'card_deposit.auto_allocated',
-    aggregateType: 'card_deposit',
-    aggregateId: depositId,
-    payloadJson: {
-      run_id: runId,
-      amount_usd: amountUsd,
-      buckets: bucketResults,
-      rationale,
-      source: 'AUTO_AI',
-    },
-    actor: 'system',
-  }).onConflictDoNothing();
+  let parsed: unknown;
+  try { parsed = JSON.parse(jsonMatch[0]); }
+  catch { throw new Error('AI response JSON could not be parsed'); }
+
+  // 4. Strict validation — throws descriptively on any violation
+  const { normalized, rationale } = validateAiOutput(parsed, bucketNames);
+
+  // 5. Build bucket results array (for audit payload)
+  const now = new Date();
+  const bucketResults: AutoAllocResult['buckets'] = activePolicies.map(policy => {
+    const pct = normalized[policy.bucketName] as number;
+    const usdAmount = Math.round((amountUsd * pct) / 100 * 100) / 100;
+    const asset = BUCKET_ASSET[policy.bucketName] ?? (policy.assetSymbol || 'USD');
+    return { bucket: policy.bucketName, pct, usdAmount, asset };
+  });
+
+  // 6. Write all rows + success audit event inside a single transaction.
+  //    If any insert fails, the whole run is rolled back — no partial state.
+  await db.transaction(async (tx) => {
+    for (const { bucket, pct, usdAmount, asset } of bucketResults) {
+      await tx.insert(treasuryAllocations).values({
+        allocationBucket: bucket,
+        assetSymbol: asset,
+        amount: usdAmount.toFixed(8),
+        usdValue: usdAmount.toFixed(2),
+        status: 'recorded',
+        notes: `AUTO (AI) · ${rationale}`,
+        effectiveAt: now,
+        metadata: {
+          source: 'AUTO_AI',
+          run_id: runId,
+          deposit_id: depositId,
+          pct,
+          rationale,
+        },
+      });
+    }
+
+    await tx.insert(capAuditEvents).values({
+      id: generateId('ae'),
+      eventType: 'card_deposit.auto_allocated',
+      aggregateType: 'card_deposit',
+      aggregateId: depositId,
+      payloadJson: {
+        run_id: runId,
+        amount_usd: amountUsd,
+        buckets: bucketResults,
+        rationale,
+        source: 'AUTO_AI',
+        source_label: 'AUTO (AI)',
+      },
+      actor: 'system',
+    }).onConflictDoNothing();
+  });
 
   return { runId, amountUsd, buckets: bucketResults, rationale, source: 'AUTO_AI' };
 }
