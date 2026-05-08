@@ -401,6 +401,11 @@ export default function SentinelIndex() {
         return;
       }
       setSiweRequired(false);
+      if (res.status === 409) {
+        // Stripe account mismatch — treat as no active subscription so UI and API gate are consistent
+        setSub({ status: 'none', currentPeriodStart: null, currentPeriodEnd: null, cancelAtPeriodEnd: false });
+        return;
+      }
       if (res.ok) setSub(await res.json() as SubInfo);
     } catch { /* leave existing state */ }
   }, []);

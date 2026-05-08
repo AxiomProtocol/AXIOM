@@ -296,7 +296,7 @@ export const sentinelBilling = {
   async getSubscriptionInfo(walletAddress: string): Promise<SentinelSubInfo> {
     const result = await pool.query(
       `SELECT status, current_period_start, current_period_end, cancel_at_period_end,
-              stripe_customer_id, stripe_subscription_id
+              stripe_customer_id, stripe_subscription_id, stripe_account_id
        FROM sentinel_subscriptions
        WHERE wallet_address = $1 LIMIT 1`,
       [walletAddress],
@@ -313,18 +313,31 @@ export const sentinelBilling = {
       };
     }
 
-    const row = result.rows[0];
-    const status = (['active', 'past_due', 'canceled'].includes(row.status as string)
+    const row = result.rows[0] as {
+      status: string;
+      current_period_start: Date | null;
+      current_period_end: Date | null;
+      cancel_at_period_end: boolean;
+      stripe_customer_id: string | null;
+      stripe_subscription_id: string | null;
+      stripe_account_id: string | null;
+    };
+
+    // Validate row provenance against the live Stripe account.
+    // Untagged rows (stripe_account_id IS NULL) are allowed through for back-compat.
+    await assertCurrentStripeAccount(row.stripe_account_id);
+
+    const status = (['active', 'past_due', 'canceled'].includes(row.status)
       ? row.status
       : 'none') as SentinelSubStatus;
 
     return {
       status,
-      currentPeriodStart: (row.current_period_start as Date | null)?.toISOString() ?? null,
-      currentPeriodEnd: (row.current_period_end as Date | null)?.toISOString() ?? null,
-      cancelAtPeriodEnd: (row.cancel_at_period_end as boolean) ?? false,
-      stripeCustomerId: (row.stripe_customer_id as string | null) ?? null,
-      stripeSubscriptionId: (row.stripe_subscription_id as string | null) ?? null,
+      currentPeriodStart: row.current_period_start?.toISOString() ?? null,
+      currentPeriodEnd: row.current_period_end?.toISOString() ?? null,
+      cancelAtPeriodEnd: row.cancel_at_period_end ?? false,
+      stripeCustomerId: row.stripe_customer_id ?? null,
+      stripeSubscriptionId: row.stripe_subscription_id ?? null,
     };
   },
 
@@ -342,9 +355,10 @@ export const sentinelBilling = {
     const row = result.rows[0];
     if (row.status === 'canceled') return { ok: false, reason: 'Subscription already canceled' };
     if (!row.stripe_subscription_id) {
+      const acctId = await currentStripeAccountId().catch(() => null);
       await pool.query(
-        `UPDATE sentinel_subscriptions SET status = 'canceled', updated_at = NOW() WHERE wallet_address = $1`,
-        [walletAddress],
+        `UPDATE sentinel_subscriptions SET status = 'canceled', stripe_account_id = $1, updated_at = NOW() WHERE wallet_address = $2`,
+        [acctId, walletAddress],
       );
       await writeAudit(walletAddress, 'SUBSCRIPTION_CANCELED_LOCAL', { reason: 'no_stripe_id' });
       return { ok: true };
@@ -353,13 +367,14 @@ export const sentinelBilling = {
     try {
       await assertCurrentStripeAccount(row.stripe_account_id as string);
       const stripe = await getStripe();
+      const stripeAccountId = await currentStripeAccountId();
       await stripe.subscriptions.update(row.stripe_subscription_id as string, { cancel_at_period_end: true });
 
       await pool.query(
         `UPDATE sentinel_subscriptions
-         SET cancel_at_period_end = TRUE, updated_at = NOW()
-         WHERE wallet_address = $1`,
-        [walletAddress],
+         SET cancel_at_period_end = TRUE, stripe_account_id = $1, updated_at = NOW()
+         WHERE wallet_address = $2`,
+        [stripeAccountId, walletAddress],
       );
 
       await writeAudit(walletAddress, 'CANCEL_AT_PERIOD_END_SET', {

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { sentinelBilling } from '../../../../lib/sentinel/billing';
+import { sentinelBilling, LegacyStripeAccountError } from '../../../../lib/sentinel/billing';
+import { StripeAccountMismatchError } from '../../../../lib/stripe/client';
 import { requireWalletOwnership } from '../../../../lib/sentinel/walletAuth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -19,6 +20,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const info = await sentinelBilling.getSubscriptionInfo(walletAddress);
     return res.status(200).json(info);
   } catch (err: unknown) {
+    if (err instanceof LegacyStripeAccountError || err instanceof StripeAccountMismatchError) {
+      return res.status(409).json({ error: 'stripe_account_mismatch', detail: err.message });
+    }
     const message = err instanceof Error ? err.message : 'Internal error';
     console.error('[sentinel/subscription/status]', err);
     return res.status(500).json({ error: message });
