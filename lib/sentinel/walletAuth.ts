@@ -50,3 +50,30 @@ export async function requireWalletOwnership(
   }
   return { ok: true };
 }
+
+/**
+ * Gate used by premium Sentinel API endpoints (signals, decisions, regimes).
+ * Returns ok:true only when the request carries a valid SIWE session AND
+ * that wallet holds an active (status = 'active') Sentinel subscription.
+ */
+export async function requireActiveSubscription(
+  req: IncomingMessage,
+): Promise<{ ok: true; walletAddress: string } | { ok: false; status: 401 | 403; error: string }> {
+  const auth = await getAuthenticatedWallet(req);
+  if (!auth.authenticated || !auth.walletAddress) {
+    return { ok: false, status: 401, error: 'Wallet authentication required — sign in with your wallet first' };
+  }
+
+  const result = await pool.query(
+    `SELECT status FROM sentinel_subscriptions
+     WHERE wallet_address = $1 LIMIT 1`,
+    [auth.walletAddress],
+  );
+
+  const status = result.rows[0]?.status as string | undefined;
+  if (status !== 'active') {
+    return { ok: false, status: 403, error: 'Active Sentinel Advisory subscription required' };
+  }
+
+  return { ok: true, walletAddress: auth.walletAddress };
+}

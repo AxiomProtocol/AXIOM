@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { sentinelBilling, LegacyStripeAccountError } from '../../../../lib/sentinel/billing';
 import { requireWalletOwnership } from '../../../../lib/sentinel/walletAuth';
+import { StripeAccountMismatchError } from '../../../../lib/stripe/client';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -28,8 +29,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
     return res.status(200).json({ url });
   } catch (err: unknown) {
-    if (err instanceof LegacyStripeAccountError) {
-      return res.status(409).json({ error: 'legacy_stripe_account', message: err.message });
+    if (err instanceof LegacyStripeAccountError || err instanceof StripeAccountMismatchError) {
+      return res.status(409).json({ error: 'stripe_account_mismatch', message: (err as Error).message });
     }
     const message = err instanceof Error ? err.message : 'Internal error';
     console.error('[sentinel/subscription/checkout]', err);

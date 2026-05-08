@@ -469,20 +469,35 @@ export default function SentinelIndex() {
     }
   }, [walletAddress, fetchSubStatus]);
 
-  const isSubscribed = sub?.status === 'active' || sub?.status === 'past_due';
+  // Only status === 'active' unlocks the dashboard; past_due loses access
+  const isSubscribed = sub?.status === 'active';
 
-  // Dashboard data fetch
-  const fetchData = useCallback(() => {
+  // Dashboard data fetch — premium endpoints (signals/decisions/regimes) are only
+  // called when the wallet holds an active subscription; the server also enforces
+  // this gate independently via requireActiveSubscription().
+  const fetchData = useCallback((activeSubscription: boolean) => {
     setLoading(true);
     setError(null);
-    Promise.all([
+
+    const publicFetches: Promise<unknown>[] = [
       fetch('/api/sentinel/overview').then(r => r.json()),
-      fetch('/api/sentinel/signals?limit=50').then(r => r.json()),
-      fetch('/api/sentinel/decisions?limit=20').then(r => r.json()),
-      fetch('/api/sentinel/regimes?limit=30').then(r => r.json()),
       fetch('/api/sentinel/health').then(r => r.json()),
-    ])
-      .then(([overviewData, signalsData, decisionsData, regimesData, healthData]) => {
+    ];
+
+    const premiumFetches: Promise<unknown>[] = activeSubscription
+      ? [
+          fetch('/api/sentinel/signals?limit=50').then(r => r.json()),
+          fetch('/api/sentinel/decisions?limit=20').then(r => r.json()),
+          fetch('/api/sentinel/regimes?limit=30').then(r => r.json()),
+        ]
+      : [
+          Promise.resolve({ signals: [] }),
+          Promise.resolve({ decisions: [] }),
+          Promise.resolve({ regimes: [] }),
+        ];
+
+    Promise.all([...publicFetches, ...premiumFetches])
+      .then(([overviewData, healthData, signalsData, decisionsData, regimesData]) => {
         if ((overviewData as { error?: string }).error) {
           setError((overviewData as { error: string }).error);
           return;
@@ -507,7 +522,7 @@ export default function SentinelIndex() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData, refreshKey]);
+  useEffect(() => { fetchData(isSubscribed); }, [fetchData, refreshKey, isSubscribed]);
 
   useEffect(() => {
     if (autoRefreshRef.current) { clearInterval(autoRefreshRef.current); autoRefreshRef.current = null; }
