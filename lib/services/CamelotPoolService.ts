@@ -474,11 +474,13 @@ class CamelotPoolService {
         // USD per token = price0 × 10^tokenDecimals / 1e6
         usdPrice = (Number(twapFixed) / 1e12) * Math.pow(10, tokenDecimals) / 1e6;
       } else {
-        // token0 = USDC (6 dec), token1 = our token (AXM, 18 dec)
-        // USD per token = 1e6 / (price0 × 10^tokenDecimals)
+        // token0 = USDC (6 dec), token1 = our token (tokenDecimals dec)
+        // price0 = AXM_raw / USDC_raw (time-averaged)
+        // USD per AXM = (1 / priceRaw) × 10^tokenDecimals / 1e6
+        //             = 10^(tokenDecimals − 6) / priceRaw
         const priceRaw = Number(twapFixed) / 1e12;
         if (priceRaw <= 0) return null;
-        usdPrice = 1e6 / (priceRaw * Math.pow(10, tokenDecimals));
+        usdPrice = Math.pow(10, tokenDecimals - 6) / priceRaw;
       }
 
       return usdPrice > 0 ? usdPrice : null;
