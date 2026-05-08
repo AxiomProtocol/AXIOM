@@ -4402,7 +4402,7 @@ export default function FounderOpsPage() {
                                           : b.price_source === 'last_known'        ? 'text-amber-700 border-amber-500'
                                           : 'text-dl-gray border-dl-border'
                                         }`}>
-                                          {b.price_source === 'coingecko'              ? 'CG'
+                                          {b.price_source === 'coingecko'              ? 'CoinGecko'
                                             : b.price_source === 'camelot_twap'        ? 'Camelot TWAP'
                                             : b.price_source === 'last_known'          ? 'Last Known'
                                             : b.price_source.replace(/_/g, ' ')}

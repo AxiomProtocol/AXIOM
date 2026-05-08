@@ -369,13 +369,13 @@ class CamelotPoolService {
    * using the Uniswap-V2-compatible cumulative price accumulators stored on
    * every Camelot V2 pair.
    *
-   * Algorithm (identical to Uniswap V2 TWAP reference implementation):
-   *   1. Read price0CumulativeLast + reserves at the HISTORICAL block.
-   *   2. Read price0CumulativeLast + reserves at the CURRENT block, then
-   *      project the cumulative forward to the actual current timestamp by
-   *      adding  (currentSpotQ112 × timeElapsedSinceLastSync).
-   *   3. TWAP_Q112 = (effectiveCum_now − cum_hist) / timeDelta
-   *   4. Decode Q112 fixed-point to a USD float with decimal adjustment.
+   * Algorithm (Uniswap V2 TWAP reference pattern):
+   *   For each observation point (current and historical block):
+   *     effectiveCum(T) = price0CumulativeLast + spotQ112 × (T − blockTimestampLast)
+   *   where T is the ACTUAL block timestamp (fetched from the chain), not the
+   *   pair's stored blockTimestampLast, so stale-sync periods are always covered.
+   *
+   *   TWAP_Q112 = (effectiveCum(T_now) − effectiveCum(T_hist)) / (T_now − T_hist)
    *
    * Returns null if: pair does not exist, time window is zero, reserves are
    * empty, or any RPC call fails.
@@ -401,70 +401,81 @@ class CamelotPoolService {
       ];
       const pair = new ethers.Contract(pairAddress, pairABI, provider);
 
-      // Arbitrum One: ~4 blocks/second → 30-min window ≈ 7200 blocks
-      const BLOCKS_PER_SEC = 4;
-      const twapBlocks = Math.ceil(twapWindowSecs * BLOCKS_PER_SEC);
+      // Step 1: resolve current block and derive a historical block target.
+      // The historical block is only a coarse starting point — we use the
+      // ACTUAL block timestamps (T_now, T_hist) as the authoritative window.
       const currentBlock = await provider.getBlockNumber();
-      const historicalBlock = Math.max(1, currentBlock - twapBlocks);
+      // ~4 blocks/s on Arbitrum One → 30 min ≈ 7200 blocks (approximation only)
+      const historicalBlock = Math.max(1, currentBlock - Math.ceil(twapWindowSecs * 4));
 
-      // Fetch both observations and the current block timestamp in parallel
+      // Step 2: fetch actual block timestamps and pair state at both block heights.
       const [
+        nowBlockData,
+        histBlockData,
         reserves_now,
         cum0_now,
         token0Addr,
         reserves_hist,
         cum0_hist,
-        nowBlockData,
       ] = await Promise.all([
+        provider.getBlock(currentBlock),
+        provider.getBlock(historicalBlock),
         pair.getReserves({ blockTag: currentBlock }),
         pair.price0CumulativeLast({ blockTag: currentBlock }),
         pair.token0(),
         pair.getReserves({ blockTag: historicalBlock }),
         pair.price0CumulativeLast({ blockTag: historicalBlock }),
-        provider.getBlock(currentBlock),
       ]);
 
       const isToken0 = (token0Addr as string).toLowerCase() === tokenAddress.toLowerCase();
-
       const Q112 = 2n ** 112n;
-      // 12-decimal fixed-point for intermediate division to avoid float imprecision
+      // 12-decimal fixed-point preserves ~12 significant digits through BigInt division
       const PRECISION = 10n ** 12n;
 
-      const bTimestampNow  = BigInt(nowBlockData?.timestamp ?? Number(reserves_now[2]));
-      const bTimestampLastSyncNow = BigInt(reserves_now[2]);
-      const bTimestampHist = BigInt(reserves_hist[2]);
+      // Use actual block timestamps to define the exact observation window
+      const T_now  = BigInt(nowBlockData?.timestamp  ?? Number(reserves_now[2]));
+      const T_hist = BigInt(histBlockData?.timestamp ?? Number(reserves_hist[2]));
 
-      // Project cumulative forward from last-sync to actual current timestamp
-      const timeSinceSync = bTimestampNow > bTimestampLastSyncNow
-        ? bTimestampNow - bTimestampLastSyncNow
-        : 0n;
-
-      const r0_now: bigint = reserves_now[0];
-      const r1_now: bigint = reserves_now[1];
-      let effectiveCum0_now: bigint = cum0_now as bigint;
-      if (r0_now > 0n && timeSinceSync > 0n) {
-        effectiveCum0_now = (cum0_now as bigint) + (r1_now * Q112 / r0_now) * timeSinceSync;
-      }
-
-      const timeDelta = bTimestampNow - bTimestampHist;
+      const timeDelta = T_now - T_hist;
       if (timeDelta <= 0n) return null;
 
-      // TWAP price0 in Q112 (= token1_raw per token0_raw, time-averaged)
-      const cumulativeDiff = effectiveCum0_now - (cum0_hist as bigint);
-      // Compute in PRECISION fixed-point to preserve significance
+      // Step 3: project each stored cumulative forward to its block's actual timestamp.
+      // effectiveCum(T) = priceCumulativeLast + spotQ112 × (T − blockTimestampLast)
+      // This correctly handles "stale" pools where no swap occurred near the boundary.
+
+      const r0_now: bigint  = reserves_now[0];
+      const r1_now: bigint  = reserves_now[1];
+      const bts_lastNow = BigInt(reserves_now[2]);
+      const lagNow = T_now > bts_lastNow ? T_now - bts_lastNow : 0n;
+      let effectiveCum_now: bigint = cum0_now as bigint;
+      if (r0_now > 0n && lagNow > 0n) {
+        effectiveCum_now = (cum0_now as bigint) + (r1_now * Q112 / r0_now) * lagNow;
+      }
+
+      const r0_hist: bigint = reserves_hist[0];
+      const r1_hist: bigint = reserves_hist[1];
+      const bts_lastHist = BigInt(reserves_hist[2]);
+      const lagHist = T_hist > bts_lastHist ? T_hist - bts_lastHist : 0n;
+      let effectiveCum_hist: bigint = cum0_hist as bigint;
+      if (r0_hist > 0n && lagHist > 0n) {
+        effectiveCum_hist = (cum0_hist as bigint) + (r1_hist * Q112 / r0_hist) * lagHist;
+      }
+
+      // Step 4: TWAP in PRECISION fixed-point
+      const cumulativeDiff = effectiveCum_now - effectiveCum_hist;
       const twapFixed = cumulativeDiff * PRECISION / (Q112 * timeDelta);
       if (twapFixed === 0n) return null;
 
-      // Raw price: token1_raw / token0_raw (still in PRECISION fixed-point)
-      // Decimal-adjust: usdPrice = rawPrice * 10^tokenDecimals / 1e6
+      // Step 5: decode UQ112×112 ratio to USD float with decimal adjustment.
+      // price0 = token1_raw / token0_raw (time-averaged)
       let usdPrice: number;
       if (isToken0) {
         // token0 = our token (AXM, 18 dec), token1 = USDC (6 dec)
-        // price0 = USDC_raw / AXM_raw  →  USD = price0 × 10^18 / 1e6
+        // USD per token = price0 × 10^tokenDecimals / 1e6
         usdPrice = (Number(twapFixed) / 1e12) * Math.pow(10, tokenDecimals) / 1e6;
       } else {
         // token0 = USDC (6 dec), token1 = our token (AXM, 18 dec)
-        // price0 = AXM_raw / USDC_raw  →  USD = 1 / (price0 × 10^18 / 1e6)
+        // USD per token = 1e6 / (price0 × 10^tokenDecimals)
         const priceRaw = Number(twapFixed) / 1e12;
         if (priceRaw <= 0) return null;
         usdPrice = 1e6 / (priceRaw * Math.pow(10, tokenDecimals));
