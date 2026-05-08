@@ -33,7 +33,6 @@ import {
 import { eq, desc, and, sql, type SQL } from 'drizzle-orm';
 import { generateId } from '../ids';
 import { centsToDecimalString, type UsdDecimalString } from '../money';
-import { maybeEmitDrainArchiveEmail } from './drainArchive';
 
 export type CardDepositIntent = 'TREASURY_FUND' | 'AXUSD_MINT' | 'AXAU_MINT' | 'WALLET_TOPUP';
 export type CardDepositStatus =
@@ -471,7 +470,10 @@ export async function handleStripeWebhookEvent(
   // Drain-completion archive (task #250). Only run on real status
   // transitions; the emitter is non-throwing and self-gates on
   // in-flight > 0 / marker-present.
+  // Dynamic import keeps drainArchive (→ resend → Replit connector) OUT
+  // of the checkout Lambda's module graph — only the webhook Lambda loads it.
   if (newStatus !== null) {
+    const { maybeEmitDrainArchiveEmail } = await import('./drainArchive');
     await maybeEmitDrainArchiveEmail();
   }
 

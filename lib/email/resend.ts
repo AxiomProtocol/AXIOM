@@ -3,6 +3,16 @@ import { Resend } from 'resend';
 let connectionSettings: any;
 
 async function getCredentials() {
+  // Non-Replit runtimes (Vercel, etc.): use RESEND_API_KEY env var directly.
+  const directApiKey = process.env.RESEND_API_KEY?.trim();
+  if (directApiKey) {
+    return {
+      apiKey: directApiKey,
+      fromEmail: process.env.RESEND_FROM_EMAIL?.trim() || 'noreply@axiomprotocol.app',
+    };
+  }
+
+  // Replit connector path.
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
   const xReplitToken = process.env.REPL_IDENTITY 
     ? 'repl ' + process.env.REPL_IDENTITY 
@@ -11,7 +21,7 @@ async function getCredentials() {
     : null;
 
   if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+    throw new Error('Resend not configured: set RESEND_API_KEY or run inside Replit with connector attached');
   }
 
   connectionSettings = await fetch(
