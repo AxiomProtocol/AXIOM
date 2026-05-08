@@ -446,7 +446,7 @@ async function settleAXUSDMint(input: DispatchInput): Promise<SettlementOutcome>
   }
 
   try {
-    const amountWei = ethers.parseUnits(input.quantity.toFixed(6), 18);
+    const amountWei = ethers.parseUnits(input.quantity.toFixed(18), 18);
     const mintTx    = await axusd.mint(DEPLOYER_EOA, amountWei);
     const receipt   = await mintTx.wait(1);
     const txHash: string = receipt.hash;
@@ -482,7 +482,7 @@ async function settleAXMTransfer(input: DispatchInput): Promise<SettlementOutcom
       txHash:           null,
       settlementStatus: 'treasury_hold',
       settlementRef:    `governance_safe:${AXM_GOV_SAFE}`,
-      settlementNote:   `DEPLOYER_PRIVATE_KEY not configured — ${Math.round(input.quantity)} AXM recorded as governance treasury hold under ${AXM_GOV_SAFE}.`,
+      settlementNote:   `DEPLOYER_PRIVATE_KEY not configured — ${input.quantity.toFixed(8)} AXM recorded as governance treasury hold under ${AXM_GOV_SAFE}.`,
     };
   }
 
@@ -494,24 +494,25 @@ async function settleAXMTransfer(input: DispatchInput): Promise<SettlementOutcom
         txHash:           null,
         settlementStatus: 'treasury_hold',
         settlementRef:    `governance_safe:${AXM_GOV_SAFE}`,
-        settlementNote:   `Deployer AXM balance is zero — ${Math.round(input.quantity)} AXM recorded as governance treasury hold.`,
+        settlementNote:   `Deployer AXM balance is zero — ${input.quantity.toFixed(8)} AXM recorded as governance treasury hold.`,
       };
     }
 
-    const needed  = ethers.parseUnits(Math.round(input.quantity).toString(), 18);
+    const needed  = ethers.parseUnits(input.quantity.toFixed(18), 18);
     const amount  = balance < needed ? balance : needed;
     const partial = amount < needed;
 
     const tx      = await axm.transfer(AXM_GOV_SAFE, amount);
     const receipt = await tx.wait(1);
     const txHash: string = receipt.hash;
-    const sent = Number(ethers.formatUnits(amount, 18)).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    const sent = Number(ethers.formatUnits(amount, 18)).toLocaleString('en-US', { maximumFractionDigits: 8 });
+    const allocStr = input.quantity.toLocaleString('en-US', { maximumFractionDigits: 8 });
 
     return {
       txHash,
       settlementStatus: 'confirmed',
       settlementRef:    txHash,
-      settlementNote:   `${sent} AXM${partial ? ` (partial — allocated ${Math.round(input.quantity).toLocaleString()} AXM)` : ''} transferred to Governance Safe ${AXM_GOV_SAFE}. Arbitrum tx: ${txHash}`,
+      settlementNote:   `${sent} AXM${partial ? ` (partial — allocated ${allocStr} AXM)` : ''} transferred to Governance Safe ${AXM_GOV_SAFE}. Arbitrum tx: ${txHash}`,
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -519,7 +520,7 @@ async function settleAXMTransfer(input: DispatchInput): Promise<SettlementOutcom
       txHash:           null,
       settlementStatus: 'treasury_hold',
       settlementRef:    `governance_safe:${AXM_GOV_SAFE}`,
-      settlementNote:   `AXM transfer failed (${msg.slice(0, 200)}) — ${Math.round(input.quantity)} AXM recorded as governance treasury hold.`,
+      settlementNote:   `AXM transfer failed (${msg.slice(0, 200)}) — ${input.quantity.toFixed(8)} AXM recorded as governance treasury hold.`,
     };
   }
 }

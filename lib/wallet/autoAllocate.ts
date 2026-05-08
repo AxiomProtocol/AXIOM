@@ -136,7 +136,7 @@ export async function runAutoAlloc(opts: {
   const bucketNames = activePolicies.map(p => p.bucketName);
 
   const policyLines = activePolicies
-    .map(p => `  ${p.bucketName} (${p.assetSymbol}): ${p.targetPct.toFixed ? Number(p.targetPct).toFixed(0) : p.targetPct}% → $${((amountUsd * Number(p.targetPct)) / 100).toFixed(2)}`)
+    .map(p => `  ${p.bucketName} (${p.assetSymbol}): ${Number(p.targetPct).toFixed(0)}% → $${((amountUsd * Number(p.targetPct)) / 100).toFixed(2)}`)
     .join('\n');
 
   const bucketListForJson = bucketNames

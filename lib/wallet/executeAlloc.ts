@@ -242,17 +242,42 @@ export async function executeAlloc(opts: {
     throw new Error(`No AUTO_AI allocation rows found for run_id: ${runId}`);
   }
 
-  // 2. Idempotency — refuse to re-execute an already-executed run
-  const alreadyExecuted = rows.some(r => r.status === 'executed');
-  if (alreadyExecuted) {
-    throw new Error(`Run ${runId} has already been executed — use a new allocation run`);
+  // 2. Idempotency — refuse to re-execute an already-executing or already-executed run
+  const blockedRow = rows.find(r => r.status === 'executed' || r.status === 'executing');
+  if (blockedRow) {
+    const verb = blockedRow.status === 'executed' ? 'already been executed' : 'currently executing';
+    throw new Error(`Run ${runId} has ${verb} — use a new allocation run`);
   }
 
   const rowIds = rows.map(r => r.id);
   const totalUsd = rows.reduce((s, r) => s + Number(r.usdValue ?? 0), 0);
   const totalCents = Math.round(totalUsd * 100);
 
-  // 3. Resolve userId — look up from deposit_id or fall back to operator_founder
+  // 3. Pre-claim: atomically mark all rows → 'executing' in their own committed write.
+  //    This must be durable BEFORE settlement dispatch starts so that a crash after
+  //    an on-chain tx is emitted (but before the final commit) leaves the DB in
+  //    'executing' — recoverable by an operator — rather than silently allowing
+  //    a second executeAlloc call to re-execute already-settled on-chain funds.
+  const preclaimAt = new Date();
+  const claimed = await db
+    .update(treasuryAllocations)
+    .set({ status: 'executing', updatedAt: preclaimAt })
+    .where(
+      and(
+        inArray(treasuryAllocations.id, rowIds),
+        inArray(treasuryAllocations.status, ['recorded']),
+      ),
+    )
+    .returning({ id: treasuryAllocations.id });
+
+  if (claimed.length !== rowIds.length) {
+    throw new Error(
+      `Run ${runId} pre-claim failed — ${claimed.length} of ${rowIds.length} rows were available ` +
+      `(a concurrent execution may already be in progress)`,
+    );
+  }
+
+  // 4a. Resolve userId — look up from deposit_id or fall back to operator_founder
   const firstMeta = rows[0]?.metadata as Record<string, unknown> | null;
   const depositId = typeof firstMeta?.deposit_id === 'string' ? firstMeta.deposit_id : null;
 
@@ -342,15 +367,11 @@ export async function executeAlloc(opts: {
 
   const now = new Date();
 
-  // 7. All DB mutations in one transaction
+  // 7. Final DB commit — rows are already 'executing' from the pre-claim above.
+  //    Settlement outcomes are now recorded durably. Any crash before this point
+  //    leaves rows in 'executing' and is recoverable by operator reconciliation.
   await db.transaction(async (tx) => {
-    // 7a. Mark rows → 'executing' first (crash-safe mid-execution marker)
-    await tx
-      .update(treasuryAllocations)
-      .set({ status: 'executing', updatedAt: now })
-      .where(inArray(treasuryAllocations.id, rowIds));
-
-    // 7b. Mark rows → 'executed'
+    // 7a. Mark rows → 'executed' (pre-claim already committed 'executing')
     for (const row of rows) {
       const bucket = fullBuckets.find(b => b.bucket === row.allocationBucket)!;
       await tx
