@@ -666,6 +666,24 @@ export default function FounderOpsPage() {
   const [customFundingAmount, setCustomFundingAmount]   = useState('');
   const [walletTopupLoading, setWalletTopupLoading]     = useState(false);
 
+  // ── Last AI auto-allocation (Reserves tab notice) ──────────────────────
+  type AutoAllocBucket = { bucket: string; asset: string; usd_amount: number; pct: number | null };
+  type LastAutoAlloc = { run_id: string; created_at: string; amount_usd: number; bucket_count: number; rationale: string | null; deposit_id: string | null; buckets: AutoAllocBucket[] };
+  const [lastAutoAlloc, setLastAutoAlloc]               = useState<LastAutoAlloc | null>(null);
+  const [lastAutoAllocLoading, setLastAutoAllocLoading] = useState(false);
+
+  const loadLastAutoAlloc = async (keyArg?: string) => {
+    const adminKey = keyArg ?? reservesAdminKey ?? railAdminKey;
+    if (!adminKey) return;
+    setLastAutoAllocLoading(true);
+    try {
+      const res  = await fetch('/api/capinfra/operator/last-auto-alloc', { headers: { 'x-admin-key': adminKey } });
+      const json = await res.json();
+      if (json.success && json.data) setLastAutoAlloc(json.data as LastAutoAlloc);
+    } catch { /* silent */ }
+    finally { setLastAutoAllocLoading(false); }
+  };
+
   const loadWalletBalance = async (keyArg?: string) => {
     const adminKey = keyArg ?? reservesAdminKey ?? railAdminKey;
     if (!adminKey) return;
@@ -4215,7 +4233,7 @@ export default function FounderOpsPage() {
                     className="font-dl-mono text-xs border border-dl-border px-3 py-2 bg-dl-surface w-56 outline-none"
                   />
                   <button
-                    onClick={() => { loadReserves(reservesAdminKey); loadAllocPolicy(reservesAdminKey); loadLatestSettlement(reservesAdminKey); loadWalletBalance(reservesAdminKey); }}
+                    onClick={() => { loadReserves(reservesAdminKey); loadAllocPolicy(reservesAdminKey); loadLatestSettlement(reservesAdminKey); loadWalletBalance(reservesAdminKey); loadLastAutoAlloc(reservesAdminKey); }}
                     disabled={reservesLoading}
                     className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-4 py-2 uppercase tracking-wider hover:bg-dl-navy hover:text-white transition-colors disabled:opacity-50"
                   >
@@ -4227,6 +4245,65 @@ export default function FounderOpsPage() {
                     </span>
                   )}
                 </div>
+
+                {/* ── Last AI Auto-Allocation notice ────────────────────── */}
+                {reservesAdminKey && (
+                  <div className="mb-4 border border-dl-border bg-dl-surface flex items-start gap-0">
+                    <div className="px-4 py-3 border-r border-dl-border bg-dl-bg-alt flex-none">
+                      <p className="font-dl-mono text-[10px] uppercase tracking-widest text-dl-gray whitespace-nowrap">Last Auto-Alloc</p>
+                    </div>
+                    <div className="px-4 py-3 flex-1 min-w-0">
+                      {lastAutoAllocLoading && (
+                        <p className="font-dl-mono text-xs text-dl-gray">Loading…</p>
+                      )}
+                      {!lastAutoAllocLoading && !lastAutoAlloc && (
+                        <div className="flex items-center gap-3">
+                          <p className="font-dl-mono text-xs text-dl-gray">No auto-allocation recorded yet.</p>
+                          <button
+                            onClick={() => loadLastAutoAlloc(reservesAdminKey)}
+                            className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-border px-3 py-1 text-dl-gray hover:text-dl-navy"
+                          >Check</button>
+                        </div>
+                      )}
+                      {!lastAutoAllocLoading && lastAutoAlloc && (() => {
+                        const fmtUsd = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+                        const dt = new Date(lastAutoAlloc.created_at);
+                        const dtStr = dt.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                        return (
+                          <div className="flex flex-col gap-2">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                              <p className="font-dl-mono text-xs text-dl-navy font-semibold">
+                                {fmtUsd(lastAutoAlloc.amount_usd)} distributed across {lastAutoAlloc.bucket_count} buckets
+                              </p>
+                              <p className="font-dl-mono text-[10px] text-dl-gray">{dtStr}</p>
+                              <span className="font-dl-mono text-[9px] uppercase tracking-wider text-emerald-700 border border-emerald-700 px-1.5 py-0.5">AI</span>
+                              <button
+                                onClick={() => loadLastAutoAlloc(reservesAdminKey)}
+                                className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-border px-2 py-0.5 text-dl-gray hover:text-dl-navy"
+                              >Refresh</button>
+                            </div>
+                            {lastAutoAlloc.buckets.length > 0 && (
+                              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                {lastAutoAlloc.buckets.map(b => (
+                                  <span key={b.bucket} className="font-dl-mono text-[10px] text-dl-gray">
+                                    <span className="text-dl-navy font-semibold">{b.bucket.replace(/_/g, ' ')}</span>
+                                    {' '}
+                                    {fmtUsd(b.usd_amount)}
+                                    {b.pct != null ? ` (${b.pct}%)` : ''}
+                                    {' · '}<span className="text-dl-gray">{b.asset}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {lastAutoAlloc.rationale && (
+                              <p className="font-dl-mono text-[10px] text-dl-gray italic border-l-2 border-dl-border pl-2">{lastAutoAlloc.rationale}</p>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
 
                 {/* ── Funding Source — shown immediately after key is entered ── */}
                 {reservesAdminKey && (() => {

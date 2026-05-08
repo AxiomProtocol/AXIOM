@@ -16,8 +16,10 @@ import {
   type AxiomWalletBalance,
   type AxiomWalletTransaction,
 } from '../../shared/walletSchema';
+import { capAuditEvents } from '../../shared/capInfraSchema';
 import { eq, desc, and } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
+import { generateId } from '../capinfra/ids';
 
 // ── ID generation ─────────────────────────────────────────────────────────
 function walletTxId(): string {
@@ -51,7 +53,7 @@ export async function creditTopUp(opts: {
   if (!Number.isInteger(opts.amountCents) || opts.amountCents <= 0) {
     throw new Error('amountCents must be a positive integer');
   }
-  return db.transaction(async (tx) => {
+  const txnRow = await db.transaction(async (tx) => {
     // Idempotency check first — no-op if already credited.
     const existing = await tx
       .select()
@@ -101,6 +103,28 @@ export async function creditTopUp(opts: {
 
     return txnRow;
   });
+
+  // Fire-and-forget AI auto-allocation — non-blocking, never throws to caller
+  if (txnRow) {
+    (async () => {
+      try {
+        const { runAutoAlloc } = await import('./autoAllocate');
+        await runAutoAlloc({ amountCents: opts.amountCents, depositId: opts.referenceId });
+      } catch (err: any) {
+        console.error('[wallet] auto-alloc failed:', err?.message ?? err);
+        db.insert(capAuditEvents).values({
+          id: generateId('ae'),
+          eventType: 'card_deposit.auto_allocation_failed',
+          aggregateType: 'card_deposit',
+          aggregateId: opts.referenceId,
+          payloadJson: { error: err?.message ?? String(err), source: 'creditTopUp', amount_cents: opts.amountCents },
+          actor: 'system',
+        }).onConflictDoNothing().catch(() => {});
+      }
+    })();
+  }
+
+  return txnRow;
 }
 
 // ── Place a hold (allocation in flight) ───────────────────────────────────
