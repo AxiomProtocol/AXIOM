@@ -48,7 +48,10 @@ async function writeAudit(
 function mapStripeStatus(status: string): SentinelSubStatus {
   if (status === 'active') return 'active';
   if (status === 'past_due') return 'past_due';
-  return 'canceled';
+  // Terminal states map to canceled; transitional/non-terminal states (incomplete,
+  // incomplete_expired, trialing, unpaid) map to none so access is not prematurely revoked.
+  if (status === 'canceled' || status === 'incomplete_expired') return 'canceled';
+  return 'none';
 }
 
 async function upsertSubscriptionFromStripe(
@@ -98,11 +101,18 @@ export const sentinelBilling = {
       [walletAddress],
     );
 
-    let customerId: string | null = existing.rows[0]?.stripe_customer_id ?? null;
+    let customerId: string | null = null;
+    const existingRow = existing.rows[0] as { stripe_customer_id: string | null; stripe_account_id: string | null } | undefined;
 
-    if (customerId && existing.rows[0]?.stripe_account_id) {
-      // Validate the stored customer belongs to the current Stripe account
-      await assertCurrentStripeAccount(existing.rows[0].stripe_account_id);
+    if (existingRow?.stripe_customer_id) {
+      if (!existingRow.stripe_account_id) {
+        // Untagged legacy row — cannot verify Stripe account provenance; create a fresh customer
+        console.warn('[sentinel/billing] untagged legacy row for wallet, creating new Stripe customer');
+      } else {
+        // Validate stored customer belongs to the current Stripe account before reusing
+        await assertCurrentStripeAccount(existingRow.stripe_account_id);
+        customerId = existingRow.stripe_customer_id;
+      }
     }
 
     if (!customerId) {
