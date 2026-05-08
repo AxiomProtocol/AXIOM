@@ -669,7 +669,7 @@ export default function FounderOpsPage() {
   // ── Last AI auto-allocation (Reserves tab notice) ──────────────────────
   type AutoAllocBucket = { bucket: string; asset: string; usd_amount: number; pct: number | null };
   type LastAutoAlloc = { run_id: string; created_at: string; amount_usd: number; bucket_count: number; source_label: string; rationale: string | null; deposit_id: string | null; execution_status: string | null; buckets: AutoAllocBucket[] };
-  type ExecBucket = { bucket: string; asset: string; usd_amount: number; pct: number; quantity: number; mark_price: number; execution_path: string; status: string };
+  type ExecBucket = { bucket: string; asset: string; usd_amount: number; pct: number; quantity: number; mark_price: number; execution_path: string; status: string; tx_hash: string | null; settlement_status: string | null; settlement_ref: string | null; settlement_note: string | null };
   type ExecAllocResult = { exec_id: string; run_id: string; amount_usd: number; bucket_count: number; executed_at: string; prices_fetched_at: string; buckets: ExecBucket[] };
   const [lastAutoAlloc, setLastAutoAlloc]               = useState<LastAutoAlloc | null>(null);
   const [lastAutoAllocLoading, setLastAutoAllocLoading] = useState(false);
@@ -4364,32 +4364,59 @@ export default function FounderOpsPage() {
                           <table className="w-full text-left border-collapse">
                             <thead>
                               <tr className="border-b border-dl-border">
-                                {['Bucket','Asset','USD Amount','Mark Price','Qty Acquired','Execution Path','Status'].map(h => (
+                                {['Bucket','Asset','USD','Mark Price','Qty Acquired','Path','Settlement','Tx Hash'].map(h => (
                                   <th key={h} className="font-dl-mono text-[9px] uppercase tracking-widest text-dl-gray pb-2 pr-4 whitespace-nowrap">{h}</th>
                                 ))}
                               </tr>
                             </thead>
                             <tbody>
-                              {execAllocResult.buckets.map(b => (
-                                <tr key={b.bucket} className="border-b border-dl-border last:border-0">
-                                  <td className="font-dl-mono text-[10px] text-dl-navy py-2 pr-4 whitespace-nowrap">{b.bucket.replace(/_/g, ' ')}</td>
-                                  <td className="font-dl-mono text-[10px] font-semibold text-dl-navy py-2 pr-4">{b.asset}</td>
-                                  <td className="font-dl-mono text-[10px] text-dl-gray py-2 pr-4">${b.usd_amount.toFixed(2)}</td>
-                                  <td className="font-dl-mono text-[10px] text-dl-gray py-2 pr-4">
-                                    {b.mark_price >= 1 ? `$${b.mark_price.toLocaleString('en-US', { maximumFractionDigits: 2 })}` : `$${b.mark_price.toFixed(6)}`}
-                                  </td>
-                                  <td className="font-dl-mono text-[10px] text-dl-navy font-semibold py-2 pr-4">
-                                    {b.quantity < 0.001 ? b.quantity.toExponential(4) : b.quantity.toFixed(6)} {b.asset}
-                                  </td>
-                                  <td className="font-dl-mono text-[9px] text-dl-gray py-2 pr-4 whitespace-nowrap">{b.execution_path.replace(/_/g, ' ')}</td>
-                                  <td className="py-2 pr-4">
-                                    <span className="font-dl-mono text-[9px] uppercase tracking-wider text-emerald-700 border border-emerald-700 px-1.5 py-0.5">{b.status}</span>
-                                  </td>
-                                </tr>
-                              ))}
+                              {execAllocResult.buckets.map(b => {
+                                const ss = b.settlement_status ?? '';
+                                const settlementBadge = (() => {
+                                  if (ss === 'confirmed')           return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-emerald-700 border border-emerald-700 px-1.5 py-0.5">Confirmed</span>;
+                                  if (ss === 'pending_custody')     return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-amber-700 border border-amber-500 px-1.5 py-0.5">Pending Custody</span>;
+                                  if (ss === 'treasury_hold')       return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-navy border border-dl-navy px-1.5 py-0.5">Treasury Hold</span>;
+                                  if (ss === 'queued_no_role')      return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-orange-700 border border-orange-500 px-1.5 py-0.5">Queued · Role</span>;
+                                  if (ss === 'queued_no_buffer')    return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-orange-700 border border-orange-500 px-1.5 py-0.5">Queued · Buffer</span>;
+                                  if (ss === 'queued_oracle_stale') return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-orange-700 border border-orange-500 px-1.5 py-0.5">Queued · Oracle</span>;
+                                  if (ss === 'queued_no_custody')   return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-orange-700 border border-orange-500 px-1.5 py-0.5">Queued · Custody</span>;
+                                  if (ss.startsWith('queued'))      return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-orange-700 border border-orange-500 px-1.5 py-0.5">Queued</span>;
+                                  if (ss === 'failed')              return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-red-700 border border-red-500 px-1.5 py-0.5">Failed</span>;
+                                  return <span className="font-dl-mono text-[9px] text-dl-gray">{ss || '—'}</span>;
+                                })();
+                                const txDisplay = b.tx_hash
+                                  ? <a href={`https://arbiscan.io/tx/${b.tx_hash}`} target="_blank" rel="noopener noreferrer" className="font-dl-mono text-[9px] text-dl-navy underline underline-offset-2 hover:text-dl-forest" title={b.tx_hash}>{b.tx_hash.slice(0,6)}…{b.tx_hash.slice(-4)}</a>
+                                  : <span className="font-dl-mono text-[9px] text-dl-gray" title={b.settlement_note ?? ''}>{ss === 'pending_custody' ? 'Pending' : ss === 'treasury_hold' ? 'N/A' : '—'}</span>;
+                                return (
+                                  <tr key={b.bucket} className="border-b border-dl-border last:border-0">
+                                    <td className="font-dl-mono text-[10px] text-dl-navy py-2 pr-4 whitespace-nowrap">{b.bucket.replace(/_/g, ' ')}</td>
+                                    <td className="font-dl-mono text-[10px] font-semibold text-dl-navy py-2 pr-4">{b.asset}</td>
+                                    <td className="font-dl-mono text-[10px] text-dl-gray py-2 pr-4">${b.usd_amount.toFixed(2)}</td>
+                                    <td className="font-dl-mono text-[10px] text-dl-gray py-2 pr-4">
+                                      {b.mark_price >= 1 ? `$${b.mark_price.toLocaleString('en-US', { maximumFractionDigits: 2 })}` : `$${b.mark_price.toFixed(6)}`}
+                                    </td>
+                                    <td className="font-dl-mono text-[10px] text-dl-navy font-semibold py-2 pr-4 whitespace-nowrap">
+                                      {b.quantity < 0.001 ? b.quantity.toExponential(4) : b.quantity.toFixed(6)} {b.asset}
+                                    </td>
+                                    <td className="font-dl-mono text-[9px] text-dl-gray py-2 pr-4 whitespace-nowrap">{b.execution_path.replace(/_/g, ' ')}</td>
+                                    <td className="py-2 pr-4 whitespace-nowrap">{settlementBadge}</td>
+                                    <td className="py-2 pr-4 whitespace-nowrap">{txDisplay}</td>
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
+                        {/* Settlement notes — only for non-confirmed rows */}
+                        {execAllocResult.buckets.some(b => b.settlement_note && b.settlement_status !== 'confirmed') && (
+                          <div className="mt-3 border-t border-dl-border pt-3 flex flex-col gap-1">
+                            {execAllocResult.buckets.filter(b => b.settlement_note && b.settlement_status !== 'confirmed').map(b => (
+                              <p key={b.bucket} className="font-dl-mono text-[9px] text-dl-gray border-l-2 border-dl-border pl-2">
+                                <span className="text-dl-navy font-semibold">{b.asset}:</span> {b.settlement_note}
+                              </p>
+                            ))}
+                          </div>
+                        )}
                         <p className="font-dl-mono text-[9px] text-dl-gray mt-2">
                           Exec ID: {execAllocResult.exec_id} · Run: {execAllocResult.run_id} · Reserve positions updated · Wallet debited
                         </p>

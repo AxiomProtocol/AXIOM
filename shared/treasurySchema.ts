@@ -87,6 +87,11 @@ export const reservePositions = pgTable('reserve_positions', {
   valuationSource: varchar('valuation_source', { length: 50 }),
   valuationConfidence: varchar('valuation_confidence', { length: 20 }),
   snapshotAt: timestamp('snapshot_at').defaultNow().notNull(),
+  // Settlement tracking — added migration 0058
+  txHash: varchar('tx_hash', { length: 66 }),
+  settlementStatus: varchar('settlement_status', { length: 50 }),
+  settlementRef: varchar('settlement_ref', { length: 300 }),
+  settlementNote: text('settlement_note'),
   metadata: jsonb('metadata'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -94,6 +99,8 @@ export const reservePositions = pgTable('reserve_positions', {
   assetIdx: index('rp_asset_idx').on(t.assetSymbol),
   snapshotIdx: index('rp_snapshot_idx').on(t.snapshotAt),
   typeIdx: index('rp_type_idx').on(t.positionType),
+  settlementIdx: index('rp_settlement_status_idx').on(t.settlementStatus),
+  txHashIdx: index('rp_tx_hash_idx').on(t.txHash),
 }));
 
 export const custodyWalletRegistry = pgTable('custody_wallet_registry', {

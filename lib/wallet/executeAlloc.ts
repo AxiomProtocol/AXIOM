@@ -8,20 +8,22 @@
  *  2. Mark all rows → 'executing' (atomic batch).
  *  3. Fetch live market prices for all 6 protocol assets via CoinGecko.
  *  4. Convert each USD allocation to a token quantity.
- *  5. Build execution orders per asset (BitGo / on-chain / treasury-hold).
- *  6. Mark all rows → 'executed'.
- *  7. Upsert reserve_positions reflecting the newly acquired holdings.
- *  8. Debit axiom_wallet_balances — places a hold for the total executed amount.
+ *  5. Dispatch settlement per asset (BitGo / on-chain / treasury-hold).
+ *     — runs OUTSIDE the DB transaction; on-chain txs can take 30+ seconds.
+ *  6. Mark all rows → 'executed' + persist settlement outcomes.
+ *  7. Upsert reserve_positions with tx_hash, settlement_status, settlement_ref.
+ *  8. Debit axiom_wallet_balances.
  *  9. Write a cap_audit_events success record.
  *
  * Execution paths per asset:
- *   ETH, PAXG, USDC  → BitGo CaaS custody wallet order
- *   AXAU, AXUSD       → On-chain mint instruction (queued)
- *   AXM               → Governance treasury hold (recorded as treasury position)
+ *   ETH, PAXG, USDC  → BitGo CaaS custody wallet reference
+ *   AXAU              → mintWithAsset via deployer wallet → Arbitrum tx hash
+ *   AXUSD             → mint() on AXUSD ERC-3643 contract → Arbitrum tx hash
+ *   AXM               → governance treasury hold (internal reference)
  *
  * All DB mutations (steps 2, 6, 7, 8, 9) run inside a single transaction.
- * Any failure rolls back entirely — the run stays 'executing' and can be
- * retried after operator review.
+ * Settlement dispatch (step 5) runs before the transaction — failures are
+ * recorded as 'failed'/'queued' status but never block the accounting commit.
  */
 
 import { db } from '../../server/db';
@@ -31,6 +33,7 @@ import { axiomWalletBalances, axiomWalletTransactions } from '../../shared/walle
 import { eq, sql, and, inArray } from 'drizzle-orm';
 import { generateId } from '../capinfra/ids';
 import { customAlphabet } from 'nanoid';
+import { dispatchSettlement, type SettlementOutcome } from './settlementDispatch';
 
 const nanoid8 = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 8);
 
@@ -91,6 +94,10 @@ export interface ExecuteBucketResult {
   markPrice: number;
   executionPath: string;
   status: 'executed' | 'queued';
+  txHash: string | null;
+  settlementStatus: string;
+  settlementRef: string | null;
+  settlementNote: string;
 }
 
 export interface ExecAllocResult {
@@ -201,32 +208,65 @@ export async function executeAlloc(opts: {
   const { prices, fetchedAt } = await fetchLivePrices();
 
   // 5. Compute token quantities for each bucket
-  const bucketResults: ExecuteBucketResult[] = rows.map(row => {
+  const bucketResults: Omit<ExecuteBucketResult, 'txHash' | 'settlementStatus' | 'settlementRef' | 'settlementNote'>[] = rows.map(row => {
     const asset = row.assetSymbol;
     const usdAmount = Number(row.usdValue ?? 0);
     const markPrice = prices[asset] ?? 1.0;
     const quantity = markPrice > 0 ? usdAmount / markPrice : 0;
-    const pct = (firstMeta as any)?.pct ?? 0;
+    const rowMeta = row.metadata as Record<string, unknown> | null;
+    const pct = Number(rowMeta?.pct ?? 0);
     const execPath = EXEC_PATH[asset] ?? 'treasury_hold';
-    // Assets that can be executed immediately vs queued
-    const status: 'executed' | 'queued' = 'executed';
 
-    return { bucket: row.allocationBucket, asset, usdAmount, pct, quantity, markPrice, executionPath: execPath, status };
+    return { bucket: row.allocationBucket, asset, usdAmount, pct, quantity, markPrice, executionPath: execPath, status: 'executed' as const };
   });
+
+  // 6. Dispatch settlement per bucket (runs OUTSIDE DB transaction)
+  //    On-chain calls (AXAU mint, AXUSD mint) can take 10-60s — must not block the DB txn.
+  //    IMPORTANT: settlements run SEQUENTIALLY (not Promise.all) — all on-chain paths share
+  //    the deployer wallet. Parallel submissions cause nonce collisions.
+  //    BitGo calls run in parallel since they don't share nonce state.
+  console.log(`[executeAlloc] Dispatching settlement for ${bucketResults.length} buckets (exec: ${execId})`);
+
+  const settlementOutcomes: SettlementOutcome[] = [];
+  for (const b of bucketResults) {
+    const outcome = await dispatchSettlement({
+      asset:     b.asset,
+      path:      b.executionPath,
+      usdAmount: b.usdAmount,
+      quantity:  b.quantity,
+      execId,
+      runId,
+    });
+    settlementOutcomes.push(outcome);
+    if (outcome.txHash) {
+      console.log(`[executeAlloc] ${b.asset} settled — tx: ${outcome.txHash}`);
+    } else {
+      console.log(`[executeAlloc] ${b.asset} ${outcome.settlementStatus} — ${outcome.settlementNote.slice(0, 80)}`);
+    }
+  }
+
+  // Merge settlement into bucket results
+  const fullBuckets: ExecuteBucketResult[] = bucketResults.map((b, i) => ({
+    ...b,
+    txHash:           settlementOutcomes[i].txHash,
+    settlementStatus: settlementOutcomes[i].settlementStatus,
+    settlementRef:    settlementOutcomes[i].settlementRef,
+    settlementNote:   settlementOutcomes[i].settlementNote,
+  }));
 
   const now = new Date();
 
-  // 6. All DB mutations in one transaction
+  // 7. All DB mutations in one transaction
   await db.transaction(async (tx) => {
-    // 6a. Mark rows → 'executing' first (crash-safe mid-execution marker)
+    // 7a. Mark rows → 'executing' first (crash-safe mid-execution marker)
     await tx
       .update(treasuryAllocations)
       .set({ status: 'executing', updatedAt: now })
       .where(inArray(treasuryAllocations.id, rowIds));
 
-    // 6b. Mark rows → 'executed'
+    // 7b. Mark rows → 'executed'
     for (const row of rows) {
-      const bucket = bucketResults.find(b => b.bucket === row.allocationBucket)!;
+      const bucket = fullBuckets.find(b => b.bucket === row.allocationBucket)!;
       await tx
         .update(treasuryAllocations)
         .set({
@@ -234,90 +274,102 @@ export async function executeAlloc(opts: {
           updatedAt: now,
           metadata: {
             ...(row.metadata as object ?? {}),
-            exec_id: execId,
-            exec_path: bucket.executionPath,
-            mark_price: bucket.markPrice,
-            quantity: bucket.quantity,
-            prices_fetched_at: fetchedAt,
+            exec_id:            execId,
+            exec_path:          bucket.executionPath,
+            mark_price:         bucket.markPrice,
+            quantity:           bucket.quantity,
+            tx_hash:            bucket.txHash,
+            settlement_status:  bucket.settlementStatus,
+            prices_fetched_at:  fetchedAt,
           },
         })
         .where(eq(treasuryAllocations.id, row.id));
     }
 
-    // 6c. Upsert reserve_positions — one snapshot row per asset
-    for (const b of bucketResults) {
+    // 7c. Insert reserve_positions — one snapshot row per asset with settlement fields
+    for (const b of fullBuckets) {
       await tx.insert(reservePositions).values({
-        assetSymbol: b.asset,
-        positionType: POSITION_TYPE[b.asset] ?? 'protocol_reserve',
-        quantity: b.quantity.toFixed(8),
-        markPrice: b.markPrice.toFixed(8),
-        usdValue: b.usdAmount.toFixed(2),
-        valuationSource: VALUATION_SOURCE[b.asset] ?? 'protocol',
+        assetSymbol:        b.asset,
+        positionType:       POSITION_TYPE[b.asset] ?? 'protocol_reserve',
+        quantity:           b.quantity.toFixed(8),
+        markPrice:          b.markPrice.toFixed(8),
+        usdValue:           b.usdAmount.toFixed(2),
+        valuationSource:    VALUATION_SOURCE[b.asset] ?? 'protocol',
         valuationConfidence: 'medium',
-        snapshotAt: now,
+        snapshotAt:         now,
+        txHash:             b.txHash,
+        settlementStatus:   b.settlementStatus,
+        settlementRef:      b.settlementRef,
+        settlementNote:     b.settlementNote,
         metadata: {
-          exec_id: execId,
-          run_id: runId,
-          execution_path: b.executionPath,
-          prices_fetched_at: fetchedAt,
-          source: 'AUTO_EXEC',
+          exec_id:            execId,
+          run_id:             runId,
+          execution_path:     b.executionPath,
+          prices_fetched_at:  fetchedAt,
+          source:             'AUTO_EXEC',
         },
       });
     }
 
-    // 6d. Debit internal wallet — place a hold for the total executed amount
+    // 7d. Debit internal wallet
     if (totalCents > 0) {
       const locked = await tx.execute(
         sql`SELECT available_cents FROM axiom_wallet_balances WHERE user_id = ${resolvedUserId} FOR UPDATE`,
       );
       const lockRow = locked.rows[0] as { available_cents: number } | undefined;
       const available = lockRow ? Number(lockRow.available_cents) : 0;
-      const debit = Math.min(totalCents, available); // never go negative
+      const debit = Math.min(totalCents, available);
       const newAvailable = available - debit;
       const txnId = `wtx_${Date.now()}_${nanoid8()}`;
 
       if (debit > 0) {
         await tx.insert(axiomWalletTransactions).values({
-          id: txnId,
-          userId: resolvedUserId,
-          type: 'DEBIT',
-          amountCents: debit,
-          direction: 'DEBIT',
+          id:               txnId,
+          userId:           resolvedUserId,
+          type:             'DEBIT',
+          amountCents:      debit,
+          direction:        'DEBIT',
           balanceAfterCents: newAvailable,
-          status: 'SETTLED',
-          referenceType: 'AUTO_EXEC',
-          referenceId: execId,
-          notes: `Auto-executed allocation run ${runId} — 6 asset positions`,
-          idempotencyKey: `exec_${execId}`,
+          status:           'SETTLED',
+          referenceType:    'AUTO_EXEC',
+          referenceId:      execId,
+          notes:            `Auto-executed allocation run ${runId} — 6 asset positions`,
+          idempotencyKey:   `exec_${execId}`,
         } as any);
 
         await tx
           .update(axiomWalletBalances)
           .set({
-            availableCents: newAvailable,
-            lifetimeAllocatedCents: sql`lifetime_allocated_cents + ${debit}`,
-            updatedAt: now,
+            availableCents:          newAvailable,
+            lifetimeAllocatedCents:  sql`lifetime_allocated_cents + ${debit}`,
+            updatedAt:               now,
           })
           .where(eq(axiomWalletBalances.userId, resolvedUserId));
       }
     }
 
-    // 6e. Audit event — success
+    // 7e. Audit event — success
     await tx.insert(capAuditEvents).values({
-      id: generateId('ae'),
-      eventType: 'card_deposit.allocation_executed',
+      id:            generateId('ae'),
+      eventType:     'card_deposit.allocation_executed',
       aggregateType: 'treasury_allocation',
-      aggregateId: runId,
+      aggregateId:   runId,
       payloadJson: {
-        exec_id: execId,
-        run_id: runId,
-        amount_usd: totalUsd,
-        user_id: resolvedUserId,
-        bucket_count: bucketResults.length,
-        buckets: bucketResults,
+        exec_id:      execId,
+        run_id:       runId,
+        amount_usd:   totalUsd,
+        user_id:      resolvedUserId,
+        bucket_count: fullBuckets.length,
+        buckets:      fullBuckets,
         prices,
         prices_fetched_at: fetchedAt,
         source: 'AUTO_EXEC',
+        settlement_summary: fullBuckets.map(b => ({
+          asset:             b.asset,
+          settlement_status: b.settlementStatus,
+          tx_hash:           b.txHash,
+          settlement_ref:    b.settlementRef,
+        })),
       },
       actor: 'system',
     }).onConflictDoNothing();
@@ -327,8 +379,8 @@ export async function executeAlloc(opts: {
     execId,
     runId,
     amountUsd: totalUsd,
-    buckets: bucketResults,
-    executedAt: now.toISOString(),
+    buckets:   fullBuckets,
+    executedAt:      now.toISOString(),
     pricesFetchedAt: fetchedAt,
   };
 }
