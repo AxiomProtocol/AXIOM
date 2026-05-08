@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { sentinelBilling } from '../../../../lib/sentinel/billing';
+import { sentinelBilling, LegacyStripeAccountError } from '../../../../lib/sentinel/billing';
+import { StripeAccountMismatchError } from '../../../../lib/stripe/client';
 
 export const config = { api: { bodyParser: false } };
 
@@ -25,11 +26,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await sentinelBilling.handleWebhook(rawBody.toString('utf8'), signature);
     return res.status(200).json({ received: true });
   } catch (err: unknown) {
+    // Stripe account configuration mismatch — clean 409 so ops can diagnose quickly
+    if (err instanceof LegacyStripeAccountError || err instanceof StripeAccountMismatchError) {
+      console.error('[sentinel/subscription/webhook] Stripe account mismatch:', err);
+      return res.status(409).json({ error: 'stripe_account_mismatch', message: (err as Error).message });
+    }
+
     const message = err instanceof Error ? err.message : 'Internal error';
     console.error('[sentinel/subscription/webhook]', err);
-    if (message.includes('No signatures found') || message.includes('webhook')) {
+
+    // Invalid signature returns 400 so Stripe retries are suppressed
+    if (
+      message.includes('No signatures found') ||
+      message.includes('timestamp') ||
+      message.includes('webhook secret')
+    ) {
       return res.status(400).json({ error: 'Webhook signature invalid' });
     }
+
     return res.status(500).json({ error: message });
   }
 }
