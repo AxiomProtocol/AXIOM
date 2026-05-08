@@ -30,7 +30,8 @@ import { db } from '../../server/db';
 import { treasuryAllocations, reservePositions } from '../../shared/treasurySchema';
 import { capAuditEvents, capCardDeposits } from '../../shared/capInfraSchema';
 import { axiomWalletBalances, axiomWalletTransactions } from '../../shared/walletSchema';
-import { eq, sql, and, inArray } from 'drizzle-orm';
+import { eq, sql, and, inArray, desc } from 'drizzle-orm';
+import { CORE_CONTRACTS } from '../../shared/contracts';
 import { generateId } from '../capinfra/ids';
 import { customAlphabet } from 'nanoid';
 import { dispatchSettlement, type SettlementOutcome } from './settlementDispatch';
@@ -92,6 +93,7 @@ export interface ExecuteBucketResult {
   pct: number;
   quantity: number;
   markPrice: number;
+  priceSource: string;
   executionPath: string;
   status: 'executed' | 'queued';
   txHash: string | null;
@@ -113,6 +115,7 @@ export interface ExecAllocResult {
 
 async function fetchLivePrices(): Promise<{
   prices: Record<string, number>;
+  priceSources: Record<string, string>;
   fetchedAt: string;
 }> {
   const ids = Object.values(COINGECKO_IDS).join(',');
@@ -136,25 +139,83 @@ async function fetchLivePrices(): Promise<{
   }
 
   const prices: Record<string, number> = { ...STABLE_PRICE };
+  const priceSources: Record<string, string> = {
+    USDC: 'protocol',
+    AXUSD: 'protocol',
+  };
 
   for (const [asset, cgId] of Object.entries(COINGECKO_IDS)) {
     const spot = cgData[cgId]?.usd;
     if (spot && spot > 0) {
       prices[asset] = spot;
+      priceSources[asset] = 'coingecko';
     }
   }
 
   // AXAU price tracks PAXG (both represent 1 troy oz of gold)
   if (prices[AXAU_TRACKS]) {
     prices['AXAU'] = prices[AXAU_TRACKS];
+    priceSources['AXAU'] = priceSources[AXAU_TRACKS] ?? 'coingecko';
   }
 
-  // AXM fallback: protocol-internal token, no external listing
-  if (!prices['AXM']) {
-    prices['AXM'] = 0.001; // internal accounting placeholder
+  // AXM: NOT hardcoded here — cascade resolved in executeAlloc()
+  // (CoinGecko above may have already set it if the listing goes live)
+
+  return { prices, priceSources, fetchedAt: new Date().toISOString() };
+}
+
+// ── AXM price cascade (CoinGecko → Camelot TWAP → last-known) ──────────────
+
+async function resolveAXMPrice(cgPrice: number | undefined): Promise<{
+  price: number;
+  source: string;
+}> {
+  // 1. CoinGecko already resolved it
+  if (cgPrice && cgPrice > 0) {
+    return { price: cgPrice, source: 'coingecko' };
   }
 
-  return { prices, fetchedAt: new Date().toISOString() };
+  // 2. Camelot on-chain spot (AXM/USDC pool via factory discovery)
+  try {
+    const { camelotPoolService } = await import('../services/CamelotPoolService');
+    const camelotPrice = await camelotPoolService.getTokenPriceVsUsdc(
+      CORE_CONTRACTS.AXM_TOKEN,
+      18,
+    );
+    if (camelotPrice !== null && camelotPrice > 0) {
+      console.log(`[executeAlloc] AXM price via Camelot pool: $${camelotPrice.toFixed(8)}`);
+      return { price: camelotPrice, source: 'camelot_twap' };
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn('[executeAlloc] Camelot AXM price lookup failed:', msg);
+  }
+
+  // 3. Last-known mark price from reserve_positions
+  try {
+    const rows = await db
+      .select({ markPrice: reservePositions.markPrice })
+      .from(reservePositions)
+      .where(
+        sql`asset_symbol = 'AXM' AND mark_price IS NOT NULL AND mark_price::numeric > 0`,
+      )
+      .orderBy(desc(reservePositions.snapshotAt))
+      .limit(1);
+    const lastKnown = rows[0]?.markPrice !== undefined && rows[0].markPrice !== null
+      ? Number(rows[0].markPrice)
+      : null;
+    if (lastKnown !== null && lastKnown > 0) {
+      console.warn(`[executeAlloc] AXM price: using last-known from reserve_positions: $${lastKnown}`);
+      return { price: lastKnown, source: 'last_known' };
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn('[executeAlloc] AXM last-known price lookup failed:', msg);
+  }
+
+  // 4. Final fallback — log clearly so the operator knows
+  console.warn('[executeAlloc] AXM price: all sources failed, using protocol placeholder $0.001');
+  return { price: 0.001, source: 'protocol_placeholder' };
 }
 
 // ── Main execution function ────────────────────────────────────────────────
@@ -205,7 +266,12 @@ export async function executeAlloc(opts: {
   }
 
   // 4. Fetch live prices
-  const { prices, fetchedAt } = await fetchLivePrices();
+  const { prices, priceSources, fetchedAt } = await fetchLivePrices();
+
+  // 4a. Resolve AXM price via cascade (CoinGecko → Camelot → last-known)
+  const { price: axmPrice, source: axmSource } = await resolveAXMPrice(prices['AXM']);
+  prices['AXM'] = axmPrice;
+  priceSources['AXM'] = axmSource;
 
   // 5. Compute token quantities for each bucket
   const bucketResults: Omit<ExecuteBucketResult, 'txHash' | 'settlementStatus' | 'settlementRef' | 'settlementNote'>[] = rows.map(row => {
@@ -216,8 +282,9 @@ export async function executeAlloc(opts: {
     const rowMeta = row.metadata as Record<string, unknown> | null;
     const pct = Number(rowMeta?.pct ?? 0);
     const execPath = EXEC_PATH[asset] ?? 'treasury_hold';
+    const priceSource = priceSources[asset] ?? VALUATION_SOURCE[asset] ?? 'protocol';
 
-    return { bucket: row.allocationBucket, asset, usdAmount, pct, quantity, markPrice, executionPath: execPath, status: 'executed' as const };
+    return { bucket: row.allocationBucket, asset, usdAmount, pct, quantity, markPrice, priceSource, executionPath: execPath, status: 'executed' as const };
   });
 
   // 6. Dispatch settlement per bucket (runs OUTSIDE DB transaction)
@@ -294,7 +361,7 @@ export async function executeAlloc(opts: {
         quantity:           b.quantity.toFixed(8),
         markPrice:          b.markPrice.toFixed(8),
         usdValue:           b.usdAmount.toFixed(2),
-        valuationSource:    VALUATION_SOURCE[b.asset] ?? 'protocol',
+        valuationSource:    b.priceSource,
         valuationConfidence: 'medium',
         snapshotAt:         now,
         txHash:             b.txHash,
@@ -306,6 +373,7 @@ export async function executeAlloc(opts: {
           run_id:             runId,
           execution_path:     b.executionPath,
           prices_fetched_at:  fetchedAt,
+          price_source:       b.priceSource,
           source:             'AUTO_EXEC',
         },
       });

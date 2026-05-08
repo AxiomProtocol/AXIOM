@@ -364,6 +364,32 @@ class CamelotPoolService {
     }
   }
 
+  async getTokenPriceVsUsdc(tokenAddress: string, tokenDecimals: number = 18): Promise<number | null> {
+    try {
+      const provider = await this.getProvider();
+      const pairAddress = await this.getPairAddress(tokenAddress, STABLECOINS.USDC);
+      if (!pairAddress) return null;
+
+      const pairContract = new ethers.Contract(pairAddress, CAMELOT_PAIR_ABI, provider);
+      const [reserves, token0] = await Promise.all([
+        pairContract.getReserves(),
+        pairContract.token0(),
+      ]);
+
+      const isToken0 = token0.toLowerCase() === tokenAddress.toLowerCase();
+      const tokenReserve: bigint = isToken0 ? reserves[0] : reserves[1];
+      const usdcReserve: bigint  = isToken0 ? reserves[1] : reserves[0];
+
+      if (tokenReserve === 0n) return null;
+
+      const tokenAmount = Number(tokenReserve) / Math.pow(10, tokenDecimals);
+      const usdcAmount  = Number(usdcReserve)  / 1e6;
+      return usdcAmount / tokenAmount;
+    } catch {
+      return null;
+    }
+  }
+
   clearCache(): void {
     this.volumeCache.clear();
   }

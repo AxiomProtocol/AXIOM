@@ -669,7 +669,7 @@ export default function FounderOpsPage() {
   // ── Last AI auto-allocation (Reserves tab notice) ──────────────────────
   type AutoAllocBucket = { bucket: string; asset: string; usd_amount: number; pct: number | null };
   type LastAutoAlloc = { run_id: string; created_at: string; amount_usd: number; bucket_count: number; source_label: string; rationale: string | null; deposit_id: string | null; execution_status: string | null; buckets: AutoAllocBucket[] };
-  type ExecBucket = { bucket: string; asset: string; usd_amount: number; pct: number; quantity: number; mark_price: number; execution_path: string; status: string; tx_hash: string | null; settlement_status: string | null; settlement_ref: string | null; settlement_note: string | null };
+  type ExecBucket = { bucket: string; asset: string; usd_amount: number; pct: number; quantity: number; mark_price: number; price_source: string | null; execution_path: string; status: string; tx_hash: string | null; settlement_status: string | null; settlement_ref: string | null; settlement_note: string | null };
   type ExecAllocResult = { exec_id: string; run_id: string; amount_usd: number; bucket_count: number; executed_at: string; prices_fetched_at: string; buckets: ExecBucket[] };
   const [lastAutoAlloc, setLastAutoAlloc]               = useState<LastAutoAlloc | null>(null);
   const [lastAutoAllocLoading, setLastAutoAllocLoading] = useState(false);
@@ -4395,6 +4395,21 @@ export default function FounderOpsPage() {
                                     <td className="font-dl-mono text-[10px] text-dl-gray py-2 pr-4">${b.usd_amount.toFixed(2)}</td>
                                     <td className="font-dl-mono text-[10px] text-dl-gray py-2 pr-4">
                                       {b.mark_price >= 1 ? `$${b.mark_price.toLocaleString('en-US', { maximumFractionDigits: 2 })}` : `$${b.mark_price.toFixed(6)}`}
+                                      {b.price_source && (
+                                        <span className={`ml-1.5 font-dl-mono text-[8px] uppercase tracking-wider px-1 py-0.5 border ${
+                                          b.price_source === 'coingecko'           ? 'text-emerald-700 border-emerald-600'
+                                          : b.price_source === 'camelot_twap'      ? 'text-dl-navy border-dl-navy'
+                                          : b.price_source === 'last_known'        ? 'text-amber-700 border-amber-500'
+                                          : b.price_source === 'protocol_placeholder' ? 'text-red-600 border-red-400'
+                                          : 'text-dl-gray border-dl-border'
+                                        }`}>
+                                          {b.price_source === 'coingecko'              ? 'CG'
+                                            : b.price_source === 'camelot_twap'        ? 'Camelot'
+                                            : b.price_source === 'last_known'          ? 'Last Known'
+                                            : b.price_source === 'protocol_placeholder' ? 'Placeholder'
+                                            : b.price_source.replace(/_/g, ' ')}
+                                        </span>
+                                      )}
                                     </td>
                                     <td className="font-dl-mono text-[10px] text-dl-navy font-semibold py-2 pr-4 whitespace-nowrap">
                                       {b.quantity < 0.001 ? b.quantity.toExponential(4) : b.quantity.toFixed(6)} {b.asset}

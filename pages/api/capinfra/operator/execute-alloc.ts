@@ -72,6 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         pct:              b.pct,
         quantity:         Number(b.quantity.toFixed(8)),
         mark_price:       b.markPrice,
+        price_source:     b.priceSource,
         execution_path:   b.executionPath,
         status:           b.status,
         tx_hash:          b.txHash,
