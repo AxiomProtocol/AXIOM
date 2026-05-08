@@ -183,21 +183,24 @@ async function resolveAXMPrice(cgPrice: number | undefined): Promise<{
       18,
     );
     if (camelotPrice !== null && camelotPrice > 0) {
-      console.log(`[executeAlloc] AXM price via Camelot pool: $${camelotPrice.toFixed(8)}`);
-      return { price: camelotPrice, source: 'camelot_twap' };
+      console.log(`[executeAlloc] AXM price via Camelot spot: $${camelotPrice.toFixed(8)}`);
+      return { price: camelotPrice, source: 'camelot_spot' };
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn('[executeAlloc] Camelot AXM price lookup failed:', msg);
   }
 
-  // 3. Last-known mark price from reserve_positions
+  // 3. Last-known mark price from the most recent CONFIRMED reserve_positions row
   try {
     const rows = await db
       .select({ markPrice: reservePositions.markPrice })
       .from(reservePositions)
       .where(
-        sql`asset_symbol = 'AXM' AND mark_price IS NOT NULL AND mark_price::numeric > 0`,
+        sql`asset_symbol = 'AXM'
+            AND mark_price IS NOT NULL
+            AND mark_price::numeric > 0
+            AND settlement_status = 'confirmed'`,
       )
       .orderBy(desc(reservePositions.snapshotAt))
       .limit(1);
@@ -205,7 +208,7 @@ async function resolveAXMPrice(cgPrice: number | undefined): Promise<{
       ? Number(rows[0].markPrice)
       : null;
     if (lastKnown !== null && lastKnown > 0) {
-      console.warn(`[executeAlloc] AXM price: using last-known from reserve_positions: $${lastKnown}`);
+      console.warn(`[executeAlloc] AXM price [warn source=last-known]: $${lastKnown} from reserve_positions`);
       return { price: lastKnown, source: 'last_known' };
     }
   } catch (err: unknown) {
@@ -213,9 +216,11 @@ async function resolveAXMPrice(cgPrice: number | undefined): Promise<{
     console.warn('[executeAlloc] AXM last-known price lookup failed:', msg);
   }
 
-  // 4. Final fallback — log clearly so the operator knows
-  console.warn('[executeAlloc] AXM price: all sources failed, using protocol placeholder $0.001');
-  return { price: 0.001, source: 'protocol_placeholder' };
+  // All sources exhausted — fail explicitly rather than using a fictitious placeholder
+  throw new Error(
+    'AXM price unavailable: CoinGecko returned no listing, Camelot spot lookup returned null, ' +
+    'and no confirmed reserve_positions row exists. Run aborted to prevent fictitious accounting.',
+  );
 }
 
 // ── Main execution function ────────────────────────────────────────────────
@@ -312,14 +317,28 @@ export async function executeAlloc(opts: {
     }
   }
 
-  // Merge settlement into bucket results
-  const fullBuckets: ExecuteBucketResult[] = bucketResults.map((b, i) => ({
-    ...b,
-    txHash:           settlementOutcomes[i].txHash,
-    settlementStatus: settlementOutcomes[i].settlementStatus,
-    settlementRef:    settlementOutcomes[i].settlementRef,
-    settlementNote:   settlementOutcomes[i].settlementNote,
-  }));
+  // Merge settlement into bucket results; for AXM, append price-source provenance to note
+  const fullBuckets: ExecuteBucketResult[] = bucketResults.map((b, i) => {
+    const outcome = settlementOutcomes[i];
+    let settlementNote = outcome.settlementNote;
+    if (b.asset === 'AXM') {
+      const sourceLabel =
+        b.priceSource === 'coingecko'    ? 'CoinGecko live price'
+        : b.priceSource === 'camelot_spot' ? 'Camelot on-chain spot price'
+        : b.priceSource === 'last_known'   ? 'last confirmed reserve_positions mark'
+        : b.priceSource;
+      settlementNote = settlementNote
+        ? `${settlementNote} | AXM mark source: ${sourceLabel}`
+        : `AXM mark source: ${sourceLabel}`;
+    }
+    return {
+      ...b,
+      txHash:           outcome.txHash,
+      settlementStatus: outcome.settlementStatus,
+      settlementRef:    outcome.settlementRef,
+      settlementNote,
+    };
+  });
 
   const now = new Date();
 

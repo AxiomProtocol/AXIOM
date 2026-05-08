@@ -4397,16 +4397,14 @@ export default function FounderOpsPage() {
                                       {b.mark_price >= 1 ? `$${b.mark_price.toLocaleString('en-US', { maximumFractionDigits: 2 })}` : `$${b.mark_price.toFixed(6)}`}
                                       {b.price_source && (
                                         <span className={`ml-1.5 font-dl-mono text-[8px] uppercase tracking-wider px-1 py-0.5 border ${
-                                          b.price_source === 'coingecko'           ? 'text-emerald-700 border-emerald-600'
-                                          : b.price_source === 'camelot_twap'      ? 'text-dl-navy border-dl-navy'
-                                          : b.price_source === 'last_known'        ? 'text-amber-700 border-amber-500'
-                                          : b.price_source === 'protocol_placeholder' ? 'text-red-600 border-red-400'
+                                          b.price_source === 'coingecko'          ? 'text-emerald-700 border-emerald-600'
+                                          : b.price_source === 'camelot_spot'     ? 'text-dl-navy border-dl-navy'
+                                          : b.price_source === 'last_known'       ? 'text-amber-700 border-amber-500'
                                           : 'text-dl-gray border-dl-border'
                                         }`}>
-                                          {b.price_source === 'coingecko'              ? 'CG'
-                                            : b.price_source === 'camelot_twap'        ? 'Camelot'
-                                            : b.price_source === 'last_known'          ? 'Last Known'
-                                            : b.price_source === 'protocol_placeholder' ? 'Placeholder'
+                                          {b.price_source === 'coingecko'             ? 'CG'
+                                            : b.price_source === 'camelot_spot'       ? 'Camelot Spot'
+                                            : b.price_source === 'last_known'         ? 'Last Known'
                                             : b.price_source.replace(/_/g, ' ')}
                                         </span>
                                       )}
