@@ -1317,11 +1317,17 @@ export default function FounderOpsPage() {
       });
       const json = await res.json();
       if (json.ok) {
-        const written = json.current?.written ?? [];
-        const backfilled = json.backfill?.written ?? [];
+        const written        = json.current?.written  ?? [];
+        const skipped        = json.current?.skipped  ?? [];
+        const backfilled     = [...new Set(json.backfill?.written ?? [])];
+        const backSkipped    = [...new Set(json.backfill?.skipped ?? [])];
+        const currentAlready = written.length === 0 && skipped.length > 0;
+        const backAlready    = backfilled.length === 0 && backSkipped.length > 0;
+        const currentMsg     = currentAlready ? `already seeded (${skipped.length} symbols)` : (written.join(', ') || 'none written');
+        const backMsg        = backAlready    ? `${backSkipped.length} symbols already present` : (backfilled.join(', ') || 'none written');
         setSnapshotBootstrapResult({
           ok: true,
-          msg: `Snapshot written for: ${written.join(', ') || 'none'}. Backfilled ${backfillHours}h for: ${[...new Set(backfilled)].join(', ') || 'none'}.`,
+          msg: `Current snapshot: ${currentMsg}. Backfilled ${backfillHours}h: ${backMsg}.`,
         });
         loadReservesHistory(key);
       } else {
