@@ -4221,20 +4221,20 @@ export default function FounderOpsPage() {
                     settlementNetPay;
                   return (
                     <div className="border border-dl-navy mb-5">
-                      <div className="px-4 py-2.5 border-b border-dl-navy bg-dl-navy flex items-center justify-between">
-                        <p className="font-dl-mono text-[9px] uppercase tracking-wider text-blue-300">Funding Source</p>
+                      <div className="px-4 py-3 border-b border-dl-navy bg-dl-navy flex items-center justify-between">
+                        <p className="font-dl-mono text-xs uppercase tracking-widest text-white font-bold">Funding Source</p>
                         {fundingAmount != null && (
-                          <p className="font-dl-mono text-[9px] text-green-300">{fmtUsd(fundingAmount)} ready to allocate</p>
+                          <p className="font-dl-mono text-xs text-emerald-300 font-semibold">{fmtUsd(fundingAmount)} ready to allocate</p>
                         )}
                       </div>
-                      <div className="px-4 py-3 bg-dl-bg-alt flex flex-col gap-3">
+                      <div className="px-4 py-4 bg-white flex flex-col gap-4">
                         {/* Source toggle */}
                         <div className="flex gap-0">
                           {(['settlement','wallet','custom'] as const).map(src => (
                             <button
                               key={src}
                               onClick={() => setWalletFundingSource(src)}
-                              className={`font-dl-mono text-[9px] uppercase tracking-wider px-3 py-1.5 border transition-colors ${walletFundingSource === src ? 'bg-dl-navy text-white border-dl-navy' : 'bg-white text-dl-navy border-dl-border hover:bg-dl-bg-alt'}`}
+                              className={`font-dl-mono text-xs uppercase tracking-wider px-4 py-2 border transition-colors ${walletFundingSource === src ? 'bg-dl-navy text-white border-dl-navy' : 'bg-white text-dl-navy border-dl-border hover:bg-dl-bg-alt'}`}
                             >
                               {src === 'settlement' ? 'Settlement Net Pay' : src === 'wallet' ? 'Axiom Balance' : 'Custom Amount'}
                             </button>
@@ -4244,8 +4244,8 @@ export default function FounderOpsPage() {
                         {/* Settlement */}
                         {walletFundingSource === 'settlement' && (
                           <div className="flex items-baseline gap-3">
-                            <p className="font-dl-mono text-[10px] text-dl-gray">Latest net pay:</p>
-                            <p className="font-dl-mono text-sm text-dl-navy">
+                            <p className="font-dl-mono text-xs text-dl-gray">Latest net pay:</p>
+                            <p className="font-dl-mono text-base text-dl-navy font-semibold">
                               {settlementNetPay != null ? fmtUsd(settlementNetPay) : allocLatestLoading ? 'Loading…' : 'No settlement loaded'}
                             </p>
                           </div>
@@ -4255,23 +4255,23 @@ export default function FounderOpsPage() {
                         {walletFundingSource === 'wallet' && (
                           <div className="flex items-start justify-between gap-4 flex-wrap">
                             <div>
-                              <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray mb-0.5">Available balance</p>
-                              <p className="font-dl-mono text-lg text-dl-navy">
+                              <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-1">Available balance</p>
+                              <p className="font-dl-mono text-2xl text-dl-navy font-bold">
                                 {walletBalanceLoading ? 'Loading…' : walletBalance != null ? fmtUsd(walletBalance.available_usd) : '$0.00'}
                               </p>
                               {walletBalance && walletBalance.pending_cents > 0 && (
-                                <p className="font-dl-mono text-[9px] text-dl-gray mt-0.5">{fmtUsd(walletBalance.pending_usd)} pending</p>
+                                <p className="font-dl-mono text-xs text-dl-gray mt-1">{fmtUsd(walletBalance.pending_usd)} pending</p>
                               )}
                             </div>
-                            <div className="flex flex-col gap-1.5">
-                              <p className="font-dl-mono text-[9px] uppercase tracking-wider text-dl-gray">Top up via debit card</p>
-                              <div className="flex gap-1.5 flex-wrap">
+                            <div className="flex flex-col gap-2">
+                              <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Top up via debit card</p>
+                              <div className="flex gap-2 flex-wrap">
                                 {[25, 100, 250, 500].map(d => (
                                   <button
                                     key={d}
                                     disabled={walletTopupLoading}
                                     onClick={() => startWalletTopup(d * 100)}
-                                    className="font-dl-mono text-[9px] border border-dl-navy text-dl-navy px-2.5 py-1 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50 transition-colors"
+                                    className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-3 py-1.5 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50 transition-colors font-semibold"
                                   >
                                     +${d}
                                   </button>
@@ -4279,12 +4279,12 @@ export default function FounderOpsPage() {
                                 <button
                                   disabled={walletTopupLoading}
                                   onClick={() => loadWalletBalance(reservesAdminKey)}
-                                  className="font-dl-mono text-[9px] border border-dl-border text-dl-gray px-2.5 py-1 uppercase tracking-wider hover:text-dl-navy disabled:opacity-50"
+                                  className="font-dl-mono text-xs border border-dl-border text-dl-gray px-3 py-1.5 uppercase tracking-wider hover:text-dl-navy disabled:opacity-50"
                                 >
                                   {walletBalanceLoading ? '…' : 'Refresh'}
                                 </button>
                               </div>
-                              {walletTopupLoading && <p className="font-dl-mono text-[9px] text-dl-gray">Opening Stripe checkout…</p>}
+                              {walletTopupLoading && <p className="font-dl-mono text-xs text-dl-gray">Opening Stripe checkout…</p>}
                             </div>
                           </div>
                         )}
@@ -4292,7 +4292,7 @@ export default function FounderOpsPage() {
                         {/* Custom amount */}
                         {walletFundingSource === 'custom' && (
                           <div className="flex items-baseline gap-3">
-                            <p className="font-dl-mono text-[10px] text-dl-gray">Enter amount:</p>
+                            <p className="font-dl-mono text-xs text-dl-gray">Enter amount:</p>
                             <div className="flex items-center gap-1">
                               <span className="font-dl-mono text-sm text-dl-gray">$</span>
                               <input
@@ -4302,11 +4302,11 @@ export default function FounderOpsPage() {
                                 value={customFundingAmount}
                                 onChange={e => setCustomFundingAmount(e.target.value)}
                                 placeholder="0.00"
-                                className="font-dl-mono text-sm border border-dl-border px-2 py-1 w-28 text-right outline-none bg-white"
+                                className="font-dl-mono text-sm border border-dl-border px-2 py-1.5 w-32 text-right outline-none bg-white"
                               />
                             </div>
                             {fundingAmount != null && (
-                              <p className="font-dl-mono text-[10px] text-dl-forest">{fmtUsd(fundingAmount)} will be split</p>
+                              <p className="font-dl-mono text-xs text-dl-forest font-semibold">{fmtUsd(fundingAmount)} will be split</p>
                             )}
                           </div>
                         )}
