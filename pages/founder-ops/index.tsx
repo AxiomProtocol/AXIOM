@@ -7,6 +7,7 @@ import {
   DataTable,
 } from '../../components/design-law';
 import type { Column } from '../../components/design-law';
+import WalletBalanceStrip from '../../components/founder-ops/WalletBalanceStrip';
 
 function formatUTC(dateStr: string): string {
   if (!dateStr) return '—';
@@ -658,7 +659,7 @@ export default function FounderOpsPage() {
   const [allocLatestLoading, setAllocLatestLoading] = useState(false);
 
   // ── Axiom wallet balance (funding source for Reserves tab) ────────────────
-  type WalletBalance = { available_cents: number; pending_cents: number; available_usd: number; pending_usd: number; updated_at: string };
+  type WalletBalance = { available_cents: number; pending_cents: number; available_usd: number; pending_usd: number; lifetime_deposited_cents: number; updated_at: string };
   const [walletBalance, setWalletBalance]         = useState<WalletBalance | null>(null);
   const [walletBalanceLoading, setWalletBalanceLoading] = useState(false);
   const [walletFundingSource, setWalletFundingSource]   = useState<'settlement' | 'wallet' | 'custom'>('settlement');
@@ -694,6 +695,13 @@ export default function FounderOpsPage() {
     } catch { /* silent */ }
     finally { setWalletTopupLoading(false); }
   };
+
+  // Auto-load wallet balance whenever either admin key is populated
+  useEffect(() => {
+    const key = reservesAdminKey || railAdminKey;
+    if (key) loadWalletBalance(key);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reservesAdminKey, railAdminKey]);
 
   const loadAllocPolicy = async (keyArg?: string) => {
     const adminKey = keyArg ?? reservesAdminKey ?? railAdminKey;
@@ -1439,6 +1447,15 @@ export default function FounderOpsPage() {
                 <span className="font-medium group-hover:text-dl-forest">Founder Playbook →</span>
               </a>
             </div>
+
+            <WalletBalanceStrip
+              adminKey={reservesAdminKey || railAdminKey}
+              balance={walletBalance}
+              loading={walletBalanceLoading}
+              topupLoading={walletTopupLoading}
+              onRefresh={() => loadWalletBalance(reservesAdminKey || railAdminKey || undefined)}
+              onTopUp={startWalletTopup}
+            />
 
             <div className="flex flex-wrap gap-0 border-b border-dl-border mb-8">
               {TABS.map(tab => (
