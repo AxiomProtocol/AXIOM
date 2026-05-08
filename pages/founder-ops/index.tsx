@@ -679,7 +679,7 @@ export default function FounderOpsPage() {
     try {
       const res  = await fetch('/api/capinfra/operator/last-auto-alloc', { headers: { 'x-admin-key': adminKey } });
       const json = await res.json();
-      if (json.success && json.data) setLastAutoAlloc(json.data as LastAutoAlloc);
+      if (json.success) setLastAutoAlloc(json.data ? json.data as LastAutoAlloc : null);
     } catch { /* silent */ }
     finally { setLastAutoAllocLoading(false); }
   };
