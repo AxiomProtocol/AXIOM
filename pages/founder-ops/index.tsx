@@ -326,6 +326,16 @@ export default function FounderOpsPage() {
   const [reservesHistory, setReservesHistory] = useState<Record<string, SnapshotPoint[]>>({});
   const [reservesHistoryLoading, setReservesHistoryLoading] = useState(false);
 
+  type AxmPriceHistoryRow = {
+    id: string;
+    snapshot_at: string;
+    mark_price: number | null;
+    valuation_source: string | null;
+    settlement_status: string | null;
+  };
+  const [axmPriceHistory, setAxmPriceHistory] = useState<AxmPriceHistoryRow[]>([]);
+  const [axmPriceHistoryLoading, setAxmPriceHistoryLoading] = useState(false);
+
   // Aggregate reserve USD value per snapshot hour — shared by the 7D Change %
   // cell in the totals strip AND the portfolio sparkline so both always reflect
   // identical data without duplicating the summation logic.
@@ -1266,18 +1276,24 @@ export default function FounderOpsPage() {
   const loadReservesHistory = async (key: string) => {
     if (!key) return;
     setReservesHistoryLoading(true);
+    setAxmPriceHistoryLoading(true);
     try {
-      const res = await fetch('/api/founder/reserve-snapshot-history?days=7', {
-        headers: { 'x-admin-key': key },
-      });
-      const json = await res.json();
-      if (res.ok && json.success && json.history) {
+      const [histRes, axmHistRes] = await Promise.all([
+        fetch('/api/founder/reserve-snapshot-history?days=7', { headers: { 'x-admin-key': key } }),
+        fetch('/api/capinfra/operator/reserve-source-history?asset=AXM&limit=10', { headers: { 'x-admin-key': key } }),
+      ]);
+      const [json, axmJson] = await Promise.all([histRes.json(), axmHistRes.json()]);
+      if (histRes.ok && json.success && json.history) {
         setReservesHistory(json.history);
       }
+      if (axmHistRes.ok && axmJson.success && Array.isArray(axmJson.rows)) {
+        setAxmPriceHistory(axmJson.rows as AxmPriceHistoryRow[]);
+      }
     } catch {
-      // Non-critical — sparklines simply remain empty
+      // Non-critical — sparklines and history strip simply remain empty
     } finally {
       setReservesHistoryLoading(false);
+      setAxmPriceHistoryLoading(false);
     }
   };
 
@@ -4894,6 +4910,54 @@ export default function FounderOpsPage() {
                                 </div>
                               );
                             })()}
+
+                            {/* ── AXM Price Source History ─────────────────── */}
+                            {asset.symbol === 'AXM' && (axmPriceHistoryLoading || axmPriceHistory.length > 0) && (
+                              <div className="px-5 py-3 border-b border-dl-border bg-dl-bg">
+                                <p className="font-dl-mono text-[9px] uppercase tracking-widest text-dl-gray mb-2">
+                                  Mark Price Source History — Last {axmPriceHistoryLoading && axmPriceHistory.length === 0 ? '…' : axmPriceHistory.length} Allocation Runs
+                                </p>
+                                {axmPriceHistoryLoading && axmPriceHistory.length === 0 ? (
+                                  <p className="font-dl-mono text-[9px] text-dl-gray">Loading…</p>
+                                ) : (
+                                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                                    {axmPriceHistory.map(row => {
+                                      const source = row.valuation_source ?? '';
+                                      const badgeClass =
+                                        source === 'coingecko'     ? 'text-emerald-700 border-emerald-600'
+                                        : source === 'camelot_twap' ? 'text-dl-navy border-dl-navy'
+                                        : source === 'last_known'   ? 'text-amber-700 border-amber-500'
+                                        : 'text-dl-gray border-dl-border';
+                                      const badgeLabel =
+                                        source === 'coingecko'     ? 'CoinGecko'
+                                        : source === 'camelot_twap' ? 'Camelot TWAP'
+                                        : source === 'last_known'   ? 'Last Known'
+                                        : source.replace(/_/g, ' ') || '—';
+                                      const priceStr = row.mark_price !== null
+                                        ? row.mark_price >= 1
+                                          ? `$${row.mark_price.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+                                          : `$${row.mark_price.toFixed(6)}`
+                                        : '—';
+                                      const dt = new Date(row.snapshot_at);
+                                      const dtStr = dt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                                      return (
+                                        <div
+                                          key={row.id}
+                                          className="flex flex-col gap-0.5"
+                                          title={`${dtStr}\nSource: ${source || '—'}\nStatus: ${row.settlement_status ?? '—'}`}
+                                        >
+                                          <span className={`font-dl-mono text-[8px] uppercase tracking-wider border px-1 py-0.5 self-start ${badgeClass}`}>
+                                            {badgeLabel}
+                                          </span>
+                                          <span className="font-dl-mono text-[9px] text-dl-navy font-semibold">{priceStr}</span>
+                                          <span className="font-dl-mono text-[8px] text-dl-gray">{dtStr}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            )}
 
                             {/* Location breakdown */}
                             {(asset.locationBreakdown as any[]).length > 1 && (
