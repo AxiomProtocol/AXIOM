@@ -1277,24 +1277,23 @@ export default function FounderOpsPage() {
     if (!key) return;
     setReservesHistoryLoading(true);
     setAxmPriceHistoryLoading(true);
-    try {
-      const [histRes, axmHistRes] = await Promise.all([
-        fetch('/api/founder/reserve-snapshot-history?days=7', { headers: { 'x-admin-key': key } }),
-        fetch('/api/capinfra/operator/reserve-source-history?asset=AXM&limit=10', { headers: { 'x-admin-key': key } }),
-      ]);
-      const [json, axmJson] = await Promise.all([histRes.json(), axmHistRes.json()]);
-      if (histRes.ok && json.success && json.history) {
-        setReservesHistory(json.history);
-      }
-      if (axmHistRes.ok && axmJson.success && Array.isArray(axmJson.rows)) {
-        setAxmPriceHistory(axmJson.rows as AxmPriceHistoryRow[]);
-      }
-    } catch {
-      // Non-critical — sparklines and history strip simply remain empty
-    } finally {
-      setReservesHistoryLoading(false);
-      setAxmPriceHistoryLoading(false);
+
+    const [histResult, axmResult] = await Promise.allSettled([
+      fetch('/api/founder/reserve-snapshot-history?days=7', { headers: { 'x-admin-key': key } })
+        .then(r => r.json()),
+      fetch('/api/capinfra/operator/reserve-source-history?asset=AXM&limit=10', { headers: { 'x-admin-key': key } })
+        .then(r => r.json()),
+    ]);
+
+    if (histResult.status === 'fulfilled' && histResult.value?.success && histResult.value.history) {
+      setReservesHistory(histResult.value.history);
     }
+    setReservesHistoryLoading(false);
+
+    if (axmResult.status === 'fulfilled' && axmResult.value?.success && Array.isArray(axmResult.value.rows)) {
+      setAxmPriceHistory(axmResult.value.rows as AxmPriceHistoryRow[]);
+    }
+    setAxmPriceHistoryLoading(false);
   };
 
   const loadReserves = async (key?: string) => {
@@ -4912,13 +4911,15 @@ export default function FounderOpsPage() {
                             })()}
 
                             {/* ── AXM Price Source History ─────────────────── */}
-                            {asset.symbol === 'AXM' && (axmPriceHistoryLoading || axmPriceHistory.length > 0) && (
+                            {asset.symbol === 'AXM' && !!reservesData && (
                               <div className="px-5 py-3 border-b border-dl-border bg-dl-bg">
                                 <p className="font-dl-mono text-[9px] uppercase tracking-widest text-dl-gray mb-2">
                                   Mark Price Source History — Last {axmPriceHistoryLoading && axmPriceHistory.length === 0 ? '…' : axmPriceHistory.length} Allocation Runs
                                 </p>
                                 {axmPriceHistoryLoading && axmPriceHistory.length === 0 ? (
                                   <p className="font-dl-mono text-[9px] text-dl-gray">Loading…</p>
+                                ) : axmPriceHistory.length === 0 ? (
+                                  <p className="font-dl-mono text-[9px] text-dl-gray italic">No source history recorded yet.</p>
                                 ) : (
                                   <div className="flex flex-wrap gap-x-4 gap-y-2">
                                     {axmPriceHistory.map(row => {
