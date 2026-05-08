@@ -1,3 +1,4 @@
+import Stripe from 'stripe';
 import { pool } from '../../server/db';
 import {
   getStripe,
@@ -44,6 +45,41 @@ async function writeAudit(
   }
 }
 
+function mapStripeStatus(status: string): SentinelSubStatus {
+  if (status === 'active') return 'active';
+  if (status === 'past_due') return 'past_due';
+  return 'canceled';
+}
+
+async function upsertSubscriptionFromStripe(
+  walletAddress: string,
+  customerId: string,
+  subscriptionId: string,
+  sub: Stripe.Subscription,
+  stripeAccountId: string,
+  status: SentinelSubStatus,
+): Promise<void> {
+  const periodStart = new Date(sub.current_period_start * 1000);
+  const periodEnd = new Date(sub.current_period_end * 1000);
+  await pool.query(
+    `INSERT INTO sentinel_subscriptions
+       (wallet_address, plan_key, status, stripe_customer_id, stripe_subscription_id,
+        current_period_start, current_period_end, cancel_at_period_end, stripe_account_id,
+        created_at, updated_at)
+     VALUES ($1, 'sentinel_monthly', $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+     ON CONFLICT (wallet_address) DO UPDATE
+       SET status = EXCLUDED.status,
+           stripe_customer_id = EXCLUDED.stripe_customer_id,
+           stripe_subscription_id = EXCLUDED.stripe_subscription_id,
+           current_period_start = EXCLUDED.current_period_start,
+           current_period_end = EXCLUDED.current_period_end,
+           cancel_at_period_end = EXCLUDED.cancel_at_period_end,
+           stripe_account_id = EXCLUDED.stripe_account_id,
+           updated_at = NOW()`,
+    [walletAddress, status, customerId, subscriptionId, periodStart, periodEnd, sub.cancel_at_period_end ?? false, stripeAccountId],
+  );
+}
+
 export const sentinelBilling = {
   async createCheckoutSession(
     walletAddress: string,
@@ -58,11 +94,16 @@ export const sentinelBilling = {
     const stripeAccountId = await currentStripeAccountId();
 
     const existing = await pool.query(
-      `SELECT stripe_customer_id FROM sentinel_subscriptions WHERE wallet_address = $1 LIMIT 1`,
+      `SELECT stripe_customer_id, stripe_account_id FROM sentinel_subscriptions WHERE wallet_address = $1 LIMIT 1`,
       [walletAddress],
     );
 
     let customerId: string | null = existing.rows[0]?.stripe_customer_id ?? null;
+
+    if (customerId && existing.rows[0]?.stripe_account_id) {
+      // Validate the stored customer belongs to the current Stripe account
+      await assertCurrentStripeAccount(existing.rows[0].stripe_account_id);
+    }
 
     if (!customerId) {
       const customer = await stripe.customers.create({
@@ -125,49 +166,24 @@ export const sentinelBilling = {
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as any;
-        const walletAddress: string = session.metadata?.walletAddress;
-        const customerId: string = session.customer;
-        const subscriptionId: string = session.subscription;
-        if (!walletAddress || !subscriptionId) break;
+        const session = event.data.object as Stripe.Checkout.Session;
+        const walletAddress = session.metadata?.walletAddress;
+        const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
+        const subscriptionId = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
+        if (!walletAddress || !subscriptionId || !customerId) break;
 
-        const sub = await stripe.subscriptions.retrieve(subscriptionId) as any;
-        const periodStart = new Date((sub.current_period_start as number) * 1000);
-        const periodEnd = new Date((sub.current_period_end as number) * 1000);
-
-        await pool.query(
-          `INSERT INTO sentinel_subscriptions
-             (wallet_address, plan_key, status, stripe_customer_id, stripe_subscription_id,
-              current_period_start, current_period_end, cancel_at_period_end, stripe_account_id,
-              created_at, updated_at)
-           VALUES ($1, 'sentinel_monthly', 'active', $2, $3, $4, $5, FALSE, $6, NOW(), NOW())
-           ON CONFLICT (wallet_address) DO UPDATE
-             SET status = 'active',
-                 stripe_customer_id = EXCLUDED.stripe_customer_id,
-                 stripe_subscription_id = EXCLUDED.stripe_subscription_id,
-                 current_period_start = EXCLUDED.current_period_start,
-                 current_period_end = EXCLUDED.current_period_end,
-                 cancel_at_period_end = FALSE,
-                 stripe_account_id = EXCLUDED.stripe_account_id,
-                 updated_at = NOW()`,
-          [walletAddress, customerId, subscriptionId, periodStart, periodEnd, stripeAccountId],
-        );
+        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        await upsertSubscriptionFromStripe(walletAddress, customerId, subscriptionId, sub, stripeAccountId, 'active');
         await writeAudit(walletAddress, 'SUBSCRIPTION_ACTIVATED', { subscriptionId, stripeAccountId });
         break;
       }
 
+      case 'customer.subscription.created':
       case 'customer.subscription.updated': {
-        const sub = event.data.object as any;
-        const customerId: string = sub.customer;
-        const subscriptionId: string = sub.id;
-        const periodStart = new Date((sub.current_period_start as number) * 1000);
-        const periodEnd = new Date((sub.current_period_end as number) * 1000);
-        const cancelAtPeriodEnd: boolean = sub.cancel_at_period_end ?? false;
-        const status: string = sub.status;
-
-        const mapped =
-          status === 'active' ? 'active' :
-          status === 'past_due' ? 'past_due' : 'canceled';
+        const sub = event.data.object as Stripe.Subscription;
+        const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+        const subscriptionId = sub.id;
+        const mapped = mapStripeStatus(sub.status);
 
         await pool.query(
           `UPDATE sentinel_subscriptions
@@ -179,7 +195,15 @@ export const sentinelBilling = {
                stripe_account_id = $6,
                updated_at = NOW()
            WHERE stripe_customer_id = $7`,
-          [mapped, subscriptionId, periodStart, periodEnd, cancelAtPeriodEnd, stripeAccountId, customerId],
+          [
+            mapped,
+            subscriptionId,
+            new Date(sub.current_period_start * 1000),
+            new Date(sub.current_period_end * 1000),
+            sub.cancel_at_period_end ?? false,
+            stripeAccountId,
+            customerId,
+          ],
         );
 
         const row = await pool.query(
@@ -187,16 +211,17 @@ export const sentinelBilling = {
           [customerId],
         );
         if (row.rows[0]) {
-          await writeAudit(row.rows[0].wallet_address, 'SUBSCRIPTION_UPDATED', {
-            status: mapped, cancelAtPeriodEnd, stripeAccountId,
+          const action = event.type === 'customer.subscription.created' ? 'SUBSCRIPTION_CREATED' : 'SUBSCRIPTION_UPDATED';
+          await writeAudit(row.rows[0].wallet_address as string, action, {
+            status: mapped, cancelAtPeriodEnd: sub.cancel_at_period_end, stripeAccountId,
           });
         }
         break;
       }
 
       case 'customer.subscription.deleted': {
-        const sub = event.data.object as any;
-        const customerId: string = sub.customer;
+        const sub = event.data.object as Stripe.Subscription;
+        const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
 
         await pool.query(
           `UPDATE sentinel_subscriptions
@@ -210,20 +235,17 @@ export const sentinelBilling = {
           [customerId],
         );
         if (row.rows[0]) {
-          await writeAudit(row.rows[0].wallet_address, 'SUBSCRIPTION_CANCELED', { stripeAccountId });
+          await writeAudit(row.rows[0].wallet_address as string, 'SUBSCRIPTION_CANCELED', { stripeAccountId });
         }
         break;
       }
 
       case 'invoice.paid': {
-        const invoice = event.data.object as any;
-        const subscriptionId: string = invoice.subscription;
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id;
         if (!subscriptionId) break;
 
-        const sub = await stripe.subscriptions.retrieve(subscriptionId) as any;
-        const periodStart = new Date((sub.current_period_start as number) * 1000);
-        const periodEnd = new Date((sub.current_period_end as number) * 1000);
-
+        const sub = await stripe.subscriptions.retrieve(subscriptionId);
         await pool.query(
           `UPDATE sentinel_subscriptions
            SET status = 'active',
@@ -231,14 +253,14 @@ export const sentinelBilling = {
                current_period_end = $2,
                updated_at = NOW()
            WHERE stripe_subscription_id = $3`,
-          [periodStart, periodEnd, subscriptionId],
+          [new Date(sub.current_period_start * 1000), new Date(sub.current_period_end * 1000), subscriptionId],
         );
         break;
       }
 
       case 'invoice.payment_failed': {
-        const invoice = event.data.object as any;
-        const subscriptionId: string = invoice.subscription;
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id;
         if (!subscriptionId) break;
 
         await pool.query(
@@ -253,7 +275,7 @@ export const sentinelBilling = {
           [subscriptionId],
         );
         if (row.rows[0]) {
-          await writeAudit(row.rows[0].wallet_address, 'PAYMENT_FAILED', { subscriptionId, stripeAccountId });
+          await writeAudit(row.rows[0].wallet_address as string, 'PAYMENT_FAILED', { subscriptionId, stripeAccountId });
         }
         break;
       }
@@ -281,17 +303,17 @@ export const sentinelBilling = {
     }
 
     const row = result.rows[0];
-    const status = (['active', 'past_due', 'canceled'].includes(row.status)
+    const status = (['active', 'past_due', 'canceled'].includes(row.status as string)
       ? row.status
       : 'none') as SentinelSubStatus;
 
     return {
       status,
-      currentPeriodStart: row.current_period_start?.toISOString() ?? null,
-      currentPeriodEnd: row.current_period_end?.toISOString() ?? null,
-      cancelAtPeriodEnd: row.cancel_at_period_end ?? false,
-      stripeCustomerId: row.stripe_customer_id ?? null,
-      stripeSubscriptionId: row.stripe_subscription_id ?? null,
+      currentPeriodStart: (row.current_period_start as Date | null)?.toISOString() ?? null,
+      currentPeriodEnd: (row.current_period_end as Date | null)?.toISOString() ?? null,
+      cancelAtPeriodEnd: (row.cancel_at_period_end as boolean) ?? false,
+      stripeCustomerId: (row.stripe_customer_id as string | null) ?? null,
+      stripeSubscriptionId: (row.stripe_subscription_id as string | null) ?? null,
     };
   },
 
@@ -318,9 +340,9 @@ export const sentinelBilling = {
     }
 
     try {
-      await assertCurrentStripeAccount(row.stripe_account_id);
+      await assertCurrentStripeAccount(row.stripe_account_id as string);
       const stripe = await getStripe();
-      await stripe.subscriptions.update(row.stripe_subscription_id, { cancel_at_period_end: true });
+      await stripe.subscriptions.update(row.stripe_subscription_id as string, { cancel_at_period_end: true });
 
       await pool.query(
         `UPDATE sentinel_subscriptions
@@ -334,7 +356,7 @@ export const sentinelBilling = {
       });
 
       return { ok: true };
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof LegacyStripeAccountError) {
         return { ok: false, reason: 'legacy_stripe_account' };
       }

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { sentinelBilling, LegacyStripeAccountError } from '../../../../lib/sentinel/billing';
+import { requireWalletOwnership } from '../../../../lib/sentinel/walletAuth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -7,6 +8,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { walletAddress, email } = req.body as { walletAddress?: string; email?: string };
   if (!walletAddress || !/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
     return res.status(400).json({ error: 'Valid walletAddress required' });
+  }
+
+  const authCheck = await requireWalletOwnership(req, walletAddress);
+  if (!authCheck.ok) {
+    return res.status(authCheck.status).json({ error: authCheck.error });
   }
 
   const origin = req.headers.origin || `https://${req.headers.host}`;
@@ -21,11 +27,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       cancelUrl,
     );
     return res.status(200).json({ url });
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof LegacyStripeAccountError) {
       return res.status(409).json({ error: 'legacy_stripe_account', message: err.message });
     }
+    const message = err instanceof Error ? err.message : 'Internal error';
     console.error('[sentinel/subscription/checkout]', err);
-    return res.status(500).json({ error: err.message || 'Internal error' });
+    return res.status(500).json({ error: message });
   }
 }

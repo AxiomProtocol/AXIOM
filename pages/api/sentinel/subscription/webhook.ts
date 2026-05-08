@@ -24,11 +24,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const rawBody = await readRawBody(req);
     await sentinelBilling.handleWebhook(rawBody.toString('utf8'), signature);
     return res.status(200).json({ received: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Internal error';
     console.error('[sentinel/subscription/webhook]', err);
-    if (err.message?.includes('No signatures found') || err.message?.includes('webhook')) {
+    if (message.includes('No signatures found') || message.includes('webhook')) {
       return res.status(400).json({ error: 'Webhook signature invalid' });
     }
-    return res.status(500).json({ error: err.message || 'Internal error' });
+    return res.status(500).json({ error: message });
   }
 }
