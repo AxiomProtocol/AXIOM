@@ -393,7 +393,7 @@ export default function ReservePerformance() {
       {!loading && data && (
         <>
           {/* ── Summary metrics ─────────────────────────────────────────── */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
             <Metric
               label="Total Reserve Value"
               value={`$${data.totals.totalValueUsd}`}
@@ -408,12 +408,17 @@ export default function ReservePerformance() {
             <Metric
               label="Stable Positions"
               value={`$${stableTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-              sub="USDC reserves + AXUSD treasury holding"
+              sub="USDC reserves + AXUSD holdings (Treasury Revenue + EVK vault)"
+            />
+            <Metric
+              label="AXUSD Circulating"
+              value={data.totals.axusdCirculatingSupply ? `$${data.totals.axusdCirculatingSupply}` : '—'}
+              sub="Total AXUSD on-chain supply (totalSupply)"
             />
             <Metric
               label="Coverage Ratio"
               value={data.totals.coverageRatioPct ? `${data.totals.coverageRatioPct}%` : '—'}
-              sub={data.totals.coverageNote}
+              sub={data.totals.coverageNote || 'Hard-asset backing (PAXG + USDC) / AXUSD circulating supply'}
             />
           </div>
 
@@ -464,12 +469,12 @@ export default function ReservePerformance() {
               <div>
                 <p className="font-dl-mono text-xs uppercase tracking-wide mb-2">Balance Sources</p>
                 <ul className="space-y-1.5">
-                  <li><span className="font-dl-mono text-dl-navy">ETH</span> — Deployer EOA eth_getBalance on Arbitrum One</li>
-                  <li><span className="font-dl-mono text-dl-navy">PAXG</span> — BitGoTreasuryExtension.getReserveAssetBalances() (custodian DB)</li>
-                  <li><span className="font-dl-mono text-dl-navy">AXAU</span> — AXAUFulfillmentService.getVaultBuffer() (deployer buffer)</li>
+                  <li><span className="font-dl-mono text-dl-navy">ETH</span> — Deployer EOA eth_getBalance on Arbitrum One · <em>Gas reserve — not AXUSD backing</em></li>
+                  <li><span className="font-dl-mono text-dl-navy">PAXG</span> — BitGoTreasuryExtension.getReserveAssetBalances() (custodian DB) · vault buffer fallback</li>
+                  <li><span className="font-dl-mono text-dl-navy">AXAU</span> — AXAUFulfillmentService.getVaultBuffer() (deployer buffer) · <em>Protocol instrument — not in coverage numerator</em></li>
                   <li><span className="font-dl-mono text-dl-navy">AXM</span> — Treasury Revenue + Staking Emissions ERC-20 balanceOf</li>
                   <li><span className="font-dl-mono text-dl-navy">USDC</span> — Canonical PSM + Legacy PSM + Backstop + Deployer EOA (4 sources)</li>
-                  <li><span className="font-dl-mono text-dl-navy">AXUSD</span> — Treasury Revenue contract ERC-20 balanceOf</li>
+                  <li><span className="font-dl-mono text-dl-navy">AXUSD</span> — Treasury Revenue + Euler EVK Open Market Vault (eAXUSD-6) ERC-20 balanceOf · circulating supply from totalSupply()</li>
                 </ul>
               </div>
             </div>

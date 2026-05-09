@@ -10,7 +10,7 @@
  *   AXAU  — AXAUFulfillmentService.getVaultBuffer() (fulfillment buffer, Chainlink XAU price)
  *   AXM   — TREASURY_REVENUE + STAKING_EMISSIONS ERC-20 balanceOf on Arbitrum One
  *   USDC  — canonical PSM + legacy PSM + backstop vault + deployer EOA (4 sources)
- *   AXUSD — TREASURY_REVENUE ERC-20 balanceOf on Arbitrum One
+ *   AXUSD — TREASURY_REVENUE + Euler EVK Open Market Vault (eAXUSD-6) ERC-20 balanceOf
  *
  * Price sources:
  *   ETH   — CoinGecko free API (ethereum/usd + 24h change)
@@ -26,7 +26,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { CORE_CONTRACTS, AXUSD_GENIUS_CONTRACTS, STABLECOINS } from '../../../shared/contracts';
+import { CORE_CONTRACTS, AXUSD_GENIUS_CONTRACTS, STABLECOINS, EULER_LENDING_CONTRACTS } from '../../../shared/contracts';
 import { ERC3643_CONTRACTS } from '../../../shared/contracts-3643';
 import { CANONICAL_PSM, EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, isEulerSwapDeployed } from '../../../src/config/activeContracts.generated';
 import { AXAU_ADDRESSES } from '../../../lib/services/AXAUContractService';
@@ -47,7 +47,10 @@ const ARBITRUM_RPC  = ALCHEMY_KEY
 const ZERO          = '0x0000000000000000000000000000000000000000';
 const AXM_LC        = AXM_ADDRESS.toLowerCase();
 
-const ERC20_ABI = ['function balanceOf(address) view returns (uint256)'];
+const ERC20_ABI = [
+  'function balanceOf(address) view returns (uint256)',
+  'function totalSupply() view returns (uint256)',
+];
 const POOL_ABI  = [
   'function getReserves() view returns (uint112,uint112,uint32)',
   'function getAssets() view returns (address,address)',
@@ -184,6 +187,7 @@ export interface ReserveAssetsResponse {
     coverageRatio: string | null;
     coverageRatioPct: string | null;
     coverageNote: string;
+    axusdCirculatingSupply: string;
   };
   deployer: string;
   timestamp: string;
@@ -196,7 +200,7 @@ const EMPTY_RESPONSE: Omit<ReserveAssetsResponse, 'timestamp' | 'error'> = {
   success: false,
   priceMov: [],
   stable: [],
-  totals: { totalValueUsd: '0.00', coverageRatio: null, coverageRatioPct: null, coverageNote: '' },
+  totals: { totalValueUsd: '0.00', coverageRatio: null, coverageRatioPct: null, coverageNote: '', axusdCirculatingSupply: '0.00' },
   deployer: DEPLOYER_ADDRESS,
 };
 
@@ -230,6 +234,8 @@ export default async function handler(
       axmTreasuryRaw,
       axmStakingRaw,
       axusdTreasuryRaw,
+      axusdEvkRaw,
+      axusdTotalSupplyRaw,
       usdcCanonicalRaw,
       usdcLegacyRaw,
       usdcBackstopRaw,
@@ -246,6 +252,8 @@ export default async function handler(
       axm.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),
       axm.balanceOf(CORE_CONTRACTS.STAKING_EMISSIONS).catch(() => 0n),
       axusd.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),
+      axusd.balanceOf(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT).catch(() => 0n),
+      axusd.totalSupply().catch(() => 0n),
       usdc.balanceOf(CANONICAL_PSM).catch(() => 0n),
       usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.PSM).catch(() => 0n),
       usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC).catch(() => 0n),
@@ -310,16 +318,26 @@ export default async function handler(
     const usdcTotal     = usdcCanonical + usdcLegacy + usdcBackstop + usdcDeployer;
 
     // ── AXUSD ─────────────────────────────────────────────────────────────
-    const axusdTreasury = Number(ethers.formatUnits(axusdTreasuryRaw as bigint, 18));
+    // Phase 1: include EVK Open Market Vault balance alongside Treasury Revenue.
+    const axusdTreasury        = Number(ethers.formatUnits(axusdTreasuryRaw as bigint, 18));
+    const axusdEvk             = Number(ethers.formatUnits(axusdEvkRaw as bigint, 18));
+    const axusdTotal           = axusdTreasury + axusdEvk;
+    // Phase 2: use circulating supply (totalSupply) as the coverage denominator,
+    // not just the Treasury Revenue wallet balance.
+    const axusdCirculatingSupply = Number(ethers.formatUnits(axusdTotalSupplyRaw as bigint, 18));
 
     // ── Totals ────────────────────────────────────────────────────────────
-    const knownValues    = [ethValue, paxgValue, axauValue, axmValue, usdcTotal, axusdTreasury]
+    const knownValues    = [ethValue, paxgValue, axauValue, axmValue, usdcTotal, axusdTotal]
       .filter((v): v is number => v !== null);
     const totalValueUsd  = knownValues.reduce((a, b) => a + b, 0);
 
-    const hardAssets     = [ethValue, paxgValue, axauValue, usdcTotal].filter((v): v is number => v !== null);
-    const totalHard      = hardAssets.reduce((a, b) => a + b, 0);
-    const coverageRatio  = axusdTreasury > 0 ? totalHard / axusdTreasury : null;
+    // Phase 3: coverage numerator = PAXG + USDC only.
+    //   ETH is a gas reserve (operational), not AXUSD backing.
+    //   AXAU is a protocol instrument backed partly by PAXG already counted above.
+    const hardBackingAssets = [paxgValue, usdcTotal].filter((v): v is number => v !== null);
+    const totalHard         = hardBackingAssets.reduce((a, b) => a + b, 0);
+    // Phase 2: denominator is circulating supply, not Treasury Revenue balance.
+    const coverageRatio  = axusdCirculatingSupply > 0 ? totalHard / axusdCirculatingSupply : null;
 
     // ── Build response ────────────────────────────────────────────────────
     const priceMov: PriceMovingAsset[] = [
@@ -426,15 +444,21 @@ export default async function handler(
       },
       {
         symbol:       'AXUSD',
-        label:        'Axiom USD — Treasury Holding',
-        totalBalance: fmtBal(axusdTreasury, 2),
-        totalValueUsd: fmtUsd(axusdTreasury),
+        label:        'Axiom USD — Protocol Holdings',
+        totalBalance: fmtBal(axusdTotal, 2),
+        totalValueUsd: fmtUsd(axusdTotal),
         locationBreakdown: [
           {
             label:       'Treasury Revenue Contract',
             contract:    CORE_CONTRACTS.TREASURY_REVENUE,
             balance:     fmtBal(axusdTreasury, 6),
             arbiscanUrl: arbiUrl(CORE_CONTRACTS.TREASURY_REVENUE),
+          },
+          {
+            label:       'Euler EVK Open Market Vault (eAXUSD-6)',
+            contract:    EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT,
+            balance:     fmtBal(axusdEvk, 6),
+            arbiscanUrl: arbiUrl(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT),
           },
         ],
       },
@@ -446,10 +470,11 @@ export default async function handler(
       priceMov,
       stable,
       totals: {
-        totalValueUsd:    fmtUsd(totalValueUsd),
-        coverageRatio:    coverageRatio !== null ? coverageRatio.toFixed(4) : null,
-        coverageRatioPct: coverageRatio !== null ? (coverageRatio * 100).toFixed(2) : null,
-        coverageNote:     'Hard-asset collateral (ETH + PAXG + AXAU + USDC) / AXUSD treasury holding',
+        totalValueUsd:           fmtUsd(totalValueUsd),
+        coverageRatio:           coverageRatio !== null ? coverageRatio.toFixed(4) : null,
+        coverageRatioPct:        coverageRatio !== null ? (coverageRatio * 100).toFixed(2) : null,
+        coverageNote:            'Hard-asset backing (PAXG + USDC) / AXUSD circulating supply. ETH is an operational gas reserve and is not included. AXAU is a protocol instrument and is not double-counted.',
+        axusdCirculatingSupply:  fmtUsd(axusdCirculatingSupply),
       },
       deployer:  DEPLOYER_ADDRESS,
       timestamp: new Date().toISOString(),
