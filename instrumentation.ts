@@ -105,7 +105,7 @@ export async function register() {
     const isServerlessRuntime =
       process.env.VERCEL === '1' ||
       !!process.env.VERCEL_ENV ||
-      process.env.AWS_EXECUTION_ENV?.startsWith('AWS_Lambda') === true;
+      process.env.AWS_EXECUTION_ENV?.startsWith('AWS_Lambda_') === true;
     const schemaBootstrapFlag = process.env.INSTRUMENTATION_BOOTSTRAP_SCHEMA;
     const shouldBootstrapSchema =
       schemaBootstrapFlag === '1' ||
