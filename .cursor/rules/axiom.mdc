@@ -1,0 +1,116 @@
+---
+description: Axiom Protocol root app migration controls
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Axiom Protocol root app migration controls
+
+These rules apply to migration work for the root Next.js application. Treat the
+following documents as the source of truth:
+
+- `docs/migration-root-app-scope.md`
+- `docs/operational-contract.md`
+- `docs/replit-dependency-audit.md`
+
+## Source of truth
+
+- GitHub is the source of truth for repository state, pull requests, and
+  deployment history.
+- Do not rely on local assumptions when GitHub state disagrees.
+- Keep PR descriptions aligned with the actual branch diff and validation.
+
+## Scope lock
+
+In scope:
+
+- the root Next.js app
+- root app runtime files
+- root app deployment configuration
+- root app health endpoints
+- root app environment assumptions
+- root app Replit dependency cleanup
+
+Out of scope unless explicitly requested:
+
+- `client/`
+- `recruit-standalone/`
+- `universe-blockchain/`
+- `download/`
+- `project/`
+- `_archive/`, except for artifacts already classified as confirmed unused and
+  safe to remove in `docs/replit-dependency-audit.md`
+- `.agents/`
+- `attached_assets/`
+- contracts tooling unrelated to root app runtime
+
+## Change discipline
+
+- Prefer minimal diffs.
+- Extend or unify existing modules instead of duplicating behavior.
+- Do not casually rename routes, environment variables, contracts, schemas, or
+  core services.
+- Do not broaden a cleanup beyond the classification in the migration docs.
+- If a file is classified as "used and needs replacement" or "uncertain,
+  requires manual review", do not edit it without explicit task scope.
+
+## Secrets and environment handling
+
+- Do not expose, alter, invent, or rotate secrets.
+- Do not add placeholder secret values.
+- Do not change secrets handling behavior unless the user explicitly requests
+  that specific migration.
+- Treat auth, compliance, treasury, reserve, settlement, oracle, disclosure,
+  banking, and webhook code as high risk. Flag the risk before editing.
+
+## Vercel production behavior
+
+- Preserve Vercel as the primary near-term migration target.
+- Do not rely on `server.js` for Vercel production behavior.
+- Preserve native Next.js health behavior for:
+  - `/api/health`
+  - `/api/healthz`
+  - `/health`
+  - `/_health`
+- Preserve `vercel.json` install/build expectations unless the operational
+  contract is updated in the same PR.
+- Do not remove Vercel cron behavior without replacing it or documenting the
+  migration target.
+
+## Cloud Run / Docker behavior
+
+- `server.js` remains part of the Docker/Cloud Run contract while the
+  `Dockerfile` starts `node server.js`.
+- Changes that affect `server.js`, `Dockerfile`, health routes, or `PORT`
+  behavior must call out Docker/Cloud Run risk separately from Vercel risk.
+
+## Required validation
+
+No PR is mergeable unless both commands pass:
+
+```bash
+npm ci
+npm run build
+```
+
+Additional targeted checks are required when changing:
+
+- health endpoints or rewrites
+- deployment config
+- migrations/database code
+- auth/operator/admin code
+- webhook handlers
+- email/notification integrations
+- Replit connector or domain fallback behavior
+
+## Reporting requirements
+
+For every change, report:
+
+- files changed
+- why each file changed
+- risk level
+- validation commands and results
+- rollback path
+

@@ -1,7 +1,6 @@
 {
   "name": "workspace",
   "version": "1.0.0",
-  "main": "unified-platform.js",
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 5000",
     "dev:e2e": "NEXT_PUBLIC_E2E_WAGMI=1 next dev -H 0.0.0.0 -p 5001",
@@ -10,7 +9,6 @@
     "db:studio": "drizzle-kit studio",
     "lint": "next lint",
     "build": "next build",
-    "build:replit": "next build",
     "start": "next start",
     "snapshot": "node scripts/saveReserveSnapshot.js",
     "cron:refresh-solvency": "tsx scripts/refresh-solvency.ts",
@@ -55,8 +53,6 @@
     "nft:deploy": "hardhat run scripts/nft/deploy-nft.ts --network arbitrum",
     "nft:compile": "hardhat compile",
     "capital-bridge:deploy:fork": "hardhat run scripts/capital-bridge/01-deploy-layer5e.ts --config hardhat.config.capital-bridge.ts --network hardhat",
-    "legacy-start": "node unified-platform.js",
-    "legacy-dev": "node unified-platform.js",
     "integrate:stage1": "hardhat run integration/scripts/stage1-integration.ts --network arbitrum",
     "integrate:stage1:fork": "hardhat run integration/scripts/stage1-integration.ts --network hardhat",
     "integrate:test:stage1": "hardhat test integration/tests/stage1.test.ts --network hardhat",
@@ -196,7 +192,6 @@
     "@rainbow-me/rainbowkit": "^2.1.7",
     "@reown/appkit": "^1.8.19",
     "@reown/appkit-adapter-wagmi": "^1.8.19",
-    "@replit/database": "^3.0.1",
     "@rollup/rollup-linux-x64-gnu": "^4.59.0",
     "@safe-global/api-kit": "^4.0.1",
     "@safe-global/protocol-kit": "^6.1.2",
