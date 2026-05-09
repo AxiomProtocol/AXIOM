@@ -98,6 +98,27 @@ export async function register() {
     };
     console.log('[instrumentation] Startup state:', JSON.stringify(startupBanner));
 
+    // ── Serverless blast-radius reduction ────────────────────────────────────
+    // Heavy schema bootstrap is disabled by default on serverless cold-starts.
+    // Override with INSTRUMENTATION_BOOTSTRAP_SCHEMA=1 when an environment
+    // intentionally depends on startup-time DDL.
+    const isServerlessRuntime =
+      !!process.env.VERCEL_ENV ||
+      process.env.AWS_EXECUTION_ENV?.startsWith('AWS_Lambda_') ||
+      !!process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      !!process.env.LAMBDA_TASK_ROOT;
+    const schemaBootstrapEnv = process.env.INSTRUMENTATION_BOOTSTRAP_SCHEMA;
+    const shouldBootstrapSchema =
+      schemaBootstrapEnv === '1' ||
+      (schemaBootstrapEnv !== '0' && !isServerlessRuntime);
+
+    if (!shouldBootstrapSchema) {
+      console.log(
+        '[instrumentation] Skipping schema bootstrap in serverless runtime (set INSTRUMENTATION_BOOTSTRAP_SCHEMA=1 to force)',
+      );
+      return;
+    }
+
     try {
       const { Pool } = await import('pg');
 
