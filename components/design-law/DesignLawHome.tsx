@@ -108,6 +108,63 @@ const MICRO_STRIP: Array<{ key: string; label: string; sub: string }> = [
   { key: 'verify',       label: 'Verify',        sub: 'Inspect the system first' },
 ];
 
+const SITE_URL = 'https://axiomprotocol.app';
+
+const HOME_SEO = {
+  title: 'Axiom Protocol | Verified Financial Infrastructure',
+  description:
+    'Axiom Protocol connects on-chain settlement, digital dollar systems, reserve access, capital intelligence, property analysis, and public proof tools in one reviewable operating framework.',
+  url: SITE_URL,
+};
+
+const HOMEPAGE_STRUCTURED_DATA = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${SITE_URL}/#organization`,
+      name: 'Axiom Protocol',
+      alternateName: 'AXIOM',
+      url: SITE_URL,
+      logo: `${SITE_URL}/images/axiom-token-fallback.svg`,
+      description: HOME_SEO.description,
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
+      name: 'Axiom Protocol',
+      url: SITE_URL,
+      publisher: { '@id': `${SITE_URL}/#organization` },
+      inLanguage: 'en-US',
+    },
+    {
+      '@type': 'WebPage',
+      '@id': `${SITE_URL}/#webpage`,
+      name: HOME_SEO.title,
+      url: SITE_URL,
+      description: HOME_SEO.description,
+      isPartOf: { '@id': `${SITE_URL}/#website` },
+      about: { '@id': `${SITE_URL}/#organization` },
+      inLanguage: 'en-US',
+    },
+    {
+      '@type': 'ItemList',
+      '@id': `${SITE_URL}/#primary-navigation`,
+      name: 'Primary Axiom Protocol entry points',
+      itemListElement: [
+        { '@type': 'SiteNavigationElement', position: 1, name: 'Infrastructure', url: `${SITE_URL}/infrastructure` },
+        { '@type': 'SiteNavigationElement', position: 2, name: 'Proof of Execution', url: `${SITE_URL}/proof-of-execution` },
+        { '@type': 'SiteNavigationElement', position: 3, name: 'Solvency Console', url: `${SITE_URL}/solvency` },
+        { '@type': 'SiteNavigationElement', position: 4, name: 'AXUSD', url: `${SITE_URL}/axusd-3643` },
+        { '@type': 'SiteNavigationElement', position: 5, name: 'Reserve Access', url: `${SITE_URL}/axau-early-access` },
+        { '@type': 'SiteNavigationElement', position: 6, name: 'Capital Intelligence', url: `${SITE_URL}/mirdt` },
+        { '@type': 'SiteNavigationElement', position: 7, name: 'Property Analysis', url: `${SITE_URL}/property` },
+        { '@type': 'SiteNavigationElement', position: 8, name: 'Institutional Disclosure', url: `${SITE_URL}/disclosure` },
+      ],
+    },
+  ],
+};
+
 const CATEGORY_PILLARS: Array<{ icon: React.ComponentType<{ className?: string }>; title: string; body: string }> = [
   { icon: Banknote,    title: 'Banking + On-Chain',          body: 'On-chain settlement, reserve access, and digital dollar systems — integrated banking infrastructure under provider transition.' },
   { icon: Activity,    title: 'Intelligence + Authorization', body: 'MIRDT regime detection and Sentinel capital authorization operate in advisory mode — readable before capital moves.' },
@@ -211,8 +268,22 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
   return (
     <>
       <Head>
-        <title>Axiom Protocol | Verified Financial Infrastructure</title>
-        <meta name="description" content={truth.hero.subheadline} />
+        <title>{HOME_SEO.title}</title>
+        <meta name="description" content={HOME_SEO.description} />
+        <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+        <link rel="canonical" href={HOME_SEO.url} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Axiom Protocol" />
+        <meta property="og:title" content={HOME_SEO.title} />
+        <meta property="og:description" content={HOME_SEO.description} />
+        <meta property="og:url" content={HOME_SEO.url} />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={HOME_SEO.title} />
+        <meta name="twitter:description" content={HOME_SEO.description} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(HOMEPAGE_STRUCTURED_DATA) }}
+        />
         {/* Subtle "breathing" pulse for LIVE indicators — institutional,
             low opacity, slow. Scoped via [data-dl-pulse]. */}
         <style>{`
