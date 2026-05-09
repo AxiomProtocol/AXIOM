@@ -61,7 +61,7 @@ async function fetchEulerSwapLiquidity(provider: ethers.JsonRpcProvider, deploye
     totalValueUsd: 0,
     note: 'Pool pending on-chain deployment.',
   };
-  if (!deployed || EULER_SWAP_AXUSD_USDC_POOL_ADDRESS === ZERO) return empty;
+  if (!deployed || (EULER_SWAP_AXUSD_USDC_POOL_ADDRESS as string) === ZERO) return empty;
 
   try {
     const pool = new ethers.Contract(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULERSWAP_POOL_ABI, provider);

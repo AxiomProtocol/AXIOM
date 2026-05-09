@@ -108,10 +108,10 @@ export default createRouter([
             // Gate: ≥10 SUBMITTED instructions must exist for this asset.
             // (Simplified: count all ACH SUBMITTED globally across all assets.)
             const { sql } = await import('drizzle-orm');
-            const [countRow] = await db.execute<{ cnt: string }>(
+            const [countRow] = (await db.execute<{ cnt: string }>(
               sql`SELECT COUNT(*) as cnt FROM cap_settlement_instructions
                   WHERE settlement_type = 'ACH' AND status = 'SUBMITTED'`,
-            );
+            )) as unknown as { cnt: string }[];
             const submitted = Number(countRow?.cnt ?? 0);
             if (submitted < 10) {
               throw new ValidationError(
@@ -129,11 +129,11 @@ export default createRouter([
           if (fromMode === 'LIVE_CANARY' && toMode === 'LIVE') {
             // Gate: check that at least one completed reconciliation run exists.
             const { sql } = await import('drizzle-orm');
-            const [lastRecon] = await db.execute<{ id: string }>(
+            const [lastRecon] = (await db.execute<{ id: string }>(
               sql`SELECT id FROM cap_reconciliation_runs
                   WHERE adapter_key = 'ACH' AND status = 'COMPLETED'
                   ORDER BY created_at DESC LIMIT 1`,
-            );
+            )) as unknown as { id: string }[];
             if (!lastRecon) {
               throw new ValidationError('LIVE_CANARY→LIVE gate: at least one COMPLETED reconciliation run is required');
             }

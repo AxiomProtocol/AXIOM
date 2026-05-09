@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         account_id: AXIOM_ACCOUNT_ID,
         name,
         inbound_ach: { debit_status: allow_ach_debits ? 'allowed' : 'blocked' },
-        inbound_checks: { status: 'not_allowed' },
+        inbound_checks: { status: 'not_allowed' as any },
       });
       return res.status(200).json({
         success: true,

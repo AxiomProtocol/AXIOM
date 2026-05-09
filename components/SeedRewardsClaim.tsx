@@ -63,7 +63,7 @@ export default function SeedRewardsClaim() {
     setError(null);
 
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(window.ethereum as any);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(
         V2_SOVEREIGN_BANKING_CONTRACTS.SEED,

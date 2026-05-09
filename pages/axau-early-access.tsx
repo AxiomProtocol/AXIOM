@@ -667,10 +667,10 @@ export default function AxauAccessPage() {
                   {COMPARE_ROWS.map((row, i) => (
                     <tr key={row.label} style={{ background: i % 2 === 0 ? C.bg : C.bgAlt, borderBottom: `1px solid ${C.border}` }}>
                       <td style={{ padding: '11px 18px', fontFamily: body, fontSize: 12, color: C.text, borderRight: `1px solid ${C.border}` }}>{row.label}</td>
-                      <td style={{ padding: '11px 14px', textAlign: 'center', background: `${C.gold}08`, borderRight: `1px solid ${C.border}` }}><Check yes={row.axau} /></td>
-                      <td style={{ padding: '11px 14px', textAlign: 'center', borderRight: `1px solid ${C.border}` }}><Check yes={row.paxg} /></td>
-                      <td style={{ padding: '11px 14px', textAlign: 'center', borderRight: `1px solid ${C.border}` }}><Check yes={row.etf} /></td>
-                      <td style={{ padding: '11px 14px', textAlign: 'center' }}><Check yes={row.physical} /></td>
+                      <td style={{ padding: '11px 14px', textAlign: 'center', background: `${C.gold}08`, borderRight: `1px solid ${C.border}` }}><Check yes={row.axau as boolean | 'P'} /></td>
+                      <td style={{ padding: '11px 14px', textAlign: 'center', borderRight: `1px solid ${C.border}` }}><Check yes={row.paxg as boolean | 'P'} /></td>
+                      <td style={{ padding: '11px 14px', textAlign: 'center', borderRight: `1px solid ${C.border}` }}><Check yes={row.etf as boolean | 'P'} /></td>
+                      <td style={{ padding: '11px 14px', textAlign: 'center' }}><Check yes={row.physical as boolean | 'P'} /></td>
                     </tr>
                   ))}
                 </tbody>

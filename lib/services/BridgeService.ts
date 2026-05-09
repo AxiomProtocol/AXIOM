@@ -108,7 +108,7 @@ class BridgeService {
     const fmt = (cents: number) =>
       new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
 
-    let depositInfo: BridgeQuoteResult['quote']['depositInfo'] | undefined;
+    let depositInfo: { routingNumber: string; accountNumber: string; bankName: string; accountName: string; memo: string } | undefined;
 
     if (direction === 'fiat_to_crypto') {
       try {
@@ -174,7 +174,7 @@ class BridgeService {
           account_id: AXIOM_ACCOUNT_ID,
           name: `Bridge Deposits - ${cryptoAsset}`,
           inbound_ach: { debit_status: 'blocked' },
-          inbound_checks: { status: 'not_allowed' },
+          inbound_checks: { status: 'not_allowed' as any },
         });
         accountNumber = created.account_number;
         routingNumber = created.routing_number;

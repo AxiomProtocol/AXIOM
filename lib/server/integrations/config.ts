@@ -4,6 +4,9 @@ const IntegrationConfigSchema = z.object({
   bitgoApiBaseUrl: z.string().url().default('https://app.bitgo-test.com/api/v2'),
   bitgoAccessToken: z.string().optional(),
   bridgeFeePercent: z.number().min(0).max(10).default(0.5),
+  mode: z.enum(['live', 'sandbox']).default('sandbox'),
+  unitApiBaseUrl: z.string().default('https://api.s.unit.sh'),
+  unitApiToken: z.string().optional(),
 });
 
 export type IntegrationConfig = z.infer<typeof IntegrationConfigSchema>;
@@ -17,6 +20,9 @@ export function getIntegrationConfig(): IntegrationConfig {
     bitgoApiBaseUrl: process.env.BITGO_API_URL || 'https://app.bitgo-test.com/api/v2',
     bitgoAccessToken: process.env.BITGO_ACCESS_TOKEN,
     bridgeFeePercent: process.env.BRIDGE_FEE_PERCENT ? Number(process.env.BRIDGE_FEE_PERCENT) : 0.5,
+    mode: process.env.BITGO_API_URL?.includes('bitgo.com') && !process.env.BITGO_API_URL?.includes('test') ? 'live' : 'sandbox',
+    unitApiBaseUrl: process.env.UNIT_API_URL || 'https://api.s.unit.sh',
+    unitApiToken: process.env.UNIT_API_TOKEN,
   });
 
   cachedConfig = parsed;

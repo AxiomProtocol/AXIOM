@@ -148,7 +148,7 @@ export class MultiChainRegistryService {
       configuredChains: countByStatus('configured'),
       plannedChains: countByStatus('planned'),
       researchingChains: countByStatus('researching'),
-      coreExecutionLayer: core ? toChainSummary(core) : null,
+      coreExecutionLayer: (core ? toChainSummary(core) : null) as any,
       expansionTargets: expansion.map(toChainSummary),
       featureFlags: getAllExpansionFlags(),
       layerMap: {

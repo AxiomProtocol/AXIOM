@@ -172,7 +172,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (upgraded) {
       const currentIndex = TIER_ORDER.indexOf(currentTier);
-      newTier = TIER_ORDER[Math.min(currentIndex + 1, TIER_ORDER.length - 1)];
+      newTier = TIER_ORDER[Math.min(currentIndex + 1, TIER_ORDER.length - 1)] as typeof newTier;
 
       newSeed = ethers.keccak256(
         ethers.solidityPacked(['bytes32', 'bytes32'], [tokenRow.trait_seed, burnTxHash])

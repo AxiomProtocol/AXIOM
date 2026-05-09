@@ -171,17 +171,17 @@ export const AXM_EVK_VAULT_ADDRESS = '0x8e28ffa89d168599156004db4f4d12c2af7c250e
 
 /** Returns true when the EulerSwap AXUSD/USDC pool has been deployed */
 export function isEulerSwapDeployed(): boolean {
-  return EULER_SWAP_AXUSD_USDC_POOL_ADDRESS !== '0x0000000000000000000000000000000000000000';
+  return (EULER_SWAP_AXUSD_USDC_POOL_ADDRESS as string) !== '0x0000000000000000000000000000000000000000';
 }
 
 /** Returns true when the AXM/AXUSD EulerSwap pool has been deployed */
 export function isAXMAXUSDPoolDeployed(): boolean {
-  return EULER_SWAP_AXUSD_AXM_POOL_ADDRESS !== '0x0000000000000000000000000000000000000000';
+  return (EULER_SWAP_AXUSD_AXM_POOL_ADDRESS as string) !== '0x0000000000000000000000000000000000000000';
 }
 
 /** Returns true when the AXM EVK vault has been deployed */
 export function isAXMEVKVaultDeployed(): boolean {
-  return AXM_EVK_VAULT_ADDRESS !== '0x0000000000000000000000000000000000000000';
+  return (AXM_EVK_VAULT_ADDRESS as string) !== '0x0000000000000000000000000000000000000000';
 }
 
 export const LEGACY_ADDRESSES = [
@@ -195,7 +195,7 @@ export const LEGACY_ADDRESSES = [
 
 /** Returns true when the Canonical PSM (ERC-3643 identity-gated) has been deployed */
 export function isCanonicalPsmDeployed(): boolean {
-  return CANONICAL_PSM !== '0x0000000000000000000000000000000000000000';
+  return (CANONICAL_PSM as string) !== '0x0000000000000000000000000000000000000000';
 }
 
 export function assertActiveContracts(): void {

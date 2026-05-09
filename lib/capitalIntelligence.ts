@@ -74,7 +74,7 @@ export async function recordCapitalIntelligenceEvent(event: CapitalIntelligenceE
               ...(event.payload || {}),
             },
             actor: event.actor ?? null,
-          }, 'offering', event.offeringId);
+          }, 'offering', event.offeringId ?? '');
         }
       } catch (_) {}
     });

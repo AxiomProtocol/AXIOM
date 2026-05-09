@@ -26,7 +26,7 @@ async function upsertListing(listing: NormalizedListing): Promise<'inserted' | '
   const existing = await db.select({ id: dpListings.id })
     .from(dpListings)
     .where(and(
-      eq(dpListings.source, listing.source),
+      eq(dpListings.source, listing.source as any),
       eq(dpListings.sourceId, listing.sourceId),
     ))
     .limit(1);
@@ -39,10 +39,10 @@ async function upsertListing(listing: NormalizedListing): Promise<'inserted' | '
         discountPct: listing.discountPct ? String(listing.discountPct) : null,
         status: 'active',
         updatedAt: new Date(),
-        description: listing.description || undefined,
+        description: listing.description || null,
         photos: listing.photos,
-        auctionDate: listing.auctionDate || undefined,
-        expiresAt: listing.expiresAt || undefined,
+        auctionDate: listing.auctionDate || null,
+        expiresAt: listing.expiresAt || null,
         metadata: listing.metadata || null,
       })
       .where(eq(dpListings.id, existing[0].id));
@@ -51,7 +51,7 @@ async function upsertListing(listing: NormalizedListing): Promise<'inserted' | '
 
   try {
     await db.insert(dpListings).values({
-      source: listing.source,
+      source: listing.source as any,
       sourceId: listing.sourceId,
       address: listing.address,
       city: listing.city,

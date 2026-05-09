@@ -730,7 +730,7 @@ integrationDescribe(
   () => {
     let pgPool: Pool;
     const insertedIds: number[] = [];
-    const baseUrl = `http://localhost:${process.env.PORT ?? 3000}`;
+    const baseUrl = `http://localhost:${process.env.PORT ?? 5000}`;
     const endpoint = `${baseUrl}/api/scheduler/prune-overdue-alert`;
 
     beforeAll(async () => {

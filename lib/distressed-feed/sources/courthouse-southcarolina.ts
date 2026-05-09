@@ -66,7 +66,7 @@ async function scrapeRichlandDelinquentTax(errors: string[]): Promise<Normalized
         sourceUrl: url,
         photos: [],
         description: `Parcel: ${parcel} | Owner: ${owner} | Delinquent: ${amount}`,
-        metadata: { filingType: 'Delinquent Tax Sale', source: 'Richland County SC', parcel, owner },
+        metadata: { filingType: 'Delinquent Tax Sale', source: 'Richland County SC', parcelId: parcel, owner },
       });
     });
 

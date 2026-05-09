@@ -29,7 +29,7 @@ export default createRouter([
       const conds: SQL[] = [];
       if (f.userId) conds.push(eq(capPolicyDecisions.userId, f.userId));
       if (f.assetId) conds.push(eq(capPolicyDecisions.assetId, f.assetId));
-      if (f.action) conds.push(eq(capPolicyDecisions.actionType, f.action));
+      if (f.action) conds.push(eq(capPolicyDecisions.actionType, f.action as any));
       if (typeof f.allowed === 'boolean') conds.push(eq(capPolicyDecisions.allowed, f.allowed));
       if (f.reasonCode) conds.push(eq(capPolicyDecisions.reasonCode, f.reasonCode));
       if (f.from) conds.push(gte(capPolicyDecisions.createdAt, new Date(f.from)));

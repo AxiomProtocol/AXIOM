@@ -101,12 +101,14 @@ function QRCode({ value }: { value: string }) {
 
   useEffect(() => {
     if (!canvasRef.current || !value) return;
-    import('qrcode').then(QRCodeLib => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore qrcode has no bundled types
+    import('qrcode').then((QRCodeLib: any) => {
       QRCodeLib.toCanvas(canvasRef.current!, value, {
         width: 160,
         margin: 2,
         color: { dark: '#1a2744', light: '#ffffff' },
-      }, (err) => {
+      }, (err: Error | null) => {
         if (err) setError(true);
       });
     }).catch(() => setError(true));
@@ -274,7 +276,7 @@ export default function CreditPage() {
       if (!signer && (window as Window & { ethereum?: unknown }).ethereum) {
         const { ethers } = await import('ethers');
         const provider = new ethers.BrowserProvider(
-          (window as Window & { ethereum: unknown }).ethereum as Parameters<typeof ethers.BrowserProvider>[0],
+          (window as Window & { ethereum: unknown }).ethereum as any,
         );
         signer = await provider.getSigner();
         const network = await provider.getNetwork();
@@ -287,7 +289,7 @@ export default function CreditPage() {
         return;
       }
 
-      await siweService.signIn(address, chainId, signer);
+      await siweService.signIn(signer, address, chainId);
       setNeedsSignIn(false);
       fetchStatus(address);
     } catch (err) {

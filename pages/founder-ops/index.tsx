@@ -3579,8 +3579,8 @@ export default function FounderOpsPage() {
                                       </button>
                                     </div>
                                     {axauFulfillMsg?.id === req.id && (
-                                      <p className={`font-dl-mono text-[9px] ${axauFulfillMsg.type === 'success' ? 'text-dl-forest' : 'text-dl-error'}`}>
-                                        {axauFulfillMsg.text}
+                                      <p className={`font-dl-mono text-[9px] ${axauFulfillMsg!.type === 'success' ? 'text-dl-forest' : 'text-dl-error'}`}>
+                                        {axauFulfillMsg!.text}
                                       </p>
                                     )}
                                   </div>
@@ -4335,8 +4335,8 @@ export default function FounderOpsPage() {
                                         {isBusy ? 'Provisioning…' : 'Provision Account'}
                                       </button>
                                       {daoProvisionMsg?.id === app.id && (
-                                        <p className={`font-dl-mono text-[9px] break-all ${daoProvisionMsg.type === 'success' ? 'text-dl-forest' : 'text-dl-error'}`}>
-                                          {daoProvisionMsg.text}
+                                        <p className={`font-dl-mono text-[9px] break-all ${daoProvisionMsg!.type === 'success' ? 'text-dl-forest' : 'text-dl-error'}`}>
+                                          {daoProvisionMsg!.text}
                                         </p>
                                       )}
                                     </div>
@@ -5584,7 +5584,7 @@ export default function FounderOpsPage() {
                             </div>
                             <div className="text-right">
                               <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Net Pay</p>
-                              <p className="font-dl-mono text-base font-semibold text-dl-forest mt-0.5">{netPay != null ? fmtUsd(netPay) : '—'}</p>
+                              <p className="font-dl-mono text-base font-semibold text-dl-forest mt-0.5">{latest.net_pay != null ? fmtUsd(latest.net_pay) : '—'}</p>
                             </div>
                           </div>
                         )}

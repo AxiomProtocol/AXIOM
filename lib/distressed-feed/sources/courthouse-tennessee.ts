@@ -164,7 +164,7 @@ async function scrapeDavidsonChancery(errors: string[]): Promise<NormalizedListi
         sourceUrl: url,
         photos: [],
         description: `Case: ${caseNo} | Filed: ${dateStr}`,
-        metadata: { filingType: 'Lis Pendens', source: 'Davidson County Chancery Court TN', caseNo, filingDate: dateStr },
+        metadata: { filingType: 'Lis Pendens', source: 'Davidson County Chancery Court TN', caseNo, filedDate: dateStr },
       });
     });
 

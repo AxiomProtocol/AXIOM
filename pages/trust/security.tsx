@@ -79,7 +79,7 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
 interface ControlRow {
   control: string;
   what: string;
-  state: 'LIVE' | 'PENDING_LIVE_READ';
+  state: 'LIVE' | 'PENDING_LIVE_READ' | 'OFFLINE';
   source: string;
 }
 
@@ -151,6 +151,13 @@ function StateBadge({ state }: { state: ControlRow['state'] }) {
     return (
       <span className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-forest text-dl-forest px-1.5 py-0.5">
         LIVE
+      </span>
+    );
+  }
+  if (state === 'OFFLINE') {
+    return (
+      <span className="font-dl-mono text-[10px] uppercase tracking-wider border border-dl-error text-dl-error px-1.5 py-0.5">
+        OFFLINE
       </span>
     );
   }

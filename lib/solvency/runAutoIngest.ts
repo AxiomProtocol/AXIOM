@@ -207,7 +207,7 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
   let eulerSwapAxmTvl = 0;
   const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
   if (isEulerSwapDeployed()) {
-    if (EULER_SWAP_AXUSD_USDC_POOL_ADDRESS !== ZERO_ADDR) {
+    if ((EULER_SWAP_AXUSD_USDC_POOL_ADDRESS as string) !== ZERO_ADDR) {
       try {
         const usdcPool = new ethers.Contract(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULERSWAP_POOL_ABI_LITE, provider);
         const [r, token0] = await Promise.all([usdcPool.getReserves(), usdcPool.token0()]);
@@ -215,7 +215,7 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
         void token0;
       } catch {}
     }
-    if (EULER_SWAP_AXUSD_AXM_POOL_ADDRESS !== ZERO_ADDR) {
+    if ((EULER_SWAP_AXUSD_AXM_POOL_ADDRESS as string) !== ZERO_ADDR) {
       try {
         const axmPool = new ethers.Contract(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, EULERSWAP_POOL_ABI_LITE, provider);
         const [r, token0] = await Promise.all([axmPool.getReserves(), axmPool.token0()]);
@@ -318,13 +318,13 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
           pair: 'AXUSD/USDC',
           address: EULER_SWAP_AXUSD_USDC_POOL_ADDRESS,
           tvlUsd: eulerSwapUsdcTvl,
-          status: EULER_SWAP_AXUSD_USDC_POOL_ADDRESS !== ZERO_ADDR ? 'LIVE' : 'PENDING_DEPLOYMENT',
+          status: (EULER_SWAP_AXUSD_USDC_POOL_ADDRESS as string) !== ZERO_ADDR ? 'LIVE' : 'PENDING_DEPLOYMENT',
         },
         {
           pair: 'AXUSD/AXM',
           address: EULER_SWAP_AXUSD_AXM_POOL_ADDRESS,
           tvlUsd: eulerSwapAxmTvl,
-          status: EULER_SWAP_AXUSD_AXM_POOL_ADDRESS !== ZERO_ADDR ? 'LIVE' : 'PENDING_DEPLOYMENT',
+          status: (EULER_SWAP_AXUSD_AXM_POOL_ADDRESS as string) !== ZERO_ADDR ? 'LIVE' : 'PENDING_DEPLOYMENT',
         },
       ],
       totalTvlUsd: eulerSwapTotalTvl,

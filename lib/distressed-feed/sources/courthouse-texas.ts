@@ -123,7 +123,7 @@ async function scrapeHarris(errors: string[]): Promise<NormalizedListing[]> {
         metadata: {
           filingType: 'Trustee Sale Notice',
           source: 'Harris County FCL',
-          causeNo,
+          caseNo: causeNo,
         },
       });
     });

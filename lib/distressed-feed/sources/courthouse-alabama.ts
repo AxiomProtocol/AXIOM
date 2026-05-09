@@ -163,7 +163,7 @@ async function scrapeAlaDorTaxSales(errors: string[]): Promise<NormalizedListing
         sourceUrl: url,
         photos: [],
         description: `Parcel: ${parcel} | County: ${county} | Delinquent: ${amount}`,
-        metadata: { filingType: 'Land Sold For Taxes', source: 'Alabama Department of Revenue', parcel },
+        metadata: { filingType: 'Land Sold For Taxes', source: 'Alabama Department of Revenue', parcelId: parcel },
       });
     });
 

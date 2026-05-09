@@ -67,7 +67,7 @@ async function scrapeNcCourtForeclosures(errors: string[]): Promise<NormalizedLi
         sourceUrl: baseUrl,
         photos: [],
         description: `Case: ${caseNo} | Hearing: ${dateStr} | County: ${county}`,
-        metadata: { filingType: 'Foreclosure Hearing', source: 'NC Courts AOC', caseNo, hearingDate: dateStr },
+        metadata: { filingType: 'Foreclosure Hearing', source: 'NC Courts AOC', caseNo, filedDate: dateStr },
       });
     });
 

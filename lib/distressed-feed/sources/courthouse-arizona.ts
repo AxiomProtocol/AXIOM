@@ -83,7 +83,7 @@ async function scrapeMaricopaRecorder(errors: string[]): Promise<NormalizedListi
         metadata: {
           filingType: 'Notice of Trustee Sale',
           source: 'Maricopa County Recorder',
-          docNum,
+          caseNo: docNum,
           recordDate,
         },
       });
@@ -144,7 +144,7 @@ async function scrapeMaricopaSheriff(errors: string[]): Promise<NormalizedListin
         metadata: {
           filingType: 'Sheriff Civil Sale',
           source: 'Maricopa County Sheriff',
-          causeNo,
+          caseNo: causeNo,
         },
       });
     });

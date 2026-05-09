@@ -135,7 +135,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const vaultAddress = EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT;
   const axusdAddress = ERC3643_CONTRACTS.AXUSD_TOKEN;
-  const isDeployed = vaultAddress !== ZERO_ADDRESS;
+  const isDeployed = (vaultAddress as string) !== ZERO_ADDRESS;
   const amountWei = ethers.parseEther(amountAxusd);
   const client = await pool.connect();
 

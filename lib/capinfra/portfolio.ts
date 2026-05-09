@@ -60,7 +60,7 @@ async function loadAccounts(tx: Tx): Promise<BootstrapAccounts> {
   const result = await tx.execute(
     sql`select id, name from cap_accounts where name in (${ACCT_TREASURY_ASSETS}, ${ACCT_USER_LIABILITIES})`,
   );
-  const rows = (result as { rows?: Array<{ id: string; name: string }> }).rows ?? [];
+  const rows = (result as unknown as { rows?: Array<{ id: string; name: string }> }).rows ?? [];
   const treasury = rows.find((r) => r.name === ACCT_TREASURY_ASSETS);
   const userLiab = rows.find((r) => r.name === ACCT_USER_LIABILITIES);
   if (!treasury || !userLiab) {
@@ -306,7 +306,7 @@ export async function createSnapshot(opts: {
       values (${asOf}, ${checksum}, ${sql.raw(`'${sourcesJson}'::jsonb`)}, ${'HIGH'}, ${sql.raw(`'${warningsJson}'::jsonb`)})
       returning id
     `);
-    const snapId = ((ins as { rows?: Array<{ id: string }> }).rows ?? [])[0]?.id;
+    const snapId = ((ins as unknown as { rows?: Array<{ id: string }> }).rows ?? [])[0]?.id;
     if (!snapId) throw new Error('snapshot insert returned no id');
 
     if (positions.length > 0) {

@@ -150,7 +150,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const vaultAddress = EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT;
-  const isDeployed = vaultAddress !== ZERO_ADDRESS;
+  const isDeployed = (vaultAddress as string) !== ZERO_ADDRESS;
   const amountNum = amountAxusd ? parseFloat(amountAxusd) : 0;
   const amountWei = amountNum > 0 ? ethers.parseEther(amountAxusd!) : 0n;
   const client = await pool.connect();

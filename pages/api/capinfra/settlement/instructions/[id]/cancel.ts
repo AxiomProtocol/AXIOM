@@ -15,7 +15,7 @@ export default createRouter([
       const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
       const correlationId =
         typeof req.body?.correlationId === 'string' ? req.body.correlationId : undefined;
-      const updated = await cancelInstruction(id, getActor(req), reason, correlationId);
+      const updated = await cancelInstruction(id, getActor(req), correlationId);
       res.status(200).json({ instruction: updated });
     },
   },

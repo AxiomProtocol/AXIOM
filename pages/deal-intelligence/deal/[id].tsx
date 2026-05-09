@@ -182,7 +182,7 @@ export default function DealWorkspacePage() {
     const dealMeta = summary.deal?.meta as DealMeta | undefined;
     const existingMls = dealMeta?.mlsEnrichment;
     if (existingMls) {
-      setMlsEnrichment(existingMls);
+      setMlsEnrichment(existingMls as any);
       return;
     }
     fetch(`/api/real-estate/deals/${id}/mls-enrich`, { method: 'POST' })

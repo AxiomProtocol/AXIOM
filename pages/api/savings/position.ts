@@ -39,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const normalizedAddress = address.toLowerCase();
   const vaultAddress = EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT;
-  const isDeployed = vaultAddress !== ZERO_ADDRESS;
+  const isDeployed = (vaultAddress as string) !== ZERO_ADDRESS;
 
   let onChainShares = '0';
   let onChainBalanceNum = 0;

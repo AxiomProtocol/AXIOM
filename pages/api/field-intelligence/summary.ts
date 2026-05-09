@@ -98,9 +98,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     for (const walk of walks) {
       for (const system of systems) {
-        const condition = walk[system] || 'not_inspected';
-        if (!distribution[system][condition]) distribution[system][condition] = 0;
-        distribution[system][condition] += 1;
+        const condition = (walk as any)[system] || 'not_inspected';
+        if (!(distribution as any)[system][condition]) (distribution as any)[system][condition] = 0;
+        (distribution as any)[system][condition] += 1;
       }
       const worst = worstCondition(walk);
       unitConditionCounts[worst] = (unitConditionCounts[worst] || 0) + 1;

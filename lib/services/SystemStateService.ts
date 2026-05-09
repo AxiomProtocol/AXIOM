@@ -185,21 +185,21 @@ export class SystemStateService {
       const r = await reserveAccountingService.refreshPositions();
       results.reserve = { status: r.success ? 'ok' : 'error', positions: r.positions };
     } catch (e: any) {
-      results.reserve = { status: 'error' };
+      results.reserve = { status: 'error', positions: undefined };
     }
 
     try {
       const r = await disclosureSnapshotService.createSnapshot();
       results.snapshot = { status: r.success ? 'ok' : 'error', id: r.snapshot?.id };
     } catch (e: any) {
-      results.snapshot = { status: 'error' };
+      results.snapshot = { status: 'error', id: undefined };
     }
 
     try {
       const r = await allocationPolicyService.seedDefaultPolicies();
       results.policies = { status: 'ok', seeded: r.seeded };
     } catch (e: any) {
-      results.policies = { status: 'error' };
+      results.policies = { status: 'error', seeded: undefined };
     }
 
     results.completedAt = new Date().toISOString();

@@ -272,7 +272,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
     const loan = r.rows[0];
 
     if (!isAdminRequest(req)) {
-      const authResult = verifyCreditAuth(req, loan.wallet_address);
+      const authResult = await verifyCreditAuth(req, loan.wallet_address);
       if (!authResult.ok) {
         return res.status(403).json({ success: false, error: 'Access denied: you do not own this loan' });
       }
@@ -398,7 +398,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
           error: 'Wallet ownership proof required. Provide x-wallet-signature and x-wallet-message headers.',
         });
       }
-      const authResult = verifyCreditAuth(req, walletAddress);
+      const authResult = await verifyCreditAuth(req, walletAddress);
       if (!authResult.ok) {
         return res.status(401).json({ success: false, error: authResult.reason });
       }
@@ -494,7 +494,7 @@ async function handleOriginate(req: NextApiRequest, res: NextApiResponse) {
     });
   }
 
-  const auth = verifyCreditAuth(req, walletAddress);
+  const auth = await verifyCreditAuth(req, walletAddress);
   if (!auth.ok) {
     return res.status(401).json({ success: false, error: auth.reason });
   }
@@ -632,7 +632,7 @@ async function handlePatch(req: NextApiRequest, res: NextApiResponse) {
     if (!walletAddress) {
       return res.status(400).json({ success: false, error: 'walletAddress required for repayment' });
     }
-    const auth = verifyCreditAuth(req, walletAddress);
+    const auth = await verifyCreditAuth(req, walletAddress);
     if (!auth.ok) return res.status(401).json({ success: false, error: auth.reason });
     if (auth.verifiedAddress.toLowerCase() !== loan.wallet_address.toLowerCase()) {
       return res.status(403).json({ success: false, error: 'You do not own this loan' });
@@ -825,7 +825,7 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
         const valuation = await valueAxusdAsUsd(oracleContract as unknown as Erc7726QuoteReader, principalWei18);
         writeDownUsdValue = valuation.usdValue;
         oracleUsed = valuation.source === 'erc7726_peg' ? 'erc7726_on_chain' : 'static_parity';
-        if (valuation.source === 'static_parity') {
+        if ((valuation.source as string) === 'static_parity') {
           recordAxusdParityFallback({
             caller: 'loan-lifecycle:charge_off',
             loanId: loan.loan_id,
@@ -902,7 +902,7 @@ async function handleAdminAction(res: NextApiResponse, loan: LoanRow, action: st
         const valuation = await valueAxusdAsUsd(oracleContract as unknown as Erc7726QuoteReader, principalWei18);
         exposureUsdValue = valuation.usdValue;
         oracleUsed = valuation.source === 'erc7726_peg' ? 'erc7726_on_chain' : 'static_parity';
-        if (valuation.source === 'static_parity') {
+        if ((valuation.source as string) === 'static_parity') {
           recordAxusdParityFallback({
             caller: 'loan-lifecycle:default',
             loanId: loan.loan_id,

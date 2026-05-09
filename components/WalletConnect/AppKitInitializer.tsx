@@ -10,9 +10,9 @@ let appKitCreated = false;
 if (typeof window !== 'undefined' && projectId && !appKitCreated) {
   appKitCreated = true;
   createAppKit({
-    adapters: [wagmiAdapter],
+    adapters: wagmiAdapter ? [wagmiAdapter] : [],
     projectId,
-    networks,
+    networks: networks as unknown as Parameters<typeof createAppKit>[0]['networks'],
     defaultNetwork: arbitrum,
     metadata: {
       name: 'Axiom Protocol',

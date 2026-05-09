@@ -21,7 +21,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   if (redirect) return redirect;
   const status = typeof ctx.query.status === 'string' ? ctx.query.status : null;
   const conds: SQL[] = [];
-  if (status) conds.push(eq(capSettlementInstructions.status, status));
+  if (status) conds.push(eq(capSettlementInstructions.status, status as any));
   const q = db
     .select()
     .from(capSettlementInstructions)

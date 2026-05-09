@@ -46,6 +46,7 @@ export interface DexStats {
   totalTVL: string;
   totalVolume24h: string;
   totalFees24h: string;
+  primaryVenue?: string;
 }
 
 // Fix 1 (regression): typed rewards object replaces the bare string that caused NaN
@@ -93,8 +94,8 @@ export function useDexPools() {
         // Fix 3: tokenA/tokenB were wrongly set to poolAddress/''; map to real token addresses
         const eulerSwapPools: Pool[] = (rawPools.eulerSwap || []).map((p: EulerSwapPoolAPIEntry, idx: number) => ({
           id: idx + 1,
-          tokenA: getAddressBySymbol(p.tokenASymbol) || p.tokenAAddress || '',
-          tokenB: getAddressBySymbol(p.tokenBSymbol) || p.tokenBAddress || '',
+          tokenA: getAddressBySymbol(p.tokenASymbol ?? '') || p.tokenAAddress || '',
+          tokenB: getAddressBySymbol(p.tokenBSymbol ?? '') || p.tokenBAddress || '',
           tokenASymbol: p.tokenASymbol || 'Token A',
           tokenBSymbol: p.tokenBSymbol || 'Token B',
           protocol: p.protocol || 'EulerSwap',

@@ -115,7 +115,7 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
       }
 
       console.log('🦊 Requesting MetaMask accounts...');
-      const accounts = await window.ethereum.request({ 
+      const accounts = await (window.ethereum as any).request({ 
         method: 'eth_requestAccounts' 
       });
 
@@ -132,7 +132,7 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
       
       // Manually set the provider state
       const { ethers } = await import('ethers');
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(window.ethereum as any);
       const signer = await provider.getSigner();
       const network = await provider.getNetwork();
       const chainId = Number(network.chainId);
@@ -188,7 +188,7 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
       }
 
       console.log('🔗 Requesting wallet accounts...');
-      const accounts = await window.ethereum.request({ 
+      const accounts = await (window.ethereum as any).request({ 
         method: 'eth_requestAccounts' 
       });
 
@@ -200,7 +200,7 @@ export const WalletConnectButton: React.FC<WalletConnectButtonProps> = ({
       console.log('✅ Wallet connected:', address);
 
       const { ethers } = await import('ethers');
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(window.ethereum as any);
       const signer = await provider.getSigner();
       const network = await provider.getNetwork();
       const chainId = Number(network.chainId);

@@ -526,7 +526,6 @@ export default function InspectionWalkthrough({
                   </div>
                   <Button
                     variant="ghost"
-                    size="sm"
                     onClick={() => handleRemoveDeficiency(idx)}
                     className="text-red-600"
                   >
@@ -576,7 +575,6 @@ export default function InspectionWalkthrough({
                 />
                 <Button
                   variant="ghost"
-                  size="sm"
                   onClick={() => handleRemovePhoto(idx)}
                   className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white"
                 >

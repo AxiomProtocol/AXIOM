@@ -1477,7 +1477,7 @@ function PsmMintRedeemPanel({
     const eth = (window as unknown as Record<string, unknown>).ethereum;
     if (!eth) throw new Error('No injected wallet found. Install MetaMask.');
     const { ethers } = await import('ethers');
-    const provider = new ethers.BrowserProvider(eth as Parameters<typeof ethers.BrowserProvider>[0]);
+    const provider = new ethers.BrowserProvider(eth as any);
     const signer = await provider.getSigner();
     return { ethers, signer };
   }

@@ -90,7 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const vaultAddress = EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT;
-  const isPending = vaultAddress === ZERO_ADDRESS;
+  const isPending = (vaultAddress as string) === ZERO_ADDRESS;
 
   if (isPending) {
     const pendingStats: EvkVaultStats = {

@@ -62,8 +62,8 @@ async function upsertSubscriptionFromStripe(
   stripeAccountId: string,
   status: SentinelSubStatus,
 ): Promise<void> {
-  const periodStart = new Date(sub.current_period_start * 1000);
-  const periodEnd = new Date(sub.current_period_end * 1000);
+  const periodStart = new Date((sub as any).current_period_start * 1000);
+  const periodEnd = new Date((sub as any).current_period_end * 1000);
   await pool.query(
     `INSERT INTO sentinel_subscriptions
        (wallet_address, plan_key, status, stripe_customer_id, stripe_subscription_id,
@@ -208,8 +208,8 @@ export const sentinelBilling = {
           [
             mapped,
             subscriptionId,
-            new Date(sub.current_period_start * 1000),
-            new Date(sub.current_period_end * 1000),
+            new Date((sub as any).current_period_start * 1000),
+            new Date((sub as any).current_period_end * 1000),
             sub.cancel_at_period_end ?? false,
             stripeAccountId,
             customerId,
@@ -252,7 +252,8 @@ export const sentinelBilling = {
 
       case 'invoice.paid': {
         const invoice = event.data.object as Stripe.Invoice;
-        const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id;
+        const _inv1 = invoice as any;
+        const subscriptionId = typeof _inv1.subscription === 'string' ? _inv1.subscription : _inv1.subscription?.id;
         if (!subscriptionId) break;
 
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
@@ -264,14 +265,15 @@ export const sentinelBilling = {
                stripe_account_id = $3,
                updated_at = NOW()
            WHERE stripe_subscription_id = $4`,
-          [new Date(sub.current_period_start * 1000), new Date(sub.current_period_end * 1000), stripeAccountId, subscriptionId],
+          [new Date((sub as any).current_period_start * 1000), new Date((sub as any).current_period_end * 1000), stripeAccountId, subscriptionId],
         );
         break;
       }
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
-        const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id;
+        const _inv2 = invoice as any;
+        const subscriptionId = typeof _inv2.subscription === 'string' ? _inv2.subscription : _inv2.subscription?.id;
         if (!subscriptionId) break;
 
         await pool.query(

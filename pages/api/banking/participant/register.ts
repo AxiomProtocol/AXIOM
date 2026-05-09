@@ -5,7 +5,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import { increaseParticipants } from '../../../../shared/increaseParticipantSchema';
-import { IncreaseService, getAccountId, getEntityId, IncreaseDisabledError } from '../../../../lib/services/IncreaseService';
+import { IncreaseService, getAccountId, IncreaseDisabledError } from '../../../../lib/services/IncreaseService';
 import { getSiweWallet } from '../../../../lib/server/banking/siweHelper';
 import { eq } from 'drizzle-orm';
 
@@ -100,7 +100,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         virtualAccountNumber,
         cardStatus: 'not_requested',
         // Store shared entity/account IDs (B2B model — no per-participant entities)
-        increaseEntityId: getEntityId() || null,
+        increaseEntityId: (process.env.INCREASE_ENTITY_ID ?? null),
         increaseAccountId: accountId || null,
       })
       .returning();

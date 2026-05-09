@@ -133,7 +133,7 @@ async function scrapeCounty(county: FloridaCounty, errors: string[]): Promise<No
         metadata: {
           filingType: docType,
           source: `${county.name} County Clerk`,
-          bookPage,
+          caseNo: bookPage,
           filedDate: docDate,
         },
       });

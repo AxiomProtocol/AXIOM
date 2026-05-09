@@ -76,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             status: r.status,
             createdAt: r.createdAt,
           })),
-        });
+        } as any);
       })
     );
 

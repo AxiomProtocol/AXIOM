@@ -108,7 +108,7 @@ export class WalletService {
       console.log('🔍 Checking for existing wallet connection...');
       let accounts;
       try {
-        accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        accounts = await (window.ethereum as any).request({ method: 'eth_accounts' });
       } catch (sdkError: any) {
         // MetaMask SDK throws specific errors when no prior connection exists
         // 4100: Unauthorized, 4900: Disconnected, 4901: Chain disconnected
@@ -127,7 +127,7 @@ export class WalletService {
         try {
           this.provider = window.ethereum;
           console.log('📦 Creating BrowserProvider...');
-          this.ethersProvider = new ethers.BrowserProvider(window.ethereum);
+          this.ethersProvider = new ethers.BrowserProvider(window.ethereum as any);
           
           console.log('✍️ Getting signer...');
           this.signer = await this.ethersProvider.getSigner();
@@ -267,7 +267,7 @@ export class WalletService {
       }
 
       const provider = window.ethereum;
-      const accounts = await provider.request({
+      const accounts = await (provider as any).request({
         method: 'eth_requestAccounts'
       });
 
@@ -276,7 +276,7 @@ export class WalletService {
       }
 
       this.provider = provider;
-      this.ethersProvider = new ethers.BrowserProvider(provider);
+      this.ethersProvider = new ethers.BrowserProvider(provider as any);
       this.signer = await this.ethersProvider.getSigner();
 
       const address = accounts[0];
@@ -572,6 +572,6 @@ export const walletService = {
 // TypeScript module augmentation for window.ethereum
 declare global {
   interface Window {
-    ethereum?: any;
+    ethereum?: Record<string, unknown>;
   }
 }

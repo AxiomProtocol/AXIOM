@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const vaultAddress = EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT;
-  const isDeployed = vaultAddress !== ZERO_ADDRESS;
+  const isDeployed = (vaultAddress as string) !== ZERO_ADDRESS;
 
   let supplyApyPct = '0.00';
   let tvlAxusd = '0.00';

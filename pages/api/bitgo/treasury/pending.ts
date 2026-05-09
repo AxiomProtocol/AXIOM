@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const result = await bitGoCustodyService.getPendingApprovals(BITGO_ENTERPRISE_ID);
 
   return res.status(200).json({
-    pendingApprovals: result.approvals ?? [],
-    count: result.approvals?.length ?? 0,
+    pendingApprovals: result ?? [],
+    count: result?.length ?? 0,
   });
 }

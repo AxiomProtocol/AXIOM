@@ -219,7 +219,7 @@ export default function OfferingBuilder() {
   const [distributions, setDistributions] = useState<any[]>([]);
   const [distSummary, setDistSummary] = useState<any>(null);
   const [showCreateDist, setShowCreateDist] = useState(false);
-  const [distForm, setDistForm] = useState<any>({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD' });
+  const [distForm, setDistForm] = useState<{ distributionType: string; grossAmount: string; periodStart: string; periodEnd: string; currency: string; waterfallMeta?: Record<string, unknown> }>({ distributionType: 'preferred_return', grossAmount: '', periodStart: '', periodEnd: '', currency: 'USD' });
   const [showWaterfall, setShowWaterfall] = useState(false);
   const [waterfallForm, setWaterfallForm] = useState({ grossAmount: '', periodStart: '', periodEnd: '', capitalDeployed: '', preferredRate: '' });
   const [waterfallResult, setWaterfallResult] = useState<any>(null);

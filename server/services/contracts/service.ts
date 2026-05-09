@@ -68,8 +68,8 @@ export async function mutateContractStatus({ req, entityId, body }: StatusMutati
     throw error;
   }
 
-  assertDomainAccess(auth.domainScopes, entity.domain);
-  assertTransitionAllowed(entity.domain, entity.currentStatus, envelope.payload.toStatus, auth.actorType);
+  assertDomainAccess(auth.domainScopes, entity.domain as 'field_intelligence' | 'real_estate');
+  assertTransitionAllowed(entity.domain as 'field_intelligence' | 'real_estate', entity.currentStatus as Parameters<typeof assertTransitionAllowed>[1], envelope.payload.toStatus as Parameters<typeof assertTransitionAllowed>[2], auth.actorType);
 
   const currentVersion = Number(entity.version || 1);
   if ('version' in envelope.concurrency && envelope.concurrency.version !== currentVersion) {
@@ -79,7 +79,7 @@ export async function mutateContractStatus({ req, entityId, body }: StatusMutati
     throw error;
   }
   if ('updatedAt' in envelope.concurrency) {
-    const currentUpdatedAt = new Date(entity.updatedAt).toISOString();
+    const currentUpdatedAt = new Date(entity.updatedAt as string).toISOString();
     if (envelope.concurrency.updatedAt !== currentUpdatedAt) {
       const error = new Error('Stale timestamp token');
       (error as any).statusCode = 409;

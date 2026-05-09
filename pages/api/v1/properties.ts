@@ -82,10 +82,10 @@ async function validateAndThrottle(rawKey: string): Promise<{
   keyRow?: typeof dpApiKeys.$inferSelect;
 }> {
   const rows = await db.select().from(dpApiKeys).where(eq(dpApiKeys.apiKey, rawKey)).limit(1);
-  if (rows.length === 0) return { ok: false, reason: 'Invalid API key' };
+  if (rows.length === 0) return { ok: false, tier: '', reason: 'Invalid API key' };
 
   const key = rows[0];
-  if (!key.active) return { ok: false, reason: 'API key is inactive' };
+  if (!key.active) return { ok: false, tier: '', reason: 'API key is inactive' };
 
   const today = todayStr();
 
@@ -101,6 +101,7 @@ async function validateAndThrottle(rawKey: string): Promise<{
   if (key.requestsToday >= limit) {
     return {
       ok: false,
+      tier: key.tier,
       reason: `Daily limit reached (${limit} requests/day on ${key.tier} tier). Resets at midnight UTC.`,
     };
   }

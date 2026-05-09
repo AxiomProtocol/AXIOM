@@ -96,8 +96,8 @@ async function loadLegacySlice(walletAddresses: string[]): Promise<LegacyIdentit
     FROM compliance_claims
     WHERE LOWER(claimant_address) = ANY(${lower}::text[])
   `);
-  const kycRows = (kycResult.rows ?? []) as LegacyKycRow[];
-  const claimRows = (claimsResult.rows ?? []) as LegacyClaimRow[];
+  const kycRows = (kycResult.rows ?? []) as unknown as LegacyKycRow[];
+  const claimRows = (claimsResult.rows ?? []) as unknown as LegacyClaimRow[];
   return {
     kycVerifications: kycRows.map((r) => ({
       walletAddress: r.user_address,

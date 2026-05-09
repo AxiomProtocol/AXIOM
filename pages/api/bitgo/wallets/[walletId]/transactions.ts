@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSIWESession } from '../../../../../lib/middleware/siweAuth';
 import { bitGoWalletService } from '../../../../../lib/services/BitGoWalletService';
 import { rateLimitDefault } from '../../../../../lib/rateLimit';
-import { db } from '../../../../../lib/db';
+import { db } from '../../../../../server/db';
 import { bitgoTransactions } from '../../../../../shared/bitgoSchema';
 import { eq, desc } from 'drizzle-orm';
 

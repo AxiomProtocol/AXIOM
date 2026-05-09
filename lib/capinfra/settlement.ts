@@ -1122,7 +1122,7 @@ export async function getInstructionsByExternalRef(
 ): Promise<CapSettlementInstruction[]> {
   const conditions: SQL[] = [eq(capSettlementInstructions.externalRef, externalRef)];
   if (settlementType) {
-    conditions.push(eq(capSettlementInstructions.settlementType, settlementType as typeof capSettlementInstructions.settlementType.dataType));
+    conditions.push(eq(capSettlementInstructions.settlementType, settlementType as any));
   }
   return db
     .select()

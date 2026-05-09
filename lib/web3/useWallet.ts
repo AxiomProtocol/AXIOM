@@ -52,6 +52,6 @@ export function useWallet() {
 
 declare global {
   interface Window {
-    ethereum?: any;
+    ethereum?: Record<string, unknown>;
   }
 }

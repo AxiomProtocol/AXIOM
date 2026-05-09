@@ -34,14 +34,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     toAddress: String(toAddress),
     amountStr: String(amount),
     coin: coin ?? wallet.coin,
-    memo: memo ? String(memo) : undefined,
-  });
+  } as any);
 
   if (!result.success) return res.status(400).json({ error: result.error });
 
   return res.status(200).json({
     success: true,
     txId: result.txId,
-    status: result.status,
+    status: result.state,
   });
 }

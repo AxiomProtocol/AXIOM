@@ -11,7 +11,7 @@ import { PSM_ABI, ERC20_ABI, USDC_ADDRESS, USDC_DECIMALS, AXUSD_DECIMALS, PRIMAR
 
 declare global {
   interface Window {
-    ethereum?: any;
+    ethereum?: Record<string, unknown>;
   }
 }
 
@@ -251,7 +251,7 @@ export default function PlaybookPage() {
 
   const checkRoles = useCallback(async (address: string) => {
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(window.ethereum as any);
       const primaryPsm = new ethers.Contract(PRIMARY_PSM, ACCESS_CONTROL_ABI, provider);
       const eulerPsm = new ethers.Contract(EULER_PSM, ACCESS_CONTROL_ABI, provider);
       const adminRole = ethers.ZeroHash;
@@ -276,7 +276,7 @@ export default function PlaybookPage() {
     setRoleGranting(true);
     setTxStatus({ type: 'pending', message: `Connecting wallet for ${label} PSM role grant...` });
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(window.ethereum as any);
       const accounts = await provider.send('eth_requestAccounts', []);
       if (!accounts.length) throw new Error('No accounts found');
       setWalletAddr(accounts[0]);
@@ -285,10 +285,10 @@ export default function PlaybookPage() {
       if (Number(network.chainId) !== 42161) {
         setTxStatus({ type: 'pending', message: 'Switching to Arbitrum One...' });
         try {
-          await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xa4b1' }] });
+          await (window.ethereum as any).request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xa4b1' }] });
         } catch (switchErr: any) {
           if (switchErr.code === 4902) {
-            await window.ethereum.request({
+            await (window.ethereum as any).request({
               method: 'wallet_addEthereumChain',
               params: [{ chainId: '0xa4b1', chainName: 'Arbitrum One', rpcUrls: ['https://arb1.arbitrum.io/rpc'], nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 }, blockExplorerUrls: ['https://arbiscan.io'] }],
             });
@@ -399,7 +399,7 @@ export default function PlaybookPage() {
     setTxStatus({ type: 'pending', message: 'Connecting wallet...' });
 
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(window.ethereum as any);
       const accounts = await provider.send('eth_requestAccounts', []);
       if (!accounts.length) throw new Error('No accounts found');
       setWalletAddr(accounts[0]);
@@ -409,13 +409,13 @@ export default function PlaybookPage() {
       if (Number(network.chainId) !== 42161) {
         setTxStatus({ type: 'pending', message: 'Switching to Arbitrum One...' });
         try {
-          await window.ethereum.request({
+          await (window.ethereum as any).request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: '0xa4b1' }],
           });
         } catch (switchErr: any) {
           if (switchErr.code === 4902) {
-            await window.ethereum.request({
+            await (window.ethereum as any).request({
               method: 'wallet_addEthereumChain',
               params: [{
                 chainId: '0xa4b1',

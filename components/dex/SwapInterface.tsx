@@ -291,8 +291,8 @@ export default function SwapInterface() {
           {route !== 'psm' && (
             <div className="flex justify-between">
               <span className={DL.label}>Price Impact</span>
-              <span className={`font-mono text-xs ${parseFloat(quote.priceImpact) > 5 ? 'text-red-600' : 'text-[#1D3D2A]'}`}>
-                {parseFloat(quote.priceImpact).toFixed(2)}%
+              <span className={`font-mono text-xs ${parseFloat(String(quote.priceImpact)) > 5 ? 'text-red-600' : 'text-[#1D3D2A]'}`}>
+                {parseFloat(String(quote.priceImpact)).toFixed(2)}%
               </span>
             </div>
           )}

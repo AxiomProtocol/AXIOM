@@ -73,7 +73,7 @@ async function fetchEulerSwapPool(
     const pool = new ethers.Contract(poolAddress, EULERSWAP_POOL_ABI, provider);
     const reserves = await pool.getReserves();
 
-    let feeBps = EULER_SWAP.SWAP_FEE_BPS;
+    let feeBps: number = EULER_SWAP.SWAP_FEE_BPS as number;
     try { feeBps = Number(await pool.fee()); } catch {}
 
     const r0 = Number(ethers.formatUnits(reserves[0], decimalsA));

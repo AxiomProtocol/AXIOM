@@ -111,7 +111,7 @@ export async function getFieldSignalsForDeal(
     );
 
     // Determine estimate confidence based on sampling
-    const samplingPercent = summaryData.samplingPercentage || 0;
+    const samplingPercent = Number(summaryData.samplingPercentage || 0);
     let estimateConfidence: "low" | "medium" | "high" = "low";
     if (samplingPercent >= 80) {
       estimateConfidence = "high";
@@ -150,15 +150,15 @@ export async function getFieldSignalsForDeal(
         total: summaryData.totalDeficiencies || 0,
         critical: summaryData.criticalDeficiencies || 0,
         majorPercentage:
-          summaryData.totalDeficiencies > 0
+          (summaryData.totalDeficiencies ?? 0) > 0
             ? ((summaryData.criticalDeficiencies || 0) /
-                summaryData.totalDeficiencies) *
+                summaryData.totalDeficiencies!) *
               100
             : 0,
       },
       estimatedRehabCosts: {
-        totalPerProperty: summaryData.estimatedTotalRehabCost || 0,
-        perUnit: summaryData.estimatedAvgCostPerUnit || 0,
+        totalPerProperty: Number(summaryData.estimatedTotalRehabCost || 0),
+        perUnit: Number(summaryData.estimatedAvgCostPerUnit || 0),
         byCategory: {
           light:
             ((summaryData.rehabPackageBreakdown as any)
@@ -309,7 +309,7 @@ export function generateRiskFlagsFromField(
     });
   }
 
-  return flags;
+  return flags as { flag: string; severity: 'low' | 'medium' | 'high'; description: string }[];
 }
 
 /**

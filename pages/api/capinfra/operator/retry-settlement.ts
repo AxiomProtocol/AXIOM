@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, error: `Unsupported asset: ${asset}. Supported: ${SUPPORTED.join(', ')}` });
   }
 
-  const retryId  = generateId('retry');
+  const retryId  = generateId('retry' as any);
   const now      = new Date();
 
   try {

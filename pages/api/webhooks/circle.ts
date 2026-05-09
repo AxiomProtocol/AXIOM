@@ -170,8 +170,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 async function logWebhookEvent(payload: any): Promise<void> {
   try {
-    const { getPool } = await import('../../../server/db');
-    const pool = getPool();
+    const { pool } = await import('../../../server/db');
     await pool.query(
       `INSERT INTO circle_webhook_events (notification_id, notification_type, client_id, raw_payload)
        VALUES ($1, $2, $3, $4)

@@ -7,6 +7,15 @@ export interface AttomListingMetadata {
   totalDebt?: number;
   apn?: string;
   fips?: string;
+  source?: string;
+  parcelId?: string;
+  caseNo?: string;
+  saleDate?: string;
+  listUrl?: string;
+  filedDate?: string;
+  recordDate?: string;
+  owner?: string;
+  [key: string]: unknown;
 }
 
 export interface NormalizedListing {

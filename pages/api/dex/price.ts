@@ -25,7 +25,7 @@ const POOL_ABI = [
 
 async function getAxmPriceFromPool(): Promise<string> {
   const poolAddress = EULER_SWAP_AXUSD_AXM_POOL_ADDRESS;
-  if (!isEulerSwapDeployed() || poolAddress === ZERO) return '0';
+  if (!isEulerSwapDeployed() || (poolAddress as string) === ZERO) return '0';
   try {
     const provider = new ethers.JsonRpcProvider(ALCHEMY_RPC);
     const pool = new ethers.Contract(poolAddress, POOL_ABI, provider);

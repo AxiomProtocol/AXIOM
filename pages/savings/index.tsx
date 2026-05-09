@@ -175,10 +175,10 @@ export default function SavingsPage() {
       let lastTxHash: string | null = null;
       for (const step of data.steps) {
         setTxMessage(`Step ${step.step}: ${step.description}…`);
-        lastTxHash = await eth.request({
+        lastTxHash = (await eth.request({
           method: 'eth_sendTransaction',
           params: [{ from: walletAddress as string, to: step.to, data: step.data }],
-        });
+        })) as string;
         setTxMessage(`Step ${step.step} submitted: ${lastTxHash?.slice(0, 10)}…`);
       }
 
@@ -243,10 +243,10 @@ export default function SavingsPage() {
       let lastTxHash: string | null = null;
       for (const step of data.steps) {
         setTxMessage(`Step ${step.step}: ${step.description}…`);
-        lastTxHash = await eth.request({
+        lastTxHash = (await eth.request({
           method: 'eth_sendTransaction',
           params: [{ from: walletAddress as string, to: step.to, data: step.data }],
-        });
+        })) as string;
         setTxMessage(`Withdrawal submitted: ${lastTxHash?.slice(0, 10)}…`);
       }
 
