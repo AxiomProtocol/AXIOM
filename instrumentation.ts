@@ -104,11 +104,13 @@ export async function register() {
     // intentionally depends on startup-time DDL.
     const isServerlessRuntime =
       !!process.env.VERCEL_ENV ||
-      process.env.AWS_EXECUTION_ENV?.startsWith('AWS_Lambda_') === true;
-    const schemaBootstrapFlag = process.env.INSTRUMENTATION_BOOTSTRAP_SCHEMA;
+      process.env.AWS_EXECUTION_ENV?.startsWith('AWS_Lambda_') === true ||
+      !!process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      !!process.env.LAMBDA_TASK_ROOT;
+    const schemaBootstrapEnv = process.env.INSTRUMENTATION_BOOTSTRAP_SCHEMA;
     const shouldBootstrapSchema =
-      schemaBootstrapFlag === '1' ||
-      (schemaBootstrapFlag !== '0' && !isServerlessRuntime);
+      schemaBootstrapEnv === '1' ||
+      (schemaBootstrapEnv !== '0' && !isServerlessRuntime);
 
     if (!shouldBootstrapSchema) {
       console.log(
