@@ -691,6 +691,8 @@ export default function FounderOpsPage() {
   const [execAllocError, setExecAllocError]             = useState<string | null>(null);
   const [triggerAllocLoading, setTriggerAllocLoading]   = useState(false);
   const [triggerAllocError, setTriggerAllocError]       = useState<string | null>(null);
+  const [retrySettlementLoading, setRetrySettlementLoading] = useState<string | null>(null); // asset key
+  const [retrySettlementResult, setRetrySettlementResult]   = useState<Record<string, { tx_hash: string | null; settlement_status: string; settlement_note: string | null }>>({});
 
   const loadLastAutoAlloc = async (keyArg?: string) => {
     const adminKey = keyArg ?? reservesAdminKey ?? railAdminKey;
@@ -729,6 +731,43 @@ export default function FounderOpsPage() {
       setExecAllocError(String(e));
     } finally {
       setExecAllocLoading(false);
+    }
+  };
+
+  const retrySettlement = async (asset: string, quantity: number, usdAmount: number, positionId?: string) => {
+    const adminKey = reservesAdminKey ?? railAdminKey;
+    if (!adminKey) return;
+    setRetrySettlementLoading(asset);
+    try {
+      const res  = await fetch('/api/capinfra/operator/retry-settlement', {
+        method:  'POST',
+        headers: { 'x-admin-key': adminKey, 'content-type': 'application/json' },
+        body:    JSON.stringify({ asset, quantity, usd_amount: usdAmount, position_id: positionId }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setRetrySettlementResult(prev => ({
+          ...prev,
+          [asset]: {
+            tx_hash:           json.tx_hash,
+            settlement_status: json.settlement_status,
+            settlement_note:   json.settlement_note,
+          },
+        }));
+        loadReserves(adminKey);
+      } else {
+        setRetrySettlementResult(prev => ({
+          ...prev,
+          [asset]: { tx_hash: null, settlement_status: 'failed', settlement_note: json.error ?? 'Retry failed' },
+        }));
+      }
+    } catch (e) {
+      setRetrySettlementResult(prev => ({
+        ...prev,
+        [asset]: { tx_hash: null, settlement_status: 'failed', settlement_note: String(e) },
+      }));
+    } finally {
+      setRetrySettlementLoading(null);
     }
   };
 
@@ -4514,7 +4553,12 @@ export default function FounderOpsPage() {
                             </thead>
                             <tbody>
                               {execAllocResult.buckets.map(b => {
-                                const ss = b.settlement_status ?? '';
+                                const retried    = retrySettlementResult[b.asset];
+                                const rawSS      = b.settlement_status ?? '';
+                                const ss         = retried ? retried.settlement_status : rawSS;
+                                const canRetry   = (rawSS === 'insufficient_balance' || rawSS === 'failed' || rawSS.startsWith('queued')) && !retried;
+                                const isRetrying = retrySettlementLoading === b.asset;
+
                                 const settlementBadge = (() => {
                                   if (ss === 'confirmed')           return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-emerald-700 border border-emerald-700 px-1.5 py-0.5">Confirmed</span>;
                                   if (ss === 'pending_custody')     return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-amber-700 border border-amber-500 px-1.5 py-0.5">Pending Custody</span>;
@@ -4528,9 +4572,12 @@ export default function FounderOpsPage() {
                                   if (ss === 'failed')              return <span className="font-dl-mono text-[9px] uppercase tracking-wider text-red-700 border border-red-500 px-1.5 py-0.5">Failed</span>;
                                   return <span className="font-dl-mono text-[9px] text-dl-gray">{ss || '—'}</span>;
                                 })();
-                                const txDisplay = b.tx_hash
-                                  ? <a href={`https://arbiscan.io/tx/${b.tx_hash}`} target="_blank" rel="noopener noreferrer" className="font-dl-mono text-[9px] text-dl-navy underline underline-offset-2 hover:text-dl-forest" title={b.tx_hash}>{b.tx_hash.slice(0,6)}…{b.tx_hash.slice(-4)}</a>
-                                  : <span className="font-dl-mono text-[9px] text-dl-gray" title={b.settlement_note ?? ''}>{ss === 'pending_custody' ? 'Pending' : ss === 'treasury_hold' ? 'N/A' : '—'}</span>;
+
+                                const effectiveTxHash = retried?.tx_hash ?? b.tx_hash;
+                                const txDisplay = effectiveTxHash
+                                  ? <a href={`https://arbiscan.io/tx/${effectiveTxHash}`} target="_blank" rel="noopener noreferrer" className="font-dl-mono text-[9px] text-dl-navy underline underline-offset-2 hover:text-dl-forest" title={effectiveTxHash}>{effectiveTxHash.slice(0,6)}…{effectiveTxHash.slice(-4)}</a>
+                                  : <span className="font-dl-mono text-[9px] text-dl-gray" title={(retried?.settlement_note ?? b.settlement_note) ?? ''}>{ss === 'pending_custody' ? 'Pending' : ss === 'treasury_hold' ? 'N/A' : '—'}</span>;
+
                                 return (
                                   <tr key={b.bucket} className="border-b border-dl-border last:border-0">
                                     <td className="font-dl-mono text-[10px] text-dl-navy py-2 pr-4 whitespace-nowrap">{b.bucket.replace(/_/g, ' ')}</td>
@@ -4556,7 +4603,20 @@ export default function FounderOpsPage() {
                                       {b.quantity < 0.001 ? b.quantity.toExponential(4) : b.quantity.toFixed(6)} {b.asset}
                                     </td>
                                     <td className="font-dl-mono text-[9px] text-dl-gray py-2 pr-4 whitespace-nowrap">{b.execution_path.replace(/_/g, ' ')}</td>
-                                    <td className="py-2 pr-4 whitespace-nowrap">{settlementBadge}</td>
+                                    <td className="py-2 pr-4 whitespace-nowrap">
+                                      <div className="flex items-center gap-1.5">
+                                        {settlementBadge}
+                                        {canRetry && (
+                                          <button
+                                            onClick={() => retrySettlement(b.asset, b.quantity, b.usd_amount)}
+                                            disabled={!!retrySettlementLoading}
+                                            className="font-dl-mono text-[8px] uppercase tracking-wider border border-dl-navy text-dl-navy px-1.5 py-0.5 hover:bg-dl-navy hover:text-white disabled:opacity-40"
+                                          >
+                                            {isRetrying ? '…' : 'Retry →'}
+                                          </button>
+                                        )}
+                                      </div>
+                                    </td>
                                     <td className="py-2 pr-4 whitespace-nowrap">{txDisplay}</td>
                                   </tr>
                                 );
