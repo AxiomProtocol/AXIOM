@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import { t3Claims, t3Identities, t3ComplianceOpsLog, CLAIM_VALIDITY_DAYS, CLAIM_REFRESH_WARNING_DAYS } from '../../../../shared/erc3643Schema';
 import { eq, and, lte, gte } from 'drizzle-orm';
+import { getResendClient } from '../../../../lib/email/resend';
 
 const TOPIC_NAMES: Record<number, string> = {
   1: 'KYC_VERIFIED',
@@ -24,25 +25,7 @@ function getExpiryStatus(expiresAt: Date | null): 'valid' | 'expiring_soon' | 'e
 
 async function sendExpiryAlertEmail(entries: { wallet: string; topic: number; daysRemaining: number | null; expiresAt: Date | null }[]) {
   try {
-    const { Resend } = await import('resend');
-    const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-    const xReplitToken = process.env.REPL_IDENTITY
-      ? 'repl ' + process.env.REPL_IDENTITY
-      : process.env.WEB_REPL_RENEWAL
-      ? 'depl ' + process.env.WEB_REPL_RENEWAL
-      : null;
-
-    if (!xReplitToken || !hostname) throw new Error('Resend credentials unavailable');
-
-    const connData = await fetch(
-      'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
-      { headers: { Accept: 'application/json', X_REPLIT_TOKEN: xReplitToken } }
-    ).then(r => r.json()).then(d => d.items?.[0]);
-
-    if (!connData?.settings?.api_key) throw new Error('Resend not connected');
-
-    const client = new Resend(connData.settings.api_key);
-    const fromEmail = connData.settings.from_email ?? 'compliance@axiom.money';
+    const { client, fromEmail } = await getResendClient('compliance@axiom.money');
     const toEmail = process.env.COMPLIANCE_ALERT_EMAIL ?? fromEmail;
 
     const rows = entries.map(e =>

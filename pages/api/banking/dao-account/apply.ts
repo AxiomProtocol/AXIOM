@@ -13,7 +13,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../../../server/db';
 import { daoAccountApplications } from '../../../../shared/daoAccountSchema';
 import { checkRateLimit } from '../../../../lib/multichain/stellar/axiom-rail/rateLimiter';
-import { Resend } from 'resend';
+import { getResendClient } from '../../../../lib/email/resend';
 
 const VALID_ID_TYPES = ['passport', 'drivers_license', 'national_id', 'state_id'];
 
@@ -24,22 +24,6 @@ function escapeHtml(str: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-async function getResendCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY
-    ? 'repl ' + process.env.REPL_IDENTITY
-    : process.env.WEB_REPL_RENEWAL
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL
-    : null;
-  if (!xReplitToken) throw new Error('No Replit token');
-  const settings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
-    { headers: { Accept: 'application/json', X_REPLIT_TOKEN: xReplitToken } }
-  ).then(r => r.json()).then(d => d.items?.[0]);
-  if (!settings?.settings?.api_key) throw new Error('Resend not connected');
-  return { apiKey: settings.settings.api_key, fromEmail: settings.settings.from_email };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -101,8 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     try {
-      const { apiKey, fromEmail } = await getResendCredentials();
-      const client = new Resend(apiKey);
+      const { client, fromEmail } = await getResendClient('Axiom Ops <noreply@axiom.money>');
       await client.emails.send({
         from: fromEmail || 'Axiom Ops <noreply@axiom.money>',
         to: ['info@axiomprotocol.app'],
