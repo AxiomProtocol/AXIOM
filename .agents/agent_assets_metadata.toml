@@ -1007,3 +1007,9 @@ id = "k2ZEIvea427ZmBDI4a5FA"
 uri = "file://attached_assets/stock_images/agricultural-land.jpg"
 type = "image"
 title = "aerial view green agricultural land fields landscape"
+
+[[outputs]]
+id = "jxTrb50j5aPnAt0XirnO7"
+uri = "file://.local/reserve-audit.md"
+type = "text"
+title = "Reserve Audit — Mismatch Matrix, Canonical Model & 7-Phase Plan"
