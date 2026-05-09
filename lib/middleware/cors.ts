@@ -6,15 +6,19 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+function normalizeOrigin(origin: string): string {
+  return origin.replace(/\/+$/, '');
+}
+
 function buildAllowedOrigins(): string[] {
   const origins: string[] = [];
   
   if (process.env.NEXT_PUBLIC_APP_URL) {
-    origins.push(process.env.NEXT_PUBLIC_APP_URL);
+    origins.push(normalizeOrigin(process.env.NEXT_PUBLIC_APP_URL));
   }
 
   if (process.env.NEXT_PUBLIC_BASE_URL) {
-    origins.push(process.env.NEXT_PUBLIC_BASE_URL);
+    origins.push(normalizeOrigin(process.env.NEXT_PUBLIC_BASE_URL));
   }
   
   origins.push('https://www.axiomprotocol.app');
