@@ -1,109 +1,31 @@
 /**
  * /api/observer/reserve-assets
  *
- * Aggregates live on-chain balances and mark prices for all protocol reserve
- * assets on Arbitrum One.
+ * Public (unauthenticated) reserve asset endpoint. Delegates all balance
+ * and price fetching to getCanonicalReserveSnapshot() so AXUSD scope,
+ * coverage denominator, and hard-asset numerator cannot drift from the
+ * authenticated internal view.
  *
- * Balance sources (canonical, per spec):
- *   ETH   — deployer EOA native balance (eth_getBalance)
- *   PAXG  — BitGoTreasuryExtension.getReserveAssetBalances() (custodian-reported)
- *   AXAU  — AXAUFulfillmentService.getVaultBuffer() (fulfillment buffer, Chainlink XAU price)
- *   AXM   — TREASURY_REVENUE + STAKING_EMISSIONS ERC-20 balanceOf on Arbitrum One
- *   USDC  — canonical PSM + legacy PSM + backstop vault + deployer EOA (4 sources)
- *   AXUSD — TREASURY_REVENUE + Euler EVK Open Market Vault (eAXUSD-6) ERC-20 balanceOf
+ * This handler is a thin adapter:
+ *   1. Call getCanonicalReserveSnapshot() — canonical balances + prices
+ *   2. Fetch sparklines separately (display-only, not in canonical function)
+ *   3. Map canonical data → ReserveAssetsResponse shape
  *
- * Price sources:
- *   ETH   — CoinGecko free API (ethereum/usd + 24h change)
- *   PAXG  — Chainlink XAU/USD oracle on Arbitrum One (via getVaultBuffer)
- *   AXAU  — Chainlink XAU/USD oracle on Arbitrum One (same as PAXG; backing price)
- *   AXM   — On-chain EulerSwap pool reserve ratio (AXUSD/AXM)
- *   USDC  — $1.00 stable peg (no oracle)
- *   AXUSD — $1.00 stable peg (no oracle)
- *
- * 30-day sparkline data:
- *   ETH / PAXG — Alchemy Historical Prices API (1d interval)
+ * Accounting rules are enforced in getCanonicalReserveSnapshot() and are
+ * NOT re-implemented here. Do not add coverage logic to this file.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { ethers } from 'ethers';
-import { CORE_CONTRACTS, AXUSD_GENIUS_CONTRACTS, STABLECOINS, EULER_LENDING_CONTRACTS } from '../../../shared/contracts';
-import { ERC3643_CONTRACTS } from '../../../shared/contracts-3643';
-import { CANONICAL_PSM, EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, isEulerSwapDeployed } from '../../../src/config/activeContracts.generated';
+import { getCanonicalReserveSnapshot } from '../../../lib/reserves/getCanonicalReserveSnapshot';
+import { CORE_CONTRACTS, EULER_LENDING_CONTRACTS } from '../../../shared/contracts';
+import { DEPLOYER_EOA } from '../../../src/config/adminRoles';
 import { AXAU_ADDRESSES } from '../../../lib/services/AXAUContractService';
-import { bitGoTreasuryExtension } from '../../../lib/services/BitGoTreasuryExtension';
-import { getVaultBuffer } from '../../../lib/services/AXAUFulfillmentService';
 
-const DEPLOYER_ADDRESS  = '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96';
-const PAXG_ARBITRUM     = '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429';
-const AXM_ADDRESS       = CORE_CONTRACTS.AXM_TOKEN;
-const AXUSD_ADDRESS     = ERC3643_CONTRACTS.AXUSD_TOKEN;
-const AXAU_ADDRESS      = AXAU_ADDRESSES.AXAUTokenLite3643;
-const USDC_ADDRESS      = STABLECOINS.USDC;
+const ALCHEMY_KEY = process.env.ALCHEMY_API_KEY ?? '';
+const PAXG_ARBITRUM = '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429';
 
-const ALCHEMY_KEY   = process.env.ALCHEMY_API_KEY ?? '';
-const ARBITRUM_RPC  = ALCHEMY_KEY
-  ? `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`
-  : 'https://arb1.arbitrum.io/rpc';
-const ZERO          = '0x0000000000000000000000000000000000000000';
-const AXM_LC        = AXM_ADDRESS.toLowerCase();
-
-const ERC20_ABI = [
-  'function balanceOf(address) view returns (uint256)',
-  'function totalSupply() view returns (uint256)',
-];
-const POOL_ABI  = [
-  'function getReserves() view returns (uint112,uint112,uint32)',
-  'function getAssets() view returns (address,address)',
-];
-
-// ─── Price feeds ─────────────────────────────────────────────────────────────
-
-interface CgPrices {
-  ethUsd: number | null;
-  eth24hPct: number | null;
-  xauUsd: number | null;
-  xau24hPct: number | null;
-}
-
-async function fetchCoinGeckoPrices(): Promise<CgPrices> {
-  try {
-    const url = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum,pax-gold&vs_currencies=usd&include_24hr_change=true';
-    const res = await fetch(url, {
-      headers: { accept: 'application/json' },
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!res.ok) return { ethUsd: null, eth24hPct: null, xauUsd: null, xau24hPct: null };
-    const json = await res.json() as {
-      ethereum?: { usd?: number; usd_24h_change?: number };
-      'pax-gold'?: { usd?: number; usd_24h_change?: number };
-    };
-    return {
-      ethUsd:   json.ethereum?.usd ?? null,
-      eth24hPct: json.ethereum?.usd_24h_change ?? null,
-      xauUsd:   json['pax-gold']?.usd ?? null,
-      xau24hPct: json['pax-gold']?.usd_24h_change ?? null,
-    };
-  } catch {
-    return { ethUsd: null, eth24hPct: null, xauUsd: null, xau24hPct: null };
-  }
-}
-
-async function fetchAxmPrice(provider: ethers.JsonRpcProvider): Promise<number | null> {
-  const poolAddr = EULER_SWAP_AXUSD_AXM_POOL_ADDRESS;
-  if (!isEulerSwapDeployed() || !poolAddr || poolAddr === ZERO) return null;
-  try {
-    const pool     = new ethers.Contract(poolAddr, POOL_ABI, provider);
-    const [reserves, assets] = await Promise.all([pool.getReserves(), pool.getAssets()]);
-    const asset0Lower  = (assets[0] as string).toLowerCase();
-    const axmIsAsset0  = asset0Lower === AXM_LC;
-    const axmReserve   = Number(ethers.formatUnits(axmIsAsset0 ? reserves[0] : reserves[1], 18));
-    const axusdReserve = Number(ethers.formatUnits(axmIsAsset0 ? reserves[1] : reserves[0], 18));
-    if (axmReserve <= 0) return null;
-    return axusdReserve / axmReserve;
-  } catch {
-    return null;
-  }
-}
+// Stale threshold for BitGo custodian data — emit a UI warning if exceeded.
+const BITGO_STALE_THRESHOLD_SECONDS = 3_600;
 
 async function fetchSparkline(symbol: string, days = 30): Promise<number[] | null> {
   if (!ALCHEMY_KEY) return null;
@@ -116,32 +38,11 @@ async function fetchSparkline(symbol: string, days = 30): Promise<number[] | nul
       { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(12_000) },
     );
     if (!res.ok) return null;
-    const json = await res.json() as { data?: { history?: Array<{ value: string }> } };
+    const json    = await res.json() as { data?: { history?: Array<{ value: string }> } };
     const history = json.data?.history ?? [];
     const prices  = history.map((h) => parseFloat(h.value)).filter((v) => !isNaN(v) && v > 0);
     return prices.length >= 2 ? prices : null;
-  } catch {
-    return null;
-  }
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function fmtBal(n: number, decimals = 6): string {
-  return n.toFixed(decimals);
-}
-
-function fmtUsd(n: number): string {
-  return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function arbiUrl(addr: string): string {
-  return `https://arbiscan.io/address/${addr}`;
-}
-
-function change24hUsd(price: number | null, pct: number | null): string | null {
-  if (price === null || pct === null) return null;
-  return (price * pct / 100).toFixed(2);
+  } catch { return null; }
 }
 
 // ─── Response types ───────────────────────────────────────────────────────────
@@ -189,20 +90,59 @@ export interface ReserveAssetsResponse {
     coverageNote: string;
     axusdCirculatingSupply: string;
   };
+  freshness: {
+    fetchedAt: string;
+    dataAgeSeconds: number;
+    bitgoDataAgeSeconds: number | null;
+    isBitgoStale: boolean;
+  };
   deployer: string;
   timestamp: string;
   error?: string;
 }
 
-// ─── Handler ──────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function fmtBal(n: number, decimals = 6): string {
+  return n.toFixed(decimals);
+}
+
+function fmtUsd(n: number): string {
+  return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function arbiUrl(addr: string): string {
+  return `https://arbiscan.io/address/${addr}`;
+}
+
+function change24hUsd(price: number | null, pct: number | null): string | null {
+  if (price === null || pct === null) return null;
+  return (price * pct / 100).toFixed(2);
+}
+
+// ─── Empty response ───────────────────────────────────────────────────────────
 
 const EMPTY_RESPONSE: Omit<ReserveAssetsResponse, 'timestamp' | 'error'> = {
   success: false,
   priceMov: [],
   stable: [],
-  totals: { totalValueUsd: '0.00', coverageRatio: null, coverageRatioPct: null, coverageNote: '', axusdCirculatingSupply: '0.00' },
-  deployer: DEPLOYER_ADDRESS,
+  totals: {
+    totalValueUsd: '0.00',
+    coverageRatio: null,
+    coverageRatioPct: null,
+    coverageNote: '',
+    axusdCirculatingSupply: '0.00',
+  },
+  freshness: {
+    fetchedAt: new Date().toISOString(),
+    dataAgeSeconds: 0,
+    bitgoDataAgeSeconds: null,
+    isBitgoStale: false,
+  },
+  deployer: DEPLOYER_EOA,
 };
+
+// ─── Handler ──────────────────────────────────────────────────────────────────
 
 export default async function handler(
   req: NextApiRequest,
@@ -216,251 +156,145 @@ export default async function handler(
     });
   }
 
+  const requestStart = Date.now();
+
   try {
-    const provider = new ethers.JsonRpcProvider(ARBITRUM_RPC);
-
-    const axm   = new ethers.Contract(AXM_ADDRESS, ERC20_ABI, provider);
-    const axusd = new ethers.Contract(AXUSD_ADDRESS, ERC20_ABI, provider);
-    const axauT = new ethers.Contract(AXAU_ADDRESS, ERC20_ABI, provider);
-    const usdc  = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, provider);
-
-    // Kick off all data fetches in parallel
-    const [
-      cgPrices,
-      axmPrice,
-      vault,
-      bitgo,
-      ethBalanceRaw,
-      axmTreasuryRaw,
-      axmStakingRaw,
-      axusdTreasuryRaw,
-      axusdEvkRaw,
-      axusdTotalSupplyRaw,
-      usdcCanonicalRaw,
-      usdcLegacyRaw,
-      usdcBackstopRaw,
-      usdcDeployerRaw,
-      axauDeployerFallbackRaw,
-      ethSparkline,
-      paxgSparkline,
-    ] = await Promise.all([
-      fetchCoinGeckoPrices(),
-      fetchAxmPrice(provider),
-      getVaultBuffer().catch(() => null),
-      bitGoTreasuryExtension.getReserveAssetBalances().catch(() => null),
-      provider.getBalance(DEPLOYER_ADDRESS).catch(() => 0n),
-      axm.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),
-      axm.balanceOf(CORE_CONTRACTS.STAKING_EMISSIONS).catch(() => 0n),
-      axusd.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE).catch(() => 0n),
-      axusd.balanceOf(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT).catch(() => 0n),
-      axusd.totalSupply().catch(() => 0n),
-      usdc.balanceOf(CANONICAL_PSM).catch(() => 0n),
-      usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.PSM).catch(() => 0n),
-      usdc.balanceOf(AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC).catch(() => 0n),
-      usdc.balanceOf(DEPLOYER_ADDRESS).catch(() => 0n),
-      axauT.balanceOf(DEPLOYER_ADDRESS).catch(() => 0n),
+    // Step 1: canonical balances + prices (single source of truth)
+    // Step 2: sparklines (display-only, parallel with canonical fetch would be ideal
+    //         but canonical fetch is the bottleneck so we sequence for simplicity)
+    const [snap, ethSparkline, paxgSparkline] = await Promise.all([
+      getCanonicalReserveSnapshot(),
       fetchSparkline('WETH', 30),
       fetchSparkline('PAXG', 30),
     ]);
 
-    // ── ETH ───────────────────────────────────────────────────────────────
-    const ethBal      = Number(ethers.formatEther(ethBalanceRaw as bigint));
-    const ethPrice    = cgPrices.ethUsd;
-    const eth24hPct   = cgPrices.eth24hPct;
-    const ethValue    = ethPrice !== null ? ethBal * ethPrice : null;
+    const r = snap._raw;
+    const dataAgeSeconds = Math.round((Date.now() - requestStart) / 1000);
 
-    // ── PAXG ──────────────────────────────────────────────────────────────
-    // Balance: BitGo custodian (canonical) → vault deployer wallet (fallback)
-    const bitgoPaxg = (bitgo?.positions ?? []).find(p => p.assetSymbol === 'PAXG');
-    const paxgBal   = bitgoPaxg && bitgoPaxg.quantity > 0
-      ? bitgoPaxg.quantity
-      : (vault ? parseFloat(vault.paxgBalanceFormatted) : 0);
-    const paxgBalSource = bitgoPaxg && bitgoPaxg.quantity > 0
+    // ── ETH ─────────────────────────────────────────────────────────────
+    const ethValue = r.ethPrice !== null ? r.ethBal * r.ethPrice : null;
+
+    // ── PAXG ────────────────────────────────────────────────────────────
+    const paxgBalSource = r.paxgViaBitgo
       ? 'BitGo CaaS (custodian-reported)'
       : 'Deployer EOA on-chain balance (BitGo unavailable)';
+    const paxgValue = r.xauPrice !== null ? r.paxgBal * r.xauPrice : null;
 
-    // Price: Chainlink XAU/USD via vault buffer → CoinGecko pax-gold fallback
-    const xauPrice  = vault ? parseFloat(vault.xauUsdPrice) : (cgPrices.xauUsd ?? null);
-    const xau24hPct = cgPrices.xau24hPct;
-    const paxgValue = xauPrice !== null ? paxgBal * xauPrice : null;
-
-    // ── AXAU ──────────────────────────────────────────────────────────────
-    // Balance: vault buffer (deployer fulfillment buffer) → direct on-chain fallback
-    const axauBal = vault
-      ? parseFloat(vault.axauBalanceFormatted)
-      : Number(ethers.formatUnits(axauDeployerFallbackRaw as bigint, 18));
-    const axauBalSource = vault
+    // ── AXAU ────────────────────────────────────────────────────────────
+    const axauBalSource = r.vault
       ? 'AXAUFulfillmentService.getVaultBuffer() (deployer buffer)'
       : 'Deployer EOA on-chain balanceOf (getVaultBuffer unavailable)';
 
-    // Price: Approximate Mint NAV from AXAUFulfillmentService (~$1.15/AXAU).
-    // AXAU is NOT priced at the full XAU/USD gold troy-ounce price — it is a
-    // reserve instrument whose NAV is computed internally by the fulfillment
-    // service. Using XAU/USD here would overstate the value by ~4000×.
-    const axauNavPerToken = vault && axauBal > 0
-      ? parseFloat(vault.axauValueUsd) / axauBal
-      : 1.15;
-    const axauValue = vault
-      ? parseFloat(vault.axauValueUsd)
-      : axauBal * 1.15;
+    // ── AXM ─────────────────────────────────────────────────────────────
+    const axmValue = r.axmPrice !== null ? r.axmTotal * r.axmPrice : null;
 
-    // ── AXM ───────────────────────────────────────────────────────────────
-    const axmTreasury = Number(ethers.formatUnits(axmTreasuryRaw as bigint, 18));
-    const axmStaking  = Number(ethers.formatUnits(axmStakingRaw as bigint, 18));
-    const axmTotal    = axmTreasury + axmStaking;
-    const axmValue    = axmPrice !== null ? axmTotal * axmPrice : null;
+    // ── Coverage ─────────────────────────────────────────────────────────
+    const { totalReserveUsd, hardAssetCoverageUsd, axusdCirculatingSupply, coverageRatio } = snap.totals;
 
-    // ── USDC ──────────────────────────────────────────────────────────────
-    const usdcCanonical = Number(ethers.formatUnits(usdcCanonicalRaw as bigint, 6));
-    const usdcLegacy    = Number(ethers.formatUnits(usdcLegacyRaw as bigint, 6));
-    const usdcBackstop  = Number(ethers.formatUnits(usdcBackstopRaw as bigint, 6));
-    const usdcDeployer  = Number(ethers.formatUnits(usdcDeployerRaw as bigint, 6));
-    const usdcTotal     = usdcCanonical + usdcLegacy + usdcBackstop + usdcDeployer;
+    // ── Freshness ────────────────────────────────────────────────────────
+    const isBitgoStale = r.bitgoDataAgeSeconds !== null
+      ? r.bitgoDataAgeSeconds > BITGO_STALE_THRESHOLD_SECONDS
+      : false;
 
-    // ── AXUSD ─────────────────────────────────────────────────────────────
-    // Phase 1: include EVK Open Market Vault balance alongside Treasury Revenue.
-    const axusdTreasury        = Number(ethers.formatUnits(axusdTreasuryRaw as bigint, 18));
-    const axusdEvk             = Number(ethers.formatUnits(axusdEvkRaw as bigint, 18));
-    const axusdTotal           = axusdTreasury + axusdEvk;
-    // Phase 2: use circulating supply (totalSupply) as the coverage denominator,
-    // not just the Treasury Revenue wallet balance.
-    const axusdCirculatingSupply = Number(ethers.formatUnits(axusdTotalSupplyRaw as bigint, 18));
-
-    // ── Totals ────────────────────────────────────────────────────────────
-    const knownValues    = [ethValue, paxgValue, axauValue, axmValue, usdcTotal, axusdTotal]
-      .filter((v): v is number => v !== null);
-    const totalValueUsd  = knownValues.reduce((a, b) => a + b, 0);
-
-    // Phase 3: coverage numerator = PAXG + USDC only.
-    //   ETH is a gas reserve (operational), not AXUSD backing.
-    //   AXAU is a protocol instrument backed partly by PAXG already counted above.
-    const hardBackingAssets = [paxgValue, usdcTotal].filter((v): v is number => v !== null);
-    const totalHard         = hardBackingAssets.reduce((a, b) => a + b, 0);
-    // Phase 2: denominator is circulating supply, not Treasury Revenue balance.
-    const coverageRatio  = axusdCirculatingSupply > 0 ? totalHard / axusdCirculatingSupply : null;
-
-    // ── Build response ────────────────────────────────────────────────────
+    // ── Build priceMov ────────────────────────────────────────────────────
     const priceMov: PriceMovingAsset[] = [
       {
-        symbol:           'ETH',
-        label:            'Ethereum',
-        balance:          fmtBal(ethBal, 6),
-        balanceSource:    'Deployer EOA native balance (eth_getBalance)',
-        price:            ethPrice !== null ? fmtBal(ethPrice, 2) : null,
-        price24hChangePct: eth24hPct !== null ? eth24hPct.toFixed(2) : null,
-        price24hChangeUsd: change24hUsd(ethPrice, eth24hPct),
-        valueUsd:         ethValue !== null ? fmtUsd(ethValue) : null,
-        priceSource:      'CoinGecko (ethereum/usd)',
-        priceHistoryNote: ethSparkline ? null : 'Historical chart sourced from Alchemy Historical Prices API',
-        location:         'Deployer EOA',
-        contracts:        [DEPLOYER_ADDRESS],
-        arbiscanUrls:     [arbiUrl(DEPLOYER_ADDRESS)],
-        sparkline:        ethSparkline,
+        symbol:            'ETH',
+        label:             'Ethereum',
+        balance:           fmtBal(r.ethBal, 6),
+        balanceSource:     'Deployer EOA native balance (eth_getBalance)',
+        price:             r.ethPrice !== null ? fmtBal(r.ethPrice, 2) : null,
+        price24hChangePct: r.eth24hPct !== null ? r.eth24hPct.toFixed(2) : null,
+        price24hChangeUsd: change24hUsd(r.ethPrice, r.eth24hPct),
+        valueUsd:          ethValue !== null ? fmtUsd(ethValue) : null,
+        priceSource:       'CoinGecko (ethereum/usd)',
+        priceHistoryNote:  ethSparkline ? null : 'Historical chart sourced from Alchemy Historical Prices API',
+        location:          'Deployer EOA',
+        contracts:         [DEPLOYER_EOA],
+        arbiscanUrls:      [arbiUrl(DEPLOYER_EOA)],
+        sparkline:         ethSparkline,
       },
       {
-        symbol:           'PAXG',
-        label:            'PAX Gold',
-        balance:          fmtBal(paxgBal, 6),
-        balanceSource:    paxgBalSource,
-        price:            xauPrice !== null ? fmtBal(xauPrice, 2) : null,
-        price24hChangePct: xau24hPct !== null ? xau24hPct.toFixed(2) : null,
-        price24hChangeUsd: change24hUsd(xauPrice, xau24hPct),
-        valueUsd:         paxgValue !== null ? fmtUsd(paxgValue) : null,
-        priceSource:      vault
+        symbol:            'PAXG',
+        label:             'PAX Gold',
+        balance:           fmtBal(r.paxgBal, 6),
+        balanceSource:     paxgBalSource,
+        price:             r.xauPrice !== null ? fmtBal(r.xauPrice, 2) : null,
+        price24hChangePct: r.xau24hPct !== null ? r.xau24hPct.toFixed(2) : null,
+        price24hChangeUsd: change24hUsd(r.xauPrice, r.xau24hPct),
+        valueUsd:          paxgValue !== null ? fmtUsd(paxgValue) : null,
+        priceSource:       r.vault
           ? 'Chainlink XAU/USD · Arbitrum One (via AXAUFulfillmentService)'
           : 'CoinGecko pax-gold/usd (Chainlink fallback)',
-        priceHistoryNote: paxgSparkline ? null : '30-day chart sourced from Alchemy Historical Prices API (PAXG symbol)',
-        location:         'BitGo CaaS Custody',
-        contracts:        [DEPLOYER_ADDRESS, PAXG_ARBITRUM],
-        arbiscanUrls:     [arbiUrl(DEPLOYER_ADDRESS), arbiUrl(PAXG_ARBITRUM)],
-        sparkline:        paxgSparkline,
+        priceHistoryNote:  paxgSparkline ? null : '30-day chart sourced from Alchemy Historical Prices API (PAXG symbol)',
+        location:          'BitGo CaaS Custody',
+        contracts:         [DEPLOYER_EOA, PAXG_ARBITRUM],
+        arbiscanUrls:      [arbiUrl(DEPLOYER_EOA), arbiUrl(PAXG_ARBITRUM)],
+        sparkline:         paxgSparkline,
       },
       {
-        symbol:           'AXAU',
-        label:            'AXAU — Gold Reserve Instrument',
-        balance:          fmtBal(axauBal, 6),
-        balanceSource:    axauBalSource,
-        price:            axauNavPerToken.toFixed(4),
+        symbol:            'AXAU',
+        label:             'AXAU — Gold Reserve Instrument',
+        balance:           fmtBal(r.axauBal, 6),
+        balanceSource:     axauBalSource,
+        price:             r.axauNavPerToken.toFixed(4),
         price24hChangePct: null,
         price24hChangeUsd: null,
-        valueUsd:         fmtUsd(axauValue),
-        priceSource:      'Approximate Mint NAV (AXAUFulfillmentService · ~$1.15/AXAU) — not XAU/USD spot',
-        priceHistoryNote: 'AXAU is priced at its internal Mint NAV (~$1.15/token), not the XAU/USD gold price. It is a reserve instrument backed by gold/land NAV, not a direct troy-ounce equivalent. No secondary market price feed exists.',
-        location:         'Deployer EOA (fulfillment buffer)',
-        contracts:        [DEPLOYER_ADDRESS, AXAU_ADDRESS],
-        arbiscanUrls:     [arbiUrl(DEPLOYER_ADDRESS), arbiUrl(AXAU_ADDRESS)],
-        sparkline:        null,
+        valueUsd:          fmtUsd(r.axauValueUsd),
+        priceSource:       'Approximate Mint NAV (AXAUFulfillmentService · ~$1.15/AXAU) — not XAU/USD spot',
+        priceHistoryNote:  'AXAU is priced at its internal Mint NAV (~$1.15/token), not the XAU/USD gold price. It is a reserve instrument backed by gold/land NAV, not a direct troy-ounce equivalent. Not included in hard-asset coverage numerator.',
+        location:          'Deployer EOA (fulfillment buffer)',
+        contracts:         [DEPLOYER_EOA, AXAU_ADDRESSES.AXAUTokenLite3643],
+        arbiscanUrls:      [arbiUrl(DEPLOYER_EOA), arbiUrl(AXAU_ADDRESSES.AXAUTokenLite3643)],
+        sparkline:         null,
       },
       {
-        symbol:           'AXM',
-        label:            'Axiom Governance Token',
-        balance:          fmtBal(axmTotal, 4),
-        balanceSource:    'Treasury Revenue + Staking Emissions ERC-20 balanceOf',
-        price:            axmPrice !== null ? axmPrice.toFixed(6) : null,
+        symbol:            'AXM',
+        label:             'Axiom Governance Token',
+        balance:           fmtBal(r.axmTotal, 4),
+        balanceSource:     'Treasury Revenue + Staking Emissions ERC-20 balanceOf',
+        price:             r.axmPrice !== null ? r.axmPrice.toFixed(6) : null,
         price24hChangePct: null,
         price24hChangeUsd: null,
-        valueUsd:         axmValue !== null ? fmtUsd(axmValue) : null,
-        priceSource:      'On-chain EulerSwap pool reserve ratio (AXUSD/AXM) — spot price only, no oracle',
-        priceHistoryNote: 'AXM is not listed on any public price index (CoinGecko, Alchemy, etc.). 24h change and 30-day sparkline are unavailable. Spot price is derived from the live AXUSD/AXM EulerSwap pool reserve ratio and reflects the current on-chain exchange rate only.',
-        location:         'Treasury Revenue + Staking Emissions',
-        contracts:        [CORE_CONTRACTS.TREASURY_REVENUE, CORE_CONTRACTS.STAKING_EMISSIONS],
-        arbiscanUrls:     [arbiUrl(CORE_CONTRACTS.TREASURY_REVENUE), arbiUrl(CORE_CONTRACTS.STAKING_EMISSIONS)],
-        sparkline:        null,
+        valueUsd:          axmValue !== null ? fmtUsd(axmValue) : null,
+        priceSource:       'On-chain EulerSwap pool reserve ratio (AXUSD/AXM) — spot price only, no oracle',
+        priceHistoryNote:  'AXM is not listed on any public price index (CoinGecko, Alchemy, etc.). 24h change and 30-day sparkline are unavailable. Spot price is derived from the live AXUSD/AXM EulerSwap pool reserve ratio and reflects the current on-chain exchange rate only.',
+        location:          'Treasury Revenue + Staking Emissions',
+        contracts:         [CORE_CONTRACTS.TREASURY_REVENUE, CORE_CONTRACTS.STAKING_EMISSIONS],
+        arbiscanUrls:      [arbiUrl(CORE_CONTRACTS.TREASURY_REVENUE), arbiUrl(CORE_CONTRACTS.STAKING_EMISSIONS)],
+        sparkline:         null,
       },
     ];
 
+    // ── Build stable ──────────────────────────────────────────────────────
     const stable: StableAsset[] = [
       {
-        symbol:       'USDC',
-        label:        'USD Coin — Aggregated Reserve',
-        totalBalance: fmtBal(usdcTotal, 2),
-        totalValueUsd: fmtUsd(usdcTotal),
-        locationBreakdown: [
-          {
-            label:       'Canonical PSM (ERC-3643)',
-            contract:    CANONICAL_PSM,
-            balance:     fmtBal(usdcCanonical, 6),
-            arbiscanUrl: arbiUrl(CANONICAL_PSM),
-          },
-          {
-            label:       'Legacy PSM / GENIUS (Migrating)',
-            contract:    AXUSD_GENIUS_CONTRACTS.PSM,
-            balance:     fmtBal(usdcLegacy, 6),
-            arbiscanUrl: arbiUrl(AXUSD_GENIUS_CONTRACTS.PSM),
-          },
-          {
-            label:       'Backstop Vault USDC',
-            contract:    AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC,
-            balance:     fmtBal(usdcBackstop, 6),
-            arbiscanUrl: arbiUrl(AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC),
-          },
-          {
-            label:       'Deployer EOA',
-            contract:    DEPLOYER_ADDRESS,
-            balance:     fmtBal(usdcDeployer, 6),
-            arbiscanUrl: arbiUrl(DEPLOYER_ADDRESS),
-          },
-        ],
+        symbol:        'USDC',
+        label:         'USD Coin — Aggregated Reserve',
+        totalBalance:  fmtBal(r.usdcTotal, 2),
+        totalValueUsd: fmtUsd(r.usdcTotal),
+        locationBreakdown: snap.assets
+          .find(a => a.symbol === 'USDC')!
+          .locations.map(loc => ({
+            label:       loc.label,
+            contract:    loc.address!,
+            balance:     fmtBal(loc.balance, 6),
+            arbiscanUrl: arbiUrl(loc.address!),
+          })),
       },
       {
-        symbol:       'AXUSD',
-        label:        'Axiom USD — Protocol Holdings',
-        totalBalance: fmtBal(axusdTotal, 2),
-        totalValueUsd: fmtUsd(axusdTotal),
-        locationBreakdown: [
-          {
-            label:       'Treasury Revenue Contract',
-            contract:    CORE_CONTRACTS.TREASURY_REVENUE,
-            balance:     fmtBal(axusdTreasury, 6),
-            arbiscanUrl: arbiUrl(CORE_CONTRACTS.TREASURY_REVENUE),
-          },
-          {
-            label:       'Euler EVK Open Market Vault (eAXUSD-6)',
-            contract:    EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT,
-            balance:     fmtBal(axusdEvk, 6),
-            arbiscanUrl: arbiUrl(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT),
-          },
-        ],
+        symbol:        'AXUSD',
+        label:         'Axiom USD — Protocol Holdings',
+        totalBalance:  fmtBal(r.axusdTotal, 2),
+        totalValueUsd: fmtUsd(r.axusdTotal),
+        locationBreakdown: snap.assets
+          .find(a => a.symbol === 'AXUSD')!
+          .locations.map(loc => ({
+            label:       loc.label,
+            contract:    loc.address!,
+            balance:     fmtBal(loc.balance, 6),
+            arbiscanUrl: arbiUrl(loc.address!),
+          })),
       },
     ];
 
@@ -470,14 +304,20 @@ export default async function handler(
       priceMov,
       stable,
       totals: {
-        totalValueUsd:           fmtUsd(totalValueUsd),
-        coverageRatio:           coverageRatio !== null ? coverageRatio.toFixed(4) : null,
-        coverageRatioPct:        coverageRatio !== null ? (coverageRatio * 100).toFixed(2) : null,
-        coverageNote:            'Hard-asset backing (PAXG + USDC) / AXUSD circulating supply. ETH is an operational gas reserve and is not included. AXAU is a protocol instrument and is not double-counted.',
-        axusdCirculatingSupply:  fmtUsd(axusdCirculatingSupply),
+        totalValueUsd:          fmtUsd(totalReserveUsd),
+        coverageRatio:          coverageRatio !== null ? coverageRatio.toFixed(4) : null,
+        coverageRatioPct:       coverageRatio !== null ? (coverageRatio * 100).toFixed(2) : null,
+        coverageNote:           snap.notes.coverage,
+        axusdCirculatingSupply: fmtUsd(axusdCirculatingSupply),
       },
-      deployer:  DEPLOYER_ADDRESS,
-      timestamp: new Date().toISOString(),
+      freshness: {
+        fetchedAt:           snap.fetchedAt,
+        dataAgeSeconds,
+        bitgoDataAgeSeconds: r.bitgoDataAgeSeconds,
+        isBitgoStale,
+      },
+      deployer:  DEPLOYER_EOA,
+      timestamp: snap.fetchedAt,
     });
   } catch (error: any) {
     console.error('[reserve-assets] error:', error?.message);

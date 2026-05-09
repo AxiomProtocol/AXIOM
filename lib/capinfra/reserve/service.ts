@@ -296,3 +296,202 @@ function scaledToDecimal(scaled: bigint): string {
   const out = `${intPart}.${fracPart}`;
   return negative ? `-${out}` : out;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// On-chain ↔ Ledger Reconciliation
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// reconcileOnChainVsLedger() compares two independent views of reserve balances:
+//
+//   LEDGER VIEW  — the append-only `cap_reserve_holdings` table, which is the
+//                  source of truth for settlement headroom and policy enforcement.
+//                  Balance = SUM(CREDIT) - SUM(DEBIT) per assetId.
+//
+//   ON-CHAIN VIEW — getCanonicalReserveSnapshot(), which queries the chain live
+//                   (eth_call / balanceOf / totalSupply) and BitGo CaaS DB.
+//
+// Intended use: scheduled cron (e.g. every 6h), post-mint webhook, or manual
+// operator trigger via /api/internal/reserve-reconcile (not yet wired).
+//
+// Output shape intentionally mirrors standard double-entry difference reports:
+//   discrepancy > 0  — ledger shows MORE than on-chain (possible over-crediting)
+//   discrepancy < 0  — ledger shows LESS than on-chain (possible under-crediting)
+//   discrepancy = 0  — views agree within tolerance
+//
+// IMPORTANT: This function is READ-ONLY. It does not mutate the ledger or
+// trigger corrections. Remediation (e.g. ADJUSTMENT entries) must be initiated
+// by an authorized operator with a valid idempotencyKey and reasonCode, following
+// the same path as adjustReserve().
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { getCanonicalReserveSnapshot } from '../../reserves/getCanonicalReserveSnapshot';
+
+export type ReconciliationStatus =
+  | 'MATCH'      // within tolerance
+  | 'DISCREPANCY' // outside tolerance — needs review
+  | 'LEDGER_EMPTY' // no ledger rows for this asset — new or uninitialized
+  | 'ONCHAIN_ZERO' // on-chain balance is 0 (zero supply or not yet deployed)
+  | 'ERROR';       // one side failed to fetch
+
+export interface ReconciliationEntry {
+  assetId: string;         // canonical asset identifier (e.g. 'AXUSD', 'PAXG')
+  ledgerAvailable: string; // decimal string from getAssetHeadroom()
+  onChainBalance: string;  // decimal string from getCanonicalReserveSnapshot()
+  discrepancy: string;     // ledgerAvailable - onChainBalance (signed decimal)
+  discrepancyUsd: number | null;
+  status: ReconciliationStatus;
+  notes: string;
+}
+
+export interface ReconciliationReport {
+  reconciledAt: string;
+  entries: ReconciliationEntry[];
+  summary: {
+    totalEntries: number;
+    matches: number;
+    discrepancies: number;
+    errors: number;
+    hasActionableDiscrepancy: boolean;
+  };
+}
+
+/** Tolerance: differences below this amount (in token units) are treated as
+ *  rounding noise rather than real discrepancies. Adjustable per-asset in future.
+ *  Currently set to 0.01 tokens — sufficient for 18-decimal ERC-20s. */
+const DEFAULT_TOLERANCE = 0.01;
+
+/**
+ * Scaffold: reconcile on-chain reserve balances against the capinfra ledger.
+ *
+ * Phase 1 (current): reads both sides and returns a diff report.
+ * Phase 2 (planned): emit audit events for discrepancies above threshold.
+ * Phase 3 (planned): auto-open JIRA/Linear ticket via webhook on DISCREPANCY.
+ *
+ * Wire to: POST /api/internal/reserve-reconcile (requires ADMIN_SOLVENCY_KEY).
+ */
+export async function reconcileOnChainVsLedger(
+  opts: {
+    toleranceOverride?: number;
+    actor?: string;
+  } = {},
+): Promise<ReconciliationReport> {
+  const reconciledAt = new Date().toISOString();
+  const tolerance    = opts.toleranceOverride ?? DEFAULT_TOLERANCE;
+
+  // The canonical on-chain snapshot is the external source of truth.
+  // The ledger (cap_reserve_holdings SUM) is the internal source of truth.
+  // We compare per asset and surface any discrepancy.
+  const [snap, axusdHeadroom, paxgHeadroom, usdcHeadroom] = await Promise.allSettled([
+    getCanonicalReserveSnapshot(),
+    getAssetHeadroom('AXUSD').catch(() => null),
+    getAssetHeadroom('PAXG').catch(() => null),
+    getAssetHeadroom('USDC').catch(() => null),
+  ]);
+
+  const entries: ReconciliationEntry[] = [];
+
+  function makeEntry(
+    assetId: string,
+    ledgerResult: PromiseSettledResult<AssetHeadroom | null>,
+    onChainBalance: number,
+    priceUsd: number | null,
+  ): ReconciliationEntry {
+    if (ledgerResult.status === 'rejected') {
+      return {
+        assetId,
+        ledgerAvailable: '0',
+        onChainBalance: onChainBalance.toFixed(10),
+        discrepancy: '0',
+        discrepancyUsd: null,
+        status: 'ERROR',
+        notes: `Ledger fetch failed: ${(ledgerResult as PromiseRejectedResult).reason?.message ?? 'unknown error'}`,
+      };
+    }
+
+    const headroom = ledgerResult.value;
+    if (!headroom || headroom.rowCount === 0) {
+      return {
+        assetId,
+        ledgerAvailable: '0',
+        onChainBalance: onChainBalance.toFixed(10),
+        discrepancy: (-onChainBalance).toFixed(10),
+        discrepancyUsd: priceUsd !== null ? -onChainBalance * priceUsd : null,
+        status: 'LEDGER_EMPTY',
+        notes: `No ledger rows for ${assetId}. On-chain balance: ${onChainBalance.toFixed(6)}. Ledger not yet initialized or all adjustments netted to zero.`,
+      };
+    }
+
+    if (onChainBalance === 0) {
+      return {
+        assetId,
+        ledgerAvailable: headroom.available,
+        onChainBalance: '0',
+        discrepancy: headroom.available,
+        discrepancyUsd: priceUsd !== null ? parseFloat(headroom.available) * priceUsd : null,
+        status: 'ONCHAIN_ZERO',
+        notes: `On-chain balance is 0 for ${assetId}. Ledger available: ${headroom.available}. Possible: deployment not live, wrong address, or balance transferred out.`,
+      };
+    }
+
+    const ledgerFloat = parseFloat(headroom.available);
+    const diff        = ledgerFloat - onChainBalance;
+    const absDiff     = Math.abs(diff);
+    const status: ReconciliationStatus = absDiff <= tolerance ? 'MATCH' : 'DISCREPANCY';
+
+    return {
+      assetId,
+      ledgerAvailable: headroom.available,
+      onChainBalance: onChainBalance.toFixed(10),
+      discrepancy: diff.toFixed(10),
+      discrepancyUsd: priceUsd !== null ? diff * priceUsd : null,
+      status,
+      notes: status === 'MATCH'
+        ? `Within tolerance (diff: ${diff.toFixed(8)}, tolerance: ${tolerance})`
+        : `Discrepancy detected: ledger=${ledgerFloat.toFixed(6)}, on-chain=${onChainBalance.toFixed(6)}, diff=${diff.toFixed(8)}. Operator review required.`,
+    };
+  }
+
+  if (snap.status === 'rejected') {
+    // On-chain fetch failed entirely — cannot compare any asset.
+    for (const assetId of ['AXUSD', 'PAXG', 'USDC']) {
+      entries.push({
+        assetId,
+        ledgerAvailable: '0',
+        onChainBalance: '0',
+        discrepancy: '0',
+        discrepancyUsd: null,
+        status: 'ERROR',
+        notes: `On-chain snapshot failed: ${(snap as PromiseRejectedResult).reason?.message ?? 'unknown error'}`,
+      });
+    }
+  } else {
+    const s = snap.value;
+    const r = s._raw;
+
+    entries.push(makeEntry('AXUSD', axusdHeadroom, r.axusdTotal,     1.0));
+    entries.push(makeEntry('PAXG',  paxgHeadroom,  r.paxgBal,        r.xauPrice));
+    entries.push(makeEntry('USDC',  usdcHeadroom,  r.usdcTotal,      1.0));
+
+    // AXUSD circulating supply check: on-chain totalSupply vs. sum of all
+    // CREDIT entries in the ledger is a higher-level consistency check.
+    // Scaffolded here for Phase 2 — requires a dedicated assetId convention
+    // (e.g. 'AXUSD:totalSupply') and a separate ledger sweep.
+    // TODO (Phase 2): emit audit event if axusdCirculatingSupply > axusdTotal + headroom
+  }
+
+  const matches       = entries.filter(e => e.status === 'MATCH').length;
+  const discrepancies = entries.filter(e => e.status === 'DISCREPANCY').length;
+  const errors        = entries.filter(e => e.status === 'ERROR').length;
+
+  return {
+    reconciledAt,
+    entries,
+    summary: {
+      totalEntries: entries.length,
+      matches,
+      discrepancies,
+      errors,
+      hasActionableDiscrepancy: discrepancies > 0,
+    },
+  };
+}

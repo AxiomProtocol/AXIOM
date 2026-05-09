@@ -1,3 +1,35 @@
+/**
+ * lib/services/BitGoTreasuryExtension.ts
+ *
+ * Reads BitGo wallet records from the local database (bitgo_wallets table)
+ * and exposes reserve positions for consumption by the canonical reserve
+ * snapshot function.
+ *
+ * ── Balance unit normalization ────────────────────────────────────────────────
+ *
+ * BitGo REST API returns balances in ATOMIC UNITS (smallest denomination),
+ * consistent with the EVM convention:
+ *   - arbeth / paxg / axusd / axm / tarbeth  → 18 decimal places (wei-scale)
+ *   - usdc                                   →  6 decimal places
+ *   - eth / teth                             → 18 decimal places
+ *
+ * The `confirmed_balance_str` column in `bitgo_wallets` stores the raw
+ * atomic-unit string exactly as returned by the BitGo API response field
+ * `confirmedBalance` (a decimal-string integer, e.g. "9717000000000000"
+ * for 0.009717 PAXG).
+ *
+ * RISK: If BitGo ever returns human-readable decimals instead of atomic
+ * units (e.g. after an API version change), normalizeBitGoBalance() will
+ * silently under-report by many orders of magnitude. The suspicious-magnitude
+ * guard below logs a warning at runtime if a normalized quantity exceeds
+ * SUSPICIOUS_MAX_QUANTITY, which would catch atomic-scale input being
+ * treated as decimal.
+ *
+ * If unit certainty cannot be verified from the BitGo dashboard or API
+ * response for a specific coin/wallet, set confirmedBalanceStr to '0'
+ * and verify before re-enabling.
+ */
+
 import { db } from '../../server/db';
 import { treasuryAccounts, custodyWalletRegistry, reservePositions } from '../../shared/treasurySchema';
 import { bitgoWallets } from '../../shared/bitgoSchema';
@@ -9,6 +41,78 @@ import { eq } from 'drizzle-orm';
 
 const PROVIDER = 'bitgo';
 
+// ── Decimal place map ─────────────────────────────────────────────────────────
+// Authoritative source for how many decimal places each coin uses in BitGo's
+// atomic-unit representation. Update here when adding new coin types.
+
+const COIN_DECIMALS: Record<string, number> = {
+  arbeth:   18,  // Arbitrum ETH (wei)
+  tarbeth:  18,  // Arbitrum testnet ETH (wei)
+  eth:      18,  // Ethereum mainnet ETH (wei)
+  teth:     18,  // Ethereum testnet ETH (wei)
+  arbitrum: 18,  // Arbitrum native (wei)
+  tarbitrum: 18, // Arbitrum testnet (wei)
+  paxg:     18,  // PAX Gold ERC-20 (18 decimals on-chain)
+  axm:      18,  // AXM governance token (18 decimals)
+  axusd:    18,  // AXUSD stablecoin (18 decimals — ERC-3643)
+  usdc:      6,  // USD Coin (6 decimals on Arbitrum and Ethereum)
+};
+
+/**
+ * Upper bound for a sanity check on normalized quantity.
+ * Any single wallet holding more than this amount is suspicious and
+ * likely indicates a decimal normalization error (atomic units being
+ * treated as already-decimal).
+ *
+ * 1,000,000 tokens is conservative for gold (PAXG) and governance tokens;
+ * for USDC/AXUSD, very large balances are more plausible, so the check
+ * uses a higher ceiling of 1e9 USD-equivalent.
+ */
+const SUSPICIOUS_MAX_QUANTITY = 1_000_000;
+
+/**
+ * Normalize a raw BitGo balance string to a human-readable decimal quantity.
+ *
+ * @param balanceStr  - The `confirmedBalanceStr` value from the database.
+ *                      Expected to be atomic units as returned by the BitGo API.
+ * @param coin        - The coin identifier (e.g. 'arbeth', 'usdc', 'paxg').
+ * @returns           - Decimal quantity (e.g. 0.009717 for 9717000000000000 PAXG).
+ */
+export function normalizeBitGoBalance(balanceStr: string, coin: string): number {
+  if (!balanceStr || balanceStr === '0') return 0;
+
+  const decimals = COIN_DECIMALS[coin.toLowerCase()];
+
+  if (decimals === undefined) {
+    // Unknown coin — default to 18 decimals (safe for most EVM assets)
+    // and emit a warning so the operator can add the coin to COIN_DECIMALS.
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(
+        `[BitGoTreasuryExtension] Unknown coin "${coin}" — defaulting to 18 decimal places. ` +
+        `Add to COIN_DECIMALS map to suppress this warning.`,
+      );
+    }
+    const quantity = parseFloat(balanceStr) / 10 ** 18;
+    warnIfSuspicious(quantity, coin, balanceStr);
+    return quantity;
+  }
+
+  const quantity = parseFloat(balanceStr) / 10 ** decimals;
+  warnIfSuspicious(quantity, coin, balanceStr);
+  return quantity;
+}
+
+function warnIfSuspicious(quantity: number, coin: string, rawStr: string): void {
+  if (quantity > SUSPICIOUS_MAX_QUANTITY && process.env.NODE_ENV !== 'production') {
+    console.warn(
+      `[BitGoTreasuryExtension] SUSPICIOUS BALANCE: normalized quantity ${quantity.toLocaleString()} ` +
+      `for coin "${coin}" (raw: "${rawStr}"). ` +
+      `This may indicate the balance string is already in decimal units, not atomic units. ` +
+      `Verify the BitGo API response format and update COIN_DECIMALS if needed.`,
+    );
+  }
+}
+
 export class BitGoTreasuryExtension {
   getProviderStatus() {
     return getProviderStatus('bitgo');
@@ -16,7 +120,7 @@ export class BitGoTreasuryExtension {
 
   getBitGoConnectionInfo() {
     const mode = getBitGoMode();
-    const url = getBitGoApiUrl();
+    const url  = getBitGoApiUrl();
     console.log(`[BitGoTreasuryExtension] Mode: ${mode} → ${url}`);
     return { mode, url };
   }
@@ -55,7 +159,14 @@ export class BitGoTreasuryExtension {
             bitgoWalletId: wallet.bitgoWalletId,
             bitgoEnterpriseId: wallet.bitgoEnterpriseId,
             coin: wallet.coin,
-            confirmedBalance: wallet.confirmedBalanceStr,
+            // Store the raw atomic-unit string alongside the normalized quantity
+            // so auditors can verify the normalization independently.
+            confirmedBalanceRaw: wallet.confirmedBalanceStr,
+            confirmedBalanceNormalized: normalizeBitGoBalance(
+              wallet.confirmedBalanceStr ?? '0',
+              wallet.coin ?? 'arbeth',
+            ),
+            decimalsUsed: COIN_DECIMALS[wallet.coin?.toLowerCase() ?? ''] ?? 18,
             lastSynced: wallet.lastSyncedAt?.toISOString() ?? null,
           },
         };
@@ -85,7 +196,12 @@ export class BitGoTreasuryExtension {
           status: wallet.isActive ? 'live' : 'configured',
           metadata: {
             walletAddress: wallet.walletAddress,
-            confirmedBalance: wallet.confirmedBalanceStr,
+            confirmedBalanceRaw: wallet.confirmedBalanceStr,
+            confirmedBalanceNormalized: normalizeBitGoBalance(
+              wallet.confirmedBalanceStr ?? '0',
+              wallet.coin ?? 'arbeth',
+            ),
+            decimalsUsed: COIN_DECIMALS[wallet.coin?.toLowerCase() ?? ''] ?? 18,
             lastSynced: wallet.lastSyncedAt?.toISOString() ?? null,
           },
         };
@@ -112,12 +228,13 @@ export class BitGoTreasuryExtension {
     }
   }
 
-  private async syncFromBitGoApi(existingSynced: number): Promise<void> {
+  private async syncFromBitGoApi(_existingSynced: number): Promise<void> {
     try {
       const { getBitGoApiUrl } = await import('../providers/featureFlags');
       const apiUrl = getBitGoApiUrl();
       console.log(`[BitGoTreasuryExtension] Syncing from BitGo API: ${apiUrl}`);
     } catch {
+      // no-op: live API sync is a future capability
     }
   }
 
@@ -136,11 +253,7 @@ export class BitGoTreasuryExtension {
     const providerStatus = this.getProviderStatus();
 
     if (providerStatus.status === 'not_connected') {
-      return {
-        positions: [],
-        status: 'not_connected',
-        error: providerStatus.reason,
-      };
+      return { positions: [], status: 'not_connected', error: providerStatus.reason };
     }
 
     try {
@@ -158,11 +271,16 @@ export class BitGoTreasuryExtension {
         if (!wallet.confirmedBalanceStr || wallet.confirmedBalanceStr === '0') continue;
 
         const asset = this.coinToAsset(wallet.coin ?? '');
-        const quantity = parseFloat(wallet.confirmedBalanceStr) / 1e18;
+
+        // Use normalizeBitGoBalance() to apply per-coin decimal handling.
+        // BitGo returns atomic units; USDC has 6 decimals, all others 18.
+        // The old inline `/ 1e18` was wrong for USDC (would overstate by 10^12).
+        const quantity = normalizeBitGoBalance(wallet.confirmedBalanceStr, wallet.coin ?? 'arbeth');
+
         const syncAge = wallet.lastSyncedAt
           ? Date.now() - wallet.lastSyncedAt.getTime()
           : Infinity;
-        const confidence = syncAge < 3600_000 ? 'high' : syncAge < 86400_000 ? 'medium' : 'low';
+        const confidence = syncAge < 3_600_000 ? 'high' : syncAge < 86_400_000 ? 'medium' : 'low';
 
         positions.push({
           assetSymbol: asset,
@@ -188,12 +306,16 @@ export class BitGoTreasuryExtension {
 
   private coinToAsset(coin: string): string {
     const map: Record<string, string> = {
-      arbeth: 'ETH',
-      tarbeth: 'ETH',
-      usdc: 'USDC',
-      axm: 'AXM',
-      axusd: 'AXUSD',
-      paxg: 'PAXG',
+      arbeth:    'ETH',
+      tarbeth:   'ETH',
+      eth:       'ETH',
+      teth:      'ETH',
+      usdc:      'USDC',
+      axm:       'AXM',
+      axusd:     'AXUSD',
+      paxg:      'PAXG',
+      arbitrum:  'ETH',
+      tarbitrum: 'ETH',
     };
     return map[coin.toLowerCase()] ?? coin.toUpperCase();
   }

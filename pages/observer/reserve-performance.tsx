@@ -33,8 +33,61 @@ function ObserverNav({ current }: { current: string }) {
   );
 }
 
-// ─── Composition bar ─────────────────────────────────────────────────────────
-// Flat horizontal stacked bar — Design Law compliant (solid colors, no gradients/animations)
+// ─── Freshness indicator ──────────────────────────────────────────────────────
+
+function FreshnessBar({ fetchedAt, isBitgoStale, bitgoDataAgeSeconds }: {
+  fetchedAt: string;
+  isBitgoStale: boolean;
+  bitgoDataAgeSeconds: number | null;
+}) {
+  const [ageSeconds, setAgeSeconds] = useState(0);
+
+  useEffect(() => {
+    const base = new Date(fetchedAt).getTime();
+    const tick = () => setAgeSeconds(Math.round((Date.now() - base) / 1000));
+    tick();
+    const id = setInterval(tick, 5_000);
+    return () => clearInterval(id);
+  }, [fetchedAt]);
+
+  const ageLabel = ageSeconds < 60
+    ? `${ageSeconds}s ago`
+    : ageSeconds < 3600
+    ? `${Math.floor(ageSeconds / 60)}m ago`
+    : `${Math.floor(ageSeconds / 3600)}h ago`;
+
+  return (
+    <div className="mb-6 space-y-2">
+      <div className="flex items-center gap-3 border border-dl-border px-4 py-2.5">
+        <div className="w-2 h-2 bg-dl-forest shrink-0" />
+        <span className="font-dl-mono text-xs text-dl-gray">
+          Live on-chain data — fetched {ageLabel} &nbsp;·&nbsp; {new Date(fetchedAt).toUTCString()}
+        </span>
+        <span className="font-dl-mono text-xs text-dl-gray ml-auto">
+          Network: Arbitrum One · Chain ID 42161
+        </span>
+      </div>
+
+      {isBitgoStale && (
+        <div className="border border-dl-gold bg-dl-bg-alt px-4 py-3">
+          <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wide mb-0.5">
+            Custodian Data Notice
+          </p>
+          <p className="text-xs text-dl-gray">
+            BitGo CaaS wallet data is{' '}
+            {bitgoDataAgeSeconds !== null
+              ? `${Math.round(bitgoDataAgeSeconds / 3600)}h old`
+              : 'unavailable'}{' '}
+            — exceeds the 1-hour freshness threshold. PAXG balance is sourced from the
+            on-chain deployer EOA as a fallback. BitGo sync recommended.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Composition bar ──────────────────────────────────────────────────────────
 
 const COMP_COLORS: Record<string, string> = {
   AXAU:  '#C8A84B',
@@ -72,15 +125,10 @@ function CompositionBar({ entries, total }: { entries: CompositionEntry[]; total
           if (pct < 0.05) return null;
           return (
             <div key={e.symbol} className="flex items-center gap-1.5">
-              <div
-                className="w-3 h-3 shrink-0"
-                style={{ backgroundColor: COMP_COLORS[e.symbol] ?? '#888' }}
-              />
+              <div className="w-3 h-3 shrink-0" style={{ backgroundColor: COMP_COLORS[e.symbol] ?? '#888' }} />
               <span className="font-dl-mono text-xs text-dl-gray">
                 {e.symbol} <span className="text-dl-navy font-medium">{pct.toFixed(1)}%</span>
-                <span className="ml-1 text-dl-gray">
-                  (${e.valueUsd.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })})
-                </span>
+                <span className="ml-1 text-dl-gray">(${e.valueUsd.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })})</span>
               </span>
             </div>
           );
@@ -97,23 +145,15 @@ function Sparkline({ data, width = 140, height = 36 }: { data: number[]; width?:
   const min   = Math.min(...data);
   const max   = Math.max(...data);
   const range = max - min || 1;
-  const pts   = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1)) * width;
-      const y = height - ((v - min) / range) * (height - 2) - 1;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
+  const pts   = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - ((v - min) / range) * (height - 2) - 1;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
   const isUp = data[data.length - 1] >= data[0];
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="block">
-      <polyline
-        points={pts}
-        fill="none"
-        stroke={isUp ? '#2E5E47' : '#8B1A1A'}
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
+      <polyline points={pts} fill="none" stroke={isUp ? '#2E5E47' : '#8B1A1A'} strokeWidth="1.5" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -128,11 +168,7 @@ function ChangeBadge({ pct, usd }: { pct: string | null; usd: string | null }) {
   return (
     <div className={`font-dl-mono text-xs ${isUp ? 'text-dl-forest' : 'text-red-700'}`}>
       {sign}{pct}% 24h
-      {usd && (
-        <span className="text-dl-gray ml-1">
-          ({sign}${Math.abs(parseFloat(usd)).toFixed(2)}/token)
-        </span>
-      )}
+      {usd && <span className="text-dl-gray ml-1">({sign}${Math.abs(parseFloat(usd)).toFixed(2)}/token)</span>}
     </div>
   );
 }
@@ -147,8 +183,8 @@ const SYMBOL_COLOR: Record<string, string> = {
 };
 
 function PriceMovingCard({ asset }: { asset: PriceMovingAsset }) {
-  const color   = SYMBOL_COLOR[asset.symbol] ?? 'text-dl-navy';
-  const balNum  = parseFloat(asset.balance);
+  const color    = SYMBOL_COLOR[asset.symbol] ?? 'text-dl-navy';
+  const balNum   = parseFloat(asset.balance);
   const priceNum = asset.price ? parseFloat(asset.price) : null;
   const hasHistory = asset.sparkline !== null || asset.price24hChangePct !== null;
 
@@ -159,9 +195,7 @@ function PriceMovingCard({ asset }: { asset: PriceMovingAsset }) {
           <span className={`font-dl-mono text-xl font-bold ${color}`}>{asset.symbol}</span>
           <p className="text-xs text-dl-gray mt-0.5">{asset.label}</p>
         </div>
-        {asset.sparkline && asset.sparkline.length > 1 && (
-          <Sparkline data={asset.sparkline} />
-        )}
+        {asset.sparkline && asset.sparkline.length > 1 && <Sparkline data={asset.sparkline} />}
       </div>
 
       <div className="space-y-2 mb-4 flex-1">
@@ -175,9 +209,7 @@ function PriceMovingCard({ asset }: { asset: PriceMovingAsset }) {
           <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide mt-0.5">Mark Price</span>
           <div className="text-right">
             <div className="font-dl-mono text-sm text-dl-gray">
-              {priceNum
-                ? `$${priceNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                : '—'}
+              {priceNum ? `$${priceNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
             </div>
             <ChangeBadge pct={asset.price24hChangePct} usd={asset.price24hChangeUsd} />
           </div>
@@ -190,7 +222,6 @@ function PriceMovingCard({ asset }: { asset: PriceMovingAsset }) {
         </div>
       </div>
 
-      {/* AXM explicit unavailability notice */}
       {!hasHistory && asset.priceHistoryNote && (
         <div className="border border-dl-border bg-dl-bg-alt px-3 py-2 mb-3">
           <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wide mb-0.5">Price History</p>
@@ -333,26 +364,22 @@ export default function ReservePerformance() {
     load();
   }, []);
 
-  const fetchedAt = data?.timestamp ? new Date(data.timestamp) : null;
-
   const priceMovTotal = data?.priceMov
     .map(a => a.valueUsd ? parseFloat(a.valueUsd.replace(/,/g, '')) : 0)
     .reduce((a, b) => a + b, 0) ?? 0;
   const stableTotal = data?.stable
     .map(a => parseFloat(a.totalValueUsd.replace(/,/g, '')))
     .reduce((a, b) => a + b, 0) ?? 0;
-  const totalNum = priceMovTotal + stableTotal;
-  const priceMovCount = data?.priceMov.filter(a => a.valueUsd).length ?? 0;
+  const totalNum       = priceMovTotal + stableTotal;
+  const priceMovCount  = data?.priceMov.filter(a => a.valueUsd).length ?? 0;
 
-  const compositionEntries: CompositionEntry[] = data
-    ? [
-        ...data.priceMov
-          .filter(a => a.valueUsd)
-          .map(a => ({ symbol: a.symbol, valueUsd: parseFloat(a.valueUsd!.replace(/,/g, '')) })),
-        ...data.stable
-          .map(a => ({ symbol: a.symbol, valueUsd: parseFloat(a.totalValueUsd.replace(/,/g, '')) })),
-      ]
-    : [];
+  const compositionEntries: CompositionEntry[] = data ? [
+    ...data.priceMov
+      .filter(a => a.valueUsd)
+      .map(a => ({ symbol: a.symbol, valueUsd: parseFloat(a.valueUsd!.replace(/,/g, '')) })),
+    ...data.stable
+      .map(a => ({ symbol: a.symbol, valueUsd: parseFloat(a.totalValueUsd.replace(/,/g, '')) })),
+  ] : [];
 
   return (
     <DesignLawLayout>
@@ -392,6 +419,13 @@ export default function ReservePerformance() {
 
       {!loading && data && (
         <>
+          {/* ── Freshness bar ────────────────────────────────────────────── */}
+          <FreshnessBar
+            fetchedAt={data.freshness.fetchedAt}
+            isBitgoStale={data.freshness.isBitgoStale}
+            bitgoDataAgeSeconds={data.freshness.bitgoDataAgeSeconds}
+          />
+
           {/* ── Summary metrics ─────────────────────────────────────────── */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
             <Metric
@@ -408,17 +442,17 @@ export default function ReservePerformance() {
             <Metric
               label="Stable Positions"
               value={`$${stableTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-              sub="USDC reserves + AXUSD holdings (Treasury Revenue + EVK vault)"
+              sub="USDC + AXUSD holdings (Treasury Revenue + EVK vault)"
             />
             <Metric
               label="AXUSD Circulating"
               value={data.totals.axusdCirculatingSupply ? `$${data.totals.axusdCirculatingSupply}` : '—'}
-              sub="Total AXUSD on-chain supply (totalSupply)"
+              sub="On-chain totalSupply() — coverage denominator"
             />
             <Metric
               label="Coverage Ratio"
               value={data.totals.coverageRatioPct ? `${data.totals.coverageRatioPct}%` : '—'}
-              sub={data.totals.coverageNote || 'Hard-asset backing (PAXG + USDC) / AXUSD circulating supply'}
+              sub="Hard-asset backing (PAXG + USDC) / AXUSD circulating supply. ETH and AXAU excluded — see methodology."
             />
           </div>
 
@@ -453,15 +487,47 @@ export default function ReservePerformance() {
             </div>
           </div>
 
+          {/* ── Coverage Methodology ─────────────────────────────────────── */}
+          <div className="border border-dl-border p-6 mb-8">
+            <SectionHeading>Coverage Ratio Methodology</SectionHeading>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-dl-gray">
+              <div>
+                <p className="font-dl-mono text-xs uppercase tracking-wide mb-2">Numerator — Hard-Asset Backing</p>
+                <ul className="space-y-1.5">
+                  <li><span className="font-dl-mono text-dl-forest">PAXG</span> — included. External gold-backed asset with on-chain verifiable balance.</li>
+                  <li><span className="font-dl-mono text-dl-forest">USDC</span> — included. External stablecoin with direct USD redemption.</li>
+                  <li><span className="font-dl-mono text-dl-gray line-through">ETH</span> — excluded. Operational gas reserve, not held as AXUSD backing.</li>
+                  <li><span className="font-dl-mono text-dl-gray line-through">AXAU</span> — excluded. Protocol instrument backed partly by PAXG (already counted). Including it would double-count gold exposure.</li>
+                  <li><span className="font-dl-mono text-dl-gray line-through">AXM</span> — excluded. Governance token with no fixed AXUSD redemption peg.</li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-dl-mono text-xs uppercase tracking-wide mb-2">Denominator — AXUSD Circulating Supply</p>
+                <ul className="space-y-1.5">
+                  <li>Source: <span className="font-dl-mono text-dl-navy">axusd.totalSupply()</span> on Arbitrum One</li>
+                  <li>Reflects total AXUSD issued and outstanding at request time</li>
+                  <li>Not the treasury wallet balance — that is often 0 and produces a meaningless ratio</li>
+                </ul>
+                <p className="font-dl-mono text-xs uppercase tracking-wide mt-4 mb-2">Provenance Labels</p>
+                <ul className="space-y-1">
+                  <li><span className="font-dl-mono text-dl-navy">live_rpc</span> — on-chain balanceOf / eth_getBalance at request time</li>
+                  <li><span className="font-dl-mono text-dl-navy">custodian_db</span> — BitGo CaaS DB snapshot (may lag up to 1h)</li>
+                  <li><span className="font-dl-mono text-dl-navy">oracle</span> — Chainlink on-chain price feed</li>
+                  <li><span className="font-dl-mono text-dl-navy">coingecko</span> — CoinGecko free API (fallback for 24h change)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           {/* ── Data Sources ─────────────────────────────────────────────── */}
           <div className="border border-dl-border p-6">
-            <SectionHeading>Data Sources & Methodology</SectionHeading>
+            <SectionHeading>Data Sources</SectionHeading>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 text-sm text-dl-gray">
               <div>
                 <p className="font-dl-mono text-xs uppercase tracking-wide mb-2">Price Oracles</p>
                 <ul className="space-y-1.5">
                   <li><span className="font-dl-mono text-dl-navy">ETH</span> — CoinGecko free API (ethereum/usd) · 24h change included</li>
-                  <li><span className="font-dl-mono text-dl-navy">PAXG / AXAU</span> — Chainlink XAU/USD on Arbitrum One via AXAUFulfillmentService · 24h % from CoinGecko pax-gold</li>
+                  <li><span className="font-dl-mono text-dl-navy">PAXG / AXAU</span> — Chainlink XAU/USD on Arbitrum One via AXAUFulfillmentService · 24h from CoinGecko pax-gold</li>
                   <li><span className="font-dl-mono text-dl-navy">AXM</span> — EulerSwap AXUSD/AXM pool reserve ratio (spot) · no index listing, no 24h/30d history</li>
                   <li><span className="font-dl-mono text-dl-navy">USDC / AXUSD</span> — $1.00 stable peg</li>
                 </ul>
@@ -469,8 +535,8 @@ export default function ReservePerformance() {
               <div>
                 <p className="font-dl-mono text-xs uppercase tracking-wide mb-2">Balance Sources</p>
                 <ul className="space-y-1.5">
-                  <li><span className="font-dl-mono text-dl-navy">ETH</span> — Deployer EOA eth_getBalance on Arbitrum One · <em>Gas reserve — not AXUSD backing</em></li>
-                  <li><span className="font-dl-mono text-dl-navy">PAXG</span> — BitGoTreasuryExtension.getReserveAssetBalances() (custodian DB) · vault buffer fallback</li>
+                  <li><span className="font-dl-mono text-dl-navy">ETH</span> — Deployer EOA eth_getBalance · <em>Gas reserve — not AXUSD backing</em></li>
+                  <li><span className="font-dl-mono text-dl-navy">PAXG</span> — BitGoTreasuryExtension.getReserveAssetBalances() (custodian DB) · vault buffer fallback if BitGo unavailable</li>
                   <li><span className="font-dl-mono text-dl-navy">AXAU</span> — AXAUFulfillmentService.getVaultBuffer() (deployer buffer) · <em>Protocol instrument — not in coverage numerator</em></li>
                   <li><span className="font-dl-mono text-dl-navy">AXM</span> — Treasury Revenue + Staking Emissions ERC-20 balanceOf</li>
                   <li><span className="font-dl-mono text-dl-navy">USDC</span> — Canonical PSM + Legacy PSM + Backstop + Deployer EOA (4 sources)</li>
@@ -483,13 +549,11 @@ export default function ReservePerformance() {
                 Network: Arbitrum One (Chain ID 42161) · Deployer EOA: 0x8d7892CF226B43d48B6e3ce988A1274e6D114C96
               </p>
               <p className="font-dl-mono text-xs text-dl-gray">
-                All balances fetched live at request time. No caching. AXAU price is backing XAU/USD — actual NAV may differ.
+                All balances fetched live at request time. No caching. AXAU price is backing Mint NAV — actual NAV may differ.
               </p>
-              {fetchedAt && (
-                <p className="font-dl-mono text-xs text-dl-gray">
-                  Fetched: {fetchedAt.toUTCString()}
-                </p>
-              )}
+              <p className="font-dl-mono text-xs text-dl-gray">
+                Fetched: {data.freshness.fetchedAt}
+              </p>
             </div>
           </div>
         </>
