@@ -85,7 +85,7 @@ export class BitGoCustodyService {
         bitgoPolicyId: result.data?.id,
         policyType: 'spending_limit',
         label: `Spending limit: ${config.amountStr} ${config.coin} per ${config.timeWindow ?? 'month'}`,
-        config: config as Record<string, unknown>,
+        config: config as unknown as Record<string, unknown>,
       })
       .returning({ id: bitgoCustodyPolicies.id });
 
@@ -137,7 +137,7 @@ export class BitGoCustodyService {
         bitgoPolicyId: result.data?.id,
         policyType: 'address_whitelist',
         label: config.label ?? `Whitelist: ${config.addresses.length} address(es)`,
-        config: config as Record<string, unknown>,
+        config: config as unknown as Record<string, unknown>,
       })
       .returning({ id: bitgoCustodyPolicies.id });
 
