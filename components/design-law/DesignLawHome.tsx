@@ -211,8 +211,6 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
   return (
     <>
       <Head>
-        <title>Axiom Protocol | Verified Financial Infrastructure</title>
-        <meta name="description" content={truth.hero.subheadline} />
         {/* Subtle "breathing" pulse for LIVE indicators — institutional,
             low opacity, slow. Scoped via [data-dl-pulse]. */}
         <style>{`
