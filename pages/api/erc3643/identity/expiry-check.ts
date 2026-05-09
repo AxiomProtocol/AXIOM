@@ -9,6 +9,10 @@ const TOPIC_NAMES: Record<number, string> = {
   3: 'SANCTIONS_CLEAR',
 };
 
+function getHeaderValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 function getExpiryStatus(expiresAt: Date | null): 'valid' | 'expiring_soon' | 'expired' {
   if (!expiresAt) return 'valid';
   const now = new Date();
@@ -99,6 +103,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const authHeader = req.headers['authorization'] as string | undefined;
   const cronSecret = process.env.CRON_SECRET;
   const isVercelCron = !!cronSecret && authHeader === `Bearer ${cronSecret}`;
+  const adminKey = getHeaderValue(req.headers['x-admin-key']);
+  const isAdminKey = !!adminKey && adminKey === process.env.ADMIN_SOLVENCY_KEY;
 
   if (req.method === 'GET') {
     if (isVercelCron) {
@@ -107,6 +113,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } catch (err: unknown) {
         return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
       }
+    }
+    if (!isAdminKey) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     try {
@@ -159,8 +168,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
-    const adminKey = req.headers['x-admin-key'] as string | undefined;
-    const isAdminKey = adminKey && adminKey === process.env.ADMIN_SOLVENCY_KEY;
     if (!isVercelCron && !isAdminKey) {
       return res.status(401).json({ error: 'Unauthorized' });
     }

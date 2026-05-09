@@ -1,9 +1,20 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import os from 'os';
 
+function getHeaderValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const adminKey = getHeaderValue(req.headers['x-admin-key']);
+  const configuredAdminKey = process.env.ADMIN_SOLVENCY_KEY;
+  const isAuthorized = !!adminKey && !!configuredAdminKey && adminKey === configuredAdminKey;
+  if (!isAuthorized && process.env.NODE_ENV === 'production') {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const envPresence: Record<string, boolean> = {};
