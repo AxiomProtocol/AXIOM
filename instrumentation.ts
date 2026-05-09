@@ -103,7 +103,6 @@ export async function register() {
     // Override with INSTRUMENTATION_BOOTSTRAP_SCHEMA=1 when an environment
     // intentionally depends on startup-time DDL.
     const isServerlessRuntime =
-      process.env.VERCEL === '1' ||
       !!process.env.VERCEL_ENV ||
       process.env.AWS_EXECUTION_ENV?.startsWith('AWS_Lambda_') === true;
     const schemaBootstrapFlag = process.env.INSTRUMENTATION_BOOTSTRAP_SCHEMA;
