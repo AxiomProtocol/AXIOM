@@ -89,6 +89,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const adminKey = getHeaderValue(req.headers['x-admin-key']);
   const isAdminKey = !!adminKey && adminKey === process.env.ADMIN_SOLVENCY_KEY;
 
+  res.setHeader('Cache-Control', 'no-store');
+
   if (req.method === 'GET') {
     if (isVercelCron) {
       try {

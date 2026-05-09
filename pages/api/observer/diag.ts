@@ -10,6 +10,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  res.setHeader('Cache-Control', 'no-store');
+
   const adminKey = getHeaderValue(req.headers['x-admin-key']);
   const configuredAdminKey = process.env.ADMIN_SOLVENCY_KEY;
   const isAuthorized = !!adminKey && !!configuredAdminKey && adminKey === configuredAdminKey;
