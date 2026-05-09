@@ -32,7 +32,6 @@
     "verify:all-api": "node scripts/verify-all-api.js",
     "check:disclosure": "node scripts/check-disclosure-regression.js",
     "slither": "slither contracts/ --exclude-dependencies --json reports/slither-output.json 2>/dev/null || true",
-    "audit:full": "npm run test:invariants && npm run test:scenarios",
     "audit:report": "node scripts/generate-audit-report.js",
     "capital-bridge:deploy": "hardhat run scripts/capital-bridge/deploy-all.ts --config hardhat.config.capital-bridge.ts --network arbitrum",
     "capital-bridge:deploy:5e": "hardhat run scripts/capital-bridge/01-deploy-layer5e.ts --config hardhat.config.capital-bridge.ts --network arbitrum",
