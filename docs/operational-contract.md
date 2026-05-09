@@ -86,6 +86,26 @@ For Cloud Run / Docker: yes, currently.
 The Docker image starts `server.js` directly. In that runtime, `server.js` is
 part of the production contract until the Dockerfile is changed and validated.
 
+## Deployment alignment assessment
+
+The root app is currently better aligned to Vercel for the near-term migration
+target.
+
+Reasons:
+
+- the root app is a standard Next.js app,
+- Vercel uses the native Next.js runtime and `vercel.json`,
+- Vercel install/build now matches the canonical `npm ci` / `next build`
+  contract,
+- native health routes cover the custom-server health aliases required outside
+  `server.js`, and
+- Vercel does not require proving the Docker/custom-server boot path.
+
+Cloud Run remains viable, but it is a different runtime contract. It requires
+the Docker image to build, start `server.js`, bind to `PORT`, and preserve the
+custom warmup behavior. That path should be validated separately before it is
+treated as production-ready.
+
 ## `server.js` behavior
 
 `server.js` provides a small custom HTTP wrapper around Next.js.
