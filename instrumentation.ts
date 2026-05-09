@@ -114,7 +114,7 @@ export async function register() {
 
     if (!shouldBootstrapSchema) {
       console.log(
-        '[instrumentation] Skipping schema bootstrap on serverless runtime (set INSTRUMENTATION_BOOTSTRAP_SCHEMA=1 to force)',
+        '[instrumentation] Skipping schema bootstrap in serverless runtime (set INSTRUMENTATION_BOOTSTRAP_SCHEMA=1 to force)',
       );
       return;
     }
