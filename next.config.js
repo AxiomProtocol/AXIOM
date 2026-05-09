@@ -20,6 +20,10 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        source: '/_health',
+        destination: '/health',
+      },
+      {
         source: '/.well-known/stellar.toml',
         destination: '/api/stellar-toml',
       },

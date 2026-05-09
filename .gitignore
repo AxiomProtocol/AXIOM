@@ -19,9 +19,11 @@ temp-compile-*/
 *.cache
 .temp/
 *.tmp
+tmp/
 
 # Environment files (keep secrets safe)
 .env
+.env.*
 .env.local
 .env.production
 .env*.local
