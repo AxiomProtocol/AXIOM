@@ -1,47 +1,19 @@
 import { Resend } from 'resend';
 
-let connectionSettings: any;
-
-async function getCredentials() {
-  // Non-Replit runtimes (Vercel, etc.): use RESEND_API_KEY env var directly.
+async function getCredentials(defaultFromEmail = 'noreply@axiomprotocol.app') {
   const directApiKey = process.env.RESEND_API_KEY?.trim();
-  if (directApiKey) {
-    return {
-      apiKey: directApiKey,
-      fromEmail: process.env.RESEND_FROM_EMAIL?.trim() || 'noreply@axiomprotocol.app',
-    };
+  if (!directApiKey) {
+    throw new Error('Resend not configured: set RESEND_API_KEY');
   }
 
-  // Replit connector path.
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY 
-    ? 'repl ' + process.env.REPL_IDENTITY 
-    : process.env.WEB_REPL_RENEWAL 
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
-    : null;
-
-  if (!xReplitToken) {
-    throw new Error('Resend not configured: set RESEND_API_KEY or run inside Replit with connector attached');
-  }
-
-  connectionSettings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
-    {
-      headers: {
-        'Accept': 'application/json',
-        'X_REPLIT_TOKEN': xReplitToken
-      }
-    }
-  ).then(res => res.json()).then(data => data.items?.[0]);
-
-  if (!connectionSettings || (!connectionSettings.settings.api_key)) {
-    throw new Error('Resend not connected');
-  }
-  return { apiKey: connectionSettings.settings.api_key, fromEmail: connectionSettings.settings.from_email };
+  return {
+    apiKey: directApiKey,
+    fromEmail: process.env.RESEND_FROM_EMAIL?.trim() || defaultFromEmail,
+  };
 }
 
-export async function getResendClient() {
-  const { apiKey, fromEmail } = await getCredentials();
+export async function getResendClient(defaultFromEmail?: string) {
+  const { apiKey, fromEmail } = await getCredentials(defaultFromEmail);
   return {
     client: new Resend(apiKey),
     fromEmail: fromEmail || 'noreply@axiomprotocol.app'

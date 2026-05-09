@@ -9,8 +9,8 @@
  *   - sendAxauPurchaseRequestConfirmation  (two conditional branches)
  *
  * Strategy mirrors tests/property-report-emails.test.ts:
- *   1. Stub the `resend` SDK + Replit connector fetch so no real network
- *      call is made and `getResendClient()` resolves to a fake sender.
+ *   1. Stub the `resend` SDK and provide direct Resend env vars so no real
+ *      network call is made and `getResendClient()` resolves to a fake sender.
  *   2. Call each email function with deterministic inputs.
  *   3. Snapshot { subject, html } captured by the fake send().
  */
@@ -32,34 +32,17 @@ vi.mock('resend', () => {
   return { Resend: FakeResend };
 });
 
-// Stub global fetch so `getCredentials()` resolves without a real network hop.
-const originalFetch = globalThis.fetch;
 const originalEnv = {
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-  REPLIT_CONNECTORS_HOSTNAME: process.env.REPLIT_CONNECTORS_HOSTNAME,
-  REPL_IDENTITY: process.env.REPL_IDENTITY,
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
 };
 
 beforeEach(() => {
   sendMock.mockClear();
   process.env.NEXT_PUBLIC_APP_URL = 'https://axiomprotocol.app';
-  process.env.REPLIT_CONNECTORS_HOSTNAME = 'connectors.replit.test';
-  process.env.REPL_IDENTITY = 'test-identity';
-  globalThis.fetch = vi.fn(async () =>
-    new Response(
-      JSON.stringify({
-        items: [
-          {
-            settings: {
-              api_key: 'test-resend-api-key',
-              from_email: 'noreply@axiomprotocol.app',
-            },
-          },
-        ],
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    ),
-  ) as unknown as typeof fetch;
+  process.env.RESEND_API_KEY = 'test-resend-api-key';
+  process.env.RESEND_FROM_EMAIL = 'noreply@axiomprotocol.app';
 });
 
 const {
@@ -283,7 +266,6 @@ describe('sendEscrowCounterpartyInvitation — snapshot', () => {
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 afterAll(() => {
-  globalThis.fetch = originalFetch;
   for (const [key, value] of Object.entries(originalEnv)) {
     if (value === undefined) {
       delete process.env[key];

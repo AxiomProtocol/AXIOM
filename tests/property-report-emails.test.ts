@@ -13,9 +13,8 @@
  *   - Missing reportId / address in the subject or receipt block
  *
  * Strategy:
- *   1. Stub the `resend` package + the Replit connector fetch so
- *      `getResendClient()` resolves without any real network round-trip and
- *      hands back a fake sender we can inspect.
+ *   1. Stub the `resend` package and provide direct Resend env vars so
+ *      `getResendClient()` resolves to a fake sender we can inspect.
  *   2. Call each email function with deterministic inputs.
  *   3. Snapshot { subject, html } as captured by the fake send().
  *   4. The ready email gets two snapshots — Arbitrum One and Sepolia — so
@@ -43,38 +42,17 @@ vi.mock('resend', () => {
   return { Resend: FakeResend };
 });
 
-// `getResendClient()` calls `getCredentials()` which fetches the Resend
-// connector secret from the Replit connectors API. Stub global fetch so
-// that lookup resolves to a deterministic api_key + from_email without
-// hitting the network.
-const originalFetch = globalThis.fetch;
 const originalEnv = {
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-  REPLIT_CONNECTORS_HOSTNAME: process.env.REPLIT_CONNECTORS_HOSTNAME,
-  REPL_IDENTITY: process.env.REPL_IDENTITY,
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
 };
 
 beforeEach(() => {
   sendMock.mockClear();
   process.env.NEXT_PUBLIC_APP_URL = 'https://axiomprotocol.app';
-  // Required by getCredentials() to even attempt the lookup.
-  process.env.REPLIT_CONNECTORS_HOSTNAME = 'connectors.replit.test';
-  process.env.REPL_IDENTITY = 'test-identity';
-  globalThis.fetch = vi.fn(async () =>
-    new Response(
-      JSON.stringify({
-        items: [
-          {
-            settings: {
-              api_key: 'test-resend-api-key',
-              from_email: 'noreply@axiomprotocol.app',
-            },
-          },
-        ],
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    ),
-  ) as unknown as typeof fetch;
+  process.env.RESEND_API_KEY = 'test-resend-api-key';
+  process.env.RESEND_FROM_EMAIL = 'noreply@axiomprotocol.app';
 });
 
 const {
@@ -178,11 +156,8 @@ describe('sendPropertyReportExpiredEmail — snapshot', () => {
   });
 });
 
-// Restore real fetch + env after the suite to be a good neighbor in shared
-// vitest workers (avoids leaking the test-identity / fake hostname into
-// other suites that run in the same process).
+// Restore env after the suite to be a good neighbor in shared vitest workers.
 afterAll(() => {
-  globalThis.fetch = originalFetch;
   for (const [key, value] of Object.entries(originalEnv)) {
     if (value === undefined) {
       delete process.env[key];

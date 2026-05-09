@@ -102,8 +102,8 @@ const nextConfig = {
       // be bundled by webpack or the Vercel serverless function crashes at cold
       // start with FUNCTION_INVOCATION_FAILED.
       'stripe',
-      // Resend uses the Replit connector runtime (REPL_IDENTITY / WEB_REPL_RENEWAL)
-      // which must be loaded from node_modules, not inlined into the webpack bundle.
+      // Resend is used by server-side email flows; keep it external so the
+      // provider SDK is loaded from node_modules instead of being inlined.
       'resend',
     ],
   },
