@@ -145,9 +145,9 @@ export function getBaseUrl(): string {
   if (config.isStaging && config.stagingBaseUrl) {
     return config.stagingBaseUrl;
   }
-  return process.env.REPLIT_DEV_DOMAIN 
-    ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-    : 'http://localhost:5000';
+  return (process.env.NEXT_PUBLIC_APP_URL
+    || process.env.NEXT_PUBLIC_BASE_URL
+    || 'http://localhost:5000').replace(/\/+$/, '');
 }
 
 export type { AxiomEnvironment, AiAgentMode, AuditLogSink, EnvConfig };

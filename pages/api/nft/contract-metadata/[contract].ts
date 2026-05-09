@@ -1,7 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getCollectionStats } from '../../../../lib/nft/db';
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? `https://${process.env.REPLIT_DEV_DOMAIN ?? 'localhost:5000'}`;
+const SITE_URL = (
+  process.env.NEXT_PUBLIC_APP_URL ??
+  process.env.NEXT_PUBLIC_BASE_URL ??
+  'https://axiomprotocol.app'
+).replace(/\/+$/, '');
 const TREASURY = process.env.TREASURY_ADDRESS ?? '0x3fD63728288546AC41dAe3bf25ca383061c3A929';
 const ROYALTY_BPS = 750;
 

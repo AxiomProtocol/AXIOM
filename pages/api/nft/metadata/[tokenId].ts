@@ -2,7 +2,11 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getNFTToken, ensureNFTTables } from '../../../../lib/nft/db';
 import { computeSeed, computeTraits, traitsToAttributes, generateAnimationHTML } from '../../../../lib/nft/traitEngine';
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? `https://${process.env.REPLIT_DEV_DOMAIN ?? 'localhost:5000'}`;
+const SITE_URL = (
+  process.env.NEXT_PUBLIC_APP_URL ??
+  process.env.NEXT_PUBLIC_BASE_URL ??
+  'https://axiomprotocol.app'
+).replace(/\/+$/, '');
 
 const COLLECTION_CONFIG: Record<string, {
   name: string;
