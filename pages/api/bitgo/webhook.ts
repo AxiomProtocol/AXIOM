@@ -23,9 +23,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     await db.insert(bitgoWebhooks).values({
       eventType,
+      walletId,
       payload: event as Record<string, unknown>,
       processedAt: new Date(),
-    } as any).onConflictDoNothing();
+    }).onConflictDoNothing();
   } catch {
   }
 

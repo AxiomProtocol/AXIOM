@@ -1975,6 +1975,7 @@ export async function register() {
       await exec(`ALTER TYPE dp_distress_type ADD VALUE IF NOT EXISTS 'lis_pendens'`, 'enum dp_distress_type lis_pendens');
       await exec(`ALTER TYPE dp_source ADD VALUE IF NOT EXISTS 'attom'`, 'enum dp_source attom');
       await exec(`ALTER TYPE dp_source ADD VALUE IF NOT EXISTS 'courthouse'`, 'enum dp_source courthouse');
+      await exec(`ALTER TYPE dp_source ADD VALUE IF NOT EXISTS 'mls_repliers'`, 'enum dp_source mls_repliers');
       await exec(`ALTER TABLE dp_listings ADD COLUMN IF NOT EXISTS metadata JSONB`, 'col dp_listings.metadata');
 
       // ── API key tier system ──
