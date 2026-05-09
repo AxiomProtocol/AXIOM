@@ -208,7 +208,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
 
         const dueDateStr = dueDate ? new Date(dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Upon receipt';
         const investorName = sub.legal_name || sub.entity_name || 'Investor';
-        const platformUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.REPLIT_DEV_DOMAIN || 'axiomprotocol.app'}`;
+        const platformUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://axiomprotocol.app';
 
         let instructionsHtml = '';
         let instructionsText = '';

@@ -58,8 +58,10 @@ export function getOnrampConfig(): OnrampConfig {
   const supportedChainIds = parseChainIds(process.env.ONRAMP_SUPPORTED_CHAIN_IDS);
   const defaultAsset = process.env.ONRAMP_DEFAULT_ASSET || 'ETH';
   const assetList = parseAssetList(process.env.ONRAMP_ASSET_LIST);
-  const callbackBaseUrl = process.env.ONRAMP_CALLBACK_BASE_URL || 
-    process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000';
+  const callbackBaseUrl = process.env.ONRAMP_CALLBACK_BASE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    (process.env.NODE_ENV === 'production' ? 'https://axiomprotocol.app' : 'http://localhost:5000');
 
   const coinbaseKey = process.env.COINBASE_PROJECT_ID || process.env.CDP_PROJECT_ID || process.env.NEXT_PUBLIC_CDP_PROJECT_ID;
 

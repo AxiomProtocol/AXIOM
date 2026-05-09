@@ -107,7 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             const typeLabel = REPORT_TYPE_LABELS[reportType] || reportType;
             const subject = `[Axiom Protocol] ${typeLabel} — ${offeringName}`;
-            const platformUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.REPLIT_DEV_DOMAIN || 'axiomprotocol.app'}`;
+            const platformUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://axiomprotocol.app';
             const offeringUrl = `${platformUrl}/syndication/offerings/${id}`;
             const publishDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
             const contentPreview = content ? (content.length > 500 ? content.substring(0, 500) + '...' : content) : '';

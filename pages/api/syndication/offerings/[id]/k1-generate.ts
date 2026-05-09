@@ -244,7 +244,7 @@ FORMAT REQUIREMENTS:
           const { client, fromEmail } = await getResendClient();
 
           const subject = `[Axiom Protocol] K-1 Tax Summary — ${offering.name} — Tax Year ${year}`;
-          const platformUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.REPLIT_DEV_DOMAIN || 'axiomprotocol.app'}`;
+          const platformUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://axiomprotocol.app';
           const offeringUrl = `${platformUrl}/syndication/offerings/${id}`;
 
           const text = `K-1 Tax Summary — ${offering.name}\n\nDear ${investorName},\n\nYour K-1 tax summary for Tax Year ${year} has been generated and is available for your records.\n\n${k1Content}\n\nView your offering: ${offeringUrl}\n\nIMPORTANT: This document is an informational summary only and is not an official IRS Schedule K-1. Please consult your tax advisor for official tax filings.\n\nAxiom Protocol | Capital Formation`;

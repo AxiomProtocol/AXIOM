@@ -65,9 +65,7 @@ export async function getPruneStatus(): Promise<PruneAlertStatus> {
 }
 
 function buildDashboardUrl(): string {
-  const domain = process.env.REPLIT_DEV_DOMAIN
-    ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-    : process.env.NEXT_PUBLIC_APP_URL ?? 'https://axiomprotocol.app';
+  const domain = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_BASE_URL ?? 'https://axiomprotocol.app';
   return `${domain}/admin/oracle-fallbacks`;
 }
 
