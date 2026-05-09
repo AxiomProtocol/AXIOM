@@ -51,12 +51,13 @@ describe('SEO indexing artifacts', () => {
   });
 
   it('exposes indexable homepage metadata and structured data', () => {
-    const home = readFileSync(projectPath('components', 'design-law', 'DesignLawHome.tsx'), 'utf8');
+    const app = readFileSync(projectPath('pages', '_app.js'), 'utf8');
 
-    expect(home).toContain('<link rel="canonical" href={HOME_SEO.url} />');
-    expect(home).toContain('name="robots"');
-    expect(home).toContain('application/ld+json');
-    expect(home).toContain("'@type': 'Organization'");
-    expect(home).toContain("'@type': 'WebSite'");
+    expect(app).toContain('<link rel="canonical" href={HOME_SEO.url} />');
+    expect(app).toContain('name="robots"');
+    expect(app).toContain('application/ld+json');
+    expect(app).toContain("'@type': 'Organization'");
+    expect(app).toContain("'@type': 'WebSite'");
+    expect(app).toContain("router.pathname === '/'");
   });
 });
