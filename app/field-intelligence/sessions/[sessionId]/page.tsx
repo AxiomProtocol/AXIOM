@@ -32,6 +32,7 @@ interface SessionData {
 }
 
 export default function InspectionPage() {
+    const [session, setSession] = useState<SessionData | null>(null);
     // --- Contract Status History & Event Timeline ---
     const [statusHistory, setStatusHistory] = useState<any[]>([]);
     const [eventTimeline, setEventTimeline] = useState<any[]>([]);
@@ -85,11 +86,11 @@ export default function InspectionPage() {
       }[type] || "bg-gray-100 text-gray-500";
       return <span className={`px-2 py-1 rounded text-xs font-semibold ${color}`} title={type}>{type}</span>;
     };
-  const params = useParams();
+  const params = useParams<{ sessionId?: string | string[] }>();
   const router = useRouter();
-  const sessionId = params.sessionId as string;
-
-  const [session, setSession] = useState<SessionData | null>(null);
+  const sessionId = Array.isArray(params?.sessionId)
+    ? params.sessionId[0]
+    : params?.sessionId || "";
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -251,6 +252,28 @@ export default function InspectionPage() {
         </CardHeader>
         <CardContent>
           <p className="text-red-700">{error || "Session not found"}</p>
+          <Button
+            className="mt-4 w-full"
+            onClick={() => router.back()}
+          >
+            Go Back
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!sessionId) {
+    return (
+      <Card className="max-w-lg mx-auto bg-red-50 border-red-200">
+        <CardHeader>
+          <CardTitle className="text-red-900 flex items-center gap-2">
+            <AlertCircle className="w-5 h-5" />
+            Error
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-red-700">Invalid session ID</p>
           <Button
             className="mt-4 w-full"
             onClick={() => router.back()}
@@ -452,11 +475,16 @@ export default function InspectionPage() {
   );
 
   // Show walkthrough if not started
+  if (!session) {
+    return null;
+  }
+  const activeSession = session!;
+
   if (isWalkthrough) {
     return (
       <InspectionWalkthrough
         sessionId={sessionId}
-        totalUnits={session.totalUnits}
+        totalUnits={activeSession.totalUnits}
         onUnitComplete={handleUnitComplete}
         onSessionComplete={handleSessionComplete}
       />
@@ -464,7 +492,7 @@ export default function InspectionPage() {
   }
 
   // Show session overview
-  const samplingPercent = ((units.length / session.totalUnits) * 100).toFixed(1);
+  const samplingPercent = ((units.length / activeSession.totalUnits) * 100).toFixed(1);
   const samplingStatus =
     parseInt(samplingPercent) >= 80
       ? "high"
@@ -479,21 +507,21 @@ export default function InspectionPage() {
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle>{session.sessionName}</CardTitle>
+              <CardTitle>{activeSession.sessionName}</CardTitle>
               <p className="text-sm text-gray-500 mt-1">
                 Session ID: {sessionId.slice(0, 8)}...
               </p>
             </div>
             <Badge
               className={
-                session.status === "in_progress"
+                activeSession.status === "in_progress"
                   ? "bg-blue-500"
-                  : session.status === "submitted"
+                  : activeSession.status === "submitted"
                     ? "bg-green-500"
                     : "bg-gray-500"
               }
             >
-              {session.status}
+              {activeSession.status}
             </Badge>
           </div>
         </CardHeader>
@@ -501,7 +529,7 @@ export default function InspectionPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs text-gray-600 uppercase">Total Units</p>
-              <p className="text-2xl font-bold">{session.totalUnits}</p>
+              <p className="text-2xl font-bold">{activeSession.totalUnits}</p>
             </div>
             <div>
               <p className="text-xs text-gray-600 uppercase">Units Walked</p>
@@ -536,7 +564,7 @@ export default function InspectionPage() {
         <div className="flex justify-between text-sm">
           <p className="font-medium">Progress</p>
           <p className="text-gray-600">
-            {units.length} of {session.totalUnits}
+            {units.length} of {activeSession.totalUnits}
           </p>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-3">
@@ -578,7 +606,7 @@ export default function InspectionPage() {
 
       {/* Action Buttons */}
       <div className="space-y-3">
-        {units.length < session.totalUnits ? (
+        {units.length < activeSession.totalUnits ? (
           <>
             <Button
               className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-base"
@@ -598,8 +626,8 @@ export default function InspectionPage() {
               )}
             </Button>
             <p className="text-center text-sm text-gray-600">
-              {session.totalUnits - units.length} more unit
-              {session.totalUnits - units.length !== 1 ? "s" : ""} to go
+              {activeSession.totalUnits - units.length} more unit
+              {activeSession.totalUnits - units.length !== 1 ? "s" : ""} to go
             </p>
           </>
         ) : (

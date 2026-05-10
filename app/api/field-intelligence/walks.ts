@@ -13,7 +13,7 @@ import {
   fieldInspectionSessions,
   fieldUnitWalkRows,
   fieldUnitWalkDeficiencies,
-} from "@/shared/schema";
+} from "@/shared/fieldIntelligenceSchema";
 
 /**
  * POST /api/field-intelligence/sessions/[sessionId]/walks
@@ -152,7 +152,7 @@ export async function GET(
       .select()
       .from(fieldUnitWalkRows)
       .where(eq(fieldUnitWalkRows.sessionId, sessionId))
-      .orderBy((t) => t.createdAt);
+      .orderBy((t: any) => t.createdAt);
 
     return NextResponse.json(walks);
   } catch (error) {

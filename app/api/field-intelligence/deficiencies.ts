@@ -12,7 +12,7 @@ import { eq } from "drizzle-orm";
 import {
   fieldUnitWalkRows,
   fieldUnitWalkDeficiencies,
-} from "@/shared/schema";
+} from "@/shared/fieldIntelligenceSchema";
 
 /**
  * POST /api/field-intelligence/deficiencies
@@ -114,7 +114,7 @@ export async function GET(req: NextRequest) {
       .select()
       .from(fieldUnitWalkDeficiencies)
       .where(eq(fieldUnitWalkDeficiencies.unitWalkId, unitWalkId))
-      .orderBy((t) => t.createdAt);
+      .orderBy((t: any) => t.createdAt);
 
     return NextResponse.json(deficiencies);
   } catch (error) {

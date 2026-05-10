@@ -12,7 +12,7 @@ import { eq } from "drizzle-orm";
 import {
   fieldUnitWalkRows,
   fieldUnitWalkPhotos,
-} from "@/shared/schema";
+} from "@/shared/fieldIntelligenceSchema";
 
 /**
  * POST /api/field-intelligence/photos
@@ -142,7 +142,7 @@ export async function GET(req: NextRequest) {
       query = query.where(eq(fieldUnitWalkPhotos.system, system));
     }
 
-    const photos = await query.orderBy((t) => t.createdAt);
+    const photos = await query.orderBy((t: any) => t.createdAt);
 
     return NextResponse.json(photos);
   } catch (error) {
