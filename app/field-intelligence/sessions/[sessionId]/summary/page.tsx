@@ -111,7 +111,7 @@ function fmtUsd(n: number | string | null | undefined): string {
   return isNaN(num) ? "—" : num.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
-function conditionBar(count: SystemCount | undefined): React.ReactNode {
+function conditionBar(count: SystemCount | undefined) {
   if (!count) return <span className="text-gray-400 text-xs">No data</span>;
   const total = count.good + count.light_rehab + count.medium_rehab + count.full_replace + count.not_inspected;
   if (total === 0) return <span className="text-gray-400 text-xs">—</span>;
@@ -124,7 +124,7 @@ function conditionBar(count: SystemCount | undefined): React.ReactNode {
   ] as const;
   return (
     <div className="flex h-2 w-full rounded-full overflow-hidden gap-px">
-      {segments.map(({ key, color }) => {
+      {segments.map(({ key, color, label }) => {
         const pct = (count[key] / total) * 100;
         if (pct === 0) return null;
         return (
@@ -132,7 +132,7 @@ function conditionBar(count: SystemCount | undefined): React.ReactNode {
             key={key}
             className={`${color} h-2`}
             style={{ width: `${pct}%` }}
-            title={`${SYSTEM_LABELS[key] ?? key}: ${count[key]}`}
+            title={`${label}: ${count[key]}`}
           />
         );
       })}
@@ -219,16 +219,25 @@ export default function InspectionSummaryPage() {
 
   useEffect(() => {
     if (!sessionId) return;
+    const controller = new AbortController();
     setIsLoading(true);
     setError(null);
-    fetch(`/api/field-intelligence/summary?sessionId=${sessionId}`)
+    fetch(`/api/field-intelligence/summary?sessionId=${encodeURIComponent(sessionId)}`, {
+      signal: controller.signal,
+    })
       .then((res) => {
         if (!res.ok) throw new Error(`Server returned ${res.status}`);
         return res.json();
       })
       .then((data) => setSummary(data))
-      .catch((err) => setError(err instanceof Error ? err.message : "Unknown error"))
-      .finally(() => setIsLoading(false));
+      .catch((err) => {
+        if (err instanceof Error && err.name === "AbortError") return;
+        setError(err instanceof Error ? err.message : "Unknown error");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+    return () => controller.abort();
   }, [sessionId]);
 
   const handleCopy = useCallback(async () => {
@@ -304,7 +313,7 @@ export default function InspectionSummaryPage() {
           </div>
           <p className="text-sm text-gray-500">
             Session&nbsp;
-            <span className="font-mono text-gray-700">{sessionId.slice(0, 8)}…</span>
+            <span className="font-mono text-gray-700">{sessionId.length > 8 ? `${sessionId.slice(0, 8)}…` : sessionId}</span>
             &nbsp;·&nbsp;
             <span>Computed {new Date(summary.computedAt).toLocaleString()}</span>
           </p>
