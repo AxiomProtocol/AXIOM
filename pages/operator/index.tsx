@@ -248,6 +248,16 @@ export default function OperatorDashboard(props: DashboardProps) {
           </div>
         </section>
 
+        <section className="border border-dl-border p-4 mb-6">
+          <h2 className="font-serif text-lg mb-3">Liquidity Strategy</h2>
+          <p className="text-sm text-dl-muted mb-3">
+            Review the canonical pool sequence, venue policy, AXAU public-market gate, and deployment scaffolding.
+          </p>
+          <Link href="/operator/liquidity" className="text-sm underline">
+            Open liquidity strategy registry →
+          </Link>
+        </section>
+
         {props.counts.stuckPropertyPayments > 0 ? (
           <section className="border border-yellow-700 bg-yellow-50 text-yellow-900 p-4 mb-6">
             <h2 className="font-serif text-lg mb-2">Property reports — stuck pending payments</h2>

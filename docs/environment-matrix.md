@@ -210,6 +210,11 @@ Sensitivity legend:
 | `EVM_ADAPTER_LIVE_ALLOWLIST` | Live EVM adapter allowlist. | Capinfra EVM adapter | Optional | Conditional | Required if live adapter | Sensitive/Internal | Settlement/risk owner. |
 | `TIMEBOOST_ENABLED` | Enables Timeboost service. | DEX service | Optional | Conditional | Conditional | Non-sensitive | DEX owner. |
 | `TIMEBOOST_MAX_BID` | Timeboost max bid setting. | DEX service | Optional | Conditional | Conditional | Non-sensitive | DEX/risk owner. |
+| `LIQUIDITY_POOL_AXUSD_USDC_UNISWAP_ENABLED` | Activation flag for the planned AXUSD/USDC Uniswap pool after deployment and readiness checks. | Liquidity registry | Optional | Conditional | Conditional | Non-sensitive | Must remain false/unset until the verified pool address and parity monitoring are ready. |
+| `LIQUIDITY_POOL_AXM_AXUSD_UNISWAP_ENABLED` | Activation flag for the planned AXM/AXUSD Uniswap pool after deployment and readiness checks. | Liquidity registry | Optional | Conditional | Conditional | Non-sensitive | Must remain false/unset until treasury allocation and AXUSD transfer compatibility are approved. |
+| `LIQUIDITY_POOL_AXUSD_USDC_CURVE_ENABLED` | Activation flag for the deferred AXUSD/USDC Curve pool. | Liquidity registry | Optional | Conditional | Conditional | Non-sensitive | Phase 2 only; requires real AXUSD flow on the Uniswap pool first. |
+| `LIQUIDITY_POOL_AXM_AXUSD_BALANCER_REVIEW_ENABLED` | Review flag for possible AXM/AXUSD Balancer weighted pool evaluation. | Liquidity registry | Optional | Conditional | Conditional | Non-sensitive | Evaluation only; not a deployment approval. |
+| `LIQUIDITY_POOL_AXAU_AXUSD_UNISWAP_ENABLED` | Blocked activation flag placeholder for a possible AXAU/AXUSD Uniswap pool. | Liquidity registry | Avoid | Avoid | Avoid unless all AXAU gates pass | Non-sensitive | Do not enable until AXAU public AMM compatibility and governance approval are recorded. |
 | `POLYGONSCAN_API_KEY` | Legacy explorer verification key. | Archived/legacy contract APIs | Optional | Optional | Conditional | Sensitive | Likely out of runtime path; manual review. |
 
 ## Circle, Coinbase CDP, and BitGo
