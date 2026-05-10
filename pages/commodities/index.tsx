@@ -266,12 +266,7 @@ export default function CommoditiesHubPage() {
             chain={axau.chain}
             unit={axau.unit}
             statusEl={<CommodityStatusBadge status={axau.productStatus} size="md" />}
-            description={
-              'AXAU is Axiom Protocol\'s gold reserve module, live on Arbitrum One. ' +
-              'Gold reserves are held via PAXG and direct custodied gold. NAV is ' +
-              'published on-chain by NAVEngine. The authoritative on-chain value governs. ' +
-              'Additional reserve sleeves may be added through governance and launch gates.'
-            }
+            description={axau.disclosureNotes.join(' ')}
             detailHref="/axau"
             accentColor={C.gold}
             bg={C.bgGold}
@@ -286,12 +281,7 @@ export default function CommoditiesHubPage() {
             chain={kag.chain}
             unit={kag.unit}
             statusEl={<CommodityStatusBadge status={kag.productStatus} size="md" />}
-            description={
-              'KAG is issued by KMS Labs within the Kinesis ecosystem. ' +
-              'Axiom supports KAG as an external commodity asset for portfolio ' +
-              'visibility. Axiom does not issue KAG. Axiom does not custody the ' +
-              'underlying silver. Any redemption rights depend on KMS Labs / Kinesis terms.'
-            }
+            description={kag.disclosureNotes.join(' ')}
             detailHref="/commodities/kag"
             accentColor={C.blue}
             bg={C.bgBlue}
@@ -306,12 +296,7 @@ export default function CommoditiesHubPage() {
             chain="n/a — not deployed"
             unit={axag.unit}
             statusEl={<CommodityStatusBadge status={axag.productStatus} size="md" />}
-            description={
-              'AXAG is not live and is not issued. No AXAG token exists on any chain. ' +
-              'The silver wrapper-token path is deferred pending governance approval, ' +
-              'custody evaluation, and launch-gate sign-off. ' +
-              'Axiom does not issue AXAG in this phase. Phase 1 silver support is KAG (external) only.'
-            }
+            description={axag.disclosureNotes.join(' ')}
             accentColor={C.red}
             bg={C.bgRed}
             borderColor={C.red}

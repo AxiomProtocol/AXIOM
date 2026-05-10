@@ -99,9 +99,9 @@ export const COMMODITY_REGISTRY: CommodityAsset[] = [
     axiomIssued: true,
     axiomCustodies: false,
     reserveModel:
-      'Gold reserves held via PAXG (PAX Gold ERC-20) and direct custodied gold.' +
-      ' NAV published on-chain by NAVEngine. Coverage ratio enforced by MintRedeemController.' +
-      ' Additional reserve sleeves may be added through governance and launch gates.',
+      'Gold reserves held via PAXG (PAX Gold ERC-20) and direct custodied gold. ' +
+      'NAV published on-chain by NAVEngine. Coverage ratio enforced by MintRedeemController. ' +
+      'Additional reserve sleeves may be added through governance and launch gates.',
     pricingSource: 'CoinGecko pax-gold / Chainlink XAU/USD (Arbitrum One)',
     readOnly: false,
     detailRoute: '/axau',

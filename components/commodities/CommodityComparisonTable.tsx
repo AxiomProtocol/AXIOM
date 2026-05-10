@@ -86,7 +86,7 @@ export function CommodityComparisonTable({
   rows = DEFAULT_ROWS,
   axauStatus = 'LIVE',
   kagStatus = 'EXTERNAL_SUPPORTED',
-  showAxag = true,
+  showAxag = false,
 }: CommodityComparisonTableProps) {
   const thStyle: React.CSSProperties = {
     padding: '8px 12px',
