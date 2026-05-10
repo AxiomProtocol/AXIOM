@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useWallet } from '../components/WalletConnect/WalletContext';
 import { DesignLawLayout, SectionHeading, DetailGrid } from '../components/design-law';
 import { StatusBadge } from '../components/design-law/StatusBadge';
 import { SolidButton } from '../components/design-law/SolidButton';
+import { SeoHead } from '../components/seo/SeoHead';
 import type { OraclePriceResponse } from './api/oracle/axusd-price';
 import {
   isEvkVaultDeployed,
@@ -317,10 +317,11 @@ export default function AXUSD3643Page() {
 
   return (
     <DesignLawLayout>
-      <Head>
-        <title>Unified AXUSD — Layer 01 Settlement Rail | ERC-3643 T-REX | Axiom Protocol</title>
-        <meta name="description" content="AXUSD is the Axiom Protocol's Layer 01 settlement rail — an ERC-3643 identity-gated stablecoin on Arbitrum One. The mandatory unit of account for all capital movement across the protocol. Identity credential required." />
-      </Head>
+      <SeoHead
+        title="AXUSD ERC-3643 Compliance Infrastructure | Axiom Protocol"
+        description="Review Axiom Protocol's ERC-3643 AXUSD compliance infrastructure, identity-gated settlement rail, credential workflow, PSM controls, and on-chain verification."
+        path="/axusd-3643"
+      />
 
       {/* HERO — cinematic split */}
       <div className="mb-6 border-t-4 border-dl-gold overflow-hidden" style={{ borderBottom: '1px solid #d1d5db' }}>

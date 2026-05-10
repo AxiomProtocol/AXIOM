@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import Head from 'next/head';
+import Link from 'next/link';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
 import { CollateralClassificationPanel } from '../components/disclosure/CollateralClassificationPanel';
+import { SeoHead } from '../components/seo/SeoHead';
 import {
   Landmark, AlertTriangle, ShieldCheck, FileText, Layers, Shield,
   BookOpen, Lock, BarChart3, Scale, Eye, Target, Coins, Radio,
@@ -268,10 +269,11 @@ export default function DisclosurePage() {
 
   return (
     <DesignLawLayout>
-      <Head>
-        <title>Institutional Disclosure | Axiom Protocol</title>
-        <meta name="description" content="Axiom Protocol sovereign infrastructure disclosure and capital framework." />
-      </Head>
+      <SeoHead
+        title="Disclosure and Reserve Transparency | Axiom Protocol"
+        description="Review Axiom Protocol's public disclosure, reserve posture, legal entity details, infrastructure stack, and transparency framework."
+        path="/disclosure"
+      />
 
       <div className="max-w-4xl mx-auto">
 
@@ -285,8 +287,11 @@ export default function DisclosurePage() {
             />
           </div>
 
-          <h1 className="font-dl-serif text-3xl text-dl-navy">Axiom Protocol</h1>
-          <p className="text-dl-gray mt-1 text-lg">Sovereign Infrastructure Disclosure and Capital Framework</p>
+          <h1 className="font-dl-serif text-3xl text-dl-navy">Disclosure and Reserve Transparency</h1>
+          <p className="text-dl-gray mt-1 text-lg">
+            Axiom Protocol is a financial operating system for real-world assets. This page preserves the detailed
+            legal, reserve, infrastructure, and operational disclosures behind that positioning.
+          </p>
           <div className="border border-dl-border mt-4 px-6 py-3 bg-dl-bg-alt border-l-4 border-l-dl-navy">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-dl-navy flex-shrink-0" />
@@ -323,6 +328,16 @@ export default function DisclosurePage() {
           </div>
         </div>
 
+        <div className="mb-8 border border-dl-border px-6 py-5 bg-dl-bg">
+          <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-wider mb-3">Related public pages</p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/axusd" className="text-sm text-dl-navy underline">AXUSD stablecoin infrastructure</Link>
+            <Link href="/axau" className="text-sm text-dl-navy underline">AXAU reserve infrastructure</Link>
+            <Link href="/lending-fund" className="text-sm text-dl-navy underline">Private credit infrastructure</Link>
+            <Link href="/contact" className="text-sm text-dl-navy underline">Contact Axiom Protocol</Link>
+          </div>
+        </div>
+
         <div className="mb-8 border border-dl-border px-6 py-4">
           <p className="text-xs text-dl-gray uppercase tracking-wider font-dl-mono mb-3">Current Protocol Limitations — Materially Important</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
@@ -347,7 +362,9 @@ export default function DisclosurePage() {
           <SectionHeading><span className="inline-flex items-center gap-2"><FileText className="w-5 h-5 text-dl-navy" />Executive Summary</span></SectionHeading>
           <div className="text-dl-navy leading-relaxed space-y-4">
             <p>
-              Axiom Protocol is a sovereign digital-physical economy built on Arbitrum One (Chain ID 42161), designed to create a community-governed financial infrastructure bridging on-chain capital coordination with physical asset acquisition.
+              Axiom Protocol is a financial operating system for real-world assets built on Arbitrum One (Chain ID 42161).
+              It is designed to coordinate stablecoin settlement, reserve transparency, private credit infrastructure,
+              and physical asset acquisition under a reviewable disclosure framework.
             </p>
             <div className="border border-dl-border px-6 py-3 bg-dl-bg-alt">
               <p className="text-sm font-dl-mono text-dl-navy">Current State: Bootstrap Phase (Week 5 of 52-Week Operational Playbook)</p>

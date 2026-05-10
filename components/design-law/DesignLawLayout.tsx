@@ -153,7 +153,7 @@ export function DesignLawLayout({ children }: DesignLawLayoutProps) {
                   Discord
                 </a>
                 <a
-                  href="https://x.com/FarmerFuqu97143"
+                  href="https://x.com/axiaboreal"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-dl-navy hover:underline"

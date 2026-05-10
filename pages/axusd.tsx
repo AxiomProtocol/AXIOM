@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import Head from "next/head";
+import Link from "next/link";
 import { useWallet } from "../components/WalletConnect/WalletContext";
 import { DesignLawLayout } from "../components/design-law";
 import { CollateralClassificationPanel } from "../components/disclosure/CollateralClassificationPanel";
+import { SeoHead } from "../components/seo/SeoHead";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -661,12 +662,21 @@ function CollateralClassificationSection() {
 export default function AXUSDPage() {
   return (
     <DesignLawLayout>
-      <Head>
-        <title>AXUSD — Layer 01 Settlement Rail | Axiom Protocol</title>
-        <meta name="description" content="AXUSD is Axiom Protocol's Layer 01 settlement token — issued through the Peg Stability Module (PSM), identity-gated via ERC-3643, and anchored to the Layer 02 AXAU reserve infrastructure on Arbitrum One." />
-      </Head>
+      <SeoHead
+        title="AXUSD | Stablecoin Infrastructure by Axiom Protocol"
+        description="AXUSD is Axiom Protocol's compliance-first stablecoin infrastructure for transparent settlement, reserve visibility, and real-world asset coordination."
+        path="/axusd"
+      />
 
       <Hero />
+      <section style={{ background: C.bg, borderBottom: `1px solid ${C.border}`, padding: '24px 0' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 20px', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+          <Link href="/disclosure" className="text-sm text-dl-navy underline">Disclosure and reserve transparency</Link>
+          <Link href="/axau" className="text-sm text-dl-navy underline">AXAU reserve infrastructure</Link>
+          <Link href="/lending-fund" className="text-sm text-dl-navy underline">Private credit infrastructure</Link>
+          <Link href="/contact" className="text-sm text-dl-navy underline">Contact</Link>
+        </div>
+      </section>
       <ArchitectureStrip />
       <PSMSection />
       <ReserveConnection />

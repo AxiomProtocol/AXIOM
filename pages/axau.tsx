@@ -1,11 +1,12 @@
-import Head from 'next/head';
 import Image from 'next/image';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { DesignLawLayout } from '../components/design-law';
 import { PageVisualSuite } from '../components/visual';
 import { CollateralClassificationPanel } from '../components/disclosure/CollateralClassificationPanel';
+import { SeoHead } from '../components/seo/SeoHead';
 import { ChevronDown } from 'lucide-react';
 
 const LiveNavPanel = dynamic(() => import('../components/axau/LiveNavPanel'), { ssr: false });
@@ -831,12 +832,21 @@ export default function AxauPage() {
   return (
     <DesignLawLayout>
       <PageVisualSuite preset="axau" />
-      <Head>
-        <title>AXAU — Layer 02 Gold Reserve Infrastructure | Axiom Protocol</title>
-        <meta name="description" content="AXAU is the Axiom Protocol's Layer 02 reserve unit on Arbitrum One — backed by on-chain PAXG (Paxos Gold), governed by a live coverage ratio, and accessible via direct on-chain mint or ops-assisted fulfillment. ERC-3643 identity credential required." />
-      </Head>
+      <SeoHead
+        title="AXAU | Reserve Asset Infrastructure by Axiom Protocol"
+        description="AXAU is Axiom Protocol's reserve-linked digital asset infrastructure designed for disciplined capital systems and transparent asset coordination."
+        path="/axau"
+      />
 
       <Hero />
+      <section style={{ background: C.bg, borderBottom: `1px solid ${C.border}`, padding: '24px 0' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 20px', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+          <Link href="/disclosure" className="text-sm text-dl-navy underline">Disclosure and reserve transparency</Link>
+          <Link href="/axusd" className="text-sm text-dl-navy underline">AXUSD settlement infrastructure</Link>
+          <Link href="/observer/reserve-performance" className="text-sm text-dl-navy underline">Reserve performance observer</Link>
+          <Link href="/contact" className="text-sm text-dl-navy underline">Contact</Link>
+        </div>
+      </section>
       <ReserveFlow />
       <HowItWorks />
       <LiveDashboard />

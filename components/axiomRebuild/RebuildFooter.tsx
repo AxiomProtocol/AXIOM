@@ -26,8 +26,8 @@ export function RebuildFooter() {
             <Link href="/terms-and-conditions">Terms</Link>
             <Link href="/transparency">Transparency</Link>
             <Link href="/join">Contact</Link>
-            <Link href="/about-us">About</Link>
-            <Link href="/team">Team</Link>
+            <Link href="/about">About</Link>
+            <Link href="/trust/team">Team</Link>
           </div>
         </div>
 

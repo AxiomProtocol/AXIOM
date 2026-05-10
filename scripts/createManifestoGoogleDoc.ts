@@ -285,7 +285,7 @@ This is the architecture of a new economic paradigm—designed for those who und
 AXIOM PROTOCOL
 Build Wealth Together, On-Chain.
 
-www.axiomprotocol.app
+axiomprotocol.app
 
 ═══════════════════════════════════════════════════════════════════════════════
 `;

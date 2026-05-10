@@ -21,7 +21,6 @@ function buildAllowedOrigins(): string[] {
     origins.push(normalizeOrigin(process.env.NEXT_PUBLIC_BASE_URL));
   }
   
-  origins.push('https://www.axiomprotocol.app');
   origins.push('https://axiomprotocol.app');
   
   if (process.env.NODE_ENV === 'development') {

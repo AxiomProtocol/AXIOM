@@ -6,7 +6,7 @@ export const homeSectionsCopy = {
     subheadline:
       "Built from completed land projects and an active produce community. Designed to scale future land acquisition.",
     primaryCta: { label: "Explore KeyGrow", href: "/products" },
-    secondaryCta: { label: "See Our Origin Story", href: "/about-us" },
+    secondaryCta: { label: "See Our Origin Story", href: "/about" },
     microcopy:
       "Built from real execution: a community farmland purchase, development work, and a founder-led infrastructure roadmap."
   },
@@ -20,7 +20,7 @@ export const homeSectionsCopy = {
     title: "Executed Projects. Ongoing Community. Scalable Model.",
     body: "Completed land stewardship cycles executed 3 to 8 years ago demonstrate capability, not current inventory. Before Axiom existed as software, a real community came together, pooled funds, acquired six acres of farmland, and developed it into a working farm with USDA support. Real people. Real land. Real outcomes.\n\nThat experience proved shared ownership works. It also proved most groups fail because coordination breaks down.\n\nAxiom exists to turn what already worked into a repeatable system that can scale responsibly.",
     primaryCta: { label: "View the Farmland Proof", href: "/proof" },
-    secondaryCta: { label: "Read the Origin Story", href: "/about-us" }
+    secondaryCta: { label: "Read the Origin Story", href: "/about" }
   },
   founderCapability: {
     title: "Built by Experience",

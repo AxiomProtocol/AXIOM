@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
+import { SeoHead } from '../components/seo/SeoHead';
 
 const INQUIRY_TYPES = [
   'Capital Allocation',
@@ -55,14 +55,17 @@ export default function ContactPage() {
 
   return (
     <DesignLawLayout>
-      <Head>
-        <title>Contact | Axiom Protocol</title>
-        <meta name="description" content="Contact Axiom Protocol - Institutional inquiries, partnerships, and community channels." />
-      </Head>
+      <SeoHead
+        title="Contact Axiom Protocol | Real-World Asset Infrastructure"
+        description="Contact Axiom Protocol for institutional inquiries, partnerships, compliance questions, community coordination, and real-world asset infrastructure discussions."
+        path="/contact"
+      />
 
       <div className="mb-8">
         <h1 className="font-dl-serif text-dl-navy text-3xl mb-2">Contact</h1>
-        <p className="text-dl-gray text-sm">Axiom Nexus LLC | Arbitrum One (Chain ID 42161)</p>
+        <p className="text-dl-gray text-sm">
+          Axiom Protocol is a financial operating system for real-world assets. Legal entity context: Axiom Nexus LLC.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -254,8 +257,14 @@ export default function ContactPage() {
               <Link href="/solvency" className="block text-sm text-dl-navy underline">
                 Solvency Console
               </Link>
-              <Link href="/about-us" className="block text-sm text-dl-navy underline">
+              <Link href="/about" className="block text-sm text-dl-navy underline">
                 About Axiom Protocol
+              </Link>
+              <Link href="/partner" className="block text-sm text-dl-navy underline">
+                Partner With Axiom Protocol
+              </Link>
+              <Link href="/community" className="block text-sm text-dl-navy underline">
+                Community Ownership and Coordination
               </Link>
               <a href="/axiom-capital-framework.txt" className="block text-sm text-dl-navy underline" target="_blank" rel="noopener noreferrer">
                 Capital Framework (Download)

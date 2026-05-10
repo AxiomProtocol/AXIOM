@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading, SolidButton } from '../../components/design-law';
+import { SeoHead } from '../../components/seo/SeoHead';
 
 function IconShield({ className = 'w-7 h-7' }: { className?: string }) {
   return (
@@ -287,10 +287,11 @@ export default function LendingFundPage() {
 
   return (
     <DesignLawLayout>
-      <Head>
-        <title>Lending Fund — Layer 03 Capital Deployment | Axiom Protocol</title>
-        <meta name="description" content="Axiom Protocol Lending Fund: SEC Reg D 506(c) bridge loan capital program for real asset acquisition. On-chain settlement and institutional reporting on Arbitrum One. Accredited participants only." />
-      </Head>
+      <SeoHead
+        title="Private Credit Infrastructure | Axiom Protocol"
+        description="Axiom Protocol provides disciplined private credit and real estate capital infrastructure designed for transparent underwriting, reserve-aware operations, and real-world execution."
+        path="/lending-fund"
+      />
 
       <div className="border-b border-dl-border mb-10 overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-2">
@@ -326,6 +327,12 @@ export default function LendingFundPage() {
               </Link>
               <Link href="/lending-fund/borrow">
                 <SolidButton variant="secondary">Apply for Capital</SolidButton>
+              </Link>
+              <Link href="/disclosure">
+                <SolidButton variant="secondary">Review Disclosure</SolidButton>
+              </Link>
+              <Link href="/contact">
+                <SolidButton variant="secondary">Contact</SolidButton>
               </Link>
             </div>
             <div className="grid grid-cols-3 gap-0 border border-dl-border">

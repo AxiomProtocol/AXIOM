@@ -861,5 +861,5 @@ Axiom Protocol platform.
 -----------------------------------------------------------------------
 
 Axiom Protocol
-www.axiomprotocol.app
+axiomprotocol.app
 Build Wealth Together, On-Chain.
