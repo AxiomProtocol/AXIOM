@@ -98,7 +98,7 @@ export default function SupportedAssetsAdmissionsPage({
         </h1>
         <div className="text-xs font-dl-mono text-dl-muted mb-6">
           Internal operator view | Read-only | Evaluated{' '}
-          {evaluatedAt.replace('T', ' ').replace(/\.\d+Z$/, '') + ' UTC'}
+          {evaluatedAt.slice(0, 19).replace('T', ' ') + ' UTC'}
         </div>
 
         <div className="border border-dl-gold bg-dl-bg-alt p-4 mb-8 text-xs">

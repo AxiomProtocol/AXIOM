@@ -482,8 +482,12 @@ export function buildSupportedAssetComparisonTable(
   candidates: SupportedAssetAdmissionCandidate[],
   precomputedResults?: SupportedAssetAdmissionResult[],
 ): SupportedAssetComparisonRow[] {
-  return candidates.map((c, i) => {
-    const result = precomputedResults?.[i] ?? evaluateSupportedAssetAdmission(c);
+  const resultBySymbol = precomputedResults
+    ? new Map(precomputedResults.map((r) => [r.symbol, r]))
+    : null;
+
+  return candidates.map((c) => {
+    const result = resultBySymbol?.get(c.symbol) ?? evaluateSupportedAssetAdmission(c);
 
     return {
       symbol: c.symbol,
