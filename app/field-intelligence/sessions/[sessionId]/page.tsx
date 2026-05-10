@@ -435,7 +435,7 @@ export default function InspectionPage() {
             <Button
               disabled={!transitionTarget || transitionLoading}
               onClick={handleStatusTransition}
-              variant="primary"
+              variant="default"
             >
               {transitionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Change Status"}
             </Button>
