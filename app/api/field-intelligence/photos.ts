@@ -7,7 +7,7 @@
 import { db } from "@/server/db";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 import {
   fieldUnitWalkRows,
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       .values({
         unitWalkId,
         photoType: photoType || "general",
-        system: system || null,
+        system: (system as any) || null,
         isBefore,
         fileName,
         fileUrl,
@@ -129,20 +129,17 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    let query = db
+    const filterConditions = [
+      eq(fieldUnitWalkPhotos.unitWalkId, unitWalkId),
+      ...(photoType ? [eq(fieldUnitWalkPhotos.photoType, photoType)] : []),
+      ...(system ? [eq(fieldUnitWalkPhotos.system, system as any)] : []),
+    ];
+
+    const photos = await db
       .select()
       .from(fieldUnitWalkPhotos)
-      .where(eq(fieldUnitWalkPhotos.unitWalkId, unitWalkId));
-
-    // Optional filtering
-    if (photoType) {
-      query = query.where(eq(fieldUnitWalkPhotos.photoType, photoType));
-    }
-    if (system) {
-      query = query.where(eq(fieldUnitWalkPhotos.system, system));
-    }
-
-    const photos = await query.orderBy((t: any) => t.createdAt);
+      .where(and(...filterConditions))
+      .orderBy(fieldUnitWalkPhotos.createdAt);
 
     return NextResponse.json(photos);
   } catch (error) {

@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         inspectionDate: inspectionDate ? new Date(inspectionDate) : null,
         inspectedBy: userId,
         unitsWalked: 0,
-        samplingConfidenceScore: 0,
+        samplingConfidenceScore: "0",
         meta: {
           ip: req.headers.get("x-forwarded-for") || "unknown",
           userAgent: req.headers.get("user-agent"),

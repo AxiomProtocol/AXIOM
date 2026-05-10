@@ -117,7 +117,7 @@ export async function POST(
       .update(fieldInspectionSessions)
       .set({
         unitsWalked: newUnitsWalked,
-        samplingConfidenceScore: samplingConfidence,
+        samplingConfidenceScore: String(samplingConfidence),
         updatedAt: new Date(),
       })
       .where(eq(fieldInspectionSessions.id, sessionId));
