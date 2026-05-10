@@ -13,8 +13,6 @@ Complete this checklist after installing the SDK and before beginning Phase 3 im
 
 ```bash
 npm install @stellar/stellar-sdk
-# or
-pnpm add @stellar/stellar-sdk
 ```
 
 After install, update DB:
