@@ -36,7 +36,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
 
   const candidates = SUPPORTED_ASSET_ADMISSION_CANDIDATES;
   const results = candidates.map(evaluateSupportedAssetAdmission);
-  const comparisonTable = buildSupportedAssetComparisonTable(candidates);
+  const comparisonTable = buildSupportedAssetComparisonTable(candidates, results);
 
   return {
     props: JSON.parse(
@@ -98,7 +98,7 @@ export default function SupportedAssetsAdmissionsPage({
         </h1>
         <div className="text-xs font-dl-mono text-dl-muted mb-6">
           Internal operator view | Read-only | Evaluated{' '}
-          {new Date(evaluatedAt).toLocaleString()} UTC
+          {evaluatedAt.replace('T', ' ').replace(/\.\d+Z$/, '') + ' UTC'}
         </div>
 
         <div className="border border-dl-gold bg-dl-bg-alt p-4 mb-8 text-xs">
