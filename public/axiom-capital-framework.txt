@@ -1,5 +1,5 @@
 AXIOM PROTOCOL
-Sovereign Infrastructure Disclosure & Capital Framework
+Financial Operating System Disclosure & Capital Framework
 Document Date: February 14, 2026 | Network: Arbitrum One (Chain ID 42161)
 Document Classification: Institutional — Not Investment Advice
 
@@ -38,11 +38,11 @@ TABLE OF CONTENTS
 1. EXECUTIVE SUMMARY
 ========================================================================
 
-Axiom Protocol is a sovereign digital-physical economy built on Arbitrum
-One, designed to create America's first on-chain sovereign digital-physical
-economy. The protocol combines treasury infrastructure, real estate asset
-onboarding, decentralized physical infrastructure (DePIN), and community
-governance into a single integrated system.
+Axiom Protocol is a financial operating system for real-world assets built
+on Arbitrum One. The protocol combines stablecoin settlement, reserve
+transparency, private credit infrastructure, real estate asset onboarding,
+decentralized physical infrastructure (DePIN), and governance into a single
+integrated system.
 
 Current State: Bootstrap Phase (Week 5 of 52-Week Playbook)
 Treasury Total: $167.43 USD

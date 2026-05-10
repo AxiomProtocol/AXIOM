@@ -89,9 +89,9 @@ export const SITE_NAV: NavItem[] = [
   {
     label: "About",
     children: [
-      { label: "About Us", href: "/about-us" },
+      { label: "About Axiom Protocol", href: "/about" },
       { label: "How It Works", href: "/how-it-works" },
-      { label: "Team", href: "/team" },
+      { label: "Team & Entity", href: "/trust/team" },
       { label: "FAQ", href: "/faq" }
     ]
   },
@@ -143,8 +143,9 @@ export const FOOTER_SECTIONS: FooterSection[] = [
   {
     title: "Company",
     links: [
-      { label: "About Us", href: "/about-us" },
-      { label: "Team", href: "/team" },
+      { label: "About Axiom Protocol", href: "/about" },
+      { label: "Partner", href: "/partner" },
+      { label: "Team & Entity", href: "/trust/team" },
       { label: "Terms of Service", href: "/terms-and-conditions" }
     ]
   }

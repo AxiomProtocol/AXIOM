@@ -76,7 +76,7 @@ These are the first pages most people see. They introduce what Axiom is, who it 
 
 ---
 
-### About — `/about-us`
+### About — `/about`
 
 **What it is:** The full story of Axiom Protocol — its mission, founding philosophy, operating principles, and the timeline of how it was built. Includes a founder biography and a plain "what Axiom is and is not" comparison.
 

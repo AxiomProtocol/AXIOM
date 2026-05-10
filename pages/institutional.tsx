@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import Head from 'next/head';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
+import { SeoHead } from '../components/seo/SeoHead';
 
 type AccordionItem = {
   id: string;
@@ -66,15 +66,16 @@ export default function InstitutionalPage() {
 
   return (
     <DesignLawLayout>
-      <Head>
-        <title>Institutional Overview | Axiom Protocol</title>
-        <meta name="description" content="Axiom Protocol institutional documentation for allocators, builders, and partners." />
-      </Head>
+      <SeoHead
+        title="Institutional Overview | Axiom Protocol"
+        description="Axiom Protocol institutional documentation for real-world asset infrastructure, private credit coordination, stablecoin settlement, reserve transparency, and governance."
+        path="/institutional"
+      />
 
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="font-dl-serif text-3xl text-dl-navy">Axiom Protocol</h1>
+            <h1 className="font-dl-serif text-3xl text-dl-navy">Institutional Overview</h1>
             <p className="text-dl-gray mt-1">Institutional Overview</p>
           </div>
           <div className="flex flex-col sm:items-end gap-1 text-sm text-dl-gray font-dl-mono">
@@ -86,7 +87,7 @@ export default function InstitutionalPage() {
         <section className="mb-12">
           <SectionHeading>1. Executive Overview</SectionHeading>
           <p className="text-dl-navy leading-relaxed">
-            Axiom Protocol is a governance-first community infrastructure platform built on Arbitrum One with 53 deployed automated control layers (contract addresses verifiable on Arbiscan). The protocol provides a framework for communities to participate in real asset acquisition, development, and ownership through SEC-compliant crowdfunding, structured group savings (The Wealth Practice), and digitally issued land participation instruments. It bridges traditional real estate finance with decentralized infrastructure, offering institutional-grade treasury management, transparent settlement systems, and community-driven governance. The protocol operates under a targeted land acquisition roadmap toward building a sovereign digital-physical economy.
+            Axiom Protocol is a financial operating system for real-world assets built on Arbitrum One with deployed automated control layers and public disclosure routes. The protocol coordinates tokenized real estate, private credit infrastructure, stablecoin settlement, reserve transparency, and governance for disciplined capital formation. Community participation remains an access and coordination layer inside the broader infrastructure stack.
           </p>
         </section>
 

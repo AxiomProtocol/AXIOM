@@ -10,6 +10,17 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.axiomprotocol.app' }],
+        destination: 'https://axiomprotocol.app/:path*',
+        permanent: true,
+      },
+      {
+        source: '/about-us',
+        destination: '/about',
+        permanent: true,
+      },
+      {
         source: '/axau-access',
         destination: '/axau-early-access',
         permanent: true,

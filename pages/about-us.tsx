@@ -1,7 +1,7 @@
 import React from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading, SolidButton } from '../components/design-law';
+import { SeoHead } from '../components/seo/SeoHead';
 import {
   ShieldCheck, Users, Lock, TrendingUp,
   Crown, Shield, FileText, Target, Layers,
@@ -53,20 +53,21 @@ const MILESTONES = [
 export default function AboutUsPage() {
   return (
     <DesignLawLayout>
-      <Head>
-        <title>About — Axiom Protocol</title>
-        <meta name="description" content="Axiom Protocol provides disciplined capital infrastructure for real asset ownership through transparent capital programs, risk visibility, and deterministic governance." />
-      </Head>
+      <SeoHead
+        title="About Axiom Protocol | Financial Operating System for Real-World Assets"
+        description="Learn how Axiom Protocol operates as a financial operating system for real-world assets through tokenized real estate, private credit infrastructure, settlement, governance, and disclosure."
+        path="/about"
+      />
 
       <div className="border-b border-dl-border pb-8 mb-10">
         <p className="text-xs text-dl-forest uppercase tracking-widest mb-4 font-dl-mono">About Axiom Protocol</p>
         <h1 className="font-dl-serif text-2xl sm:text-3xl md:text-4xl text-dl-navy leading-tight mb-4">
-          Disciplined capital infrastructure for real asset ownership
+          Financial operating system for real-world assets
         </h1>
         <p className="text-sm text-dl-gray max-w-3xl leading-relaxed mb-4">
-          Axiom Protocol is a governance-first financial operating system delivering reserve capital (AXAU),
-          a settlement stablecoin (AXUSD), structured capital programs, and community wealth infrastructure
-          — with full on-chain transparency on Arbitrum One.
+          Axiom Protocol is a financial operating system for real-world assets. It coordinates tokenized real estate,
+          private credit infrastructure, stablecoin settlement, reserve transparency, and governance through one
+          compliance-first operating framework.
         </p>
         <p className="text-sm text-dl-gray max-w-3xl leading-relaxed">
           Built from real execution — a community land initiative, USDA-supported development work, and a
@@ -333,6 +334,9 @@ export default function AboutUsPage() {
           </Link>
           <Link href="/disclosure">
             <SolidButton variant="secondary">Read Full Disclosure</SolidButton>
+          </Link>
+          <Link href="/partner">
+            <SolidButton variant="secondary">Partner With Axiom</SolidButton>
           </Link>
         </div>
       </div>

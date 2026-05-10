@@ -1,10 +1,16 @@
 import '../styles/globals.css'
 import { useEffect, createContext, useContext, useState } from 'react'
 import { useRouter } from 'next/router'
-import Head from 'next/head'
 import dynamic from 'next/dynamic'
 import { UserProvider } from '@auth0/nextjs-auth0/client'
 import ErrorBoundary from '../components/ErrorBoundary'
+import { SeoHead, JsonLd } from '../components/seo/SeoHead'
+import {
+  DEFAULT_SEO_DESCRIPTION,
+  DEFAULT_SEO_TITLE,
+  HOMEPAGE_STRUCTURED_DATA,
+  normalizePathForCanonical,
+} from '../lib/seo/site'
 
 // ClientWalletProviders bundles ALL wagmi / Reown AppKit / WalletConnect imports.
 // Loaded with ssr:false so those packages never enter the serverless function
@@ -19,89 +25,92 @@ const OnboardingContext = createContext({ triggerOnboarding: () => {} })
 export const useOnboarding = () => useContext(OnboardingContext)
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
-const SITE_URL = 'https://axiomprotocol.app'
 
-const HOME_SEO = {
-  title: 'Axiom Protocol | Verified Financial Infrastructure',
-  description:
-    'Axiom Protocol connects on-chain settlement, digital dollar systems, reserve access, capital intelligence, property analysis, and public proof tools in one reviewable operating framework.',
-  url: SITE_URL,
+const PAGE_SEO = {
+  '/': {
+    title: DEFAULT_SEO_TITLE,
+    description: DEFAULT_SEO_DESCRIPTION,
+  },
+  '/about': {
+    title: 'About Axiom Protocol | Financial Operating System for Real-World Assets',
+    description:
+      'Learn how Axiom Protocol operates as a financial operating system for real-world assets through tokenized real estate, private credit infrastructure, settlement, governance, and disclosure.',
+  },
+  '/community': {
+    title: 'Community Ownership and Coordination | Axiom Protocol',
+    description:
+      'Explore how Axiom Protocol coordinates community participation, ownership pathways, and disciplined capital formation around real-world assets.',
+  },
+  '/disclosure': {
+    title: 'Disclosure and Reserve Transparency | Axiom Protocol',
+    description:
+      "Review Axiom Protocol's public disclosure, reserve posture, legal entity details, infrastructure stack, and transparency framework.",
+  },
+  '/contact': {
+    title: 'Contact Axiom Protocol | Real-World Asset Infrastructure',
+    description:
+      'Contact Axiom Protocol for institutional inquiries, partnerships, compliance questions, community coordination, and real-world asset infrastructure discussions.',
+  },
+  '/partner': {
+    title: 'Partner With Axiom Protocol | Real-World Asset Infrastructure',
+    description:
+      'Partner with Axiom Protocol on real-world asset infrastructure, private credit coordination, stablecoin settlement, reserve transparency, and compliance-first capital formation.',
+  },
+  '/axusd': {
+    title: 'AXUSD | Stablecoin Infrastructure by Axiom Protocol',
+    description:
+      "AXUSD is Axiom Protocol's compliance-first stablecoin infrastructure for transparent settlement, reserve visibility, and real-world asset coordination.",
+  },
+  '/axusd-3643': {
+    title: 'AXUSD ERC-3643 Compliance Infrastructure | Axiom Protocol',
+    description:
+      "Review Axiom Protocol's ERC-3643 AXUSD compliance infrastructure, identity-gated settlement rail, credential workflow, PSM controls, and on-chain verification.",
+  },
+  '/axau': {
+    title: 'AXAU | Reserve Asset Infrastructure by Axiom Protocol',
+    description:
+      "AXAU is Axiom Protocol's reserve-linked digital asset infrastructure designed for disciplined capital systems and transparent asset coordination.",
+  },
+  '/lending-fund': {
+    title: 'Private Credit Infrastructure | Axiom Protocol',
+    description:
+      'Axiom Protocol provides disciplined private credit and real estate capital infrastructure designed for transparent underwriting, reserve-aware operations, and real-world execution.',
+  },
+  '/institutional': {
+    title: 'Institutional Overview | Axiom Protocol',
+    description:
+      'Axiom Protocol institutional documentation for real-world asset infrastructure, private credit coordination, stablecoin settlement, reserve transparency, and governance.',
+  },
 }
 
-const HOMEPAGE_STRUCTURED_DATA = {
-  '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@type': 'Organization',
-      '@id': `${SITE_URL}/#organization`,
-      name: 'Axiom Protocol',
-      alternateName: 'AXIOM',
-      url: SITE_URL,
-      logo: `${SITE_URL}/images/axiom-token-fallback.svg`,
-      description: HOME_SEO.description,
-    },
-    {
-      '@type': 'WebSite',
-      '@id': `${SITE_URL}/#website`,
-      name: 'Axiom Protocol',
-      url: SITE_URL,
-      publisher: { '@id': `${SITE_URL}/#organization` },
-      inLanguage: 'en-US',
-    },
-    {
-      '@type': 'WebPage',
-      '@id': `${SITE_URL}/#webpage`,
-      name: HOME_SEO.title,
-      url: SITE_URL,
-      description: HOME_SEO.description,
-      isPartOf: { '@id': `${SITE_URL}/#website` },
-      about: { '@id': `${SITE_URL}/#organization` },
-      inLanguage: 'en-US',
-    },
-    {
-      '@type': 'ItemList',
-      '@id': `${SITE_URL}/#primary-navigation`,
-      name: 'Primary Axiom Protocol entry points',
-      itemListElement: [
-        { '@type': 'SiteNavigationElement', position: 1, name: 'Infrastructure', url: `${SITE_URL}/infrastructure` },
-        { '@type': 'SiteNavigationElement', position: 2, name: 'Proof of Execution', url: `${SITE_URL}/proof-of-execution` },
-        { '@type': 'SiteNavigationElement', position: 3, name: 'Solvency Console', url: `${SITE_URL}/solvency` },
-        { '@type': 'SiteNavigationElement', position: 4, name: 'AXUSD', url: `${SITE_URL}/axusd-3643` },
-        { '@type': 'SiteNavigationElement', position: 5, name: 'Reserve Access', url: `${SITE_URL}/axau-early-access` },
-        { '@type': 'SiteNavigationElement', position: 6, name: 'Capital Intelligence', url: `${SITE_URL}/mirdt` },
-        { '@type': 'SiteNavigationElement', position: 7, name: 'Property Analysis', url: `${SITE_URL}/property` },
-        { '@type': 'SiteNavigationElement', position: 8, name: 'Institutional Disclosure', url: `${SITE_URL}/disclosure` },
-      ],
-    },
-  ],
-}
+const SSR_PUBLIC_PATHS = new Set([
+  '/',
+  '/about',
+  '/community',
+  '/disclosure',
+  '/contact',
+  '/partner',
+  '/institutional',
+  '/lending-fund',
+])
 
-function HomepageSeoHead() {
-  return (
-    <Head>
-      <title>{HOME_SEO.title}</title>
-      <meta name="description" content={HOME_SEO.description} />
-      <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
-      <link rel="canonical" href={HOME_SEO.url} />
-      <meta property="og:type" content="website" />
-      <meta property="og:site_name" content="Axiom Protocol" />
-      <meta property="og:title" content={HOME_SEO.title} />
-      <meta property="og:description" content={HOME_SEO.description} />
-      <meta property="og:url" content={HOME_SEO.url} />
-      <meta name="twitter:card" content="summary" />
-      <meta name="twitter:title" content={HOME_SEO.title} />
-      <meta name="twitter:description" content={HOME_SEO.description} />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(HOMEPAGE_STRUCTURED_DATA) }}
-      />
-    </Head>
-  )
+function WalletBoundary({ mounted, ssrPublic, children }) {
+  if (ssrPublic && !mounted) {
+    return children
+  }
+
+  return <ClientWalletProviders>{mounted ? children : null}</ClientWalletProviders>
 }
 
 export default function App({ Component, pageProps }) {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
+  const canonicalPath = normalizePathForCanonical(router.asPath || '/')
+  const seo = PAGE_SEO[canonicalPath] || PAGE_SEO[router.pathname] || {
+    title: DEFAULT_SEO_TITLE,
+    description: DEFAULT_SEO_DESCRIPTION,
+  }
+  const ssrPublic = SSR_PUBLIC_PATHS.has(router.pathname)
 
   useEffect(() => {
     setMounted(true)
@@ -124,13 +133,18 @@ export default function App({ Component, pageProps }) {
 
   return (
     <UserProvider>
-      {router.pathname === '/' && <HomepageSeoHead />}
+      <SeoHead
+        title={seo.title}
+        description={seo.description}
+        path={canonicalPath}
+      />
+      {router.pathname === '/' && <JsonLd data={HOMEPAGE_STRUCTURED_DATA} />}
       <ErrorBoundary>
-        <ClientWalletProviders>
+        <WalletBoundary mounted={mounted} ssrPublic={ssrPublic}>
           <OnboardingContext.Provider value={{ triggerOnboarding: () => {} }}>
-            {mounted ? <Component {...pageProps} /> : null}
+            <Component {...pageProps} />
           </OnboardingContext.Provider>
-        </ClientWalletProviders>
+        </WalletBoundary>
       </ErrorBoundary>
     </UserProvider>
   )

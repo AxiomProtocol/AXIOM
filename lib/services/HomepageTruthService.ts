@@ -138,9 +138,9 @@ export interface ResolveOptions {
 }
 
 const HERO_CTA_VARIANTS: Record<HeroCtaVariant, { primaryLabel: string; primaryHref: string }> = {
-  start_here:          { primaryLabel: 'Start Here →',          primaryHref: '/start' },
-  open_account:        { primaryLabel: 'Open Account →',        primaryHref: '/start' },
-  begin_verification:  { primaryLabel: 'Begin Verification →',  primaryHref: '/infrastructure' },
+  start_here:          { primaryLabel: 'Explore Infrastructure →', primaryHref: '/infrastructure' },
+  open_account:        { primaryLabel: 'View Disclosure →',        primaryHref: '/disclosure' },
+  begin_verification:  { primaryLabel: 'View Reserves →',          primaryHref: '/solvency' },
 };
 
 function pickHeroCtaVariant(override?: HeroCtaVariant): { variant: HeroCtaVariant; verifiedFrom: string } {
@@ -166,16 +166,16 @@ function pickHeroCtaVariant(override?: HeroCtaVariant): { variant: HeroCtaVarian
 export type HeroHeadlineVariant = 'A' | 'B' | 'C';
 const HERO_HEADLINE_VARIANTS: Record<HeroHeadlineVariant, { headline: string; subheadline: string }> = {
   A: {
-    headline: 'Build Wealth Through Verified Financial Infrastructure',
-    subheadline: 'Digital dollar systems, reserve access, capital intelligence, property analysis, and public proof tools — all connected through one operating framework.',
+    headline: 'Financial Operating System for Real-World Assets',
+    subheadline: 'Axiom Protocol brings together tokenized real estate, private credit infrastructure, stablecoin settlement, and reserve transparency in one disciplined, compliance-first system.',
   },
   B: {
-    headline: 'Where Capital Moves With Proof, Not Promises',
-    subheadline: 'Settlement layer, reserve access, capital intelligence, and solvency proof — fully reviewable before capital moves.',
+    headline: 'Financial Operating System for Real-World Assets',
+    subheadline: 'Axiom Protocol coordinates capital, identity, settlement, reporting, and governance across real estate, private credit, and digital asset infrastructure.',
   },
   C: {
-    headline: 'Banking. Intelligence. Reserve. Proof — One System.',
-    subheadline: 'Axiom connects on-chain settlement, capital intelligence, reserve access, property analysis, and public proof into one operating framework.',
+    headline: 'Financial Operating System for Real-World Assets',
+    subheadline: 'Stablecoin infrastructure, tokenized real estate, private credit coordination, and public reserve visibility in one operating framework.',
   },
 };
 
@@ -323,10 +323,10 @@ export class HomepageTruthService {
     const allPaths: Array<Omit<PathCard, 'available' | 'verifiedFrom'>> = [
       {
         key: 'earn',
-        title: 'Earn on Idle Dollars',
-        body: 'Put digital dollars to work through Axiom\u2019s income layer.',
-        cta: 'Explore Yield',
-        href: '/savings',
+        title: 'Stablecoin and Settlement Layer',
+        body: 'Review the AXUSD settlement path, identity-gated access controls, and stablecoin infrastructure.',
+        cta: 'Review Settlement',
+        href: '/axusd',
       },
       {
         key: 'borrow',
@@ -337,10 +337,10 @@ export class HomepageTruthService {
       },
       {
         key: 'reserve',
-        title: 'Protect Wealth With Reserve Assets',
-        body: 'Apply for access to Axiom\u2019s reserve layer structured around hard assets.',
-        cta: 'Apply for Reserve Access',
-        href: '/axau-early-access',
+        title: 'Reserve Transparency and Disclosure',
+        body: 'Inspect reserve posture, public disclosure, solvency reporting, and asset coordination controls.',
+        cta: 'View Disclosure',
+        href: '/disclosure',
       },
       {
         key: 'intelligence',
@@ -351,24 +351,24 @@ export class HomepageTruthService {
       },
       {
         key: 'property',
-        title: 'Analyze Properties',
-        body: 'AI-powered property analysis reports with rental estimates, comparables, and acquisition insight.',
-        cta: 'Analyze a Property',
-        href: '/property',
+        title: 'Real-World Asset Infrastructure',
+        body: 'Evaluate tokenized real estate workflows, property intelligence, and asset onboarding infrastructure.',
+        cta: 'Explore Real Assets',
+        href: '/real-assets',
       },
       {
         key: 'capital',
-        title: 'Access Capital Programs',
-        body: 'Structured participation through the Capital Program, Lending Fund, and Syndication pipeline.',
-        cta: 'View Capital Access',
-        href: '/pilot',
+        title: 'Private Credit and Capital Formation',
+        body: 'Review structured lending, syndication, and real estate capital formation infrastructure.',
+        cta: 'View Private Credit',
+        href: '/lending-fund',
       },
       {
         key: 'community',
-        title: 'Join the Community Economy',
-        body: 'Wealth Practice groups, NFT utility collection, community credit, and land acquisition pipeline.',
+        title: 'Community Coordination Layer',
+        body: 'Understand community participation as an access and coordination layer within the broader protocol.',
         cta: 'Explore Community',
-        href: '/wealth-practice',
+        href: '/community',
       },
       {
         key: 'verify',

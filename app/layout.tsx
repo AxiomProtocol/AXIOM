@@ -1,21 +1,53 @@
-export const metadata = {
-  title: "Axiom Protocol | The Financial Operating System for Real-World Assets",
-  description:
-    "Axiom Protocol connects real estate, capital markets, and blockchain infrastructure. Tokenized assets, decentralized finance, and institutional-grade investment tools in one ecosystem.",
+import type { Metadata } from "next";
+import {
+  DEFAULT_SEO_DESCRIPTION,
+  DEFAULT_SEO_TITLE,
+  LOGO_PATH,
+  SITE_NAME,
+  SITE_URL,
+  canonicalUrl,
+} from "../lib/seo/site";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: DEFAULT_SEO_TITLE,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: DEFAULT_SEO_DESCRIPTION,
+  alternates: {
+    canonical: SITE_URL,
+  },
   openGraph: {
-    title: "Axiom Protocol — The Financial Operating System for Real-World Assets",
-    description:
-      "Invest in tokenized real estate, private credit, and yield strategies powered by blockchain infrastructure and the AXUSD settlement layer.",
-    url: "https://axiomprotocol.app",
-    siteName: "Axiom Protocol",
+    title: DEFAULT_SEO_TITLE,
+    description: DEFAULT_SEO_DESCRIPTION,
+    url: SITE_URL,
+    siteName: SITE_NAME,
     images: [
       {
-        url: "https://axiomprotocol.app/axiom-og-image.jpg",
+        url: canonicalUrl(LOGO_PATH),
         width: 1200,
         height: 630,
       },
     ],
     type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: DEFAULT_SEO_TITLE,
+    description: DEFAULT_SEO_DESCRIPTION,
+    images: [canonicalUrl(LOGO_PATH)],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
 };
 

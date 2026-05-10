@@ -7,7 +7,7 @@ export const homeCopy = {
       "Axiom Protocol is inspired by long-term group economics and disciplined resource stewardship. We prioritize structure, transparency, and community-led participation over speculation and hype.",
     primaryCta: { label: "View Land Pipeline", href: "/products" },
     secondaryCta: { label: "Explore KeyGrow", href: "/products" },
-    tertiaryCta: { label: "Read Our Philosophy", href: "/about-us" },
+    tertiaryCta: { label: "Read Our Philosophy", href: "/about" },
     microcopy:
       "Built from real execution: a community farmland purchase, development work, and a founder-led infrastructure roadmap."
   },
@@ -17,8 +17,8 @@ export const homeCopy = {
       title: "We Built the Model Before We Built the Platform",
       body:
         "Before Axiom existed as software, a real community came together, pooled funds, and participated in the acquisition and development of farmland with USDA support. Real people. Real coordination. Real execution.\n\nThat experience demonstrated that shared ownership can work with structure. It also showed that most groups fail because coordination breaks down.\n\nAxiom exists to turn what already worked into a repeatable system that can scale responsibly.",
-      primaryCta: { label: "View the Farmland Proof", href: "/about-us" },
-      secondaryCta: { label: "Read the Origin Story", href: "/about-us" },
+      primaryCta: { label: "View the Farmland Proof", href: "/about" },
+      secondaryCta: { label: "Read the Origin Story", href: "/about" },
       image: "/keygrow-proof/proof-01.jpg",
       imageAlt: "Community team working together on the farmland"
     },
@@ -90,7 +90,7 @@ export const homeCopy = {
       body:
         "If you care about real assets, land, and building long-term outcomes with structure, start here.\n\nStep one: Read the Origin Story.\nStep two: Explore KeyGrow.\nStep three: Join the community.",
       primaryCta: { label: "Join the Community", href: "/join" },
-      secondaryCta: { label: "See Our Origin Story", href: "/about-us" },
+      secondaryCta: { label: "See Our Origin Story", href: "/about" },
       image: "/generated/community_overlooking_farmland.png",
       imageAlt: "Community overlooking farmland valley at sunset"
     }

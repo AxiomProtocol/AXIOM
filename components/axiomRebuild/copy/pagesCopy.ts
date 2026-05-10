@@ -114,7 +114,7 @@ export const pagesCopy: Record<string, PageCopy> = {
       secondary: "From Confusion to Coordination",
       subheadline: "Axiom provides the framework for communities to own real assets together without the chaos that usually destroys shared projects.",
       primaryCta: { label: "Start with KeyGrow", href: "/products" },
-      secondaryCta: { label: "Read Origin Story", href: "/about-us" },
+      secondaryCta: { label: "Read Origin Story", href: "/about" },
       microcopy: "Built from real experience, not theoretical frameworks."
     },
     sections: [
@@ -204,7 +204,7 @@ export const pagesCopy: Record<string, PageCopy> = {
         body:
           "Operating authority means independence. It means Axiom can support its own farmland development without relying on third-party transportation. This is a commitment to building the full stack of real asset ownership: acquisition, development, and movement.",
         primaryCta: { label: "Join the Journey", href: "/join" },
-        secondaryCta: { label: "Read Origin Story", href: "/about-us" }
+        secondaryCta: { label: "Read Origin Story", href: "/about" }
       }
     ]
   },
@@ -312,7 +312,7 @@ export const pagesCopy: Record<string, PageCopy> = {
       secondary: "Structure Over Speculation",
       subheadline: "Axiom is inspired by principles of group economics, resource stewardship, and long-term structural durability. We prioritize discipline over impulse and coordination over hype.",
       primaryCta: { label: "Read Our Philosophy", href: "/philosophy" },
-      secondaryCta: { label: "See Our Origin", href: "/about-us" },
+      secondaryCta: { label: "See Our Origin", href: "/about" },
       microcopy: "Built on structure, transparency, and community-led participation."
     },
     sections: [

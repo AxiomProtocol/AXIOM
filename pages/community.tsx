@@ -1,7 +1,7 @@
 import React from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
+import { SeoHead } from '../components/seo/SeoHead';
 
 const PIPELINE_STAGES = [
   {
@@ -27,13 +27,17 @@ const PIPELINE_STAGES = [
 export default function CommunityPage() {
   return (
     <DesignLawLayout>
-      <Head>
-        <title>Community Capital Formation | Axiom Protocol</title>
-        <meta name="description" content="Axiom Protocol community capital formation pipeline — The Wealth Practice, capital readiness, and institutional fund access on Arbitrum One." />
-      </Head>
+      <SeoHead
+        title="Community Ownership and Coordination | Axiom Protocol"
+        description="Explore how Axiom Protocol coordinates community participation, ownership pathways, and disciplined capital formation around real-world assets."
+        path="/community"
+      />
 
-      <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Community Capital Formation</h1>
-      <p className="text-sm text-dl-gray mb-1">Structured group capital formation on Arbitrum One — from group savings to institutional fund access via a three-stage trust pipeline.</p>
+      <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Community Ownership and Coordination</h1>
+      <p className="text-sm text-dl-gray mb-1">
+        Community is an access and coordination layer within Axiom Protocol, not the entire identity of the platform.
+        The broader system coordinates real-world assets, settlement, reserve transparency, and private credit infrastructure.
+      </p>
       <p className="text-xs text-dl-gray font-dl-mono mb-4">Wealth Practice Hub: LIVE on Arbitrum One · Groups currently forming · No completed broad-cycle performance data</p>
 
       <div className="border border-dl-border mb-4 px-5 py-3 bg-dl-bg-alt">
@@ -62,6 +66,21 @@ export default function CommunityPage() {
               <div className="text-xs text-dl-gray mt-1">{stat.label}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="mb-10">
+        <SectionHeading>Related Diligence Routes</SectionHeading>
+        <div className="border border-dl-border bg-dl-bg-alt p-5">
+          <p className="text-sm text-dl-gray leading-relaxed mb-4">
+            Review the broader protocol context before evaluating community participation.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/" className="text-sm text-dl-navy underline">Axiom Protocol overview</Link>
+            <Link href="/disclosure" className="text-sm text-dl-navy underline">Disclosure and reserves</Link>
+            <Link href="/lending-fund" className="text-sm text-dl-navy underline">Private credit infrastructure</Link>
+            <Link href="/contact" className="text-sm text-dl-navy underline">Contact</Link>
+          </div>
         </div>
       </section>
 

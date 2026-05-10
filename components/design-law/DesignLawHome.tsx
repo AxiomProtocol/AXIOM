@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { ConnectWalletButton } from './ConnectWalletButton';
+import dynamic from 'next/dynamic';
 import { SectionHeading } from './SectionHeading';
 import { NAV_ITEMS } from './navItems';
 import { NavDropdown } from './NavDropdown';
@@ -12,6 +12,11 @@ import {
   Lock, BarChart3, KeyRound, Layers,
   Activity, Zap, Banknote, Network,
 } from 'lucide-react';
+
+const ConnectWalletButton = dynamic(
+  () => import('./ConnectWalletButton').then((m) => m.ConnectWalletButton),
+  { ssr: false, loading: () => <button className="bg-dl-navy text-white px-5 py-2 text-sm font-medium">Access Platform</button> }
+);
 
 // ─────────────────────────────────────────────────────────────────────
 // Homepage V4 — Capital conversion upgrade.
@@ -47,14 +52,14 @@ interface HomepageTruth {
 
 const FALLBACK_TRUTH: HomepageTruth = {
   hero: {
-    headline: 'Build Wealth Through Verified Financial Infrastructure',
-    subheadline: 'Digital dollar systems, reserve access, and public proof tools — all connected through one operating framework.',
+    headline: 'Financial Operating System for Real-World Assets',
+    subheadline: 'Axiom Protocol brings together tokenized real estate, private credit infrastructure, stablecoin settlement, and reserve transparency in one disciplined, compliance-first system.',
     trustItems: [
       { label: 'Built on Arbitrum One', verifiedFrom: 'fallback' },
       { label: 'Self-custody by default', verifiedFrom: 'fallback' },
       { label: 'Verified access controls', verifiedFrom: 'fallback' },
     ],
-    cta: { primaryLabel: 'Start Here →', primaryHref: '/start', variant: 'start_here', verifiedFrom: 'fallback' },
+    cta: { primaryLabel: 'Explore Infrastructure →', primaryHref: '/infrastructure', variant: 'start_here', verifiedFrom: 'fallback' },
   },
   pathCards: [],
   trustCards: [],
@@ -77,9 +82,9 @@ const FALLBACK_TRUTH: HomepageTruth = {
 // Section titles are constants here so copy can be swapped in one place.
 const SECTION_TITLES = {
   momentum:  'Momentum and Visibility',
-  objective: 'Choose Your Objective',
-  category:  'A New Category of Financial Infrastructure',
-  capital:   'Why Capital Moves Here',
+  objective: 'Core Infrastructure Pillars',
+  category:  'What Axiom Protocol Is',
+  capital:   'Trust Architecture',
   operations: 'Operational Status',
   availability: 'Current Availability',
   metrics:   'Verified at a Glance',
@@ -98,28 +103,57 @@ const PATH_META: Record<string, { icon: React.ComponentType<{ className?: string
 };
 
 const MICRO_STRIP: Array<{ key: string; label: string; sub: string }> = [
-  { key: 'earn',         label: 'Earn',         sub: 'Put digital dollars to work' },
-  { key: 'borrow',       label: 'Borrow',        sub: 'Access Bitcoin-backed liquidity' },
-  { key: 'reserve',      label: 'Reserve',       sub: 'Apply for reserve access' },
-  { key: 'intelligence', label: 'Intelligence',  sub: 'Regime detection & authorization' },
-  { key: 'property',     label: 'Property',      sub: 'AI-powered property analysis' },
-  { key: 'capital',      label: 'Capital',       sub: 'Capital programs & lending' },
-  { key: 'community',    label: 'Community',     sub: 'Wealth Practice & NFT collection' },
-  { key: 'verify',       label: 'Verify',        sub: 'Inspect the system first' },
+  { key: 'earn',         label: 'AXUSD',         sub: 'Stablecoin settlement infrastructure' },
+  { key: 'reserve',      label: 'Disclosure',    sub: 'Reserve posture and public transparency' },
+  { key: 'property',     label: 'Real Assets',   sub: 'Tokenized real estate workflows' },
+  { key: 'capital',      label: 'Private Credit', sub: 'Structured capital formation' },
+  { key: 'community',    label: 'Community',     sub: 'Access and coordination layer' },
+  { key: 'verify',       label: 'Verify',        sub: 'Inspect infrastructure first' },
 ];
 
 const CATEGORY_PILLARS: Array<{ icon: React.ComponentType<{ className?: string }>; title: string; body: string }> = [
-  { icon: Banknote,    title: 'Banking + On-Chain',          body: 'On-chain settlement, reserve access, and digital dollar systems — integrated banking infrastructure under provider transition.' },
-  { icon: Activity,    title: 'Intelligence + Authorization', body: 'MIRDT regime detection and Sentinel capital authorization operate in advisory mode — readable before capital moves.' },
-  { icon: Eye,         title: 'Proof Before Participation',   body: 'Public solvency, disclosure, operational logs, and property analysis are available to review before committing capital.' },
-  { icon: Network,     title: 'One Operating Framework',      body: 'Banking, settlement, intelligence, property, NFT, DePIN, and community programs — one connected system.' },
+  { icon: Banknote,    title: 'Capital coordination', body: 'Axiom Protocol coordinates capital formation, settlement, identity, reporting, and governance across real-world asset workflows.' },
+  { icon: Activity,    title: 'Operational discipline', body: 'MIRDT, Sentinel, and observer surfaces are framed as decision support and visibility layers, not unsupported performance claims.' },
+  { icon: Eye,         title: 'Disclosure before participation', body: 'Public solvency, reserve visibility, contracts, and operational records remain reviewable before capital moves.' },
+  { icon: Network,     title: 'Community as access layer', body: 'Community participation supports coordination and access. It is one layer of the protocol, not the entire platform identity.' },
 ];
 
 const CAPITAL_CARDS = [
-  { icon: KeyRound,    title: 'Control',        body: 'Self-custody by default where applicable.' },
-  { icon: Eye,         title: 'Visibility',     body: 'Public solvency, disclosure, and operations data remain reviewable.' },
-  { icon: ShieldCheck, title: 'Access',         body: 'Reserve, yield, and capital pathways are structured through verified entry.' },
-  { icon: Layers,      title: 'Infrastructure', body: 'Banking, settlement, and on-chain systems operate in one connected framework.' },
+  { icon: KeyRound,    title: 'Legal entity clarity', body: 'Axiom Protocol is operated through Axiom Nexus LLC where legal entity context is required.' },
+  { icon: Eye,         title: 'Reserve visibility', body: 'Public solvency, observer, disclosure, and reserve-performance routes keep core data inspectable.' },
+  { icon: ShieldCheck, title: 'Compliance-first access', body: 'AXUSD and reserve pathways use identity-gated infrastructure where required by the product design.' },
+  { icon: Layers,      title: 'Auditability', body: 'Contracts, operations logs, and dashboards provide independent review paths without relying on narrative alone.' },
+];
+
+const CORE_PILLARS = [
+  {
+    icon: Layers,
+    title: 'Real-World Asset Infrastructure',
+    body: 'Tokenized real estate workflows, property intelligence, and asset onboarding infrastructure for real asset finance.',
+    href: '/real-assets',
+    cta: 'Explore real assets',
+  },
+  {
+    icon: Coins,
+    title: 'Stablecoin and Settlement Layer',
+    body: 'AXUSD settlement infrastructure, ERC-3643 access controls, and reserve-aware capital movement.',
+    href: '/axusd',
+    cta: 'Review AXUSD',
+  },
+  {
+    icon: Banknote,
+    title: 'Private Credit and Capital Formation',
+    body: 'Structured lending, syndication, and real estate capital formation infrastructure.',
+    href: '/lending-fund',
+    cta: 'View private credit',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Reserve Transparency and Disclosure',
+    body: 'Public disclosure, solvency reporting, reserve visibility, and on-chain verification where available.',
+    href: '/disclosure',
+    cta: 'Read disclosure',
+  },
 ];
 
 function StatusChip({ status }: { status: ClaimStatus }) {
@@ -301,7 +335,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
           <div className="relative w-full" style={{ minHeight: '540px' }}>
             <img
               src="/images/hero-landing.png"
-              alt="Verified financial infrastructure on Arbitrum One"
+              alt="Axiom Protocol real-world asset infrastructure"
               className="absolute inset-0 w-full h-full object-cover"
               style={{ display: 'block' }}
             />
@@ -325,6 +359,12 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
                   >
                     {truth.hero.subheadline}
                   </p>
+                  <p
+                    className="text-sm md:text-base leading-relaxed mb-8"
+                    style={{ color: '#f0d98a', maxWidth: '620px', textShadow: '0 1px 8px rgba(0,0,0,0.7)' }}
+                  >
+                    Built for disciplined capital formation, transparent operations, and real-world asset coordination.
+                  </p>
 
                   {/* 1 dominant primary + 1 secondary + 1 tertiary text link */}
                   <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4 mb-7">
@@ -343,7 +383,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
                           className="inline-block border-2 border-white text-white px-7 py-3.5 text-sm font-bold hover:bg-white hover:text-dl-navy font-dl-mono uppercase tracking-wider w-full sm:w-auto text-center"
                           style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}
                         >
-                          View Live Proof
+                          View Reserves
                         </span>
                       </Link>
                     )}
@@ -468,7 +508,26 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
           </div>
         </div>
 
-        {/* SECTION 2 — MICRO BENEFITS STRIP ─────────────────────────── */}
+        {/* SECTION 2 — WHAT AXIOM IS ─────────────────────────────────── */}
+        <div className="border-b border-dl-border bg-dl-bg" data-section="what_axiom_is">
+          <div className="max-w-7xl mx-auto px-6 py-10 md:py-12">
+            <div className="border border-dl-border border-l-4 border-l-dl-navy bg-dl-bg-alt p-6 md:p-8">
+              <p className="font-dl-mono text-xs uppercase tracking-widest text-dl-gold mb-3">
+                Plain-English Summary
+              </p>
+              <h2 className="font-dl-serif text-2xl md:text-3xl text-dl-navy leading-tight mb-4">
+                Axiom Protocol is a financial operating system for real-world assets.
+              </h2>
+              <p className="text-sm md:text-base text-dl-gray leading-relaxed max-w-4xl">
+                It is designed to coordinate capital, identity, settlement, reporting, and governance across real estate,
+                private credit, and digital asset infrastructure. Community participation is an access and coordination
+                layer inside the system; it does not replace the broader protocol, settlement, reserve, and disclosure architecture.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 3 — MICRO BENEFITS STRIP ─────────────────────────── */}
         {microStrip.length > 0 && (
           <div className="border-b border-dl-border bg-dl-bg" data-section="micro_benefits">
             <div className="max-w-7xl mx-auto px-6 py-5">
@@ -493,7 +552,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
           </div>
         )}
 
-        {/* SECTION 3 — MOMENTUM AND VISIBILITY (social proof) ───────── */}
+        {/* SECTION 4 — MOMENTUM AND VISIBILITY (social proof) ───────── */}
         {truth.momentum.length > 0 && (
           <div className="border-b border-dl-border bg-dl-bg" data-section="momentum">
             <div className="max-w-7xl mx-auto px-6 py-12 md:py-14">
@@ -530,14 +589,48 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
           </div>
         )}
 
-        {/* SECTION 4 — CHOOSE YOUR OBJECTIVE ────────────────────────── */}
+        {/* SECTION 5 — CORE PILLARS ─────────────────────────────────── */}
+        <div className="border-b border-dl-border" style={{ backgroundColor: '#fafaf8' }} data-section="core_pillars">
+          <div className="max-w-7xl mx-auto px-6 py-14 md:py-16">
+            <div className="mb-7">
+              <SectionHeading>{SECTION_TITLES.objective}</SectionHeading>
+              <p className="text-sm md:text-base text-dl-gray mt-2 max-w-3xl">
+                Four public entry points explain how the financial operating system connects real assets,
+                settlement, private credit, and reserve transparency.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border border-dl-border bg-dl-bg">
+              {CORE_PILLARS.map((card, i) => {
+                const Icon = card.icon;
+                return (
+                  <Link
+                    key={card.title}
+                    href={card.href}
+                    className={`block p-6 border-l-4 border-l-dl-navy no-underline hover:bg-dl-bg-alt
+                      ${i < CORE_PILLARS.length - 1 ? 'border-b lg:border-b-0 lg:border-r border-dl-border' : ''}
+                      ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
+                  >
+                    <Icon className="w-5 h-5 text-dl-gold mb-3" />
+                    <h3 className="font-dl-serif text-lg text-dl-navy font-bold leading-tight mb-2">{card.title}</h3>
+                    <p className="text-sm text-dl-gray leading-relaxed mb-5">{card.body}</p>
+                    <span className="inline-flex items-center gap-1.5 text-xs text-dl-navy font-dl-mono font-bold uppercase tracking-wider">
+                      {card.cta} <ChevronRight className="w-3 h-3" />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 6 — RELATED PATHS ────────────────────────────────── */}
         {truth.pathCards.length > 0 && (
           <div className="border-b border-dl-border" style={{ backgroundColor: '#fafaf8' }} data-section="paths">
             <div className="max-w-7xl mx-auto px-6 py-14 md:py-16">
               <div className="mb-7">
-                <SectionHeading>{SECTION_TITLES.objective}</SectionHeading>
+                <SectionHeading>Related Public Paths</SectionHeading>
                 <p className="text-sm md:text-base text-dl-gray mt-2 max-w-2xl">
-                  Start with the path that matches what you want to do.
+                  Start with the review path that matches your diligence objective.
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border border-dl-border bg-dl-bg">
@@ -581,7 +674,9 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
                 {SECTION_TITLES.category}
               </h2>
               <p className="text-sm md:text-base text-white/70 mt-3 max-w-2xl">
-                Axiom connects on-chain settlement, digital dollar systems, reserve access, capital intelligence, and public proof into one reviewable operating framework.
+                Axiom Protocol is a financial operating system for real-world assets. It combines stablecoin infrastructure,
+                private credit infrastructure, tokenized real estate workflows, and reserve transparency without replacing
+                disclosure depth with marketing claims.
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border border-white/20">
@@ -610,7 +705,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
             <div className="mb-7">
               <SectionHeading>{SECTION_TITLES.capital}</SectionHeading>
               <p className="text-sm md:text-base text-dl-gray mt-2 max-w-2xl">
-                Built for participants who want transparency, control, and structured access — not black-box finance.
+                Trust is expressed through public disclosure, reserve visibility, explicit access controls, and reviewable operational records.
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border border-dl-border">
@@ -746,7 +841,7 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
                 <span className="text-dl-gold">Read first. Then decide.</span>
               </h2>
               <p className="text-sm md:text-base text-dl-gray leading-relaxed mb-8" style={{ maxWidth: '560px', margin: '0 auto 32px' }}>
-                No signup required. No narrative required. The solvency console, contracts, and disclosure are open.
+                Start with disclosure, reserves, contact, or community participation. The public diligence routes are crawlable and open.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
                 {truth.proofLinks.proof.available && (
@@ -773,6 +868,18 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
                     Read Institutional Disclosure <ArrowRight className="w-3 h-3" />
                   </Link>
                 )}
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center justify-center gap-2 border border-dl-border text-dl-navy px-6 py-3.5 text-xs font-bold hover:bg-dl-bg font-dl-mono uppercase tracking-wider"
+                >
+                  Contact <ArrowRight className="w-3 h-3" />
+                </Link>
+                <Link
+                  href="/community"
+                  className="inline-flex items-center justify-center gap-2 border border-dl-border text-dl-navy px-6 py-3.5 text-xs font-bold hover:bg-dl-bg font-dl-mono uppercase tracking-wider"
+                >
+                  Explore Community <ArrowRight className="w-3 h-3" />
+                </Link>
               </div>
             </div>
           </div>
@@ -782,8 +889,8 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
             <div className="p-6 md:p-10">
               <p className="font-dl-mono text-xs text-dl-gold uppercase tracking-widest mb-3">Mission</p>
               <p className="font-dl-serif text-lg md:text-2xl text-dl-navy leading-snug" style={{ maxWidth: '880px' }}>
-                Built for participants who are done choosing between broken banks and black-box crypto.
-                Axiom makes capital systems reviewable, usable, and structurally aligned with real wealth building.
+                Axiom Protocol exists to make real-world asset finance more reviewable: capital formation, settlement,
+                reserves, governance, and reporting organized through one disciplined operating system.
               </p>
             </div>
           </div>
@@ -806,8 +913,8 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
                   That experience proved shared ownership works — and proved most groups fail because coordination lacks structure.
                 </p>
                 <p className="text-sm text-dl-gray leading-relaxed mb-6">
-                  Axiom converts that insight into a financial system: every operational action, snapshot, and capital movement is recorded
-                  with a hash-chained log. Verification does not require trust — it requires reading.
+                  Axiom converts that insight into infrastructure: community is an access and coordination layer, while
+                  settlement, reserve visibility, disclosure, and governance define the broader protocol.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Link
@@ -833,14 +940,14 @@ export function DesignLawHome({ initialTruth }: DesignLawHomeProps = {}) {
           <div className="border-t border-dl-border pt-8 pb-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-2">
               {[
+                { label: 'About', href: '/about' },
+                { label: 'AXUSD Settlement', href: '/axusd' },
                 { label: 'AXAU Reserve', href: '/axau' },
-                { label: 'AXUSD Settlement', href: '/axusd-3643' },
-                { label: 'Capital Program', href: '/pilot' },
-                { label: 'Lending Fund', href: '/lending-fund' },
-                { label: 'Regime Intelligence', href: '/mirdt' },
-                { label: 'Wealth Practice', href: '/wealth-practice' },
-                { label: 'Solvency Console', href: '/solvency' },
+                { label: 'Private Credit', href: '/lending-fund' },
+                { label: 'Community', href: '/community' },
+                { label: 'Partner', href: '/partner' },
                 { label: 'Disclosure', href: '/disclosure' },
+                { label: 'Contact', href: '/contact' },
               ].map((link, i) => (
                 <Link
                   key={link.label}

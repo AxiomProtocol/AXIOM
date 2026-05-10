@@ -1,7 +1,7 @@
 {
   "name": "Axiom Protocol",
   "short_name": "Axiom",
-  "description": "Build Wealth Together, On-Chain",
+  "description": "A financial operating system for real-world assets.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#111827",

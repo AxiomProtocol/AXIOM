@@ -73,9 +73,9 @@ export const navItems: NavItem[] = [
   {
     label: "About",
     children: [
-      { label: "About Us", href: "/about-us" },
+      { label: "About Axiom Protocol", href: "/about" },
       { label: "How It Works", href: "/how-it-works" },
-      { label: "Team", href: "/team" },
+      { label: "Team & Entity", href: "/trust/team" },
       { label: "FAQ", href: "/faq" }
     ]
   },
