@@ -16,7 +16,6 @@
 import { getCommodity } from '../commodities/registry';
 import { D } from '../commodities/disclosures';
 import { RESERVE_LAYERS } from '../axau/spec';
-import { AXM_TOKEN_CONFIG, CORE_CONTRACTS } from '../../shared/contracts';
 
 export type AssetHubGroup =
   | 'INTERNAL_LIVE_CORE'
@@ -94,6 +93,18 @@ const kag = getCommodity('KAG');
 const axag = getCommodity('AXAG');
 const landLayer = RESERVE_LAYERS.find((layer) => layer.id === 'land-rwa');
 
+const AXM_TOKEN = {
+  address: '0x864F9c6f50dC5Bd244F5002F1B0873Cd80e2539D',
+  symbol: 'AXM',
+  name: 'Axiom Protocol Token',
+} as const;
+
+const SEED_TOKEN = {
+  address: '0xdfcdc9bB6486Eb06e2885fAb590AE67796c35046',
+  symbol: 'SEED',
+  legacyAlias: 'veAXM',
+} as const;
+
 const INTERNAL_LIVE_CORE: AssetHubEntry[] = [
   {
     name: 'Axiom USD',
@@ -166,8 +177,8 @@ const INTERNAL_LIVE_CORE: AssetHubEntry[] = [
     ],
   },
   {
-    name: AXM_TOKEN_CONFIG.name,
-    symbol: AXM_TOKEN_CONFIG.symbol,
+    name: AXM_TOKEN.name,
+    symbol: AXM_TOKEN.symbol,
     category: 'GOVERNANCE',
     group: 'INTERNAL_LIVE_CORE',
     issuer: 'Axiom Protocol',
@@ -511,6 +522,6 @@ export function getAxiomAssetBySymbol(symbol: string): AssetHubEntry | undefined
 }
 
 export const AXIOM_ASSETS_HUB_SOURCE_CONTRACTS = {
-  axmToken: CORE_CONTRACTS.AXM_TOKEN,
-  seedOrVeAxm: CORE_CONTRACTS.SEED,
+  axmToken: AXM_TOKEN.address,
+  seedOrVeAxm: SEED_TOKEN.address,
 } as const;
