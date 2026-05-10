@@ -238,15 +238,7 @@ export default function InspectionSummaryPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      // Fallback for environments without clipboard API
-      const el = document.createElement("textarea");
-      el.value = buildPlainTextReport(summary, sessionId);
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand("copy");
-      document.body.removeChild(el);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+      alert("Copy failed. Please select the report text manually and copy it.");
     }
   }, [summary, sessionId]);
 
