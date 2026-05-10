@@ -4,7 +4,7 @@
  * Layer 5: Field Intelligence Capture
  */
 
-import { db } from "@/lib/db";
+import { db } from "@/server/db";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
