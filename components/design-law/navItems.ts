@@ -33,7 +33,9 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/system-map', label: 'System Map' },
       { href: '/real-assets', label: 'Real Assets (Overview)' },
       { href: '/axau', label: 'AXAU — Gold Reserve' },
+      { href: '/commodities', label: 'Commodities Hub' },
       { href: '/commodities/kag', label: 'Silver Reserve (KAG)' },
+      { href: '/commodities/insights', label: 'Commodity Insights' },
       { href: '/assets', label: 'Supported Assets' },
       { href: '/assets/dashboard', label: 'Asset Dashboard' },
       { href: '/axau-early-access', label: 'AXAU Early Access' },
@@ -45,7 +47,7 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/treasury/fund/card', label: 'Fund Treasury (Card → On-Chain)' },
       { href: '/escrow/new', label: 'Escrow' },
       { href: '/depin/denet', label: 'DePIN Network' },
-      { href: '/commodity-framework', label: 'Tokenized Commodities' },
+      { href: '/commodity-framework', label: 'Commodity Expansion Framework' },
     ],
   },
   {
