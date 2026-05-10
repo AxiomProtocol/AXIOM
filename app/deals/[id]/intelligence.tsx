@@ -11,7 +11,8 @@ import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, TrendingUp, TrendingDown, Zap } from "lucide-react";
+import { AlertCircle, Loader2, TrendingUp, TrendingDown, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface DealIntelligence {
   id: string;
@@ -24,6 +25,9 @@ interface DealIntelligence {
 }
 
 export default function EnhancedDealIntelligencePage() {
+  const params = useParams();
+  const dealId = params.id as string;
+
     // --- Contract Status Panel State ---
     const [contractEntity, setContractEntity] = useState<any | null>(null);
     const [contractLoading, setContractLoading] = useState(true);
@@ -125,8 +129,6 @@ export default function EnhancedDealIntelligencePage() {
         setTransitionLoading(false);
       }
     };
-  const params = useParams();
-  const dealId = params.id as string;
   const [intelligence, setIntelligence] = useState<DealIntelligence | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -208,7 +210,7 @@ export default function EnhancedDealIntelligencePage() {
                 <Button
                   disabled={!transitionTarget || transitionLoading}
                   onClick={handleStatusTransition}
-                  variant="primary"
+                  variant="default"
                 >
                   {transitionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Change Status"}
                 </Button>

@@ -47,6 +47,9 @@
     "utils/**/*.js",
     "utils/**/*.jsx",
     "lib/**/*.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "hooks/**/*.ts",
     ".next/types/**/*.ts"
   ],
   "exclude": [
