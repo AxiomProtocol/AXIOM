@@ -31,12 +31,12 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Stack',
     children: [
       { href: '/system-map', label: 'System Map' },
+      { href: '/assets', label: 'Axiom Assets Hub' },
       { href: '/real-assets', label: 'Real Assets (Overview)' },
       { href: '/axau', label: 'AXAU — Gold Reserve' },
       { href: '/commodities', label: 'Commodities Hub' },
       { href: '/commodities/kag', label: 'Silver Reserve (KAG)' },
       { href: '/commodities/insights', label: 'Commodity Insights' },
-      { href: '/assets', label: 'Supported Assets' },
       { href: '/assets/dashboard', label: 'Asset Dashboard' },
       { href: '/axau-early-access', label: 'AXAU Early Access' },
       { href: '/axau-buy', label: 'AXAU Mint Terminal' },
