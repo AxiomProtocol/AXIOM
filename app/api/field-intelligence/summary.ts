@@ -15,7 +15,7 @@ import {
   fieldUnitWalkRows,
   fieldUnitWalkDeficiencies,
   fieldInspectionSummaries,
-} from "@/shared/schema";
+} from "@/shared/fieldIntelligenceSchema";
 
 /**
  * Compute inspection summary statistics from all unit walks in a session
@@ -70,7 +70,7 @@ async function computeInspectionSummary(sessionId: string) {
   });
 
   // Aggregate condition data from all walks
-  walks.forEach((walk) => {
+  walks.forEach((walk: any) => {
     systems.forEach((system) => {
       const condition = walk[system as keyof typeof walk] as string;
       if (condition) {
@@ -99,7 +99,7 @@ async function computeInspectionSummary(sessionId: string) {
   // Count deficiencies by severity and system
   const totalDeficiencies = allDeficiencies.length;
   const criticalDeficiencies = allDeficiencies.filter(
-    (d) => d.field_unit_walk_deficiencies.severity === "critical"
+    (d: any) => d.field_unit_walk_deficiencies.severity === "critical"
   ).length;
 
   const deficienciesBySystem: any = {};
@@ -120,7 +120,7 @@ async function computeInspectionSummary(sessionId: string) {
     };
   });
 
-  allDeficiencies.forEach((d) => {
+  allDeficiencies.forEach((d: any) => {
     const system = d.field_unit_walk_deficiencies.system;
     const severity = d.field_unit_walk_deficiencies.severity;
 
@@ -134,7 +134,7 @@ async function computeInspectionSummary(sessionId: string) {
 
   // Calculate estimated rehabilitation costs
   let estimatedTotalRehabCost = 0;
-  allDeficiencies.forEach((d) => {
+  allDeficiencies.forEach((d: any) => {
     if (d.field_unit_walk_deficiencies.estimatedRepairCost) {
       estimatedTotalRehabCost += parseFloat(
         d.field_unit_walk_deficiencies.estimatedRepairCost as any

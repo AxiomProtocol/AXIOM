@@ -32,6 +32,7 @@ interface SessionData {
 }
 
 export default function InspectionPage() {
+    const [session, setSession] = useState<SessionData | null>(null);
     // --- Contract Status History & Event Timeline ---
     const [statusHistory, setStatusHistory] = useState<any[]>([]);
     const [eventTimeline, setEventTimeline] = useState<any[]>([]);
@@ -85,11 +86,11 @@ export default function InspectionPage() {
       }[type] || "bg-gray-100 text-gray-500";
       return <span className={`px-2 py-1 rounded text-xs font-semibold ${color}`} title={type}>{type}</span>;
     };
-  const params = useParams();
+  const params = useParams<{ sessionId?: string | string[] }>();
   const router = useRouter();
-  const sessionId = params.sessionId as string;
-
-  const [session, setSession] = useState<SessionData | null>(null);
+  const sessionId = Array.isArray(params?.sessionId)
+    ? params.sessionId[0]
+    : params?.sessionId || "";
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -251,6 +252,28 @@ export default function InspectionPage() {
         </CardHeader>
         <CardContent>
           <p className="text-red-700">{error || "Session not found"}</p>
+          <Button
+            className="mt-4 w-full"
+            onClick={() => router.back()}
+          >
+            Go Back
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!sessionId) {
+    return (
+      <Card className="max-w-lg mx-auto bg-red-50 border-red-200">
+        <CardHeader>
+          <CardTitle className="text-red-900 flex items-center gap-2">
+            <AlertCircle className="w-5 h-5" />
+            Error
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-red-700">Invalid session ID</p>
           <Button
             className="mt-4 w-full"
             onClick={() => router.back()}
@@ -452,6 +475,10 @@ export default function InspectionPage() {
   );
 
   // Show walkthrough if not started
+  if (!session) {
+    return null;
+  }
+
   if (isWalkthrough) {
     return (
       <InspectionWalkthrough

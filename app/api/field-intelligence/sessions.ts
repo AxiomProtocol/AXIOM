@@ -11,7 +11,7 @@ import { eq, and } from "drizzle-orm";
 
 // Import the field intelligence tables from the main schema
 // These are defined in shared/fieldIntelligenceSchema.ts and seeded in instrumentation.ts
-import { fieldInspectionSessions, fieldUnitWalkRows } from "@/shared/schema";
+import { fieldInspectionSessions, fieldUnitWalkRows } from "@/shared/fieldIntelligenceSchema";
 
 /**
  * POST /api/field-intelligence/sessions
@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
       .select()
       .from(fieldInspectionSessions)
       .where(and(...conditions))
-      .orderBy((t) => t.createdAt)
+      .orderBy((t: any) => t.createdAt)
       .limit(100);
 
     return NextResponse.json(sessions);
