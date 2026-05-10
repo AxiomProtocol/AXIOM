@@ -142,6 +142,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
     "@auth0/nextjs-auth0": "^3.8.0",
+    "@clerk/nextjs": "^7.3.3",
     "@coinbase/cdp-sdk": "^1.48.2",
     "@coinbase/wallet-sdk": "^4.3.7",
     "@google-cloud/storage": "^7.18.0",
