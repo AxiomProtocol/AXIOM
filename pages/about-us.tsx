@@ -58,6 +58,51 @@ const TRUST_ITEMS = [
   'Clear distinctions between live systems, configured systems, and products in formation',
 ];
 
+const TIMELINE = [
+  {
+    label: 'Settlement infrastructure',
+    status: 'live' as const,
+    detail: 'AXUSD stablecoin issued via ERC-3643 identity-gated PSM. Protocol Exchange deployed on Arbitrum One. On-chain peg maintenance active.',
+    href: '/axusd',
+  },
+  {
+    label: 'Reserve infrastructure',
+    status: 'live' as const,
+    detail: 'AXAU reserve vault deployed. Direct on-chain mint against PAXG via GoldVault. Coverage ratio enforced by NAVEngine before every issuance.',
+    href: '/axau',
+  },
+  {
+    label: 'Proof and disclosure systems',
+    status: 'live' as const,
+    detail: 'Solvency console, proof-of-execution audit trail, and institutional disclosure pages deployed. Publicly readable on Arbitrum One.',
+    href: '/solvency',
+  },
+  {
+    label: 'Capital intelligence layer',
+    status: 'live' as const,
+    detail: 'MIRDT regime scoring, Sentinel authorization gate, and Observer read-access console operational.',
+    href: '/infrastructure',
+  },
+  {
+    label: 'Private credit program',
+    status: 'in formation' as const,
+    detail: 'Reg D lending fund and SPV-structured capital program in formation. Expressions of interest open for accredited investors.',
+    href: '/partner',
+  },
+  {
+    label: 'Expanded capital access',
+    status: 'roadmap' as const,
+    detail: 'Broader real-world asset participation frameworks, expanded settlement infrastructure, and reserve-linked product access.',
+    href: null,
+  },
+];
+
+const STATUS_BADGE: Record<string, { label: string; color: string }> = {
+  'live':         { label: 'LIVE',         color: '#2d5016' },
+  'in formation': { label: 'IN FORMATION', color: '#b8860b' },
+  'roadmap':      { label: 'ROADMAP',      color: '#6b7280' },
+};
+
 export default function AboutUsPage() {
   return (
     <DesignLawLayout>
@@ -177,20 +222,13 @@ export default function AboutUsPage() {
         <SectionHeading>Why Axiom Exists</SectionHeading>
         <div className="border border-dl-border bg-dl-bg-alt p-6 border-t-4 border-t-dl-gold">
           <p className="text-sm text-dl-gray leading-relaxed mb-4">
-            Most real-world asset platforms focus on access, marketing, or token issuance.
-          </p>
-          <p className="text-sm text-dl-gray leading-relaxed mb-4">
-            Axiom Protocol focuses on infrastructure.
-          </p>
-          <p className="text-sm text-dl-gray leading-relaxed mb-4">
-            That means building the underlying systems that allow capital, settlement, identity, reserve
-            visibility, governance, and reporting to operate together in a coordinated way.
-          </p>
-          <p className="text-sm text-dl-gray leading-relaxed mb-2">
-            The goal is not to create more noise in financial markets.
+            Most real-world asset platforms prioritize access, marketing, or token issuance.
+            Axiom Protocol prioritizes infrastructure — the underlying systems that allow capital, settlement,
+            identity, reserve visibility, governance, and reporting to operate together in a coordinated way.
           </p>
           <p className="text-sm text-dl-gray leading-relaxed">
-            The goal is to create a stronger operating model for real-world asset participation.
+            The goal is not more noise in financial markets. It is a stronger, more reviewable operating model
+            for real-world asset participation.
           </p>
         </div>
       </div>
@@ -238,8 +276,8 @@ export default function AboutUsPage() {
         <div className="border border-dl-border bg-dl-bg-alt p-6 mb-6">
           <p className="text-sm text-dl-gray leading-relaxed">
             Axiom Protocol is organized as a multi-layer operating environment for real-world asset finance.
-            Community participation exists within this system as an access and coordination layer, but it does
-            not replace the broader protocol, settlement, reserve, and disclosure architecture.
+            Community participation exists within this system as an access and coordination layer — it does
+            not replace the broader settlement, reserve, and disclosure architecture.
           </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 border border-dl-border">
@@ -376,19 +414,49 @@ export default function AboutUsPage() {
         </div>
       </div>
 
-      {/* Where Axiom Is Going */}
+      {/* Development Timeline */}
       <div className="mb-12">
-        <SectionHeading>Where Axiom Is Going</SectionHeading>
-        <div className="border border-dl-border bg-dl-bg-alt p-6 border-l-4 border-l-dl-navy">
-          <p className="text-sm text-dl-gray leading-relaxed mb-4">
-            Axiom Protocol is being developed as a broader operating system for real-world assets, with
-            continued expansion across settlement, reserve-linked infrastructure, capital formation, and
-            public financial transparency.
-          </p>
+        <SectionHeading>Development Timeline</SectionHeading>
+        <div className="border border-dl-border bg-dl-bg-alt p-6 mb-6">
           <p className="text-sm text-dl-gray leading-relaxed">
-            As the platform develops, the objective remains the same: build a more disciplined model for
-            real-world asset finance that can be reviewed, understood, and used with greater confidence.
+            The following reflects public-facing system status as of the current date.
+            Each milestone uses the same status labels applied across the platform:
+            live, in formation, and roadmap.
           </p>
+        </div>
+        <div className="border border-dl-border">
+          {TIMELINE.map((entry, i) => {
+            const badge = STATUS_BADGE[entry.status];
+            const isLast = i === TIMELINE.length - 1;
+            return (
+              <div
+                key={entry.label}
+                className={[
+                  'px-6 py-5 flex flex-col sm:flex-row sm:items-start gap-4 border-l-4',
+                  entry.status === 'live' ? 'border-l-dl-forest' : entry.status === 'in formation' ? 'border-l-dl-gold' : 'border-l-dl-border',
+                  !isLast ? 'border-b border-dl-border' : '',
+                  i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt',
+                ].join(' ')}
+              >
+                <div className="flex-shrink-0 pt-0.5">
+                  <span
+                    className="font-dl-mono text-xs px-2 py-0.5 border uppercase tracking-wider"
+                    style={{ color: badge.color, borderColor: badge.color }}
+                  >
+                    {badge.label}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-dl-serif text-base text-dl-navy font-medium mb-1">
+                    {entry.href ? (
+                      <Link href={entry.href} className="hover:underline">{entry.label}</Link>
+                    ) : entry.label}
+                  </p>
+                  <p className="text-sm text-dl-gray leading-relaxed">{entry.detail}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
