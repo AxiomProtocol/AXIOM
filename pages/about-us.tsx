@@ -208,10 +208,16 @@ export default function AboutUsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-dl-border">
           {PRINCIPLES.map((p, i) => {
             const Icon = p.icon;
+            const isLastPair = i >= PRINCIPLES.length - 2;
+            const isEven = i % 2 === 0;
             return (
               <div
                 key={p.title}
-                className={`px-6 py-5 ${i < PRINCIPLES.length - 2 ? 'border-b border-dl-border' : i === PRINCIPLES.length - 2 ? 'border-b md:border-b-0 border-dl-border' : ''} ${i % 2 === 0 ? 'md:border-r border-dl-border bg-dl-bg' : 'bg-dl-bg-alt'} border-l-4 border-l-dl-forest`}
+                className={[
+                  'px-6 py-5 border-l-4 border-l-dl-forest',
+                  !isLastPair ? 'border-b border-dl-border' : isEven ? 'border-b md:border-b-0 border-dl-border' : '',
+                  isEven ? 'md:border-r border-dl-border bg-dl-bg' : 'bg-dl-bg-alt',
+                ].join(' ')}
               >
                 <div className="flex items-center gap-2 mb-3">
                   <Icon className="w-5 h-5 text-dl-forest" />
@@ -239,11 +245,15 @@ export default function AboutUsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 border border-dl-border">
           {OPERATING_LAYERS.map((layer, i) => {
             const Icon = layer.icon;
-            const isLastRow = i >= OPERATING_LAYERS.length - (OPERATING_LAYERS.length % 4 || 4);
+            const isLast = i === OPERATING_LAYERS.length - 1;
             return (
               <div
                 key={layer.title}
-                className={`px-5 py-4 flex items-center gap-3 border-l-4 border-l-dl-navy bg-dl-bg ${!isLastRow || i < OPERATING_LAYERS.length - 1 ? 'border-b sm:border-b border-dl-border' : ''} ${i % 2 === 0 ? '' : 'bg-dl-bg-alt'}`}
+                className={[
+                  'px-5 py-4 flex items-center gap-3 border-l-4 border-l-dl-navy',
+                  isLast ? '' : 'border-b border-dl-border',
+                  i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt',
+                ].join(' ')}
               >
                 <Icon className="w-4 h-4 text-dl-navy flex-shrink-0" />
                 <p className="text-sm text-dl-gray leading-relaxed">{layer.title}</p>
