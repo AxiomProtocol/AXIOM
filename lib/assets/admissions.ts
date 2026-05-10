@@ -346,7 +346,7 @@ export function computeSupportedAssetDisclosureScore(
 export function classifySupportedAssetMaturity(
   c: SupportedAssetAdmissionCandidate,
 ): SupportedAssetMaturity {
-  if (c.publicSupportStatus === 'LIVE_AXIOM_ISSUED') return 'LIVE_AXIOM_MODULE';
+  if (c.publicSupportStatus === 'LIVE_AXIOM_ISSUED' && c.axiomIssued) return 'LIVE_AXIOM_MODULE';
   if (c.publicSupportStatus === 'EXTERNAL_SUPPORTED') return 'EXTERNAL_READ_ONLY';
   if (c.publicSupportStatus === 'NOT_LIVE_NOT_ISSUED') return 'NOT_LIVE_NOT_ISSUED';
   if (c.blockers.length > 0 && c.integrationFriction === 'HIGH') {
@@ -480,9 +480,14 @@ export function evaluateSupportedAssetAdmission(
 
 export function buildSupportedAssetComparisonTable(
   candidates: SupportedAssetAdmissionCandidate[],
+  precomputedResults?: SupportedAssetAdmissionResult[],
 ): SupportedAssetComparisonRow[] {
+  const resultBySymbol = precomputedResults
+    ? new Map(precomputedResults.map((r) => [r.symbol, r]))
+    : null;
+
   return candidates.map((c) => {
-    const result = evaluateSupportedAssetAdmission(c);
+    const result = resultBySymbol?.get(c.symbol) ?? evaluateSupportedAssetAdmission(c);
 
     return {
       symbol: c.symbol,
@@ -603,7 +608,7 @@ const futureCandidateSnapshots: SupportedAssetAdmissionCandidate[] = [
     issuer: 'Circle Internet Financial, LLC',
     chain: 'Arbitrum One',
     contractAddress: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
-    publicSupportStatus: 'EXTERNAL_SUPPORTED',
+    publicSupportStatus: 'CANDIDATE_ONLY',
     currentTruthStatement:
       'External stable asset; no Axiom issuance. This admissions snapshot does not add new support.',
     source: 'SUPPORTED_ASSETS_FRAMEWORK',
@@ -644,7 +649,7 @@ const futureCandidateSnapshots: SupportedAssetAdmissionCandidate[] = [
     issuer: 'Paxos Trust Company, LLC',
     chain: 'Ethereum mainnet / Arbitrum One reference',
     contractAddress: '0x45804880De22913dAFE09f4980848ECE6EcbAf78',
-    publicSupportStatus: 'EXTERNAL_SUPPORTED',
+    publicSupportStatus: 'CANDIDATE_ONLY',
     currentTruthStatement:
       'External gold asset; AXAU remains the Axiom-issued gold rail.',
     source: 'SUPPORTED_ASSETS_FRAMEWORK',
@@ -685,7 +690,7 @@ const futureCandidateSnapshots: SupportedAssetAdmissionCandidate[] = [
     issuer: 'TG Commodities Limited',
     chain: 'Ethereum mainnet',
     contractAddress: '0x68749665FF8D2d112Fa859AA293F07A622782F38',
-    publicSupportStatus: 'EXTERNAL_SUPPORTED',
+    publicSupportStatus: 'CANDIDATE_ONLY',
     currentTruthStatement:
       'External gold asset; this framework adds no new public asset status.',
     source: 'SUPPORTED_ASSETS_FRAMEWORK',
@@ -726,7 +731,7 @@ const futureCandidateSnapshots: SupportedAssetAdmissionCandidate[] = [
     issuer: 'BitGo Trust Company / WBTC merchant network',
     chain: 'Arbitrum One',
     contractAddress: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f',
-    publicSupportStatus: 'EXTERNAL_SUPPORTED',
+    publicSupportStatus: 'CANDIDATE_ONLY',
     currentTruthStatement:
       'External wrapped BTC asset; no Axiom BTC issuance or custody.',
     source: 'SUPPORTED_ASSETS_FRAMEWORK',
@@ -767,7 +772,7 @@ const futureCandidateSnapshots: SupportedAssetAdmissionCandidate[] = [
     issuer: 'Coinbase, Inc.',
     chain: 'Ethereum mainnet',
     contractAddress: '0xBe9895146f7AF43049ca1c1AE358B0541Ea49704',
-    publicSupportStatus: 'EXTERNAL_SUPPORTED',
+    publicSupportStatus: 'CANDIDATE_ONLY',
     currentTruthStatement:
       'External yield-bearing staked ETH wrapper; no Axiom yield product.',
     source: 'SUPPORTED_ASSETS_FRAMEWORK',
