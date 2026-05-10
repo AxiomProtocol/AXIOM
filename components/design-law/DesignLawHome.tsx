@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { ConnectWalletButton } from './ConnectWalletButton';
+import dynamic from 'next/dynamic';
 import { SectionHeading } from './SectionHeading';
 import { NAV_ITEMS } from './navItems';
 import { NavDropdown } from './NavDropdown';
@@ -12,6 +12,11 @@ import {
   Lock, BarChart3, KeyRound, Layers,
   Activity, Zap, Banknote, Network,
 } from 'lucide-react';
+
+const ConnectWalletButton = dynamic(
+  () => import('./ConnectWalletButton').then((m) => m.ConnectWalletButton),
+  { ssr: false, loading: () => <button className="bg-dl-navy text-white px-5 py-2 text-sm font-medium">Access Platform</button> }
+);
 
 // ─────────────────────────────────────────────────────────────────────
 // Homepage V4 — Capital conversion upgrade.
