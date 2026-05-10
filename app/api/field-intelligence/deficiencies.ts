@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
         severity,
         title,
         description,
-        estimatedRepairCost: estimatedRepairCost ? parseFloat(estimatedRepairCost) : null,
+        estimatedRepairCost: estimatedRepairCost ? String(parseFloat(estimatedRepairCost)) : null,
         estimatedDaysToFix: estimatedDaysToFix ? parseInt(estimatedDaysToFix) : null,
         needsImmediateAttention: needsImmediateAttention || false,
         affectsTenancy: affectsTenancy || false,
