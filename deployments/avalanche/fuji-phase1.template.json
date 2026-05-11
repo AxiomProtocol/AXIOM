@@ -1,0 +1,16 @@
+{
+  "network": "avalanche-fuji",
+  "chainId": 43113,
+  "mode": "scaffold-only",
+  "canonicalChain": "arbitrum",
+  "contracts": {
+    "IdentityRegistryStorage": null,
+    "TrustedIssuersRegistry": null,
+    "ClaimTopicsRegistry": null,
+    "IdentityRegistry": null,
+    "ModularCompliance": null,
+    "CountryAllowModule": null,
+    "TransferLimitModule": null,
+    "AxiomStable3643Fuji": null
+  }
+}
