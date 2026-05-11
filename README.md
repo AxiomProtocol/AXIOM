@@ -153,7 +153,7 @@ The `predeploy-tests` job in `.github/workflows/main.yml` requires the following
 
 A dedicated pre-flight step (`Verify TEST_DATABASE_URL secret is configured`) runs at the start of the `predeploy-tests` job and fails fast with an actionable error message if `TEST_DATABASE_URL` is missing, so contributors are not left waiting through `npm ci` and migration steps to discover an unwired secret.
 
-#### Avalanche Integration CI (`avalanche-integration.yml`)
+## CI / Avalanche Integration
 
 The `avalanche-integration` workflow (`.github/workflows/avalanche-integration.yml`) runs on
 pushes and pull requests that touch Avalanche-related files. It has two jobs:

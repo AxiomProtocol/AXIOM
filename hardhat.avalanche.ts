@@ -5,12 +5,12 @@
  * cache isolated from the primary Arbitrum/PEAQ hardhat.config.ts.
  *
  * Networks:
- *   hardhat       — local fork of Avalanche C-Chain mainnet (43114)
+ *   hardhat       — local fork of Avalanche C-Chain (uses AVALANCHE_RPC_URL)
  *   avalanche     — Avalanche C-Chain mainnet (43114)
  *   avalancheFuji — Avalanche Fuji testnet (43113)
  *
  * Env vars required for LIVE usage:
- *   AVALANCHE_RPC_URL    — public or private C-Chain RPC endpoint
+ *   AVALANCHE_RPC_URL    — C-Chain RPC endpoint (mainnet or testnet)
  *   SNOWTRACE_API_KEY    — Routescan/Snowtrace API key for verification
  *   DEPLOYER_PK          — 0x-prefixed deployer private key
  *
@@ -29,8 +29,8 @@ import 'dotenv/config';
 const AVALANCHE_RPC_URL =
   process.env.AVALANCHE_RPC_URL || 'https://api.avax.network/ext/bc/C/rpc';
 
-const AVALANCHE_FUJI_RPC =
-  process.env.AVALANCHE_FUJI_RPC_URL || 'https://api.avax-test.network/ext/bc/C/rpc';
+const AVALANCHE_FUJI_RPC_URL =
+  process.env.AVALANCHE_RPC_URL || 'https://api.avax-test.network/ext/bc/C/rpc';
 
 const DEPLOYER_ACCOUNTS: string[] = process.env.DEPLOYER_PK
   ? [process.env.DEPLOYER_PK]
@@ -65,7 +65,7 @@ const config: HardhatUserConfig = {
     },
 
     avalancheFuji: {
-      url: AVALANCHE_FUJI_RPC,
+      url: AVALANCHE_FUJI_RPC_URL,
       chainId: 43113,
       accounts: DEPLOYER_ACCOUNTS,
     },

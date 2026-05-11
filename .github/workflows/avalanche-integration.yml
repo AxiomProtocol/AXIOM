@@ -1,26 +1,18 @@
+# Avalanche Integration CI
+#
+# Required GitHub Actions secrets:
+#   AVALANCHE_RPC_URL   — C-Chain RPC endpoint for fork tests (private endpoint recommended)
+#   SNOWTRACE_API_KEY   — Routescan/Snowtrace API key for contract verification
+#   DEPLOYER_PK         — 0x-prefixed private key (deploy jobs only)
+#
+# See documents/chains/AXIOM_AVALANCHE_FUJI_ENV.md for full env var documentation.
+
 name: Avalanche Integration
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'hardhat.avalanche.ts'
-      - 'contracts/avalanche/**'
-      - 'scripts/deploy/avalanche/**'
-      - 'shared/contracts-avalanche.ts'
-      - 'lib/capinfra/adapters/avalanche/**'
-      - 'deployments/avalanche/**'
-      - '.github/workflows/avalanche-integration.yml'
   pull_request:
-    branches: [main]
-    paths:
-      - 'hardhat.avalanche.ts'
-      - 'contracts/avalanche/**'
-      - 'scripts/deploy/avalanche/**'
-      - 'shared/contracts-avalanche.ts'
-      - 'lib/capinfra/adapters/avalanche/**'
-      - 'deployments/avalanche/**'
-      - '.github/workflows/avalanche-integration.yml'
   workflow_dispatch:
 
 permissions:
@@ -101,8 +93,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: avalanche-test-results-run-${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}
-          path: |
-            test-results/
-            cache_avalanche/
+          path: test-results/
           if-no-files-found: ignore
           retention-days: 14
