@@ -1,0 +1,33 @@
+{
+  "_comment": "Avalanche Fuji Phase 1 deployment manifest template. Copy to fuji-phase1.json and populate after deploy.",
+  "network": "avalancheFuji",
+  "chainId": 43113,
+  "deployedAt": "",
+  "deployer": "",
+  "contracts": {
+    "IdentityRegistry": {
+      "address": "",
+      "txHash": null
+    },
+    "Compliance": {
+      "address": "",
+      "txHash": null
+    },
+    "AXUSD": {
+      "address": "",
+      "txHash": null
+    },
+    "LandNAVOracle": {
+      "address": "",
+      "txHash": null
+    },
+    "AXAU": {
+      "address": "",
+      "txHash": null
+    },
+    "Treasury": {
+      "address": "",
+      "txHash": null
+    }
+  }
+}

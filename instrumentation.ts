@@ -7324,7 +7324,7 @@ END $seed$`, 'seed dp_listings');
       await exec(enumSafe('cap_asset_subtype', ['GOLD','SILVER','PLATINUM','PALLADIUM','TREASURY_BILL','MONEY_MARKET','REIT','COMMERCIAL','RESIDENTIAL','NONE']), 'enum cap_asset_subtype');
       await exec(enumSafe('cap_custody_model', ['ALLOCATED_PHYSICAL','ISSUER_CUSTODY','SEGREGATED_CUSTODY','OMNIBUS_CUSTODY','ON_CHAIN_NATIVE']), 'enum cap_custody_model');
       await exec(enumSafe('cap_redemption_type', ['PHYSICAL_DELIVERY','CASH','IN_KIND','NONE']), 'enum cap_redemption_type');
-      await exec(enumSafe('cap_settlement_type', ['INTERNAL','EVM','STELLAR','ACH','WIRE','SWIFT']), 'enum cap_settlement_type');
+      await exec(enumSafe('cap_settlement_type', ['INTERNAL','EVM','STELLAR','ACH','WIRE','SWIFT','AVALANCHE']), 'enum cap_settlement_type');
       await exec(enumSafe('cap_price_type', ['SPOT','NAV','INDICATIVE','MARK_TO_MODEL','MID','BID','ASK']), 'enum cap_price_type');
       await exec(enumSafe('cap_action_type', ['MINT','REDEEM','TRANSFER','BUY','SELL','STAKE','UNSTAKE','CUSTODY_MOVE']), 'enum cap_action_type');
       await exec(enumSafe('cap_route_type', ['DIRECT','INTERMEDIATED','ATOMIC_SWAP','CCTP']), 'enum cap_route_type');

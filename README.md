@@ -153,6 +153,28 @@ The `predeploy-tests` job in `.github/workflows/main.yml` requires the following
 
 A dedicated pre-flight step (`Verify TEST_DATABASE_URL secret is configured`) runs at the start of the `predeploy-tests` job and fails fast with an actionable error message if `TEST_DATABASE_URL` is missing, so contributors are not left waiting through `npm ci` and migration steps to discover an unwired secret.
 
+#### Avalanche Integration CI (`avalanche-integration.yml`)
+
+The `avalanche-integration` workflow (`.github/workflows/avalanche-integration.yml`) runs on
+pushes and pull requests that touch Avalanche-related files. It has two jobs:
+
+| Job | What it does |
+|---|---|
+| `compile` | `npx hardhat compile --config hardhat.avalanche.ts` — verifies all Avalanche contracts compile cleanly |
+| `test-fork` | `npm run test:avalanche` — runs Hardhat tests against a local fork of Avalanche C-Chain |
+
+The following repository secrets are required for this workflow:
+
+| Secret | Required by | Purpose |
+|---|---|---|
+| `AVALANCHE_RPC_URL` | `test-fork` | Avalanche C-Chain (or Fuji) RPC endpoint for fork tests. A private endpoint is strongly recommended to avoid public rate limits. |
+| `SNOWTRACE_API_KEY` | post-deploy verification (optional for CI) | Routescan/Snowtrace API key for `hardhat verify` contract verification. |
+| `DEPLOYER_PK` | deploy jobs only | 0x-prefixed private key for the deployer wallet (only needed when the CI deploy job is enabled). |
+
+See `documents/chains/AXIOM_AVALANCHE_FUJI_ENV.md` for full environment variable documentation.
+
+**Adding secrets:** Settings → Secrets and variables → Actions → New repository secret.
+
 #### Skipping the auto-migration step
 
 `vitest.globalSetup.ts` runs migrations automatically before the test suite when `DATABASE_URL` is set. To opt out (e.g. against a pre-migrated CI database or for fast unit-test-only runs) without unsetting `DATABASE_URL`, set:

@@ -24,6 +24,7 @@ import { internalAdapter } from './internal';
 import { evmAdapter } from './evm';
 import { stellarAdapter } from './stellar/index';
 import { achAdapter } from './ach/index';
+import { avalancheAdapter } from './avalanche/index';
 import type { AdapterCreateInput } from '../types';
 import type { SettlementAdapter } from './types';
 
@@ -33,12 +34,13 @@ function register(adapter: SettlementAdapter) {
   ADAPTERS_BY_KIND.set(adapter.kind, adapter);
 }
 
-// Bootstrap the four canonical adapter kinds. INTERNAL is live; the
-// other three are stubs that throw NotImplementedAdapterError.
+// Bootstrap the five canonical adapter kinds. INTERNAL is live; the
+// others are stubs or DRY_RUN by default until LIVE env vars are set.
 register(internalAdapter);
 register(evmAdapter);
 register(stellarAdapter);
 register(achAdapter);
+register(avalancheAdapter);
 
 /**
  * Returns the adapter implementation for a given `kind`. Throws

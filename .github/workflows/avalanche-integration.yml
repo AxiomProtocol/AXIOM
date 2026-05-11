@@ -1,0 +1,108 @@
+name: Avalanche Integration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'hardhat.avalanche.ts'
+      - 'contracts/avalanche/**'
+      - 'scripts/deploy/avalanche/**'
+      - 'shared/contracts-avalanche.ts'
+      - 'lib/capinfra/adapters/avalanche/**'
+      - 'deployments/avalanche/**'
+      - '.github/workflows/avalanche-integration.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'hardhat.avalanche.ts'
+      - 'contracts/avalanche/**'
+      - 'scripts/deploy/avalanche/**'
+      - 'shared/contracts-avalanche.ts'
+      - 'lib/capinfra/adapters/avalanche/**'
+      - 'deployments/avalanche/**'
+      - '.github/workflows/avalanche-integration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    name: Compile Avalanche contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile contracts (avalanche config)
+        run: npx hardhat compile --config hardhat.avalanche.ts
+
+      - name: Upload compilation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avalanche-artifacts-run-${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}
+          path: artifacts_avalanche/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  test-fork:
+    name: Hardhat fork tests (Avalanche)
+    runs-on: ubuntu-latest
+    needs: compile
+    env:
+      AVALANCHE_RPC_URL: ${{ secrets.AVALANCHE_RPC_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify AVALANCHE_RPC_URL secret is configured
+        run: |
+          if [ -z "${AVALANCHE_RPC_URL}" ]; then
+            echo "============================================================"
+            echo "MISSING REQUIRED SECRET: AVALANCHE_RPC_URL"
+            echo "============================================================"
+            echo "The test-fork job requires the AVALANCHE_RPC_URL GitHub"
+            echo "Actions secret to be configured on this repository."
+            echo
+            echo "Add it at: Settings → Secrets and variables → Actions"
+            echo "See documents/chains/AXIOM_AVALANCHE_FUJI_ENV.md for details."
+            echo "============================================================"
+            exit 1
+          fi
+          echo "AVALANCHE_RPC_URL is configured (value hidden)."
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile contracts (avalanche config)
+        run: npx hardhat compile --config hardhat.avalanche.ts
+
+      - name: Run Avalanche fork tests
+        run: npm run test:avalanche
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avalanche-test-results-run-${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}
+          path: |
+            test-results/
+            cache_avalanche/
+          if-no-files-found: ignore
+          retention-days: 14

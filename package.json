@@ -119,7 +119,9 @@
     "test:migrate-idempotency": "vitest run tests/migrate-idempotency.test.ts",
     "test:prune-status-panel": "vitest run tests/prune-status-panel.test.tsx --reporter=verbose",
     "export:policy-pdfs": "tsx scripts/export-policy-pdfs.ts",
-    "test:policy-pdfs": "vitest run tests/export-policy-pdfs.test.ts"
+    "test:policy-pdfs": "vitest run tests/export-policy-pdfs.test.ts",
+    "test:avalanche": "hardhat test --config hardhat.avalanche.ts --network hardhat",
+    "deploy:avalanche:fuji": "hardhat run scripts/deploy/avalanche/deploy-phase1-fuji.ts --config hardhat.avalanche.ts --network avalancheFuji"
   },
   "keywords": [],
   "author": "",
