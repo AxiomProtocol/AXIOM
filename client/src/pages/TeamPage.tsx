@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 
+type DepartmentId = 'leadership' | 'development' | 'operations' | 'advisory';
+
 interface TeamMember {
   id: string;
   name: string;
   role: string;
-  department: 'leadership' | 'development' | 'operations' | 'advisory';
+  department: DepartmentId;
   bio: string;
   expertise: string[];
   experience: string;
@@ -12,11 +14,14 @@ interface TeamMember {
   achievements?: string[];
 }
 
-const TeamPage: React.FC = () => {
-  const [activeDepartment, setActiveDepartment] = useState<string>('leadership');
-  const [selectedMember, setSelectedMember] = useState<string | null>(null);
+interface Department {
+  id: DepartmentId;
+  name: string;
+  icon: string;
+  count: number;
+}
 
-  const teamMembers: TeamMember[] = [
+const teamMembers: TeamMember[] = [
     // Leadership Team
     {
       id: 'ceo-founder',
@@ -174,14 +179,18 @@ const TeamPage: React.FC = () => {
         'Advised 20+ blockchain projects on scalability'
       ]
     }
-  ];
+];
 
-  const departments = [
-    { id: 'leadership', name: 'Leadership', icon: '👑', count: teamMembers.filter(m => m.department === 'leadership').length },
-    { id: 'development', name: 'Development', icon: '💻', count: teamMembers.filter(m => m.department === 'development').length },
-    { id: 'operations', name: 'Operations', icon: '⚙️', count: teamMembers.filter(m => m.department === 'operations').length },
-    { id: 'advisory', name: 'Advisory', icon: '🎯', count: teamMembers.filter(m => m.department === 'advisory').length }
-  ];
+const departments: Department[] = [
+  { id: 'leadership', name: 'Leadership', icon: '👑', count: teamMembers.filter(m => m.department === 'leadership').length },
+  { id: 'development', name: 'Development', icon: '💻', count: teamMembers.filter(m => m.department === 'development').length },
+  { id: 'operations', name: 'Operations', icon: '⚙️', count: teamMembers.filter(m => m.department === 'operations').length },
+  { id: 'advisory', name: 'Advisory', icon: '🎯', count: teamMembers.filter(m => m.department === 'advisory').length },
+];
+
+const TeamPage: React.FC = () => {
+  const [activeDepartment, setActiveDepartment] = useState<DepartmentId>('leadership');
+  const [selectedMember, setSelectedMember] = useState<string | null>(null);
 
   const filteredMembers = teamMembers.filter(member => member.department === activeDepartment);
 
