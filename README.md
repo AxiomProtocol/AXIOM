@@ -156,7 +156,7 @@ A dedicated pre-flight step (`Verify TEST_DATABASE_URL secret is configured`) ru
 ## CI / Avalanche Integration
 
 The `avalanche-integration` workflow (`.github/workflows/avalanche-integration.yml`) runs on
-pushes and pull requests that touch Avalanche-related files. It has two jobs:
+all pushes to `main` and all pull requests. It has two jobs:
 
 | Job | What it does |
 |---|---|

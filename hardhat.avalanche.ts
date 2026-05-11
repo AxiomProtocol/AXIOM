@@ -26,11 +26,14 @@ import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-verify';
 import 'dotenv/config';
 
+// Both mainnet and Fuji resolve from the same AVALANCHE_RPC_URL env var so
+// operators configure a single endpoint. The public fallback differs per network
+// so a missing env var still points to the correct chain's public RPC.
 const AVALANCHE_RPC_URL =
   process.env.AVALANCHE_RPC_URL || 'https://api.avax.network/ext/bc/C/rpc';
 
-const AVALANCHE_FUJI_RPC_URL =
-  process.env.AVALANCHE_RPC_URL || 'https://api.avax-test.network/ext/bc/C/rpc';
+const AVALANCHE_FUJI_DEFAULT = 'https://api.avax-test.network/ext/bc/C/rpc';
+const AVALANCHE_FUJI_RPC_URL = process.env.AVALANCHE_RPC_URL || AVALANCHE_FUJI_DEFAULT;
 
 const DEPLOYER_ACCOUNTS: string[] = process.env.DEPLOYER_PK
   ? [process.env.DEPLOYER_PK]
