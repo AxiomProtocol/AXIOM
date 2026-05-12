@@ -10,6 +10,8 @@
     "lint": "next lint",
     "build": "next build",
     "start": "next start",
+    "avalanche:compile": "hardhat compile --config contracts-axusd-3643/hardhat.config.ts",
+    "avalanche:scaffold:fuji": "hardhat run scripts/deploy/avalanche/deploy-phase1-fuji.ts --config contracts-axusd-3643/hardhat.config.ts --network avalancheFuji",
     "cron:refresh-solvency": "tsx scripts/refresh-solvency.ts",
     "admin:reset-password": "node scripts/reset-admin-password.js",
     "test": "hardhat test",

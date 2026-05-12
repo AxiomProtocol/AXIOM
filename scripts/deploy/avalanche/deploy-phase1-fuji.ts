@@ -29,7 +29,8 @@ function ensureFlagEnabled(name: string): void {
 }
 
 async function main() {
-  const chainId = Number(network.config.chainId ?? 0);
+  const connection = await network.create();
+  const chainId = Number(connection.networkConfig.chainId ?? 0);
   if (chainId !== 43113) {
     throw new Error(
       `This scaffold is Fuji-only. Expected chainId=43113, received ${chainId}.`,
@@ -62,13 +63,16 @@ async function main() {
     },
   };
 
-  const outDir = path.join(process.cwd(), "deployments", "avalanche");
+  const outputRoot = process.env.AVALANCHE_PHASE1_OUTPUT_ROOT || process.cwd();
+  const outDir = path.join(outputRoot, "deployments", "avalanche");
   fs.mkdirSync(outDir, { recursive: true });
   const outPath = path.join(outDir, "fuji-phase1.template.json");
   fs.writeFileSync(outPath, JSON.stringify(manifest, null, 2));
 
   console.log("Avalanche Fuji Phase 1 scaffold generated:");
   console.log(outPath);
+
+  await connection.close();
 }
 
 main().catch((error) => {

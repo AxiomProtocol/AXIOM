@@ -56,16 +56,16 @@ No fake addresses or transaction hashes were added.
 
 Before any public runtime integration, Axiom must complete all of the following:
 
-1. Resolve the Hardhat runtime blocker without destabilizing the root app.
-2. Add or enable a guarded Phase 2 real-deploy path for the approved Fuji-only
+1. Add or enable a guarded Phase 2 real-deploy path for the approved Fuji-only
    contract set.
-3. Provide a dedicated funded Fuji-only deployer key.
-4. Re-run compile and dry-run successfully.
-5. Execute the minimal Fuji deployment.
-6. Capture addresses, transaction hashes, and explorer links.
-7. Update only Avalanche-specific registries with actual deployed addresses.
-8. Verify that Avalanche remains feature-flagged and disabled by default.
-9. Keep Arbitrum as canonical for reserve, accounting, identity, issuance,
+2. Provide a dedicated funded Fuji-only deployer key.
+3. Re-run compile and dry-run successfully with
+   `contracts-axusd-3643/hardhat.config.ts`.
+4. Execute the minimal Fuji deployment.
+5. Capture addresses, transaction hashes, and explorer links.
+6. Update only Avalanche-specific registries with actual deployed addresses.
+7. Verify that Avalanche remains feature-flagged and disabled by default.
+8. Keep Arbitrum as canonical for reserve, accounting, identity, issuance,
    policy, solvency, and disclosure until a later explicit migration decision.
 
 ## 7) Safety result

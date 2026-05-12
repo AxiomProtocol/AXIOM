@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "Isolated ESM Hardhat project for AXIOM ERC-3643 Avalanche Fuji contracts."
+}
