@@ -120,9 +120,11 @@
     "test:prune-status-panel": "vitest run tests/prune-status-panel.test.tsx --reporter=verbose",
     "export:policy-pdfs": "tsx scripts/export-policy-pdfs.ts",
     "test:policy-pdfs": "vitest run tests/export-policy-pdfs.test.ts",
-    "test:avalanche": "cd hardhat-avalanche && npx hardhat test --config hardhat.config.mts --network hardhat",
-    "deploy:avalanche:fuji": "cd hardhat-avalanche && npx hardhat run ../scripts/deploy/avalanche/deploy-phase1-fuji.mts --config hardhat.config.mts --network avalancheFuji",
-    "compile:avalanche": "cd hardhat-avalanche && npx hardhat compile --config hardhat.config.mts"
+    "install:avalanche": "npm install --prefix hardhat-avalanche",
+    "test:avalanche": "npm run install:avalanche && cd hardhat-avalanche && npx hardhat test --config hardhat.config.mts --network hardhat",
+    "deploy:avalanche:fuji": "npm run install:avalanche && cd hardhat-avalanche && npx hardhat run ../scripts/deploy/avalanche/deploy-phase1-fuji.mts --config hardhat.config.mts --network avalancheFuji",
+    "compile:avalanche": "npm run install:avalanche && cd hardhat-avalanche && npx hardhat compile --config hardhat.config.mts",
+    "postinstall": "npm run install:avalanche"
   },
   "keywords": [],
   "author": "",
