@@ -1,0 +1,40 @@
+# Root app migration focus
+#
+# The migration docs define the root Next.js app as the only in-scope target.
+# Keep Cursor focused on root runtime/application files and away from nested
+# apps, generated artifacts, and agent assets.
+
+# Nested apps and out-of-scope projects
+client/
+recruit-standalone/
+universe-blockchain/
+download/
+project/
+
+# Out-of-scope archives and agent/artifact folders
+_archive/
+.agents/
+attached_assets/
+
+# Contract tooling not needed for root app migration context
+contracts/
+integration/
+web3/
+
+# Generated/dependency output
+node_modules/
+.next/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+
+# Local/runtime noise
+*.log
+.env
+.env.*
+.cache/
+tmp/
+.vercel/
+
