@@ -35,6 +35,20 @@ contract AxiomStable3643 is
     string internal _tokenSymbol;
     uint8 internal _tokenDecimals;
 
+    uint256 public constant GOVERNANCE_UPDATE_DELAY = 1 days;
+
+    address internal _pendingIdentityRegistry;
+    uint256 internal _pendingIdentityRegistryReadyAt;
+    address internal _pendingCompliance;
+    uint256 internal _pendingComplianceReadyAt;
+
+    event IdentityRegistryUpdateProposed(address indexed identityRegistry, uint256 readyAt);
+    event ComplianceUpdateProposed(address indexed compliance, uint256 readyAt);
+
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(
         address identityRegistry_,
         address compliance_,
@@ -105,11 +119,15 @@ contract AxiomStable3643 is
     }
 
     function mint(address _to, uint256 _amount) external override onlyRole(MINTER_ROLE) {
+        require(!paused(), "TOKEN_PAUSED");
         require(_identityRegistry.isVerified(_to), "RECEIVER_NOT_VERIFIED");
+        require(_compliance.canTransfer(address(0), _to, _amount), "MINT_NOT_COMPLIANT");
         _mint(_to, _amount);
     }
 
     function burn(address _userAddress, uint256 _amount) external override onlyRole(BURNER_ROLE) {
+        require(!paused(), "TOKEN_PAUSED");
+        require(balanceOf(_userAddress) - _frozenTokens[_userAddress] >= _amount, "BURN_EXCEEDS_UNFROZEN");
         _burn(_userAddress, _amount);
     }
 
@@ -150,11 +168,13 @@ contract AxiomStable3643 is
 
         uint256 amount = balanceOf(_lostWallet);
         uint256 frozenAmt = _frozenTokens[_lostWallet];
+        if (frozenAmt > 0) {
+            _frozenTokens[_lostWallet] = 0;
+        }
 
         _transfer(_lostWallet, _newWallet, amount);
 
         if (frozenAmt > 0) {
-            _frozenTokens[_lostWallet] = 0;
             _frozenTokens[_newWallet] += frozenAmt;
         }
         if (wasFrozen) {
@@ -214,14 +234,46 @@ contract AxiomStable3643 is
 
     function setIdentityRegistry(address _identityRegistryAddr) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_identityRegistryAddr != address(0), "ZERO_IDENTITY_REGISTRY");
-        _identityRegistry = IIdentityRegistry(_identityRegistryAddr);
-        emit IdentityRegistryAdded(_identityRegistryAddr);
+        require(_identityRegistryAddr.code.length > 0, "IDENTITY_REGISTRY_NOT_CONTRACT");
+        _pendingIdentityRegistry = _identityRegistryAddr;
+        _pendingIdentityRegistryReadyAt = block.timestamp + GOVERNANCE_UPDATE_DELAY;
+        emit IdentityRegistryUpdateProposed(_identityRegistryAddr, _pendingIdentityRegistryReadyAt);
+    }
+
+    function acceptIdentityRegistry() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_pendingIdentityRegistry != address(0), "NO_PENDING_IDENTITY_REGISTRY");
+        require(block.timestamp >= _pendingIdentityRegistryReadyAt, "IDENTITY_REGISTRY_DELAY_ACTIVE");
+        address identityRegistry_ = _pendingIdentityRegistry;
+        delete _pendingIdentityRegistry;
+        delete _pendingIdentityRegistryReadyAt;
+        _identityRegistry = IIdentityRegistry(identityRegistry_);
+        emit IdentityRegistryAdded(identityRegistry_);
+    }
+
+    function pendingIdentityRegistry() external view returns (address pending, uint256 readyAt) {
+        return (_pendingIdentityRegistry, _pendingIdentityRegistryReadyAt);
     }
 
     function setCompliance(address _complianceAddr) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_complianceAddr != address(0), "ZERO_COMPLIANCE");
-        _compliance = IModularCompliance(_complianceAddr);
-        emit ComplianceAdded(_complianceAddr);
+        require(_complianceAddr.code.length > 0, "COMPLIANCE_NOT_CONTRACT");
+        _pendingCompliance = _complianceAddr;
+        _pendingComplianceReadyAt = block.timestamp + GOVERNANCE_UPDATE_DELAY;
+        emit ComplianceUpdateProposed(_complianceAddr, _pendingComplianceReadyAt);
+    }
+
+    function acceptCompliance() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_pendingCompliance != address(0), "NO_PENDING_COMPLIANCE");
+        require(block.timestamp >= _pendingComplianceReadyAt, "COMPLIANCE_DELAY_ACTIVE");
+        address compliance_ = _pendingCompliance;
+        delete _pendingCompliance;
+        delete _pendingComplianceReadyAt;
+        _compliance = IModularCompliance(compliance_);
+        emit ComplianceAdded(compliance_);
+    }
+
+    function pendingCompliance() external view returns (address pending, uint256 readyAt) {
+        return (_pendingCompliance, _pendingComplianceReadyAt);
     }
 
     function identityRegistry() external view override returns (IIdentityRegistry) {

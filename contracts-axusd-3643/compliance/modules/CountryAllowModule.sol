@@ -14,12 +14,14 @@ contract CountryAllowModule is AbstractModule {
 
     function addAllowedCountry(address _compliance, uint16 _country) external onlyOwner {
         require(_complianceBound[_compliance], "COMPLIANCE_NOT_BOUND");
+        require(_country != 0, "INVALID_COUNTRY");
         _allowedCountries[_compliance][_country] = true;
         emit CountryAllowed(_compliance, _country);
     }
 
     function removeAllowedCountry(address _compliance, uint16 _country) external onlyOwner {
         require(_complianceBound[_compliance], "COMPLIANCE_NOT_BOUND");
+        require(_country != 0, "INVALID_COUNTRY");
         _allowedCountries[_compliance][_country] = false;
         emit CountryDisallowed(_compliance, _country);
     }
@@ -27,6 +29,7 @@ contract CountryAllowModule is AbstractModule {
     function batchAllowCountries(address _compliance, uint16[] calldata _countries) external onlyOwner {
         require(_complianceBound[_compliance], "COMPLIANCE_NOT_BOUND");
         for (uint256 i = 0; i < _countries.length; i++) {
+            require(_countries[i] != 0, "INVALID_COUNTRY");
             _allowedCountries[_compliance][_countries[i]] = true;
             emit CountryAllowed(_compliance, _countries[i]);
         }
@@ -37,11 +40,12 @@ contract CountryAllowModule is AbstractModule {
     }
 
     function moduleCheck(address, address _to, uint256, address _compliance) external view override returns (bool) {
+        require(msg.sender == _compliance, "ONLY_COMPLIANCE");
         if (_to == address(0)) return true;
         address tokenAddr = IModularCompliance(_compliance).getTokenBound();
         IIdentityRegistry registry = IERC3643(tokenAddr).identityRegistry();
         uint16 country = registry.investorCountry(_to);
-        if (country == 0) return true;
+        if (country == 0) return false;
         return _allowedCountries[_compliance][country];
     }
 

@@ -9,6 +9,10 @@ contract ClaimTopicsRegistry is IClaimTopicsRegistry, OwnableUpgradeable, UUPSUp
     uint256[] internal _claimTopics;
     mapping(uint256 => bool) internal _topicExists;
 
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize() external initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
