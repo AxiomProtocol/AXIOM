@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+    "rootDir": "..",
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "hardhat.config.mts",
+    "../scripts/deploy/avalanche/**/*.ts",
+    "../test/avalanche/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "../node_modules"
+  ]
+}

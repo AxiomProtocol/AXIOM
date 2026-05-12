@@ -1,0 +1,10 @@
+{
+  "name": "axiom-hardhat-avalanche",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "ESM-isolated Hardhat workspace for Axiom Protocol Avalanche C-Chain contracts.",
+  "devDependencies": {
+    "hardhat": "^3.4.4"
+  }
+}

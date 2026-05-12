@@ -1,4 +1,5 @@
-const path = require('path');
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 const webpack = require('webpack');
 
 /** @type {import('next').NextConfig} */
@@ -140,4 +141,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
