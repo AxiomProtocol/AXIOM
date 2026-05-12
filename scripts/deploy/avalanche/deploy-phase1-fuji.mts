@@ -3,51 +3,67 @@
  *
  * Deploys the approved 8-contract ERC-3643 suite to Avalanche Fuji (43113).
  *
+ * Contracts 1-5 use official @tokenysolutions/t-rex pre-compiled artifacts
+ * (IdentityRegistryStorage, TrustedIssuersRegistry, ClaimTopicsRegistry,
+ * IdentityRegistry, ModularCompliance). Contracts 6-8 are Axiom custom
+ * (CountryAllowModule, TransferLimitModule, AxiomStable3643Fuji).
+ *
  * Safety gate:
- *   By default this script runs in DRY-RUN mode — it validates inputs and
- *   prints all contract constructor arguments, but does NOT broadcast any
- *   transactions. Set AVALANCHE_PHASE2_REAL_DEPLOY=true to enable real broadcast.
+ *   By default this script runs in DRY-RUN mode. Set
+ *   AVALANCHE_PHASE2_REAL_DEPLOY=true to enable real Fuji broadcast.
  *
  * Run via npm scripts (from repo root):
  *   npm run deploy:avalanche:fuji                                        # dry-run
  *   AVALANCHE_PHASE2_REAL_DEPLOY=true npm run deploy:avalanche:fuji      # real
  *
  * Required env vars for real deploy:
- *   AVALANCHE_DEPLOYER_PRIVATE_KEY   funded Fuji-only deployer key
+ *   AVALANCHE_DEPLOYER_PRIVATE_KEY  (or DEPLOYER_PRIVATE_KEY as fallback)
  *   MULTICHAIN_ENABLED=true
  *   CHAIN_AVALANCHE_ENABLED=true
  *   AVALANCHE_PHASE2_REAL_DEPLOY=true
  *
- * Deploy order (dependency chain):
- *   1. IdentityRegistryStorage
- *   2. TrustedIssuersRegistry
- *   3. ClaimTopicsRegistry
- *   4. IdentityRegistry        (deps: 1, 2, 3)
- *   5. ModularCompliance
- *   6. CountryAllowModule
- *   7. TransferLimitModule
- *   8. AxiomStable3643Fuji     (deps: 4, 5)
+ * Deploy order:
+ *   1. IdentityRegistryStorage  (T-REX official)
+ *   2. TrustedIssuersRegistry   (T-REX official)
+ *   3. ClaimTopicsRegistry      (T-REX official)
+ *   4. IdentityRegistry         (T-REX official, deps: 1,2,3)
+ *   5. ModularCompliance        (T-REX official)
+ *   6. CountryAllowModule       (Axiom custom)
+ *   7. TransferLimitModule      (Axiom custom)
+ *   8. AxiomStable3643Fuji      (Axiom custom, deps: 4,5)
  *
  * Post-deploy wiring:
- *   - IdentityRegistryStorage.transferOwnership → IdentityRegistry
- *   - ModularCompliance.bindToken(AxiomStable3643Fuji)
- *   - ModularCompliance.addModule(CountryAllowModule)
- *   - ModularCompliance.addModule(TransferLimitModule)
- *   - CountryAllowModule.setAllowAll(compliance, true)  (Fuji testnet default)
- *   - IdentityRegistry.addAgent(deployer)
- *   - IdentityRegistry.registerIdentity(deployer, deployer, 0)  (smoke-test seed)
- *
- * On real deploy, shared/contracts-avalanche.ts FUJI_CONTRACTS is updated
- * automatically with the deployed addresses.
+ *   - IRS.init()  TIR.init()  CTR.init()  MC.init()
+ *   - IR.init(TIR, CTR, IRS)
+ *   - IRS.bindIdentityRegistry(IR)  — grants IR agent rights on IRS
+ *   - MC.bindToken(token)
+ *   - MC.addModule(CAM) / MC.addModule(TLM)
+ *   - CAM.setAllowAll(MC, true)  — Fuji testnet default
+ *   - IR.addAgent(deployer)
+ *   - IR.registerIdentity(deployer, deployer, 0)  — smoke-test seed
  *
  * Outputs:
  *   deployments/avalanche/fuji-phase1.json
+ *   shared/contracts-avalanche.ts  (FUJI_CONTRACTS updated on real deploy)
  */
 
 import fs from 'fs';
 import path from 'path';
 import { network } from 'hardhat';
 import type { Contract, ContractTransactionResponse } from 'ethers';
+
+// Load T-REX pre-compiled artifacts via fs.readFileSync.
+// process.cwd() = hardhat-avalanche/ when invoked via `cd hardhat-avalanche && npx hardhat run`.
+function loadArtifact(relPath: string): { abi: unknown[]; bytecode: string } {
+  return JSON.parse(fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8'));
+}
+
+const tArtBase = 'node_modules/@tokenysolutions/t-rex/artifacts/contracts';
+const IRSArtifact = loadArtifact(`${tArtBase}/registry/implementation/IdentityRegistryStorage.sol/IdentityRegistryStorage.json`);
+const TIRArtifact = loadArtifact(`${tArtBase}/registry/implementation/TrustedIssuersRegistry.sol/TrustedIssuersRegistry.json`);
+const CTRArtifact = loadArtifact(`${tArtBase}/registry/implementation/ClaimTopicsRegistry.sol/ClaimTopicsRegistry.json`);
+const IRArtifact  = loadArtifact(`${tArtBase}/registry/implementation/IdentityRegistry.sol/IdentityRegistry.json`);
+const MCArtifact  = loadArtifact(`${tArtBase}/compliance/modular/ModularCompliance.sol/ModularCompliance.json`);
 
 interface ContractEntry {
   address: string;
@@ -84,12 +100,17 @@ async function main(): Promise<void> {
     console.log(`Balance:  ${ethers.formatEther(balance)} AVAX`);
 
     if (chainId !== 43113n) {
-      throw new Error(
-        `SAFETY: this script targets Fuji (43113) only. Got chainId=${chainId}.`,
-      );
+      throw new Error(`SAFETY: this script targets Fuji (43113) only. Got chainId=${chainId}.`);
     }
-    if (!process.env.AVALANCHE_DEPLOYER_PRIVATE_KEY) {
-      throw new Error('AVALANCHE_DEPLOYER_PRIVATE_KEY is not set. Aborting real deploy.');
+
+    const deployerKey =
+      process.env.AVALANCHE_DEPLOYER_PRIVATE_KEY ??
+      process.env.DEPLOYER_PRIVATE_KEY;
+
+    if (!deployerKey) {
+      throw new Error(
+        'AVALANCHE_DEPLOYER_PRIVATE_KEY (or DEPLOYER_PRIVATE_KEY) is not set. Aborting real deploy.',
+      );
     }
     if (process.env.MULTICHAIN_ENABLED !== 'true') {
       throw new Error('MULTICHAIN_ENABLED must be "true". Aborting real deploy.');
@@ -111,11 +132,40 @@ async function main(): Promise<void> {
 
   let simulatedIndex = 0;
 
-  async function deploy(contractName: string, args: unknown[]): Promise<string> {
+  // ── Deploy helpers ──────────────────────────────────────────────────────────
+
+  async function deployFromArtifact(
+    contractName: string,
+    artifact: { abi: unknown[]; bytecode: string },
+    args: unknown[],
+  ): Promise<string> {
     const label = args.length > 0
       ? `(${args.map((a) => JSON.stringify(a)).join(', ')})`
       : '()';
-    console.log(`\n[deploy] ${contractName}${label}`);
+    console.log(`\n[deploy] ${contractName}${label}  [T-REX official]`);
+
+    if (DRY_RUN) {
+      const fakeAddr = `0xDRYRUN${'0'.repeat(33)}${(simulatedIndex++).toString(16).padStart(2, '0')}`;
+      manifest.contracts[contractName] = { address: fakeAddr, txHash: null };
+      console.log(`  → DRY-RUN: simulated ${contractName} at ${fakeAddr}`);
+      return fakeAddr;
+    }
+
+    const factory  = new ethers.ContractFactory(artifact.abi, artifact.bytecode, deployer);
+    const contract = await factory.deploy(...args);
+    await contract.waitForDeployment();
+    const address = await contract.getAddress();
+    const txHash  = contract.deploymentTransaction()?.hash ?? null;
+    manifest.contracts[contractName] = { address, txHash };
+    console.log(`  ✓ ${address}  (tx: ${txHash})`);
+    return address;
+  }
+
+  async function deployCompiled(contractName: string, args: unknown[]): Promise<string> {
+    const label = args.length > 0
+      ? `(${args.map((a) => JSON.stringify(a)).join(', ')})`
+      : '()';
+    console.log(`\n[deploy] ${contractName}${label}  [Axiom custom]`);
 
     if (DRY_RUN) {
       const fakeAddr = `0xDRYRUN${'0'.repeat(33)}${(simulatedIndex++).toString(16).padStart(2, '0')}`;
@@ -146,21 +196,26 @@ async function main(): Promise<void> {
     console.log(`  ✓ done`);
   }
 
-  async function callOn(contract: Contract, method: string, ...args: unknown[]): Promise<ContractTransactionResponse> {
+  async function callAndWait(
+    contract: Contract,
+    method: string,
+    ...args: unknown[]
+  ): Promise<void> {
     const tx = await contract.getFunction(method)(...args) as ContractTransactionResponse;
-    return tx;
+    await tx.wait();
   }
 
+  // ── Deploy contracts ────────────────────────────────────────────────────────
   console.log('\n── 8-contract ERC-3643 deploy ─────────────────────────────────────\n');
 
-  const irsAddr   = await deploy('IdentityRegistryStorage', []);
-  const tirAddr   = await deploy('TrustedIssuersRegistry',  []);
-  const ctrAddr   = await deploy('ClaimTopicsRegistry',     []);
-  const irAddr    = await deploy('IdentityRegistry',        [irsAddr, tirAddr, ctrAddr]);
-  const mcAddr    = await deploy('ModularCompliance',       []);
-  const camAddr   = await deploy('CountryAllowModule',      []);
-  const tlmAddr   = await deploy('TransferLimitModule',     []);
-  const tokenAddr = await deploy('AxiomStable3643Fuji',     [
+  const irsAddr   = await deployFromArtifact('IdentityRegistryStorage', IRSArtifact, []);
+  const tirAddr   = await deployFromArtifact('TrustedIssuersRegistry',  TIRArtifact, []);
+  const ctrAddr   = await deployFromArtifact('ClaimTopicsRegistry',     CTRArtifact, []);
+  const irAddr    = await deployFromArtifact('IdentityRegistry',        IRArtifact,  []);
+  const mcAddr    = await deployFromArtifact('ModularCompliance',       MCArtifact,  []);
+  const camAddr   = await deployCompiled('CountryAllowModule',  []);
+  const tlmAddr   = await deployCompiled('TransferLimitModule', []);
+  const tokenAddr = await deployCompiled('AxiomStable3643Fuji', [
     irAddr,
     mcAddr,
     'Axiom Stable USD',
@@ -169,42 +224,75 @@ async function main(): Promise<void> {
     deployer.address,
   ]);
 
+  // ── Post-deploy wiring ──────────────────────────────────────────────────────
   console.log('\n── Post-deploy wiring ─────────────────────────────────────────────\n');
 
   if (!DRY_RUN) {
-    const irs: Contract = await ethers.getContractAt('IdentityRegistryStorage', irsAddr);
-    const mc:  Contract = await ethers.getContractAt('ModularCompliance',       mcAddr);
-    const cam: Contract = await ethers.getContractAt('CountryAllowModule',      camAddr);
-    const ir:  Contract = await ethers.getContractAt('IdentityRegistry',        irAddr);
+    const irs: Contract = await ethers.getContractAt(IRSArtifact.abi, irsAddr);
+    const tir: Contract = await ethers.getContractAt(TIRArtifact.abi, tirAddr);
+    const ctr: Contract = await ethers.getContractAt(CTRArtifact.abi, ctrAddr);
+    const ir:  Contract = await ethers.getContractAt(IRArtifact.abi,  irAddr);
+    const mc:  Contract = await ethers.getContractAt(MCArtifact.abi,  mcAddr);
+    const cam: Contract = await ethers.getContractAt('CountryAllowModule', camAddr);
 
-    await wire('IdentityRegistryStorage.transferOwnership → IdentityRegistry', async () => {
-      await callOn(irs, 'transferOwnership', irAddr);
+    // Init: T-REX upgradeable contracts deployed without proxy → call init() directly
+    await wire('IdentityRegistryStorage.init()', async () => {
+      await callAndWait(irs, 'init');
     });
+    await wire('TrustedIssuersRegistry.init()', async () => {
+      await callAndWait(tir, 'init');
+    });
+    await wire('ClaimTopicsRegistry.init()', async () => {
+      await callAndWait(ctr, 'init');
+    });
+    await wire('IdentityRegistry.init(TIR, CTR, IRS)', async () => {
+      await callAndWait(ir, 'init', tirAddr, ctrAddr, irsAddr);
+    });
+    await wire('ModularCompliance.init()', async () => {
+      await callAndWait(mc, 'init');
+    });
+
+    // Bind IRS ↔ IR (T-REX: grants IR as agent on IRS)
+    await wire('IdentityRegistryStorage.bindIdentityRegistry(IR)', async () => {
+      await callAndWait(irs, 'bindIdentityRegistry', irAddr);
+    });
+
+    // Token wiring
     await wire('ModularCompliance.bindToken(AxiomStable3643Fuji)', async () => {
-      await callOn(mc, 'bindToken', tokenAddr);
+      await callAndWait(mc, 'bindToken', tokenAddr);
     });
     await wire('ModularCompliance.addModule(CountryAllowModule)', async () => {
-      await callOn(mc, 'addModule', camAddr);
+      await callAndWait(mc, 'addModule', camAddr);
     });
     await wire('ModularCompliance.addModule(TransferLimitModule)', async () => {
-      await callOn(mc, 'addModule', tlmAddr);
+      await callAndWait(mc, 'addModule', tlmAddr);
     });
-    await wire('CountryAllowModule.setAllowAll(compliance, true) — Fuji testnet default', async () => {
-      await callOn(cam, 'setAllowAll', mcAddr, true);
+
+    // CountryAllowModule: setAllowAll is a custom Axiom extension for Fuji testnet
+    await wire('CountryAllowModule.setAllowAll(MC, true) — Fuji testnet default', async () => {
+      await callAndWait(cam, 'setAllowAll', mcAddr, true);
     });
+
+    // IR agent + seed identity
     await wire('IdentityRegistry.addAgent(deployer)', async () => {
-      await callOn(ir, 'addAgent', deployer.address);
+      await callAndWait(ir, 'addAgent', deployer.address);
     });
     await wire('IdentityRegistry.registerIdentity(deployer) — smoke-test seed', async () => {
-      await callOn(ir, 'registerIdentity', deployer.address, deployer.address, 0);
+      await callAndWait(ir, 'registerIdentity', deployer.address, deployer.address, 0);
     });
+
   } else {
     const steps = [
-      'IdentityRegistryStorage.transferOwnership → IdentityRegistry',
+      'IdentityRegistryStorage.init()',
+      'TrustedIssuersRegistry.init()',
+      'ClaimTopicsRegistry.init()',
+      'IdentityRegistry.init(TIR, CTR, IRS)',
+      'ModularCompliance.init()',
+      'IdentityRegistryStorage.bindIdentityRegistry(IR)',
       'ModularCompliance.bindToken(AxiomStable3643Fuji)',
       'ModularCompliance.addModule(CountryAllowModule)',
       'ModularCompliance.addModule(TransferLimitModule)',
-      'CountryAllowModule.setAllowAll(compliance, true) — Fuji testnet default',
+      'CountryAllowModule.setAllowAll(MC, true) — Fuji testnet default',
       'IdentityRegistry.addAgent(deployer)',
       'IdentityRegistry.registerIdentity(deployer) — smoke-test seed',
     ];
@@ -214,16 +302,17 @@ async function main(): Promise<void> {
     }
   }
 
-  // ── Write deployment manifest ────────────────────────────────────────────
-  // Resolve relative to workspace root (one level up from hardhat-avalanche/
-  // when invoked via `cd hardhat-avalanche && npx hardhat run ../scripts/...`)
-  const workspaceRoot = path.resolve(process.cwd(), process.cwd().endsWith('hardhat-avalanche') ? '..' : '.');
+  // ── Write deployment manifest ───────────────────────────────────────────────
+  const workspaceRoot = path.resolve(
+    process.cwd(),
+    process.cwd().endsWith('hardhat-avalanche') ? '..' : '.',
+  );
   const outDir  = path.join(workspaceRoot, 'deployments', 'avalanche');
   fs.mkdirSync(outDir, { recursive: true });
   const outFile = path.join(outDir, 'fuji-phase1.json');
   fs.writeFileSync(outFile, JSON.stringify(manifest, null, 2));
 
-  // ── Update shared/contracts-avalanche.ts on real deploy ─────────────────
+  // ── Update shared/contracts-avalanche.ts on real deploy ────────────────────
   if (!DRY_RUN) {
     const contractsFile = path.join(workspaceRoot, 'shared', 'contracts-avalanche.ts');
     let src = fs.readFileSync(contractsFile, 'utf8');
@@ -258,7 +347,7 @@ async function main(): Promise<void> {
     console.log(`\n✓ shared/contracts-avalanche.ts FUJI_CONTRACTS updated`);
   }
 
-  // ── Summary ──────────────────────────────────────────────────────────────
+  // ── Summary ─────────────────────────────────────────────────────────────────
   console.log(`\n── Summary ─────────────────────────────────────────────────────────`);
   console.log(`\nManifest → ${outFile}`);
   console.log('\nContracts:');
@@ -268,15 +357,15 @@ async function main(): Promise<void> {
 
   if (DRY_RUN) {
     console.log(`\nDRY-RUN complete. To deploy for real:`);
-    console.log(`  1. Fund a Fuji wallet: https://faucet.avax.network`);
+    console.log(`  1. Fund deployer on Fuji: https://faucet.avax.network`);
     console.log(`  2. export AVALANCHE_DEPLOYER_PRIVATE_KEY=<funded-key>`);
     console.log(`  3. export MULTICHAIN_ENABLED=true`);
     console.log(`  4. export CHAIN_AVALANCHE_ENABLED=true`);
     console.log(`  5. AVALANCHE_PHASE2_REAL_DEPLOY=true npm run deploy:avalanche:fuji`);
   } else {
     console.log(`\nNext steps:`);
-    console.log(`  1. Verify contracts: https://testnet.snowtrace.io`);
-    console.log(`  2. Run smoke tests against Fuji`);
+    console.log(`  1. Verify contracts on Fuji: https://testnet.snowtrace.io`);
+    console.log(`  2. Run smoke tests against Fuji addresses`);
     console.log(`  3. Commit updated shared/contracts-avalanche.ts`);
   }
 

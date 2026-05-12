@@ -6,19 +6,21 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
   
 
   export interface CountryAllowModuleInterface extends Interface {
-    getFunction(nameOrSignature: "addAllowedCountry" | "batchAllowCountries" | "bindCompliance" | "isComplianceBound" | "isCountryAllowed" | "moduleBurnAction" | "moduleCheck" | "moduleMintAction" | "moduleTransferAction" | "name" | "owner" | "removeAllowedCountry" | "renounceOwnership" | "setAllowAll" | "transferOwnership" | "unbindCompliance"): FunctionFragment;
+    getFunction(nameOrSignature: "addAllowedCountry" | "batchAllowCountries" | "bindCompliance" | "canComplianceBind" | "isComplianceBound" | "isCountryAllowed" | "isPlugAndPlay" | "moduleBurnAction" | "moduleCheck" | "moduleMintAction" | "moduleTransferAction" | "name" | "owner" | "removeAllowedCountry" | "renounceOwnership" | "setAllowAll" | "transferOwnership" | "unbindCompliance"): FunctionFragment;
 
     getEvent(nameOrSignatureOrTopic: "AllowAllSet" | "ComplianceBound" | "ComplianceUnbound" | "CountryAllowed" | "CountryDisallowed" | "OwnershipTransferred"): EventFragment;
 
     encodeFunctionData(functionFragment: 'addAllowedCountry', values: [AddressLike, BigNumberish]): string;
 encodeFunctionData(functionFragment: 'batchAllowCountries', values: [AddressLike, BigNumberish[]]): string;
 encodeFunctionData(functionFragment: 'bindCompliance', values: [AddressLike]): string;
+encodeFunctionData(functionFragment: 'canComplianceBind', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'isComplianceBound', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'isCountryAllowed', values: [AddressLike, BigNumberish]): string;
-encodeFunctionData(functionFragment: 'moduleBurnAction', values: [AddressLike, BigNumberish, AddressLike]): string;
+encodeFunctionData(functionFragment: 'isPlugAndPlay', values?: undefined): string;
+encodeFunctionData(functionFragment: 'moduleBurnAction', values: [AddressLike, BigNumberish]): string;
 encodeFunctionData(functionFragment: 'moduleCheck', values: [AddressLike, AddressLike, BigNumberish, AddressLike]): string;
-encodeFunctionData(functionFragment: 'moduleMintAction', values: [AddressLike, BigNumberish, AddressLike]): string;
-encodeFunctionData(functionFragment: 'moduleTransferAction', values: [AddressLike, AddressLike, BigNumberish, AddressLike]): string;
+encodeFunctionData(functionFragment: 'moduleMintAction', values: [AddressLike, BigNumberish]): string;
+encodeFunctionData(functionFragment: 'moduleTransferAction', values: [AddressLike, AddressLike, BigNumberish]): string;
 encodeFunctionData(functionFragment: 'name', values?: undefined): string;
 encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
 encodeFunctionData(functionFragment: 'removeAllowedCountry', values: [AddressLike, BigNumberish]): string;
@@ -30,8 +32,10 @@ encodeFunctionData(functionFragment: 'unbindCompliance', values: [AddressLike]):
     decodeFunctionResult(functionFragment: 'addAllowedCountry', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'batchAllowCountries', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'bindCompliance', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'canComplianceBind', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'isComplianceBound', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'isCountryAllowed', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'isPlugAndPlay', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'moduleBurnAction', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'moduleCheck', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'moduleMintAction', data: BytesLike): Result;
@@ -176,6 +180,14 @@ decodeFunctionResult(functionFragment: 'unbindCompliance', data: BytesLike): Res
     
 
     
+    canComplianceBind: TypedContractMethod<
+      [arg0: AddressLike, ],
+      [boolean],
+      'view'
+    >
+    
+
+    
     isComplianceBound: TypedContractMethod<
       [_compliance: AddressLike, ],
       [boolean],
@@ -192,8 +204,16 @@ decodeFunctionResult(functionFragment: 'unbindCompliance', data: BytesLike): Res
     
 
     
+    isPlugAndPlay: TypedContractMethod<
+      [],
+      [boolean],
+      'view'
+    >
+    
+
+    
     moduleBurnAction: TypedContractMethod<
-      [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, ],
+      [arg0: AddressLike, arg1: BigNumberish, ],
       [void],
       'nonpayable'
     >
@@ -209,7 +229,7 @@ decodeFunctionResult(functionFragment: 'unbindCompliance', data: BytesLike): Res
 
     
     moduleMintAction: TypedContractMethod<
-      [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, ],
+      [arg0: AddressLike, arg1: BigNumberish, ],
       [void],
       'nonpayable'
     >
@@ -217,7 +237,7 @@ decodeFunctionResult(functionFragment: 'unbindCompliance', data: BytesLike): Res
 
     
     moduleTransferAction: TypedContractMethod<
-      [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, arg3: AddressLike, ],
+      [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, ],
       [void],
       'nonpayable'
     >
@@ -297,6 +317,11 @@ getFunction(nameOrSignature: 'bindCompliance'): TypedContractMethod<
       [void],
       'nonpayable'
     >;
+getFunction(nameOrSignature: 'canComplianceBind'): TypedContractMethod<
+      [arg0: AddressLike, ],
+      [boolean],
+      'view'
+    >;
 getFunction(nameOrSignature: 'isComplianceBound'): TypedContractMethod<
       [_compliance: AddressLike, ],
       [boolean],
@@ -307,8 +332,13 @@ getFunction(nameOrSignature: 'isCountryAllowed'): TypedContractMethod<
       [boolean],
       'view'
     >;
+getFunction(nameOrSignature: 'isPlugAndPlay'): TypedContractMethod<
+      [],
+      [boolean],
+      'view'
+    >;
 getFunction(nameOrSignature: 'moduleBurnAction'): TypedContractMethod<
-      [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, ],
+      [arg0: AddressLike, arg1: BigNumberish, ],
       [void],
       'nonpayable'
     >;
@@ -318,12 +348,12 @@ getFunction(nameOrSignature: 'moduleCheck'): TypedContractMethod<
       'view'
     >;
 getFunction(nameOrSignature: 'moduleMintAction'): TypedContractMethod<
-      [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, ],
+      [arg0: AddressLike, arg1: BigNumberish, ],
       [void],
       'nonpayable'
     >;
 getFunction(nameOrSignature: 'moduleTransferAction'): TypedContractMethod<
-      [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, arg3: AddressLike, ],
+      [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, ],
       [void],
       'nonpayable'
     >;

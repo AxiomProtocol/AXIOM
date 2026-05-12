@@ -6,19 +6,21 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
   
 
   export interface TransferLimitModuleInterface extends Interface {
-    getFunction(nameOrSignature: "bindCompliance" | "getDailyUsage" | "getTransferLimit" | "isComplianceBound" | "isExempt" | "moduleBurnAction" | "moduleCheck" | "moduleMintAction" | "moduleTransferAction" | "name" | "owner" | "renounceOwnership" | "setExempt" | "setTransferLimit" | "transferOwnership" | "unbindCompliance"): FunctionFragment;
+    getFunction(nameOrSignature: "bindCompliance" | "canComplianceBind" | "getDailyUsage" | "getTransferLimit" | "isComplianceBound" | "isExempt" | "isPlugAndPlay" | "moduleBurnAction" | "moduleCheck" | "moduleMintAction" | "moduleTransferAction" | "name" | "owner" | "renounceOwnership" | "setExempt" | "setTransferLimit" | "transferOwnership" | "unbindCompliance"): FunctionFragment;
 
     getEvent(nameOrSignatureOrTopic: "ComplianceBound" | "ComplianceUnbound" | "ExemptionSet" | "OwnershipTransferred" | "TransferLimitSet"): EventFragment;
 
     encodeFunctionData(functionFragment: 'bindCompliance', values: [AddressLike]): string;
+encodeFunctionData(functionFragment: 'canComplianceBind', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'getDailyUsage', values: [AddressLike, AddressLike]): string;
 encodeFunctionData(functionFragment: 'getTransferLimit', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'isComplianceBound', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'isExempt', values: [AddressLike, AddressLike]): string;
-encodeFunctionData(functionFragment: 'moduleBurnAction', values: [AddressLike, BigNumberish, AddressLike]): string;
+encodeFunctionData(functionFragment: 'isPlugAndPlay', values?: undefined): string;
+encodeFunctionData(functionFragment: 'moduleBurnAction', values: [AddressLike, BigNumberish]): string;
 encodeFunctionData(functionFragment: 'moduleCheck', values: [AddressLike, AddressLike, BigNumberish, AddressLike]): string;
-encodeFunctionData(functionFragment: 'moduleMintAction', values: [AddressLike, BigNumberish, AddressLike]): string;
-encodeFunctionData(functionFragment: 'moduleTransferAction', values: [AddressLike, AddressLike, BigNumberish, AddressLike]): string;
+encodeFunctionData(functionFragment: 'moduleMintAction', values: [AddressLike, BigNumberish]): string;
+encodeFunctionData(functionFragment: 'moduleTransferAction', values: [AddressLike, AddressLike, BigNumberish]): string;
 encodeFunctionData(functionFragment: 'name', values?: undefined): string;
 encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
 encodeFunctionData(functionFragment: 'renounceOwnership', values?: undefined): string;
@@ -28,10 +30,12 @@ encodeFunctionData(functionFragment: 'transferOwnership', values: [AddressLike])
 encodeFunctionData(functionFragment: 'unbindCompliance', values: [AddressLike]): string;
 
     decodeFunctionResult(functionFragment: 'bindCompliance', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'canComplianceBind', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getDailyUsage', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getTransferLimit', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'isComplianceBound', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'isExempt', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'isPlugAndPlay', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'moduleBurnAction', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'moduleCheck', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'moduleMintAction', data: BytesLike): Result;
@@ -148,6 +152,14 @@ decodeFunctionResult(functionFragment: 'unbindCompliance', data: BytesLike): Res
     
 
     
+    canComplianceBind: TypedContractMethod<
+      [arg0: AddressLike, ],
+      [boolean],
+      'view'
+    >
+    
+
+    
     getDailyUsage: TypedContractMethod<
       [_compliance: AddressLike, _wallet: AddressLike, ],
       [bigint],
@@ -180,8 +192,16 @@ decodeFunctionResult(functionFragment: 'unbindCompliance', data: BytesLike): Res
     
 
     
+    isPlugAndPlay: TypedContractMethod<
+      [],
+      [boolean],
+      'view'
+    >
+    
+
+    
     moduleBurnAction: TypedContractMethod<
-      [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, ],
+      [arg0: AddressLike, arg1: BigNumberish, ],
       [void],
       'nonpayable'
     >
@@ -197,7 +217,7 @@ decodeFunctionResult(functionFragment: 'unbindCompliance', data: BytesLike): Res
 
     
     moduleMintAction: TypedContractMethod<
-      [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, ],
+      [arg0: AddressLike, arg1: BigNumberish, ],
       [void],
       'nonpayable'
     >
@@ -205,7 +225,7 @@ decodeFunctionResult(functionFragment: 'unbindCompliance', data: BytesLike): Res
 
     
     moduleTransferAction: TypedContractMethod<
-      [_from: AddressLike, arg1: AddressLike, _value: BigNumberish, _compliance: AddressLike, ],
+      [_from: AddressLike, arg1: AddressLike, _value: BigNumberish, ],
       [void],
       'nonpayable'
     >
@@ -275,6 +295,11 @@ decodeFunctionResult(functionFragment: 'unbindCompliance', data: BytesLike): Res
       [void],
       'nonpayable'
     >;
+getFunction(nameOrSignature: 'canComplianceBind'): TypedContractMethod<
+      [arg0: AddressLike, ],
+      [boolean],
+      'view'
+    >;
 getFunction(nameOrSignature: 'getDailyUsage'): TypedContractMethod<
       [_compliance: AddressLike, _wallet: AddressLike, ],
       [bigint],
@@ -295,8 +320,13 @@ getFunction(nameOrSignature: 'isExempt'): TypedContractMethod<
       [boolean],
       'view'
     >;
+getFunction(nameOrSignature: 'isPlugAndPlay'): TypedContractMethod<
+      [],
+      [boolean],
+      'view'
+    >;
 getFunction(nameOrSignature: 'moduleBurnAction'): TypedContractMethod<
-      [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, ],
+      [arg0: AddressLike, arg1: BigNumberish, ],
       [void],
       'nonpayable'
     >;
@@ -306,12 +336,12 @@ getFunction(nameOrSignature: 'moduleCheck'): TypedContractMethod<
       'view'
     >;
 getFunction(nameOrSignature: 'moduleMintAction'): TypedContractMethod<
-      [arg0: AddressLike, arg1: BigNumberish, arg2: AddressLike, ],
+      [arg0: AddressLike, arg1: BigNumberish, ],
       [void],
       'nonpayable'
     >;
 getFunction(nameOrSignature: 'moduleTransferAction'): TypedContractMethod<
-      [_from: AddressLike, arg1: AddressLike, _value: BigNumberish, _compliance: AddressLike, ],
+      [_from: AddressLike, arg1: AddressLike, _value: BigNumberish, ],
       [void],
       'nonpayable'
     >;

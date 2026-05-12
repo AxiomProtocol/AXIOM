@@ -3,15 +3,24 @@ pragma solidity ^0.8.24;
 
 import "./AbstractModule.sol";
 
+/**
+ * @title TransferLimitModule
+ * @notice Per-compliance daily transfer limit module (ERC-3643).
+ *
+ * moduleCheck    — called by the token with (from, to, value, compliance):
+ *                  compliance param used to look up the configured limit.
+ * moduleTransferAction — called by MC with (from, to, value) — NO compliance
+ *                  param per T-REX IModule spec; msg.sender IS the compliance.
+ */
 contract TransferLimitModule is AbstractModule {
     struct TransferCounter {
         uint256 dailyTotal;
         uint256 lastResetDay;
     }
 
-    mapping(address => uint256) internal _transferLimits;
+    mapping(address => uint256)                              internal _transferLimits;
     mapping(address => mapping(address => TransferCounter)) internal _counters;
-    mapping(address => mapping(address => bool)) internal _exempt;
+    mapping(address => mapping(address => bool))            internal _exempt;
 
     event TransferLimitSet(address indexed compliance, uint256 limit);
     event ExemptionSet(address indexed compliance, address indexed wallet, bool exempt);
@@ -42,6 +51,10 @@ contract TransferLimitModule is AbstractModule {
         return _exempt[_compliance][_wallet];
     }
 
+    /**
+     * @dev Compliance check — called with 4 params including compliance.
+     *      Returns false (blocking) if sender would exceed their daily limit.
+     */
     function moduleCheck(
         address _from,
         address,
@@ -53,18 +66,22 @@ contract TransferLimitModule is AbstractModule {
         if (_exempt[_compliance][_from]) return true;
 
         TransferCounter memory counter = _counters[_compliance][_from];
-        uint256 today = block.timestamp / 1 days;
+        uint256 today    = block.timestamp / 1 days;
         uint256 dailyUsed = (counter.lastResetDay == today) ? counter.dailyTotal : 0;
 
         return (dailyUsed + _value) <= limit;
     }
 
+    /**
+     * @dev Transfer action — called by MC with no compliance param.
+     *      msg.sender IS the compliance contract (enforced by MC's onlyToken guard).
+     */
     function moduleTransferAction(
         address _from,
         address,
-        uint256 _value,
-        address _compliance
+        uint256 _value
     ) external override {
+        address _compliance = msg.sender;
         uint256 limit = _transferLimits[_compliance];
         if (limit == 0) return;
         if (_exempt[_compliance][_from]) return;
@@ -73,7 +90,7 @@ contract TransferLimitModule is AbstractModule {
         uint256 today = block.timestamp / 1 days;
 
         if (counter.lastResetDay != today) {
-            counter.dailyTotal = _value;
+            counter.dailyTotal   = _value;
             counter.lastResetDay = today;
         } else {
             counter.dailyTotal += _value;

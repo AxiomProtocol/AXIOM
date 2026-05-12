@@ -1,7 +1,22 @@
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { expect } from 'chai';
 import { network } from 'hardhat';
 import type { Contract } from 'ethers';
 import type { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers.js';
+
+// Load T-REX pre-compiled artifacts via readFileSync (avoids ESM/CJS boundary issues).
+// process.cwd() = hardhat-avalanche/ when tests run via `cd hardhat-avalanche && npx hardhat test`.
+function loadArtifact(relPath: string): { abi: unknown[]; bytecode: string } {
+  return JSON.parse(readFileSync(resolve(process.cwd(), relPath), 'utf8'));
+}
+
+const tArtBase = 'node_modules/@tokenysolutions/t-rex/artifacts/contracts';
+const IRSArtifact = loadArtifact(`${tArtBase}/registry/implementation/IdentityRegistryStorage.sol/IdentityRegistryStorage.json`);
+const TIRArtifact = loadArtifact(`${tArtBase}/registry/implementation/TrustedIssuersRegistry.sol/TrustedIssuersRegistry.json`);
+const CTRArtifact = loadArtifact(`${tArtBase}/registry/implementation/ClaimTopicsRegistry.sol/ClaimTopicsRegistry.json`);
+const IRArtifact  = loadArtifact(`${tArtBase}/registry/implementation/IdentityRegistry.sol/IdentityRegistry.json`);
+const MCArtifact  = loadArtifact(`${tArtBase}/compliance/modular/ModularCompliance.sol/ModularCompliance.json`);
 
 describe('AxiomStable3643Fuji — Fuji ERC-3643 Suite', function () {
   this.timeout(120_000);
@@ -29,39 +44,52 @@ describe('AxiomStable3643Fuji — Fuji ERC-3643 Suite', function () {
   beforeEach(async function () {
     [deployer, user1, user2] = await ethers.getSigners();
 
-    const IRS = await ethers.getContractFactory('IdentityRegistryStorage');
-    irs = await IRS.deploy();
+    // ── Deploy official @tokenysolutions/t-rex registry + compliance ──────────
+
+    const IRSFactory = new ethers.ContractFactory(IRSArtifact.abi, IRSArtifact.bytecode, deployer);
+    irs = await IRSFactory.deploy() as Contract;
     await irs.waitForDeployment();
+    await (await irs['init']()).wait();
 
-    const TIR = await ethers.getContractFactory('TrustedIssuersRegistry');
-    tir = await TIR.deploy();
+    const TIRFactory = new ethers.ContractFactory(TIRArtifact.abi, TIRArtifact.bytecode, deployer);
+    tir = await TIRFactory.deploy() as Contract;
     await tir.waitForDeployment();
+    await (await tir['init']()).wait();
 
-    const CTR = await ethers.getContractFactory('ClaimTopicsRegistry');
-    ctr = await CTR.deploy();
+    const CTRFactory = new ethers.ContractFactory(CTRArtifact.abi, CTRArtifact.bytecode, deployer);
+    ctr = await CTRFactory.deploy() as Contract;
     await ctr.waitForDeployment();
+    await (await ctr['init']()).wait();
 
-    const IR = await ethers.getContractFactory('IdentityRegistry');
-    ir = await IR.deploy(
-      await irs.getAddress(),
+    const IRFactory = new ethers.ContractFactory(IRArtifact.abi, IRArtifact.bytecode, deployer);
+    ir = await IRFactory.deploy() as Contract;
+    await ir.waitForDeployment();
+    // T-REX IR.init order: (trustedIssuersRegistry, claimTopicsRegistry, identityStorage)
+    await (await ir['init'](
       await tir.getAddress(),
       await ctr.getAddress(),
-    );
-    await ir.waitForDeployment();
+      await irs.getAddress(),
+    )).wait();
 
-    await irs['transferOwnership'](await ir.getAddress());
-
-    const MC = await ethers.getContractFactory('ModularCompliance');
-    mc = await MC.deploy();
+    const MCFactory = new ethers.ContractFactory(MCArtifact.abi, MCArtifact.bytecode, deployer);
+    mc = await MCFactory.deploy() as Contract;
     await mc.waitForDeployment();
+    await (await mc['init']()).wait();
+
+    // T-REX pattern: bindIdentityRegistry adds IR as an agent on IRS
+    await (await irs['bindIdentityRegistry'](await ir.getAddress())).wait();
+
+    // ── Deploy custom Axiom compliance modules ────────────────────────────────
 
     const CAM = await ethers.getContractFactory('CountryAllowModule');
-    cam = await CAM.deploy();
+    cam = await CAM.deploy() as Contract;
     await cam.waitForDeployment();
 
     const TLM = await ethers.getContractFactory('TransferLimitModule');
-    tlm = await TLM.deploy();
+    tlm = await TLM.deploy() as Contract;
     await tlm.waitForDeployment();
+
+    // ── Deploy custom AxiomStable3643Fuji token ───────────────────────────────
 
     const Token = await ethers.getContractFactory('AxiomStable3643Fuji');
     token = await Token.deploy(
@@ -71,18 +99,24 @@ describe('AxiomStable3643Fuji — Fuji ERC-3643 Suite', function () {
       'AXUSD',
       6,
       deployer.address,
-    );
+    ) as Contract;
     await token.waitForDeployment();
 
-    await mc['bindToken'](await token.getAddress());
-    await mc['addModule'](await cam.getAddress());
-    await mc['addModule'](await tlm.getAddress());
-    await cam['setAllowAll'](await mc.getAddress(), true);
+    // ── Wire: bind token → compliance, add modules ────────────────────────────
 
-    await ir['addAgent'](deployer.address);
-    await ir['registerIdentity'](deployer.address, deployer.address, 0);
-    await ir['registerIdentity'](user1.address, user1.address, 0);
-    await ir['registerIdentity'](user2.address, user2.address, 0);
+    await (await mc['bindToken'](await token.getAddress())).wait();
+    await (await mc['addModule'](await cam.getAddress())).wait();
+    await (await mc['addModule'](await tlm.getAddress())).wait();
+
+    // setAllowAll is a custom Axiom testnet helper (all countries permitted)
+    await (await cam['setAllowAll'](await mc.getAddress(), true)).wait();
+
+    // ── Wire: IR agent + seed identities ─────────────────────────────────────
+
+    await (await ir['addAgent'](deployer.address)).wait();
+    await (await ir['registerIdentity'](deployer.address, deployer.address, 0)).wait();
+    await (await ir['registerIdentity'](user1.address, user1.address, 0)).wait();
+    await (await ir['registerIdentity'](user2.address, user2.address, 0)).wait();
   });
 
   describe('Deployment', function () {
@@ -110,40 +144,43 @@ describe('AxiomStable3643Fuji — Fuji ERC-3643 Suite', function () {
   });
 
   describe('IdentityRegistryStorage', function () {
-    it('stores and retrieves identity data', async function () {
-      expect(await irs['getIdentity'](deployer.address)).to.not.equal(ethers.ZeroAddress);
-      expect(await irs['contains'](deployer.address)).to.be.true;
+    it('stores and retrieves identity data via official T-REX IRS', async function () {
+      const storedId = await irs['storedIdentity'](deployer.address);
+      expect(storedId).to.not.equal(ethers.ZeroAddress);
+      expect(await ir['contains'](deployer.address)).to.be.true;
     });
   });
 
   describe('Mint', function () {
     it('minter can mint to a verified address', async function () {
-      const amount = ethers.parseUnits('1000', 6);
+      const amount = ethers.parseUnits('100', 6);
       await token['mint'](user1.address, amount);
       expect(await token['balanceOf'](user1.address)).to.equal(amount);
     });
 
     it('reverts minting to an unverified address', async function () {
-      const unverified = ethers.Wallet.createRandom().address;
+      const [,,, unverified] = await ethers.getSigners();
       const amount = ethers.parseUnits('100', 6);
-      await expect(token['mint'](unverified, amount)).to.be.revertedWith('RECEIVER_NOT_VERIFIED');
+      await expect(
+        token['mint'](unverified.address, amount),
+      ).to.be.revertedWith('RECEIVER_NOT_VERIFIED');
     });
   });
 
   describe('Transfer', function () {
     it('allows transfer between two verified addresses', async function () {
-      const amount = ethers.parseUnits('500', 6);
+      const amount = ethers.parseUnits('100', 6);
       await token['mint'](user1.address, amount);
       await token.connect(user1)['transfer'](user2.address, amount);
       expect(await token['balanceOf'](user2.address)).to.equal(amount);
     });
 
     it('blocks transfer to an unverified address', async function () {
+      const [,,, unverified] = await ethers.getSigners();
       const amount = ethers.parseUnits('100', 6);
       await token['mint'](user1.address, amount);
-      const unverified = ethers.Wallet.createRandom().address;
       await expect(
-        token.connect(user1)['transfer'](unverified, amount),
+        token.connect(user1)['transfer'](unverified.address, amount),
       ).to.be.revertedWith('RECEIVER_NOT_VERIFIED');
     });
 

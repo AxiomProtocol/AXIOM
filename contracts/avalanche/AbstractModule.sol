@@ -4,6 +4,14 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IModule.sol";
 
+/**
+ * @dev Base module for Axiom compliance modules.
+ *
+ * - isPlugAndPlay() returns true  → MC's addModule() skips canComplianceBind().
+ * - canComplianceBind()           → provided for completeness; always true here.
+ * - moduleTransferAction / moduleMintAction / moduleBurnAction have no compliance
+ *   param; concrete overrides read msg.sender as the compliance address.
+ */
 abstract contract AbstractModule is IModule, Ownable {
     mapping(address => bool) internal _complianceBound;
 
@@ -29,14 +37,15 @@ abstract contract AbstractModule is IModule, Ownable {
         return _complianceBound[_compliance];
     }
 
-    function moduleTransferAction(
-        address,
-        address,
-        uint256,
-        address
-    ) external virtual override {}
+    function isPlugAndPlay() external pure override returns (bool) {
+        return true;
+    }
 
-    function moduleMintAction(address, uint256, address) external virtual override {}
+    function canComplianceBind(address) external pure override returns (bool) {
+        return true;
+    }
 
-    function moduleBurnAction(address, uint256, address) external virtual override {}
+    function moduleTransferAction(address, address, uint256) external virtual override {}
+    function moduleMintAction(address, uint256) external virtual override {}
+    function moduleBurnAction(address, uint256) external virtual override {}
 }

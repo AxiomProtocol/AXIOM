@@ -27,7 +27,7 @@
         "type": "address"
       }
     ],
-    "name": "isComplianceBound",
+    "name": "canComplianceBind",
     "outputs": [
       {
         "internalType": "bool",
@@ -42,6 +42,38 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_compliance",
+        "type": "address"
+      }
+    ],
+    "name": "isComplianceBound",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "isPlugAndPlay",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_from",
         "type": "address"
       },
@@ -49,11 +81,6 @@
         "internalType": "uint256",
         "name": "_value",
         "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_compliance",
-        "type": "address"
       }
     ],
     "name": "moduleBurnAction",
@@ -106,11 +133,6 @@
         "internalType": "uint256",
         "name": "_value",
         "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_compliance",
-        "type": "address"
       }
     ],
     "name": "moduleMintAction",
@@ -134,11 +156,6 @@
         "internalType": "uint256",
         "name": "_value",
         "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_compliance",
-        "type": "address"
       }
     ],
     "name": "moduleTransferAction",

@@ -5,6 +5,9 @@
   "private": true,
   "description": "ESM-isolated Hardhat workspace for Axiom Protocol Avalanche C-Chain contracts.",
   "devDependencies": {
+    "@onchain-id/solidity": "^2.2.1",
+    "@openzeppelin/contracts-upgradeable": "^5.6.1",
+    "@tokenysolutions/t-rex": "^4.1.6",
     "hardhat": "^3.4.4"
   }
 }

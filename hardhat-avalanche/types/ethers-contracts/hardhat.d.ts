@@ -12,56 +12,36 @@ declare module "@nomicfoundation/hardhat-ethers/types" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
   getContractFactory(name: 'AbstractModule', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.AbstractModule__factory>
 getContractFactory(name: 'AxiomStable3643Fuji', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.AxiomStable3643Fuji__factory>
-getContractFactory(name: 'ClaimTopicsRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.ClaimTopicsRegistry__factory>
 getContractFactory(name: 'CountryAllowModule', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.CountryAllowModule__factory>
 getContractFactory(name: 'ITokenRegistryProvider', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.ITokenRegistryProvider__factory>
-getContractFactory(name: 'IdentityRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IdentityRegistry__factory>
-getContractFactory(name: 'IdentityRegistryStorage', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IdentityRegistryStorage__factory>
-getContractFactory(name: 'ModularCompliance', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.ModularCompliance__factory>
 getContractFactory(name: 'TransferLimitModule', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.TransferLimitModule__factory>
-getContractFactory(name: 'TrustedIssuersRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.TrustedIssuersRegistry__factory>
 getContractFactory(name: 'IIdentityRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IIdentityRegistry__factory>
 getContractFactory(name: 'IModularCompliance', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IModularCompliance__factory>
 getContractFactory(name: 'IModule', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IModule__factory>
 
   getContractAt(name: 'AbstractModule', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.AbstractModule>
 getContractAt(name: 'AxiomStable3643Fuji', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.AxiomStable3643Fuji>
-getContractAt(name: 'ClaimTopicsRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.ClaimTopicsRegistry>
 getContractAt(name: 'CountryAllowModule', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.CountryAllowModule>
 getContractAt(name: 'ITokenRegistryProvider', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.ITokenRegistryProvider>
-getContractAt(name: 'IdentityRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IdentityRegistry>
-getContractAt(name: 'IdentityRegistryStorage', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IdentityRegistryStorage>
-getContractAt(name: 'ModularCompliance', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.ModularCompliance>
 getContractAt(name: 'TransferLimitModule', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.TransferLimitModule>
-getContractAt(name: 'TrustedIssuersRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.TrustedIssuersRegistry>
 getContractAt(name: 'IIdentityRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IIdentityRegistry>
 getContractAt(name: 'IModularCompliance', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IModularCompliance>
 getContractAt(name: 'IModule', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IModule>
 
   deployContract(name: 'AbstractModule', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AbstractModule>
 deployContract(name: 'AxiomStable3643Fuji', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AxiomStable3643Fuji>
-deployContract(name: 'ClaimTopicsRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ClaimTopicsRegistry>
 deployContract(name: 'CountryAllowModule', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.CountryAllowModule>
 deployContract(name: 'ITokenRegistryProvider', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ITokenRegistryProvider>
-deployContract(name: 'IdentityRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IdentityRegistry>
-deployContract(name: 'IdentityRegistryStorage', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IdentityRegistryStorage>
-deployContract(name: 'ModularCompliance', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ModularCompliance>
 deployContract(name: 'TransferLimitModule', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.TransferLimitModule>
-deployContract(name: 'TrustedIssuersRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.TrustedIssuersRegistry>
 deployContract(name: 'IIdentityRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IIdentityRegistry>
 deployContract(name: 'IModularCompliance', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IModularCompliance>
 deployContract(name: 'IModule', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IModule>
 
   deployContract(name: 'AbstractModule', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AbstractModule>
 deployContract(name: 'AxiomStable3643Fuji', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AxiomStable3643Fuji>
-deployContract(name: 'ClaimTopicsRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ClaimTopicsRegistry>
 deployContract(name: 'CountryAllowModule', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.CountryAllowModule>
 deployContract(name: 'ITokenRegistryProvider', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ITokenRegistryProvider>
-deployContract(name: 'IdentityRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IdentityRegistry>
-deployContract(name: 'IdentityRegistryStorage', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IdentityRegistryStorage>
-deployContract(name: 'ModularCompliance', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ModularCompliance>
 deployContract(name: 'TransferLimitModule', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.TransferLimitModule>
-deployContract(name: 'TrustedIssuersRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.TrustedIssuersRegistry>
 deployContract(name: 'IIdentityRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IIdentityRegistry>
 deployContract(name: 'IModularCompliance', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IModularCompliance>
 deployContract(name: 'IModule', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IModule>

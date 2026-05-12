@@ -46,6 +46,8 @@ const MAINNET_RPC =
 const DEPLOYER_ACCOUNTS: string[] =
   process.env.AVALANCHE_DEPLOYER_PRIVATE_KEY
     ? [process.env.AVALANCHE_DEPLOYER_PRIVATE_KEY]
+    : process.env.DEPLOYER_PRIVATE_KEY
+    ? [process.env.DEPLOYER_PRIVATE_KEY]
     : [];
 
 export default defineConfig({
