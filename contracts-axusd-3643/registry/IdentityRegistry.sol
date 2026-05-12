@@ -22,6 +22,10 @@ contract IdentityRegistry is IIdentityRegistry, OwnableUpgradeable, UUPSUpgradea
         _;
     }
 
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(
         address _identityStorageAddr,
         address _claimTopicsRegistryAddr,
@@ -41,6 +45,7 @@ contract IdentityRegistry is IIdentityRegistry, OwnableUpgradeable, UUPSUpgradea
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
     function addAgent(address _agent) external onlyOwner {
+        require(_agent != address(0), "ZERO_AGENT");
         require(!_isAgent[_agent], "ALREADY_AGENT");
         _isAgent[_agent] = true;
         emit AgentAdded(_agent);
@@ -57,6 +62,7 @@ contract IdentityRegistry is IIdentityRegistry, OwnableUpgradeable, UUPSUpgradea
     }
 
     function registerIdentity(address _userAddress, IIdentity _identity, uint16 _country) external override onlyAgent nonReentrant {
+        require(_country != 0, "INVALID_COUNTRY");
         _identityStorage.addIdentityToStorage(_userAddress, _identity, _country);
         emit IdentityRegistered(_userAddress, _identity);
     }
@@ -74,6 +80,7 @@ contract IdentityRegistry is IIdentityRegistry, OwnableUpgradeable, UUPSUpgradea
     }
 
     function updateCountry(address _userAddress, uint16 _country) external override onlyAgent nonReentrant {
+        require(_country != 0, "INVALID_COUNTRY");
         _identityStorage.modifyStoredInvestorCountry(_userAddress, _country);
         emit CountryUpdated(_userAddress, _country);
     }
@@ -83,7 +90,7 @@ contract IdentityRegistry is IIdentityRegistry, OwnableUpgradeable, UUPSUpgradea
         if (address(userIdentity) == address(0)) return false;
 
         uint256[] memory requiredTopics = _claimTopicsRegistry.getClaimTopics();
-        if (requiredTopics.length == 0) return true;
+        if (requiredTopics.length == 0) return false;
 
         IClaimIssuer[] memory trustedIssuers = _trustedIssuersRegistry.getTrustedIssuers();
 

@@ -10,6 +10,10 @@ contract TrustedIssuersRegistry is ITrustedIssuersRegistry, OwnableUpgradeable, 
     mapping(address => bool) internal _isTrusted;
     mapping(address => uint256[]) internal _issuerClaimTopics;
 
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize() external initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();

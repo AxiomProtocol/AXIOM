@@ -19,6 +19,10 @@ contract ModularCompliance is IModularCompliance, OwnableUpgradeable, UUPSUpgrad
         _;
     }
 
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize() external initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
@@ -42,6 +46,7 @@ contract ModularCompliance is IModularCompliance, OwnableUpgradeable, UUPSUpgrad
 
     function addModule(address _module) external override onlyOwner nonReentrant {
         require(_module != address(0), "ZERO_MODULE");
+        require(_module.code.length > 0, "MODULE_NOT_CONTRACT");
         require(!_moduleBound[_module], "MODULE_ALREADY_BOUND");
         require(_modules.length < MAX_MODULES, "MAX_MODULES_REACHED");
         _modules.push(_module);

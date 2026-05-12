@@ -16,11 +16,14 @@ abstract contract AbstractModule is IModule, Ownable {
 
     function bindCompliance(address _compliance) external override {
         require(_compliance != address(0), "ZERO_COMPLIANCE");
+        require(msg.sender == _compliance, "ONLY_COMPLIANCE");
+        require(!_complianceBound[_compliance], "ALREADY_BOUND");
         _complianceBound[_compliance] = true;
         emit ComplianceBound(_compliance);
     }
 
     function unbindCompliance(address _compliance) external override {
+        require(msg.sender == _compliance, "ONLY_COMPLIANCE");
         require(_complianceBound[_compliance], "NOT_BOUND");
         _complianceBound[_compliance] = false;
         emit ComplianceUnbound(_compliance);

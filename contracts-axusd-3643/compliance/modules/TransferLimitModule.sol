@@ -6,6 +6,8 @@ import "../../interfaces/IModularCompliance.sol";
 import "../../interfaces/IERC3643.sol";
 import "../../interfaces/IIdentityRegistry.sol";
 import "../../interfaces/IIdentity.sol";
+import "../../interfaces/ITrustedIssuersRegistry.sol";
+import "../../interfaces/IClaimIssuer.sol";
 
 contract TransferLimitModule is AbstractModule {
     uint256 public constant TIER_1_KYC = 1;
@@ -20,6 +22,7 @@ contract TransferLimitModule is AbstractModule {
     }
 
     mapping(address => mapping(uint256 => uint256)) internal _tierLimits;
+    mapping(address => mapping(uint256 => bool)) internal _tierLimitConfigured;
     mapping(address => mapping(address => TransferCounter)) internal _counters;
     mapping(address => mapping(address => bool)) internal _exempt;
 
@@ -28,17 +31,25 @@ contract TransferLimitModule is AbstractModule {
 
     function setTierLimit(address _compliance, uint256 _tier, uint256 _limit) external onlyOwner {
         require(_complianceBound[_compliance], "COMPLIANCE_NOT_BOUND");
+        require(_tier > 0, "INVALID_TIER");
         _tierLimits[_compliance][_tier] = _limit;
+        _tierLimitConfigured[_compliance][_tier] = true;
         emit TierLimitSet(_compliance, _tier, _limit);
     }
 
     function setExempt(address _compliance, address _wallet, bool _isExempt) external onlyOwner {
+        require(_complianceBound[_compliance], "COMPLIANCE_NOT_BOUND");
+        require(_wallet != address(0), "ZERO_WALLET");
         _exempt[_compliance][_wallet] = _isExempt;
         emit TransferExemptSet(_compliance, _wallet, _isExempt);
     }
 
     function getTierLimit(address _compliance, uint256 _tier) external view returns (uint256) {
         return _tierLimits[_compliance][_tier];
+    }
+
+    function isTierLimitConfigured(address _compliance, uint256 _tier) external view returns (bool) {
+        return _tierLimitConfigured[_compliance][_tier];
     }
 
     function getDailyUsage(address _compliance, address _wallet) external view returns (uint256) {
@@ -55,13 +66,28 @@ contract TransferLimitModule is AbstractModule {
         if (!registry.contains(_user)) return 0;
 
         IIdentity userIdentity = registry.identity(_user);
+        ITrustedIssuersRegistry issuersRegistry = registry.issuersRegistry();
+        IClaimIssuer[] memory trustedIssuers = issuersRegistry.getTrustedIssuers();
         bytes32[] memory accreditedClaims = userIdentity.getClaimIdsByTopic(ACCREDITED_TOPIC);
-        if (accreditedClaims.length > 0) return TIER_2_ACCREDITED;
+        for (uint256 c = 0; c < accreditedClaims.length; c++) {
+            (uint256 topic, , address issuer, bytes memory sig, bytes memory data, ) =
+                userIdentity.getClaim(accreditedClaims[c]);
+            if (topic != ACCREDITED_TOPIC) continue;
+            if (!issuersRegistry.hasClaimTopic(issuer, ACCREDITED_TOPIC)) continue;
+
+            for (uint256 i = 0; i < trustedIssuers.length; i++) {
+                if (address(trustedIssuers[i]) != issuer) continue;
+                if (IClaimIssuer(issuer).isClaimValid(userIdentity, topic, sig, data)) {
+                    return TIER_2_ACCREDITED;
+                }
+            }
+        }
 
         return TIER_1_KYC;
     }
 
     function moduleCheck(address _from, address, uint256 _value, address _compliance) external view override returns (bool) {
+        require(msg.sender == _compliance, "ONLY_COMPLIANCE");
         if (_from == address(0)) return true;
         if (_exempt[_compliance][_from]) return true;
 
@@ -70,6 +96,7 @@ contract TransferLimitModule is AbstractModule {
         if (tier >= TIER_3_INSTITUTIONAL) return true;
 
         uint256 limit = _tierLimits[_compliance][tier];
+        if (!_tierLimitConfigured[_compliance][tier]) return false;
         if (limit == 0) return true;
 
         TransferCounter memory counter = _counters[_compliance][_from];
@@ -80,11 +107,13 @@ contract TransferLimitModule is AbstractModule {
     }
 
     function moduleTransferAction(address _from, address, uint256 _value, address _compliance) external override onlyCompliance {
+        require(msg.sender == _compliance, "ONLY_COMPLIANCE");
         if (_from == address(0)) return;
-        if (_exempt[_compliance][_from]) return;
+        address compliance = msg.sender;
+        if (_exempt[compliance][_from]) return;
 
         uint256 today = block.timestamp / 1 days;
-        TransferCounter storage counter = _counters[_compliance][_from];
+        TransferCounter storage counter = _counters[compliance][_from];
         if (counter.lastResetDay != today) {
             counter.dailyTotal = _value;
             counter.lastResetDay = today;
