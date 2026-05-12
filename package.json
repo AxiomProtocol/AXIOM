@@ -2,7 +2,6 @@
   "name": "workspace",
   "version": "1.0.0",
   "main": "unified-platform.js",
-  "type": "module",
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 5000",
     "dev:e2e": "NEXT_PUBLIC_E2E_WAGMI=1 next dev -H 0.0.0.0 -p 5001",
@@ -56,8 +55,8 @@
     "nft:deploy": "hardhat run scripts/nft/deploy-nft.ts --network arbitrum",
     "nft:compile": "hardhat compile",
     "capital-bridge:deploy:fork": "hardhat run scripts/capital-bridge/01-deploy-layer5e.ts --config hardhat.config.capital-bridge.ts --network hardhat",
-    "legacy-start": "node unified-platform.cjs",
-    "legacy-dev": "node unified-platform.cjs",
+    "legacy-start": "node unified-platform.js",
+    "legacy-dev": "node unified-platform.js",
     "integrate:stage1": "hardhat run integration/scripts/stage1-integration.ts --network arbitrum",
     "integrate:stage1:fork": "hardhat run integration/scripts/stage1-integration.ts --network hardhat",
     "integrate:test:stage1": "hardhat test integration/tests/stage1.test.ts --network hardhat",
@@ -121,9 +120,9 @@
     "test:prune-status-panel": "vitest run tests/prune-status-panel.test.tsx --reporter=verbose",
     "export:policy-pdfs": "tsx scripts/export-policy-pdfs.ts",
     "test:policy-pdfs": "vitest run tests/export-policy-pdfs.test.ts",
-    "test:avalanche": "hardhat test --config hardhat.avalanche.config.mts --network hardhat",
-    "deploy:avalanche:fuji": "hardhat run scripts/deploy/avalanche/deploy-phase1-fuji.ts --config hardhat.avalanche.config.mts --network avalancheFuji",
-    "compile:avalanche": "hardhat compile --config hardhat.avalanche.config.mts"
+    "test:avalanche": "cd hardhat-avalanche && npx hardhat test --config hardhat.config.mts --network hardhat",
+    "deploy:avalanche:fuji": "cd hardhat-avalanche && npx hardhat run ../scripts/deploy/avalanche/deploy-phase1-fuji.mts --config hardhat.config.mts --network avalancheFuji",
+    "compile:avalanche": "cd hardhat-avalanche && npx hardhat compile --config hardhat.config.mts"
   },
   "keywords": [],
   "author": "",

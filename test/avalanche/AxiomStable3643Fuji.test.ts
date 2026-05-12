@@ -1,23 +1,30 @@
 import { expect } from 'chai';
 import { network } from 'hardhat';
-
-const { ethers } = await network.create();
+import type { Contract } from 'ethers';
+import type { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers.js';
 
 describe('AxiomStable3643Fuji — Fuji ERC-3643 Suite', function () {
   this.timeout(120_000);
 
-  let deployer: any;
-  let user1:    any;
-  let user2:    any;
+  let ethers: Awaited<ReturnType<typeof network.create>>['ethers'];
 
-  let irs:   any;
-  let tir:   any;
-  let ctr:   any;
-  let ir:    any;
-  let mc:    any;
-  let cam:   any;
-  let tlm:   any;
-  let token: any;
+  let deployer: HardhatEthersSigner;
+  let user1:    HardhatEthersSigner;
+  let user2:    HardhatEthersSigner;
+
+  let irs:   Contract;
+  let tir:   Contract;
+  let ctr:   Contract;
+  let ir:    Contract;
+  let mc:    Contract;
+  let cam:   Contract;
+  let tlm:   Contract;
+  let token: Contract;
+
+  before(async function () {
+    const conn = await network.create();
+    ethers = conn.ethers;
+  });
 
   beforeEach(async function () {
     [deployer, user1, user2] = await ethers.getSigners();
@@ -42,7 +49,7 @@ describe('AxiomStable3643Fuji — Fuji ERC-3643 Suite', function () {
     );
     await ir.waitForDeployment();
 
-    await irs.transferOwnership(await ir.getAddress());
+    await irs['transferOwnership'](await ir.getAddress());
 
     const MC = await ethers.getContractFactory('ModularCompliance');
     mc = await MC.deploy();
@@ -67,85 +74,85 @@ describe('AxiomStable3643Fuji — Fuji ERC-3643 Suite', function () {
     );
     await token.waitForDeployment();
 
-    await mc.bindToken(await token.getAddress());
-    await mc.addModule(await cam.getAddress());
-    await mc.addModule(await tlm.getAddress());
-    await cam.setAllowAll(await mc.getAddress(), true);
+    await mc['bindToken'](await token.getAddress());
+    await mc['addModule'](await cam.getAddress());
+    await mc['addModule'](await tlm.getAddress());
+    await cam['setAllowAll'](await mc.getAddress(), true);
 
-    await ir.addAgent(deployer.address);
-    await ir.registerIdentity(deployer.address, deployer.address, 0);
-    await ir.registerIdentity(user1.address, user1.address, 0);
-    await ir.registerIdentity(user2.address, user2.address, 0);
+    await ir['addAgent'](deployer.address);
+    await ir['registerIdentity'](deployer.address, deployer.address, 0);
+    await ir['registerIdentity'](user1.address, user1.address, 0);
+    await ir['registerIdentity'](user2.address, user2.address, 0);
   });
 
   describe('Deployment', function () {
     it('deploys all 8 contracts with correct names', async function () {
-      expect(await token.name()).to.equal('Axiom Stable USD');
-      expect(await token.symbol()).to.equal('AXUSD');
-      expect(await token.decimals()).to.equal(6);
+      expect(await token['name']()).to.equal('Axiom Stable USD');
+      expect(await token['symbol']()).to.equal('AXUSD');
+      expect(await token['decimals']()).to.equal(6);
     });
 
     it('wires IdentityRegistry to ModularCompliance correctly', async function () {
-      const boundToken = await mc.getTokenBound();
+      const boundToken = await mc['getTokenBound']();
       expect(boundToken).to.equal(await token.getAddress());
     });
 
     it('adds both compliance modules', async function () {
-      const modules = await mc.getModules();
+      const modules = await mc['getModules']();
       expect(modules.length).to.equal(2);
       expect(modules).to.include(await cam.getAddress());
       expect(modules).to.include(await tlm.getAddress());
     });
 
     it('registers deployer identity in IdentityRegistry', async function () {
-      expect(await ir.isVerified(deployer.address)).to.be.true;
+      expect(await ir['isVerified'](deployer.address)).to.be.true;
     });
   });
 
   describe('IdentityRegistryStorage', function () {
     it('stores and retrieves identity data', async function () {
-      expect(await irs.getIdentity(deployer.address)).to.not.equal(ethers.ZeroAddress);
-      expect(await irs.contains(deployer.address)).to.be.true;
+      expect(await irs['getIdentity'](deployer.address)).to.not.equal(ethers.ZeroAddress);
+      expect(await irs['contains'](deployer.address)).to.be.true;
     });
   });
 
   describe('Mint', function () {
     it('minter can mint to a verified address', async function () {
       const amount = ethers.parseUnits('1000', 6);
-      await token.mint(user1.address, amount);
-      expect(await token.balanceOf(user1.address)).to.equal(amount);
+      await token['mint'](user1.address, amount);
+      expect(await token['balanceOf'](user1.address)).to.equal(amount);
     });
 
     it('reverts minting to an unverified address', async function () {
       const unverified = ethers.Wallet.createRandom().address;
       const amount = ethers.parseUnits('100', 6);
-      await expect(token.mint(unverified, amount)).to.be.revertedWith('RECEIVER_NOT_VERIFIED');
+      await expect(token['mint'](unverified, amount)).to.be.revertedWith('RECEIVER_NOT_VERIFIED');
     });
   });
 
   describe('Transfer', function () {
     it('allows transfer between two verified addresses', async function () {
       const amount = ethers.parseUnits('500', 6);
-      await token.mint(user1.address, amount);
-      await token.connect(user1).transfer(user2.address, amount);
-      expect(await token.balanceOf(user2.address)).to.equal(amount);
+      await token['mint'](user1.address, amount);
+      await token.connect(user1)['transfer'](user2.address, amount);
+      expect(await token['balanceOf'](user2.address)).to.equal(amount);
     });
 
     it('blocks transfer to an unverified address', async function () {
       const amount = ethers.parseUnits('100', 6);
-      await token.mint(user1.address, amount);
+      await token['mint'](user1.address, amount);
       const unverified = ethers.Wallet.createRandom().address;
       await expect(
-        token.connect(user1).transfer(unverified, amount),
+        token.connect(user1)['transfer'](unverified, amount),
       ).to.be.revertedWith('RECEIVER_NOT_VERIFIED');
     });
 
     it('blocks transfer from a frozen address', async function () {
       const amount = ethers.parseUnits('100', 6);
-      await token.mint(user1.address, amount);
-      await token.freezeAddress(user1.address, true);
+      await token['mint'](user1.address, amount);
+      await token['freezeAddress'](user1.address, true);
       await expect(
-        token.connect(user1).transfer(user2.address, amount),
+        token.connect(user1)['transfer'](user2.address, amount),
       ).to.be.revertedWith('SENDER_FROZEN');
     });
   });
@@ -153,9 +160,9 @@ describe('AxiomStable3643Fuji — Fuji ERC-3643 Suite', function () {
   describe('Burn', function () {
     it('burner can burn tokens', async function () {
       const amount = ethers.parseUnits('200', 6);
-      await token.mint(user1.address, amount);
-      await token.burn(user1.address, amount);
-      expect(await token.balanceOf(user1.address)).to.equal(0n);
+      await token['mint'](user1.address, amount);
+      await token['burn'](user1.address, amount);
+      expect(await token['balanceOf'](user1.address)).to.equal(0n);
     });
   });
 
@@ -164,11 +171,11 @@ describe('AxiomStable3643Fuji — Fuji ERC-3643 Suite', function () {
       const limit  = ethers.parseUnits('500', 6);
       const amount = ethers.parseUnits('600', 6);
 
-      await tlm.setTransferLimit(await mc.getAddress(), limit);
-      await token.mint(user1.address, amount);
+      await tlm['setTransferLimit'](await mc.getAddress(), limit);
+      await token['mint'](user1.address, amount);
 
       await expect(
-        token.connect(user1).transfer(user2.address, amount),
+        token.connect(user1)['transfer'](user2.address, amount),
       ).to.be.revertedWith('TRANSFER_NOT_COMPLIANT');
     });
 
@@ -176,24 +183,24 @@ describe('AxiomStable3643Fuji — Fuji ERC-3643 Suite', function () {
       const limit  = ethers.parseUnits('500', 6);
       const amount = ethers.parseUnits('400', 6);
 
-      await tlm.setTransferLimit(await mc.getAddress(), limit);
-      await token.mint(user1.address, amount);
-      await token.connect(user1).transfer(user2.address, amount);
-      expect(await token.balanceOf(user2.address)).to.equal(amount);
+      await tlm['setTransferLimit'](await mc.getAddress(), limit);
+      await token['mint'](user1.address, amount);
+      await token.connect(user1)['transfer'](user2.address, amount);
+      expect(await token['balanceOf'](user2.address)).to.equal(amount);
     });
   });
 
   describe('Pause', function () {
     it('admin can pause and unpause the token', async function () {
-      await token.pause();
+      await token['pause']();
       const amount = ethers.parseUnits('100', 6);
-      await token.mint(user1.address, amount);
+      await token['mint'](user1.address, amount);
       await expect(
-        token.connect(user1).transfer(user2.address, amount),
+        token.connect(user1)['transfer'](user2.address, amount),
       ).to.be.revertedWith('TOKEN_PAUSED');
-      await token.unpause();
-      await token.connect(user1).transfer(user2.address, amount);
-      expect(await token.balanceOf(user2.address)).to.equal(amount);
+      await token['unpause']();
+      await token.connect(user1)['transfer'](user2.address, amount);
+      expect(await token['balanceOf'](user2.address)).to.equal(amount);
     });
   });
 });
