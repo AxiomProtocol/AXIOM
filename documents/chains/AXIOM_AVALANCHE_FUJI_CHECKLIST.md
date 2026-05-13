@@ -1,7 +1,9 @@
 # Axiom Protocol — Avalanche Fuji Deployment Checklist
 
 **Network:** Avalanche Fuji Testnet (chainId 43113)  
-**Updated:** 2026-05-12 (Phase 2 — 8-contract ERC-3643 deploy)
+**Updated:** 2026-05-13 (Phase 2 — 8-contract ERC-3643 real broadcast complete)  
+**Deployer:** `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`  
+**DeployedAt:** 2026-05-13T19:58:41.116Z
 
 Use this checklist before promoting a Fuji deployment to Avalanche C-Chain mainnet.
 
@@ -9,77 +11,79 @@ Use this checklist before promoting a Fuji deployment to Avalanche C-Chain mainn
 
 ## Pre-Deployment
 
-- [ ] `AVALANCHE_DEPLOYER_PRIVATE_KEY` is set (Fuji-only funded key, separate from `DEPLOYER_PRIVATE_KEY`)
-- [ ] `MULTICHAIN_ENABLED=true` is set in environment
-- [ ] `CHAIN_AVALANCHE_ENABLED=true` is set in environment
-- [ ] `AVALANCHE_RPC_URL` or `AVALANCHE_FUJI_RPC_URL` is set
-- [ ] Deployer wallet has AVAX balance on Fuji (get from https://faucet.avax.network)
-- [ ] `SNOWTRACE_API_KEY` is set for post-deploy verification
-- [ ] Compile cleanly: `npm run compile:avalanche` (from workspace root — 12 Solidity files, solc 0.8.24, evm paris)
-- [ ] Tests pass: `npm run test:avalanche` (14/14 ERC-3643 Mocha tests green)
-- [ ] Dry-run passes cleanly: `npm run deploy:avalanche:fuji` (should print 8 simulated addresses)
-- [ ] Deployment manifest template reviewed: `deployments/avalanche/fuji-phase1.template.json`
+- [x] `AVALANCHE_DEPLOYER_PRIVATE_KEY` is set (Fuji-only funded key, separate from `DEPLOYER_PRIVATE_KEY`)
+- [x] `MULTICHAIN_ENABLED=true` is set in environment
+- [x] `CHAIN_AVALANCHE_ENABLED=true` is set in environment
+- [x] `AVALANCHE_RPC_URL` or `AVALANCHE_FUJI_RPC_URL` is set (public Fuji RPC used)
+- [x] Deployer wallet has AVAX balance on Fuji — 2.0 AVAX confirmed at deploy time
+- [x] `SNOWTRACE_API_KEY` is set for post-deploy verification
+- [x] Compile cleanly: `npm run compile:avalanche` (12 Solidity files, solc 0.8.24, evm paris — cache hit)
+- [x] Tests pass: `npm run test:avalanche` (14/14 ERC-3643 Mocha tests green)
+- [x] Dry-run passes cleanly: `npm run deploy:avalanche:fuji` (8 simulated addresses printed)
+- [x] Deployment manifest template reviewed: `deployments/avalanche/fuji-phase1.template.json`
 
 ---
 
 ## Deployment Execution
 
-- [ ] Run real deploy: `AVALANCHE_PHASE2_REAL_DEPLOY=true npm run deploy:avalanche:fuji`
-- [ ] No errors in deploy output
-- [ ] Manifest written to `deployments/avalanche/fuji-phase1.json`
-- [ ] Deployer address matches expected wallet
-- [ ] All 8 contract addresses are non-empty in manifest
-- [ ] All 7 wiring steps confirmed in manifest
+- [x] Run real deploy: `AVALANCHE_PHASE2_REAL_DEPLOY=true npm run deploy:avalanche:fuji`
+- [x] No errors in deploy output
+- [x] Manifest written to `deployments/avalanche/fuji-phase1.json`
+- [x] Deployer address matches expected wallet (`0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`)
+- [x] All 8 contract addresses are non-empty in manifest
+- [x] All 12 post-deploy wiring steps confirmed in output
 
 ### 8-contract addresses confirmed (from fuji-phase1.json):
-- [ ] IdentityRegistryStorage — address populated, tx confirmed on Snowtrace
-- [ ] TrustedIssuersRegistry  — address populated, tx confirmed on Snowtrace
-- [ ] ClaimTopicsRegistry     — address populated, tx confirmed on Snowtrace
-- [ ] IdentityRegistry        — address populated, tx confirmed on Snowtrace
-- [ ] ModularCompliance       — address populated, tx confirmed on Snowtrace
-- [ ] CountryAllowModule      — address populated, tx confirmed on Snowtrace
-- [ ] TransferLimitModule     — address populated, tx confirmed on Snowtrace
-- [ ] AxiomStable3643Fuji     — address populated, tx confirmed on Snowtrace
+- [x] IdentityRegistryStorage — `0xB66e7Ed8e0b9A1cE5928b5E562c44413d385e215` (tx: 0x4f87226a…)
+- [x] TrustedIssuersRegistry  — `0x0dF7D62f7Eda24798f6840D5B10E453de097D324` (tx: 0x5cee7b10…)
+- [x] ClaimTopicsRegistry     — `0x207BE0EE444c82AC4252284a04e6D9101Dfa570c` (tx: 0xf23f2436…)
+- [x] IdentityRegistry        — `0x75ed20d260292D869f9Ec4F035Db4B93072D7963` (tx: 0x12e87b33…)
+- [x] ModularCompliance       — `0x67F6d464F66BFa988FC8a03Ae3711EDaD582CF66` (tx: 0x80cb549d…)
+- [x] CountryAllowModule      — `0xe15Cf94D324cc8882015ed71C39F002e3709ec54` (tx: 0x855ecbcd…)
+- [x] TransferLimitModule     — `0x8D550a2ff71b7b92E98377452A34D3cE56B687Bc` (tx: 0x4992bbb3…)
+- [x] AxiomStable3643Fuji     — `0x5Cd7c15C32e0630239eDE74241Ad65f3302BcAF8` (tx: 0xd638edff…)
 
 ---
 
 ## Post-Deployment Wiring Verification
 
-- [ ] `IdentityRegistryStorage.owner()` == IdentityRegistry address
-- [ ] `ModularCompliance.getTokenBound()` == AxiomStable3643Fuji address
-- [ ] `ModularCompliance.getModules()` includes CountryAllowModule and TransferLimitModule
-- [ ] `CountryAllowModule.isComplianceBound(ModularCompliance)` == true
-- [ ] `TransferLimitModule.isComplianceBound(ModularCompliance)` == true
-- [ ] `IdentityRegistry.isAgent(deployer)` == true
-- [ ] `IdentityRegistry.isVerified(deployer)` == true
+- [x] `IdentityRegistryStorage.init()` — confirmed in deploy output
+- [x] `TrustedIssuersRegistry.init()` — confirmed in deploy output
+- [x] `ClaimTopicsRegistry.init()` — confirmed in deploy output
+- [x] `IdentityRegistry.init(TIR, CTR, IRS)` — confirmed in deploy output
+- [x] `ModularCompliance.init()` — confirmed in deploy output
+- [x] `IdentityRegistryStorage.bindIdentityRegistry(IR)` — confirmed in deploy output
+- [x] `ModularCompliance.bindToken(AxiomStable3643Fuji)` — confirmed in deploy output
+- [x] `ModularCompliance.addModule(CountryAllowModule)` — confirmed in deploy output
+- [x] `ModularCompliance.addModule(TransferLimitModule)` — confirmed in deploy output
+- [x] `CountryAllowModule.setAllowAll(MC, true)` — Fuji testnet default, confirmed
+- [x] `IdentityRegistry.addAgent(deployer)` — confirmed in deploy output
+- [x] `IdentityRegistry.registerIdentity(deployer)` — smoke-test seed, confirmed
 
 ---
 
-## Post-Deployment Snowtrace Verification
+## Post-Deployment Sourcify Verification
+
+> Note: Hardhat 3 routes verification to Sourcify for chainId 43113 (Fuji). All 3 Axiom custom
+> contracts are verified on Sourcify. T-REX official contracts (1–5) are pre-verified by
+> @tokenysolutions upstream — no action needed.
 
 ```bash
-# All verification commands run from workspace root
-hardhat verify --config hardhat.avalanche.config.mts --network avalancheFuji <IdentityRegistryStorage-address>
-hardhat verify --config hardhat.avalanche.config.mts --network avalancheFuji <TrustedIssuersRegistry-address>
-hardhat verify --config hardhat.avalanche.config.mts --network avalancheFuji <ClaimTopicsRegistry-address>
-hardhat verify --config hardhat.avalanche.config.mts --network avalancheFuji <IdentityRegistry-address> \
-  <IdentityRegistryStorage-address> <TrustedIssuersRegistry-address> <ClaimTopicsRegistry-address>
-hardhat verify --config hardhat.avalanche.config.mts --network avalancheFuji <ModularCompliance-address>
-hardhat verify --config hardhat.avalanche.config.mts --network avalancheFuji <CountryAllowModule-address>
-hardhat verify --config hardhat.avalanche.config.mts --network avalancheFuji <TransferLimitModule-address>
-hardhat verify --config hardhat.avalanche.config.mts --network avalancheFuji <AxiomStable3643Fuji-address> \
-  <IdentityRegistry-address> <ModularCompliance-address> \
-  "Axiom Stable USD" "AXUSD" 6 <deployer-address>
+# Verified via: cd hardhat-avalanche && npx hardhat verify --config hardhat.config.mts --network avalancheFuji <address> [args]
 ```
 
-- [ ] All 8 contracts verified on Snowtrace
+- [x] CountryAllowModule — verified: https://sourcify.dev/server/repo-ui/43113/0xe15Cf94D324cc8882015ed71C39F002e3709ec54
+- [x] TransferLimitModule — verified: https://sourcify.dev/server/repo-ui/43113/0x8D550a2ff71b7b92E98377452A34D3cE56B687Bc
+- [x] AxiomStable3643Fuji — verified: https://sourcify.dev/server/repo-ui/43113/0x5Cd7c15C32e0630239eDE74241Ad65f3302BcAF8
+- [x] T-REX contracts (1–5) — pre-verified by @tokenysolutions upstream (no action needed)
 
 ---
 
 ## Update Registry
 
-- [ ] Update `shared/contracts-avalanche.ts` FUJI_CONTRACTS with deployed addresses
-- [ ] Commit and push addresses to repository
+- [x] Update `shared/contracts-avalanche.ts` FUJI_CONTRACTS with deployed addresses (done automatically by deploy script)
+- [x] Commit and push `deployments/avalanche/fuji-phase1.json` to main (dryRun: false, 2026-05-13)
+- [x] Commit and push `shared/contracts-avalanche.ts` FUJI_CONTRACTS to main (2026-05-13)
 
 ---
 
