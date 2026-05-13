@@ -1,12 +1,16 @@
 /**
  * Capinfra schema migration runner — CI edition.
  *
- * Drops all cap_* tables and enum types then re-applies every SQL file in
- * ./drizzle-capinfra/ from scratch.  This guarantees the schema in the test
- * database exactly matches capInfraSchema.ts regardless of any partial state
- * left by a prior CI run.
+ * Drops the specific cap_* tables/enums defined in capInfraSchema.ts then
+ * re-applies every SQL file in ./drizzle-capinfra/ from scratch.  This
+ * guarantees the schema in the test database exactly matches capInfraSchema.ts
+ * regardless of any partial state left by a prior CI run.
  *
- * The script is idempotent: running it twice produces the same clean schema.
+ * IMPORTANT: only the tables/types listed in CAP_INFRA_TABLES / CAP_INFRA_ENUMS
+ * are dropped.  Other cap_* tables defined in shared/schema.ts (e.g.
+ * cap_accounts, cap_ledger_entries) are left untouched.
+ *
+ * Idempotent: running it twice produces the same clean schema.
  *
  * Usage:  npx tsx scripts/capinfra-migrate.ts
  */
@@ -15,28 +19,74 @@ import fs from 'fs';
 import path from 'path';
 import { Pool } from 'pg';
 
+const CAP_INFRA_TABLES = [
+  'cap_adapters',
+  'cap_admin_actions',
+  'cap_asset_markets',
+  'cap_assets',
+  'cap_audit_events',
+  'cap_bridge_allowlist_proposal_comments',
+  'cap_bridge_allowlist_proposals',
+  'cap_card_deposits',
+  'cap_card_deposit_webhook_events',
+  'cap_claims',
+  'cap_counterparties',
+  'cap_documents',
+  'cap_identity_profiles',
+  'cap_loss_coverage_claim_events',
+  'cap_loss_coverage_claims',
+  'cap_notifications',
+  'cap_plaid_accounts',
+  'cap_plaid_items',
+  'cap_policy_decisions',
+  'cap_positions',
+  'cap_price_snapshots',
+  'cap_reconciliation_drift',
+  'cap_reconciliation_runs',
+  'cap_reserve_config',
+  'cap_reserve_holdings',
+  'cap_reserve_holdings_snapshot_lines',
+  'cap_reserve_holdings_snapshots',
+  'cap_reserve_snapshots',
+  'cap_risk_decisions',
+  'cap_risk_policies',
+  'cap_settlement_instructions',
+  'cap_users',
+  'cap_wallets',
+  'cap_webhook_events',
+];
+
+const CAP_INFRA_ENUMS = [
+  'cap_action_type',
+  'cap_asset_subtype',
+  'cap_asset_type',
+  'cap_claim_status',
+  'cap_claim_type',
+  'cap_collateral_class',
+  'cap_custody_model',
+  'cap_entity_type',
+  'cap_exposure_class',
+  'cap_price_type',
+  'cap_record_status',
+  'cap_redemption_type',
+  'cap_route_type',
+  'cap_settlement_status',
+  'cap_settlement_type',
+  'cap_severity_level',
+];
+
 async function dropCapInfraSchema(pool: Pool): Promise<void> {
   const client = await pool.connect();
   try {
-    const { rows: tables } = await client.query<{ tablename: string }>(`
-      SELECT tablename
-      FROM pg_tables
-      WHERE schemaname = 'public' AND tablename LIKE 'cap_%'
-    `);
-    for (const { tablename } of tables) {
-      await client.query(`DROP TABLE IF EXISTS "${tablename}" CASCADE`);
-      console.log(`[capinfra-migrate] dropped table ${tablename}`);
+    for (const tbl of CAP_INFRA_TABLES) {
+      await client.query(`DROP TABLE IF EXISTS "${tbl}" CASCADE`);
     }
+    console.log(`[capinfra-migrate] dropped ${CAP_INFRA_TABLES.length} capinfra tables.`);
 
-    const { rows: types } = await client.query<{ typname: string }>(`
-      SELECT typname
-      FROM pg_type
-      WHERE typtype = 'e' AND typname LIKE 'cap_%'
-    `);
-    for (const { typname } of types) {
-      await client.query(`DROP TYPE IF EXISTS "${typname}" CASCADE`);
-      console.log(`[capinfra-migrate] dropped type ${typname}`);
+    for (const typ of CAP_INFRA_ENUMS) {
+      await client.query(`DROP TYPE IF EXISTS "${typ}" CASCADE`);
     }
+    console.log(`[capinfra-migrate] dropped ${CAP_INFRA_ENUMS.length} capinfra enum types.`);
   } finally {
     client.release();
   }
@@ -55,7 +105,7 @@ async function main() {
 
   const pool = new Pool({ connectionString: url });
 
-  console.log('[capinfra-migrate] dropping any existing cap_* schema…');
+  console.log('[capinfra-migrate] dropping existing capinfra schema…');
   await dropCapInfraSchema(pool);
 
   const dir = path.join(process.cwd(), 'drizzle-capinfra');
