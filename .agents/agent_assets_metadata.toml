@@ -1013,3 +1013,9 @@ id = "jxTrb50j5aPnAt0XirnO7"
 uri = "file://.local/reserve-audit.md"
 type = "text"
 title = "Reserve Audit — Mismatch Matrix, Canonical Model & 7-Phase Plan"
+
+[[outputs]]
+id = "5NpqbrZmi5zHv9Bhp6mdG"
+uri = "file://docs/superpowers/specs/2026-05-12-treasury-yield-engine-design.md"
+type = "text"
+title = "Treasury Yield Engine — Design Spec v1.0"
