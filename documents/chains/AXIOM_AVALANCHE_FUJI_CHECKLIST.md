@@ -114,8 +114,8 @@ Use this checklist before promoting a Fuji deployment to Avalanche C-Chain mainn
 - [x] `TransferLimitModule.setTransferLimit(compliance, 200e6)` enforced — over-limit(300) reverted, under-limit(150) passed
 - [x] `freezeAddress(wallet, true)` blocks receiver — [tx](https://testnet.snowtrace.io/tx/0xe3e9ff3f763132c855c4c9e8fcb2a26719e56006bbece3ec844ee57f4293a646)
 - [x] `freezeAddress(wallet, false)` restores transfers
-- [x] Capinfra `AVALANCHE` adapter DRY_RUN dispatch returns expected receipt — Task #482, 19/19 checks, invariants A–G all PASS
-- [x] Capinfra `AVALANCHE` adapter LIVE dispatch mints on Fuji — Task #482, 2026-05-13T23:29:56Z, 19/19 checks passed, txHash: 0x3ea938cd4e85531907b8834446a0bcf10173bfec0270705998522694e8e34a54, on-chain balanceOf confirmed, contract from shared/contracts-avalanche.ts
+- [x] Capinfra `AVALANCHE` adapter DRY_RUN dispatch returns expected receipt — Task #482, 22/22 checks, invariants A–G all PASS
+- [x] Capinfra `AVALANCHE` adapter LIVE dispatch mints on Fuji — Task #482, 2026-05-13T23:36:59Z, 22/22 checks passed, txHash: 0xf10d156a9328b9c4ad32f7bd6dd1df143f92449a270146b209c2129ddb69ef8c, block=55330858, receipt.status=1, Transfer event in logs, balanceOf delta=1 raw (attributed to this run), contract from shared/contracts-avalanche.ts
 
 ---
 
