@@ -27,7 +27,7 @@ import { test, expect, Page, Locator } from '@playwright/test';
 
 import { BASE } from './helpers/baseURL';
 
-const EXPECTED_CSV_HEADER = 'When (UTC),Aggregate,Event,Actor,User,Asset,Payload';
+const EXPECTED_CSV_HEADER = 'When (UTC),Aggregate,Event,Actor,User,Legal Name,Asset,Payload';
 
 async function loginAsOperator(page: Page) {
   const resp = await page.request.post(`${BASE}/api/capinfra/operator/auth/test-session`, {
@@ -150,7 +150,8 @@ test.describe('Audit Search — Download CSV', () => {
     await gotoConsole(page);
 
     const section = auditSection(page);
-    await section.getByLabel('Aggregate Type').fill('User');
+    // 'policy_decision' events are seeded by the capinfra smoke harness (25 evaluations).
+    await section.getByLabel('Aggregate Type').fill('policy_decision');
 
     const [download] = await Promise.all([
       page.waitForEvent('download'),
@@ -168,7 +169,7 @@ test.describe('Audit Search — Download CSV', () => {
 
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i].split(',');
-      expect(cols[1], `row ${i} Aggregate column must start with "User"`).toMatch(/^User/);
+      expect(cols[1], `row ${i} Aggregate column must be policy_decision`).toBe('policy_decision');
     }
 
     fs.unlinkSync(tmpPath);
