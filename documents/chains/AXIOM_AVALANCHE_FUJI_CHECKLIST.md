@@ -101,13 +101,21 @@ Use this checklist before promoting a Fuji deployment to Avalanche C-Chain mainn
 
 ## Smoke Tests
 
-- [ ] `AxiomStable3643Fuji.mint(deployer, 1000e6)` succeeds (deployer is verified + has MINTER_ROLE)
-- [ ] `AxiomStable3643Fuji.transfer(user, 100e6)` fails if user is not registered in IdentityRegistry
-- [ ] Register user in IdentityRegistry, transfer succeeds
-- [ ] `AxiomStable3643Fuji.pause()` blocks transfers, `unpause()` restores them
-- [ ] `TransferLimitModule.setTransferLimit(compliance, limit)` enforced on transfer
-- [ ] Capinfra `AVALANCHE` adapter DRY_RUN dispatch returns expected receipt
-- [ ] Capinfra `AVALANCHE` adapter LIVE dispatch mints on Fuji (AXUSD allowlisted)
+> Task #480 live smoke run: **15 / 15 passed** — 2026-05-13T20:26:53.439Z  
+> Script: `scripts/smoke/avalanche/fuji-smoke.mts`  
+> Results: `deployments/avalanche/fuji-smoke-results.json`  
+> Report: `documents/chains/AXIOM_AVALANCHE_FUJI_SMOKE_REPORT.md`
+
+- [x] `AxiomStable3643Fuji.mint(deployer, 1000e6)` succeeds — [tx](https://testnet.snowtrace.io/tx/0xd4e1aaa17120116224f69055d56288c4d0408efed187852442e921e38f373c70)
+- [x] `AxiomStable3643Fuji.transfer(user, 100e6)` fails if user not registered (T10 — reverted RECEIVER_NOT_VERIFIED)
+- [x] Register user in IdentityRegistry, transfer succeeds — [tx](https://testnet.snowtrace.io/tx/0x359836e0be61441945c5228b60044882932bf817e6986c8ccc5263a998ad3038)
+- [x] `AxiomStable3643Fuji.pause()` blocks transfers — [tx](https://testnet.snowtrace.io/tx/0x9c66c014e53b91be84daa54c41ec4545cf0da3c9f0a0eb5115534d1ef22eb827)
+- [x] `unpause()` restores transfers — [tx](https://testnet.snowtrace.io/tx/0x729c0463cdde53b25b55633422ecfc57ab741ce47ab61bec11495dfcbaec659b)
+- [x] `TransferLimitModule.setTransferLimit(compliance, 200e6)` enforced — over-limit(300) reverted, under-limit(150) passed
+- [x] `freezeAddress(wallet, true)` blocks receiver — [tx](https://testnet.snowtrace.io/tx/0xe3e9ff3f763132c855c4c9e8fcb2a26719e56006bbece3ec844ee57f4293a646)
+- [x] `freezeAddress(wallet, false)` restores transfers
+- [ ] Capinfra `AVALANCHE` adapter DRY_RUN dispatch returns expected receipt (out of scope — Task #480)
+- [ ] Capinfra `AVALANCHE` adapter LIVE dispatch mints on Fuji (out of scope — Task #480)
 
 ---
 
