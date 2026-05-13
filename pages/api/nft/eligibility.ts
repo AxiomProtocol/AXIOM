@@ -69,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     const adminKey = req.headers['x-admin-key'];
-    if (adminKey !== process.env.ADMIN_SOLVENCY_KEY) {
+    if (!adminKey || !process.env.ADMIN_SOLVENCY_KEY || adminKey !== process.env.ADMIN_SOLVENCY_KEY) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
