@@ -36,14 +36,18 @@ jobs:
         run: npm ci
 
       - name: Compile contracts (avalanche config)
-        run: npx hardhat compile --config hardhat.avalanche.ts
+        # Uses the hardhat-avalanche/ sub-workspace which carries "type":"module"
+        # and hardhat.config.mts — fully ESM-compatible with Hardhat 3.
+        # Running `npx hardhat compile --config hardhat.avalanche.ts` from the
+        # workspace root fails because the root package.json is CJS (no "type":"module").
+        run: npm run compile:avalanche
 
       - name: Upload compilation artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: avalanche-artifacts-run-${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}
-          path: artifacts_avalanche/
+          path: hardhat-avalanche/artifacts/
           if-no-files-found: ignore
           retention-days: 14
 
@@ -83,7 +87,7 @@ jobs:
         run: npm ci
 
       - name: Compile contracts (avalanche config)
-        run: npx hardhat compile --config hardhat.avalanche.ts
+        run: npm run compile:avalanche
 
       - name: Run Avalanche fork tests
         run: npm run test:avalanche
