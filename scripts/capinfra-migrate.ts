@@ -160,12 +160,13 @@ async function main() {
       for (const stmt of statements) {
         try {
           await lockClient.query(stmt);
-        } catch (err: any) {
+        } catch (err: unknown) {
           await releaseAdvisoryLock(lockClient);
           lockClient.release();
           await pool.end();
+          const pgErr = err as { code?: string; message?: string };
           console.error(
-            `[capinfra-migrate] FAILED:\n  ${stmt.slice(0, 200)}\n  Error (${err.code}): ${err.message}`,
+            `[capinfra-migrate] FAILED:\n  ${stmt.slice(0, 200)}\n  Error (${pgErr.code ?? '?'}): ${pgErr.message ?? String(err)}`,
           );
           process.exit(1);
         }
@@ -177,11 +178,12 @@ async function main() {
     await verifyCapAssets(lockClient);
 
     await releaseAdvisoryLock(lockClient);
-  } catch (err: any) {
-    try { await releaseAdvisoryLock(lockClient); } catch {}
+  } catch (err: unknown) {
+    try { await releaseAdvisoryLock(lockClient); } catch { /* best-effort */ }
     lockClient.release();
     await pool.end();
-    console.error('[capinfra-migrate] fatal:', err.message);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[capinfra-migrate] fatal:', msg);
     process.exit(1);
   }
 
