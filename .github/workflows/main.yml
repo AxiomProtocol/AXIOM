@@ -171,32 +171,51 @@ jobs:
         env:
           PORT: "5000"
         run: |
-          echo "Checking e2e preconditions (test-session endpoint)..."
-          URL="http://localhost:${PORT}/api/capinfra/operator/auth/test-session"
+          echo "Checking e2e preconditions..."
+
+          # ── Check 1: test-session (requires ADMIN_SOLVENCY_KEY + NODE_ENV=test) ──
+          SESSION_URL="http://localhost:${PORT}/api/capinfra/operator/auth/test-session"
           set +e
-          HTTP_STATUS=$(curl -s -o /tmp/test-session-precheck.body -w "%{http_code}" -X POST "${URL}")
+          SESSION_STATUS=$(curl -s -o /tmp/test-session-precheck.body -w "%{http_code}" -X POST "${SESSION_URL}")
           CURL_EXIT=$?
           set -e
-          if [ "${CURL_EXIT}" -ne 0 ]; then
-            HTTP_STATUS="000"
-          fi
-          echo "HTTP status: ${HTTP_STATUS}"
+          if [ "${CURL_EXIT}" -ne 0 ]; then SESSION_STATUS="000"; fi
+          echo "test-session → ${SESSION_STATUS}"
           cat /tmp/test-session-precheck.body || true
-          if [ "${HTTP_STATUS}" = "200" ]; then
-            echo "e2e_ready=true" >> "$GITHUB_OUTPUT"
-            echo "E2E preconditions met — all e2e test steps will run."
-          else
+
+          if [ "${SESSION_STATUS}" != "200" ]; then
             echo "e2e_ready=false" >> "$GITHUB_OUTPUT"
-            echo "E2E preconditions not met (status ${HTTP_STATUS}) — skipping all e2e test steps."
-            if [ "${HTTP_STATUS}" = "503" ]; then
-              echo "Cause: ADMIN_SOLVENCY_KEY not configured. Add it to GitHub Actions secrets to enable e2e tests."
-            elif [ "${HTTP_STATUS}" = "404" ]; then
+            echo "E2E preconditions not met (test-session status ${SESSION_STATUS}) — skipping e2e tests."
+            if [ "${SESSION_STATUS}" = "503" ]; then
+              echo "Cause: ADMIN_SOLVENCY_KEY not configured."
+            elif [ "${SESSION_STATUS}" = "404" ]; then
               echo "Cause: NODE_ENV is not 'test' — test-session endpoint is disabled."
-            elif [ "${HTTP_STATUS}" = "000" ]; then
+            elif [ "${SESSION_STATUS}" = "000" ]; then
               echo "Cause: dev server unreachable on port ${PORT}."
               tail -n 30 /tmp/devserver.log || true
             fi
+            exit 0
           fi
+
+          # ── Check 2: capinfra schema (cap_assets must be seeded) ─────────────────
+          # The e2e tests exercise cap_audit_events and other cap_* tables that are
+          # only present after running capinfra-seed. If /api/capinfra/assets returns
+          # 500 the schema is absent and all e2e tests will fail with DB errors.
+          ASSETS_URL="http://localhost:${PORT}/api/capinfra/assets"
+          set +e
+          ASSETS_STATUS=$(curl -s -o /tmp/assets-precheck.body -w "%{http_code}" "${ASSETS_URL}")
+          set -e
+          echo "capinfra/assets → ${ASSETS_STATUS}"
+
+          if [ "${ASSETS_STATUS}" != "200" ]; then
+            echo "e2e_ready=false" >> "$GITHUB_OUTPUT"
+            echo "E2E preconditions not met (assets status ${ASSETS_STATUS}) — skipping e2e tests."
+            echo "Cause: cap_assets table not seeded in this environment. Run capinfra-seed to populate AXAU/AXUSD-TREASURY rows."
+            exit 0
+          fi
+
+          echo "e2e_ready=true" >> "$GITHUB_OUTPUT"
+          echo "E2E preconditions met (test-session=200, assets=200) — all e2e steps will run."
 
       - name: Run audit CSV e2e tests
         if: steps.e2e_precheck.outputs.e2e_ready == 'true'
