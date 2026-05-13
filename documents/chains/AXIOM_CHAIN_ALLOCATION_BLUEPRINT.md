@@ -36,7 +36,6 @@ reserve layer anchored to PAXG on Ethereum.
 - AXUSD stablecoin issuance and settlement
 - AXAU reserve token (backed by PAXG on Ethereum)
 - All 53 live Axiom smart contracts
-- DEX / Euler vault integration
 - DePIN node economy
 - Land acquisition registry
 - Governance (TimelockController, governance hub)
@@ -278,7 +277,7 @@ state for the foreseeable future.**
 1. **53 live smart contracts already deployed on Arbitrum** — migrating canonical state requires contract migration, not just config changes
 2. **ERC-3643 ONCHAINID identity is Arbitrum-native** — identity canonical state cannot be moved without re-onboarding all users
 3. **AXUSD and AXAU are Arbitrum-deployed ERC-3643 tokens** — supply control and reserve accounting are on-chain
-4. **All existing automated control layers are Arbitrum** — fee plumbing, governance, DEX are live
+4. **All existing automated control layers are Arbitrum** — fee plumbing, governance, settlement, community, DePIN are live
 5. **Avalanche, Polygon, and Sui are all in `researching` status** — none have source files, SDKs, or live integrations
 6. **Risk of canonical state migration is extremely high** — moving canonical state mid-operation creates exposure
 7. **Avalanche's intended role as reserve/policy core is complementary** — it can execute policy in permissioned capital zones while Arbitrum remains the canonical settlement layer
