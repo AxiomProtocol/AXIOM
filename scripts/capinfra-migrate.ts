@@ -2,12 +2,15 @@
  * Capinfra schema migration runner.
  *
  * Applies all SQL files in ./drizzle-capinfra/ to the DATABASE_URL.
- * Tracks applied migrations in `capinfra_migrations` table (same pattern
- * as `handwritten_migrations` used by scripts/migrate.ts).
+ * Tracks applied migrations in `capinfra_migrations` table.
  *
- * Idempotent: each statement is attempted individually; "already exists"
- * errors (duplicate_table 42P07, duplicate_object 42710, etc.) are silently
- * skipped so the script is safe to retry after a partial failure.
+ * Clean-slate strategy: if the migration has not been tracked as fully applied,
+ * any partial cap_* tables/types left by a previous failed run are dropped
+ * (CASCADE) before the SQL is re-applied.  This guarantees the schema matches
+ * the TypeScript definition exactly, even if a prior CI run died mid-push.
+ *
+ * Idempotent: once a migration is recorded in `capinfra_migrations` the file
+ * is skipped entirely on subsequent runs.
  *
  * Usage:  npx tsx scripts/capinfra-migrate.ts
  */
@@ -17,13 +20,34 @@ import path from 'path';
 import crypto from 'crypto';
 import { Pool } from 'pg';
 
-const ALREADY_EXISTS_CODES = new Set([
-  '42P07', // duplicate_table
-  '42710', // duplicate_object  (types, indexes, constraints)
-  '42P06', // duplicate_schema
-  '42P16', // invalid_table_definition (sometimes raised for duplicate index)
-  '23505', // unique_violation — tolerated for tracking table inserts
-]);
+async function dropCapInfraSchema(pool: Pool): Promise<void> {
+  const client = await pool.connect();
+  try {
+    // Discover all cap_* tables and drop them (CASCADE handles FK refs)
+    const { rows: tables } = await client.query<{ tablename: string }>(`
+      SELECT tablename
+      FROM pg_tables
+      WHERE schemaname = 'public' AND tablename LIKE 'cap_%'
+    `);
+    for (const { tablename } of tables) {
+      await client.query(`DROP TABLE IF EXISTS "${tablename}" CASCADE`);
+      console.log(`[capinfra-migrate] dropped table ${tablename}`);
+    }
+
+    // Discover all cap_* enum types and drop them
+    const { rows: types } = await client.query<{ typname: string }>(`
+      SELECT typname
+      FROM pg_type
+      WHERE typtype = 'e' AND typname LIKE 'cap_%'
+    `);
+    for (const { typname } of types) {
+      await client.query(`DROP TYPE IF EXISTS "${typname}" CASCADE`);
+      console.log(`[capinfra-migrate] dropped type ${typname}`);
+    }
+  } finally {
+    client.release();
+  }
+}
 
 async function main() {
   const url =
@@ -49,7 +73,7 @@ async function main() {
   const { rows } = await pool.query<{ filename: string }>(
     'SELECT filename FROM capinfra_migrations',
   );
-  const applied = new Set(rows.map((r) => r.filename));
+  const appliedSet = new Set(rows.map((r) => r.filename));
 
   const dir = path.join(process.cwd(), 'drizzle-capinfra');
   const files = fs
@@ -58,7 +82,7 @@ async function main() {
     .sort();
 
   for (const file of files) {
-    if (applied.has(file)) {
+    if (appliedSet.has(file)) {
       console.log(`[capinfra-migrate] ${file} already applied — skipping.`);
       continue;
     }
@@ -67,34 +91,30 @@ async function main() {
     const sql = fs.readFileSync(fullPath, 'utf8');
     const checksum = crypto.createHash('sha256').update(sql).digest('hex');
 
-    console.log(`[capinfra-migrate] Applying ${file}…`);
+    // Drop any partial cap_* tables/types left by a previous failed attempt
+    // so the CREATE statements below run against a clean slate.
+    console.log(`[capinfra-migrate] cleaning up partial cap_* schema before applying ${file}…`);
+    await dropCapInfraSchema(pool);
+
+    console.log(`[capinfra-migrate] applying ${file}…`);
     const statements = sql
       .split('-->statement-breakpoint')
       .map((s) => s.trim())
       .filter(Boolean);
 
-    let applied_count = 0;
-    let skipped_count = 0;
-
     for (const stmt of statements) {
       const client = await pool.connect();
       try {
         await client.query(stmt);
-        applied_count++;
       } catch (err: any) {
-        if (ALREADY_EXISTS_CODES.has(err.code)) {
-          skipped_count++;
-        } else {
-          await client.release();
-          await pool.end();
-          console.error(
-            `[capinfra-migrate] FAILED on statement:\n  ${stmt.slice(0, 120)}\n  Error: ${err.message}`,
-          );
-          process.exit(1);
-        }
-      } finally {
         client.release();
+        await pool.end();
+        console.error(
+          `[capinfra-migrate] FAILED on statement:\n  ${stmt.slice(0, 200)}\n  Error (${err.code}): ${err.message}`,
+        );
+        process.exit(1);
       }
+      client.release();
     }
 
     await pool.query(
@@ -102,9 +122,7 @@ async function main() {
       [file, checksum],
     );
 
-    console.log(
-      `[capinfra-migrate] ${file} done (${applied_count} applied, ${skipped_count} already-existed).`,
-    );
+    console.log(`[capinfra-migrate] ${file} done — ${statements.length} statements applied.`);
   }
 
   await pool.end();
