@@ -162,6 +162,48 @@
       "when": 1777190400000,
       "tag": "0052_plaid_items",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1777276800000,
+      "tag": "0053_reserve_alerts",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1777363200000,
+      "tag": "0054_reserve_balance_snapshots",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1777449600000,
+      "tag": "0055_pilot_settlement_extractions",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1777536000000,
+      "tag": "0056_pilot_allocation_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1777622400000,
+      "tag": "0057_axiom_wallet",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1777708800000,
+      "tag": "0058_reserve_positions_settlement",
+      "breakpoints": true
     }
   ]
 }

@@ -10,12 +10,22 @@
 --   queued_oracle_stale — AXAU/AXUSD mint deferred: Chainlink XAU/USD oracle is stale
 --   queued_no_custody  — BitGo not configured; custody instruction pending manual setup
 --   failed             — attempt made but failed; see settlement_note for reason
+--
+-- Guarded: reserve_positions is created via drizzle-kit schema push on production
+-- databases but does not exist in fresh CI databases built purely from migrations.
 
-ALTER TABLE reserve_positions
-  ADD COLUMN IF NOT EXISTS tx_hash          VARCHAR(66),
-  ADD COLUMN IF NOT EXISTS settlement_status VARCHAR(50),
-  ADD COLUMN IF NOT EXISTS settlement_ref   VARCHAR(300),
-  ADD COLUMN IF NOT EXISTS settlement_note  TEXT;
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'reserve_positions'
+  ) THEN
+    ALTER TABLE reserve_positions
+      ADD COLUMN IF NOT EXISTS tx_hash          VARCHAR(66),
+      ADD COLUMN IF NOT EXISTS settlement_status VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS settlement_ref   VARCHAR(300),
+      ADD COLUMN IF NOT EXISTS settlement_note  TEXT;
 
-CREATE INDEX IF NOT EXISTS rp_settlement_status_idx ON reserve_positions(settlement_status);
-CREATE INDEX IF NOT EXISTS rp_tx_hash_idx           ON reserve_positions(tx_hash) WHERE tx_hash IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS rp_settlement_status_idx ON reserve_positions(settlement_status);
+    CREATE INDEX IF NOT EXISTS rp_tx_hash_idx           ON reserve_positions(tx_hash) WHERE tx_hash IS NOT NULL;
+  END IF;
+END $$;

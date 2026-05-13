@@ -384,7 +384,7 @@ describe('AssetIntegrityAlertsPanel — link points at /operator/integrity', () 
     // can land on the failed-page subset without typing a query
     // string. Pin both the destination and the wording so a future
     // header refactor can't silently break the cross-link.
-    render(<AssetIntegrityAlertsPanel alerts={[]} nowMs={NOW_MS} />);
+    render(<AssetIntegrityAlertsPanel alerts={[]} nowMs={NOW_MS} failedPagesCount={1} />);
     const link = screen.getByTestId(
       'asset-integrity-alerts-failed-pages-link',
     ) as HTMLAnchorElement;
