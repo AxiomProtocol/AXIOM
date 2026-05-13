@@ -102,7 +102,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
           NODE_ENV: test
-        run: npx drizzle-kit push --force
+        run: npx drizzle-kit push --config=drizzle-capinfra.config.ts --force
 
       - name: Seed capinfra data
         env:
