@@ -7,7 +7,7 @@
  * Covers:
  *   - Clicking "Download CSV" triggers a file download
  *   - The downloaded file has the correct CSV header row
- *   - The downloaded file contains at least one data row with 11 columns
+ *   - The downloaded file contains at least one data row with 12 columns
  *   - The filename matches the expected pattern (asset-registry-*.csv)
  *
  * Auth: Uses the dev-only POST /api/capinfra/operator/auth/test-session endpoint.
@@ -33,6 +33,7 @@ const EXPECTED_COLUMNS = [
   'Custody',
   'Settlement',
   'Status',
+  'Collateral Class',
   'Spot Price',
   'Spot Source',
   'Spot As-Of (UTC)',
