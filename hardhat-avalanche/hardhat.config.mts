@@ -95,4 +95,29 @@ export default defineConfig({
       accounts: DEPLOYER_ACCOUNTS,
     },
   },
+
+  etherscan: {
+    apiKey: {
+      avalancheFuji: process.env.SNOWTRACE_API_KEY ?? '',
+      avalanche:     process.env.SNOWTRACE_API_KEY ?? '',
+    },
+    customChains: [
+      {
+        network:  'avalancheFuji',
+        chainId:  43113,
+        urls: {
+          apiURL:     'https://api.routescan.io/v2/network/testnet/evm/43113/etherscan',
+          browserURL: 'https://testnet.snowtrace.io',
+        },
+      },
+      {
+        network:  'avalanche',
+        chainId:  43114,
+        urls: {
+          apiURL:     'https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan',
+          browserURL: 'https://snowtrace.io',
+        },
+      },
+    ],
+  },
 });
