@@ -274,7 +274,7 @@ test.describe('Eligibility Inspector — TypeAheadPicker', () => {
   test('asset picker shows suggestions and fills with ast_ ID on selection', async ({ page }) => {
     await gotoConsole(page);
 
-    await page.getByRole('heading', { name: 'Eligibility Inspector' }).scrollIntoViewIfNeeded();
+    await page.getByRole('heading', { name: 'Eligibility Inspect' }).scrollIntoViewIfNeeded();
 
     const assetInput = page.locator('input[placeholder="symbol or asset ID"]').nth(1);
     await assetInput.click();
@@ -291,7 +291,7 @@ test.describe('Eligibility Inspector — TypeAheadPicker', () => {
   test('user picker shows suggestions and fills with usr_ ID on selection', async ({ page }) => {
     await gotoConsole(page);
 
-    await page.getByRole('heading', { name: 'Eligibility Inspector' }).scrollIntoViewIfNeeded();
+    await page.getByRole('heading', { name: 'Eligibility Inspect' }).scrollIntoViewIfNeeded();
 
     const userInput = page.locator('input[placeholder="email, wallet, or user ID"]').nth(1);
     await userInput.click();
