@@ -33,6 +33,7 @@ const HEADER_COLUMNS = [
   'Custody',
   'Settlement',
   'Status',
+  'Collateral Class',
   'Spot Price',
   'Spot Source',
   'Spot As-Of (UTC)',
@@ -107,7 +108,7 @@ function parseCsvRow(line: string): string[] {
 }
 
 describe('ASSET_CSV_HEADER', () => {
-  it('lists the eleven expected columns in the documented order', () => {
+  it('lists the twelve expected columns in the documented order', () => {
     expect(ASSET_CSV_HEADER.split(',')).toEqual(HEADER_COLUMNS);
   });
 });
@@ -124,42 +125,42 @@ describe('buildAssetCsvRow', () => {
     expect(cells[3]).toBe('BAILMENT');
     expect(cells[4]).toBe('T_PLUS_0');
     expect(cells[5]).toBe('ACTIVE');
-    expect(cells[6]).toBe('2412.55');
-    expect(cells[7]).toBe('lbma');
-    expect(cells[10]).toBe('7');
+    expect(cells[7]).toBe('2412.55');
+    expect(cells[8]).toBe('lbma');
+    expect(cells[11]).toBe('7');
   });
 
   it('formats spot and reserve timestamps via fmtTs (UTC suffix)', () => {
     const row = makeRow();
     const cells = parseCsvRow(buildAssetCsvRow(row));
 
-    expect(cells[8]).toBe(fmtTs('2026-04-20T14:30:00.000Z'));
-    expect(cells[9]).toBe(fmtTs('2026-04-20T12:00:00.000Z'));
-    expect(cells[8].endsWith(' UTC')).toBe(true);
+    expect(cells[9]).toBe(fmtTs('2026-04-20T14:30:00.000Z'));
+    expect(cells[10]).toBe(fmtTs('2026-04-20T12:00:00.000Z'));
     expect(cells[9].endsWith(' UTC')).toBe(true);
+    expect(cells[10].endsWith(' UTC')).toBe(true);
   });
 
   it('leaves spot price / source / timestamp blank when latestSpot is null', () => {
     const row = makeRow({ latestSpot: null });
     const cells = parseCsvRow(buildAssetCsvRow(row));
 
-    expect(cells[6]).toBe('');
     expect(cells[7]).toBe('');
     expect(cells[8]).toBe('');
+    expect(cells[9]).toBe('');
   });
 
   it('leaves the reserve timestamp blank when latestReserve is null', () => {
     const row = makeRow({ latestReserve: null });
     const cells = parseCsvRow(buildAssetCsvRow(row));
 
-    expect(cells[9]).toBe('');
+    expect(cells[10]).toBe('');
   });
 
   it('coerces auditEventCount to a string even when zero', () => {
     const row = makeRow({ auditEventCount: 0 });
     const cells = parseCsvRow(buildAssetCsvRow(row));
 
-    expect(cells[10]).toBe('0');
+    expect(cells[11]).toBe('0');
   });
 
   it('survives an asset display name containing commas, quotes, and newlines', () => {
