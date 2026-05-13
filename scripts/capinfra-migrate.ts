@@ -1,29 +1,23 @@
 /**
- * Capinfra schema migration runner.
+ * Capinfra schema migration runner — CI edition.
  *
- * Applies all SQL files in ./drizzle-capinfra/ to the DATABASE_URL.
- * Tracks applied migrations in `capinfra_migrations` table.
+ * Drops all cap_* tables and enum types then re-applies every SQL file in
+ * ./drizzle-capinfra/ from scratch.  This guarantees the schema in the test
+ * database exactly matches capInfraSchema.ts regardless of any partial state
+ * left by a prior CI run.
  *
- * Clean-slate strategy: if the migration has not been tracked as fully applied,
- * any partial cap_* tables/types left by a previous failed run are dropped
- * (CASCADE) before the SQL is re-applied.  This guarantees the schema matches
- * the TypeScript definition exactly, even if a prior CI run died mid-push.
- *
- * Idempotent: once a migration is recorded in `capinfra_migrations` the file
- * is skipped entirely on subsequent runs.
+ * The script is idempotent: running it twice produces the same clean schema.
  *
  * Usage:  npx tsx scripts/capinfra-migrate.ts
  */
 import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
-import crypto from 'crypto';
 import { Pool } from 'pg';
 
 async function dropCapInfraSchema(pool: Pool): Promise<void> {
   const client = await pool.connect();
   try {
-    // Discover all cap_* tables and drop them (CASCADE handles FK refs)
     const { rows: tables } = await client.query<{ tablename: string }>(`
       SELECT tablename
       FROM pg_tables
@@ -34,7 +28,6 @@ async function dropCapInfraSchema(pool: Pool): Promise<void> {
       console.log(`[capinfra-migrate] dropped table ${tablename}`);
     }
 
-    // Discover all cap_* enum types and drop them
     const { rows: types } = await client.query<{ typname: string }>(`
       SELECT typname
       FROM pg_type
@@ -62,18 +55,8 @@ async function main() {
 
   const pool = new Pool({ connectionString: url });
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS capinfra_migrations (
-      filename   text PRIMARY KEY,
-      checksum   text NOT NULL,
-      applied_at timestamptz NOT NULL DEFAULT now()
-    )
-  `);
-
-  const { rows } = await pool.query<{ filename: string }>(
-    'SELECT filename FROM capinfra_migrations',
-  );
-  const appliedSet = new Set(rows.map((r) => r.filename));
+  console.log('[capinfra-migrate] dropping any existing cap_* schema…');
+  await dropCapInfraSchema(pool);
 
   const dir = path.join(process.cwd(), 'drizzle-capinfra');
   const files = fs
@@ -82,25 +65,14 @@ async function main() {
     .sort();
 
   for (const file of files) {
-    if (appliedSet.has(file)) {
-      console.log(`[capinfra-migrate] ${file} already applied — skipping.`);
-      continue;
-    }
-
     const fullPath = path.join(dir, file);
     const sql = fs.readFileSync(fullPath, 'utf8');
-    const checksum = crypto.createHash('sha256').update(sql).digest('hex');
-
-    // Drop any partial cap_* tables/types left by a previous failed attempt
-    // so the CREATE statements below run against a clean slate.
-    console.log(`[capinfra-migrate] cleaning up partial cap_* schema before applying ${file}…`);
-    await dropCapInfraSchema(pool);
-
-    console.log(`[capinfra-migrate] applying ${file}…`);
     const statements = sql
       .split('-->statement-breakpoint')
       .map((s) => s.trim())
       .filter(Boolean);
+
+    console.log(`[capinfra-migrate] applying ${file} (${statements.length} statements)…`);
 
     for (const stmt of statements) {
       const client = await pool.connect();
@@ -110,19 +82,14 @@ async function main() {
         client.release();
         await pool.end();
         console.error(
-          `[capinfra-migrate] FAILED on statement:\n  ${stmt.slice(0, 200)}\n  Error (${err.code}): ${err.message}`,
+          `[capinfra-migrate] FAILED:\n  ${stmt.slice(0, 200)}\n  Error (${err.code}): ${err.message}`,
         );
         process.exit(1);
       }
       client.release();
     }
 
-    await pool.query(
-      'INSERT INTO capinfra_migrations (filename, checksum) VALUES ($1, $2) ON CONFLICT (filename) DO NOTHING',
-      [file, checksum],
-    );
-
-    console.log(`[capinfra-migrate] ${file} done — ${statements.length} statements applied.`);
+    console.log(`[capinfra-migrate] ${file} done.`);
   }
 
   await pool.end();
