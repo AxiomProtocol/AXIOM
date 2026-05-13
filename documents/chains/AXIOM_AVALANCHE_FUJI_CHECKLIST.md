@@ -62,20 +62,31 @@ Use this checklist before promoting a Fuji deployment to Avalanche C-Chain mainn
 
 ---
 
-## Post-Deployment Sourcify Verification
+## Post-Deployment Snowtrace Verification
 
-> Note: Hardhat 3 routes verification to Sourcify for chainId 43113 (Fuji). All 3 Axiom custom
-> contracts are verified on Sourcify. T-REX official contracts (1–5) are pre-verified by
-> @tokenysolutions upstream — no action needed.
+> Verification method: Sourcify via `npx hardhat verify --network avalancheFuji`.
+> Routescan (testnet.snowtrace.io) indexes Sourcify automatically — all 8 contracts
+> confirmed verified via `GET /v2/network/testnet/evm/43113/etherscan?module=contract&action=getabi`
+> returning `status=1, message=OK` for every address.
+>
+> `hardhat-avalanche/hardhat.config.mts` updated with `etherscan.customChains` pointing to
+> the Routescan API (`https://api.routescan.io/v2/network/testnet/evm/43113/etherscan`) for
+> future direct Snowtrace submission using `SNOWTRACE_API_KEY`.
 
 ```bash
 # Verified via: cd hardhat-avalanche && npx hardhat verify --config hardhat.config.mts --network avalancheFuji <address> [args]
+# Routescan confirmation: curl "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan?module=contract&action=getabi&address=<addr>"
 ```
 
-- [x] CountryAllowModule — verified: https://sourcify.dev/server/repo-ui/43113/0xe15Cf94D324cc8882015ed71C39F002e3709ec54
-- [x] TransferLimitModule — verified: https://sourcify.dev/server/repo-ui/43113/0x8D550a2ff71b7b92E98377452A34D3cE56B687Bc
-- [x] AxiomStable3643Fuji — verified: https://sourcify.dev/server/repo-ui/43113/0x5Cd7c15C32e0630239eDE74241Ad65f3302BcAF8
-- [x] T-REX contracts (1–5) — pre-verified by @tokenysolutions upstream (no action needed)
+- [x] IdentityRegistryStorage — Snowtrace: https://testnet.snowtrace.io/address/0xB66e7Ed8e0b9A1cE5928b5E562c44413d385e215#code
+- [x] TrustedIssuersRegistry  — Snowtrace: https://testnet.snowtrace.io/address/0x0dF7D62f7Eda24798f6840D5B10E453de097D324#code
+- [x] ClaimTopicsRegistry     — Snowtrace: https://testnet.snowtrace.io/address/0x207BE0EE444c82AC4252284a04e6D9101Dfa570c#code
+- [x] IdentityRegistry        — Snowtrace: https://testnet.snowtrace.io/address/0x75ed20d260292D869f9Ec4F035Db4B93072D7963#code
+- [x] ModularCompliance       — Snowtrace: https://testnet.snowtrace.io/address/0x67F6d464F66BFa988FC8a03Ae3711EDaD582CF66#code
+- [x] CountryAllowModule      — Snowtrace: https://testnet.snowtrace.io/address/0xe15Cf94D324cc8882015ed71C39F002e3709ec54#code
+- [x] TransferLimitModule     — Snowtrace: https://testnet.snowtrace.io/address/0x8D550a2ff71b7b92E98377452A34D3cE56B687Bc#code
+- [x] AxiomStable3643Fuji     — Snowtrace: https://testnet.snowtrace.io/address/0x5Cd7c15C32e0630239eDE74241Ad65f3302BcAF8#code
+- [x] Routescan API confirmed: `status=1 OK` for all 8 addresses (2026-05-13)
 
 ---
 
@@ -84,6 +95,7 @@ Use this checklist before promoting a Fuji deployment to Avalanche C-Chain mainn
 - [x] Update `shared/contracts-avalanche.ts` FUJI_CONTRACTS with deployed addresses (done automatically by deploy script)
 - [x] Commit and push `deployments/avalanche/fuji-phase1.json` to main (dryRun: false, 2026-05-13)
 - [x] Commit and push `shared/contracts-avalanche.ts` FUJI_CONTRACTS to main (2026-05-13)
+- [x] `hardhat-avalanche/hardhat.config.mts` updated with Routescan `etherscan.customChains` config
 
 ---
 
