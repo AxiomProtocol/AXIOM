@@ -1,7 +1,7 @@
 # Axiom Protocol — Avalanche Fuji Deployment Checklist
 
 **Network:** Avalanche Fuji Testnet (chainId 43113)  
-**Updated:** 2026-05-13 (Phase 2 — 8-contract ERC-3643 real broadcast complete)  
+**Updated:** 2026-05-13 (Task #481 — Fuji contract status page live at /operations/fuji-status)  
 **Deployer:** `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`  
 **DeployedAt:** 2026-05-13T19:58:41.116Z
 
