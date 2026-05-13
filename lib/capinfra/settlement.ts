@@ -71,6 +71,13 @@ export const SETTLEMENT_LIFECYCLE = [
 ] as const;
 
 type Status = CapSettlementInstruction['status'];
+const AVALANCHE_CHAIN_NAMES = new Set([
+  'avalanche',
+  'avalanche-c-chain',
+  'avalanche-mainnet',
+  'avalanche-fuji',
+  'fuji',
+]);
 
 export const VALID_TRANSITIONS: Record<Status, Status[]> = {
   PENDING: ['AUTHORIZED', 'CANCELLED'],
@@ -559,7 +566,7 @@ function resolveAdapterKind(asset: CapAsset): string {
   if (asset.settlementType !== 'EVM') return asset.settlementType;
 
   const chain = (asset.chain ?? '').toLowerCase();
-  if (chain.includes('avalanche') || chain.includes('fuji')) return 'AVALANCHE';
+  if (AVALANCHE_CHAIN_NAMES.has(chain)) return 'AVALANCHE';
 
   const chainId = asset.chainId ?? null;
   if (chainId === 43113 || chainId === 43114) return 'AVALANCHE';

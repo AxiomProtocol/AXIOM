@@ -104,6 +104,10 @@ function dryRunDispatch(
   const { instruction, asset } = input;
   const route = resolveRoute(input);
   const decimals = asset.decimals ?? 18;
+  // Deterministic synthetic externalRef for DRY_RUN:
+  // hash stable instruction+asset routing fields and use a fixed-length
+  // 32-hex suffix so repeated dry runs of the same instruction shape map
+  // to the same synthetic reference.
   const key = [
     instruction.id,
     instruction.actionType,
@@ -113,7 +117,6 @@ function dryRunDispatch(
     String(asset.contractAddress ?? ''),
     String(route.to ?? ''),
     String(route.from ?? ''),
-    reason,
   ].join('|');
   const digest = createHash('sha256').update(key).digest('hex').slice(0, 32);
   const externalRef = `0xavadry-${digest}`;

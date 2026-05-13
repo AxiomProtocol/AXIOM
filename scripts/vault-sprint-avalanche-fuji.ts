@@ -43,8 +43,9 @@ interface ProofCheck {
 const checks: ProofCheck[] = [];
 const TEST_USER_ID = 'usr_capinfra_smoke';
 const TEST_ASSET_SYMBOL = 'AXUSD-FUJI-CAPINFRA';
-const TEST_AMOUNT = '0.0000010000'; // 1e-6
+const TEST_AMOUNT = '0.0000010000'; // 0.000001 tokens (1 smallest unit when token decimals = 6)
 const TEST_DECIMALS = 6;
+const BALANCE_TOLERANCE = 1e-10;
 
 function addCheck(id: string, title: string, status: ProofStatus, detail: string) {
   checks.push({ id, title, status, detail });
@@ -313,7 +314,7 @@ async function main() {
       dPass &&
       ePass &&
       fPass &&
-      Math.abs((qtyAfterSettle - qtyBeforeLive) - Number(TEST_AMOUNT)) < 1e-10;
+      Math.abs((qtyAfterSettle - qtyBeforeLive) - Number(TEST_AMOUNT)) < BALANCE_TOLERANCE;
     addCheck(
       'G',
       'final state and balances reconcile',
