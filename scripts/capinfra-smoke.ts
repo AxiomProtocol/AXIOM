@@ -1783,12 +1783,12 @@ async function main() {
     const ev73Over = await call('/api/capinfra/policy/evaluate', {
       method: 'POST',
       withAuth: true,
-      body: {
+      body: JSON.stringify({
         userId: 'usr_capinfra_smoke',
         assetId: axusdT!.id,
         actionType: 'BORROW',
         amount: '1000001',
-      },
+      }),
     });
     assert(ev73Over.status === 200, `73a: evaluate 200 (got ${ev73Over.status})`);
     const r73Over = ev73Over.body as { allowed: boolean; reasonCode: string; policyVersion: string };
@@ -1804,12 +1804,12 @@ async function main() {
     const ev73Under = await call('/api/capinfra/policy/evaluate', {
       method: 'POST',
       withAuth: true,
-      body: {
+      body: JSON.stringify({
         userId: 'usr_capinfra_smoke',
         assetId: axusdT!.id,
         actionType: 'BORROW',
         amount: '1000',
-      },
+      }),
     });
     const r73Under = ev73Under.body as { allowed: boolean; reasonCode: string };
     assert(r73Under.allowed === true, `73b: below-cap BORROW allowed (got reason ${r73Under.reasonCode})`);
@@ -1821,12 +1821,12 @@ async function main() {
     const ev74Pre = await call('/api/capinfra/policy/evaluate', {
       method: 'POST',
       withAuth: true,
-      body: {
+      body: JSON.stringify({
         userId: 'usr_capinfra_smoke',
         assetId: axau!.id,
         actionType: 'BORROW',
         amount: '1',
-      },
+      }),
     });
     const r74Pre = ev74Pre.body as { allowed: boolean; reasonCode: string };
     assert(r74Pre.allowed === true, `74a: AXAU BORROW pre-disable allowed (got ${r74Pre.reasonCode})`);
@@ -1834,12 +1834,12 @@ async function main() {
     const disable74 = await call('/api/capinfra/risk/collateral/disable', {
       method: 'POST',
       withAuth: true,
-      body: {
+      body: JSON.stringify({
         assetId: axau!.id,
         reason: 'smoke harness: guardian disable cache-bypass proof',
         primaryActor: 'smoke-collat-1',
         secondaryActor: 'smoke-collat-2',
-      },
+      }),
     });
     assert(disable74.status === 200, `74b: guardian disable 200 (got ${disable74.status})`);
     const d74 = disable74.body as { newClass: string; previousClass: string; adminActionId: string };
@@ -1854,12 +1854,12 @@ async function main() {
     const ev75 = await call('/api/capinfra/policy/evaluate', {
       method: 'POST',
       withAuth: true,
-      body: {
+      body: JSON.stringify({
         userId: 'usr_capinfra_smoke',
         assetId: axau!.id,
         actionType: 'BORROW',
         amount: '1',
-      },
+      }),
     });
     const r75 = ev75.body as { allowed: boolean; reasonCode: string };
     assert(r75.allowed === false, `75: AXAU BORROW post-disable denied`);
