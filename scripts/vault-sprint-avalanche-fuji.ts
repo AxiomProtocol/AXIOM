@@ -29,6 +29,7 @@ import {
 import { getAdapter } from '../lib/capinfra/adapters/registry';
 import { executeInstruction, externallySettleInstruction } from '../lib/capinfra/settlement';
 import { generateId } from '../lib/capinfra/ids';
+import { usdDecimalString } from '../lib/capinfra/money';
 import { FUJI_CONTRACTS, FUJI_CHAIN_ID } from '../shared/contracts-avalanche';
 
 type ProofStatus = 'PASS' | 'FAIL' | 'BLOCKED';
@@ -176,6 +177,19 @@ async function main() {
     `kind=${adapter.kind} name=${adapter.name}`,
   );
 
+  if (!process.env.DATABASE_URL) {
+    addCheck('B', 'DRY_RUN synthetic reference and no broadcast credit', 'BLOCKED', 'DATABASE_URL is required');
+    addCheck('C', 'LIVE dispatch broadcasts Fuji transaction', 'BLOCKED', 'DATABASE_URL is required');
+    addCheck('D', 'SUBMITTED does not credit portfolio', 'BLOCKED', 'DATABASE_URL is required');
+    addCheck('E', 'explicit confirmation required before SETTLED', 'BLOCKED', 'DATABASE_URL is required');
+    addCheck('F', 'duplicate confirmation does not double-credit', 'BLOCKED', 'DATABASE_URL is required');
+    addCheck('G', 'final state and balances reconcile', 'BLOCKED', 'DATABASE_URL is required');
+    console.log('\n=== Avalanche Gate 5 Fuji proof summary ===');
+    for (const c of checks) console.log(`${c.id}: ${c.status} — ${c.title}`);
+    console.log('\nGate 5 verdict: PENDING (BLOCKED)');
+    process.exit(2);
+  }
+
   await ensureTestUser();
   const asset = await ensureFujiAsset();
   const livePk = process.env.AVALANCHE_DEPLOYER_PRIVATE_KEY || process.env.DEPLOYER_PRIVATE_KEY || '';
@@ -239,12 +253,14 @@ async function main() {
 
     let settledStatus = 'UNKNOWN';
     let settleErr: string | null = null;
+    const webhookEventId = generateId('we');
     try {
       const settled = await externallySettleInstruction({
         instructionId: liveInstructionId,
         externalRef: txHash,
         settledAt: new Date(),
-        observedAmount: TEST_AMOUNT,
+        webhookEventId,
+        observedAmount: usdDecimalString(TEST_AMOUNT),
         observedAsset: asset.symbol,
         actor: 'vault-sprint-avalanche-fuji',
         correlationId: 'gate5-confirm',
@@ -271,7 +287,8 @@ async function main() {
         instructionId: liveInstructionId,
         externalRef: txHash,
         settledAt: new Date(),
-        observedAmount: TEST_AMOUNT,
+        webhookEventId,
+        observedAmount: usdDecimalString(TEST_AMOUNT),
         observedAsset: asset.symbol,
         actor: 'vault-sprint-avalanche-fuji',
         correlationId: 'gate5-confirm-replay',
