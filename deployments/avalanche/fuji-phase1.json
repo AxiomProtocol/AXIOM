@@ -7,35 +7,35 @@
   "contracts": {
     "IdentityRegistryStorage": {
       "address": "0xB66e7Ed8e0b9A1cE5928b5E562c44413d385e215",
-      "txHash": "0x4f87226a5413c3f997462912aef5f4337372fb01a5937357d4514e0990f671f6"
+      "txHash": "0x4f87226a"
     },
     "TrustedIssuersRegistry": {
       "address": "0x0dF7D62f7Eda24798f6840D5B10E453de097D324",
-      "txHash": "0x5cee7b1037ed9870ef1ac195b893ae61f86f4f88e8d889145ae032405ca35b80"
+      "txHash": "0x5cee7b10"
     },
     "ClaimTopicsRegistry": {
       "address": "0x207BE0EE444c82AC4252284a04e6D9101Dfa570c",
-      "txHash": "0xf23f2436bc501761c5ac8a963c652cc5e2a2d2c9e5f44bec73f7f30e53f2a341"
+      "txHash": "0xf23f2436"
     },
     "IdentityRegistry": {
       "address": "0x75ed20d260292D869f9Ec4F035Db4B93072D7963",
-      "txHash": "0x12e87b33dd86fcf45020f7dcaa3730d734ef9da246029000370ce4796b890134"
+      "txHash": "0x12e87b33"
     },
     "ModularCompliance": {
       "address": "0x67F6d464F66BFa988FC8a03Ae3711EDaD582CF66",
-      "txHash": "0x80cb549dd110f19ae789c4c40e10ac461c249fa4d29bdf39110763f00c841324"
+      "txHash": "0x80cb549d"
     },
     "CountryAllowModule": {
       "address": "0xe15Cf94D324cc8882015ed71C39F002e3709ec54",
-      "txHash": "0x855ecbcd75cfca28d07e931fb2e6a4241ab693711d24ed0e4d3d3de0d46051eb"
+      "txHash": "0x855ecbcd"
     },
     "TransferLimitModule": {
       "address": "0x8D550a2ff71b7b92E98377452A34D3cE56B687Bc",
-      "txHash": "0x4992bbb3f9be50b912a9fec451ccd6036f55d6dce89a727fd7c0c0c0d64f99fd"
+      "txHash": "0x4992bbb3"
     },
     "AxiomStable3643Fuji": {
       "address": "0x5Cd7c15C32e0630239eDE74241Ad65f3302BcAF8",
-      "txHash": "0xd638edff413e1e097710cd836f70fc034b1c7fa674f915ba75eedcff3525d2dc"
+      "txHash": "0xd638edff"
     }
   },
   "wiring": [
@@ -50,6 +50,6 @@
     "ModularCompliance.addModule(TransferLimitModule)",
     "CountryAllowModule.setAllowAll(MC, true) — Fuji testnet default",
     "IdentityRegistry.addAgent(deployer)",
-    "IdentityRegistry.registerIdentity(deployer) — smoke-test seed"
+    "IdentityRegistry.registerIdentity(deployer, deployer, 0) — smoke-test seed"
   ]
 }
