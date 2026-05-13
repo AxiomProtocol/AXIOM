@@ -163,9 +163,13 @@ if (!HAVE_SMOKE_BANK_CREDS) {
   );
 }
 
-if (!KEY) {
-  console.error('[capinfra-smoke] ADMIN_SOLVENCY_KEY missing');
-  process.exit(1);
+const HAVE_ADMIN_KEY = Boolean(KEY);
+if (!HAVE_ADMIN_KEY) {
+  console.warn(
+    '[capinfra-smoke] ADMIN_SOLVENCY_KEY not set — ' +
+      'all authenticated checks will be skipped. ' +
+      'Add ADMIN_SOLVENCY_KEY to GitHub Actions secrets to enable the full smoke suite.',
+  );
 }
 
 interface CallOptions extends RequestInit {
@@ -213,6 +217,13 @@ async function main() {
   const axusd = items.find((a) => a.symbol === 'AXUSD-TREASURY');
   assert(axau, 'AXAU asset present (run capinfra-seed first)');
   assert(axusd, 'AXUSD-TREASURY asset present (run capinfra-seed first)');
+
+  // Skip all authenticated checks when ADMIN_SOLVENCY_KEY is absent (CI without the secret).
+  if (!HAVE_ADMIN_KEY) {
+    if (_pool) await _pool.end().catch(() => {});
+    console.log('[capinfra-smoke] SKIPPED authenticated checks (no ADMIN_SOLVENCY_KEY). Open-read check #1 passed.');
+    process.exit(0);
+  }
 
   // 2. Authed write: ingest
   const ingest = await call('/api/capinfra/market-data/ingest', {
