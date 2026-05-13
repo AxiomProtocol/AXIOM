@@ -4,9 +4,9 @@
 **Version:** 1.0.0  
 **Created:** 2026-05-13  
 **Classification:** Internal — Operations + Technical Lead  
-**Status:** PENDING EXECUTION — funds present in two vaults  
+**Status:** WITHDRAWALS COMPLETE — both vaults empty as of 2026-05-13  
 
-> **Trigger:** Euler V2 is no longer in active use. Two Euler vaults still hold Axiom funds seeded by the Deployer EOA. These funds must be withdrawn to the Treasury Hub before Euler V2 is formally decommissioned.
+> **Trigger:** Euler V2 is no longer in active use. Two Euler vaults held Axiom funds seeded by the Deployer EOA. Withdrawals were executed on 2026-05-13 and confirmed on-chain. Code-layer decommissioning (Step 3 checklist below) is still pending.
 
 ---
 
@@ -14,14 +14,27 @@
 
 Queried live on Arbitrum One (chain ID 42161):
 
-| Contract | Address | Asset | Balance | Holder | Status |
+| Contract | Address | Asset | Balance (pre) | Balance (post) | Status |
 |---|---|---|---|---|---|
-| EVK Open Market Vault (eAXUSD-6) | `0xacdA87801f6409bB5157BA78aF1BD9631d6609B2` | AXUSD | **10,048.55 AXUSD** | Deployer EOA | ⚠️ WITHDRAWAL REQUIRED |
-| AXM EVK Vault (eAXM-1) | `0x8e28ffa89d168599156004db4f4d12c2af7c250e` | AXM | **10,039.94 AXM** | Deployer EOA | ⚠️ WITHDRAWAL REQUIRED |
-| Euler Earn Vault (earnAXUSD) | `0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B` | AXUSD | 0 | — | ✅ Already empty |
-| AxiomFeeBurner | `0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94` | AXUSD | 0 | — | ✅ Already empty |
-| EulerSwap AXUSD/USDC Pool | `0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8` | AXUSD + USDC | 0 / 0 | — | ✅ Already empty |
-| EVC | `0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066` | AXUSD | 0 | — | ✅ Already empty |
+| EVK Open Market Vault (eAXUSD-6) | `0xacdA87801f6409bB5157BA78aF1BD9631d6609B2` | AXUSD | 10,048.55 | **0** | ✅ WITHDRAWN — tx `0x435a1275` |
+| AXM EVK Vault (eAXM-1) | `0x8e28ffa89d168599156004db4f4d12c2af7c250e` | AXM | 10,039.94 | **0** | ✅ WITHDRAWN — tx `0x51a0607a` |
+| Euler Earn Vault (earnAXUSD) | `0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B` | AXUSD | 0 | 0 | ✅ Already empty |
+| AxiomFeeBurner | `0xF5d59581Eb0fd024aC1b2B67f1B290832eb8Cb94` | AXUSD | 0 | 0 | ✅ Already empty |
+| EulerSwap AXUSD/USDC Pool | `0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8` | AXUSD + USDC | 0 / 0 | 0 / 0 | ✅ Already empty |
+| EVC | `0x6302ef0F34100CDDFb5489fbcB6eE1AA95CD1066` | AXUSD | 0 | 0 | ✅ Already empty |
+
+### Executed Transactions
+
+| # | Contract | TX Hash | Block | Status |
+|---|---|---|---|---|
+| 1 | EVK Open Market Vault | [`0x435a12755feb4c71e21091ef8f77d04fb4b460efd8b7bb3b626e7c6aafeb4eff`](https://arbiscan.io/tx/0x435a12755feb4c71e21091ef8f77d04fb4b460efd8b7bb3b626e7c6aafeb4eff) | 462526199 | ✅ SUCCESS |
+| 2 | AXM EVK Vault | [`0x51a0607af1a1d5b2c6e572a7bcc9ab5772352536a6fea8cb16a29eb786626c84`](https://arbiscan.io/tx/0x51a0607af1a1d5b2c6e572a7bcc9ab5772352536a6fea8cb16a29eb786626c84) | 462526218 | ✅ SUCCESS |
+
+**Post-withdrawal Deployer wallet balances (confirmed on-chain):**
+- AXUSD: 10,074.05
+- AXM: 79,996,482.94
+- EVK shares remaining: 0 ✅
+- AXM vault shares remaining: 0 ✅
 
 **Share amounts held by Deployer EOA (exact wei values):**
 
