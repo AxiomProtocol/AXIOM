@@ -1,0 +1,144 @@
+{
+  "task": "Task #480 — Avalanche Fuji Live Smoke Tests",
+  "network": "avalancheFuji",
+  "chainId": 43113,
+  "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+  "contracts": {
+    "IdentityRegistryStorage": "0xB66e7Ed8e0b9A1cE5928b5E562c44413d385e215",
+    "TrustedIssuersRegistry": "0x0dF7D62f7Eda24798f6840D5B10E453de097D324",
+    "ClaimTopicsRegistry": "0x207BE0EE444c82AC4252284a04e6D9101Dfa570c",
+    "IdentityRegistry": "0x75ed20d260292D869f9Ec4F035Db4B93072D7963",
+    "ModularCompliance": "0x67F6d464F66BFa988FC8a03Ae3711EDaD582CF66",
+    "CountryAllowModule": "0xe15Cf94D324cc8882015ed71C39F002e3709ec54",
+    "TransferLimitModule": "0x8D550a2ff71b7b92E98377452A34D3cE56B687Bc",
+    "AxiomStable3643Fuji": "0x5Cd7c15C32e0630239eDE74241Ad65f3302BcAF8"
+  },
+  "startedAt": "2026-05-13T20:26:13.179Z",
+  "completedAt": "2026-05-13T20:26:53.439Z",
+  "total": 15,
+  "passed": 15,
+  "failed": 0,
+  "skipped": 0,
+  "results": [
+    {
+      "id": 1,
+      "name": "Token metadata (name/symbol/decimals/supply/paused)",
+      "status": "PASS",
+      "detail": "name=\"Axiom Stable USD\" symbol=\"AXUSD\" decimals=6 supply=0.0 paused=false",
+      "txHash": null,
+      "explorer": null
+    },
+    {
+      "id": 2,
+      "name": "Deployer admin/minter/agent roles",
+      "status": "PASS",
+      "detail": "isAdmin=true isMinter=true isAgent=true",
+      "txHash": null,
+      "explorer": null
+    },
+    {
+      "id": 3,
+      "name": "ModularCompliance bound to AxiomStable3643Fuji",
+      "status": "PASS",
+      "detail": "getTokenBound()=0x5Cd7c15C32e0630239eDE74241Ad65f3302BcAF8",
+      "txHash": null,
+      "explorer": null
+    },
+    {
+      "id": 4,
+      "name": "IdentityRegistry connected to TIR, CTR, IRS",
+      "status": "PASS",
+      "detail": "TIR=0x0df7d62f… CTR=0x207be0ee… IRS=0xb66e7ed8…",
+      "txHash": null,
+      "explorer": null
+    },
+    {
+      "id": 5,
+      "name": "CountryAllowModule and TransferLimitModule attached to MC",
+      "status": "PASS",
+      "detail": "modules=[0xe15Cf94D…, 0x8D550a2f…] CAM=true TLM=true",
+      "txHash": null,
+      "explorer": null
+    },
+    {
+      "id": 6,
+      "name": "Deployer verified + agent in IdentityRegistry",
+      "status": "PASS",
+      "detail": "isVerified=true isAgent=true",
+      "txHash": null,
+      "explorer": null
+    },
+    {
+      "id": 7,
+      "name": "Mint 1 000 AXUSD to deployer",
+      "status": "PASS",
+      "detail": "balance after mint: 1000.0 AXUSD",
+      "txHash": "0xd4e1aaa17120116224f69055d56288c4d0408efed187852442e921e38f373c70",
+      "explorer": "https://testnet.snowtrace.io/tx/0xd4e1aaa17120116224f69055d56288c4d0408efed187852442e921e38f373c70"
+    },
+    {
+      "id": 8,
+      "name": "Register second test wallet in IdentityRegistry",
+      "status": "PASS",
+      "detail": "registered 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "txHash": "0xb5d00a92cc6a31218ac530ccbe515b72454d94cf1fa8e73a08d665d4437ead43",
+      "explorer": "https://testnet.snowtrace.io/tx/0xb5d00a92cc6a31218ac530ccbe515b72454d94cf1fa8e73a08d665d4437ead43"
+    },
+    {
+      "id": 9,
+      "name": "Transfer 100 AXUSD to registered test wallet",
+      "status": "PASS",
+      "detail": "test wallet balance: 100.0 AXUSD",
+      "txHash": "0x359836e0be61441945c5228b60044882932bf817e6986c8ccc5263a998ad3038",
+      "explorer": "https://testnet.snowtrace.io/tx/0x359836e0be61441945c5228b60044882932bf817e6986c8ccc5263a998ad3038"
+    },
+    {
+      "id": 10,
+      "name": "Transfer to unregistered wallet reverts",
+      "status": "PASS",
+      "detail": "correctly reverted (RECEIVER_NOT_VERIFIED or compliance failure)",
+      "txHash": null,
+      "explorer": null
+    },
+    {
+      "id": 11,
+      "name": "TransferLimitModule: over-limit reverts, under-limit passes",
+      "status": "PASS",
+      "detail": "limit=200 AXUSD — over(300) reverted=true, under(150) tx=0xa61f737a4d…",
+      "txHash": "0xa61f737a4da48924323930ccea8f5e053a2ae4bd1e2f11e5c61a069ab27e88f5",
+      "explorer": "https://testnet.snowtrace.io/tx/0xa61f737a4da48924323930ccea8f5e053a2ae4bd1e2f11e5c61a069ab27e88f5"
+    },
+    {
+      "id": 12,
+      "name": "Pause blocks all transfers",
+      "status": "PASS",
+      "detail": "paused=true transferReverted=true",
+      "txHash": "0x9c66c014e53b91be84daa54c41ec4545cf0da3c9f0a0eb5115534d1ef22eb827",
+      "explorer": "https://testnet.snowtrace.io/tx/0x9c66c014e53b91be84daa54c41ec4545cf0da3c9f0a0eb5115534d1ef22eb827"
+    },
+    {
+      "id": 13,
+      "name": "Unpause restores transfers",
+      "status": "PASS",
+      "detail": "paused after unpause=false",
+      "txHash": "0x729c0463cdde53b25b55633422ecfc57ab741ce47ab61bec11495dfcbaec659b",
+      "explorer": "https://testnet.snowtrace.io/tx/0x729c0463cdde53b25b55633422ecfc57ab741ce47ab61bec11495dfcbaec659b"
+    },
+    {
+      "id": 14,
+      "name": "Freeze blocks receiver; unfreeze restores transfers",
+      "status": "PASS",
+      "detail": "frozenDuring=true transferReverted=true frozenAfter=false resumeOk=true",
+      "txHash": "0xe3e9ff3f763132c855c4c9e8fcb2a26719e56006bbece3ec844ee57f4293a646",
+      "explorer": "https://testnet.snowtrace.io/tx/0xe3e9ff3f763132c855c4c9e8fcb2a26719e56006bbece3ec844ee57f4293a646"
+    },
+    {
+      "id": 15,
+      "name": "Final state read — supply and balances",
+      "status": "PASS",
+      "detail": "totalSupply=1000.0 deployer=744.0 testWallet=256.0 paused=false",
+      "txHash": null,
+      "explorer": null
+    }
+  ]
+}
