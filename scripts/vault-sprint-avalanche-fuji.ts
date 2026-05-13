@@ -414,6 +414,8 @@ async function invariantC_LiveDispatch(): Promise<C_Result> {
   // C6: Find Transfer(from=0x0, to=deployer, value=SMOKE_MINT_RAW) in logs.
   const deployerPadded = `0x${DEPLOYER_ADDRESS.slice(2).toLowerCase().padStart(64, '0')}`;
   const logs = txReceipt.logs ?? [];
+  // ERC-20 Transfer value is ABI-encoded as a 32-byte uint256 in log.data.
+  const expectedData = `0x${SMOKE_MINT_RAW.toString(16).padStart(64, '0')}`;
   const transferLog = logs.find((log) => {
     const t = log.topics ?? [];
     return (
@@ -421,7 +423,9 @@ async function invariantC_LiveDispatch(): Promise<C_Result> {
       // from = zero address (mint)
       t[1] === '0x0000000000000000000000000000000000000000000000000000000000000000' &&
       // to = deployer
-      t[2]?.toLowerCase() === deployerPadded.toLowerCase()
+      t[2]?.toLowerCase() === deployerPadded.toLowerCase() &&
+      // value == SMOKE_MINT_RAW (ABI-encoded in data)
+      log.data?.toLowerCase() === expectedData.toLowerCase()
     );
   });
   const foundTransfer = transferLog !== undefined;
@@ -429,8 +433,8 @@ async function invariantC_LiveDispatch(): Promise<C_Result> {
     'C6 Transfer(0x0→deployer, value=SMOKE_MINT_RAW) event in tx logs',
     foundTransfer,
     foundTransfer
-      ? `found Transfer event in tx logs for deployer=${DEPLOYER_ADDRESS.slice(0, 10)}… — mint confirmed`
-      : `Transfer event NOT found in ${logs.length} log(s) for this txHash`,
+      ? `found Transfer event — from=0x0 to=deployer value=${SMOKE_MINT_RAW} (data=${expectedData}) — mint confirmed`
+      : `Transfer event NOT found in ${logs.length} log(s); expected data=${expectedData} (SMOKE_MINT_RAW=${SMOKE_MINT_RAW})`,
   );
 
   // Snapshot post-dispatch balance (for G delta check).
@@ -741,7 +745,9 @@ function printReport(liveTxHash: string | null, liveBlocker: string | null) {
   }
   console.log('══════════════════════════════════════════════════════════\n');
 
-  if (blockingFailures.length > 0) process.exit(1);
+  // Exit non-zero whenever Gate 5 is not fully satisfied — including LIVE_BLOCKER
+  // states (missing LIVE env / funds) — so CI/automation never gets a false-green.
+  if (!allPass || blockingFailures.length > 0) process.exit(1);
 }
 
 // ═══════════════════════════════════════════════════════════════════
