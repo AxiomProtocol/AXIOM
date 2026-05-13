@@ -558,14 +558,16 @@ describe('/api/admin/oracle-fallbacks-prune-csv handler', () => {
 // SELECT query and the on-disk table schema (column names, types, ordering)
 // that mocked unit tests cannot detect.
 //
-// Skipped unless both TEST_DATABASE_URL and ADMIN_SOLVENCY_KEY are set so CI
-// environments without a test DB or running Next.js server do not produce
-// false failures.
+// Skipped unless TEST_DATABASE_URL, ADMIN_SOLVENCY_KEY, and CAPINFRA_BASE_URL
+// are all set. CAPINFRA_BASE_URL must point at a running Next.js server (e.g.
+// http://localhost:5000). Without it the fetch calls have nowhere to connect
+// and will always produce ECONNREFUSED rather than a test failure.
 
 const INTEGRATION_DB_URL = process.env.TEST_DATABASE_URL;
 const INTEGRATION_ADMIN_KEY = process.env.ADMIN_SOLVENCY_KEY;
+const INTEGRATION_BASE_URL = process.env.CAPINFRA_BASE_URL ?? null;
 const integrationDescribe =
-  INTEGRATION_DB_URL && INTEGRATION_ADMIN_KEY ? describe : describe.skip;
+  INTEGRATION_DB_URL && INTEGRATION_ADMIN_KEY && INTEGRATION_BASE_URL ? describe : describe.skip;
 
 integrationDescribe('/api/admin/oracle-fallbacks-prune-csv integration (real DB)', () => {
   let pgPool: Pool;
@@ -661,7 +663,7 @@ integrationDescribe('/api/admin/oracle-fallbacks-prune-csv integration (real DB)
     });
 
     const resp = await fetch(
-      `http://localhost:${process.env.PORT ?? 3000}/api/admin/oracle-fallbacks-prune-csv`,
+      `${INTEGRATION_BASE_URL}/api/admin/oracle-fallbacks-prune-csv`,
       { headers: { 'x-admin-key': INTEGRATION_ADMIN_KEY ?? '' } },
     );
 
@@ -752,7 +754,7 @@ integrationDescribe('/api/admin/oracle-fallbacks-prune-csv integration (real DB)
     });
 
     const url =
-      `http://localhost:${process.env.PORT ?? 3000}/api/admin/oracle-fallbacks-prune-csv` +
+      `${INTEGRATION_BASE_URL}/api/admin/oracle-fallbacks-prune-csv` +
       `?from=${encodeURIComponent(fromAt.toISOString())}` +
       `&to=${encodeURIComponent(toAt.toISOString())}`;
 
