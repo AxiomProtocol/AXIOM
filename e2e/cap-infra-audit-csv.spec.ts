@@ -169,7 +169,8 @@ test.describe('Audit Search — Download CSV', () => {
 
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i].split(',');
-      expect(cols[1], `row ${i} Aggregate column must be policy_decision`).toBe('policy_decision');
+      // Aggregate column contains "aggregateType aggregateId" (space-separated) in one cell.
+      expect(cols[1], `row ${i} Aggregate column must start with policy_decision`).toMatch(/^policy_decision/);
     }
 
     fs.unlinkSync(tmpPath);
