@@ -1,10 +1,13 @@
 # Axiom Protocol — Avalanche vs Arbitrum Control-Layer Decision Memo
 
 **Document type:** Strategic architecture decision memo  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Analysis date:** 2026-05-13  
+**Amended:** 2026-05-13 — Euler V2 references removed (no longer in use); grounded in `AXIOM_CHAIN_ALLOCATION_BLUEPRINT.md`  
 **Prepared for:** Task #484  
 **Classification:** Internal — Technical Leadership + Compliance Counsel  
+
+> **Authoritative strategic context:** This memo is written in alignment with `documents/chains/AXIOM_CHAIN_ALLOCATION_BLUEPRINT.md` (generated 2026-05-11), which is the canonical chain responsibility document for Axiom Protocol. All chain role assignments, source-of-truth rules, and non-negotiable design principles in the Blueprint apply here and supersede any earlier chain planning documents.
 
 > **Authorization statement:** This memo does not authorize Avalanche C-Chain mainnet deployment. All 12 mainnet promotion gates defined in `AXIOM_AVALANCHE_MAINNET_PROMOTION_GATES.md` must be satisfied and signed off by technical lead, operations lead, and compliance counsel before the first mainnet transaction is broadcast. The recommended option in this memo is a future-state intent — it does not modify current deployment status.
 
@@ -40,8 +43,8 @@ This recommendation is grounded in:
 |---|---|---|
 | Core infrastructure (AXM, Identity, Treasury, Staking, Credentials, Land Registry) | 6 | Active — all API routes integrated |
 | AXUSD GENIUS Act stack (token, oracle, rate limiter, vault, PSM, backstop, compliance, custody) | 13 | Active — peg-status, supply, treasury-health APIs call these |
-| Euler V2 lending markets (EVK vault, Earn vault, EVC, IRM, collateral vaults) | 11 | Active — lending and yield APIs integrated |
-| EulerSwap pools (AXUSD/USDC, AXUSD/AXM, AXM EVK vault) | 3 | Active — lp-analytics API integrated |
+| Euler V2 lending markets (EVK vault, Earn vault, EVC, IRM, collateral vaults) | 11 | Deployed — **no longer in active use** |
+| EulerSwap pools (AXUSD/USDC, AXUSD/AXM, AXM EVK vault) | 3 | Deployed — **no longer in active use** |
 | Real estate lending (FixFlip vault, manager, DSCR vault, manager, risk configs) | 10 | Active — lending fund APIs integrated |
 | Land acquisition (LandOptionRegistry, pool, RegCF, BuilderFarmerCredit) | 4 | Active — land acquisition service integrated |
 | Governance (GovernanceHub with timelock, risk committee, emergency pause) | 1 | Active — controls lending risk parameters |
@@ -69,14 +72,14 @@ The Arbitrum ERC-3643 stack is deployed and actively integrated. It serves as th
 | CountryAllowModule | `0xfa3404d1085a10c5E83514BE24E969b4De960f3C` | Yes |
 | MaxBalanceModule | `0xf3C460Dd6db0D3b0b421be6cBbb32D677ea60145` | Yes |
 | TransferLimitModule | `0xa4062e0C2B70921c56291D3e7f05f088Ce7BBEaE` | Yes |
-| LendingPlatformModule | `0xC0177120Fb5922813031a5857f4dF7F01750Bb6F` | Yes — Euler vault whitelist |
+| LendingPlatformModule | `0xC0177120Fb5922813031a5857f4dF7F01750Bb6F` | Deployed — whitelist module (Euler V2 no longer in use) |
 
 ### 2.3 Operations Infrastructure
 
 - **Solvency system:** `solvency_snapshots` table in PostgreSQL, auto-ingested. APIs: `/api/solvency/latest`, `/api/solvency/treasury-health`
 - **AXUSD supply:** `/api/axusd/supply.ts` — reads ERC-3643 AXUSD totalSupply on Arbitrum via Alchemy RPC
 - **Peg stability:** `/api/axusd/peg-status.ts`, `/api/axusd/psm.ts`, `/api/axusd/pools.ts`
-- **Lending:** `/api/axusd/liquidity.ts`, `/api/axusd/lp-analytics.ts`, `/api/axusd/incentives.ts`
+- **Lending:** `/api/axusd/liquidity.ts`, `/api/axusd/lp-analytics.ts`, `/api/axusd/incentives.ts` — note: Euler V2 routes remain in code but Euler V2 is no longer in active use
 - **DePIN:** depinEventListener.ts active
 - No `/operations/arbitrum-status` dedicated page — monitoring is distributed across individual API routes
 
@@ -99,7 +102,7 @@ The Arbitrum ERC-3643 stack is deployed and actively integrated. It serves as th
 - AXUSD supply tracked exclusively on Arbitrum One — no cross-chain aggregation
 - Backstop vaults: USDC backstop (`0x54438…`), ETH backstop (`0xF2540…`), T-bill vault (`0x091c1…`)
 - Solvency snapshots stored in PostgreSQL, computed from Arbitrum on-chain reads
-- Euler V2 open market vault: 1M AXUSD supply cap, 500K borrow cap, USDC collateral
+- Euler V2 contracts remain deployed but are no longer in use; the yield/lending layer is currently inactive
 
 ---
 
@@ -149,11 +152,11 @@ Per Task #483 gap analysis: 1/12 gates satisfied, 11/12 open. See `AXIOM_AVALANC
 | **ERC-3643 deployment** | Full stack, live, integrated | Full stack, Fuji only, smoke-tested |
 | **Compliance modules** | CountryAllow, MaxBalance, TransferLimit, LendingPlatform | CountryAllow, TransferLimit (setAllowAll=true on Fuji) |
 | **Identity architecture** | ONCHAINID (ERC-734/735) — claim-based, KYC claim topics, TIR | Same ONCHAINID / T-REX pattern — functionally identical |
-| **Permissioned transfer enforcement** | Active — verified for Euler vault whitelist, KYC claims | Active on Fuji — tested smoke tests T09/T10 |
+| **Permissioned transfer enforcement** | Active — KYC claims, compliance modules live | Active on Fuji — tested smoke tests T09/T10 |
 | **Modular compliance extensibility** | 4 modules deployed; LendingPlatformModule is Arbitrum-specific | 2 modules; same framework, extensible |
 | **Active contracts** | 53 integrated + ~28 deployed | 8 (Fuji) + 0 (mainnet) |
 | **Active API integrations** | 15+ live API routes, solvency, supply, peg, lending, DePIN | 1 (fuji-status) |
-| **DeFi liquidity** | Euler V2 (EVK + Earn), EulerSwap (AXUSD/USDC + AXUSD/AXM pools), Camelot | None |
+| **DeFi liquidity** | Camelot (AXUSD/USDC LP pool). Euler V2 and EulerSwap contracts deployed but no longer in active use. | None |
 | **Governance** | GovernanceHub timelock (lending risk parameters) | None |
 | **Reserve system** | Solvency snapshots, backstop vaults, PSM, T-bill vault | None — no reserve model exists |
 | **Supply tracking** | Real-time via Alchemy, stored in PostgreSQL snapshots | Not implemented |
@@ -167,7 +170,7 @@ Per Task #483 gap analysis: 1/12 gates satisfied, 11/12 open. See `AXIOM_AVALANC
 | **Block time** | ~0.25s | ~2s |
 | **EVM compatibility** | Full | Full (C-Chain is EVM-equivalent) |
 | **Institutional RWA perception** | Established L2 with large DeFi ecosystem | Growing — AvalancheGo, Spruce subnet, Evergreen interest |
-| **Enterprise / institutional partners** | Arbitrum ecosystem (GMX, Aave, Uniswap, Euler) | Avalanche institutional subnets (Spruce, others) |
+| **Enterprise / institutional partners** | Arbitrum ecosystem (GMX, Aave, Uniswap) | Avalanche institutional subnets (Spruce, others) |
 | **Ecosystem maturity** | TVL ~$3B+, deep liquidity | TVL growing; institutional subnets gaining traction |
 | **Bridge infrastructure** | Arbitrum bridge, Hop, Across, LayerZero | Avalanche bridge, LayerZero |
 | **Migration cost to switch** | Baseline (already here) | Very high — 53+ contracts, all API routes, all Capinfra adapters |
@@ -211,8 +214,8 @@ Per Task #483 gap analysis: 1/12 gates satisfied, 11/12 open. See `AXIOM_AVALANC
 
 | Risk | Arbitrum | Avalanche |
 |---|---|---|
-| DeFi liquidity access | Full Euler V2 ecosystem active; AXUSD liquidity in EulerSwap pools | None — no liquidity layer planned for control-layer role |
-| DEX availability | EulerSwap, Camelot on Arbitrum | No Axiom-relevant DEX integration planned |
+| DeFi liquidity access | Camelot AXUSD/USDC LP pool active. Euler V2 and EulerSwap no longer in use — yield/lending layer currently inactive. | None — no liquidity layer planned for control-layer role |
+| DEX availability | Camelot on Arbitrum | No Axiom-relevant DEX integration planned |
 | Bridge availability | Mature bridge infrastructure | Bridge infrastructure exists but Axiom not yet integrated |
 | Ecosystem dependency | Arbitrum governance decisions affect all contracts | Avalanche C-Chain is stable; control-layer role minimizes DeFi exposure |
 
@@ -222,8 +225,6 @@ A full replacement of Arbitrum with Avalanche is not recommended. For informatio
 
 - **87 deployed contracts** would need to be redeployed or bridged on Avalanche
 - **15+ API routes** reading Arbitrum RPC would need to be ported
-- **Euler V2 integration** — Euler does not have a live deployment on Avalanche C-Chain; the entire yield layer would be lost or need alternative
-- **EulerSwap pools** with existing liquidity — cannot be migrated; liquidity would need to be withdrawn and re-seeded
 - **Solvency snapshot system** — Arbitrum-specific; full rebuild required
 - **User AXUSD balances** — all existing holders would need to migrate or bridge
 - **GovernanceHub** — would need to be recreated on Avalanche
@@ -248,21 +249,20 @@ This recommendation reflects:
 Avalanche C-Chain with the ERC-3643 stack is well-suited for: authorizing issuance of AXUSD, enforcing cross-chain compliance policies, managing reserve authorization, and applying modular compliance rules before assets are settled on Arbitrum. This is a distinct function from Arbitrum's role as the settlement and liquidity layer.
 
 **3. Full migration has prohibitive cost and no net compliance gain.**  
-Replacing Arbitrum with Avalanche would require rebuilding 87 contracts, porting all API routes, losing the Euler V2 liquidity layer (which has no Avalanche equivalent), and migrating all existing AXUSD balances. There is no compliance or regulatory benefit that justifies this — both chains support the same ERC-3643 framework identically.
+Replacing Arbitrum with Avalanche would require rebuilding 87 contracts, porting all API routes, and migrating all existing AXUSD balances. There is no compliance or regulatory benefit that justifies this — both chains support the same ERC-3643 framework identically. Note: Euler V2 is no longer in use, so the yield/lending layer is not a migration dependency, but the core settlement infrastructure, solvency system, ERC-3643 identity stack, real estate lending, land acquisition, DePIN, and governance contracts all remain on Arbitrum and would need to be fully rebuilt.
 
 **4. Avalanche is not production-ready today — 11/12 mainnet gates are open.**  
 Any discussion of Avalanche as the primary layer is premature until all 12 gates are satisfied. The hybrid model allows Avalanche readiness to be built without halting Arbitrum operations.
 
-**5. The hybrid model avoids ecosystem lock-in.**  
-Maintaining Arbitrum as the execution layer preserves access to the Euler V2 yield ecosystem, EulerSwap liquidity, and the Arbitrum DeFi infrastructure. None of this is replicated on Avalanche today.
+**5. The Chain Allocation Blueprint already defines this split.**  
+`documents/chains/AXIOM_CHAIN_ALLOCATION_BLUEPRINT.md` establishes that Arbitrum is the canonical chain for identity, reserve accounting, AXUSD issuance state, policy decisions, and solvency/disclosure state. Avalanche is designated as the future reserve/policy core — additive, not a replacement. This memo implements that blueprint, not a new direction.
 
 ### What "Controlled Hybrid" Means Concretely
 
 | Function | Chain | Rationale |
 |---|---|---|
-| AXUSD settlement and transfers | Arbitrum One | Live, integrated, Euler liquidity available |
+| AXUSD settlement and transfers | Arbitrum One | Live, integrated, canonical supply on Arbitrum |
 | AXUSD supply tracking | Arbitrum One | solvency system, supply API — extend to aggregate Avalanche when live |
-| Euler lending market (borrow/supply AXUSD) | Arbitrum One | No Euler on Avalanche |
 | PSM, backstop, peg management | Arbitrum One | Live — do not disrupt |
 | Real estate lending (FixFlip, DSCR) | Arbitrum One | Live — do not migrate |
 | Land acquisition contracts | Arbitrum One | Live — do not migrate |
