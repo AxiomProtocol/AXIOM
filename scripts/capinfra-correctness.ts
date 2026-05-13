@@ -116,12 +116,9 @@ async function insertVerifiedAchWebhookEvent(payload: Record<string, unknown>): 
   return id;
 }
 
-async function getAssets(): Promise<{ axau: AssetRow; axusd: AssetRow } | null> {
+async function getAssets(): Promise<{ axau: AssetRow; axusd: AssetRow }> {
   const res = await call('/api/capinfra/assets', { withAuth: false });
-  if (res.status === 500) {
-    return null;
-  }
-  assert(res.status === 200, `assets 200 (got ${res.status})`);
+  assert(res.status === 200, `assets 200 (got ${res.status}) — run capinfra-seed first to populate AXAU/AXUSD-TREASURY rows`);
   const items = (res.body as { items: AssetRow[] }).items;
   const axau = items.find((a) => a.symbol === 'AXAU');
   const axusd = items.find((a) => a.symbol === 'AXUSD-TREASURY');
@@ -556,15 +553,7 @@ async function testAchSubmittedConfirmLifecycle(axau: AssetRow): Promise<void> {
 
 async function main() {
   console.log(`[capinfra-correctness] base=${BASE}`);
-  const assets = await getAssets();
-  if (!assets) {
-    console.log(
-      '[capinfra-correctness] SKIPPED (assets returned 500 — cap_assets table not seeded in this environment; ' +
-      'run capinfra-seed first to populate AXAU/AXUSD-TREASURY rows).',
-    );
-    process.exit(0);
-  }
-  const { axau } = assets;
+  const { axau } = await getAssets();
   await testPolicyIdempotency(axau);
   await testAuditPagination(axau);
   await testAchMissingRemoteNoSettle();
