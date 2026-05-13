@@ -1461,16 +1461,42 @@ async function main() {
     }
   }
 
-  // 67. Concentration cap denial: publish policy with maxSingleCounterpartyPctOfDaily=0.001 → $2 denied.
+  // 67. Concentration cap denial: publish policy with maxSingleCounterpartyPctOfDaily=0.01 → $2 denied.
   {
-    // dailyAggregateCapUsd=1000 so (10+2)/1000 = 1.2% which exceeds the 1% concentration cap,
-    // while keeping total ($12) well under $1000 daily cap so the daily check doesn't fire first.
+    // dailyAggregateCapUsd=1000, concentration cap 1%.
+    // First we authorize a $10 baseline instruction for SMOKE_USER so it lands in AUTHORIZED
+    // status (a COUNTED_STATUS). Then: (10+2)/1000 = 1.2% > 1% → the $2 instruction is denied.
+    // The baseline $10 itself passes because 10/1000 = 1.0% which is not > 1% (strict).
+    // This makes check 67 self-contained regardless of whether checks #56-#60 were skipped
+    // (they are skipped in CI when Increase bank credentials are absent).
     const policyId67 = await setAchCapPolicy({
       perInstructionCapUsd: 5000,
       dailyAggregateCapUsd: 1000,
       maxSingleCounterpartyPctOfDaily: 0.01,
     });
     try {
+      // Pre-condition: authorize a $10 instruction to establish a prior position in AUTHORIZED status.
+      const siBase67 = await call('/api/capinfra/settlement/instructions', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: SMOKE_USER,
+          assetId: achAsset!.id,
+          actionType: 'MINT',
+          settlementType: 'ACH',
+          amount: '10',
+          idempotencyKey: `smoke-67-base-${Date.now()}`,
+          correlationId: 'smoke-67-base',
+        }),
+      });
+      assert(siBase67.status === 201, `check 67: create $10 baseline instruction 201 (got ${siBase67.status})`);
+      const siBaseId67 = ((siBase67.body as { instruction: { id: string } }).instruction).id;
+      const authBase67 = await call(`/api/capinfra/settlement/instructions/${siBaseId67}/authorize`, {
+        method: 'POST',
+        body: JSON.stringify({ correlationId: 'smoke-67-base-auth' }),
+      });
+      assert(authBase67.status === 200, `check 67: baseline $10 authorize 200 (got ${authBase67.status})`);
+
+      // Now the $2 instruction should be denied: (10+2)/1000 = 1.2% > 1%.
       const si67 = await call('/api/capinfra/settlement/instructions', {
         method: 'POST',
         body: JSON.stringify({
@@ -1491,7 +1517,7 @@ async function main() {
         body: JSON.stringify({ correlationId: 'smoke-67-auth' }),
       });
       console.log('  67. concentration cap denial →', auth67.status);
-      assert(auth67.status === 422, `check 67: authorize $2 (conc=0.001) denied 422 (got ${auth67.status})`);
+      assert(auth67.status === 422, `check 67: authorize $2 (conc=0.01) denied 422 (got ${auth67.status})`);
       const a67 = auth67.body as { error?: string; reasonCode?: string; code?: string };
       const code67 = a67.reasonCode ?? a67.code ?? a67.error ?? '';
       assert(
