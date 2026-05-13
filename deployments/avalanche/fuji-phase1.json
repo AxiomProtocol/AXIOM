@@ -1,55 +1,55 @@
 {
-  "network": "hardhat",
+  "network": "avalancheFuji",
   "chainId": 43113,
-  "deployedAt": "2026-05-13T20:12:30.268Z",
-  "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-  "dryRun": true,
+  "deployedAt": "2026-05-13T19:58:41.116Z",
+  "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+  "dryRun": false,
   "contracts": {
     "IdentityRegistryStorage": {
-      "address": "0xDRYRUN00000000000000000000000000000000000",
-      "txHash": null
+      "address": "0xB66e7Ed8e0b9A1cE5928b5E562c44413d385e215",
+      "txHash": "0x4f87226a"
     },
     "TrustedIssuersRegistry": {
-      "address": "0xDRYRUN00000000000000000000000000000000001",
-      "txHash": null
+      "address": "0x0dF7D62f7Eda24798f6840D5B10E453de097D324",
+      "txHash": "0x5cee7b10"
     },
     "ClaimTopicsRegistry": {
-      "address": "0xDRYRUN00000000000000000000000000000000002",
-      "txHash": null
+      "address": "0x207BE0EE444c82AC4252284a04e6D9101Dfa570c",
+      "txHash": "0xf23f2436"
     },
     "IdentityRegistry": {
-      "address": "0xDRYRUN00000000000000000000000000000000003",
-      "txHash": null
+      "address": "0x75ed20d260292D869f9Ec4F035Db4B93072D7963",
+      "txHash": "0x12e87b33"
     },
     "ModularCompliance": {
-      "address": "0xDRYRUN00000000000000000000000000000000004",
-      "txHash": null
+      "address": "0x67F6d464F66BFa988FC8a03Ae3711EDaD582CF66",
+      "txHash": "0x80cb549d"
     },
     "CountryAllowModule": {
-      "address": "0xDRYRUN00000000000000000000000000000000005",
-      "txHash": null
+      "address": "0xe15Cf94D324cc8882015ed71C39F002e3709ec54",
+      "txHash": "0x855ecbcd"
     },
     "TransferLimitModule": {
-      "address": "0xDRYRUN00000000000000000000000000000000006",
-      "txHash": null
+      "address": "0x8D550a2ff71b7b92E98377452A34D3cE56B687Bc",
+      "txHash": "0x4992bbb3"
     },
     "AxiomStable3643Fuji": {
-      "address": "0xDRYRUN00000000000000000000000000000000007",
-      "txHash": null
+      "address": "0x5Cd7c15C32e0630239eDE74241Ad65f3302BcAF8",
+      "txHash": "0xd638edff"
     }
   },
   "wiring": [
-    "DRY-RUN: IdentityRegistryStorage.init()",
-    "DRY-RUN: TrustedIssuersRegistry.init()",
-    "DRY-RUN: ClaimTopicsRegistry.init()",
-    "DRY-RUN: IdentityRegistry.init(TIR, CTR, IRS)",
-    "DRY-RUN: ModularCompliance.init()",
-    "DRY-RUN: IdentityRegistryStorage.bindIdentityRegistry(IR)",
-    "DRY-RUN: ModularCompliance.bindToken(AxiomStable3643Fuji)",
-    "DRY-RUN: ModularCompliance.addModule(CountryAllowModule)",
-    "DRY-RUN: ModularCompliance.addModule(TransferLimitModule)",
-    "DRY-RUN: CountryAllowModule.setAllowAll(MC, true) — Fuji testnet default",
-    "DRY-RUN: IdentityRegistry.addAgent(deployer)",
-    "DRY-RUN: IdentityRegistry.registerIdentity(deployer) — smoke-test seed"
+    "IdentityRegistryStorage.init()",
+    "TrustedIssuersRegistry.init()",
+    "ClaimTopicsRegistry.init()",
+    "IdentityRegistry.init(TIR, CTR, IRS)",
+    "ModularCompliance.init()",
+    "IdentityRegistryStorage.bindIdentityRegistry(IR)",
+    "ModularCompliance.bindToken(AxiomStable3643Fuji)",
+    "ModularCompliance.addModule(CountryAllowModule)",
+    "ModularCompliance.addModule(TransferLimitModule)",
+    "CountryAllowModule.setAllowAll(MC, true) — Fuji testnet default",
+    "IdentityRegistry.addAgent(deployer)",
+    "IdentityRegistry.registerIdentity(deployer, deployer, 0) — smoke-test seed"
   ]
 }
