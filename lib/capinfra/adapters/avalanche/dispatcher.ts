@@ -26,6 +26,7 @@ import {
   effectiveModeForAsset,
   avalancheRpcUrl,
   deployerPrivateKey,
+  assertChainEnabled,
   SUPPORTED_LIVE_CHAIN_IDS,
 } from './config';
 import { generateId } from '../../ids';
@@ -148,6 +149,9 @@ const ERC20_MINIMAL_ABI = [
 async function liveDispatch(input: AdapterDispatchInput): Promise<AdapterDispatchResult> {
   const { instruction, asset } = input;
 
+  // Gate: both multichain flags must be set for LIVE broadcast.
+  assertChainEnabled();
+
   if (!asset.contractAddress) {
     throw new Error(`avalanche-adapter: asset ${asset.symbol} has no contractAddress`);
   }
@@ -170,8 +174,9 @@ async function liveDispatch(input: AdapterDispatchInput): Promise<AdapterDispatc
   }
 
   // Lazy ethers import so DRY_RUN environments don't pay the load cost.
+  // Pass chainId to prefer AVALANCHE_FUJI_RPC_URL for Fuji (43113).
   const { ethers } = await import('ethers');
-  const provider = new ethers.JsonRpcProvider(avalancheRpcUrl());
+  const provider = new ethers.JsonRpcProvider(avalancheRpcUrl(chainId));
   const wallet = new ethers.Wallet(deployerPrivateKey(), provider);
   const contract = new ethers.Contract(asset.contractAddress, ERC20_MINIMAL_ABI, wallet);
 
