@@ -12,6 +12,7 @@
  */
 
 import type { AdapterMode } from '../types';
+import { isChainEnabled, isMultichainEnabled } from '../../../chains/capabilities';
 
 export const AVALANCHE_ADAPTER_KIND = 'AVALANCHE';
 
@@ -27,6 +28,15 @@ export function resolveMode(): AdapterMode {
   const raw = (process.env.AVALANCHE_ADAPTER_MODE || 'DRY_RUN').toUpperCase();
   if ((VALID_MODES as string[]).includes(raw)) return raw as AdapterMode;
   return 'DRY_RUN';
+}
+
+export function assertLiveModeEnabled(): void {
+  if (!isMultichainEnabled()) {
+    throw new Error('avalanche-adapter: MULTICHAIN_ENABLED=true is required for LIVE mode');
+  }
+  if (!isChainEnabled('avalanche')) {
+    throw new Error('avalanche-adapter: CHAIN_AVALANCHE_ENABLED=true is required for LIVE mode');
+  }
 }
 
 export function resolveAllowlist(): Set<string> {
@@ -46,17 +56,21 @@ export function effectiveModeForAsset(symbol: string, baseMode: AdapterMode): Ad
 }
 
 export function avalancheRpcUrl(): string {
-  const url = process.env.AVALANCHE_RPC_URL;
+  const url = process.env.AVALANCHE_FUJI_RPC_URL || process.env.AVALANCHE_RPC_URL;
   if (!url) {
-    throw new Error('avalanche-adapter: AVALANCHE_RPC_URL is required for LIVE mode');
+    throw new Error(
+      'avalanche-adapter: AVALANCHE_FUJI_RPC_URL (or AVALANCHE_RPC_URL fallback) is required for LIVE mode',
+    );
   }
   return url;
 }
 
 export function deployerPrivateKey(): string {
-  const pk = process.env.DEPLOYER_PRIVATE_KEY;
+  const pk = process.env.AVALANCHE_DEPLOYER_PRIVATE_KEY || process.env.DEPLOYER_PRIVATE_KEY;
   if (!pk) {
-    throw new Error('avalanche-adapter: DEPLOYER_PRIVATE_KEY is required for LIVE mode');
+    throw new Error(
+      'avalanche-adapter: AVALANCHE_DEPLOYER_PRIVATE_KEY (or DEPLOYER_PRIVATE_KEY fallback) is required for LIVE mode',
+    );
   }
   return pk;
 }

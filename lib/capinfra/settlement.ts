@@ -424,7 +424,7 @@ export async function executeInstruction(
   });
   await _dispatchNotifications(await buildCtx(executing, 'settlement.executing', correlationId));
 
-  const adapter = getAdapter(asset.settlementType);
+  const adapter = getAdapter(resolveAdapterKind(asset));
   let receipt;
   try {
     receipt = await adapter.dispatch({ instruction: executing, asset });
@@ -553,6 +553,18 @@ export async function executeInstruction(
   });
   await _dispatchNotifications(await buildCtx(settled, 'settlement.settled', correlationId));
   return settled;
+}
+
+function resolveAdapterKind(asset: CapAsset): string {
+  if (asset.settlementType !== 'EVM') return asset.settlementType;
+
+  const chain = (asset.chain ?? '').toLowerCase();
+  if (chain.includes('avalanche') || chain.includes('fuji')) return 'AVALANCHE';
+
+  const chainId = asset.chainId ?? null;
+  if (chainId === 43113 || chainId === 43114) return 'AVALANCHE';
+
+  return 'EVM';
 }
 
 // ── ACH instruction executor (mode-aware) ─────────────────────────

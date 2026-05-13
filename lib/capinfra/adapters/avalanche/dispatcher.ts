@@ -27,8 +27,10 @@ import {
   avalancheRpcUrl,
   deployerPrivateKey,
   SUPPORTED_LIVE_CHAIN_IDS,
+  assertLiveModeEnabled,
 } from './config';
 import { generateId } from '../../ids';
+import { createHash } from 'crypto';
 
 // ── Recipient parsing ──────────────────────────────────────────────
 
@@ -102,8 +104,19 @@ function dryRunDispatch(
   const { instruction, asset } = input;
   const route = resolveRoute(input);
   const decimals = asset.decimals ?? 18;
-  const suffix = generateId('inst').slice(-12);
-  const externalRef = `0xavadry-${instruction.id.slice(-16)}-${suffix}`;
+  const key = [
+    instruction.id,
+    instruction.actionType,
+    instruction.amount,
+    asset.symbol,
+    String(asset.chainId ?? ''),
+    String(asset.contractAddress ?? ''),
+    String(route.to ?? ''),
+    String(route.from ?? ''),
+    reason,
+  ].join('|');
+  const digest = createHash('sha256').update(key).digest('hex').slice(0, 32);
+  const externalRef = `0xavadry-${digest}`;
 
   let amountWei: string | null = null;
   try {
@@ -227,6 +240,7 @@ export async function dispatchAvalanche(
 ): Promise<AdapterDispatchResult> {
   const baseMode = resolveMode();
   if (baseMode === 'DISABLED') throw new AdapterDisabledError('AVALANCHE');
+  if (baseMode === 'LIVE') assertLiveModeEnabled();
   const mode = effectiveModeForAsset(input.asset.symbol, baseMode);
   if (mode === 'DRY_RUN') {
     return dryRunDispatch(input, baseMode === 'LIVE' ? 'asset_not_allowlisted' : 'mode');
