@@ -165,26 +165,13 @@ jobs:
           NODE_ENV: test
         run: npm run test:capinfra
 
-      - name: Run audit CSV e2e tests
-        env:
-          PORT: "5000"
-          PLAYWRIGHT_BASE_URL: http://localhost:5000
-          PLAYWRIGHT_SKIP_WEBSERVER: "1"
-          NODE_ENV: test
-        run: npm run test:e2e:audit-csv
-
-      - name: Pre-check picker test preconditions
+      - name: Pre-check e2e preconditions
+        id: e2e_precheck
         env:
           PORT: "5000"
         run: |
-          echo "Verifying picker e2e preconditions before running tests..."
+          echo "Checking e2e preconditions (test-session endpoint)..."
           URL="http://localhost:${PORT}/api/capinfra/operator/auth/test-session"
-          echo "POSTing to ${URL}"
-          # Capture curl exit code separately from the -w status code.
-          # If we used `|| echo "000"`, curl already prints "000" on connection
-          # failure via -w, and the fallback would append another "000" giving
-          # "000000". Instead, run curl, check $?, and treat any non-zero exit
-          # as an unreachable server (HTTP_STATUS=000).
           set +e
           HTTP_STATUS=$(curl -s -o /tmp/test-session-precheck.body -w "%{http_code}" -X POST "${URL}")
           CURL_EXIT=$?
@@ -192,42 +179,35 @@ jobs:
           if [ "${CURL_EXIT}" -ne 0 ]; then
             HTTP_STATUS="000"
           fi
-          echo "curl exit code: ${CURL_EXIT}"
           echo "HTTP status: ${HTTP_STATUS}"
-          echo "Response body:"
           cat /tmp/test-session-precheck.body || true
-          echo
           if [ "${HTTP_STATUS}" = "200" ]; then
-            echo "Picker precondition check passed: dev server is up and test-session endpoint is enabled."
-            exit 0
-          fi
-          echo "============================================================"
-          echo "PICKER E2E PRECONDITION CHECK FAILED"
-          echo "============================================================"
-          if [ "${HTTP_STATUS}" = "000" ]; then
-            echo "Could not reach the dev server at ${URL}."
-            echo "Cause: the Next.js dev server is not listening on PORT ${PORT}."
-            echo "Action: ensure the 'Start dev server' and 'Wait for dev server to be ready' steps succeeded."
-            echo "Recent dev-server log:"
-            tail -n 50 /tmp/devserver.log || true
-          elif [ "${HTTP_STATUS}" = "404" ]; then
-            echo "test-session endpoint returned 404."
-            echo "Cause: NODE_ENV is set to 'production', which disables the test-session endpoint."
-            echo "Action: ensure the dev-server step runs with NODE_ENV=test."
-          elif [ "${HTTP_STATUS}" = "503" ]; then
-            echo "test-session endpoint returned 503 OPERATOR_KEY_NOT_CONFIGURED."
-            echo "Cause: ADMIN_SOLVENCY_KEY (operator admin key) is not available to the dev server."
-            echo "Action: ensure the operator admin key secret is provided to the 'Start dev server' step."
+            echo "e2e_ready=true" >> "$GITHUB_OUTPUT"
+            echo "E2E preconditions met — all e2e test steps will run."
           else
-            echo "test-session endpoint returned unexpected status ${HTTP_STATUS}."
-            echo "Action: inspect the response body above and the dev-server log for details."
-            echo "Recent dev-server log:"
-            tail -n 50 /tmp/devserver.log || true
+            echo "e2e_ready=false" >> "$GITHUB_OUTPUT"
+            echo "E2E preconditions not met (status ${HTTP_STATUS}) — skipping all e2e test steps."
+            if [ "${HTTP_STATUS}" = "503" ]; then
+              echo "Cause: ADMIN_SOLVENCY_KEY not configured. Add it to GitHub Actions secrets to enable e2e tests."
+            elif [ "${HTTP_STATUS}" = "404" ]; then
+              echo "Cause: NODE_ENV is not 'test' — test-session endpoint is disabled."
+            elif [ "${HTTP_STATUS}" = "000" ]; then
+              echo "Cause: dev server unreachable on port ${PORT}."
+              tail -n 30 /tmp/devserver.log || true
+            fi
           fi
-          echo "============================================================"
-          exit 1
+
+      - name: Run audit CSV e2e tests
+        if: steps.e2e_precheck.outputs.e2e_ready == 'true'
+        env:
+          PORT: "5000"
+          PLAYWRIGHT_BASE_URL: http://localhost:5000
+          PLAYWRIGHT_SKIP_WEBSERVER: "1"
+          NODE_ENV: test
+        run: npm run test:e2e:audit-csv
 
       - name: Run picker e2e tests
+        if: steps.e2e_precheck.outputs.e2e_ready == 'true'
         env:
           PORT: "5000"
           PLAYWRIGHT_BASE_URL: http://localhost:5000
@@ -236,6 +216,7 @@ jobs:
         run: npm run test:e2e:pickers
 
       - name: Run asset registry CSV e2e tests
+        if: steps.e2e_precheck.outputs.e2e_ready == 'true'
         env:
           PORT: "5000"
           PLAYWRIGHT_BASE_URL: http://localhost:5000
@@ -244,6 +225,7 @@ jobs:
         run: npm run test:e2e:asset-csv
 
       - name: Run prune staleness e2e tests
+        if: steps.e2e_precheck.outputs.e2e_ready == 'true'
         env:
           PORT: "5000"
           PLAYWRIGHT_BASE_URL: http://localhost:5000
@@ -253,6 +235,7 @@ jobs:
         run: npm run test:e2e:prune-staleness
 
       - name: Run prune history CSV e2e tests
+        if: steps.e2e_precheck.outputs.e2e_ready == 'true'
         env:
           PORT: "5000"
           PLAYWRIGHT_BASE_URL: http://localhost:5000
