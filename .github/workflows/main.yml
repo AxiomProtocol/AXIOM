@@ -43,6 +43,9 @@ jobs:
   predeploy-tests:
     needs: validate-workflows
     runs-on: ubuntu-latest
+    concurrency:
+      group: ci-test-db
+      cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
