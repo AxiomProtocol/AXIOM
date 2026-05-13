@@ -43,8 +43,8 @@ This recommendation is grounded in:
 |---|---|---|
 | Core infrastructure (AXM, Identity, Treasury, Staking, Credentials, Land Registry) | 6 | Active — all API routes integrated |
 | AXUSD GENIUS Act stack (token, oracle, rate limiter, vault, PSM, backstop, compliance, custody) | 13 | Active — peg-status, supply, treasury-health APIs call these |
-| Euler V2 lending markets (EVK vault, Earn vault, EVC, IRM, collateral vaults) | 11 | Deployed — **no longer in active use** |
-| EulerSwap pools (AXUSD/USDC, AXUSD/AXM, AXM EVK vault) | 3 | Deployed — **no longer in active use** |
+| Euler V2 lending markets (EVK vault, Earn vault, EVC, IRM, collateral vaults) | 11 | Deployed — **pending decommission** (EVK vault holds 10,048 AXUSD; AXM EVK vault holds 10,039 AXM — both require withdrawal to Treasury Hub before formal decommission; see `AXIOM_EULER_V2_DECOMMISSION_RUNBOOK.md`) |
+| EulerSwap pools (AXUSD/USDC, AXUSD/AXM, AXM EVK vault) | 3 | Deployed — pools empty (AXUSD/USDC and EVC hold 0); pending decommission with Euler V2 stack |
 | Real estate lending (FixFlip vault, manager, DSCR vault, manager, risk configs) | 10 | Active — lending fund APIs integrated |
 | Land acquisition (LandOptionRegistry, pool, RegCF, BuilderFarmerCredit) | 4 | Active — land acquisition service integrated |
 | Governance (GovernanceHub with timelock, risk committee, emergency pause) | 1 | Active — controls lending risk parameters |
