@@ -164,10 +164,12 @@ const matchesCliPath =
   process.argv[1]?.endsWith('scripts/migrate.js') ||
   process.argv[1]?.endsWith('scripts/migrate');
 
+// Allow explicit force (RUN_DB_MIGRATE=true) to bypass the test-env guard so
+// that CI can run `npm run db:migrate` with NODE_ENV=test without triggering
+// the vitest import-time auto-run lockout.
 const isDirectRun =
   !isExplicitlySkipped &&
-  !isTestEnv &&
-  (isExplicitlyForced || matchesCliPath);
+  (isExplicitlyForced || (!isTestEnv && matchesCliPath));
 
 if (isDirectRun) {
   main().catch((err) => {
