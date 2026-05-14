@@ -2,8 +2,8 @@
 
 **Version:** 1.0.0  
 **Network target:** Avalanche C-Chain Mainnet (chainId 43114)  
-**Last updated:** 2026-05-13 (Task #482)  
-**Current status:** 1 of 12 gates satisfied (Fuji smoke tests)  
+**Last updated:** 2026-05-14 (Gate 6 — Internal security review complete)  
+**Current status:** 1 of 12 gates satisfied (G01 — Fuji smoke tests). Internal security review (Gate 6) is separately SATISFIED — see `AXIOM_AVALANCHE_GATE6_SECURITY_REVIEW.md`. Gate 6 ≠ G08 (external audit).  
 
 ---
 
@@ -160,6 +160,8 @@ On Fuji, the TransferLimitModule limit was set to 200 AXUSD during smoke test T1
 ### G08 — External Security Review Signed Off
 
 **Status:** ○ OPEN
+
+**Note:** The internal Gate 6 security review (`AXIOM_AVALANCHE_GATE6_SECURITY_REVIEW.md`) was completed 2026-05-14 and covers the capinfra adapter, dispatcher, settlement routing, migration, and proof script. It is a prerequisite input for G08 but does not satisfy it. G08 requires an external security firm review of the ERC-3643 smart contracts.
 
 **Acceptance criteria:**
 - An external security firm has reviewed the ERC-3643 contract code deployed on Fuji.

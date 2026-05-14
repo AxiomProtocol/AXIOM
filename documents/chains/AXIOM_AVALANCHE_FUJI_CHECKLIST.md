@@ -1,7 +1,7 @@
 # Axiom Protocol — Avalanche Fuji Deployment Checklist
 
 **Network:** Avalanche Fuji Testnet (chainId 43113)  
-**Updated:** 2026-05-13 (Task #483 — Mainnet Readiness Gap Analysis complete; 1/12 gates satisfied; NO-GO)  
+**Updated:** 2026-05-14 (Gate 6 — Internal security review SATISFIED; T03 hardening fix applied; 1/12 mainnet gates satisfied; NO-GO)  
 **Deployer:** `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`  
 **DeployedAt:** 2026-05-13T19:58:41.116Z
 
@@ -124,13 +124,34 @@ Use this checklist before promoting a Fuji deployment to Avalanche C-Chain mainn
 
 ---
 
+## Gate 6 — Internal Security Review
+
+> **Completed:** 2026-05-14 — **SATISFIED**  
+> Documents: `AXIOM_AVALANCHE_GATE6_SECURITY_DISCOVERY.md`, `AXIOM_AVALANCHE_GATE6_THREAT_MODEL.md`, `AXIOM_AVALANCHE_GATE6_SECURITY_REVIEW.md`
+
+- [x] Phase A (Discovery): All surfaces documented — adapter, dispatcher, config, settlement, migration, schema, contracts, proof script
+- [x] Phase B (Threat Model): 16 threats catalogued with severity/likelihood/status
+- [x] Phase C (Code Review): All adapter files, settlement routing, schema, and proof script reviewed
+- [x] Phase D (Hardening fix): T03 — wrong-chain RPC verification added to `liveDispatch()` (`dispatcher.ts`)
+- [x] Phase E (Accepted risks documented): T05 (shared key → Task #484), T14 (no revert detect), T15 (setAllowAll → G02), T16 (single EOA → G03–G06), L-AV01 (no EIP-55 checksum)
+- [x] Phase F (Gate verdict): SATISFIED — no critical/high findings in capinfra layer; one medium fixed
+
+Note: Gate 6 (internal review) ≠ G08 (external security firm audit). G08 remains OPEN.
+
+---
+
 ## Mainnet Promotion Gate
 
 All of the following must be true before deploying to Avalanche mainnet (43114):
 
 - [ ] All Fuji checklist items above are complete
-- [ ] Security review of Phase 2 contracts is signed off
-- [ ] Multi-party authorization wallet (Gnosis Safe on Avalanche) is funded
-- [ ] Mainnet deployer key (separate from Fuji key) is prepared and secured
+- [x] Internal security review of Phase 2 capinfra stack (Gate 6) — SATISFIED 2026-05-14
+- [ ] External security review of ERC-3643 contracts signed off (G08)
+- [ ] Multi-party authorization wallet (Gnosis Safe on Avalanche) is funded (G03)
+- [ ] Deployer EOA renounces all roles after Safe assignment (G06)
+- [ ] Mainnet deployer key (separate from Fuji key) is prepared and secured (Task #484)
+- [ ] Production TransferLimitModule cap set (G07)
+- [ ] Incident response plan filed (G11)
+- [ ] Reserve reconciliation model filed (G12)
 - [ ] Disclosure documents updated to include Avalanche C-Chain network
 - [ ] `AVALANCHE_CONTRACTS` in `shared/contracts-avalanche.ts` populated post-deploy
