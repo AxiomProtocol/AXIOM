@@ -16,8 +16,9 @@
  */
 
 import 'dotenv/config';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { createAsset, getAssetBySymbol } from '../lib/capinfra';
+import { capAssets } from '../shared/capInfraSchema';
 import {
   createAdapter,
   getAdapterRowByName,
@@ -162,7 +163,19 @@ async function seedAssets() {
   for (const seed of SEEDS) {
     const existing = await getAssetBySymbol(seed.symbol);
     if (existing) {
-      console.log(`  ↪ ${seed.symbol} already present (id=${existing.id})`);
+      // Idempotent settlementType migration: if the row exists but has a stale
+      // settlementType (e.g. AXUSD-FUJI was previously seeded as 'EVM' before
+      // migration 0059 added 'AVALANCHE' to capSettlementTypeEnum), update it
+      // in-place so routing via executeInstruction works without a re-insert.
+      if (existing.settlementType !== seed.settlementType) {
+        await db
+          .update(capAssets)
+          .set({ settlementType: seed.settlementType as typeof existing.settlementType, updatedAt: new Date() })
+          .where(eq(capAssets.id, existing.id));
+        console.log(`  ↺ ${seed.symbol} updated settlementType: ${existing.settlementType} → ${seed.settlementType} (id=${existing.id})`);
+      } else {
+        console.log(`  ↪ ${seed.symbol} already present (id=${existing.id})`);
+      }
       continue;
     }
     const created = await createAsset(seed, 'capinfra-seed', 'capinfra-seed-bootstrap');

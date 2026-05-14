@@ -254,7 +254,7 @@ async function invariantB_DryRunSafety(): Promise<void> {
         actionType: 'MINT',
         amount: SMOKE_MINT_AMOUNT,
         payloadJson: { recipient: '0x0000000000000000000000000000000000000001' },
-        settlementType: 'EVM',
+        settlementType: 'AVALANCHE',
       } as unknown as never,
       asset: fujiAsset(),
     });
@@ -354,7 +354,7 @@ async function invariantC_LiveDispatch(): Promise<C_Result> {
         actionType: 'MINT',
         amount: SMOKE_MINT_AMOUNT,
         payloadJson: { recipient: DEPLOYER_ADDRESS },
-        settlementType: 'EVM',
+        settlementType: 'AVALANCHE',
       } as unknown as never,
       asset: fujiAsset(),
     });
