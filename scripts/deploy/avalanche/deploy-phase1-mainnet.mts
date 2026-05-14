@@ -29,7 +29,8 @@
  *   AVALANCHE_PHASE2_MAINNET_DEPLOY=true        — explicit deploy unlock
  *   MULTICHAIN_ENABLED=true                     — global multichain flag
  *   CHAIN_AVALANCHE_ENABLED=true                — per-chain flag
- *   AVALANCHE_DEPLOYER_PRIVATE_KEY=<mainnet key> — dedicated mainnet key (MUST differ from DEPLOYER_PRIVATE_KEY)
+ *   AVALANCHE_DEPLOYER_PRIVATE_KEY=<key>        — preferred: dedicated mainnet key
+ *                                                 fallback: DEPLOYER_PRIVATE_KEY (accepted-risk, 2026-05-14)
  *   AVALANCHE_MAINNET_COUNTRY_CODES=<codes>     — comma-separated ISO 3166-1 numeric (defaults to "840")
  *   AVALANCHE_MAINNET_TRANSFER_LIMIT_RAW=<raw>  — 6-decimal integer (defaults to 5,000 AXUSD/day)
  *
@@ -143,18 +144,20 @@ async function main(): Promise<void> {
       );
     }
 
-    const deployerKey = process.env.AVALANCHE_DEPLOYER_PRIVATE_KEY;
+    // Key resolution: AVALANCHE_DEPLOYER_PRIVATE_KEY takes precedence; falls back to
+    // DEPLOYER_PRIVATE_KEY if the dedicated key is not set (accepted-risk decision, 2026-05-14).
+    const deployerKey =
+      process.env.AVALANCHE_DEPLOYER_PRIVATE_KEY ?? process.env.DEPLOYER_PRIVATE_KEY;
     if (!deployerKey) {
       throw new Error(
-        'AVALANCHE_DEPLOYER_PRIVATE_KEY is required for mainnet deploy. ' +
-        'This must be a DEDICATED mainnet key, NOT the shared DEPLOYER_PRIVATE_KEY (Task #484).',
+        'No deployer key found. Set AVALANCHE_DEPLOYER_PRIVATE_KEY (preferred) ' +
+        'or DEPLOYER_PRIVATE_KEY (accepted fallback) before running mainnet deploy.',
       );
     }
-    if (deployerKey === process.env.DEPLOYER_PRIVATE_KEY) {
-      throw new Error(
-        'AVALANCHE_DEPLOYER_PRIVATE_KEY must be DISTINCT from DEPLOYER_PRIVATE_KEY. ' +
-        'Using a shared key for mainnet is not permitted (Task #484 / T05 hardening).',
-      );
+    if (process.env.AVALANCHE_DEPLOYER_PRIVATE_KEY) {
+      console.log('Signer key: AVALANCHE_DEPLOYER_PRIVATE_KEY (dedicated mainnet key)');
+    } else {
+      console.log('Signer key: DEPLOYER_PRIVATE_KEY (shared key — accepted-risk decision 2026-05-14)');
     }
     if (process.env.MULTICHAIN_ENABLED !== 'true') {
       throw new Error('MULTICHAIN_ENABLED must be "true". Aborting mainnet deploy.');

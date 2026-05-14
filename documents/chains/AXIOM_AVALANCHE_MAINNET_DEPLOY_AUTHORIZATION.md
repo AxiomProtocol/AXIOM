@@ -52,7 +52,7 @@ The following configuration will be used for the mainnet deployment. Any deviati
 | `AVALANCHE_PHASE2_MAINNET_DEPLOY` | `true` (set only at time of deploy) | This memo |
 | `MULTICHAIN_ENABLED` | `true` (set only at time of deploy) | This memo |
 | `CHAIN_AVALANCHE_ENABLED` | `true` (set only at time of deploy) | This memo |
-| `AVALANCHE_DEPLOYER_PRIVATE_KEY` | Dedicated mainnet key (distinct from `DEPLOYER_PRIVATE_KEY`) | Operations Lead |
+| Signer key | `DEPLOYER_PRIVATE_KEY` (accepted-risk decision 2026-05-14 — shared key approved for initial launch) | Operations Lead |
 | Deploy script | `scripts/deploy/avalanche/deploy-phase1-mainnet.mts` | Technical Lead |
 | Output manifest | `deployments/avalanche/mainnet-phase1.json` | Technical Lead |
 
@@ -64,7 +64,7 @@ Complete all items immediately before executing the deploy command. Do not proce
 
 **Technical:**
 - [ ] Fuji smoke tests re-run immediately before deploy — all 15/15 pass (G01 regression)
-- [ ] `AVALANCHE_DEPLOYER_PRIVATE_KEY` is set and is distinct from `DEPLOYER_PRIVATE_KEY`
+- [ ] `DEPLOYER_PRIVATE_KEY` is set (signer key for this deploy — accepted-risk, 2026-05-14)
 - [ ] `deployments/avalanche/mainnet-phase1.json` does NOT exist (clean deploy)
 - [ ] Deploy script dry-run passes: `npm run deploy:avalanche:mainnet` (without the unlock flag)
 - [ ] Deployer EOA has sufficient AVAX balance for 8 contract deploys + wiring transactions (estimate 0.5–1.5 AVAX at standard gas)
@@ -143,9 +143,10 @@ Once all three sign-offs are recorded above, execute from the repository root:
 AVALANCHE_PHASE2_MAINNET_DEPLOY=true \
 MULTICHAIN_ENABLED=true \
 CHAIN_AVALANCHE_ENABLED=true \
-AVALANCHE_DEPLOYER_PRIVATE_KEY=<dedicated-mainnet-key> \
 npm run deploy:avalanche:mainnet
 ```
+
+The hardhat config will automatically use `DEPLOYER_PRIVATE_KEY` (already set in the environment) as the signer. No additional key variable is needed.
 
 **Do not execute this command until:**
 1. All three sign-offs above are completed

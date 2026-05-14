@@ -21,7 +21,7 @@
  * Env vars:
  *   AVALANCHE_RPC_URL              — optional override for mainnet RPC
  *   AVALANCHE_FUJI_RPC_URL         — optional override for Fuji RPC
- *   AVALANCHE_DEPLOYER_PRIVATE_KEY — Fuji-only deployer key
+ *   AVALANCHE_DEPLOYER_PRIVATE_KEY — preferred deployer key (Fuji + mainnet); falls back to DEPLOYER_PRIVATE_KEY
  *   SNOWTRACE_API_KEY              — Routescan API key for verification
  *
  * npm scripts (all run from workspace root):

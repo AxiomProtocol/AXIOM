@@ -49,7 +49,7 @@ Run this checklist immediately before executing `deploy:avalanche:mainnet`:
 - [x] B05 resolved: G12 Fuji reconciliation test run filed — `reconciliation-reports/2026-05-14-fuji.json`
 - [ ] `AVALANCHE_PHASE2_MAINNET_DEPLOY=true` set deliberately (not accidentally)
 - [ ] `MULTICHAIN_ENABLED=true` and `CHAIN_AVALANCHE_ENABLED=true` set only in deploy env
-- [ ] `AVALANCHE_DEPLOYER_PRIVATE_KEY` is a dedicated mainnet key (not shared with any other env)
+- [ ] `DEPLOYER_PRIVATE_KEY` is set — accepted as signer key for this deploy (2026-05-14)
 - [ ] Second operator present to observe and confirm deploy sequence
 - [ ] `deployments/avalanche/mainnet-phase1.json` does not already exist (clean deploy)
 - [ ] Post-deploy: Deployer key moved to cold storage immediately
