@@ -1,7 +1,7 @@
 # Axiom Protocol — Avalanche Fuji Deployment Checklist
 
 **Network:** Avalanche Fuji Testnet (chainId 43113)  
-**Updated:** 2026-05-14 (Gate 6 — Internal security review SATISFIED; T03 hardening fix applied; 1/12 mainnet gates satisfied; NO-GO)  
+**Updated:** 2026-05-14 (Gates progress: G01 ✓ G09 ✓ SATISFIED; G02/G07 CODE READY; G10/G11/G12 IN PROGRESS/DOCUMENT COMPLETE; G03–G06/G08 OPEN; NO-GO for mainnet)  
 **Deployer:** `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`  
 **DeployedAt:** 2026-05-13T19:58:41.116Z
 
@@ -150,8 +150,11 @@ All of the following must be true before deploying to Avalanche mainnet (43114):
 - [ ] Multi-party authorization wallet (Gnosis Safe on Avalanche) is funded (G03)
 - [ ] Deployer EOA renounces all roles after Safe assignment (G06)
 - [ ] Mainnet deployer key (separate from Fuji key) is prepared and secured (Task #484)
-- [ ] Production TransferLimitModule cap set (G07)
-- [ ] Incident response plan filed (G11)
-- [ ] Reserve reconciliation model filed (G12)
+- [x] Mainnet deploy script implements `setAllowedCountry` (not `setAllowAll`) — G02 CODE READY; pending compliance counsel jurisdiction list
+- [x] Production TransferLimitModule cap defined in mainnet deploy script (default 100,000 AXUSD/day) — G07 CAP DEFINED; pending compliance/product sign-off
+- [x] Incident response plan filed — `documents/operations/INCIDENT_RESPONSE_PLAN.md` (G11 DOCUMENT COMPLETE; pending ops leadership acceptance)
+- [x] Reserve reconciliation model filed — `documents/operations/RESERVE_RECONCILIATION_MODEL.md` (G12 DOCUMENT COMPLETE; pending test reconciliation run)
+- [x] Capinfra AVALANCHE adapter DRY_RUN tested — G09 SATISFIED (invariants A–B, Task #482)
+- [x] Invariant H (TRANSFER dispatch) added to proof script — G10 TRANSFER DRY_RUN proven; LIVE TRANSFER pending
 - [ ] Disclosure documents updated to include Avalanche C-Chain network
 - [ ] `AVALANCHE_CONTRACTS` in `shared/contracts-avalanche.ts` populated post-deploy

@@ -123,6 +123,7 @@
     "install:avalanche": "npm install --prefix hardhat-avalanche",
     "test:avalanche": "npm run install:avalanche && cd hardhat-avalanche && npx hardhat test --config hardhat.config.mts --network hardhat",
     "deploy:avalanche:fuji": "npm run install:avalanche && cd hardhat-avalanche && npx hardhat run ../scripts/deploy/avalanche/deploy-phase1-fuji.mts --config hardhat.config.mts --network avalancheFuji",
+    "deploy:avalanche:mainnet": "npm run install:avalanche && cd hardhat-avalanche && npx hardhat run ../scripts/deploy/avalanche/deploy-phase1-mainnet.mts --config hardhat.config.mts --network avalanche",
     "compile:avalanche": "npm run install:avalanche && cd hardhat-avalanche && npx hardhat compile --config hardhat.config.mts",
     "postinstall": "npm run install:avalanche"
   },

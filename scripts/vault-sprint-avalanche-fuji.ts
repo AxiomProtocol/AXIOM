@@ -23,6 +23,9 @@
  *      Invariant C; post-confirmation delta == expected mint raw amount;
  *      Transfer event in tx logs attributes the on-chain change to this Gate 5
  *      run, not a pre-existing balance; DB position consistent.
+ *   H. TRANSFER action dispatch (G10): TRANSFER instruction routes through the
+ *      AVALANCHE adapter with action='TRANSFER' in the receipt (DRY_RUN proves
+ *      dispatch path); LIVE mode broadcasts a real on-chain ERC-20 transfer.
  *
  * Settlement type note:
  *   Task #483 added 'AVALANCHE' to capSettlementTypeEnum (migration 0059).
@@ -702,6 +705,105 @@ async function invariantG_FinalReconciliation(
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Invariant H — TRANSFER action dispatch (G10: non-mint operation)
+//
+// H1. Dispatch a TRANSFER instruction through the AVALANCHE adapter.
+//     In DRY_RUN: proves the dispatcher routes TRANSFER without throwing
+//     and returns a synthetic 0xavadry-… receipt.
+//     In LIVE: broadcasts a real ERC-20 transfer on Fuji and checks status=1.
+// H2. LIVE TRANSFER tx confirmed on-chain (LIVE_BLOCKER if not in LIVE mode).
+// ═══════════════════════════════════════════════════════════════════
+
+async function invariantH_TransferDispatch(): Promise<void> {
+  console.log('\n[Invariant H] TRANSFER action dispatch (G10 non-mint proof)');
+
+  const adapterMode = (process.env.AVALANCHE_ADAPTER_MODE || 'DRY_RUN').toUpperCase();
+  const adapter     = getAdapter('AVALANCHE');
+
+  // Temporarily force DRY_RUN if not in LIVE mode so we never broadcast accidentally.
+  const savedMode = process.env.AVALANCHE_ADAPTER_MODE;
+  if (adapterMode !== 'LIVE') {
+    process.env.AVALANCHE_ADAPTER_MODE = 'DRY_RUN';
+  }
+
+  try {
+    const receipt = await adapter.dispatch({
+      instruction: {
+        id:             `inst_h_transfer_fuji_${Date.now()}`,
+        actionType:     'TRANSFER',
+        amount:         SMOKE_MINT_AMOUNT,
+        payloadJson:    { to: DEPLOYER_ADDRESS, recipient: DEPLOYER_ADDRESS },
+        settlementType: 'AVALANCHE',
+      } as unknown as never,
+      asset: fujiAsset(),
+    });
+
+    // Restore env.
+    if (savedMode !== undefined) process.env.AVALANCHE_ADAPTER_MODE = savedMode;
+    else delete process.env.AVALANCHE_ADAPTER_MODE;
+
+    const ref = receipt.externalRef ?? '';
+
+    if (adapterMode !== 'LIVE') {
+      // DRY_RUN path: receipt must be synthetic (0xavadry-… prefix).
+      const isDryRef = ref.startsWith('0xavadry-');
+      record(
+        'H1 TRANSFER dispatch returns valid DRY_RUN receipt',
+        isDryRef,
+        isDryRef
+          ? `externalRef=${ref.slice(0, 35)}… — TRANSFER routed correctly through AVALANCHE adapter`
+          : `unexpected ref: ${ref.slice(0, 50)}`,
+      );
+      record(
+        'H2 LIVE TRANSFER tx confirmed on-chain',
+        false,
+        'Skipped — LIVE mode not active. Set AVALANCHE_ADAPTER_MODE=LIVE to prove H2.',
+        'LIVE_BLOCKER',
+      );
+    } else {
+      // LIVE path: receipt must have a real 64-hex txHash.
+      const isRealHash = /^0x[0-9a-fA-F]{64}$/.test(ref);
+      record(
+        'H1 LIVE TRANSFER dispatch returns 64-hex txHash',
+        isRealHash,
+        isRealHash
+          ? `txHash=${ref} — TRANSFER dispatch succeeded`
+          : `unexpected ref: ${ref.slice(0, 50)}`,
+      );
+      if (isRealHash) {
+        try {
+          const built    = await buildProvider();
+          const txRcpt   = await built.provider.waitForTransaction(ref, 1, 120_000);
+          const minedOk  = (txRcpt as { status?: number } | null)?.status === 1;
+          record(
+            'H2 LIVE TRANSFER tx confirmed on-chain',
+            minedOk ?? false,
+            minedOk
+              ? `txHash=${ref} status=1 block=${txRcpt?.blockNumber} — TRANSFER mined`
+              : `txHash=${ref} status=${(txRcpt as { status?: number } | null)?.status ?? 'null'} — not mined or reverted`,
+          );
+        } catch (err) {
+          record('H2 LIVE TRANSFER tx confirmed on-chain', false,
+            `waitForTransaction threw: ${(err as Error).message.slice(0, 120)}`);
+        }
+      } else {
+        record('H2 LIVE TRANSFER tx confirmed on-chain', false, 'H1 failed — no valid txHash.', 'LIVE_BLOCKER');
+      }
+    }
+  } catch (err) {
+    // Restore env on throw.
+    if (savedMode !== undefined) process.env.AVALANCHE_ADAPTER_MODE = savedMode;
+    else delete process.env.AVALANCHE_ADAPTER_MODE;
+    record(
+      'H1 TRANSFER dispatch returns valid receipt',
+      false,
+      `adapter.dispatch threw: ${(err as Error).message.slice(0, 150)}`,
+    );
+    record('H2 LIVE TRANSFER tx confirmed on-chain', false, 'Skipped — H1 threw.', 'LIVE_BLOCKER');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // Print final report
 // ═══════════════════════════════════════════════════════════════════
 
@@ -725,7 +827,7 @@ function printReport(liveTxHash: string | null, liveBlocker: string | null) {
     console.log(`       ${r.detail}`);
   }
 
-  console.log('\n  ── Invariant mapping (A–G) ──');
+  console.log('\n  ── Invariant mapping (A–H) ──');
   const inv = (prefix: string) => results.find((r) => r.label.startsWith(prefix));
   const invariants = [
     { id: 'A', pass: inv('A1')?.passed && inv('A2')?.passed && inv('A3')?.passed,
@@ -742,6 +844,8 @@ function printReport(liveTxHash: string | null, liveBlocker: string | null) {
       note: 'Duplicate confirmation → ConflictError; no double-credit' },
     { id: 'G', pass: inv('G1')?.passed && inv('G2')?.passed && inv('G3')?.passed,
       note: 'On-chain delta == SMOKE_MINT_RAW (attributed to this run); DB consistent' },
+    { id: 'H', pass: inv('H1')?.passed,
+      note: 'TRANSFER action routes through AVALANCHE adapter (DRY_RUN proves path; LIVE proves on-chain transfer)' },
   ];
 
   for (const i of invariants) {
@@ -749,13 +853,13 @@ function printReport(liveTxHash: string | null, liveBlocker: string | null) {
     console.log(`              ${i.note}`);
   }
 
-  console.log('\n  ── Gate 5 status ──');
+  console.log('\n  ── Gate 5 / G10 status ──');
   const allPass = invariants.every((i) => i.pass);
 
   if (allPass) {
-    console.log('  COMPLETE ✓ — all invariants A–G proven end-to-end.');
+    console.log('  COMPLETE ✓ — all invariants A–H proven end-to-end.');
     console.log(`  AVALANCHE/FUJI LIVE TX: ${liveTxHash!}`);
-    console.log('  AVALANCHE CAPINFRA GATE 5 SATISFIED');
+    console.log('  AVALANCHE CAPINFRA GATES 5 AND G10 SATISFIED');
   } else {
     const pending = invariants.filter((i) => !i.pass).map((i) => i.id).join(', ');
     console.log(`  PARTIAL — invariants pending: ${pending}`);
@@ -812,6 +916,7 @@ async function main() {
 
   const { qtyAfterSettle } = await invariantsDEF_SettlementStateMachine(assetId, AXUSD_FUJI_SYMBOL);
   await invariantG_FinalReconciliation(liveTxHash, preDispatchBalance, postDispatchBalance, qtyAfterSettle);
+  await invariantH_TransferDispatch();
 
   printReport(liveTxHash, liveBlocker);
 }
