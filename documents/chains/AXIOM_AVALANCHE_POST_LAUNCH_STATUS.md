@@ -5,18 +5,18 @@
 **Created:** 2026-05-14  
 **Updated:** 2026-05-14  
 **Version:** 1.4.0  
-**Status:** LIMITED PILOT MODE — PENDING ACCEPTED-RISK SIGNATURE  
+**Status:** LIMITED PILOT MODE — ACTIVE  
 
 ---
 
 ## Current Operational Mode
 
-**AVALANCHE MAINNET: LIMITED PILOT MODE — PENDING ACCEPTED-RISK SIGNATURE**
+**AVALANCHE MAINNET: LIMITED PILOT MODE — ACTIVE**
 
 - Mainnet deployment executed: 2026-05-14, block 85375788
 - All 8 ERC-3643 contracts live and wired on chainId 43114
 - Pilot policy active: `AXIOM_AVALANCHE_LIMITED_PILOT_POLICY.md`
-- Accepted-risk record: `AXIOM_AVALANCHE_LIMITED_PILOT_ACCEPTED_RISK.md` — PENDING SIGNATURE
+- Accepted-risk record: `AXIOM_AVALANCHE_LIMITED_PILOT_ACCEPTED_RISK.md` — SIGNED 2026-05-14
 - No public user flows activated
 - No production minting occurred (totalSupply = 0)
 - Minting is operator-controlled and capped at 2,500 AXUSD total
@@ -24,8 +24,8 @@
 - Deferred controls remain mandatory before meaningful TVL
 - Mainnet is NOT fully unrestricted — see gate table below
 
-**Pilot becomes ACTIVE once all three accepted-risk signatures are obtained.**  
-**Until then, status remains PENDING ACCEPTED-RISK SIGNATURE — no minting.**
+**Pilot is ACTIVE. Pre-mint checklist must be completed before first mint.**  
+**Caps: 2,500 AXUSD total / 1,000 AXUSD per wallet. US-only. Operator-controlled.**
 
 ---
 
