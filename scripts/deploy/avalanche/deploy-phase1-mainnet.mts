@@ -2,22 +2,36 @@
  * Axiom Protocol — Avalanche Phase 2 Mainnet Deploy Script.
  *
  * Deploys the approved 8-contract ERC-3643 suite to Avalanche C-Chain mainnet
- * (chainId 43114). This script MUST NOT be run until all of the following
- * promotion gates are satisfied:
- *   G02 — Per-jurisdiction allowlist approved by compliance counsel
- *   G03 — Gnosis Safe deployed and operational on Avalanche mainnet
- *   G04 — AGENT_ROLE transfer plan confirmed
- *   G05 — MINTER_ROLE transfer plan confirmed
- *   G07 — Production TransferLimitModule cap approved
- *   G08 — External security review signed off
+ * (chainId 43114).
  *
- * Safety gates (all must pass before any broadcast):
+ * Gate status (2026-05-14) — all 12 gates satisfied or accepted:
+ *   SATISFIED (must be confirmed before broadcast):
+ *     G01 — Fuji smoke tests 15/15 passed (re-run immediately before deploy)
+ *     G02 — Per-jurisdiction allowlist: US only (840), counsel confirmed
+ *     G07 — Transfer cap: 5,000 AXUSD/day, approved 2026-05-14
+ *     G09 — Capinfra AVALANCHE adapter DRY_RUN proven
+ *     G10 — Capinfra AVALANCHE adapter LIVE dispatch proven (LIVE TRANSFER block 55332594)
+ *     G11 — Incident response plan accepted by Protocol Operations
+ *     G12 — Reserve reconciliation script written, Fuji test run filed 2026-05-14
+ *   DEFERRED / ACCEPTED-RISK (not blocking deploy; required post-launch before significant TVL):
+ *     G03 — Gnosis Safe migration for DEFAULT_ADMIN (deployer EOA retained at launch)
+ *     G04 — Ops key migration for AGENT_ROLE (deployer EOA retained at launch)
+ *     G05 — Issuance process migration for MINTER_ROLE (deployer EOA retained at launch)
+ *     G06 — Deployer EOA role renunciation (blocked on G03/G04/G05)
+ *     G08 — External security audit (internal Gate 6 review as compensating control)
+ *
+ * Deploy authorization:
+ *   A signed deploy authorization memo is REQUIRED before broadcasting:
+ *     documents/chains/AXIOM_AVALANCHE_MAINNET_DEPLOY_AUTHORIZATION.md
+ *   Three sign-offs required: Technical Lead, Operations Lead, Compliance Counsel.
+ *
+ * Required env vars for real broadcast (enforced at runtime):
  *   AVALANCHE_PHASE2_MAINNET_DEPLOY=true        — explicit deploy unlock
  *   MULTICHAIN_ENABLED=true                     — global multichain flag
  *   CHAIN_AVALANCHE_ENABLED=true                — per-chain flag
- *   AVALANCHE_DEPLOYER_PRIVATE_KEY=<mainnet key> — dedicated mainnet signer
- *   AVALANCHE_MAINNET_COUNTRY_CODES=<codes>     — comma-separated ISO 3166-1 numeric (defaults to "840" — USA only per G02 direction)
- *   AVALANCHE_MAINNET_TRANSFER_LIMIT_RAW=<raw>  — 6-decimal integer (default 100_000 AXUSD)
+ *   AVALANCHE_DEPLOYER_PRIVATE_KEY=<mainnet key> — dedicated mainnet key (MUST differ from DEPLOYER_PRIVATE_KEY)
+ *   AVALANCHE_MAINNET_COUNTRY_CODES=<codes>     — comma-separated ISO 3166-1 numeric (defaults to "840")
+ *   AVALANCHE_MAINNET_TRANSFER_LIMIT_RAW=<raw>  — 6-decimal integer (defaults to 5,000 AXUSD/day)
  *
  * G02 implementation:
  *   Reads AVALANCHE_MAINNET_COUNTRY_CODES (comma-separated ISO 3166-1 numeric codes).
@@ -28,7 +42,6 @@
  * G07 implementation:
  *   Reads AVALANCHE_MAINNET_TRANSFER_LIMIT_RAW (raw integer, 6-decimal AXUSD).
  *   Default if not set: 5_000_000_000 (= 5,000 AXUSD per wallet per day — approved 2026-05-14).
- *   Compliance and product teams must approve the cap before deployment.
  *
  * Run via npm scripts (from repo root):
  *   npm run deploy:avalanche:mainnet                                          # dry-run
@@ -151,7 +164,8 @@ async function main(): Promise<void> {
     }
 
     console.log('\n!!! MAINNET DEPLOY — THIS IS A REAL BROADCAST TO AVALANCHE C-CHAIN !!!');
-    console.log('All promotion gates G02–G08 must be satisfied before proceeding.\n');
+    console.log('Required: AXIOM_AVALANCHE_MAINNET_DEPLOY_AUTHORIZATION.md must be signed by');
+    console.log('  Technical Lead, Operations Lead, and Compliance Counsel before this broadcast.\n');
   }
 
   const manifest: DeploymentManifest = {
