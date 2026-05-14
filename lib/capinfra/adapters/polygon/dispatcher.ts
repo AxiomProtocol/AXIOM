@@ -25,6 +25,7 @@
  * audit log, or notifications. settlement.ts owns all post-dispatch state.
  */
 
+import { createHash } from 'crypto';
 import {
   AdapterDisabledError,
   AdapterModeNotPermittedError,
@@ -36,7 +37,6 @@ import {
   effectiveModeForAsset,
   POLYGON_ADAPTER_KIND,
 } from './config';
-import { generateId } from '../../ids';
 
 // ── Recipient parsing ──────────────────────────────────────────────
 
@@ -65,6 +65,26 @@ function resolveRoute(input: AdapterDispatchInput): ResolvedRoute {
 
 // ── DRY_RUN dispatch (no broadcast, no RPC) ────────────────────────
 
+/**
+ * Deterministic synthetic externalRef for DRY_RUN.
+ *
+ * Derived exclusively from the instruction ID using SHA-256 so that:
+ *   1. The same instruction always produces the same externalRef (stable /
+ *      idempotent across repeated DRY_RUN dispatches for the same instruction).
+ *   2. Different instructions always produce different externalRefs (collision-
+ *      resistant via SHA-256 prefix).
+ *
+ * Format: 0xpoldry-{id.slice(-16)}-{sha256(id).slice(0,12)}
+ * Example: 0xpoldry-si_abc123def456ghi7-3f8a9c10b2e4
+ *
+ * No random component — the ref is fully reproducible from the instruction alone.
+ */
+function dryRunExternalRef(instructionId: string): string {
+  const tail   = instructionId.slice(-16);
+  const digest = createHash('sha256').update(instructionId).digest('hex').slice(0, 12);
+  return `0xpoldry-${tail}-${digest}`;
+}
+
 function dryRunDispatch(
   input: AdapterDispatchInput,
   reason: 'mode' | 'asset_not_allowlisted' | 'live_not_implemented',
@@ -72,8 +92,7 @@ function dryRunDispatch(
   const { instruction, asset } = input;
   const route = resolveRoute(input);
   const decimals = asset.decimals ?? 6; // USDC on Polygon uses 6 decimals
-  const suffix = generateId('inst').slice(-12);
-  const externalRef = `0xpoldry-${instruction.id.slice(-16)}-${suffix}`;
+  const externalRef = dryRunExternalRef(instruction.id);
 
   return {
     externalRef,
