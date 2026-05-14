@@ -25,6 +25,7 @@ import { evmAdapter } from './evm';
 import { stellarAdapter } from './stellar/index';
 import { achAdapter } from './ach/index';
 import { avalancheAdapter } from './avalanche/index';
+import { polygonAdapter } from './polygon/index';
 import type { AdapterCreateInput } from '../types';
 import type { SettlementAdapter } from './types';
 
@@ -34,13 +35,15 @@ function register(adapter: SettlementAdapter) {
   ADAPTERS_BY_KIND.set(adapter.kind, adapter);
 }
 
-// Bootstrap the five canonical adapter kinds. INTERNAL is live; the
+// Bootstrap the six canonical adapter kinds. INTERNAL is live; the
 // others are stubs or DRY_RUN by default until LIVE env vars are set.
+// POLYGON is Phase 4 DRY_RUN only — LIVE not yet implemented.
 register(internalAdapter);
 register(evmAdapter);
 register(stellarAdapter);
 register(achAdapter);
 register(avalancheAdapter);
+register(polygonAdapter);
 
 /**
  * Returns the adapter implementation for a given `kind`. Throws

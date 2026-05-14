@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "adapter": "POLYGON",
+  "network": "mainnet",
+  "date": "2026-05-14",
+  "runAt": "2026-05-14T13:44:49.981Z",
+  "status": "BLOCKED",
+  "blockers": [
+    "CHAIN_POLYGON_ENABLED is not set to \"true\" — Polygon reconciliation disabled",
+    "POLYGON_RPC_URL is required for mainnet reconciliation",
+    "POLYGON_TREASURY_WALLET is not set — no treasury wallet to check. Register a BitGo Polygon wallet in custodyWalletRegistry before enabling live reconciliation."
+  ],
+  "onChainBalanceRaw": null,
+  "onChainBalanceHuman": null,
+  "capinfraNetMovementRaw": null,
+  "discrepancyRaw": null,
+  "discrepancyHuman": null,
+  "treasuryWallet": null,
+  "usdcContract": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+  "notes": [
+    "Phase 4: No Axiom contracts deployed on Polygon. USDC balance reconciliation only.",
+    "AXUSD is Arbitrum-canonical. No AXUSD supply to reconcile on Polygon.",
+    "LIVE reconciliation requires: POLYGON_TREASURY_WALLET, POLYGON_RPC_URL, CHAIN_POLYGON_ENABLED=true."
+  ]
+}

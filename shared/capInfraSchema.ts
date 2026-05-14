@@ -119,6 +119,7 @@ export const capSettlementTypeEnum = pgEnum('cap_settlement_type', [
   'WIRE',
   'SWIFT',
   'AVALANCHE',
+  'POLYGON',
 ]);
 
 export const capPriceTypeEnum = pgEnum('cap_price_type', [
