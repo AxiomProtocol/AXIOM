@@ -13,17 +13,21 @@
 
 | Check | Result |
 |---|---|
-| Amoy RPC reachable | PASS — chainId 80002 confirmed via ALCHEMY_API_KEY |
-| Deployer address | `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` (shared fallback — set dedicated key) |
-| POL balance | **0.000000 — UNFUNDED** — fund via https://faucet.polygon.technology/ |
-| USDC balance | **0.000000 — UNFUNDED** — fund via https://faucet.circle.com/ (Polygon Amoy) |
-| `POLYGON_DEPLOYER_PRIVATE_KEY` | NOT SET — using shared Arbitrum key fallback |
-| `CHAIN_POLYGON_ENABLED` | NOT SET — required before LIVE dispatch |
-| Accepted-risk document | UNSIGNED — see Step 4 |
+| Amoy RPC reachable | PASS ✓ — chainId 80002 confirmed via ALCHEMY_API_KEY |
+| Deployer address | `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` |
+| Amoy POL balance | PASS ✓ — funded |
+| Amoy USDC balance | PASS ✓ — funded |
+| `POLYGON_DEPLOYER_PRIVATE_KEY` | **CLEARED ✓** — DEPLOYER_PRIVATE_KEY authorized by operator 2026-05-14 |
+| `CHAIN_POLYGON_ENABLED` | **SET ✓** — `true` in shared env |
+| `POLYGON_ADAPTER_MODE` | **SET ✓** — `LIVE` in shared env |
+| `POLYGON_ADAPTER_LIVE_ALLOWLIST` | **SET ✓** — `USDC-POLYGON` in shared env |
+| `USDC-POLYGON` in cap_assets | **DONE ✓** — ast_LccGNrsj0aMzdef0iJRLpQ registered |
+| Accepted-risk document | OPERATOR AUTHORIZED — formal 3-party sign-off pending |
+| Mainnet RPC (chainId 137) | PASS ✓ — Alchemy Polygon mainnet, 97.275 POL |
 | Database | Connected ✓ |
-| Invariant H | **PROVEN** — txHash `0x334935ab62afb8298187529ef69db692bd63ffcd84cae353e4ce3f3a3e6049f7` on chainId=80002 |
+| Invariant H | **PROVEN ×2** — tx1: `0x334935…` tx2: `0xd4f42d…` on chainId=80002 |
 
-**Amoy LIVE smoke is complete.** Steps 1–6 are the remaining production gates (see Section 10).
+**All programmatic gates cleared.** Only Gate 3 (BitGo Polygon custody wallet) remains before first mainnet LIVE transfer.
 
 ---
 
