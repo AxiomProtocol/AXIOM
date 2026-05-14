@@ -190,35 +190,46 @@ export const CHAIN_REGISTRY: ChainRegistryEntry[] = [
   {
     id: 'polygon-mainnet',
     slug: 'polygon',
-    displayName: 'Polygon',
+    displayName: 'Polygon PoS',
     chainIdEvm: 137,
     category: 'evm',
-    roles: ['identity_bridge'],
-    status: 'researching',
+    // Phase 3 (2026-05-14): role expanded from identity_bridge only to include
+    // payments_settlement and payments_rail — Polygon's strategic designation is
+    // Payments / Treasury Routing / Enterprise Settlement. Identity bridging
+    // (Polygon ID credentials attested from Arbitrum) remains in scope but is
+    // secondary to the payments role.
+    roles: ['payments_rail', 'identity_bridge'],
+    status: 'configured',
     capabilities: {
-      settlementSupport: false,
-      reserveSupport: false,
-      identitySupport: true,
+      settlementSupport: true,   // Enterprise settlement via native USDC
+      reserveSupport: false,     // Reserve is Arbitrum + Ethereum canonical
+      identitySupport: true,     // Polygon ID credential delivery (attested, not canonical)
       complianceSupport: true,
-      custodySupport: false,
-      automatedControlLayerSupport: true,
-      paymentRailSupport: false,
+      custodySupport: false,     // BitGo custody wallet TBD
+      automatedControlLayerSupport: false, // No Axiom contracts deployed on Polygon
+      paymentRailSupport: true,  // Primary role — USDC payment and treasury routing
     },
     featureFlag: 'ENABLE_POLYGON_IDENTITY_BRIDGE',
-    sourceFilesStatus: 'missing',
+    sourceFilesStatus: 'attached',
     sdkStatus: 'not_reviewed',
-    docsStatus: 'missing',
+    docsStatus: 'attached',
     implementationReady: false,
     notes:
-      'Planned identity bridge and credential expansion layer. ' +
-      'ERC-3643 ONCHAINID credentials issued on Arbitrum will be mirrored or ' +
-      'attested to Polygon identity infrastructure for institutional access ' +
-      'bridging. Polygon ID and identity framework source files not yet gathered. ' +
-      'No Polygon integration is live or configured.',
+      'Phase 3 (2026-05-14): Foundation and architecture phase only — no contracts ' +
+      'deployed, no live payments. Strategic role is Payments / Treasury Routing / ' +
+      'Enterprise Settlement. Settlement token: native USDC on Polygon PoS ' +
+      '(0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359). Identity bridging (Polygon ID ' +
+      'credential delivery attested from Arbitrum ERC-3643) is also in scope but ' +
+      'secondary. CHAIN_POLYGON_ENABLED=false in all current environments. ' +
+      'Architecture: lib/chains/ scaffold complete, shared/contracts-polygon.ts added, ' +
+      'capinfra POLYGON adapter not yet built (Phase 4). Arbitrum remains canonical.',
     metadata: {
-      targetIntegration: 'polygon_id',
+      targetIntegration: 'polygon_pos_payments',
+      settlementToken: 'USDC_NATIVE_POLYGON',
+      settlementTokenAddress: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
       bridgeDesign: 'attestation_or_mirrored_credential',
-      dependsOn: 'Polygon SDK, Polygon ID documentation',
+      phase: 'phase3_foundation',
+      decisionMemo: 'documents/chains/AXIOM_POLYGON_PHASE3_DECISION_MEMO.md',
     },
   },
   {
