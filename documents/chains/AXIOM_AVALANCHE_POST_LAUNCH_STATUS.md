@@ -3,21 +3,29 @@
 **Document type:** Phase E — Gate Status Correction  
 **Network:** Avalanche C-Chain Mainnet (chainId 43114)  
 **Created:** 2026-05-14  
-**Version:** 1.3.0  
-**Status:** POST-LAUNCH RESTRICTED MODE — active  
+**Updated:** 2026-05-14  
+**Version:** 1.4.0  
+**Status:** LIMITED PILOT MODE — PENDING ACCEPTED-RISK SIGNATURE  
 
 ---
 
 ## Current Operational Mode
 
-**AVALANCHE MAINNET: POST-LAUNCH RESTRICTED MODE**
+**AVALANCHE MAINNET: LIMITED PILOT MODE — PENDING ACCEPTED-RISK SIGNATURE**
 
 - Mainnet deployment executed: 2026-05-14, block 85375788
 - All 8 ERC-3643 contracts live and wired on chainId 43114
+- Pilot policy active: `AXIOM_AVALANCHE_LIMITED_PILOT_POLICY.md`
+- Accepted-risk record: `AXIOM_AVALANCHE_LIMITED_PILOT_ACCEPTED_RISK.md` — PENDING SIGNATURE
 - No public user flows activated
 - No production minting occurred (totalSupply = 0)
+- Minting is operator-controlled and capped at 2,500 AXUSD total
+- US-only jurisdiction control active on-chain
 - Deferred controls remain mandatory before meaningful TVL
 - Mainnet is NOT fully unrestricted — see gate table below
+
+**Pilot becomes ACTIVE once all three accepted-risk signatures are obtained.**  
+**Until then, status remains PENDING ACCEPTED-RISK SIGNATURE — no minting.**
 
 ---
 
