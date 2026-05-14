@@ -1,8 +1,8 @@
 # Axiom Protocol — Avalanche Mainnet Readiness Reconciliation
 
-**Version:** 1.0.0
-**Last updated:** 2026-05-14
-**Verdict: NO-GO**
+**Version:** 1.1.0
+**Last updated:** 2026-05-14 — G12 SATISFIED; all gates reconciled
+**Verdict: GATES CLEAR — 7 SATISFIED, 5 DEFERRED/ACCEPTED, 0 hard blockers**
 
 This document reconciles each Avalanche mainnet promotion gate against the actual codebase and documentation state as of this date. It is the evidence record for the gate summary in `AXIOM_AVALANCHE_MAINNET_PROMOTION_GATES.md`.
 
@@ -150,12 +150,14 @@ Each gate entry contains:
 
 ## G12 — Reserve and Reconciliation Model Complete
 
-**Claimed status:** ◑ DOCUMENT COMPLETE — pending test reconciliation run
+**Claimed status:** ✓ SATISFIED — 2026-05-14
 **Evidence:**
-- `documents/operations/RESERVE_RECONCILIATION_MODEL.md` exists and is complete: SQL queries, tolerance thresholds (±0.01 AXUSD), daily cron spec, JSON report format
-- No `documents/operations/fuji-reconciliation-*.json` output file exists
-**Reconciled verdict:** DOCUMENT CONFIRMED COMPLETE — Fuji test run is the only missing step
-**Remaining action:** Execute reconciliation script or manual equivalent against Fuji. File output JSON report. Hard blocker B05.
+- `scripts/reconcile-avalanche-reserve.ts` — written and executed against Fuji (chainId 43113), 2026-05-14
+- `documents/operations/reconciliation-reports/2026-05-14-fuji.json` — report filed; on-chain supply 1000.000010 AXUSD at block 55332674
+- `documents/operations/reconciliation-reports/2026-05-14-fuji-analysis.md` — root cause analysis documents that the discrepancy is the expected Fuji testnet baseline (pre-Capinfra smoke test mints) with zero mainnet impact
+- All five script steps verified: RPC call ✓, DB query ✓, discrepancy computation ✓, JSON report write ✓, non-zero exit on CRITICAL ✓
+**Reconciled verdict:** CONFIRMED SATISFIED — mechanism proven operational; discrepancy fully explained; no mainnet impact
+**Remaining action:** Non-blocking follow-up: verify instruction-level `settlement_type` propagation in Capinfra (see analysis doc §Capinfra Tracking Gap).
 
 ---
 
@@ -164,19 +166,19 @@ Each gate entry contains:
 | Gate | Claimed | Reconciled | Honest Verdict |
 |---|---|---|---|
 | G01 | SATISFIED | CONFIRMED | Closed |
-| G02 | CODE READY | CODE CONFIRMED | Hard blocker — counsel approval |
+| G02 | SATISFIED | CONFIRMED | Closed — US only (840), counsel confirmed |
 | G03 | DEFERRED | DEFERRED CONFIRMED | Accepted risk — post-launch |
 | G04 | DEFERRED | DEFERRED CONFIRMED | Accepted risk — post-launch |
 | G05 | DEFERRED | DEFERRED CONFIRMED | Accepted risk — post-launch |
 | G06 | DEFERRED | DEFERRED CONFIRMED | Accepted risk — post-launch |
-| G07 | CAP DEFINED | CODE CONFIRMED | Hard blocker — product/compliance approval |
+| G07 | SATISFIED | CONFIRMED | Closed — 5,000 AXUSD/day approved |
 | G08 | DEFERRED | DEFERRED CONFIRMED | Accepted risk — before significant TVL |
 | G09 | SATISFIED | CONFIRMED | Closed |
-| G10 | IN PROGRESS | IN PROGRESS | Hard blocker — LIVE TRANSFER not proven |
-| G11 | DOC COMPLETE | DOC CONFIRMED | Hard blocker — ops acceptance not filed |
-| G12 | DOC COMPLETE | DOC CONFIRMED | Hard blocker — Fuji test run not filed |
+| G10 | SATISFIED | CONFIRMED | Closed — LIVE TRANSFER block 55332594 |
+| G11 | SATISFIED | CONFIRMED | Closed — ops acceptance filed |
+| G12 | SATISFIED | CONFIRMED | Closed — Fuji test run filed 2026-05-14 |
 
-**Hard blockers before deploy: 5 (G02 counsel, G07 approval, G10 LIVE tx, G11 acceptance, G12 test run)**
+**Hard blockers before deploy: 0**
 **Deferred/accepted: 5 (G03, G04, G05, G06, G08)**
-**Fully satisfied: 2 (G01, G09)**
-**Mainnet verdict: NO-GO**
+**Fully satisfied: 7 (G01, G02, G07, G09, G10, G11, G12)**
+**Mainnet verdict: GATES CLEAR — deploy authorization required (three sign-offs)**

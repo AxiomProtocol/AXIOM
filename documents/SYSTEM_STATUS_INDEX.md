@@ -36,7 +36,7 @@
 |---|---|---|---|
 | Arbitrum One | CANONICAL | Identity, reserve accounting, issuance state, policy decisions, solvency and disclosure | Source of truth. No canonical migration permitted without explicit approval. |
 | Ethereum Mainnet | REFERENCE | Reserve asset custody (PAXG, XAUT), KAG read-only | External reference layer only. |
-| Avalanche Fuji (testnet) | FUJI_TESTED | ERC-3643 compliance stack expansion | 15/15 smoke tests passed. Gate 5 proven. Mainnet NO-GO — see Section 6. |
+| Avalanche Fuji (testnet) | FUJI_TESTED | ERC-3643 compliance stack expansion | 15/15 smoke tests passed. All 12 gates satisfied or accepted. Mainnet GATES CLEAR — see Section 6. |
 
 ---
 
@@ -44,7 +44,7 @@
 
 | Chain | Status | Notes |
 |---|---|---|
-| Avalanche C-Chain Mainnet | NO-GO | Promotion gates not satisfied. See Section 6. |
+| Avalanche C-Chain Mainnet | GATES_CLEAR | All 12 promotion gates satisfied or accepted. Three-party sign-off required before deploy. See Section 6. |
 | Polygon | FUTURE | Payments/treasury layer — no implementation in current phase. |
 | Sui | FUTURE | Distribution/wallet layer — no implementation in current phase. |
 
@@ -63,24 +63,24 @@
 
 ## 6. Avalanche Mainnet Gate Status
 
-**Verdict: NO-GO**
+**Verdict: GATES CLEAR — 7 SATISFIED, 5 DEFERRED/ACCEPTED, 0 remaining hard blockers**
 
 | Gate | Description | Status |
 |---|---|---|
 | G01 | Fuji smoke tests 15/15 | ✓ SATISFIED |
-| G02 | Per-jurisdiction allowlist (US only, code 840) | ◑ CODE READY — compliance counsel list required |
+| G02 | Per-jurisdiction allowlist (US only, code 840) | ✓ SATISFIED — compliance counsel confirmed 2026-05-14 |
 | G03 | DEFAULT_ADMIN → Gnosis Safe | ✓ DEFERRED — Deployer EOA retained; Safe migration post-launch |
 | G04 | AGENT role → ops address | ✓ DEFERRED — Deployer EOA retained |
 | G05 | MINTER role → issuance process | ✓ DEFERRED — Deployer EOA retained |
 | G06 | Deployer EOA renounces all roles | ✓ DEFERRED — Pending G03/G04/G05 migration |
-| G07 | Production TransferLimitModule cap | ◑ CAP DEFINED (100k AXUSD/day default) — compliance/product sign-off required |
+| G07 | Production TransferLimitModule cap | ✓ SATISFIED — 5,000 AXUSD/day approved 2026-05-14 |
 | G08 | External security audit | ✓ DEFERRED — Internal Gate 6 review as compensating control |
 | G09 | Capinfra AVALANCHE adapter DRY_RUN | ✓ SATISFIED |
-| G10 | Capinfra AVALANCHE adapter LIVE dispatch | ◑ IN PROGRESS — MINT proven on-chain; LIVE TRANSFER not yet proven |
-| G11 | Incident response plan | ◑ DOCUMENT COMPLETE — ops leadership acceptance pending |
-| G12 | Reserve reconciliation model | ◑ DOCUMENT COMPLETE — Fuji test run pending |
+| G10 | Capinfra AVALANCHE adapter LIVE dispatch | ✓ SATISFIED — LIVE TRANSFER block 55332594 2026-05-14 |
+| G11 | Incident response plan | ✓ SATISFIED — accepted by Protocol Operations 2026-05-14 |
+| G12 | Reserve reconciliation model | ✓ SATISFIED — Fuji test run executed 2026-05-14; report filed |
 
-Pre-mainnet hard blockers: G02 (counsel list), G07 (cap sign-off), G10 (LIVE TRANSFER), G11 (acceptance), G12 (test run).
+Pre-mainnet hard blockers: **none**. Deploy requires three-party sign-off (technical lead + operations lead + compliance counsel).
 
 ---
 
@@ -133,25 +133,22 @@ All operator pages are access-controlled and not publicly exposed.
 
 | Blocker | Gate | Owner |
 |---|---|---|
-| Compliance counsel must provide and approve `AVALANCHE_MAINNET_COUNTRY_CODES` list (currently defaulting to 840/USA only) | G02 | Compliance counsel |
-| Compliance/product must approve 100,000 AXUSD/day transfer cap | G07 | Product + Compliance |
-| LIVE TRANSFER must be proven on Fuji (run proof script in LIVE mode) | G10 | Engineering |
-| Operations leadership must formally accept `INCIDENT_RESPONSE_PLAN.md` | G11 | Operations leadership |
-| Fuji reserve reconciliation test run must be executed and results filed | G12 | Engineering + Operations |
-| Gnosis Safe deployment and role migration (post-launch) | G03/G04/G05/G06 | Operations + Engineering |
+| Three-party deploy authorization memo required (technical lead + ops lead + compliance counsel) | All | Protocol Leadership |
+| Gnosis Safe deployment and role migration (post-launch, before significant TVL) | G03/G04/G05/G06 | Operations + Engineering |
 | External security audit engagement (before significant TVL) | G08 | Legal + Engineering |
+| Verify instruction-level `settlement_type` propagation in Capinfra (pre-mainnet follow-up, non-blocking) | G12 | Engineering |
 
 ---
 
 ## 11. Next Recommended Tasks
 
-Priority order before mainnet deploy:
+All pre-deploy gates are cleared. The path to mainnet is:
 
-1. **G10 LIVE TRANSFER** — Run `npm run vault:sprint:fuji` with `AVALANCHE_ADAPTER_MODE=LIVE`. Document tx hash and update G10.
-2. **G11 acceptance** — Route `INCIDENT_RESPONSE_PLAN.md` to operations leadership for sign-off. File acceptance confirmation.
-3. **G12 Fuji reconciliation run** — Execute `scripts/reconcile-avalanche-reserve.ts` against Fuji. File output report.
-4. **G02 country list** — Compliance counsel to confirm `AVALANCHE_MAINNET_COUNTRY_CODES=840` (US only) or provide modified list with justification.
-5. **G07 cap sign-off** — Product and compliance to approve `100000` AXUSD/day default or provide alternate value.
-6. **Post-mainnet** — Deploy Gnosis Safe, migrate roles (G03/G04/G05/G06), engage external auditor (G08).
+1. **Deploy authorization memo** — Technical lead, operations lead, and compliance counsel each sign the memo confirming their gate responsibilities per `AXIOM_AVALANCHE_MAINNET_PROMOTION_GATES.md §Sign-Off Requirements`.
+2. **Pre-flight Fuji smoke re-run** — Re-run `scripts/smoke/avalanche/fuji-smoke.mts` immediately before mainnet deploy (G01 regression requirement). All 15 tests must pass.
+3. **Set `AVALANCHE_DEPLOYER_PRIVATE_KEY`** — Confirm this is a dedicated mainnet key (not the Fuji key, not shared with any other environment).
+4. **Execute mainnet deploy** — `AVALANCHE_PHASE2_MAINNET_DEPLOY=true npm run deploy:avalanche:mainnet` with a second operator observing.
+5. **Post-deploy validation** — Verify all 8 contract addresses, re-run smoke tests against mainnet, start daily reconciliation cron (G12), move deployer key to cold storage.
+6. **Post-launch (before significant TVL)** — Deploy Gnosis Safe, migrate roles (G03/G04/G05/G06), engage external auditor (G08).
 
 Items not to build without explicit approval: AXAG, LAND activation, Polygon, Sui, ACH/wire/banking rails, additional country allowlist entries, new live assets.
