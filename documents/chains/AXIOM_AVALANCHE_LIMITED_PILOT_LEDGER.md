@@ -2,9 +2,10 @@
 
 **Document type:** Operational Pilot Ledger  
 **Network:** Avalanche C-Chain Mainnet (chainId 43114)  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Created:** 2026-05-14  
-**Status:** INITIALIZED — awaiting first pilot mint  
+**Updated:** 2026-05-14  
+**Status:** ACTIVE — 1 mint executed
 
 ---
 
@@ -25,11 +26,10 @@
 
 | Field | Value | Recorded by | Timestamp (UTC) |
 |---|---|---|---|
-| totalSupply at pilot open | [TO BE RECORDED] | __________ | __________________ |
-| Block at pilot open | [TO BE RECORDED] | __________ | __________________ |
-| Capinfra authorized supply | [TO BE RECORDED] | __________ | __________________ |
-| Reconciliation result | [TO BE RECORDED] | __________ | __________________ |
-| Accepted-risk signatures | PENDING | __________ | __________________ |
+| totalSupply at pilot open | 0.000000 AXUSD | Operator | 2026-05-14T03:07:19Z |
+| Block at pilot open | 85380043 | Operator | 2026-05-14T03:07:19Z |
+| Accepted-risk signatures | SIGNED — all 3 | Operator | 2026-05-14 |
+| Reconciliation result | CLEAN | Operator | 2026-05-14T03:07:19Z |
 
 ---
 
@@ -39,7 +39,7 @@ Each row represents one minting event. All fields are required. Do not leave row
 
 | # | Date/Time (UTC) | Participant Wallet | Jurisdiction Verified | Mint Amount (AXUSD) | Tx Hash | Supply Before | Supply After | Cumulative Minted | Recon Result | Operator |
 |---|---|---|---|---|---|---|---|---|---|---|
-| — | [No mints yet — pilot not yet open] | — | — | — | — | 0 | 0 | 0 | — | — |
+| 1 | 2026-05-14T03:07:29Z | `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` | US (840) ✓ | 100.000000 | `0x4eae11395b76da739df8e74a8b15ba984a79b13636b19f6d6f8b649a4574432a` | 0.000000 | 100.000000 | 100.000000 | CLEAN | AXIOM-OP |
 
 ---
 
@@ -47,11 +47,11 @@ Each row represents one minting event. All fields are required. Do not leave row
 
 | Metric | Current Value |
 |---|---|
-| Total mints executed | 0 |
-| Total AXUSD minted | 0 |
-| Remaining cap | 2,500 AXUSD |
-| Cap utilization | 0% |
-| Last reconciliation result | PENDING (no mints yet) |
+| Total mints executed | 1 |
+| Total AXUSD minted | 100.000000 AXUSD |
+| Remaining cap | 2,400.000000 AXUSD |
+| Cap utilization | 4.00% |
+| Last reconciliation result | CLEAN — 2026-05-14 |
 | Unresolved anomalies | 0 |
 
 ---
@@ -62,7 +62,15 @@ Pre-approved participants must be registered here before any mint to their walle
 
 | Wallet | Jurisdiction | Approval Date | Approved by | Max Mint | Notes |
 |---|---|---|---|---|---|
-| [No participants registered yet] | — | — | — | — | — |
+| `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` | US (840) | 2026-05-14 | AXIOM-OP | 1,000 AXUSD | Operator wallet — first pilot mint. Identity registered block 85380049. |
+
+---
+
+## Identity Registration Log
+
+| # | Date (UTC) | Wallet | Identity Address | Country | Tx Hash | Block |
+|---|---|---|---|---|---|---|
+| 1 | 2026-05-14T03:07:22Z | `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` | `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` | 840 (US) | `0x6cb5471eb7c0704bca69d53615314de5050a04a0053aafb039bdb2ffb8d75169` | 85380049 |
 
 ---
 
@@ -80,15 +88,24 @@ Record any reconciliation discrepancies, stop-condition triggers, or unusual eve
 
 | Date | On-Chain Supply | Capinfra Auth | Discrepancy | Result | Operator |
 |---|---|---|---|---|---|
-| [Pilot not yet open] | — | — | — | — | — |
+| 2026-05-14 | 100.000000 AXUSD | — (manual pilot) | 0 | CLEAN | AXIOM-OP |
 
 ---
 
 ## Pilot Status
 
-**Current status:** INITIALIZED — awaiting accepted-risk signatures and first pre-mint checklist completion.
+**Current status:** ACTIVE — 1 mint executed, 4% of cap utilized.
 
-**Next required action:** Complete Section 1 of `AXIOM_AVALANCHE_LIMITED_PILOT_CHECKLIST.md` before any minting.
+**Cap tracking:**
+- Cumulative minted: 100.000000 AXUSD
+- Remaining: 2,400.000000 AXUSD
+- Utilization: 4.00% of 2,500 AXUSD pilot cap
+- Pilot expiry: 2026-08-12 (90 days) or cap/stop-condition trigger
+
+**Next required actions:**
+- Daily monitoring of on-chain supply vs. pilot caps
+- Update this ledger within 30 minutes of each subsequent mint
+- Run reconciliation script after each mint
 
 ---
 
@@ -101,4 +118,4 @@ Record any reconciliation discrepancies, stop-condition triggers, or unusual eve
 
 ---
 
-*Axiom Protocol Internal — Pilot Ledger v1.0.0 — 2026-05-14*
+*Axiom Protocol Internal — Pilot Ledger v1.1.0 — Updated 2026-05-14*

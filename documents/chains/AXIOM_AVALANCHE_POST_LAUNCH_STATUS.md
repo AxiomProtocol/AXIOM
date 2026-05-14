@@ -4,8 +4,8 @@
 **Network:** Avalanche C-Chain Mainnet (chainId 43114)  
 **Created:** 2026-05-14  
 **Updated:** 2026-05-14  
-**Version:** 1.4.0  
-**Status:** LIMITED PILOT MODE — ACTIVE  
+**Version:** 1.5.0  
+**Status:** LIMITED PILOT MODE — ACTIVE — FIRST MINT EXECUTED 2026-05-14  
 
 ---
 
@@ -18,14 +18,31 @@
 - Pilot policy active: `AXIOM_AVALANCHE_LIMITED_PILOT_POLICY.md`
 - Accepted-risk record: `AXIOM_AVALANCHE_LIMITED_PILOT_ACCEPTED_RISK.md` — SIGNED 2026-05-14
 - No public user flows activated
-- No production minting occurred (totalSupply = 0)
+- **First pilot mint executed: 2026-05-14 — 100 AXUSD — block 85380054**
+- totalSupply: 100.000000 AXUSD (4% of 2,500 AXUSD pilot cap)
 - Minting is operator-controlled and capped at 2,500 AXUSD total
 - US-only jurisdiction control active on-chain
 - Deferred controls remain mandatory before meaningful TVL
 - Mainnet is NOT fully unrestricted — see gate table below
 
-**Pilot is ACTIVE. Pre-mint checklist must be completed before first mint.**  
-**Caps: 2,500 AXUSD total / 1,000 AXUSD per wallet. US-only. Operator-controlled.**
+**First pilot mint: COMPLETE.**  
+**Caps: 2,500 AXUSD total (2,400 remaining) / 1,000 AXUSD per wallet. US-only. Operator-controlled.**
+
+### First Mint Record
+
+| Field | Value |
+|---|---|
+| Identity registration tx | `0x6cb5471eb7c0704bca69d53615314de5050a04a0053aafb039bdb2ffb8d75169` |
+| Identity block | 85380049 |
+| Mint tx | `0x4eae11395b76da739df8e74a8b15ba984a79b13636b19f6d6f8b649a4574432a` |
+| Mint block | 85380054 |
+| Recipient | `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` (operator wallet) |
+| Jurisdiction | US (840) |
+| Amount | 100.000000 AXUSD |
+| totalSupply after | 100.000000 AXUSD |
+| Pilot cap remaining | 2,400.000000 AXUSD |
+| Stop condition | NONE |
+| Explorer | https://snowtrace.io/tx/0x4eae11395b76da739df8e74a8b15ba984a79b13636b19f6d6f8b649a4574432a |
 
 ---
 
