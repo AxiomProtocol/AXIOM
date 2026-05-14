@@ -24,8 +24,13 @@
  * Usage:
  *   npx tsx scripts/vault-sprint-polygon-amoy.ts
  *
- * DB env required only for invariant G (settlement confirmation idempotency).
- * All other invariants are adapter-level and require no env vars at all.
+ * ⚠ OPERATOR NOTE — DB WRITES (invariant G only):
+ *   When DATABASE_URL is set, invariant G temporarily inserts a synthetic
+ *   cap_user, cap_asset, and cap_settlement_instruction row into the DB.
+ *   All rows are deleted inside a finally block after the test completes.
+ *   If the cleanup fails, the inserted IDs are printed so they can be removed
+ *   manually. Run against a non-production DB for maximum safety.
+ *   Invariants A-F2 and H are pure adapter-level checks — they write nothing.
  *
  * Production safety:
  *   POLYGON_ADAPTER_MODE is not set by this script. The adapter reads its own
