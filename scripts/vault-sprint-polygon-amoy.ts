@@ -547,21 +547,29 @@ async function proveAmoyLiveSmoke() {
   }
 
   // Amoy USDC contract address:
-  //   Circle does not deploy the same USDC contract on Amoy as on mainnet.
-  //   Override via POLYGON_AMOY_USDC_CONTRACT env var when Circle provides
-  //   an Amoy-specific address. Falls back to the mainnet address for
-  //   environments that bridge USDC to Amoy using the same contract.
-  //   Check https://developers.circle.com/stablecoins/docs/usdc-on-test-networks
-  //   before running the live smoke test.
+  //   Circle deploys a separate USDC contract on Polygon Amoy (chainId=80002).
+  //   The default below is Circle's canonical Amoy USDC address — it is NOT
+  //   the same as the Polygon mainnet USDC (0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359).
+  //
+  //   Override via POLYGON_AMOY_USDC_CONTRACT env var if Circle issues a new
+  //   Amoy address or you are using a different bridged test token.
+  //
+  //   Verify the current address at:
+  //   https://developers.circle.com/stablecoins/docs/usdc-on-test-networks
+  //
+  //   Operator action required before running:
+  //   Fund the deployer wallet with Amoy USDC via https://faucet.circle.com/
+  //   (select Polygon Amoy).
+  const AMOY_USDC_DEFAULT = '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582'; // Circle canonical Amoy USDC
   const amoyUsdcContract =
     process.env.POLYGON_AMOY_USDC_CONTRACT?.trim() ??
-    '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
+    AMOY_USDC_DEFAULT;
 
   console.log(`  Running Amoy LIVE smoke test against RPC: ${amoyRpc.slice(0, 40)}…`);
   console.log(`  Amoy USDC contract: ${amoyUsdcContract}`);
   if (!process.env.POLYGON_AMOY_USDC_CONTRACT) {
-    console.warn('  ⚠ POLYGON_AMOY_USDC_CONTRACT not set — using mainnet USDC address as fallback.');
-    console.warn('    If Amoy uses a different test token, set POLYGON_AMOY_USDC_CONTRACT=0x… first.');
+    console.log('  ℹ POLYGON_AMOY_USDC_CONTRACT not set — using Circle canonical Amoy USDC address.');
+    console.log(`    Override: POLYGON_AMOY_USDC_CONTRACT=0x… if faucet uses a different token.`);
   }
 
   try {
