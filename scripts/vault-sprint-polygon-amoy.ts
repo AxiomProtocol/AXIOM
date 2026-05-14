@@ -315,38 +315,53 @@ async function main() {
   }
 
   // ── F2: LIVE with chain flags but no RPC ────────────────────────────
+  // Snapshot ALL Polygon RPC env vars before the test so H can read them
+  // correctly afterwards. Restoration is done unconditionally in finally.
   console.log('\n── Invariant F2: LIVE + chain flags + no RPC → RPC error ─────');
-  try {
-    process.env.POLYGON_ADAPTER_MODE          = 'LIVE';
-    process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST = 'USDC-POLYGON';
-    process.env.CHAIN_POLYGON_ENABLED         = 'true';
-    process.env.MULTICHAIN_ENABLED            = 'true';
-    const savedRpc = process.env.POLYGON_RPC_URL;
-    delete process.env.POLYGON_RPC_URL;
-    delete process.env.POLYGON_AMOY_RPC_URL;
-
-    let caught: Error | null = null;
+  {
+    const savedRpc     = process.env.POLYGON_RPC_URL;
+    const savedAmoyRpc = process.env.POLYGON_AMOY_RPC_URL;
     try {
-      await polygonAdapter.dispatch({ instruction, asset });
+      process.env.POLYGON_ADAPTER_MODE           = 'LIVE';
+      process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST  = 'USDC-POLYGON';
+      process.env.CHAIN_POLYGON_ENABLED           = 'true';
+      process.env.MULTICHAIN_ENABLED              = 'true';
+      delete process.env.POLYGON_RPC_URL;
+      delete process.env.POLYGON_AMOY_RPC_URL;
+
+      let caught: Error | null = null;
+      try {
+        await polygonAdapter.dispatch({ instruction, asset });
+      } catch (err) {
+        caught = err as Error;
+      }
+
+      if (!caught) {
+        fail('F2', 'LIVE + chain flags + no RPC did NOT throw — expected RPC-required error');
+      } else if (caught.message.includes('POLYGON_RPC_URL') || caught.message.includes('RPC')) {
+        pass('F2', `LIVE + chain flags + no RPC → RPC error: "${caught.message}"`);
+      } else {
+        pass('F2.other', `LIVE + chain flags + no RPC threw: "${caught.message}" (gate active)`);
+      }
     } catch (err) {
-      caught = err as Error;
+      fail('F2', 'RPC gate test threw unexpectedly', (err as Error).message);
+    } finally {
+      // Always restore — ensures invariant H sees the correct Amoy RPC URL.
+      if (savedRpc !== undefined) {
+        process.env.POLYGON_RPC_URL = savedRpc;
+      } else {
+        delete process.env.POLYGON_RPC_URL;
+      }
+      if (savedAmoyRpc !== undefined) {
+        process.env.POLYGON_AMOY_RPC_URL = savedAmoyRpc;
+      } else {
+        delete process.env.POLYGON_AMOY_RPC_URL;
+      }
+      delete process.env.POLYGON_ADAPTER_MODE;
+      delete process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST;
+      delete process.env.CHAIN_POLYGON_ENABLED;
+      delete process.env.MULTICHAIN_ENABLED;
     }
-
-    process.env.POLYGON_RPC_URL = savedRpc;
-    delete process.env.POLYGON_ADAPTER_MODE;
-    delete process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST;
-    delete process.env.CHAIN_POLYGON_ENABLED;
-    delete process.env.MULTICHAIN_ENABLED;
-
-    if (!caught) {
-      fail('F2', 'LIVE + chain flags + no RPC did NOT throw — expected RPC-required error');
-    } else if (caught.message.includes('POLYGON_RPC_URL') || caught.message.includes('RPC')) {
-      pass('F2', `LIVE + chain flags + no RPC → RPC error: "${caught.message}"`);
-    } else {
-      pass('F2.other', `LIVE + chain flags + no RPC threw: "${caught.message}" (gate active)`);
-    }
-  } catch (err) {
-    fail('F2', 'RPC gate test threw unexpectedly', (err as Error).message);
   }
 
   // ── F3: DISABLED mode ───────────────────────────────────────────────
