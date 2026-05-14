@@ -247,6 +247,10 @@ async function invariantB_DryRunSafety(): Promise<void> {
   process.env.AVALANCHE_ADAPTER_MODE = 'DRY_RUN';
 
   try {
+    // Direct adapter dispatch is intentional here: Invariant B is an adapter-unit
+    // proof (DRY_RUN mode / no DB row required). The canonical executeInstruction
+    // routing via getAdapter(asset.settlementType) is proven in Invariant A4 and
+    // exercised end-to-end in Invariants D/E/F/G via externallySettleInstruction.
     const adapter = getAdapter('AVALANCHE');
     const receipt = await adapter.dispatch({
       instruction: {
@@ -344,7 +348,9 @@ async function invariantC_LiveDispatch(): Promise<C_Result> {
     console.warn(`  [warn] pre-dispatch balance snapshot failed: ${(err as Error).message.slice(0, 80)}`);
   }
 
-  // Dispatch LIVE tx.
+  // Direct adapter dispatch is intentional for Invariant C: this is an adapter-unit
+  // proof of the LIVE dispatch path (real on-chain tx, receipt, Transfer event).
+  // The canonical executeInstruction routing is proven in A4 + D/E/F/G.
   const adapter = getAdapter('AVALANCHE');
   let liveTxHash: string | null = null;
   try {

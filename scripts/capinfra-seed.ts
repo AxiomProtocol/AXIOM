@@ -16,7 +16,7 @@
  */
 
 import 'dotenv/config';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { createAsset, getAssetBySymbol } from '../lib/capinfra';
 import { capAssets } from '../shared/capInfraSchema';
 import {
