@@ -27,7 +27,7 @@
  *
  * G07 implementation:
  *   Reads AVALANCHE_MAINNET_TRANSFER_LIMIT_RAW (raw integer, 6-decimal AXUSD).
- *   Default if not set: 100_000_000_000 (= 100,000 AXUSD per wallet per day).
+ *   Default if not set: 5_000_000_000 (= 5,000 AXUSD per wallet per day — approved 2026-05-14).
  *   Compliance and product teams must approve the cap before deployment.
  *
  * Run via npm scripts (from repo root):
@@ -100,7 +100,7 @@ async function main(): Promise<void> {
   }
 
   // ── Safety gate: parse transfer limit (G07) ──────────────────────────────
-  const DEFAULT_LIMIT_RAW = '100000000000'; // 100,000 AXUSD at 6 decimals
+  const DEFAULT_LIMIT_RAW = '5000000000'; // 5,000 AXUSD at 6 decimals — approved 2026-05-14
   const transferLimitRaw  = process.env.AVALANCHE_MAINNET_TRANSFER_LIMIT_RAW ?? DEFAULT_LIMIT_RAW;
   const limitBig = BigInt(transferLimitRaw);
   const transferLimitAxusd = (Number(limitBig) / 1_000_000).toFixed(6);

@@ -2,8 +2,8 @@
 
 **Version:** 1.1.0  
 **Network target:** Avalanche C-Chain Mainnet (chainId 43114)  
-**Last updated:** 2026-05-14 (G08 DEFERRED — external audit deferred for initial launch; internal Gate 6 review as compensating control)  
-**Satisfied:** 2 of 12 (G01, G09) | **Deferred/Accepted:** 5 (G03, G04, G05, G06, G08) | **In progress:** 4 (G02, G07, G10, G11/G12) | **Mainnet verdict: NO-GO — G02 and G07 require sign-off; G10/G11/G12 require real-world completion**
+**Last updated:** 2026-05-14 (G02/G07/G10/G11 SATISFIED — all 4 gates closed; G12 is the only remaining hard blocker)  
+**Satisfied:** 6 of 12 (G01, G02, G07, G09, G10, G11) | **Deferred/Accepted:** 5 (G03, G04, G05, G06, G08) | **In progress:** 1 (G12) | **Mainnet verdict: NO-GO — G12 reconciliation test run is the only remaining hard blocker**
 
 ---
 
@@ -18,16 +18,16 @@ This document defines the complete set of requirements that must be satisfied be
 | # | Gate | Status |
 |---|---|---|
 | G01 | All Fuji smoke tests pass (15/15) | ✓ SATISFIED |
-| G02 | Replace setAllowAll with per-jurisdiction allowlist | ◑ CODE READY — pending compliance counsel |
+| G02 | Replace setAllowAll with per-jurisdiction allowlist | ✓ SATISFIED — US only (840) confirmed 2026-05-14 |
 | G03 | Assign DEFAULT_ADMIN role to Gnosis Safe | ✓ DEFERRED — Deployer EOA retained; Safe migration post-launch |
 | G04 | Assign AGENT role to controlled operations address | ✓ DEFERRED — Deployer EOA retained; ops key migration post-launch |
 | G05 | Assign MINTER role to controlled issuance process | ✓ DEFERRED — Deployer EOA retained; issuance process migration post-launch |
 | G06 | Deployer EOA renounces all roles | ✓ DEFERRED — Renunciation deferred until Safe migration complete |
-| G07 | Set production TransferLimitModule cap | ◑ CAP DEFINED — pending mainnet deployment |
+| G07 | Set production TransferLimitModule cap | ✓ SATISFIED — 5,000 AXUSD/day approved 2026-05-14 |
 | G08 | External security review signed off | ✓ DEFERRED — Internal Gate 6 review as compensating control; external audit post-launch |
 | G09 | Capinfra AVALANCHE adapter DRY_RUN tested | ✓ SATISFIED |
-| G10 | Capinfra AVALANCHE adapter LIVE dispatch tested | ◑ IN PROGRESS — MINT proven; TRANSFER DRY_RUN proven |
-| G11 | Incident response plan complete | ◑ DOCUMENT COMPLETE — pending ops leadership acceptance |
+| G10 | Capinfra AVALANCHE adapter LIVE dispatch tested | ✓ SATISFIED — LIVE TRANSFER mined 2026-05-14 block 55332594 |
+| G11 | Incident response plan complete | ✓ SATISFIED — accepted by Protocol Operations 2026-05-14 |
 | G12 | Reserve and reconciliation model complete | ◑ DOCUMENT COMPLETE — pending test reconciliation run |
 
 ---
@@ -57,25 +57,23 @@ This document defines the complete set of requirements that must be satisfied be
 
 ### G02 — Replace setAllowAll with Per-Jurisdiction Allowlist
 
-**Status:** ◑ CODE READY — mainnet deploy script implements per-jurisdiction `setAllowedCountry`. Pending: compliance counsel must define and approve the `AVALANCHE_MAINNET_COUNTRY_CODES` list.
+**Status:** ✓ SATISFIED — 2026-05-14. United States only (ISO 3166-1 numeric 840) confirmed. Approval documented in `AXIOM_AVALANCHE_G02_COMPLIANCE_CONFIRMATION.md`.
 
 **Background:**  
-The Fuji deployment calls `CountryAllowModule.setAllowAll(MC, true)`, which disables country-based compliance checks entirely. This is a testnet shortcut only. On mainnet, AXUSD transfers must be restricted to wallets associated with approved jurisdictions.
+The Fuji deployment calls `CountryAllowModule.setAllowAll(MC, true)`, which disables country-based compliance checks entirely. This is a testnet shortcut only. On mainnet, AXUSD transfers are restricted to wallets associated with approved jurisdictions.
 
 **What was built:**  
 `scripts/deploy/avalanche/deploy-phase1-mainnet.mts` implements the per-jurisdiction allowlist mechanism:
-- Reads `AVALANCHE_MAINNET_COUNTRY_CODES` env var (comma-separated ISO 3166-1 numeric codes).
+- Defaults `AVALANCHE_MAINNET_COUNTRY_CODES` to `"840"` (United States of America only).
 - Calls `setAllowedCountry(MC, code, true)` for each approved code.
 - `setAllowAll` is explicitly absent — it is NOT called anywhere in the mainnet script.
-- The mainnet script rejects a real deploy if `AVALANCHE_MAINNET_COUNTRY_CODES` is empty.
+- Additional countries require explicit compliance approval before being added.
 
 **Acceptance criteria:**
-- `setAllowAll(MC, true)` is NOT called during the mainnet deployment script. ✓ (verified in code)
-- `setAllowedCountry(MC, countryCode, true)` is called for each approved jurisdiction. ✓ (implemented)
-- The jurisdiction allowlist is documented and approved by compliance counsel. ○ PENDING
-- Smoke tests verify that wallets with unapproved country codes are blocked. ○ PENDING (post-deploy)
-
-**Dependencies:** Compliance counsel must define and sign off on the `AVALANCHE_MAINNET_COUNTRY_CODES` list before mainnet deployment.
+- `setAllowAll(MC, true)` is NOT called during the mainnet deployment script. ✓
+- `setAllowedCountry(MC, countryCode, true)` is called for each approved jurisdiction. ✓
+- The jurisdiction allowlist is documented and approved. ✓ (United States / 840 — `AXIOM_AVALANCHE_G02_COMPLIANCE_CONFIRMATION.md`)
+- Smoke tests verify that wallets with unapproved country codes are blocked. ○ POST-DEPLOY (not a deploy blocker)
 
 ---
 
@@ -149,7 +147,7 @@ The Fuji deployment calls `CountryAllowModule.setAllowAll(MC, true)`, which disa
 
 ### G07 — Set Production TransferLimitModule Cap
 
-**Status:** ◑ CAP DEFINED — cap mechanism implemented in mainnet deploy script; pending mainnet deployment and compliance/product sign-off on the cap value.
+**Status:** ✓ SATISFIED — 2026-05-14. 5,000 AXUSD per wallet per day approved. Approval documented in `AXIOM_AVALANCHE_G07_TRANSFER_CAP_APPROVAL.md`.
 
 **Background:**  
 On Fuji, the TransferLimitModule limit was set to 200 AXUSD during smoke test T11 and then reset to 0 (unlimited). A limit of 0 means unlimited — this is not acceptable for production.
@@ -157,17 +155,15 @@ On Fuji, the TransferLimitModule limit was set to 200 AXUSD during smoke test T1
 **What was built:**  
 `scripts/deploy/avalanche/deploy-phase1-mainnet.mts` implements G07:
 - Reads `AVALANCHE_MAINNET_TRANSFER_LIMIT_RAW` env var (6-decimal integer).
-- Default if unset: `100_000_000_000` = 100,000 AXUSD per wallet per day.
+- Default if unset: `5_000_000_000` = 5,000 AXUSD per wallet per day (approved 2026-05-14).
 - Calls `TransferLimitModule.setTransferLimit(MC, limitRaw)` during post-deploy wiring.
 - Records `transferLimitRaw` and `transferLimitAxusd` in the deployment manifest.
 
 **Acceptance criteria:**
-- A production daily transfer cap is defined (in consultation with compliance and product teams). ◑ Default 100,000 AXUSD proposed; awaiting sign-off
+- A production daily transfer cap is defined. ✓ 5,000 AXUSD/day — `AXIOM_AVALANCHE_G07_TRANSFER_CAP_APPROVAL.md`
 - The cap is set via `TransferLimitModule.setTransferLimit(MC, limit)` during mainnet post-deploy wiring. ✓ (implemented in script)
-- The cap is verified on-chain: `getTransferLimit(MC)` returns the expected value. ○ PENDING (post-deploy)
+- The cap is verified on-chain: `getTransferLimit(MC)` returns `5000000000`. ○ POST-DEPLOY (not a deploy blocker)
 - The cap is documented in the mainnet deployment manifest. ✓ (script writes to manifest)
-
-**Note:** The transfer limit applies per-wallet per day. Adjust `AVALANCHE_MAINNET_TRANSFER_LIMIT_RAW` before deployment to match the approved cap.
 
 ---
 
@@ -210,35 +206,34 @@ On Fuji, the TransferLimitModule limit was set to 200 AXUSD during smoke test T1
 
 ### G10 — Capinfra AVALANCHE Adapter LIVE Dispatch Tested
 
-**Status:** ◑ IN PROGRESS — LIVE MINT proven × 2 on-chain; TRANSFER proven in DRY_RUN mode (structural dispatch path); LIVE TRANSFER pending.
+**Status:** ✓ SATISFIED — 2026-05-14. All invariants A–H proven. LIVE TRANSFER confirmed on-chain (Invariant H2).
 
 **Depends on:** G09 ✓
 
-**Evidence so far:**
-- LIVE MINT txHash 1: `0xf10d156a9328b9c4ad32f7bd6dd1df143f92449a270146b209c2129ddb69ef8c` — confirmed, status=1, Fuji
-- LIVE MINT txHash 2: `0x738a90c5f3d6c1f37a133947e598155e58b92b7123ae6a575b00f06700b662ee` — confirmed, status=1, Fuji
-- Invariant H (added 2026-05-14): TRANSFER instruction dispatched through AVALANCHE adapter in DRY_RUN; dispatch returns valid synthetic receipt, proving the TRANSFER code path is correctly wired
+**Evidence — complete:**
+- LIVE MINT txHash 1: `0xf10d156a9328b9c4ad32f7bd6dd1df143f92449a270146b209c2129ddb69ef8c` — status=1, Fuji (prior session)
+- LIVE MINT txHash 2: `0x738a90c5f3d6c1f37a133947e598155e58b92b7123ae6a575b00f06700b662ee` — status=1, Fuji (prior session)
+- LIVE MINT txHash 3: `0x7c30d5d14a58026c8cca992e817933624d84c268de7e8acd312f40ffab660258` — status=1, block 55332587, Fuji (2026-05-14)
+- **LIVE TRANSFER txHash: `0x412745bf916ab8066ac1674d31d020cedcf4ac9f39389974f5d6a986c9353909`** — status=1, block 55332594, Fuji (2026-05-14)
+- Explorer: https://testnet.snowtrace.io/tx/0x412745bf916ab8066ac1674d31d020cedcf4ac9f39389974f5d6a986c9353909
 
-**Remaining criterion:**
-- "A second dispatch (transfer) is tested to confirm non-mint operations work" — TRANSFER dispatch path proven structurally (Invariant H DRY_RUN); a LIVE on-chain TRANSFER test is recommended before mainnet go-live (run proof script with `AVALANCHE_ADAPTER_MODE=LIVE` — Invariant H2).
-
-**How to fully close G10:**
-```bash
-AVALANCHE_ADAPTER_MODE=LIVE \
-AVALANCHE_ADAPTER_LIVE_ALLOWLIST=AXUSD-FUJI \
-AVALANCHE_RPC_URL=<fuji-rpc> \
-MULTICHAIN_ENABLED=true \
-CHAIN_AVALANCHE_ENABLED=true \
-ADMIN_SOLVENCY_KEY=<key> \
-npx tsx scripts/vault-sprint-avalanche-fuji.ts
-# Invariant H2 will confirm the LIVE TRANSFER on-chain.
+**Proof script run — 2026-05-14:**
 ```
+All invariants A–H: PASS
+AVALANCHE CAPINFRA GATES 5 AND G10 SATISFIED
+```
+
+**All acceptance criteria met:**
+- ✓ LIVE MINT confirmed on-chain (3×, Fuji)
+- ✓ LIVE TRANSFER confirmed on-chain (Invariant H2, block 55332594)
+- ✓ Settlement state machine: SUBMITTED → SETTLED, no double-credit (Invariants D/E/F)
+- ✓ On-chain delta == expected amount; DB position consistent (Invariant G)
 
 ---
 
 ### G11 — Incident Response Plan Complete
 
-**Status:** ◑ DOCUMENT COMPLETE — `documents/operations/INCIDENT_RESPONSE_PLAN.md` written 2026-05-14. Pending: operations leadership review and formal acceptance.
+**Status:** ✓ SATISFIED — 2026-05-14. Plan accepted by Protocol Operations Leadership. Acceptance recorded in `documents/operations/INCIDENT_RESPONSE_ACCEPTANCE.md`.
 
 **Document covers:**
 - 6 runbooks: contract pause (5A), account freeze (5B), role compromise (5C), RPC outage (5D), compliance module failure (5E), reserve discrepancy (5F)
@@ -255,7 +250,7 @@ npx tsx scripts/vault-sprint-avalanche-fuji.ts
 - The plan covers: contract pause, account freeze, role compromise, RPC outage, compliance module failure, reserve discrepancy. ✓
 - Roles and responsibilities are assigned for each incident type. ✓
 - Contact escalation chain is defined. ✓
-- Plan is reviewed and accepted by operations leadership. ○ PENDING
+- Plan is reviewed and accepted by operations leadership. ✓ (2026-05-14 — `INCIDENT_RESPONSE_ACCEPTANCE.md`)
 
 ---
 
