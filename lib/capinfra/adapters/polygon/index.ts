@@ -5,8 +5,9 @@
  * logic is isolated in ./dispatcher.ts and config in ./config.ts.
  * See §0.1 isolation rule.
  *
- * Phase 4 status: DRY_RUN only. LIVE mode fails closed with
- * AdapterModeNotPermittedError until all pre-conditions are met.
+ * Phase 5 status: LIVE dispatch implemented. Gate via POLYGON_ADAPTER_MODE=LIVE,
+ * CHAIN_POLYGON_ENABLED=true, MULTICHAIN_ENABLED=true, and per-asset allowlist.
+ * Default mode is DRY_RUN. See dispatcher.ts for full LIVE pre-conditions.
  */
 
 import type { SettlementAdapter, AdapterDispatchInput } from '../types';

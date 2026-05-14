@@ -546,7 +546,23 @@ async function proveAmoyLiveSmoke() {
     return;
   }
 
+  // Amoy USDC contract address:
+  //   Circle does not deploy the same USDC contract on Amoy as on mainnet.
+  //   Override via POLYGON_AMOY_USDC_CONTRACT env var when Circle provides
+  //   an Amoy-specific address. Falls back to the mainnet address for
+  //   environments that bridge USDC to Amoy using the same contract.
+  //   Check https://developers.circle.com/stablecoins/docs/usdc-on-test-networks
+  //   before running the live smoke test.
+  const amoyUsdcContract =
+    process.env.POLYGON_AMOY_USDC_CONTRACT?.trim() ??
+    '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
+
   console.log(`  Running Amoy LIVE smoke test against RPC: ${amoyRpc.slice(0, 40)}…`);
+  console.log(`  Amoy USDC contract: ${amoyUsdcContract}`);
+  if (!process.env.POLYGON_AMOY_USDC_CONTRACT) {
+    console.warn('  ⚠ POLYGON_AMOY_USDC_CONTRACT not set — using mainnet USDC address as fallback.');
+    console.warn('    If Amoy uses a different test token, set POLYGON_AMOY_USDC_CONTRACT=0x… first.');
+  }
 
   try {
     const polygonAdapter = (await import('../lib/capinfra/adapters/polygon/index')).polygonAdapter;
@@ -557,7 +573,7 @@ async function proveAmoyLiveSmoke() {
         custodyModel: 'ON_CHAIN_NATIVE' as const, redemptionType: 'NONE' as const,
         settlementType: 'POLYGON' as const,
         chain: 'polygon-amoy', chainId: 80002,
-        contractAddress: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+        contractAddress: amoyUsdcContract,
         decimals: 6, issuer: 'Circle Internet Financial', basePolicyJson: null,
         exposureClass: 'RESTRICTED' as const, collateralClass: 'RED' as const,
         collateralClassificationRationale: null, status: 'ACTIVE' as const,
