@@ -274,53 +274,68 @@ async function main() {
   // ── F: Phase 5 LIVE gate behavior ───────────────────────────────────
   // LIVE no longer throws AdapterModeNotPermittedError.
   // Without chain flags, assertChainEnabled() throws with "CHAIN_POLYGON_ENABLED" message.
+  // Snapshot caller-provided vars so invariant H sees them correctly after this test.
   console.log('\n── Invariant F: Phase 5 LIVE gate — chain flags required ─────');
-  try {
-    process.env.POLYGON_ADAPTER_MODE = 'LIVE';
-    delete process.env.CHAIN_POLYGON_ENABLED;
-    delete process.env.MULTICHAIN_ENABLED;
-
-    let caught: Error | null = null;
+  {
+    const savedAdapterMode  = process.env.POLYGON_ADAPTER_MODE;
+    const savedAllowlist    = process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST;
+    const savedChainEnabled = process.env.CHAIN_POLYGON_ENABLED;
+    const savedMultichain   = process.env.MULTICHAIN_ENABLED;
     try {
-      // Allowlist the asset so the mode gate routes to liveDispatch() (not DRY_RUN)
-      process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST = 'USDC-POLYGON';
-      await polygonAdapter.dispatch({ instruction, asset });
+      process.env.POLYGON_ADAPTER_MODE = 'LIVE';
+      delete process.env.CHAIN_POLYGON_ENABLED;
+      delete process.env.MULTICHAIN_ENABLED;
+
+      let caught: Error | null = null;
+      try {
+        // Allowlist the asset so the mode gate routes to liveDispatch() (not DRY_RUN)
+        process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST = 'USDC-POLYGON';
+        await polygonAdapter.dispatch({ instruction, asset });
+      } catch (err) {
+        caught = err as Error;
+      }
+
+      if (!caught) {
+        fail('F', 'LIVE dispatch without chain flags did NOT throw — expected chain-gate error');
+      } else {
+        const msg = caught.message;
+        if (msg.includes('CHAIN_POLYGON_ENABLED') || msg.includes('MULTICHAIN_ENABLED')) {
+          pass('F', `LIVE without chain flags → chain-gate error: "${msg}"`);
+        } else {
+          // Any throw from assertChainEnabled(), RPC, or other gate is acceptable
+          pass('F.gate', `LIVE without chain flags threw: "${msg}" (gate is active)`);
+        }
+        // Confirm it's NOT AdapterModeNotPermittedError (Phase 4 hard block is gone)
+        const name = caught.constructor.name;
+        if (name === 'AdapterModeNotPermittedError') {
+          fail('F.phase5', `LIVE still throws AdapterModeNotPermittedError — Phase 4 block was not removed`);
+        } else {
+          pass('F.phase5', `Phase 4 AdapterModeNotPermittedError block removed — LIVE now delegates to liveDispatch()`);
+        }
+      }
     } catch (err) {
-      caught = err as Error;
+      fail('F', 'LIVE gate test threw unexpectedly', (err as Error).message);
+    } finally {
+      // Snapshot-based restore — preserves caller-supplied values for invariant H.
+      if (savedAdapterMode !== undefined)  { process.env.POLYGON_ADAPTER_MODE           = savedAdapterMode;  } else { delete process.env.POLYGON_ADAPTER_MODE; }
+      if (savedAllowlist !== undefined)    { process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST = savedAllowlist;    } else { delete process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST; }
+      if (savedChainEnabled !== undefined) { process.env.CHAIN_POLYGON_ENABLED          = savedChainEnabled; } else { delete process.env.CHAIN_POLYGON_ENABLED; }
+      if (savedMultichain !== undefined)   { process.env.MULTICHAIN_ENABLED             = savedMultichain;   } else { delete process.env.MULTICHAIN_ENABLED; }
     }
-
-    delete process.env.POLYGON_ADAPTER_MODE;
-    delete process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST;
-
-    if (!caught) {
-      fail('F', 'LIVE dispatch without chain flags did NOT throw — expected chain-gate error');
-    } else {
-      const msg = caught.message;
-      if (msg.includes('CHAIN_POLYGON_ENABLED') || msg.includes('MULTICHAIN_ENABLED')) {
-        pass('F', `LIVE without chain flags → chain-gate error: "${msg}"`);
-      } else {
-        // Any throw from assertChainEnabled(), RPC, or other gate is acceptable
-        pass('F.gate', `LIVE without chain flags threw: "${msg}" (gate is active)`);
-      }
-      // Confirm it's NOT AdapterModeNotPermittedError (Phase 4 hard block is gone)
-      const name = caught.constructor.name;
-      if (name === 'AdapterModeNotPermittedError') {
-        fail('F.phase5', `LIVE still throws AdapterModeNotPermittedError — Phase 4 block was not removed`);
-      } else {
-        pass('F.phase5', `Phase 4 AdapterModeNotPermittedError block removed — LIVE now delegates to liveDispatch()`);
-      }
-    }
-  } catch (err) {
-    fail('F', 'LIVE gate test threw unexpectedly', (err as Error).message);
   }
 
   // ── F2: LIVE with chain flags but no RPC ────────────────────────────
-  // Snapshot ALL Polygon RPC env vars before the test so H can read them
-  // correctly afterwards. Restoration is done unconditionally in finally.
+  // Snapshot ALL env vars touched by this test so invariant H sees the
+  // correct values afterwards. Restoration is snapshot-based (not delete-
+  // unconditionally) so inline env vars passed by the caller are preserved.
   console.log('\n── Invariant F2: LIVE + chain flags + no RPC → RPC error ─────');
   {
-    const savedRpc     = process.env.POLYGON_RPC_URL;
-    const savedAmoyRpc = process.env.POLYGON_AMOY_RPC_URL;
+    const savedRpc            = process.env.POLYGON_RPC_URL;
+    const savedAmoyRpc        = process.env.POLYGON_AMOY_RPC_URL;
+    const savedAdapterMode    = process.env.POLYGON_ADAPTER_MODE;
+    const savedAllowlist      = process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST;
+    const savedChainEnabled   = process.env.CHAIN_POLYGON_ENABLED;
+    const savedMultichain     = process.env.MULTICHAIN_ENABLED;
     try {
       process.env.POLYGON_ADAPTER_MODE           = 'LIVE';
       process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST  = 'USDC-POLYGON';
@@ -346,21 +361,15 @@ async function main() {
     } catch (err) {
       fail('F2', 'RPC gate test threw unexpectedly', (err as Error).message);
     } finally {
-      // Always restore — ensures invariant H sees the correct Amoy RPC URL.
-      if (savedRpc !== undefined) {
-        process.env.POLYGON_RPC_URL = savedRpc;
-      } else {
-        delete process.env.POLYGON_RPC_URL;
-      }
-      if (savedAmoyRpc !== undefined) {
-        process.env.POLYGON_AMOY_RPC_URL = savedAmoyRpc;
-      } else {
-        delete process.env.POLYGON_AMOY_RPC_URL;
-      }
-      delete process.env.POLYGON_ADAPTER_MODE;
-      delete process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST;
-      delete process.env.CHAIN_POLYGON_ENABLED;
-      delete process.env.MULTICHAIN_ENABLED;
+      // Snapshot-based restore — preserves values the caller passed inline.
+      // This ensures invariant H sees POLYGON_AMOY_RPC_URL, CHAIN_POLYGON_ENABLED,
+      // MULTICHAIN_ENABLED, etc. as they were before this test ran.
+      if (savedRpc !== undefined)         { process.env.POLYGON_RPC_URL                = savedRpc;         } else { delete process.env.POLYGON_RPC_URL; }
+      if (savedAmoyRpc !== undefined)     { process.env.POLYGON_AMOY_RPC_URL           = savedAmoyRpc;     } else { delete process.env.POLYGON_AMOY_RPC_URL; }
+      if (savedAdapterMode !== undefined) { process.env.POLYGON_ADAPTER_MODE           = savedAdapterMode; } else { delete process.env.POLYGON_ADAPTER_MODE; }
+      if (savedAllowlist !== undefined)   { process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST = savedAllowlist;   } else { delete process.env.POLYGON_ADAPTER_LIVE_ALLOWLIST; }
+      if (savedChainEnabled !== undefined){ process.env.CHAIN_POLYGON_ENABLED          = savedChainEnabled;} else { delete process.env.CHAIN_POLYGON_ENABLED; }
+      if (savedMultichain !== undefined)  { process.env.MULTICHAIN_ENABLED             = savedMultichain;  } else { delete process.env.MULTICHAIN_ENABLED; }
     }
   }
 

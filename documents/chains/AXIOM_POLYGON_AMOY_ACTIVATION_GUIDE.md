@@ -21,9 +21,9 @@
 | `CHAIN_POLYGON_ENABLED` | NOT SET — required before LIVE dispatch |
 | Accepted-risk document | UNSIGNED — see Step 4 |
 | Database | Connected ✓ |
-| Invariant H | SKIPPED — blocked by wallet funding only |
+| Invariant H | **PROVEN** — txHash `0x334935ab62afb8298187529ef69db692bd63ffcd84cae353e4ce3f3a3e6049f7` on chainId=80002 |
 
-**Next operator action:** Complete Steps 1–3 below (fund wallet), then re-run Step 0 preflight to unblock invariant H.
+**Amoy LIVE smoke is complete.** Steps 1–6 are the remaining production gates (see Section 10).
 
 ---
 
