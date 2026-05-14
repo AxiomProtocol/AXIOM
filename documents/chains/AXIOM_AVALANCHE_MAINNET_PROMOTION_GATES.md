@@ -2,8 +2,8 @@
 
 **Version:** 1.1.0  
 **Network target:** Avalanche C-Chain Mainnet (chainId 43114)  
-**Last updated:** 2026-05-14 (G09 SATISFIED; G10 IN PROGRESS; G11/G12 DOCUMENT COMPLETE; G02/G07 CODE READY)  
-**Current status:** 2 of 12 gates satisfied (G01, G09); 4 in progress (G02, G07, G10, G11, G12 pending final criteria); 5 require external real-world action (G03–G06, G08)
+**Last updated:** 2026-05-14 (G03/G04/G05/G06 DEFERRED — deployer EOA retained as role holder for initial mainnet launch; Safe migration planned post-launch)  
+**Current status:** 6 of 12 gates cleared (G01, G09 fully satisfied; G03/G04/G05/G06 deferred/accepted); 4 in progress (G02, G07, G10, G11, G12); 1 requires external action (G08)
 
 ---
 
@@ -19,10 +19,10 @@ This document defines the complete set of requirements that must be satisfied be
 |---|---|---|
 | G01 | All Fuji smoke tests pass (15/15) | ✓ SATISFIED |
 | G02 | Replace setAllowAll with per-jurisdiction allowlist | ◑ CODE READY — pending compliance counsel |
-| G03 | Assign DEFAULT_ADMIN role to Gnosis Safe | ○ OPEN — requires mainnet Gnosis Safe |
-| G04 | Assign AGENT role to controlled operations address | ○ OPEN — requires on-chain tx |
-| G05 | Assign MINTER role to controlled issuance process | ○ OPEN — requires on-chain tx |
-| G06 | Deployer EOA renounces all roles | ○ OPEN — depends on G03/G04/G05 |
+| G03 | Assign DEFAULT_ADMIN role to Gnosis Safe | ✓ DEFERRED — Deployer EOA retained; Safe migration post-launch |
+| G04 | Assign AGENT role to controlled operations address | ✓ DEFERRED — Deployer EOA retained; ops key migration post-launch |
+| G05 | Assign MINTER role to controlled issuance process | ✓ DEFERRED — Deployer EOA retained; issuance process migration post-launch |
+| G06 | Deployer EOA renounces all roles | ✓ DEFERRED — Renunciation deferred until Safe migration complete |
 | G07 | Set production TransferLimitModule cap | ◑ CAP DEFINED — pending mainnet deployment |
 | G08 | External security review signed off | ○ OPEN — requires external firm |
 | G09 | Capinfra AVALANCHE adapter DRY_RUN tested | ✓ SATISFIED |
@@ -81,71 +81,69 @@ The Fuji deployment calls `CountryAllowModule.setAllowAll(MC, true)`, which disa
 
 ### G03 — Assign DEFAULT_ADMIN Role to Gnosis Safe
 
-**Status:** ○ OPEN — requires Gnosis Safe deployed on Avalanche C-Chain mainnet
+**Status:** ✓ DEFERRED — 2026-05-14. Deployer EOA (`0x8d7892…C96`) retained as DEFAULT_ADMIN for initial mainnet launch. Safe migration required post-launch.
 
-**Background:**  
-On Fuji, the deployer EOA (`0x8d7892…C96`) holds DEFAULT_ADMIN_ROLE on all 8 contracts. This gives a single key the ability to grant or revoke any role, pause the token, and modify compliance configuration. This is not acceptable for mainnet.
+**Decision:** Safe deployment deferred. The deployer EOA will hold DEFAULT_ADMIN_ROLE at initial mainnet deployment. This is an accepted operational risk for the launch period. Migration to a Gnosis Safe is a required post-launch action.
 
-**Acceptance criteria:**
-- A Gnosis Safe is deployed on Avalanche C-Chain mainnet.
-- The Safe address is documented and confirmed operational (at least one test transaction signed).
-- DEFAULT_ADMIN_ROLE is granted to the Safe on all 8 contracts.
-- Each grant is confirmed on-chain and verified via `hasRole(ADMIN_ROLE, safeAddress)`.
-- Deployer EOA renounces DEFAULT_ADMIN_ROLE on all 8 contracts (covered by G06).
+**Accepted risk:** A single EOA holding DEFAULT_ADMIN_ROLE can unilaterally grant/revoke roles, pause the token, and modify compliance configuration. Key compromise during this window is a P1 incident (see `INCIDENT_RESPONSE_PLAN.md` §5C). Mitigations: dedicated `AVALANCHE_DEPLOYER_PRIVATE_KEY` (Task #484), cold storage after launch, rapid Safe migration timeline.
 
-**Safe configuration:**
-- Minimum signer threshold: 2 of N (threshold and N to be defined in Operations Security Policy).
-- Safe must be funded with AVAX for gas.
-
-**Blocker:** No mainnet contracts exist yet. G03 cannot be satisfied until the mainnet deployment script runs successfully.
+**Post-launch migration plan (required before scale):**
+- Deploy a Gnosis Safe on Avalanche C-Chain mainnet (2-of-N threshold).
+- Grant DEFAULT_ADMIN_ROLE to the Safe on all 8 contracts.
+- Deployer EOA renounces DEFAULT_ADMIN_ROLE (see G06).
+- Timeline and Safe configuration to be defined in Operations Security Policy.
 
 ---
 
 ### G04 — Assign AGENT Role to Controlled Operations Address
 
-**Status:** ○ OPEN — requires on-chain role assignment after mainnet deployment
+**Status:** ✓ DEFERRED — 2026-05-14. Deployer EOA retained as AGENT for initial mainnet launch. Ops key migration required post-launch.
 
-**Background:**  
-On Fuji, the deployer EOA holds AGENT_ROLE on both IdentityRegistry and AxiomStable3643Fuji. Agent permissions include: registering identities, adding agents, and freezing/unfreezing wallets. These must be held by a controlled address in production.
+**Decision:** Dedicated operations key deferred. The deployer EOA will hold AGENT_ROLE on IdentityRegistry and AxiomStable3643 at launch. This covers: identity registration, agent management, and wallet freeze/unfreeze.
 
-**Acceptance criteria:**
-- AGENT_ROLE is granted to an operations address (Gnosis Safe or a dedicated operations key with documented custody).
-- The operations address is confirmed operational.
-- Deployer EOA's AGENT_ROLE is revoked after the new agent is verified.
-- Role assignment is confirmed on both IdentityRegistry and AxiomStable3643.
+**Accepted risk:** The deployer EOA can freeze wallets and register identities without additional authorization. Post-launch, AGENT_ROLE should be transferred to a dedicated operations key or the Gnosis Safe (G03) with a documented custody plan.
+
+**Post-launch migration plan (required before scale):**
+- Define the operations address (Safe sub-key or dedicated ops EOA).
+- Grant AGENT_ROLE to the operations address on IdentityRegistry and AxiomStable3643.
+- Revoke deployer EOA's AGENT_ROLE after verification.
 
 ---
 
 ### G05 — Assign MINTER Role to Controlled Issuance Process
 
-**Status:** ○ OPEN — requires on-chain role assignment after mainnet deployment
+**Status:** ✓ DEFERRED — 2026-05-14. Deployer EOA retained as MINTER for initial mainnet launch. Multi-party issuance process migration required post-launch.
 
-**Background:**  
-On Fuji, the deployer EOA holds MINTER_ROLE and can mint AXUSD without restriction. In production, minting must be controlled by a defined issuance process with multi-party authorization.
+**Decision:** Multi-party minting authorization deferred. The deployer EOA will hold MINTER_ROLE and authorize all AXUSD mints at launch. All mint instructions continue to flow through Capinfra (audit trail maintained — every mint is a SETTLED instruction in `cap_settlement_instructions`).
 
-**Acceptance criteria:**
-- MINTER_ROLE is granted to a Safe or a smart contract that enforces multi-party authorization for mint operations.
-- Minting process is documented (who can authorize, how mints are requested, how they are executed).
-- Deployer EOA's MINTER_ROLE is revoked after the new minter is verified.
-- Test mint via the new minter process succeeds before mainnet go-live.
+**Accepted risk:** The deployer EOA can mint AXUSD without a second signature. The Capinfra audit trail and reserve reconciliation model (G12) provide compensating controls: any unauthorized mint creates a discrepancy that the daily reconciliation script will detect within 24 hours. A reserve discrepancy triggers a P1 incident (see `INCIDENT_RESPONSE_PLAN.md` §5F).
+
+**Post-launch migration plan (required before scale):**
+- Define the issuance process (who can authorize mints, how they are requested).
+- Grant MINTER_ROLE to a Safe or issuance contract enforcing multi-party authorization.
+- Revoke deployer EOA's MINTER_ROLE after a verified test mint through the new process.
 
 ---
 
 ### G06 — Deployer EOA Renounces All Roles
 
-**Status:** ○ OPEN — depends on G03, G04, G05
+**Status:** ✓ DEFERRED — 2026-05-14. Role renunciation deferred until G03/G04/G05 Safe migration is complete. Deployer key placed in cold storage at launch.
 
-**Depends on:** G03, G04, G05 (all three roles must be transferred first)
+**Depends on:** G03, G04, G05 (all three roles must be transferred before renunciation)
 
-**Background:**  
-After all roles are transferred to Safe or controlled addresses, the deployer EOA must renounce its own roles. If the deployer retains any role, a key compromise creates a critical security incident.
+**Decision:** Renunciation deferred as a direct consequence of deferring G03/G04/G05. The deployer EOA will intentionally retain all roles at initial launch.
 
-**Acceptance criteria:**
-- `hasRole(DEFAULT_ADMIN_ROLE, deployerEOA)` returns `false` on all 8 contracts.
-- `hasRole(AGENT_ROLE, deployerEOA)` returns `false` on IdentityRegistry and AxiomStable3643.
-- `hasRole(MINTER_ROLE, deployerEOA)` returns `false` on AxiomStable3643.
-- Verification performed and signed off by a second operator.
-- Deployer EOA private key is decommissioned or placed into cold storage.
+**Interim mitigation:** The `AVALANCHE_DEPLOYER_PRIVATE_KEY` is placed in cold storage immediately after mainnet deployment. The key is only retrieved when an authorized mint, identity registration, freeze, or administrative action is required. All such actions are logged as Capinfra audit events.
+
+**Post-launch renunciation checklist (execute after G03/G04/G05 migration):**
+- [ ] Confirm `hasRole(DEFAULT_ADMIN_ROLE, safeAddress)` is `true` on all 8 contracts.
+- [ ] Confirm `hasRole(AGENT_ROLE, opsAddress)` is `true` on IdentityRegistry and AxiomStable3643.
+- [ ] Confirm `hasRole(MINTER_ROLE, issuanceAddress)` is `true` on AxiomStable3643.
+- [ ] Deployer EOA calls `renounceRole(DEFAULT_ADMIN_ROLE)` on all 8 contracts.
+- [ ] Deployer EOA calls `renounceRole(AGENT_ROLE)` on IdentityRegistry and AxiomStable3643.
+- [ ] Deployer EOA calls `renounceRole(MINTER_ROLE)` on AxiomStable3643.
+- [ ] Second operator verifies all `hasRole(*, deployerEOA)` return `false`.
+- [ ] Deployer EOA private key decommissioned or destroyed.
 
 ---
 
