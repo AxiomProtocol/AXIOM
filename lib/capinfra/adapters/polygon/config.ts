@@ -2,31 +2,35 @@
  * Capital Infrastructure — Polygon PoS adapter config.
  *
  * Environment-variable-driven configuration, following the Avalanche
- * adapter pattern exactly. No cap_adapters DB row required — mirrors
- * the EVM and Avalanche adapter approach.
+ * adapter pattern exactly. No cap_adapters DB row required.
  *
  * Env vars:
  *   POLYGON_ADAPTER_MODE             DRY_RUN | LIVE | DISABLED (default: DRY_RUN)
  *   POLYGON_RPC_URL                  Polygon PoS mainnet RPC endpoint
  *   POLYGON_AMOY_RPC_URL             Polygon Amoy testnet RPC (preferred for chainId 80002)
  *   POLYGON_ADAPTER_LIVE_ALLOWLIST   Comma-separated asset symbols enabled for LIVE
- *   MULTICHAIN_ENABLED               Must be "true" for any non-DRY_RUN behavior
- *   CHAIN_POLYGON_ENABLED            Must be "true" for any non-DRY_RUN behavior
+ *   POLYGON_DEPLOYER_PRIVATE_KEY     Polygon-specific deployer/relayer key (preferred)
+ *   DEPLOYER_PRIVATE_KEY             Fallback deployer key (shared across chains)
+ *   MULTICHAIN_ENABLED               Must be "true" for LIVE dispatch
+ *   CHAIN_POLYGON_ENABLED            Must be "true" for LIVE dispatch
  *
- * Phase 4 status:
- *   DRY_RUN is the only permitted mode. LIVE dispatch is not yet implemented
- *   and will fail closed with AdapterModeNotPermittedError regardless of mode
- *   setting. LIVE will be implemented in a future phase after: BitGo Polygon
- *   custody wallet, accepted-risk record, full reconciliation model, and
- *   Amoy smoke test are all complete.
+ * Phase 5 status:
+ *   LIVE dispatch is implemented. Gate pre-conditions before enabling:
+ *     1. BitGo Polygon custody wallet registered in custodyWalletRegistry
+ *     2. Accepted-risk record signed (Technical Lead, Ops Lead, Compliance)
+ *     3. Polygon Amoy smoke test passing with live RPC
+ *     4. USDC-POLYGON asset registered in cap_assets
+ *     5. CHAIN_POLYGON_ENABLED=true and POLYGON_RPC_URL set in target environment
+ *     6. Legal review of Polygon USDC payment flows complete
+ *   Until all gates are met, POLYGON_ADAPTER_MODE should remain DRY_RUN.
  */
 
 import type { AdapterMode } from '../types';
 
 export const POLYGON_ADAPTER_KIND = 'POLYGON';
 
-/** Chain IDs this adapter is aware of. LIVE not yet supported on any. */
-export const SUPPORTED_CHAIN_IDS = new Set<number>([
+/** Chain IDs permitted for LIVE broadcast. */
+export const SUPPORTED_LIVE_CHAIN_IDS = new Set<number>([
   137,   // Polygon PoS mainnet
   80002, // Polygon Amoy testnet
 ]);
@@ -56,8 +60,9 @@ export function effectiveModeForAsset(symbol: string, baseMode: AdapterMode): Ad
 }
 
 /**
- * Chain-enable safety gate: non-DRY_RUN dispatch requires both multichain flags.
- * Throws if either flag is absent or not 'true'.
+ * Chain-enable safety gate: LIVE dispatch requires both multichain flags.
+ * Called at the top of liveDispatch() so a missing flag fails fast with a
+ * clear operator message rather than a cryptic RPC or contract error.
  */
 export function assertChainEnabled(): void {
   if (process.env.MULTICHAIN_ENABLED !== 'true') {
@@ -91,4 +96,23 @@ export function polygonRpcUrl(chainId?: number): string {
     );
   }
   return url;
+}
+
+/**
+ * Resolve the deployer private key for Polygon LIVE dispatch.
+ * Prefers POLYGON_DEPLOYER_PRIVATE_KEY (dedicated Polygon/Amoy key).
+ * Falls back to DEPLOYER_PRIVATE_KEY (shared deployer key).
+ *
+ * Using a dedicated POLYGON_DEPLOYER_PRIVATE_KEY is strongly recommended
+ * so Polygon keys can be rotated independently of Arbitrum/Avalanche keys.
+ */
+export function deployerPrivateKey(): string {
+  const pk =
+    process.env.POLYGON_DEPLOYER_PRIVATE_KEY ?? process.env.DEPLOYER_PRIVATE_KEY;
+  if (!pk) {
+    throw new Error(
+      'polygon-adapter: POLYGON_DEPLOYER_PRIVATE_KEY (or DEPLOYER_PRIVATE_KEY) is required for LIVE mode',
+    );
+  }
+  return pk;
 }
