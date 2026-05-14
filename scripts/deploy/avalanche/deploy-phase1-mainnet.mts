@@ -295,11 +295,11 @@ async function main(): Promise<void> {
       await callAndWait(mc, 'addModule', tlmAddr);
     });
 
-    // G02: Per-jurisdiction allowlist — setAllowedCountry for each approved country.
+    // G02: Per-jurisdiction allowlist — addAllowedCountry for each approved country.
     // IMPORTANT: setAllowAll is intentionally NOT called here. See G02 promotion gate.
     for (const code of countryCodes) {
-      await wire(`CountryAllowModule.setAllowedCountry(MC, ${code}, true) — G02`, async () => {
-        await callAndWait(cam, 'setAllowedCountry', mcAddr, code, true);
+      await wire(`CountryAllowModule.addAllowedCountry(MC, ${code}) — G02`, async () => {
+        await callAndWait(cam, 'addAllowedCountry', mcAddr, code);
       });
     }
     console.log(`\n  ✓ G02: ${countryCodes.length} country codes set. setAllowAll NOT called.`);
@@ -327,7 +327,7 @@ async function main(): Promise<void> {
       'ModularCompliance.bindToken(AxiomStable3643)',
       'ModularCompliance.addModule(CountryAllowModule)',
       'ModularCompliance.addModule(TransferLimitModule)',
-      `CountryAllowModule.setAllowedCountry(MC, <codes>, true) — G02 [${countryCodes.length || 'N'} codes]`,
+      `CountryAllowModule.addAllowedCountry(MC, <codes>) — G02 [${countryCodes.length || 'N'} codes]`,
       `TransferLimitModule.setTransferLimit(MC, ${transferLimitRaw}) — ${transferLimitAxusd} AXUSD/day — G07`,
       'IdentityRegistry.addAgent(deployer)',
     ];
