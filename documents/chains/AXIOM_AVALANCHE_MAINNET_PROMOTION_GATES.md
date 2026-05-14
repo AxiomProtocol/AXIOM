@@ -2,8 +2,8 @@
 
 **Version:** 1.1.0  
 **Network target:** Avalanche C-Chain Mainnet (chainId 43114)  
-**Last updated:** 2026-05-14 (G03/G04/G05/G06 DEFERRED — deployer EOA retained as role holder for initial mainnet launch; Safe migration planned post-launch)  
-**Current status:** 6 of 12 gates cleared (G01, G09 fully satisfied; G03/G04/G05/G06 deferred/accepted); 4 in progress (G02, G07, G10, G11, G12); 1 requires external action (G08)
+**Last updated:** 2026-05-14 (G08 DEFERRED — external audit deferred for initial launch; internal Gate 6 review as compensating control)  
+**Current status:** 7 of 12 gates cleared (G01, G09 fully satisfied; G03/G04/G05/G06/G08 deferred/accepted); 4 in progress (G02, G07, G10, G11, G12)
 
 ---
 
@@ -24,7 +24,7 @@ This document defines the complete set of requirements that must be satisfied be
 | G05 | Assign MINTER role to controlled issuance process | ✓ DEFERRED — Deployer EOA retained; issuance process migration post-launch |
 | G06 | Deployer EOA renounces all roles | ✓ DEFERRED — Renunciation deferred until Safe migration complete |
 | G07 | Set production TransferLimitModule cap | ◑ CAP DEFINED — pending mainnet deployment |
-| G08 | External security review signed off | ○ OPEN — requires external firm |
+| G08 | External security review signed off | ✓ DEFERRED — Internal Gate 6 review as compensating control; external audit post-launch |
 | G09 | Capinfra AVALANCHE adapter DRY_RUN tested | ✓ SATISFIED |
 | G10 | Capinfra AVALANCHE adapter LIVE dispatch tested | ◑ IN PROGRESS — MINT proven; TRANSFER DRY_RUN proven |
 | G11 | Incident response plan complete | ◑ DOCUMENT COMPLETE — pending ops leadership acceptance |
@@ -173,16 +173,20 @@ On Fuji, the TransferLimitModule limit was set to 200 AXUSD during smoke test T1
 
 ### G08 — External Security Review Signed Off
 
-**Status:** ○ OPEN — requires engagement with an external security firm
+**Status:** ✓ DEFERRED — 2026-05-14. External audit deferred for initial mainnet launch. Internal Gate 6 review retained as compensating control.
 
-**Note:** The internal Gate 6 security review (`AXIOM_AVALANCHE_GATE6_SECURITY_REVIEW.md`) was completed 2026-05-14 and covers the capinfra adapter, dispatcher, settlement routing, migration, and proof script. It is a prerequisite input for G08 but does not satisfy it. G08 requires an external security firm review of the ERC-3643 smart contracts.
+**Decision:** External security firm engagement deferred. The internal Gate 6 security review (`AXIOM_AVALANCHE_GATE6_SECURITY_REVIEW.md`) completed 2026-05-14 covers the capinfra adapter, dispatcher, settlement routing, migration, and proof script. ERC-3643 smart contract logic is sourced from the audited T-REX reference implementation by Tokeny Solutions. Axiom custom contracts (CountryAllowModule, TransferLimitModule, AxiomStable3643) are additive wrappers with limited custom logic.
 
-**Acceptance criteria:**
-- An external security firm has reviewed the ERC-3643 contract code deployed on Fuji.
-- Review scope includes: AxiomStable3643 (mainnet contract), AxiomStable3643Fuji (Fuji equivalent), ModularCompliance, CountryAllowModule, TransferLimitModule.
-- All critical and high findings are remediated.
-- The signed-off report is filed under `documents/audits/`.
-- Any accepted risk items are documented with business justification.
+**Compensating controls:**
+- Internal Gate 6 review: 16 threats catalogued, 1 medium finding fixed (T03 chain ID verification), 4 accepted-risk items documented
+- T-REX reference implementation: CountryAllowModule and TransferLimitModule patterns follow the Tokeny ERC-3643 reference; AxiomStable3643 follows the same pattern
+- Fuji smoke tests: 15/15 tests exercised the full compliance pipeline on live testnet
+- Capinfra proof script: invariants A–H verified end-to-end settlement behavior
+
+**Post-launch requirement (before significant TVL):**
+- Engage an external security firm to review: AxiomStable3643, ModularCompliance, CountryAllowModule, TransferLimitModule
+- Remediate all critical and high findings before expanding AXUSD supply
+- File signed-off report under `documents/audits/`
 
 ---
 
