@@ -246,6 +246,9 @@ async function main() {
       currency:          'USDC',
       fromUserId:        'smoke-check-operator',
       toAddress:         recipient!,
+      // payloadJson.recipient is required by resolveRoute() in liveDispatch()
+      // (Gate 6: TRANSFER requires payloadJson.recipient — 0x… address)
+      payloadJson:       { recipient: recipient! },
       externalRef:       null,
       settledAt:         null,
       errorMessage:      null,
