@@ -12,6 +12,26 @@
 
 ---
 
+## Testnet Waiver (Amoy Smoke Test Only)
+
+> The Amoy testnet smoke test (invariant H) uses testnet funds only —
+> no production keys, no user funds, no mainnet transactions.
+> A single Technical Lead sign-off is sufficient to authorize the Amoy smoke.
+> The full 3-party sign-off below is required before any mainnet activation.
+
+```
+I authorize the Polygon Amoy testnet smoke test only.
+Scope: chainId=80002, test USDC only, dedicated smoke wallet, no production keys.
+This waiver does NOT authorize POLYGON_ADAPTER_MODE=LIVE in staging or production.
+
+Technical Lead:
+  Name:      ___________________________
+  Signature: ___________________________
+  Date:      ___________________________
+```
+
+---
+
 ## 1. What Is Being Approved
 
 Enabling the Polygon PoS capinfra adapter to broadcast **real USDC transfer

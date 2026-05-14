@@ -158,7 +158,7 @@ Script: `scripts/vault-sprint-polygon-amoy.ts`
 | F2 — LIVE + chain flags + no RPC → RPC error | PROVEN | POLYGON_RPC_URL required error thrown |
 | F3 — DISABLED throws AdapterDisabledError | PROVEN | unchanged behavior |
 | G — Settlement confirmation idempotency (DB) | PROVEN | SUBMITTED → SETTLED → ConflictError on second call |
-| H — Amoy LIVE smoke test | SKIPPED (no POLYGON_AMOY_RPC_URL) | Run manually when Amoy RPC is configured |
+| H — Amoy LIVE smoke test | SKIPPED — wallet unfunded | Amoy RPC resolves (chainId 80002 ✓). Deployer 0x8d7892… has 0 POL / 0 USDC on Amoy. Fund wallet, set POLYGON_DEPLOYER_PRIVATE_KEY, rerun vault-sprint. See AXIOM_POLYGON_AMOY_LIVE_SMOKE_REPORT.md. |
 | I — EVM/AVALANCHE/INTERNAL/ACH/STELLAR unaffected | PROVEN | All 5 adapters still resolve |
 
 ---

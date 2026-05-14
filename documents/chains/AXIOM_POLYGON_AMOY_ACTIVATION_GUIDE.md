@@ -3,8 +3,27 @@
 **Purpose:** Step-by-step operator guide for running the Polygon Amoy LIVE smoke test  
 **Prerequisite:** Task #489 (Phase 5 LIVE dispatch implementation) must be MERGED  
 **Created:** 2026-05-14  
+**Last preflight run:** 2026-05-14 — see `AXIOM_POLYGON_AMOY_LIVE_SMOKE_REPORT.md`
 
 > This guide enables an operator to complete the final pre-production verification for Polygon PoS LIVE payments. Follow steps in order. Do not skip the dedicated wallet requirement.
+
+---
+
+## Preflight Status (2026-05-14)
+
+| Check | Result |
+|---|---|
+| Amoy RPC reachable | PASS — chainId 80002 confirmed via ALCHEMY_API_KEY |
+| Deployer address | `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` (shared fallback — set dedicated key) |
+| POL balance | **0.000000 — UNFUNDED** — fund via https://faucet.polygon.technology/ |
+| USDC balance | **0.000000 — UNFUNDED** — fund via https://faucet.circle.com/ (Polygon Amoy) |
+| `POLYGON_DEPLOYER_PRIVATE_KEY` | NOT SET — using shared Arbitrum key fallback |
+| `CHAIN_POLYGON_ENABLED` | NOT SET — required before LIVE dispatch |
+| Accepted-risk document | UNSIGNED — see Step 4 |
+| Database | Connected ✓ |
+| Invariant H | SKIPPED — blocked by wallet funding only |
+
+**Next operator action:** Complete Steps 1–3 below (fund wallet), then re-run Step 0 preflight to unblock invariant H.
 
 ---
 
