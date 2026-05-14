@@ -116,6 +116,11 @@ Use this checklist before promoting a Fuji deployment to Avalanche C-Chain mainn
 - [x] `freezeAddress(wallet, false)` restores transfers
 - [x] Capinfra `AVALANCHE` adapter DRY_RUN dispatch returns expected receipt — Task #482, 22/22 checks, invariants A–G all PASS
 - [x] Capinfra `AVALANCHE` adapter LIVE dispatch mints on Fuji — Task #482, 2026-05-13T23:36:59Z, 22/22 checks passed, txHash: 0xf10d156a9328b9c4ad32f7bd6dd1df143f92449a270146b209c2129ddb69ef8c, block=55330858, receipt.status=1, Transfer event in logs, balanceOf delta=1 raw (attributed to this run), contract from shared/contracts-avalanche.ts
+- [x] `'AVALANCHE'` added to `capSettlementTypeEnum` — Task #483, migration 0059, 2026-05-14
+- [x] AXUSD-FUJI `settlement_type` updated `EVM → AVALANCHE` in DB and seed — Task #483
+- [x] `capinfra-seed.ts` idempotent settlementType update for existing rows — Task #483
+- [x] Invariant A4: `getAdapter(asset.settlementType)` resolves to AVALANCHE adapter (canonical routing) — Task #483
+- [x] G4: routing gap closed — LIVE proof under canonical routing, invariants A–G all PASS, EXIT=0, txHash: 0x738a90c5f3d6c1f37a133947e598155e58b92b7123ae6a575b00f06700b662ee, block=55331303
 
 ---
 
