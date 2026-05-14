@@ -16,14 +16,14 @@
  *   MULTICHAIN_ENABLED=true                     — global multichain flag
  *   CHAIN_AVALANCHE_ENABLED=true                — per-chain flag
  *   AVALANCHE_DEPLOYER_PRIVATE_KEY=<mainnet key> — dedicated mainnet signer
- *   AVALANCHE_MAINNET_COUNTRY_CODES=<codes>     — comma-separated ISO 3166-1 numeric
+ *   AVALANCHE_MAINNET_COUNTRY_CODES=<codes>     — comma-separated ISO 3166-1 numeric (defaults to "840" — USA only per G02 direction)
  *   AVALANCHE_MAINNET_TRANSFER_LIMIT_RAW=<raw>  — 6-decimal integer (default 100_000 AXUSD)
  *
  * G02 implementation:
- *   Reads AVALANCHE_MAINNET_COUNTRY_CODES (comma-separated ISO 3166-1 numeric codes,
- *   e.g. "840,826,276" for US, UK, DE). Calls setAllowedCountry for each code.
+ *   Reads AVALANCHE_MAINNET_COUNTRY_CODES (comma-separated ISO 3166-1 numeric codes).
+ *   Defaults to "840" (United States of America only) per G02 compliance direction.
+ *   Additional countries require explicit compliance counsel approval before being added.
  *   Does NOT call setAllowAll — that Fuji testnet shortcut is explicitly absent.
- *   Compliance counsel must provide and sign off on the list before deployment.
  *
  * G07 implementation:
  *   Reads AVALANCHE_MAINNET_TRANSFER_LIMIT_RAW (raw integer, 6-decimal AXUSD).
@@ -77,7 +77,9 @@ async function main(): Promise<void> {
   const DRY_RUN = process.env.AVALANCHE_PHASE2_MAINNET_DEPLOY !== 'true';
 
   // ── Safety gate: parse and validate jurisdiction allowlist ───────────────
-  const rawCodes = process.env.AVALANCHE_MAINNET_COUNTRY_CODES ?? '';
+  // Default: United States of America only (ISO 3166-1 numeric 840).
+  // Per G02 compliance direction — no additional countries without counsel approval.
+  const rawCodes = process.env.AVALANCHE_MAINNET_COUNTRY_CODES ?? '840';
   const countryCodes: number[] = rawCodes
     .split(',')
     .map((s) => s.trim())

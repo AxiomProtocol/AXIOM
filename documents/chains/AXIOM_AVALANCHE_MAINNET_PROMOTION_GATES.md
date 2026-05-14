@@ -3,7 +3,7 @@
 **Version:** 1.1.0  
 **Network target:** Avalanche C-Chain Mainnet (chainId 43114)  
 **Last updated:** 2026-05-14 (G08 DEFERRED — external audit deferred for initial launch; internal Gate 6 review as compensating control)  
-**Current status:** 7 of 12 gates cleared (G01, G09 fully satisfied; G03/G04/G05/G06/G08 deferred/accepted); 4 in progress (G02, G07, G10, G11, G12)
+**Satisfied:** 2 of 12 (G01, G09) | **Deferred/Accepted:** 5 (G03, G04, G05, G06, G08) | **In progress:** 4 (G02, G07, G10, G11/G12) | **Mainnet verdict: NO-GO — G02 and G07 require sign-off; G10/G11/G12 require real-world completion**
 
 ---
 
