@@ -3,7 +3,7 @@
   "adapter": "POLYGON",
   "network": "mainnet",
   "date": "2026-05-14",
-  "runAt": "2026-05-14T14:58:10.978Z",
+  "runAt": "2026-05-14T15:00:48.926Z",
   "status": "BLOCKED",
   "blockers": [
     "CHAIN_POLYGON_ENABLED is not \"true\" — Polygon reconciliation disabled",

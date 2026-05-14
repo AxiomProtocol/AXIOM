@@ -173,7 +173,7 @@ export async function runPolygonReconcile(
       notes,
       reportPath:             null,
     };
-    if (opts.writeReport) writeReport(result, network, date);
+    if (opts.writeReport) result.reportPath = writeReport(result, network, date);
     return result;
   }
 
@@ -218,7 +218,7 @@ export async function runPolygonReconcile(
       notes,
       reportPath:             null,
     };
-    if (opts.writeReport) writeReport(result, network, date);
+    if (opts.writeReport) result.reportPath = writeReport(result, network, date);
     return result;
   }
 
