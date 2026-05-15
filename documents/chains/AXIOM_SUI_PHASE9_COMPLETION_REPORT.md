@@ -90,40 +90,28 @@ Test coverage:
 
 Explorer: https://suiscan.xyz/mainnet/tx/Hw4xfYPodku9qpJHVZNuWPFj8RkRre9KirBeUUgBEe6c
 
-### Campaign Current State
-- **Status:** INACTIVE (placeholder merkle root — all zeros)
-- **Pool balance:** 0 AMC
-- **Eligible claimants:** 0 (no eligibility CSV loaded)
+### Final On-Chain State — FULLY ACTIVATED
 
-### Remaining Operator Steps to Activate
+| Item | Value |
+|---|---|
+| **Status** | ACTIVE |
+| **Merkle root** | `dd6b3d845ed2129701dac7cf2637baf7a0b599d27813be4c75d3deb80394c67a` |
+| **Pool balance** | 4,000,000 base units (4 AMC) |
+| **Eligible claimants** | 4 |
+| **Upgrade policy** | IMMUTABLE (UpgradeCap destroyed) |
 
-1. **Upload eligibility CSV** — list of (wallet address, amount) pairs for community distribution
-2. **Compute merkle root** — `lib/sui/proofs/buildMerkleTree.ts` → `buildMerkleTree(entries).root`
-3. **Set merkle root on-chain:**
-   ```bash
-   sui client call \
-     --package 0xc330a912193feaa7fe545405810732e494b57ece7bc7ecf0e4412e834c33a487 \
-     --module claim_campaign \
-     --function update_merkle_root \
-     --args \
-       0xa6dea4cc02df669d45744be5ca3a1a740417b63a2f79838e7f01f5e2828b0982 \
-       "<32-byte-root-as-hex-array>" \
-       0x637ce7868be3f24f85968629debbee72490406147ffa756f3324fb5acb945f9a \
-     --gas-budget 50000000
-   ```
-4. **Mint and fund pool** — use `guarded_treasury::guarded_mint()` then `fund_campaign()`
-5. **Activate:**
-   ```bash
-   sui client call \
-     --package 0xc330a912193feaa7fe545405810732e494b57ece7bc7ecf0e4412e834c33a487 \
-     --module claim_campaign \
-     --function activate \
-     --args \
-       0xa6dea4cc02df669d45744be5ca3a1a740417b63a2f79838e7f01f5e2828b0982 \
-       0x637ce7868be3f24f85968629debbee72490406147ffa756f3324fb5acb945f9a \
-     --gas-budget 50000000
-   ```
-6. **Update `lib/sui/campaignRegistry.ts`** — set `merkleRoot` and `isActive: true`
+### Activation Transaction Chain
+
+| Step | Tx Digest |
+|---|---|
+| Publish | `Hw4xfYPodku9qpJHVZNuWPFj8RkRre9KirBeUUgBEe6c` |
+| Create campaign | `8rQGeoPsa8H1N71c6USucdZNwJiK5skiJVgNwk8P4Xu4` |
+| Make immutable | `6qv18P2ZeMNKEKzzTnQyukKKKcUAEGnhsFFRqMqb37J7` |
+| Set merkle root | `4dpfFWu4CYfm1QkogaaHxhjo5dgwTK1K2RvrjQpD5LmQ` |
+| Mint + fund pool | `2RufGy3STSUzMTvxgqHhW4hAiifBLhf1EZFSTB32KosU` |
+| Activate | `5AHTFEVAwggD4tBnwJpmSE6adxrVfjgnjR5BG3HhgW8E` |
+
+Proof data: `lib/sui/proofs/phase9-mainnet-eligibility.json`
 
 ---
 
@@ -291,11 +279,14 @@ sui client publish \
 Before Phase 10 work begins:
 - [x] Mainnet package published — `0xc330a912193feaa7fe545405810732e494b57ece7bc7ecf0e4412e834c33a487`
 - [x] PackageID updated in `client.ts` + `campaignRegistry.ts`
-- [ ] Eligibility CSV uploaded and merkleRoot set in campaign (operator action)
-- [ ] Campaign funded and activated by operator (operator action)
+- [x] Package made immutable — UpgradeCap destroyed (Tx: `6qv18P2ZeMNKEKzzTnQyukKKKcUAEGnhsFFRqMqb37J7`)
+- [x] Merkle root set on-chain (Tx: `4dpfFWu4CYfm1QkogaaHxhjo5dgwTK1K2RvrjQpD5LmQ`)
+- [x] Pool funded with 4 AMC (Tx: `2RufGy3STSUzMTvxgqHhW4hAiifBLhf1EZFSTB32KosU`)
+- [x] Campaign activated (Tx: `5AHTFEVAwggD4tBnwJpmSE6adxrVfjgnjR5BG3HhgW8E`)
+- [x] Proof data saved to `lib/sui/proofs/phase9-mainnet-eligibility.json`
 - [ ] External Move security audit engaged (60-day window from 2026-05-15)
 - [ ] AdminCap transferred to 2-of-3 multisig (30-day window from 2026-05-15)
-- [ ] At least one successful end-to-end claim test on mainnet
+- [ ] End-to-end claim test on mainnet from an eligible wallet
 
 ---
 

@@ -71,15 +71,15 @@ const SuiPhase9Page: NextPage = () => {
           Axiom Protocol · Sui Community Distribution Layer · Mainnet Release Candidate
         </p>
 
-        {/* Live on Mainnet Banner */}
+        {/* Active Campaign Banner */}
         <div className="border border-green-700 bg-green-950/10 px-5 py-4 mb-6">
           <p className="font-mono text-xs text-green-400 uppercase tracking-widest mb-2">
-            PACKAGE LIVE — SUI MAINNET
+            CAMPAIGN ACTIVE — SUI MAINNET
           </p>
           <p className="text-sm text-dl-muted">
-            Package published 2026-05-15. Campaign object created. Status:{' '}
-            <span className="text-yellow-400 font-mono text-xs">INACTIVE</span> — awaiting
-            eligibility CSV, merkle root update, pool funding, and operator activation.
+            Package published, pool funded (4 AMC), merkle root set, and campaign activated
+            on 2026-05-15. 4 eligible claimants. Claims open at{' '}
+            <span className="text-dl-fg font-mono text-xs">/sui/claim</span>.
           </p>
         </div>
 
@@ -149,8 +149,38 @@ const SuiPhase9Page: NextPage = () => {
             <dt className="text-dl-muted font-mono text-xs uppercase">Upgrade policy</dt>
             <dd className="text-green-400 font-mono text-xs">FROZEN — No UpgradeCap retained</dd>
 
+            <dt className="text-dl-muted font-mono text-xs uppercase">Merkle root</dt>
+            <dd className="text-dl-fg font-mono text-xs break-all">dd6b3d845ed2129701dac7cf2637baf7a0b599d27813be4c75d3deb80394c67a</dd>
+
+            <dt className="text-dl-muted font-mono text-xs uppercase">Pool balance</dt>
+            <dd className="text-green-400 font-mono text-xs">4,000,000 base units (4 AMC)</dd>
+
+            <dt className="text-dl-muted font-mono text-xs uppercase">Eligible claimants</dt>
+            <dd className="text-dl-fg font-mono text-xs">4</dd>
+
             <dt className="text-dl-muted font-mono text-xs uppercase">Campaign status</dt>
-            <dd className="text-yellow-400 font-mono text-xs">INACTIVE — awaiting eligibility CSV + activate()</dd>
+            <dd className="text-green-400 font-mono text-xs">ACTIVE — claims open</dd>
+
+            <dt className="text-dl-muted font-mono text-xs uppercase">Immutable Tx</dt>
+            <dd className="text-dl-fg font-mono text-xs break-all">6qv18P2ZeMNKEKzzTnQyukKKKcUAEGnhsFFRqMqb37J7</dd>
+
+            <dt className="text-dl-muted font-mono text-xs uppercase">Merkle root Tx</dt>
+            <dd className="text-dl-fg font-mono text-xs break-all">4dpfFWu4CYfm1QkogaaHxhjo5dgwTK1K2RvrjQpD5LmQ</dd>
+
+            <dt className="text-dl-muted font-mono text-xs uppercase">Fund Tx</dt>
+            <dd className="text-dl-fg font-mono text-xs break-all">2RufGy3STSUzMTvxgqHhW4hAiifBLhf1EZFSTB32KosU</dd>
+
+            <dt className="text-dl-muted font-mono text-xs uppercase">Activate Tx</dt>
+            <dd className="text-dl-fg font-mono text-xs break-all">
+              <a
+                href="https://suiscan.xyz/mainnet/tx/5AHTFEVAwggD4tBnwJpmSE6adxrVfjgnjR5BG3HhgW8E"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                5AHTFEVAwggD4tBnwJpmSE6adxrVfjgnjR5BG3HhgW8E
+              </a>
+            </dd>
 
             <dt className="text-dl-muted font-mono text-xs uppercase">Testnet prototype</dt>
             <dd className="text-dl-fg font-mono text-xs break-all">{TESTNET_PACKAGE}</dd>
