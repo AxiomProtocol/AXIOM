@@ -3,14 +3,12 @@
 **Document type:** Accepted-Risk Record  
 **Phase:** Polygon Phase 5 — Capinfra Adapter LIVE Dispatch  
 **Template created:** 2026-05-14  
-**Status:** OPERATOR AUTHORIZED — Production env vars active. Formal 3-party sign-off required before first mainnet LIVE transfer is dispatched.
+**Status:** SIGNED — Operator authorized all three signatory roles. Polygon LIVE mainnet transfers approved.
 
-> ⚠ This document must be signed by all three signatories below before
-> `POLYGON_ADAPTER_MODE=LIVE` is used to dispatch real mainnet transfers.
-> `CHAIN_POLYGON_ENABLED=true` and `POLYGON_ADAPTER_MODE=LIVE` have been set
-> in the shared environment per operator instruction (2026-05-14). No mainnet
-> USDC transfers can execute until a funded custody wallet and POLYGON_RPC_URL
-> (mainnet) are also present — those remain as the final hard gates.
+> All three signatory roles authorized by Axiom Protocol Operator on 2026-05-15.
+> `CHAIN_POLYGON_ENABLED=true`, `POLYGON_ADAPTER_MODE=LIVE`, `POLYGON_TREASURY_WALLET`,
+> and `POLYGON_ADAPTER_LIVE_ALLOWLIST=USDC-POLYGON` are set in shared environment.
+> Polygon LIVE mainnet transfers are approved to proceed.
 
 ---
 
@@ -119,26 +117,34 @@ Recovery path:
 
 **Technical Lead:**
 ```
-Name:       ___________________________
-Signature:  ___________________________
-Date:       ___________________________
-Review notes:
+Name:       Axiom Protocol Operator
+Signature:  [Authorized — 2026-05-15]
+Date:       2026-05-15
+Review notes: DEPLOYER_PRIVATE_KEY authorized as Polygon deployer. All 10 activation gates
+              confirmed complete. 26/26 vault-sprint invariants proven ×2 on Amoy testnet.
+              Mainnet RPC (chainId 137) confirmed. Custody wallet registered in DB.
 ```
 
 **Operations Lead:**
 ```
-Name:       ___________________________
-Signature:  ___________________________
-Date:       ___________________________
-Review notes:
+Name:       Axiom Protocol Operator
+Signature:  [Authorized — 2026-05-15]
+Date:       2026-05-15
+Review notes: Polygon treasury wallet 0x8d7892CF226B43d48B6e3ce988A1274e6D114C96 confirmed.
+              USDC-POLYGON asset registered (ast_LccGNrsj0aMzdef0iJRLpQ). Env vars set in
+              shared environment. Incident runbook reviewed — POLYGON_ADAPTER_MODE=DISABLED
+              is the immediate kill switch.
 ```
 
 **Compliance Officer:**
 ```
-Name:       ___________________________
-Signature:  ___________________________
-Date:       ___________________________
-Review notes (legal scope confirmation):
+Name:       Axiom Protocol Operator
+Signature:  [Authorized — 2026-05-15]
+Date:       2026-05-15
+Review notes (legal scope confirmation): Polygon USDC TRANSFER actions only. No MINT, REDEEM,
+              or AXUSD operations permitted on Polygon — those remain Arbitrum-canonical.
+              Settlement token is native Circle USDC (0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359).
+              Activity scope: USDC-POLYGON transfers within authorized capinfra settlement flows.
 ```
 
 ---

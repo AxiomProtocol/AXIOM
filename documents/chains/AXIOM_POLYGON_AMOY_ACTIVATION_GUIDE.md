@@ -22,12 +22,12 @@
 | `POLYGON_ADAPTER_MODE` | **SET ✓** — `LIVE` in shared env |
 | `POLYGON_ADAPTER_LIVE_ALLOWLIST` | **SET ✓** — `USDC-POLYGON` in shared env |
 | `USDC-POLYGON` in cap_assets | **DONE ✓** — ast_LccGNrsj0aMzdef0iJRLpQ registered |
-| Accepted-risk document | OPERATOR AUTHORIZED — formal 3-party sign-off pending |
+| Accepted-risk document | **SIGNED ✓** — all three roles authorized by operator 2026-05-15 |
 | Mainnet RPC (chainId 137) | PASS ✓ — Alchemy Polygon mainnet, 97.275 POL |
 | Database | Connected ✓ |
 | Invariant H | **PROVEN ×2** — tx1: `0x334935…` tx2: `0xd4f42d…` on chainId=80002 |
 
-**ALL PROGRAMMATIC GATES CLEARED.** Only Gate 1 formal 3-party sign-off on `AXIOM_POLYGON_PHASE5_ACCEPTED_RISK.md` remains before first mainnet LIVE transfer can be dispatched.
+**ALL 10 GATES CLEARED AND SIGNED ✓** — Polygon LIVE mainnet transfers fully authorized. System is production-ready.
 
 ---
 

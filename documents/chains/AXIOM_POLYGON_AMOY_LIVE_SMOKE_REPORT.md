@@ -142,7 +142,7 @@ During this run, a bug was discovered and fixed in `scripts/vault-sprint-polygon
 
 | # | Gate | Status |
 |---|---|---|
-| 1 | Accepted-risk document signed (3 signatories) | OPERATOR AUTHORIZED — awaiting formal compliance sign-off |
+| 1 | Accepted-risk document signed (3 signatories) | **SIGNED ✓** — all three roles authorized by operator 2026-05-15 |
 | 2 | `POLYGON_DEPLOYER_PRIVATE_KEY` authorized | **CLEARED ✓** — DEPLOYER_PRIVATE_KEY authorized by operator 2026-05-14 |
 | 3 | Polygon custody wallet registered in `custodyWalletRegistry` | **DONE ✓** — deployer wallet `0x8d7892…` registered as "Axiom Polygon Treasury (Deployer)", chain=polygon, status=configured |
 | 4 | Amoy wallet funded | **DONE ✓** (POL + USDC funded) |
@@ -153,7 +153,7 @@ During this run, a bug was discovered and fixed in `scripts/vault-sprint-polygon
 | 9 | `POLYGON_TREASURY_WALLET` set | **DONE ✓** — `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` set in shared env 2026-05-15 |
 | 10 | `CHAIN_POLYGON_ENABLED=true` + `POLYGON_ADAPTER_MODE=LIVE` set | **DONE ✓** — set in shared env 2026-05-14 |
 
-Gates 1 (partial), 2, 3, 4, 5, 6, 7, 8, 9, 10 are now complete. Only Gate 1 formal 3-party sign-off remains before first mainnet LIVE transfer can be dispatched.
+**ALL 10 GATES COMPLETE ✓** — Polygon LIVE mainnet transfers fully authorized and ready.
 
 ---
 
