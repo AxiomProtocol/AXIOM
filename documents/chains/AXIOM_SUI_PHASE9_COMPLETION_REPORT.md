@@ -71,52 +71,59 @@ Test coverage:
 
 ---
 
-## 4. Mainnet Publish — BLOCKED
+## 4. Mainnet Publish — COMPLETE ✓
 
-### Blocker
-The deployer wallet `0xef8fa8ff375159b49a972fd3ad0efb8c9f7784c924d3bef426f1daa1c28fddd5` has **0 SUI**
-on Sui Mainnet. A minimum of ~0.05 SUI is required for gas to publish a frozen package.
+### On-Chain Records
 
-### Funded Wallet Available
-Wallet `0x10c8bad6a245708e560a011493f362b095bbcfaf52e15a18d7d52f0aea8ab154` holds approximately
-**1.01 SUI** on mainnet (confirmed via RPC balance check). This wallet is **not** in the local
-keystore. The private key for this wallet was not accessible via `DEPLOYER_PRIVATE_KEY` in
-either ed25519 or secp256k1 import formats.
+| Item | Value |
+|---|---|
+| **Package ID** | `0xc330a912193feaa7fe545405810732e494b57ece7bc7ecf0e4412e834c33a487` |
+| **Publish Tx** | `Hw4xfYPodku9qpJHVZNuWPFj8RkRre9KirBeUUgBEe6c` |
+| **ClaimCampaign Object** | `0xa6dea4cc02df669d45744be5ca3a1a740417b63a2f79838e7f01f5e2828b0982` |
+| **AdminCap Object** | `0x637ce7868be3f24f85968629debbee72490406147ffa756f3324fb5acb945f9a` |
+| **Campaign Create Tx** | `8rQGeoPsa8H1N71c6USucdZNwJiK5skiJVgNwk8P4Xu4` |
+| **Deployer** | `0x4917ffea5289fba211976448c50103ba96a86e49a57e4dd1f22222c3b412e5ad` (SUI_DEPLOYER_KEY) |
+| **Gas used** | ~55 MIST total (publish + campaign creation) |
+| **Published date** | 2026-05-15 |
+| **Upgrade policy** | FROZEN — no UpgradeCap retained |
+| **Modules** | `axiom_mainnet_claim`, `claim_campaign`, `guarded_treasury`, `merkle` |
 
-### Resolution Options
+Explorer: https://suiscan.xyz/mainnet/tx/Hw4xfYPodku9qpJHVZNuWPFj8RkRre9KirBeUUgBEe6c
 
-**Option A (Recommended — fastest):**
-Transfer 0.1 SUI from the funded wallet (`0x10c8bad6...`) to the deployer wallet (`0xef8fa8...`)
-using any Sui wallet app (Sui Wallet, Martian, etc.). Then execute:
-```bash
-export PATH="$HOME/.local/bin:$PATH"
-sui client switch --env mainnet
-sui client publish \
-  --gas-budget 500000000 \
-  sui/packages/axiom_claim_mainnet_candidate/
-```
+### Campaign Current State
+- **Status:** INACTIVE (placeholder merkle root — all zeros)
+- **Pool balance:** 0 AMC
+- **Eligible claimants:** 0 (no eligibility CSV loaded)
 
-**Option B:**
-Export the private key for `0x10c8bad6...` and update `DEPLOYER_PRIVATE_KEY` secret,
-then run:
-```bash
-sui keytool import "$DEPLOYER_PRIVATE_KEY" ed25519
-sui client switch --address 0x10c8bad6a245708e560a011493f362b095bbcfaf52e15a18d7d52f0aea8ab154
-sui client switch --env mainnet
-sui client publish \
-  --gas-budget 500000000 \
-  sui/packages/axiom_claim_mainnet_candidate/
-```
+### Remaining Operator Steps to Activate
 
-### Post-Publish Steps
-After successful publish, capture the output and update:
-
-1. `lib/sui/client.ts` — set `PACKAGE_IDS.mainnet` to the published package ID
-2. `lib/sui/campaignRegistry.ts` — set `packageId` for Phase 9 mainnet campaign
-3. Call `create_campaign_entry()` via CLI to create the shared `ClaimCampaign` object
-4. Update `campaignObjectId` in `campaignRegistry.ts` with the resulting object ID
-5. Upload eligibility CSV and set `merkleRoot` in campaign
-6. Activate campaign when ready
+1. **Upload eligibility CSV** — list of (wallet address, amount) pairs for community distribution
+2. **Compute merkle root** — `lib/sui/proofs/buildMerkleTree.ts` → `buildMerkleTree(entries).root`
+3. **Set merkle root on-chain:**
+   ```bash
+   sui client call \
+     --package 0xc330a912193feaa7fe545405810732e494b57ece7bc7ecf0e4412e834c33a487 \
+     --module claim_campaign \
+     --function update_merkle_root \
+     --args \
+       0xa6dea4cc02df669d45744be5ca3a1a740417b63a2f79838e7f01f5e2828b0982 \
+       "<32-byte-root-as-hex-array>" \
+       0x637ce7868be3f24f85968629debbee72490406147ffa756f3324fb5acb945f9a \
+     --gas-budget 50000000
+   ```
+4. **Mint and fund pool** — use `guarded_treasury::guarded_mint()` then `fund_campaign()`
+5. **Activate:**
+   ```bash
+   sui client call \
+     --package 0xc330a912193feaa7fe545405810732e494b57ece7bc7ecf0e4412e834c33a487 \
+     --module claim_campaign \
+     --function activate \
+     --args \
+       0xa6dea4cc02df669d45744be5ca3a1a740417b63a2f79838e7f01f5e2828b0982 \
+       0x637ce7868be3f24f85968629debbee72490406147ffa756f3324fb5acb945f9a \
+     --gas-budget 50000000
+   ```
+6. **Update `lib/sui/campaignRegistry.ts`** — set `merkleRoot` and `isActive: true`
 
 ---
 
@@ -282,12 +289,12 @@ sui client publish \
 ## 12. Phase 10 Prerequisites
 
 Before Phase 10 work begins:
-- [ ] Mainnet package published (requires gas funding — see Section 4)
-- [ ] PackageID updated in `client.ts` + `campaignRegistry.ts`
-- [ ] Eligibility CSV uploaded and merkleRoot set in campaign
-- [ ] Campaign activated by operator
-- [ ] External Move security audit engaged (60-day window)
-- [ ] AdminCap transferred to 2-of-3 multisig (30-day window)
+- [x] Mainnet package published — `0xc330a912193feaa7fe545405810732e494b57ece7bc7ecf0e4412e834c33a487`
+- [x] PackageID updated in `client.ts` + `campaignRegistry.ts`
+- [ ] Eligibility CSV uploaded and merkleRoot set in campaign (operator action)
+- [ ] Campaign funded and activated by operator (operator action)
+- [ ] External Move security audit engaged (60-day window from 2026-05-15)
+- [ ] AdminCap transferred to 2-of-3 multisig (30-day window from 2026-05-15)
 - [ ] At least one successful end-to-end claim test on mainnet
 
 ---

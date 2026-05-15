@@ -17,9 +17,10 @@ const SUPPORTED_NETWORKS: SuiNetwork[] = ['testnet', 'mainnet'];
 
 const PACKAGE_IDS: Record<SuiNetwork, string> = {
   testnet: '0x4c3b1501e9567e237186766ccaa5137289dd683a044ce6b83e12459ff7c46602',
-  // Phase 9 mainnet candidate — PUBLISH BLOCKED: deployer wallet requires gas funding.
-  // Update this value after: sui client publish --gas-budget 500000000 sui/packages/axiom_claim_mainnet_candidate/
-  mainnet: '',
+  // Phase 9 mainnet — PUBLISHED 2026-05-15
+  // Tx: Hw4xfYPodku9qpJHVZNuWPFj8RkRre9KirBeUUgBEe6c
+  // Deployer: 0x4917ffea5289fba211976448c50103ba96a86e49a57e4dd1f22222c3b412e5ad
+  mainnet: '0xc330a912193feaa7fe545405810732e494b57ece7bc7ecf0e4412e834c33a487',
 };
 
 const MAINNET_PACKAGE_PUBLISHED = PACKAGE_IDS.mainnet !== '';

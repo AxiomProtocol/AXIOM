@@ -47,21 +47,30 @@ const TESTNET_CAMPAIGN: SuiCampaign = {
   disclaimer: SUI_CONSTANTS.DISCLAIMER,
 };
 
-// Phase 9 mainnet candidate — pending package publish
-// packageId and campaignObjectId populated after frozen mainnet publish.
+// Phase 9 mainnet — PUBLISHED 2026-05-15
+// Package: 0xc330a912193feaa7fe545405810732e494b57ece7bc7ecf0e4412e834c33a487
+// Publish Tx: Hw4xfYPodku9qpJHVZNuWPFj8RkRre9KirBeUUgBEe6c
+// Campaign Tx: 8rQGeoPsa8H1N71c6USucdZNwJiK5skiJVgNwk8P4Xu4
+// AdminCap:  0x637ce7868be3f24f85968629debbee72490406147ffa756f3324fb5acb945f9a
+// Deployer:  0x4917ffea5289fba211976448c50103ba96a86e49a57e4dd1f22222c3b412e5ad
+//
+// Status: INACTIVE — awaiting eligibility CSV + merkle root + pool funding + activate()
 // eligibilityList populated by operator before campaign activation.
 const MAINNET_CANDIDATE_CAMPAIGN: SuiCampaign = {
   id: 'phase9-mainnet-candidate',
-  label: 'Phase 9 — Axiom Community Distribution (Mainnet Candidate)',
-  packageId: getPackageId('mainnet'), // '' until publish is complete
-  campaignObjectId: '',               // '' until create_campaign_entry() is called
+  label: 'Phase 9 — Axiom Community Distribution (Mainnet)',
+  packageId: '0xc330a912193feaa7fe545405810732e494b57ece7bc7ecf0e4412e834c33a487',
+  campaignObjectId: '0xa6dea4cc02df669d45744be5ca3a1a740417b63a2f79838e7f01f5e2828b0982',
   network: 'mainnet',
-  merkleRoot: '',                     // populated by operator after eligibility CSV
+  merkleRoot: '',       // populated by operator after eligibility CSV + buildMerkleTree()
   amountPerClaim: '1000000',          // 1 AMC (6 decimals)
   expiresAtEpoch: '0',
   isActive: false,
   isClosed: false,
-  status: deriveStatus(false, false, getPackageId('mainnet'), ''),
+  status: deriveStatus(false, false,
+    '0xc330a912193feaa7fe545405810732e494b57ece7bc7ecf0e4412e834c33a487',
+    '0xa6dea4cc02df669d45744be5ca3a1a740417b63a2f79838e7f01f5e2828b0982',
+  ),
   eligibilityList: [] as BuildInput[],
   poolBalance: '0',
   totalClaimed: 0,

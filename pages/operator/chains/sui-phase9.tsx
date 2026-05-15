@@ -12,9 +12,12 @@ import { getAllCampaigns } from '../../../lib/sui/campaignRegistry';
 // Community distribution only. NOT AXUSD, AXAU, AXM, SEED, or KAG.
 // =============================================================================
 
-const DEPLOYER_ADDRESS = '0xef8fa8ff375159b49a972fd3ad0efb8c9f7784c924d3bef426f1daa1c28fddd5';
-const FUNDED_WALLET   = '0x10c8bad6a245708e560a011493f362b095bbcfaf52e15a18d7d52f0aea8ab154';
-const TESTNET_PACKAGE = '0x4c3b1501e9567e237186766ccaa5137289dd683a044ce6b83e12459ff7c46602';
+const DEPLOYER_ADDRESS  = '0x4917ffea5289fba211976448c50103ba96a86e49a57e4dd1f22222c3b412e5ad';
+const MAINNET_PACKAGE   = '0xc330a912193feaa7fe545405810732e494b57ece7bc7ecf0e4412e834c33a487';
+const CAMPAIGN_OBJECT   = '0xa6dea4cc02df669d45744be5ca3a1a740417b63a2f79838e7f01f5e2828b0982';
+const ADMIN_CAP_OBJECT  = '0x637ce7868be3f24f85968629debbee72490406147ffa756f3324fb5acb945f9a';
+const PUBLISH_TX        = 'Hw4xfYPodku9qpJHVZNuWPFj8RkRre9KirBeUUgBEe6c';
+const TESTNET_PACKAGE   = '0x4c3b1501e9567e237186766ccaa5137289dd683a044ce6b83e12459ff7c46602';
 
 interface RpcHealth {
   status: 'HEALTHY' | 'DEGRADED' | 'DOWN' | null;
@@ -68,6 +71,18 @@ const SuiPhase9Page: NextPage = () => {
           Axiom Protocol · Sui Community Distribution Layer · Mainnet Release Candidate
         </p>
 
+        {/* Live on Mainnet Banner */}
+        <div className="border border-green-700 bg-green-950/10 px-5 py-4 mb-6">
+          <p className="font-mono text-xs text-green-400 uppercase tracking-widest mb-2">
+            PACKAGE LIVE — SUI MAINNET
+          </p>
+          <p className="text-sm text-dl-muted">
+            Package published 2026-05-15. Campaign object created. Status:{' '}
+            <span className="text-yellow-400 font-mono text-xs">INACTIVE</span> — awaiting
+            eligibility CSV, merkle root update, pool funding, and operator activation.
+          </p>
+        </div>
+
         {/* Audit Deferred Banner */}
         <div className="border border-yellow-700 bg-yellow-950/10 px-5 py-4 mb-6">
           <p className="font-mono text-xs text-yellow-400 uppercase tracking-widest mb-2">
@@ -108,18 +123,34 @@ const SuiPhase9Page: NextPage = () => {
             <dd className="text-green-400 font-mono text-xs">COMPILED — 0 errors, lint warnings only</dd>
 
             <dt className="text-dl-muted font-mono text-xs uppercase">Mainnet package ID</dt>
-            <dd className="text-red-400 font-mono text-xs">
-              NOT YET PUBLISHED — Deployer wallet requires SUI gas funding
+            <dd className="text-green-400 font-mono text-xs break-all">{MAINNET_PACKAGE}</dd>
+
+            <dt className="text-dl-muted font-mono text-xs uppercase">Publish tx</dt>
+            <dd className="text-dl-fg font-mono text-xs break-all">
+              <a
+                href={`https://suiscan.xyz/mainnet/tx/${PUBLISH_TX}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                {PUBLISH_TX}
+              </a>
             </dd>
 
-            <dt className="text-dl-muted font-mono text-xs uppercase">Publish blocker</dt>
-            <dd className="text-yellow-400 font-mono text-xs break-all">
-              Deployer {DEPLOYER_ADDRESS.slice(0, 18)}... has 0 SUI mainnet balance.{' '}
-              Fund from {FUNDED_WALLET.slice(0, 18)}... (~1.01 SUI available)
-            </dd>
+            <dt className="text-dl-muted font-mono text-xs uppercase">Published</dt>
+            <dd className="text-green-400 font-mono text-xs">2026-05-15 — LIVE ON MAINNET</dd>
+
+            <dt className="text-dl-muted font-mono text-xs uppercase">Campaign object</dt>
+            <dd className="text-dl-fg font-mono text-xs break-all">{CAMPAIGN_OBJECT}</dd>
+
+            <dt className="text-dl-muted font-mono text-xs uppercase">AdminCap object</dt>
+            <dd className="text-dl-fg font-mono text-xs break-all">{ADMIN_CAP_OBJECT}</dd>
 
             <dt className="text-dl-muted font-mono text-xs uppercase">Upgrade policy</dt>
-            <dd className="text-dl-fg font-mono text-xs">FROZEN — No UpgradeCap retained</dd>
+            <dd className="text-green-400 font-mono text-xs">FROZEN — No UpgradeCap retained</dd>
+
+            <dt className="text-dl-muted font-mono text-xs uppercase">Campaign status</dt>
+            <dd className="text-yellow-400 font-mono text-xs">INACTIVE — awaiting eligibility CSV + activate()</dd>
 
             <dt className="text-dl-muted font-mono text-xs uppercase">Testnet prototype</dt>
             <dd className="text-dl-fg font-mono text-xs break-all">{TESTNET_PACKAGE}</dd>
