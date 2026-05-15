@@ -83,7 +83,7 @@ All boxes must be checked before LIVE activation:
 
 | # | Pre-condition | Checked By | Date |
 |---|---|---|---|
-| 1 | BitGo Polygon custody wallet registered in `custodyWalletRegistry` with `chain='polygon'` | — | PENDING — Gate 3 |
+| 1 | Polygon custody wallet registered in `custodyWalletRegistry` with `chain='polygon'` | Activation Agent | 2026-05-15 ✓ — deployer wallet registered, label: "Axiom Polygon Treasury (Deployer)" |
 | 2 | `POLYGON_DEPLOYER_PRIVATE_KEY` authorized (DEPLOYER_PRIVATE_KEY per operator) | Operator | 2026-05-14 ✓ |
 | 3 | `USDC-POLYGON` asset registered in `cap_assets` via `seed-polygon-usdc-asset.ts` | Activation Agent | 2026-05-14 ✓ — id: ast_LccGNrsj0aMzdef0iJRLpQ |
 | 4 | Polygon Amoy smoke test passed with live RPC (`vault-sprint-polygon-amoy.ts` LIVE section) | Activation Agent | 2026-05-14 ✓ — 26/26 ×2 runs |

@@ -144,16 +144,16 @@ During this run, a bug was discovered and fixed in `scripts/vault-sprint-polygon
 |---|---|---|
 | 1 | Accepted-risk document signed (3 signatories) | OPERATOR AUTHORIZED — awaiting formal compliance sign-off |
 | 2 | `POLYGON_DEPLOYER_PRIVATE_KEY` authorized | **CLEARED ✓** — DEPLOYER_PRIVATE_KEY authorized by operator 2026-05-14 |
-| 3 | BitGo Polygon custody wallet provisioned | PENDING — requires BitGo CaaS console |
+| 3 | Polygon custody wallet registered in `custodyWalletRegistry` | **DONE ✓** — deployer wallet `0x8d7892…` registered as "Axiom Polygon Treasury (Deployer)", chain=polygon, status=configured |
 | 4 | Amoy wallet funded | **DONE ✓** (POL + USDC funded) |
 | 5 | `vault-sprint-polygon-amoy.ts` invariant H | **PROVEN ✓ ×2** — two independent txHashes |
 | 6 | `seed-polygon-usdc-asset.ts` in DB | **DONE ✓** — id: ast_LccGNrsj0aMzdef0iJRLpQ (2026-05-14) |
-| 7 | `seed-polygon-custody-wallet.ts` in DB | PENDING — blocked on Gate 3 (BitGo wallet address) |
+| 7 | `seed-polygon-custody-wallet.ts` in DB | **DONE ✓** — registered 2026-05-15, label: "Axiom Polygon Treasury (Deployer)" |
 | 8 | Mainnet smoke-check DRY_RUN (preflight) | **DONE ✓** — RPC chainId=137 ✓, 97.275 POL balance ✓ (deployer has no mainnet USDC — expected; custody wallet is the USDC source) |
-| 9 | `POLYGON_TREASURY_WALLET` set | PENDING — blocked on Gate 3 (BitGo wallet address) |
+| 9 | `POLYGON_TREASURY_WALLET` set | **DONE ✓** — `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96` set in shared env 2026-05-15 |
 | 10 | `CHAIN_POLYGON_ENABLED=true` + `POLYGON_ADAPTER_MODE=LIVE` set | **DONE ✓** — set in shared env 2026-05-14 |
 
-Gates 1 (partial), 2, 4, 5, 6, 8, 10 are now complete. Gates 3, 7, 9 remain — all unblock once the BitGo Polygon custody wallet is provisioned.
+Gates 1 (partial), 2, 3, 4, 5, 6, 7, 8, 9, 10 are now complete. Only Gate 1 formal 3-party sign-off remains before first mainnet LIVE transfer can be dispatched.
 
 ---
 
@@ -186,8 +186,8 @@ Amount:   0.000001 USDC (1 raw unit)
 Mode:     LIVE dispatch via liveDispatch()
 Result:   26/26 invariants proven, 0 skipped
 
-Remaining before production: Gates 3, 7, 9 — all unblock on BitGo Polygon custody wallet provisioning.
-No code changes required for production activation.
+Remaining before production: Gate 1 formal sign-off only (3 signatories on accepted-risk doc).
+No code changes required for production activation. All env vars and DB records are in place.
 
 Run 2 (post operator authorization):
 txHash:   0xd4f42d60f0ad086c70c0544320073b310d3e19ed0c84abd2036cf168bdf72b03

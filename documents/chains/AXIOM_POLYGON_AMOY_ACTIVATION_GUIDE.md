@@ -27,7 +27,7 @@
 | Database | Connected ✓ |
 | Invariant H | **PROVEN ×2** — tx1: `0x334935…` tx2: `0xd4f42d…` on chainId=80002 |
 
-**All programmatic gates cleared.** Only Gate 3 (BitGo Polygon custody wallet) remains before first mainnet LIVE transfer.
+**ALL PROGRAMMATIC GATES CLEARED.** Only Gate 1 formal 3-party sign-off on `AXIOM_POLYGON_PHASE5_ACCEPTED_RISK.md` remains before first mainnet LIVE transfer can be dispatched.
 
 ---
 
