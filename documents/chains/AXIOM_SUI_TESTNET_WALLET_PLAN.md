@@ -4,7 +4,7 @@
 **Phase:** Phase 5 — Testnet Claim Contract Prototype Design  
 **Chain:** Sui (non-EVM, Move VM)  
 **Date:** 2026-05-15  
-**G04 Status:** ADDRESS RECORDED — awaiting private key in Replit Secrets  
+**G04 Status:** SATISFIED — key present, address derived, testnet balance confirmed 2026-05-15  
 **Classification:** Internal — operations record  
 
 ---
@@ -144,7 +144,7 @@ Populated when wallet is provisioned in Phase 6.
 
 | Role | Address | Funded | Date |
 |---|---|---|---|
-| Deployer / Admin | 0x4917ffea5289fba211976448c50103ba96a86e49a57e4dd1f22222c3b412e5ad | Pending faucet | 2026-05-15 |
+| Deployer / Admin | 0x4917ffea5289fba211976448c50103ba96a86e49a57e4dd1f22222c3b412e5ad | YES — 1 SUI testnet (2026-05-15) | 2026-05-15 |
 | Test Claimant A | PENDING | No | — |
 | Test Claimant B | PENDING | No | — |
 | Test Invalid Claimant | PENDING | No | — |

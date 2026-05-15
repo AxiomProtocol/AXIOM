@@ -1,7 +1,7 @@
 # AXIOM SUI PHASE 6 — GATE TRACKER
 # Testnet Claim Contract Prototype Build
 
-Status:        SPRINT 1 MOVE CODE COMPLETE — wallet and formal signatures still pending
+Status:        SPRINT 1 COMPLETE — G04 + G04b SATISFIED — formal signatures and reviewer still pending
 Classification: INTERNAL — operations record
 Created:       2026-05-15
 Last updated:  2026-05-15 (Sprint 1 implementation pass)
@@ -26,8 +26,8 @@ Predecessor:   documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md
 |---|---|---|---|
 | G03  | Move developer named | PENDING — no developer named | Human action required |
 | G03b | Move reviewer named | PENDING — no reviewer named | Human action required |
-| G04  | Testnet wallet provisioned | KEY PRESENT — SUI_DEPLOYER_KEY set; address derived: 0x4917...e5ad | Faucet funding pending (G04b) |
-| G04b | Faucet funding confirmed | PENDING — no wallet exists | Requires G04 |
+| G04  | Testnet wallet provisioned | SATISFIED — SUI_DEPLOYER_KEY set; 0x4917...e5ad confirmed Ed25519 | 2026-05-15 |
+| G04b | Faucet funding confirmed | SATISFIED — 1,000,000,000 MIST (1 SUI testnet) confirmed | 2026-05-15 |
 | G06  | Phase 6 authorization signed | PENDING — formal signatures required | Requires G03+G03b+G04+G04b |
 | G06b | SDK install approved | INSTALL_COMPLETE — operator task auth (2026-05-15) | v2.16.2 installed |
 | G07  | Testnet security review | PENDING — Move code written, awaiting reviewer | Requires G03b + named reviewer |
