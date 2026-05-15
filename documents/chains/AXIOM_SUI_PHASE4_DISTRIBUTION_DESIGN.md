@@ -4,7 +4,7 @@
 **Phase:** Phase 4 — Foundation & Distribution-Layer Architecture  
 **Chain:** Sui (non-EVM, Move VM)  
 **Date:** 2026-05-15  
-**Status:** OPEN — distribution model decision required before Phase 5 begins  
+**Status:** DECIDED — Option B (Claim Contract) selected 2026-05-15 — see Section 10  
 **Classification:** Internal — architecture record  
 
 ---
@@ -236,3 +236,33 @@ The distribution model decision directly determines Phase 5 work:
 
 **No Phase 5 implementation work should begin until this document's Decision Record
 section is completed.**
+
+---
+
+## 10. Decision Record — COMPLETED
+
+**Selected option:** B — Claim Contract (Native Sui, pull model, merkle root)
+
+**Rationale:**
+Option B is selected because it preserves community agency (members pull their own
+allocation), scales to unlimited eligibility via merkle commitment, carries no bridge
+counterparty risk, and follows a proven on-chain distribution pattern.
+
+**Supply model decision:** Separate supply. AXIOM_TEST_CLAIM is a testnet-only
+placeholder coin with no monetary value and no relationship to canonical Axiom assets.
+No canonical AXM, AXUSD, or AXAU is issued on Sui in Phase 5 or Phase 6.
+
+**Bridge partner:** Not applicable. Option C rejected for Phase 5 and Phase 6.
+
+**Testnet-only status:** This decision applies to testnet prototype work only.
+Any mainnet distribution requires a separate Phase 7 authorization.
+
+**Target Phase 5 start:** 2026-05-15 (design phase). Phase 6 (testnet build)
+start date: pending G03 (Move capability) and G04 (testnet wallet).
+
+**Decision authorized:** 2026-05-15
+
+**Reference documents:**
+- `documents/chains/AXIOM_SUI_PHASE5_DECISION_RECORD.md`
+- `documents/chains/AXIOM_SUI_CLAIM_CONTRACT_SPEC.md`
+- `documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md`
