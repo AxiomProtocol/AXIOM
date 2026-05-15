@@ -26,7 +26,7 @@ Predecessor:   documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md
 |---|---|---|---|
 | G03  | Move developer named | PENDING — no developer named | Human action required |
 | G03b | Move reviewer named | PENDING — no reviewer named | Human action required |
-| G04  | Testnet wallet provisioned | PENDING — no secret set, no CLI | Human action required |
+| G04  | Testnet wallet provisioned | ADDRESS RECORDED — private key needed in Replit Secrets | Add SUI_TESTNET_ADMIN_PRIVATE_KEY |
 | G04b | Faucet funding confirmed | PENDING — no wallet exists | Requires G04 |
 | G06  | Phase 6 authorization signed | PENDING — formal signatures required | Requires G03+G03b+G04+G04b |
 | G06b | SDK install approved | INSTALL_COMPLETE — operator task auth (2026-05-15) | v2.16.2 installed |
@@ -38,7 +38,8 @@ Predecessor:   documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md
 
 | Check | Result | Expected |
 |---|---|---|
-| SUI_TESTNET_ADMIN_PRIVATE_KEY in Secrets | NOT SET | Set at G04 time |
+| SUI_TESTNET_ADMIN_PRIVATE_KEY in Secrets | NOT SET — key export pending | Add via Replit Secrets panel |
+| Deployer public address | 0x7daa77a5e9071a274934f77be170d573b0da6788fefbca7089f4f2b6a970914d | RECORDED |
 | Sui CLI installed | NOT INSTALLED | Install at G04 time |
 | @mysten/sui SDK installed | INSTALLED v2.16.2 (2026-05-15) | Correct |
 | Named Move developer in docs | NONE | Required for G03 |

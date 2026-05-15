@@ -56,8 +56,8 @@ separate, independently signed Phase 7 authorization.
 
 ## 3. Authorized Deployer Address
 
-Sui Testnet address: ________________________________
-                     (to be recorded after G04 wallet provisioning)
+Sui Testnet address: 0x7daa77a5e9071a274934f77be170d573b0da6788fefbca7089f4f2b6a970914d
+                     (Stash wallet — recorded 2026-05-15)
 
 Notes:
 - Deployer address must be a Sui Testnet ed25519 wallet.
