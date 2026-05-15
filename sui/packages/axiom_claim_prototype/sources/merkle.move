@@ -2,7 +2,7 @@
 // merkle — Keccak256 binary Merkle proof verification
 //
 // TESTNET ONLY. No monetary value. No canonical Axiom assets.
-// Used by claim_campaign.move Sprint 2.
+// Used by claim_campaign.move Sprint 2 / Phase 8.
 //
 // Leaf construction:
 //   leaf = keccak256(BCS(address) || BCS(u64_amount))
@@ -15,12 +15,26 @@
 //   before hashing to make proofs position-independent and prevent
 //   second-preimage attacks.
 //
-// Sprint 2: Phase 6 — Testnet Build
-// Package: axiom_claim_prototype
+// Phase 8 hardening items:
+//   A1 — MAX_PROOF_DEPTH = 20; EProofTooLong = 7 enforced in verify_proof.
+//
+// Error codes:
+//   EProofTooLong = 7 — proof vector length > MAX_PROOF_DEPTH
 // =============================================================================
 
 module axiom_claim_prototype::merkle {
     use sui::hash;
+
+    // =========================================================================
+    // Constants (Phase 8 — A1)
+    // =========================================================================
+
+    // Maximum Merkle proof depth. A tree of depth 20 supports up to 2^20 ≈ 1M leaves.
+    // Proofs longer than this are rejected to prevent gas griefing attacks.
+    const MAX_PROOF_DEPTH: u64 = 20;
+
+    // Error code 7: submitted proof exceeds MAX_PROOF_DEPTH.
+    const EProofTooLong: u64 = 7;
 
     // =========================================================================
     // compute_leaf — encodes (address, amount) as the Merkle leaf hash.
@@ -40,6 +54,10 @@ module axiom_claim_prototype::merkle {
     // =========================================================================
     // verify_proof — standard binary Merkle tree verification.
     //
+    // Phase 8 hardening (A1):
+    //   Aborts with EProofTooLong (7) if proof length > MAX_PROOF_DEPTH.
+    //   This prevents gas griefing via artificially long proof vectors.
+    //
     // At each level, the current node hash is combined with its sibling
     // (taken from the proof vector), sorted lexicographically, and hashed
     // with keccak256. After all proof elements are consumed, the result
@@ -55,10 +73,13 @@ module axiom_claim_prototype::merkle {
         root: &vector<u8>,
         leaf: vector<u8>,
     ): bool {
+        // A1: Enforce maximum proof depth to prevent gas griefing.
+        let proof_len = vector::length(proof);
+        assert!(proof_len <= MAX_PROOF_DEPTH, EProofTooLong);
+
         let mut current = leaf;
-        let n = vector::length(proof);
         let mut i = 0;
-        while (i < n) {
+        while (i < proof_len) {
             let sibling = vector::borrow(proof, i);
             // Sort current and sibling to get a canonical ordering
             current = if (bytes_lte(&current, sibling)) {
@@ -112,5 +133,11 @@ module axiom_claim_prototype::merkle {
         } else {
             hash_pair(b, a)
         }
+    }
+
+    // Exposes MAX_PROOF_DEPTH for test assertions.
+    #[test_only]
+    public fun max_proof_depth_for_test(): u64 {
+        MAX_PROOF_DEPTH
     }
 }
