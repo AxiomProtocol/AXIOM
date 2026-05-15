@@ -144,7 +144,7 @@ Populated when wallet is provisioned in Phase 6.
 
 | Role | Address | Funded | Date |
 |---|---|---|---|
-| Deployer / Admin | 0x7daa77a5e9071a274934f77be170d573b0da6788fefbca7089f4f2b6a970914d | No — faucet pending | 2026-05-15 |
+| Deployer / Admin | 0x7daa77a5e9071a274934f77be170d573b0da6788fefbca7089f4f2b6a970914d (Slush) | No — faucet pending | 2026-05-15 |
 | Test Claimant A | PENDING | No | — |
 | Test Claimant B | PENDING | No | — |
 | Test Invalid Claimant | PENDING | No | — |
