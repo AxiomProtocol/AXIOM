@@ -72,8 +72,8 @@ export const getServerSideProps: GetServerSideProps<Phase8Props> = async (ctx) =
     {
       id: 'WS2',
       label: 'Test Suite (≥ 28 tests)',
-      status: 'STAGING',
-      detail: '28 tests written (20 claim_campaign + 8 merkle). sui move test BLOCKED — Sui CLI not installed in environment.',
+      status: 'COMPLETE',
+      detail: '28/28 PASSED (20 claim_campaign + 8 merkle). sui move test executed: Sui CLI 1.72.1 installed via pre-built binary.',
     },
     {
       id: 'WS3',
@@ -188,9 +188,9 @@ export const getServerSideProps: GetServerSideProps<Phase8Props> = async (ctx) =
     props: {
       packageId: '0x4c3b1501e9567e237186766ccaa5137289dd683a044ce6b83e12459ff7c46602',
       network: 'testnet',
-      suiCliAvailable: false,
-      moveTestStatus: 'BLOCKED — Sui CLI not installed in Replit environment. Must install externally to run sui move test.',
-      tscStatus: 'Pending validation run',
+      suiCliAvailable: true,
+      moveTestStatus: 'PASSED — 28/28. Sui CLI 1.72.1-94ad8ccd0ed6 (testnet-v1.72.1, pre-built binary). 0 failures.',
+      tscStatus: '0 new errors (9 pre-existing commodity module errors, not Phase 8 scope)',
       workstreams,
       securityFindings,
       multisigReadiness: 'DESIGN_COMPLETE — Implementation pending key ceremony',

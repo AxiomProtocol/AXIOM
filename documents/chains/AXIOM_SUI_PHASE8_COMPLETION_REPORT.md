@@ -1,7 +1,7 @@
 # AXIOM SUI PHASE 8 — COMPLETION REPORT
 
 **Date:** 2026-05-15
-**Status:** STAGING COMPLETE — Phase 9 blockers documented
+**Status:** FULLY VALIDATED — sui move test: 28/28 PASSED — Phase 9 blockers documented
 
 ---
 
@@ -78,7 +78,47 @@ Phase 8 delivers a fully hardened, staging-only Move contract implementation for
 | P1 | test_proof_depth_limit_enforced | A1: proof len 21 > MAX_PROOF_DEPTH aborts |
 | P2 | test_empty_proof_nonmatch | Empty proof, wrong leaf → false |
 
-**`sui move test` execution status: BLOCKED** — Sui CLI not installed in Replit environment. Tests are syntactically validated, structurally complete, and all test logic has been manually reviewed. External execution required.
+**`sui move test` execution status: PASSED — 28/28**
+
+```
+Sui CLI: 1.72.1-94ad8ccd0ed6
+Package: axiom_claim_prototype
+
+[ PASS    ] axiom_claim_prototype::merkle_tests::test_compute_leaf_deterministic
+[ PASS    ] axiom_claim_prototype::merkle_tests::test_empty_proof_nonmatch
+[ PASS    ] axiom_claim_prototype::merkle_tests::test_merkle_multi_leaf
+[ PASS    ] axiom_claim_prototype::merkle_tests::test_merkle_single_leaf
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_admin_cap_required
+[ PASS    ] axiom_claim_prototype::merkle_tests::test_proof_depth_limit_enforced
+[ PASS    ] axiom_claim_prototype::merkle_tests::test_tampered_proof_fails
+[ PASS    ] axiom_claim_prototype::merkle_tests::test_wrong_leaf_fails
+[ PASS    ] axiom_claim_prototype::merkle_tests::test_wrong_root_fails
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_campaign_fund_and_pool_decreases
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_campaign_is_closed_flag
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_claim_duplicate_rejected
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_claim_paused_campaign
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_claim_success
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_close_campaign
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_destroy_admin_cap
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_double_mint_boundary
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_four_leaf_claim
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_guarded_treasury_mint
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_insufficient_pool
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_invalid_proof_rejected_sprint2
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_pause_unpause
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_proof_too_long_rejects_claim
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_supply_cap_exceeded
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_transfer_admin_cap_to_new_owner
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_unpause_after_close_aborts
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_update_merkle_root_requires_paused
+[ PASS    ] axiom_claim_prototype::claim_campaign_tests::test_update_merkle_root_sprint2
+
+Test result: OK. Total tests: 28; passed: 28; failed: 0
+```
+
+**Lint warnings (informational only — no errors):**
+- 8 × `unnecessary entry on public function` in `claim_campaign.move` — `public entry` is redundant; entry is preserved for PTB compatibility
+- 2 × `coin::create_currency deprecated` in `axiom_test_claim.move` — test-only module; no production impact
 
 ---
 
@@ -187,34 +227,37 @@ Pre-existing errors (not Phase 8 scope):
 
 ## Move CLI Status
 
-**Sui CLI:** NOT INSTALLED in Replit environment
-**`sui move test` execution:** BLOCKED
-
-The 28 Move tests are written and structurally complete. They must be executed externally before Phase 9 promotion:
+**Sui CLI:** `1.72.1-94ad8ccd0ed6` installed at `~/.local/bin/sui`
+**Install method:** Pre-built Linux binary from GitHub releases (`testnet-v1.72.1-ubuntu-x86_64.tgz`)
+**`sui move test` execution:** PASSED — 28/28, 0 failed
 
 ```bash
-# Install Sui CLI (external — run outside Replit environment)
-cargo install --locked --git https://github.com/MystenLabs/sui.git \
-  --branch testnet sui --features all
+# Reproduce install
+mkdir -p ~/.local/bin
+TAG=testnet-v1.72.1
+curl -fL "https://github.com/MystenLabs/sui/releases/download/${TAG}/sui-${TAG}-ubuntu-x86_64.tgz" \
+  -o /tmp/sui.tgz
+tar -xzf /tmp/sui.tgz -C ~/.local/bin/ --occurrence=1 ./sui
+chmod +x ~/.local/bin/sui
+rm /tmp/sui.tgz
+export PATH="$HOME/.local/bin:$PATH"
 
 # Run tests
 cd sui/packages/axiom_claim_prototype
 sui move test
-
-# Expected: 28 passed, 0 failed
+# Result: Test result: OK. Total tests: 28; passed: 28; failed: 0
 ```
 
 ---
 
 ## Open Phase 9 Blockers
 
-1. **`sui move test` execution** — Requires Sui CLI. Install externally and confirm ≥ 28 pass, 0 fail.
-2. **External Move security audit** — Required. Engage a qualified Sui/Move security firm. Reference: `AXIOM_SUI_PHASE8_SECURITY_REVIEW.md`.
-3. **2-of-3 key ceremony** — Key generation, multisig address construction, AdminCap transfer to multisig. Reference: `AXIOM_SUI_PHASE8_KEY_MANAGEMENT.md`.
-4. **Authorization package signed** — 3 signatures required. Reference: `AXIOM_SUI_PHASE8_AUTHORIZATION.md`.
-5. **Proof toolchain integration test** — CSV → Merkle root → proof → on-chain claim (full round-trip on testnet).
-6. **Wallet connect integration** — `@suiet/wallet-kit` or `@mysten/wallet-standard` integration for claim UI.
-7. **Package redeployment** — Hardened A1–A7 contracts require a new `sui client publish` to testnet (frozen, no UpgradeCap).
+1. **External Move security audit** — Required. Engage a qualified Sui/Move security firm. Reference: `AXIOM_SUI_PHASE8_SECURITY_REVIEW.md`.
+2. **2-of-3 key ceremony** — Key generation, multisig address construction, AdminCap transfer to multisig. Reference: `AXIOM_SUI_PHASE8_KEY_MANAGEMENT.md`.
+3. **Authorization package signed** — 3 signatures required. Reference: `AXIOM_SUI_PHASE8_AUTHORIZATION.md`.
+4. **Proof toolchain integration test** — CSV → Merkle root → proof → on-chain claim (full round-trip on testnet).
+5. **Wallet connect integration** — `@suiet/wallet-kit` or `@mysten/wallet-standard` integration for claim UI.
+6. **Package redeployment** — Hardened A1–A7 contracts require a new `sui client publish` to testnet (frozen, no UpgradeCap).
 
 ---
 
