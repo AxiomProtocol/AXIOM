@@ -127,7 +127,8 @@
     "compile:avalanche": "npm run install:avalanche && cd hardhat-avalanche && npx hardhat compile --config hardhat.config.mts",
     "postinstall": "npm run install:avalanche",
     "sui:deploy": "tsx sui/scripts/deploy_testnet.ts",
-    "sui:build": "sh sui/scripts/build_local.sh"
+    "sui:build": "sh sui/scripts/build_local.sh",
+    "sui:smoke": "tsx sui/scripts/smoke_test.ts"
   },
   "keywords": [],
   "author": "",

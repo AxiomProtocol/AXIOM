@@ -1,0 +1,15 @@
+{
+  "network": "testnet",
+  "deployer": "0x4917ffea5289fba211976448c50103ba96a86e49a57e4dd1f22222c3b412e5ad",
+  "packageId": "0x26cb30de45494dd2b49ff1386c4babbe08cb8368ca0d565e62d5c4ace9c62343",
+  "campaignId": "0x8c55979adf4b7f1ba6db66c7f9d9dfeffe23dfbb45fa27654d52185db2b99392",
+  "adminCapId": "0x17a66d11e2830f1090a9a8044ce1be5fb25c44aa799b6739fb69a1efa04f881a",
+  "tx1Digest": "ATtHLn9SjujFni2pyCYMLd44csNwzYniWkLgkNBW4ENN",
+  "tx2Digest": "AiZsd18Q2DjX9X2ENKtY7tdb4FXaK1EbZxYrHqeNouS2",
+  "tx3Digest": "G5KFao7zeJEgwvRTjrEiZkxYEiwaLu35A8sprmLy8PpM",
+  "claimedAmount": "1000000",
+  "atcBalance": "1000000",
+  "explorerClaim": "https://testnet.suiscan.xyz/tx/G5KFao7zeJEgwvRTjrEiZkxYEiwaLu35A8sprmLy8PpM",
+  "timestamp": "2026-05-15T02:50:56.836Z",
+  "status": "PASS"
+}

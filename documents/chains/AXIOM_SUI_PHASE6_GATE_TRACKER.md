@@ -1,7 +1,7 @@
 # AXIOM SUI PHASE 6 — GATE TRACKER
 # Testnet Claim Contract Prototype Build
 
-Status:        SPRINT 1 DEPLOYED — package live on Sui Testnet — awaiting smoke test + G07 security review
+Status:        SPRINT 1 COMPLETE — package deployed + smoke test PASS — G07 security review is only remaining gate
 Classification: INTERNAL — operations record
 Created:       2026-05-15
 Last updated:  2026-05-15 (Sprint 1 implementation pass)
@@ -32,7 +32,7 @@ Predecessor:   documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md
 | G06b | SDK install approved | INSTALL_COMPLETE — operator task auth (2026-05-15) | v2.16.2 installed |
 | G07  | Testnet security review | PENDING — package deployed; review by Clarence Fuqua in progress | — |
 | G07b | Security review approved | PENDING — requires G07 completion | Requires G07 |
-| G08  | Post-testnet report | PENDING — package live; smoke test next | Requires live claim tx |
+| G08  | Post-testnet report | SATISFIED — smoke test PASS 2026-05-15; live claim tx: G5KFao7zeJEgwvRTjrEiZkxYEiwaLu35A8sprmLy8PpM | — |
 
 ### Environment Check Results (2026-05-15)
 
