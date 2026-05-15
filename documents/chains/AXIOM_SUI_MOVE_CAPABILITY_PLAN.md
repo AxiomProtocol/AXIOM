@@ -192,17 +192,14 @@ Action required: Identify and engage a qualified Sui Move developer before Phase
 
 ## 8. Phase 6 Developer Assignment Record
 
-**Status: PENDING NAMED MOVE DEVELOPER**
+**Status: SATISFIED — Clarence Fuqua named 2026-05-15**
 Last checked: 2026-05-15
 
-Environment scan result: No named developer found in any project document.
-No internal team member has been identified as having Move experience.
+### 8.1 Assignment Fields
 
-### 8.1 Assignment Fields (populate when developer is engaged)
-
-Named Move developer:      PENDING NAMED MOVE DEVELOPER
-Organization / relation:   ________________________________
-Contact / handle:          ________________________________
+Named Move developer:      Clarence Fuqua
+Organization / relation:   Axiom Protocol — Founder / Operator
+Contact / handle:          Internal
 Scope:                     Sprint 1 — simple allowlist claim prototype
                            Sprint 2 — merkle root claim prototype (if Sprint 1 passes)
 Responsibilities:
@@ -212,10 +209,10 @@ Responsibilities:
   - Write all 10 required unit tests
   - Submit code for security review before any testnet deployment
   - Record testnet transaction digest after authorized deployment
-Date assigned:             ________________________________
-Date onboarding confirmed: ________________________________
-Date spec review confirmed: ________________________________
-Availability confirmed:    YES / NO
+Date assigned:             2026-05-15
+Date onboarding confirmed: 2026-05-15
+Date spec review confirmed: 2026-05-15
+Availability confirmed:    YES
 
 ### 8.2 Engagement options
 

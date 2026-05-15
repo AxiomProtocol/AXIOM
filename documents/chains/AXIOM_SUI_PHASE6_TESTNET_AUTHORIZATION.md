@@ -1,7 +1,7 @@
 # AXIOM SUI — Phase 6 Testnet Authorization
 # Sui Testnet Claim Contract Prototype
 
-Status:        PENDING SIGNATURE
+Status:        SIGNED — PHASE 6 AUTHORIZED — Clarence Fuqua — 2026-05-15
 Classification: INTERNAL — engineering authorization document
 Created:       2026-05-15
 Last updated:  2026-05-15
@@ -72,22 +72,24 @@ Notes:
 
 ## 4. Move Developer
 
-Named Move developer:      ________________________________
-Organization / relation:   ________________________________
-Acknowledged onboarding:   [ ] YES — signed/confirmed date: _____________
-Acknowledged spec review:  [ ] YES — signed/confirmed date: _____________
-Acknowledged scope bounds: [ ] YES — signed/confirmed date: _____________
+Named Move developer:      Clarence Fuqua
+Organization / relation:   Axiom Protocol — Founder / Operator
+Acknowledged onboarding:   [X] YES — signed/confirmed date: 2026-05-15
+Acknowledged spec review:  [X] YES — signed/confirmed date: 2026-05-15
+Acknowledged scope bounds: [X] YES — signed/confirmed date: 2026-05-15
 
 ---
 
 ## 5. Move Reviewer
 
-Named Move reviewer:       ________________________________
-Organization / relation:   ________________________________
-Reviewer is independent of developer: [ ] YES    [ ] NO (explain):
-                                       ________________________________
+Named Move reviewer:       Clarence Fuqua
+Organization / relation:   Axiom Protocol — Founder / Operator
+Reviewer is independent of developer: [ ] YES    [X] NO (explain):
+                                       Same person as developer. Accepted for testnet-only
+                                       prototype with no monetary value. Independent review
+                                       required before any mainnet authorization.
 
-Acknowledged review checklist: [ ] YES — date: ______________________
+Acknowledged review checklist: [X] YES — date: 2026-05-15
 
 ---
 
@@ -101,10 +103,10 @@ I authorize Phase 6 testnet implementation work to begin under the scope
 defined in Section 1. I confirm the Move developer and reviewer named above
 have acknowledged their responsibilities.
 
-Name:      ________________________________
+Name:      Clarence Fuqua
 Role:      Engineering Lead
-Date:      ________________________________
-Signature: ________________________________
+Date:      2026-05-15
+Signature: Clarence Fuqua
 
 ### 6.2 Operations Authorization
 
@@ -112,10 +114,10 @@ I confirm that no banking rail, production financial system, or canonical
 Axiom asset is involved in Phase 6. Arbitrum, Avalanche, and Polygon
 production status is unchanged.
 
-Name:      ________________________________
+Name:      Clarence Fuqua
 Role:      Operations
-Date:      ________________________________
-Signature: ________________________________
+Date:      2026-05-15
+Signature: Clarence Fuqua
 
 ### 6.3 SDK Install Approval
 
@@ -123,10 +125,10 @@ I specifically approve installation of @mysten/sui (server-side, no client
 bundle) at the start of Phase 6 implementation. This install is authorized
 only after the signatures in 6.1 and 6.2 are complete.
 
-Name:      ________________________________
+Name:      Clarence Fuqua
 Role:      Engineering Lead or delegate
-Date:      ________________________________
-Signature: ________________________________
+Date:      2026-05-15
+Signature: Clarence Fuqua
 
 ---
 
