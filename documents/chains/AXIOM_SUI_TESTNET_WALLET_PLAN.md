@@ -190,3 +190,149 @@ G04 is satisfied when:
 - Phase 6 authorization (G06) is signed
 
 G04 update date: PENDING
+
+---
+
+## 11. Operator Execution Checklist — Phase 6 Wallet Provisioning
+
+**Status: NOT_STARTED — do not execute until Phase 6 authorization (G06) is signed**
+
+This checklist is for the operator who will provision the testnet wallet.
+Complete every step in order. Do not skip or reorder steps.
+
+---
+
+### Step 1 — Install Sui CLI
+
+The Sui CLI is required to generate an ed25519 keypair.
+
+Option A — Install via Homebrew (macOS):
+```
+brew install sui
+```
+
+Option B — Install via Cargo (all platforms):
+```
+cargo install --locked --git https://github.com/MystenLabs/sui.git \
+  --branch testnet sui
+```
+
+Option C — Download prebuilt binary from Sui GitHub releases:
+```
+https://github.com/MystenLabs/sui/releases
+```
+
+Verify installation:
+```
+sui --version
+```
+
+Expected output: `sui x.y.z-<commit>` (exact version varies)
+
+---
+
+### Step 2 — Generate ed25519 Testnet Wallet
+
+Generate a new keypair. Do NOT reuse any existing wallet:
+```
+sui keytool generate ed25519
+```
+
+Expected output includes:
+- address: 0x<64 hex chars>
+- publicKey: <base64>
+- keyScheme: ed25519
+- peerId: <hex>
+
+The private key is stored in the local Sui keystore file at:
+  `~/.sui/sui_config/sui.keystore`
+
+---
+
+### Step 3 — Record Public Address Only
+
+Record the public address (0x...) here in Section 7 of this document.
+Do NOT record the private key, mnemonic, or keystore path in this document.
+
+Update the Wallet Address Registry table in Section 7:
+- Role: Deployer / Admin
+- Address: <paste 0x address>
+- Funded: No (will update after Step 5)
+- Date: <today's date>
+
+---
+
+### Step 4 — Store Private Key in Replit Secrets
+
+Extract the private key from the Sui keystore:
+```
+cat ~/.sui/sui_config/sui.keystore
+```
+
+The keystore is a JSON array of base64-encoded keys.
+The key corresponding to the address generated in Step 2 must be
+stored in Replit Secrets as `SUI_TESTNET_ADMIN_PRIVATE_KEY`.
+
+**SECURITY RULES — no exceptions:**
+- Do NOT paste the private key into any document, code file, or commit
+- Do NOT log it to the console or server output
+- Do NOT share it in chat, email, or messaging
+- Do NOT commit `~/.sui/sui_config/sui.keystore` to the repository
+  (add `~/.sui/` to `.gitignore` if running CLI locally)
+- If the key is exposed accidentally, rotate it immediately:
+  generate a new keypair and update the secret
+
+Verification (without revealing the key):
+- Confirm the secret name `SUI_TESTNET_ADMIN_PRIVATE_KEY` appears in
+  the Replit Secrets panel
+- Confirm the address in Section 7 matches the address that corresponds
+  to the stored key (verify using `sui keytool show-address`)
+
+---
+
+### Step 5 — Fund with Testnet SUI Faucet
+
+Request testnet SUI (not real value) via the faucet:
+
+Primary faucet:   https://faucet.testnet.sui.io/
+Alternate:        https://discord.com/channels/916379725201563759 (#testnet-faucet)
+
+Request at least 1 SUI (testnet) to cover:
+- Package publication: ~0.5–1 SUI
+- Several test transactions: ~0.05 SUI total
+
+---
+
+### Step 6 — Verify Balance
+
+Confirm balance is funded via Suiscan Testnet:
+```
+https://testnet.suiscan.xyz/account/<your-0x-address>
+```
+
+Or via Sui CLI:
+```
+sui client balance
+```
+
+Expected: balance > 0 testnet SUI
+
+---
+
+### Step 7 — Update G04 and G04b in Gate Tracker
+
+Once Steps 1–6 are complete, update the Phase 6 gate tracker:
+- G04: PENDING → CONFIRMED (wallet provisioned)
+- G04b: PENDING → CONFIRMED (faucet funding confirmed)
+
+File: `documents/chains/AXIOM_SUI_PHASE6_GATE_TRACKER.md`
+
+---
+
+### Security Reminders
+
+- This wallet holds no real monetary value (testnet only)
+- Never use this testnet private key on Sui Mainnet
+- Never generate a Sui Mainnet wallet until Phase 7 is authorized
+- If this checklist is followed by a contractor, the operator must
+  verify the secret is stored correctly before proceeding to G06

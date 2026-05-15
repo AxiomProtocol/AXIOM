@@ -134,10 +134,94 @@ Rationale:
 
 ---
 
-## 7. G02 Status
+## 7. Install Deferred — Detailed Decision Record
+
+**Install deferred until Phase 6 authorization (G06) is signed.**
+
+### 7.1 Why install is deferred
+
+  1. Phase 5 is design-only. No SDK calls exist in any Phase 5 deliverable.
+     Installing an unexercised dependency creates unreviewed surface area.
+  2. The SDK should be installed at the start of Phase 6 when it is
+     immediately exercised by new TypeScript integration code.
+  3. Installing now with no active code paths makes the dependency harder
+     to audit and creates a stale-dependency risk.
+  4. The Phase 6 authorization document (G06) must be signed first to
+     confirm scope, deployer, Move developer, and reviewer are all named.
+
+### 7.2 Exact package to install (Phase 6)
+
+Do not guess the version at install time — check npm for the latest stable:
+
+  Package:         @mysten/sui
+  Do NOT install:  @mysten/sui.js  (deprecated — use @mysten/sui instead)
+  npm registry:    https://www.npmjs.com/package/@mysten/sui
+  Install command: npm install @mysten/sui
+
+Verify the version before installing:
+```
+npm view @mysten/sui version
+```
+
+Record the installed version in this document (Section 7.5) after install.
+
+### 7.3 Server-side usage requirement
+
+All @mysten/sui imports must be server-side only. No client bundle imports.
+
+Permitted import locations:
+  lib/sui/          — server-side Sui service modules
+  pages/api/sui/    — API route handlers
+  pages/operator/   — getServerSideProps functions (not component body)
+  scripts/          — one-off admin scripts
+
+Prohibited import locations:
+  Any file that renders in the browser (client components)
+  Any file imported by pages/_app.js without a server guard
+  Any file in components/ that does not have a server-only guard
+
+Enforcement mechanism:
+  Add `import 'server-only'` at the top of all lib/sui/ modules.
+  This causes a build error if a client component imports the module.
+
+### 7.4 No client bundle import rule
+
+Do NOT import @mysten/sui into any Next.js client component.
+
+Violations will cause:
+  - Increased browser bundle size (the SDK is not tree-shaken in client context)
+  - Potential exposure of server-side configuration to the browser
+  - Next.js build warnings about server-only packages in client bundles
+
+Verification at install time:
+  Run `npm run build` and inspect the build output for any @mysten/sui
+  references in client bundle chunks. If found, trace the import and move
+  to server-side only.
+
+### 7.5 Install validation steps (execute at Phase 6 start)
+
+These steps must be completed in order after G06 is signed:
+
+[ ] Step 1  Verify G06 (testnet authorization) is signed before running npm install
+[ ] Step 2  Check latest stable version: `npm view @mysten/sui version`
+[ ] Step 3  Install: `npm install @mysten/sui`
+[ ] Step 4  Record installed version here: ________________________________
+[ ] Step 5  Build check: `npm run build` — confirm no errors
+[ ] Step 6  Type check: `npx tsc --noEmit` — confirm no errors
+[ ] Step 7  Bundle check: inspect Next.js build output for client-bundle leakage
+[ ] Step 8  Confirm `import 'server-only'` added to all lib/sui/ modules
+[ ] Step 9  Update G02 status to INSTALL_COMPLETE in Phase 6 gate tracker
+[ ] Step 10 Update this document Section 8 with install date and version
+
+---
+
+## 8. G02 Status
 
 **G02: SDK Review — REVIEW_COMPLETE / INSTALL_DEFERRED**
 
-Review completed: 2026-05-15  
-Install decision: Deferred to Phase 6  
-Installer: Ops team at Phase 6 authorization  
+Review completed: 2026-05-15
+Install decision: Deferred — do not install until G06 is signed
+Install authorized by: [To be named in AXIOM_SUI_PHASE6_TESTNET_AUTHORIZATION.md Section 6.3]
+Install completed: PENDING
+Installed version: PENDING
+Install date: PENDING

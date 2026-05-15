@@ -29,36 +29,78 @@ Sui is NOT:
 
 ---
 
-## Current Status: Phase 5 — Design Only
+## Current Status: Phase 6 Preparation — Awaiting Authorization
+
+### Phase 5 Gates (complete)
 
 | Gate | Description | Status |
 |---|---|---|
 | G01 | Distribution model decision | SATISFIED — Option B (Claim Contract) |
 | G02 | @mysten/sui SDK review/install | REVIEW_COMPLETE / INSTALL_DEFERRED |
-| G03 | Move language capability | EXTERNAL_REQUIRED |
-| G04 | Testnet wallet provisioned | PENDING |
 | G05 | Claim contract spec complete | SATISFIED |
-| G06 | Testnet deployment authorization | NOT_STARTED |
-| G07 | Testnet security review | NOT_STARTED |
-| G08 | Post-testnet report | NOT_STARTED |
+
+### Phase 6 Gates (pending start)
+
+| Gate | Description | Status |
+|---|---|---|
+| G03  | Move developer named | PENDING |
+| G03b | Move reviewer named | PENDING |
+| G04  | Testnet wallet provisioned | PENDING |
+| G04b | Faucet funding confirmed | PENDING |
+| G06  | Phase 6 authorization signed | PENDING |
+| G06b | SDK install approved | PENDING |
+| G07  | Testnet security review | NOT_STARTED |
+| G07b | Security review approved | NOT_STARTED |
+| G08  | Post-testnet report | NOT_STARTED |
+
+**Phase 6 may not begin until G03, G03b, G04, G04b, G06, and G06b are all satisfied.**
 
 ---
 
 ## Planned Package Structure (Phase 6+)
 
+The planned structure below is finalized and authoritative for Sprint 1 and 2.
+No Move files exist yet. All items below `packages/` are PENDING.
+
 ```
 sui/
-├── README.md                          ← This file
+├── README.md                                 ← This file
 └── packages/
-    └── axiom_claim_prototype/         ← Phase 6 — TESTNET ONLY
-        ├── Move.toml
+    └── axiom_claim_prototype/                ← Phase 6 — TESTNET ONLY
+        ├── Move.toml                         ← Package manifest
         └── sources/
-            ├── axiom_test_claim.move  ← AXIOM_TEST_CLAIM coin definition
-            ├── claim_campaign.move    ← Campaign object + claim logic
-            └── merkle.move            ← Merkle proof helpers
+        │   ├── axiom_test_claim.move         ← AXIOM_TEST_CLAIM one-time witness + TreasuryCap
+        │   ├── claim_campaign.move           ← ClaimCampaign shared object + entry functions
+        │   └── merkle.move                   ← keccak256 merkle proof verification (Sprint 2)
+        └── tests/
+            ├── claim_campaign_tests.move     ← Sprint 1 tests (allowlist) + Sprint 2 (merkle)
+            └── merkle_tests.move             ← Standalone merkle verification tests (Sprint 2)
 ```
 
-All items below `packages/` are PENDING — no Move files exist yet.
+### Move.toml fields (planned)
+
+```toml
+[package]
+name = "axiom_claim_prototype"
+version = "0.1.0"
+edition = "2024.beta"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet" }
+
+[addresses]
+axiom_claim_prototype = "0x0"   # replaced by published package ID after deployment
+```
+
+### Sprint scope
+
+Sprint 1 — Simple allowlist:
+  axiom_test_claim.move + claim_campaign.move (allowlist) + tests
+  Proves end-to-end claim mechanic before adding merkle complexity.
+
+Sprint 2 — Merkle root:
+  merkle.move + updated claim_campaign.move (merkle) + all 10 tests
+  Production-pattern claim verification. Required before security review.
 
 ---
 
@@ -66,12 +108,16 @@ All items below `packages/` are PENDING — no Move files exist yet.
 
 | Document | Location |
 |---|---|
-| Phase 5 Decision Record | documents/chains/AXIOM_SUI_PHASE5_DECISION_RECORD.md |
+| Phase 6 Gate Tracker | documents/chains/AXIOM_SUI_PHASE6_GATE_TRACKER.md |
+| Phase 6 Authorization | documents/chains/AXIOM_SUI_PHASE6_TESTNET_AUTHORIZATION.md |
+| Move Developer Onboarding | documents/chains/AXIOM_SUI_MOVE_DEVELOPER_ONBOARDING_PACKET.md |
+| Move Reviewer Checklist | documents/chains/AXIOM_SUI_MOVE_REVIEW_CHECKLIST.md |
 | Claim Contract Spec | documents/chains/AXIOM_SUI_CLAIM_CONTRACT_SPEC.md |
 | SDK Review | documents/chains/AXIOM_SUI_SDK_REVIEW.md |
-| Move Capability Plan | documents/chains/AXIOM_SUI_MOVE_CAPABILITY_PLAN.md |
 | Testnet Wallet Plan | documents/chains/AXIOM_SUI_TESTNET_WALLET_PLAN.md |
-| Gate Tracker | documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md |
+| Phase 5 Gate Tracker | documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md |
+| Phase 5 Decision Record | documents/chains/AXIOM_SUI_PHASE5_DECISION_RECORD.md |
+| Move Capability Plan | documents/chains/AXIOM_SUI_MOVE_CAPABILITY_PLAN.md |
 | Phase 4 Discovery | documents/chains/AXIOM_SUI_PHASE4_DISCOVERY.md |
 | Distribution Design | documents/chains/AXIOM_SUI_PHASE4_DISTRIBUTION_DESIGN.md |
 
