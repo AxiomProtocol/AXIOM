@@ -199,9 +199,11 @@ async function deploy() {
   const result = await client.signAndExecuteTransaction({
     signer:      keypair,
     transaction: tx,
-    showEffects:       true,
-    showObjectChanges: true,
-    showEvents:        true,
+    options: {
+      showEffects:       true,
+      showObjectChanges: true,
+      showEvents:        true,
+    },
   });
 
   // --- Parse results -----------------------------------------------------------

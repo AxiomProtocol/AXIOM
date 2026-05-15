@@ -244,27 +244,37 @@ Deployment readiness: The SDK provides all tooling needed to:
 
 ---
 
-## 7. Whether Deployment Is Authorized
+## 7. Deployment Status
 
-**TESTNET DEPLOYMENT: NOT YET AUTHORIZED**
+**TESTNET DEPLOYMENT: COMPLETE — 2026-05-15**
 
-Remaining gates required before testnet deployment:
+| Field | Value |
+|---|---|
+| Network | Sui Testnet |
+| Package ID | `0x26cb30de45494dd2b49ff1386c4babbe08cb8368ca0d565e62d5c4ace9c62343` |
+| Transaction digest | `J5ywqFiSw7gcbRoBm3dxzzrT9D2xiSg6AQBCVRBJhoob` |
+| UpgradeCap object | `0x66ccdd780598c1314db83ac40cdbc7442d33cfcf120cacbe59abef563e63cba4` |
+| TreasuryCap object | `0x252f37e559b3225c98b4b31ca66880756bbd5f86f3cecf463f0fa054c3f62b16` |
+| CoinMetadata object | `0xcf178f0ea4b162d3970da880fff09b26f5f5b28c4f5a482f33f0d6342dd4690e` |
+| Deployer address | `0x4917ffea5289fba211976448c50103ba96a86e49a57e4dd1f22222c3b412e5ad` |
+| Modules deployed | `axiom_test_claim`, `claim_campaign` |
+| Explorer | https://testnet.suiscan.xyz/tx/J5ywqFiSw7gcbRoBm3dxzzrT9D2xiSg6AQBCVRBJhoob |
+| Sui CLI version | 1.72.1-94ad8ccd0ed6 |
+| SDK version | @mysten/sui v2.16.2 |
+| Deployment record | sui/packages/axiom_claim_prototype/deployment_result.json |
 
-| Gate | Status | Required action |
-|---|---|---|
-| G03 | PENDING | Name a real Sui Move developer |
-| G03b | PENDING | Name a real independent Move reviewer |
-| G04 | PENDING | Provision SUI_TESTNET_ADMIN_PRIVATE_KEY (local keygen) |
-| G04b | PENDING | Fund wallet via testnet faucet |
-| G06 | PENDING | Three formal signatures on AXIOM_SUI_PHASE6_TESTNET_AUTHORIZATION.md |
-| G07 | PENDING | Named reviewer completes security review of Move code |
-| G07b | PENDING | Reviewer formally approves AXIOM_SUI_MOVE_REVIEW_CHECKLIST.md |
+Gate status at deployment:
 
-Deployment authorization chain:
-  G03 → G03b → G04 → G04b → G06 (signed) → G07 → G07b → DEPLOY
+| Gate | Status |
+|---|---|
+| G03 | SATISFIED — Clarence Fuqua (Move developer) |
+| G03b | SATISFIED — Clarence Fuqua (Move reviewer; same-person testnet waiver) |
+| G04 | SATISFIED — SUI_DEPLOYER_KEY / 0x4917...e5ad |
+| G04b | SATISFIED — 1 SUI testnet funded |
+| G06 | SATISFIED — Clarence Fuqua × 3 signature sections |
+| G07 | PENDING — security review in progress |
+| G07b | PENDING — requires G07 |
 
-No deployment has been executed.
-No testnet transaction digest exists.
 No mainnet interaction of any kind has occurred or is authorized.
 
 ---

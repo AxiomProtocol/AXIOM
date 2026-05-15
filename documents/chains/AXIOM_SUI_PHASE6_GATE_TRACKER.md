@@ -1,7 +1,7 @@
 # AXIOM SUI PHASE 6 — GATE TRACKER
 # Testnet Claim Contract Prototype Build
 
-Status:        ALL GATES SATISFIED — DEPLOYMENT AUTHORIZED — ready for sui move test + publish
+Status:        SPRINT 1 DEPLOYED — package live on Sui Testnet — awaiting smoke test + G07 security review
 Classification: INTERNAL — operations record
 Created:       2026-05-15
 Last updated:  2026-05-15 (Sprint 1 implementation pass)
@@ -30,9 +30,9 @@ Predecessor:   documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md
 | G04b | Faucet funding confirmed | SATISFIED — 1,000,000,000 MIST (1 SUI testnet) confirmed | 2026-05-15 |
 | G06  | Phase 6 authorization signed | SATISFIED — Clarence Fuqua × 3 sections — 2026-05-15 | — |
 | G06b | SDK install approved | INSTALL_COMPLETE — operator task auth (2026-05-15) | v2.16.2 installed |
-| G07  | Testnet security review | PENDING — Move code written, awaiting reviewer | Requires G03b + named reviewer |
-| G07b | Security review approved | NOT_STARTED | Requires G07 |
-| G08  | Post-testnet report | NOT_STARTED | Requires G07b + live claim |
+| G07  | Testnet security review | PENDING — package deployed; review by Clarence Fuqua in progress | — |
+| G07b | Security review approved | PENDING — requires G07 completion | Requires G07 |
+| G08  | Post-testnet report | PENDING — package live; smoke test next | Requires live claim tx |
 
 ### Environment Check Results (2026-05-15)
 
@@ -40,10 +40,10 @@ Predecessor:   documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md
 |---|---|---|
 | SUI_DEPLOYER_KEY in Secrets | PRESENT | Correct (name differs from plan; docs updated) |
 | Deployer public address (derived) | 0x4917ffea5289fba211976448c50103ba96a86e49a57e4dd1f22222c3b412e5ad | Ed25519 derivation confirmed |
-| Sui CLI installed | NOT INSTALLED | Install at G04 time |
+| Sui CLI installed | INSTALLED v1.72.1 (binary, /home/runner/.local/bin/sui) | Correct |
 | @mysten/sui SDK installed | INSTALLED v2.16.2 (2026-05-15) | Correct |
-| Named Move developer in docs | NONE | Required for G03 |
-| Named Move reviewer in docs | NONE | Required for G03b |
+| Named Move developer in docs | Clarence Fuqua (2026-05-15) | Correct |
+| Named Move reviewer in docs | Clarence Fuqua (2026-05-15) | Correct |
 | Move files in sui/ | 3 source + 1 test (Sprint 1 complete) | Correct |
 | Mainnet deployment | NONE | Correct |
 

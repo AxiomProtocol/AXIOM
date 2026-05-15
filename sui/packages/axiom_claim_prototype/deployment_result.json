@@ -1,0 +1,16 @@
+{
+  "network": "testnet",
+  "deployer": "0x4917ffea5289fba211976448c50103ba96a86e49a57e4dd1f22222c3b412e5ad",
+  "packageId": "0x26cb30de45494dd2b49ff1386c4babbe08cb8368ca0d565e62d5c4ace9c62343",
+  "upgradeCapId": "0x66ccdd780598c1314db83ac40cdbc7442d33cfcf120cacbe59abef563e63cba4",
+  "treasuryCapId": "0x252f37e559b3225c98b4b31ca66880756bbd5f86f3cecf463f0fa054c3f62b16",
+  "coinMetadataId": "0xcf178f0ea4b162d3970da880fff09b26f5f5b28c4f5a482f33f0d6342dd4690e",
+  "modules": ["axiom_test_claim", "claim_campaign"],
+  "digest": "J5ywqFiSw7gcbRoBm3dxzzrT9D2xiSg6AQBCVRBJhoob",
+  "explorerUrl": "https://testnet.suiscan.xyz/tx/J5ywqFiSw7gcbRoBm3dxzzrT9D2xiSg6AQBCVRBJhoob",
+  "packageUrl": "https://testnet.suiscan.xyz/package/0x26cb30de45494dd2b49ff1386c4babbe08cb8368ca0d565e62d5c4ace9c62343",
+  "timestamp": "2026-05-15T00:00:00.000Z",
+  "status": "success",
+  "suiCliVersion": "1.72.1-94ad8ccd0ed6",
+  "sdkVersion": "@mysten/sui v2.16.2"
+}
