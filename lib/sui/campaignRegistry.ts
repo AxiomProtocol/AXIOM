@@ -80,8 +80,8 @@ const MAINNET_CANDIDATE_CAMPAIGN: SuiCampaign = {
     { address: '0x7daa77a5e9071a274934f77be170d573b0da6788fefbca7089f4f2b6a970914d', amount: '1000000' },
     { address: '0xef8fa8ff375159b49a972fd3ad0efb8c9f7784c924d3bef426f1daa1c28fddd5', amount: '1000000' },
   ] as BuildInput[],
-  poolBalance: '4000000',
-  totalClaimed: 0,
+  poolBalance: '3000000',
+  totalClaimed: 1,
   createdAt: '2026-05-15T00:00:00Z',
   disclaimer: SUI_CONSTANTS.DISCLAIMER,
 };

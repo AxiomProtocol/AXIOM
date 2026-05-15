@@ -153,10 +153,10 @@ const SuiPhase9Page: NextPage = () => {
             <dd className="text-dl-fg font-mono text-xs break-all">dd6b3d845ed2129701dac7cf2637baf7a0b599d27813be4c75d3deb80394c67a</dd>
 
             <dt className="text-dl-muted font-mono text-xs uppercase">Pool balance</dt>
-            <dd className="text-green-400 font-mono text-xs">4,000,000 base units (4 AMC)</dd>
+            <dd className="text-green-400 font-mono text-xs">3,000,000 base units (3 AMC remaining)</dd>
 
             <dt className="text-dl-muted font-mono text-xs uppercase">Eligible claimants</dt>
-            <dd className="text-dl-fg font-mono text-xs">4</dd>
+            <dd className="text-dl-fg font-mono text-xs">4 total — 1 claimed</dd>
 
             <dt className="text-dl-muted font-mono text-xs uppercase">Campaign status</dt>
             <dd className="text-green-400 font-mono text-xs">ACTIVE — claims open</dd>
@@ -179,6 +179,18 @@ const SuiPhase9Page: NextPage = () => {
                 className="underline"
               >
                 5AHTFEVAwggD4tBnwJpmSE6adxrVfjgnjR5BG3HhgW8E
+              </a>
+            </dd>
+
+            <dt className="text-dl-muted font-mono text-xs uppercase">Live claim (verified)</dt>
+            <dd className="text-dl-fg font-mono text-xs break-all">
+              <a
+                href="https://suiscan.xyz/mainnet/tx/AZVMA5RwG3LJokgXhpSGAQmDpqHCNAL9ZxkorzKLiVPn"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                AZVMA5RwG3LJokgXhpSGAQmDpqHCNAL9ZxkorzKLiVPn
               </a>
             </dd>
 

@@ -110,8 +110,11 @@ Explorer: https://suiscan.xyz/mainnet/tx/Hw4xfYPodku9qpJHVZNuWPFj8RkRre9KirBeUUg
 | Set merkle root | `4dpfFWu4CYfm1QkogaaHxhjo5dgwTK1K2RvrjQpD5LmQ` |
 | Mint + fund pool | `2RufGy3STSUzMTvxgqHhW4hAiifBLhf1EZFSTB32KosU` |
 | Activate | `5AHTFEVAwggD4tBnwJpmSE6adxrVfjgnjR5BG3HhgW8E` |
+| Live claim (deployer) | `AZVMA5RwG3LJokgXhpSGAQmDpqHCNAL9ZxkorzKLiVPn` |
 
 Proof data: `lib/sui/proofs/phase9-mainnet-eligibility.json`
+
+**Live claim verified:** wallet `0x4917ffea...` received 1,000,000 AMC. Pool balance: 3,000,000. Campaign mechanics confirmed end-to-end on mainnet.
 
 ---
 
@@ -286,7 +289,7 @@ Before Phase 10 work begins:
 - [x] Proof data saved to `lib/sui/proofs/phase9-mainnet-eligibility.json`
 - [ ] External Move security audit engaged (60-day window from 2026-05-15)
 - [ ] AdminCap transferred to 2-of-3 multisig (30-day window from 2026-05-15)
-- [ ] End-to-end claim test on mainnet from an eligible wallet
+- [x] End-to-end claim test on mainnet — deployer `0x4917ffea...` claimed 1 AMC (Tx: `AZVMA5RwG3LJokgXhpSGAQmDpqHCNAL9ZxkorzKLiVPn`)
 
 ---
 
