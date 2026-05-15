@@ -1,0 +1,24 @@
+[package]
+name = "axiom_claim_mainnet_candidate"
+edition = "2024.beta"
+
+# =============================================================================
+# MAINNET RELEASE CANDIDATE — Axiom Protocol Sui community distribution layer
+#
+# Community rewards only. No monetary value. Not a canonical Axiom asset.
+# NOT AXUSD, AXAU, AXM, SEED, or KAG. No reserve backing. Non-redeemable.
+#
+# Deployment policy:
+#   Frozen package — no UpgradeCap retained after publish.
+#   Any future upgrade requires a new multi-party authorization.
+#
+# Phase 9 accepted-risk:
+#   External audit deferred (60-day window). See AXIOM_SUI_PHASE9_ACCEPTED_RISK_MEMO.md
+#   Single-wallet custody (30-day multisig migration). See AXIOM_SUI_PHASE9_MULTISIG_MIGRATION.md
+# =============================================================================
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet" }
+
+[addresses]
+axiom_claim_mainnet_candidate = "0x0"

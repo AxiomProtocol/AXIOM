@@ -5,8 +5,6 @@
 // from @mysten/sui v2. These local declare module stubs make the import paths
 // resolvable while skipLibCheck:true means the actual library types are not
 // deeply re-checked.
-//
-// Only the symbols used by lib/sui/client.ts are declared here.
 // =============================================================================
 
 declare module '@mysten/sui/client' {
@@ -65,4 +63,32 @@ declare module '@mysten/sui/client' {
   export function getFullnodeUrl(
     network: 'mainnet' | 'testnet' | 'devnet' | 'localnet',
   ): string;
+}
+
+declare module '@mysten/sui/transactions' {
+  export interface TransactionArgument {
+    [key: string]: unknown;
+  }
+
+  export interface MoveCallParams {
+    target: string;
+    typeArguments?: string[];
+    arguments?: TransactionArgument[];
+  }
+
+  export class Transaction {
+    setSender(address: string): void;
+    setGasBudget(budget: number | bigint): void;
+    object(id: string): TransactionArgument;
+    pure: {
+      u64(value: number | bigint): TransactionArgument;
+      address(value: string): TransactionArgument;
+      vector(type: string, values: unknown[]): TransactionArgument;
+      bool(value: boolean): TransactionArgument;
+      string(value: string): TransactionArgument;
+    };
+    moveCall(params: MoveCallParams): TransactionArgument;
+    serialize(): Promise<string>;
+    build(): Promise<Uint8Array>;
+  }
 }

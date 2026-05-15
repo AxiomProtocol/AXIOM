@@ -1,13 +1,21 @@
+export interface EligibilityListEntry {
+  address: string;
+  amount: string;
+}
+
 export interface SuiCampaign {
   id: string;
   label: string;
   packageId: string;
-  network: 'testnet';
+  campaignObjectId?: string;
+  network: 'testnet' | 'mainnet';
   merkleRoot: string;
   amountPerClaim: string;
   expiresAtEpoch: string;
   isActive: boolean;
   isClosed: boolean;
+  status: 'active' | 'inactive' | 'closed' | 'pending';
+  eligibilityList?: EligibilityListEntry[];
   poolBalance: string;
   totalClaimed: number;
   createdAt: string;
@@ -68,7 +76,7 @@ export interface ProofManifest {
   root: string;
   campaignLabel: string;
   generatedAt: string;
-  network: 'testnet';
+  network: 'testnet' | 'mainnet';
   totalEntries: number;
   entries: Array<{
     address: string;
