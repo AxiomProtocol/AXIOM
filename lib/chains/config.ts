@@ -142,7 +142,7 @@ export const CHAIN_CONFIGS: Record<ChainSlug, ChainConfig> = {
     strategicRole: 'distribution_community',
     liveStatus: 'future',
     nativeCurrency: { name: 'Sui', symbol: 'SUI', decimals: 9 },
-    blockExplorerUrl: 'https://suiexplorer.com',
+    blockExplorerUrl: 'https://suiscan.xyz',
     alchemyNetwork: null, // Alchemy does not support Sui
     publicRpcFallback: 'https://fullnode.mainnet.sui.io',
     rpcUrlEnvVar: 'SUI_RPC_URL',

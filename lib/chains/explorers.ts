@@ -25,7 +25,7 @@ const EXPLORER_BASE_URLS: Record<ChainSlug, string> = {
   ethereum: 'https://etherscan.io',
   avalanche: 'https://snowtrace.io',
   polygon: 'https://polygonscan.com',
-  sui: 'https://suiexplorer.com',
+  sui: 'https://suiscan.xyz',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
