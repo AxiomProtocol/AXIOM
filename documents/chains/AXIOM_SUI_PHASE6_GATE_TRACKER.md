@@ -1,10 +1,10 @@
 # AXIOM SUI PHASE 6 — GATE TRACKER
 # Testnet Claim Contract Prototype Build
 
-Status:        PREPARATION COMPLETE — all gates pending human action
+Status:        SPRINT 1 MOVE CODE COMPLETE — wallet and formal signatures still pending
 Classification: INTERNAL — operations record
 Created:       2026-05-15
-Last updated:  2026-05-15 (readiness check pass)
+Last updated:  2026-05-15 (Sprint 1 implementation pass)
 Phase:         6 — Testnet Build and Deployment
 Predecessor:   documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md
 
@@ -15,7 +15,7 @@ Predecessor:   documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md
 | Gate | Description | Phase 5 Status | Phase 6 Start Status |
 |---|---|---|---|
 | G01 | Distribution model decision | SATISFIED | CARRIED FORWARD |
-| G02 | @mysten/sui SDK review/install | REVIEW_COMPLETE / INSTALL_DEFERRED | INSTALL_PENDING |
+| G02 | @mysten/sui SDK review/install | REVIEW_COMPLETE / INSTALL_DEFERRED | INSTALL_COMPLETE (2026-05-15 v2.16.2) |
 | G05 | Claim contract spec complete | SATISFIED | CARRIED FORWARD |
 
 ---
@@ -28,9 +28,9 @@ Predecessor:   documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md
 | G03b | Move reviewer named | PENDING — no reviewer named | Human action required |
 | G04  | Testnet wallet provisioned | PENDING — no secret set, no CLI | Human action required |
 | G04b | Faucet funding confirmed | PENDING — no wallet exists | Requires G04 |
-| G06  | Phase 6 authorization signed | PENDING — prerequisites unmet | Requires G03+G03b+G04+G04b |
-| G06b | SDK install approved | PENDING — G06 not signed | Requires G06 Section 6.3 |
-| G07  | Testnet security review | NOT_STARTED | Requires G06 + Move code |
+| G06  | Phase 6 authorization signed | PENDING — formal signatures required | Requires G03+G03b+G04+G04b |
+| G06b | SDK install approved | INSTALL_COMPLETE — operator task auth (2026-05-15) | v2.16.2 installed |
+| G07  | Testnet security review | PENDING — Move code written, awaiting reviewer | Requires G03b + named reviewer |
 | G07b | Security review approved | NOT_STARTED | Requires G07 |
 | G08  | Post-testnet report | NOT_STARTED | Requires G07b + live claim |
 
@@ -40,11 +40,25 @@ Predecessor:   documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md
 |---|---|---|
 | SUI_TESTNET_ADMIN_PRIVATE_KEY in Secrets | NOT SET | Set at G04 time |
 | Sui CLI installed | NOT INSTALLED | Install at G04 time |
-| @mysten/sui SDK installed | NOT INSTALLED | Install after G06b |
+| @mysten/sui SDK installed | INSTALLED v2.16.2 (2026-05-15) | Correct |
 | Named Move developer in docs | NONE | Required for G03 |
 | Named Move reviewer in docs | NONE | Required for G03b |
-| Move files in sui/ | NONE | Correct — Phase 6 only |
+| Move files in sui/ | 3 source + 1 test (Sprint 1 complete) | Correct |
 | Mainnet deployment | NONE | Correct |
+
+### Sprint 1 Implementation Check Results (2026-05-15)
+
+| Check | Result |
+|---|---|
+| Move.toml | WRITTEN |
+| axiom_test_claim.move | WRITTEN — AXIOM_TEST_CLAIM coin, one-time witness |
+| claim_campaign.move | WRITTEN — AdminCap, ClaimCampaign, 9 functions, 8 events |
+| claim_campaign_tests.move | WRITTEN — 10 tests (8 Sprint 1, 2 Sprint 2 stubs) |
+| merkle.move | NOT WRITTEN — Sprint 2 only |
+| sui move test | BLOCKED — Sui CLI not installed |
+| Deployer address | PENDING — no Sui key in environment |
+| Testnet deployment | NOT EXECUTED — no key, not yet authorized |
+| Mainnet deployment | NONE — correct |
 
 ---
 

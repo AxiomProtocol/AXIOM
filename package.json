@@ -199,6 +199,7 @@
     "@lit/react": "^1.0.8",
     "@metamask/delegation-toolkit": "^0.13.0-rc.1",
     "@metamask/sdk": "^0.33.0",
+    "@mysten/sui": "^2.16.2",
     "@neondatabase/serverless": "^1.0.0",
     "@octokit/rest": "^22.0.1",
     "@onchain-id/solidity": "^2.2.1",
