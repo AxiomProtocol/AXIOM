@@ -29,6 +29,8 @@
 
 **ALL 10 GATES CLEARED AND SIGNED ✓** — Polygon LIVE mainnet transfers fully authorized. System is production-ready.
 
+**First mainnet transfer: BLOCKED** — Sender wallet `0x8d7892…` has 0 USDC on Polygon mainnet. Fund with USDC then re-run Phase A preflight. `POLYGON_RPC_URL` set in shared env (2026-05-15) — reconciliation now runs CLEAN.
+
 ---
 
 ## Overview

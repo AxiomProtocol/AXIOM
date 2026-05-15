@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "adapter": "POLYGON",
+  "network": "mainnet",
+  "date": "2026-05-15",
+  "runAt": "2026-05-15T00:16:12.115Z",
+  "status": "CLEAN",
+  "blockers": [],
+  "onChainBalanceRaw": "0",
+  "onChainBalanceHuman": "0.000000",
+  "capinfraNetMovementRaw": "0",
+  "discrepancyRaw": "0",
+  "discrepancyHuman": "0.000000",
+  "treasuryWallet": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+  "usdcContract": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+  "chainId": 137,
+  "notes": [
+    "Phase 5: Polygon USDC payment rail only. No Axiom contracts on Polygon.",
+    "AXUSD is Arbitrum-canonical — no AXUSD supply to reconcile on Polygon.",
+    "LIVE reconciliation requires: POLYGON_TREASURY_WALLET, POLYGON_RPC_URL, CHAIN_POLYGON_ENABLED=true.",
+    "capinfra_net_movement = sum of SETTLED POLYGON TRANSFER instructions.",
+    "No MINT/REDEEM expected on Polygon — USDC payments only in Phase 5."
+  ],
+  "reportPath": null
+}
