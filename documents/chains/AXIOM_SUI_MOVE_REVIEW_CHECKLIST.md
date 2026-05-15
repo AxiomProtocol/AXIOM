@@ -218,6 +218,43 @@ Do not approve by commenting "looks good" — every line item must be marked.
 
 ---
 
+## Reviewer Assignment Record
+
+**Status: PENDING NAMED MOVE REVIEWER**
+Last checked: 2026-05-15
+
+Environment scan result: No named reviewer found in any project document.
+
+### Assignment Fields (populate when reviewer is engaged)
+
+Named Move reviewer:       PENDING NAMED MOVE REVIEWER
+Organization / relation:   ________________________________
+Contact / handle:          ________________________________
+Independence confirmed:    YES — reviewer is different from developer / NO (explain):
+                           ________________________________
+Review scope:              Sprint 1 (allowlist) and Sprint 2 (merkle) — Sui Testnet only
+Responsibilities:
+  - Read and acknowledge this checklist before review phase begins
+  - Complete all 67 line items (PASS / FAIL / N/A / NOTE)
+  - Return findings within agreed timeline
+  - Sign approval block below after all FAIL items are resolved
+Date assigned:             ________________________________
+Checklist acknowledged:    YES / NO — date: ________________________________
+
+### How to satisfy G03b
+
+When a real reviewer is named:
+1. Record name, organization, and contact above.
+2. Confirm they have read this checklist.
+3. Update G03b status to SATISFIED in AXIOM_SUI_PHASE6_GATE_TRACKER.md.
+4. Fill in "Named Move reviewer" in AXIOM_SUI_PHASE6_TESTNET_AUTHORIZATION.md Section 5.
+
+G03b gate rule: SATISFIED only if a real named reviewer is recorded.
+Developer and reviewer must be different people. Do not mark SATISFIED
+with a placeholder.
+
+---
+
 ## Reviewer Approval Block
 
 Reviewer name:        ________________________________

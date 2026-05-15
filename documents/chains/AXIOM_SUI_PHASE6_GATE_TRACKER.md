@@ -1,10 +1,10 @@
 # AXIOM SUI PHASE 6 — GATE TRACKER
 # Testnet Claim Contract Prototype Build
 
-Status:        PREPARATION COMPLETE — awaiting Phase 6 start
+Status:        PREPARATION COMPLETE — all gates pending human action
 Classification: INTERNAL — operations record
 Created:       2026-05-15
-Last updated:  2026-05-15
+Last updated:  2026-05-15 (readiness check pass)
 Phase:         6 — Testnet Build and Deployment
 Predecessor:   documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md
 
@@ -24,15 +24,27 @@ Predecessor:   documents/chains/AXIOM_SUI_PHASE5_GATE_TRACKER.md
 
 | Gate | Description | Status | Blocker |
 |---|---|---|---|
-| G03  | Move developer named | PENDING | Must be resolved first |
-| G03b | Move reviewer named | PENDING | Must be resolved first |
-| G04  | Testnet wallet provisioned | PENDING | Requires Sui CLI + faucet |
-| G04b | Faucet funding confirmed | PENDING | Requires G04 |
-| G06  | Phase 6 authorization signed | PENDING | Requires G03 + G03b + G04 + G04b |
-| G06b | SDK install approved | PENDING | Requires G06 (Section 6.3 signature) |
-| G07  | Testnet security review | NOT_STARTED | Requires G06 + code written |
+| G03  | Move developer named | PENDING — no developer named | Human action required |
+| G03b | Move reviewer named | PENDING — no reviewer named | Human action required |
+| G04  | Testnet wallet provisioned | PENDING — no secret set, no CLI | Human action required |
+| G04b | Faucet funding confirmed | PENDING — no wallet exists | Requires G04 |
+| G06  | Phase 6 authorization signed | PENDING — prerequisites unmet | Requires G03+G03b+G04+G04b |
+| G06b | SDK install approved | PENDING — G06 not signed | Requires G06 Section 6.3 |
+| G07  | Testnet security review | NOT_STARTED | Requires G06 + Move code |
 | G07b | Security review approved | NOT_STARTED | Requires G07 |
-| G08  | Post-testnet report | NOT_STARTED | Requires G07b + live testnet claim |
+| G08  | Post-testnet report | NOT_STARTED | Requires G07b + live claim |
+
+### Environment Check Results (2026-05-15)
+
+| Check | Result | Expected |
+|---|---|---|
+| SUI_TESTNET_ADMIN_PRIVATE_KEY in Secrets | NOT SET | Set at G04 time |
+| Sui CLI installed | NOT INSTALLED | Install at G04 time |
+| @mysten/sui SDK installed | NOT INSTALLED | Install after G06b |
+| Named Move developer in docs | NONE | Required for G03 |
+| Named Move reviewer in docs | NONE | Required for G03b |
+| Move files in sui/ | NONE | Correct — Phase 6 only |
+| Mainnet deployment | NONE | Correct |
 
 ---
 

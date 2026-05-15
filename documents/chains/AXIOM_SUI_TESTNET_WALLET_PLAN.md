@@ -191,6 +191,28 @@ G04 is satisfied when:
 
 G04 update date: PENDING
 
+### G04 Environment Check (2026-05-15)
+
+| Check | Result |
+|---|---|
+| SUI_TESTNET_ADMIN_PRIVATE_KEY present in Replit Secrets | NOT SET |
+| Sui CLI available in environment | NOT INSTALLED |
+| Public address derivable | NOT POSSIBLE (no key, no CLI) |
+| @mysten/sui SDK available for key derivation | NOT INSTALLED |
+
+**Conclusion:** No wallet has been provisioned. No secret has been set.
+No Sui CLI or SDK tooling is available to generate or verify a wallet.
+
+**Required operator actions to satisfy G04:**
+1. Install Sui CLI on your local machine (see Section 11 checklist).
+2. Generate ed25519 keypair: `sui keytool generate ed25519`
+3. Record public address in Section 7 of this document.
+4. Store private key in Replit Secrets as `SUI_TESTNET_ADMIN_PRIVATE_KEY`.
+5. Do NOT install Sui CLI in the Replit container — the CLI is not needed
+   server-side. The secret alone is sufficient for Phase 6 TypeScript use.
+
+G04b (faucet funding) cannot be attempted until G04 is satisfied.
+
 ---
 
 ## 11. Operator Execution Checklist — Phase 6 Wallet Provisioning

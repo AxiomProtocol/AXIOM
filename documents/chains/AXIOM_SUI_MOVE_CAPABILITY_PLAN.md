@@ -183,7 +183,67 @@ G03 may be updated to CONFIRMED only when:
 
 **G03: Move Language Capability — EXTERNAL_REQUIRED**
 
-Assessment date: 2026-05-15  
-Internal capability: None  
-External engagement: Not yet initiated  
+Assessment date: 2026-05-15
+Internal capability: None
+External engagement: Not yet initiated
 Action required: Identify and engage a qualified Sui Move developer before Phase 6
+
+---
+
+## 8. Phase 6 Developer Assignment Record
+
+**Status: PENDING NAMED MOVE DEVELOPER**
+Last checked: 2026-05-15
+
+Environment scan result: No named developer found in any project document.
+No internal team member has been identified as having Move experience.
+
+### 8.1 Assignment Fields (populate when developer is engaged)
+
+Named Move developer:      PENDING NAMED MOVE DEVELOPER
+Organization / relation:   ________________________________
+Contact / handle:          ________________________________
+Scope:                     Sprint 1 — simple allowlist claim prototype
+                           Sprint 2 — merkle root claim prototype (if Sprint 1 passes)
+Responsibilities:
+  - Read and acknowledge AXIOM_SUI_MOVE_DEVELOPER_ONBOARDING_PACKET.md
+  - Read and acknowledge AXIOM_SUI_CLAIM_CONTRACT_SPEC.md
+  - Write axiom_test_claim.move, claim_campaign.move, merkle.move
+  - Write all 10 required unit tests
+  - Submit code for security review before any testnet deployment
+  - Record testnet transaction digest after authorized deployment
+Date assigned:             ________________________________
+Date onboarding confirmed: ________________________________
+Date spec review confirmed: ________________________________
+Availability confirmed:    YES / NO
+
+### 8.2 Engagement options
+
+Option A — Internal hire:
+  Hire a Sui Move developer as an employee or long-term contractor.
+  Best for ongoing Sui development beyond Phase 6.
+
+Option B — Freelance contractor:
+  Engage via Sui ecosystem communities (Sui Discord, Move developer forums),
+  freelance platforms, or referral.
+  Suitable for Phase 6 prototype scope (estimated 6–10 days of Move work).
+
+Option C — Ecosystem partner:
+  Engage a Sui-ecosystem audit or development firm.
+  Higher cost, but provides developer + reviewer in one engagement.
+
+Option D — Community contributor:
+  Post a scoped bounty in the Axiom community or Sui developer communities.
+  Requires careful scope control — onboarding packet is essential.
+
+### 8.3 How to satisfy G03
+
+When a real developer is named:
+1. Record name, organization, and contact in Section 8.1 above.
+2. Confirm they have acknowledged the onboarding packet.
+3. Confirm they have reviewed the claim contract spec.
+4. Update G03 status to SATISFIED in AXIOM_SUI_PHASE6_GATE_TRACKER.md.
+5. Fill in "Named Move developer" in AXIOM_SUI_PHASE6_TESTNET_AUTHORIZATION.md Section 4.
+
+G03 gate rule: SATISFIED only if a real named developer is recorded.
+Do not mark SATISFIED with a placeholder.
