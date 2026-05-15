@@ -166,16 +166,16 @@ function pickHeroCtaVariant(override?: HeroCtaVariant): { variant: HeroCtaVarian
 export type HeroHeadlineVariant = 'A' | 'B' | 'C';
 const HERO_HEADLINE_VARIANTS: Record<HeroHeadlineVariant, { headline: string; subheadline: string }> = {
   A: {
-    headline: 'Build Wealth Through Verified Financial Infrastructure',
-    subheadline: 'Digital dollar systems, reserve access, capital intelligence, property analysis, and public proof tools — all connected through one operating framework.',
+    headline: 'The Financial Operating System for Real-World Assets',
+    subheadline: 'On-chain settlement infrastructure, reserve access, structured capital formation, and public proof — connected and reviewable before capital moves.',
   },
   B: {
-    headline: 'Where Capital Moves With Proof, Not Promises',
-    subheadline: 'Settlement layer, reserve access, capital intelligence, and solvency proof — fully reviewable before capital moves.',
+    headline: 'The Financial Operating System for Real-World Assets',
+    subheadline: 'Settlement rails, reserve instruments, capital programs, and solvency proof — fully reviewable before capital moves.',
   },
   C: {
-    headline: 'Banking. Intelligence. Reserve. Proof — One System.',
-    subheadline: 'Axiom connects on-chain settlement, capital intelligence, reserve access, property analysis, and public proof into one operating framework.',
+    headline: 'The Financial Operating System for Real-World Assets',
+    subheadline: 'Axiom connects on-chain settlement, reserve access, capital formation, identity-aware participation, and public proof into one operating framework.',
   },
 };
 
