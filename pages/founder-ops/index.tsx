@@ -681,6 +681,7 @@ export default function FounderOpsPage() {
     external_ref: string | null;
     external_url: string | null;
     note: string | null;
+    destination_address: string | null;
     executed_at: string;
     pre_existing?: boolean;
   };
@@ -688,6 +689,10 @@ export default function FounderOpsPage() {
   const [allocExecLoading, setAllocExecLoading] = useState<Record<string, boolean>>({}); // key = `${docId}:${scope}:${assetKey|all}`
   const [allocExecError, setAllocExecError] = useState<Record<string, string | null>>({});
   const [allocConfirmOpen, setAllocConfirmOpen] = useState<{ docId: string; scope: 'driver' | 'treasury' } | null>(null);
+
+  // Resolved destination wallet per scope — fetched when the confirm modal opens
+  type DestinationInfo = { address: string | null; source: string; label: string | null; loading: boolean; error: string | null };
+  const [allocDestination, setAllocDestination] = useState<Record<string, DestinationInfo>>({});
 
   // Latest settlement (used by Reserves tab to drive the allocation panel)
   type LatestSettlement = { document_id: string; title: string | null; statement_date: string | null; driver_name: string | null; net_pay: number | null; status: string | null };
@@ -1013,6 +1018,27 @@ export default function FounderOpsPage() {
       setAllocExecError(prev => ({ ...prev, [loadingKey]: e instanceof Error ? e.message : 'Network error' }));
     } finally {
       setAllocExecLoading(prev => ({ ...prev, [loadingKey]: false }));
+    }
+  };
+
+  /** Fetch + cache the resolved destination wallet for a given doc+scope. */
+  const fetchAllocDestination = async (docId: string, scope: 'driver' | 'treasury') => {
+    const adminKey = reservesAdminKey || railAdminKey;
+    if (!adminKey) return;
+    const key = `${docId}:${scope}`;
+    setAllocDestination(prev => ({ ...prev, [key]: { address: null, source: '', label: null, loading: true, error: null } }));
+    try {
+      const res  = await fetch(`/api/founder/allocation-destination?documentId=${encodeURIComponent(docId)}&scope=${scope}`, {
+        headers: { 'x-admin-key': adminKey },
+      });
+      const json = await res.json();
+      if (json.success) {
+        setAllocDestination(prev => ({ ...prev, [key]: { address: json.address, source: json.source, label: json.label, loading: false, error: null } }));
+      } else {
+        setAllocDestination(prev => ({ ...prev, [key]: { address: null, source: '', label: null, loading: false, error: json.error ?? 'Lookup failed' } }));
+      }
+    } catch (e) {
+      setAllocDestination(prev => ({ ...prev, [key]: { address: null, source: '', label: null, loading: false, error: e instanceof Error ? e.message : 'Network error' } }));
     }
   };
 
@@ -5739,7 +5765,7 @@ export default function FounderOpsPage() {
                                     : `${executedCount} executed · ${queuedCount} queued · ${failedCount} failed — retry failed rows`}
                               </div>
                               <button
-                                onClick={() => setAllocConfirmOpen({ docId, scope })}
+                                onClick={() => { setAllocConfirmOpen({ docId, scope }); fetchAllocDestination(docId, scope); }}
                                 disabled={allLoading || allSubmitted}
                                 className="font-dl-mono text-xs border border-dl-navy bg-dl-navy text-white px-4 py-1.5 uppercase tracking-wider hover:bg-dl-navy-dark disabled:opacity-50"
                               >
@@ -5903,6 +5929,10 @@ export default function FounderOpsPage() {
         const allLoadingKey = `${docId}:${scope}:all`;
         const isLoading = !!allocExecLoading[allLoadingKey];
         const errorMsg = allocExecError[allLoadingKey];
+        const destInfo = allocDestination[aiKey];
+        // onramp assets route to the resolved destination; other rails are not wallet-routed
+        const onrampAssets = new Set(['paxg','usdc','wbtc','cbeth']);
+        const hasOnrampRows = rows.some(r => onrampAssets.has(r.asset.key));
         return (
           <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4" onClick={() => !isLoading && setAllocConfirmOpen(null)}>
             <div className="bg-white border border-dl-navy max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -5913,24 +5943,48 @@ export default function FounderOpsPage() {
                 </p>
               </div>
               <div className="p-6">
+                {/* ── Destination wallet banner ── */}
+                {hasOnrampRows && (
+                  <div className={`border mb-4 p-3 ${destInfo?.error ? 'border-dl-error bg-red-50' : 'border-dl-border bg-dl-bg-alt'}`}>
+                    <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-1">Onramp Destination Wallet</p>
+                    {!destInfo || destInfo.loading ? (
+                      <p className="font-dl-mono text-xs text-dl-muted">Resolving wallet…</p>
+                    ) : destInfo.error ? (
+                      <p className="font-dl-mono text-xs text-dl-error">{destInfo.error}</p>
+                    ) : destInfo.address ? (
+                      <>
+                        <p className="font-dl-mono text-xs text-dl-navy break-all font-semibold">{destInfo.address}</p>
+                        <p className="font-dl-mono text-[10px] text-dl-gray mt-0.5">
+                          {destInfo.label ?? scope === 'treasury' ? 'Protocol Treasury' : 'Driver wallet'} · source: {destInfo.source}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="font-dl-mono text-xs text-dl-error">No wallet resolved — configure driver_wallets table or DRIVER_DEFAULT_WALLET env var before executing</p>
+                    )}
+                  </div>
+                )}
                 <table className="w-full mb-4">
                   <thead className="bg-dl-bg-alt">
                     <tr>
                       <th className="text-left font-dl-mono text-xs uppercase tracking-wider text-dl-gray px-3 py-2">Asset</th>
                       <th className="text-right font-dl-mono text-xs uppercase tracking-wider text-dl-gray px-3 py-2">Weight</th>
                       <th className="text-right font-dl-mono text-xs uppercase tracking-wider text-dl-gray px-3 py-2">USD</th>
-                      <th className="text-left font-dl-mono text-xs uppercase tracking-wider text-dl-gray px-3 py-2">Rail</th>
+                      <th className="text-left font-dl-mono text-xs uppercase tracking-wider text-dl-gray px-3 py-2">Rail · Destination</th>
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map(r => {
+                      const isOnramp = onrampAssets.has(r.asset.key);
+                      const shortAddr = destInfo?.address
+                        ? `→ ${destInfo.address.slice(0,6)}…${destInfo.address.slice(-4)}`
+                        : '';
                       const railLabel: Record<string, string> = {
-                        axau:            'AXAU mint — live (on-chain tx)',
-                        axusd:           'Camelot USDC→AXUSD — live (deployer USDC required; run USDC onramp row first)',
-                        paxg:            'Coinbase Onramp — creates session URL (operator completes purchase)',
-                        usdc:            'Coinbase Onramp — creates session URL (operator completes purchase)',
-                        wbtc:            'Coinbase Onramp — creates session URL (operator completes purchase)',
-                        cbeth:           'Coinbase Onramp — creates session URL (operator completes purchase)',
+                        axau:            'AXAU mint — live (on-chain tx, treasury deployer)',
+                        axusd:           'Camelot USDC→AXUSD — live (deployer USDC required; run USDC row first)',
+                        paxg:            `Coinbase Onramp — session URL${isOnramp && shortAddr ? ` ${shortAddr}` : ''}`,
+                        usdc:            `Coinbase Onramp — session URL${isOnramp && shortAddr ? ` ${shortAddr}` : ''}`,
+                        wbtc:            `Coinbase Onramp — session URL${isOnramp && shortAddr ? ` ${shortAddr}` : ''}`,
+                        cbeth:           `Coinbase Onramp — session URL${isOnramp && shortAddr ? ` ${shortAddr}` : ''}`,
                         kag:             'Kinesis KAG — queued (purchase on Kinesis.money)',
                         cash_reserve:    'Ledger entry — live (earmark only, no transfer)',
                         operating_spend: 'Stripe payout — live (payout to bank account)',
@@ -5954,7 +6008,7 @@ export default function FounderOpsPage() {
                 </table>
                 <div className="border border-dl-border bg-dl-bg-alt p-3 mb-4">
                   <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
-                    Live rails (AXAU mint, AXUSD Camelot swap, Stripe payout, cash ledger) submit immediately and record a real receipt. The AXUSD row requires USDC in the deployer wallet — run the USDC onramp row first. Onramp rows create a Coinbase session URL — the operator must open the link to complete the card purchase. KAG stays queued (no automated rail) — link opens the Silver Reserve onboarding page. Already-<strong>executed</strong> rows are protected against double-dispatch and show receipt-only. <strong>Queued or failed</strong> rows can be retried — clicking Retry re-dispatches the rail and updates the record.
+                    Live rails (AXAU mint, AXUSD Camelot swap, Stripe payout, cash ledger) submit immediately and record a real receipt. The AXUSD row requires USDC in the deployer wallet — run the USDC onramp row first. Onramp rows create a Coinbase session URL routed to the destination wallet shown above — the operator must open the link to complete the card purchase. KAG stays queued (no automated rail) — link opens the Silver Reserve onboarding page. Already-<strong>executed</strong> rows are protected against double-dispatch and show receipt-only. <strong>Queued or failed</strong> rows can be retried — clicking Retry re-dispatches the rail and updates the record.
                   </p>
                 </div>
                 {errorMsg && <p className="font-dl-mono text-xs text-dl-error mb-3">{errorMsg}</p>}
@@ -5966,7 +6020,7 @@ export default function FounderOpsPage() {
                   >Cancel</button>
                   <button
                     onClick={() => executeAllocationRows(docId, scope, null)}
-                    disabled={isLoading}
+                    disabled={isLoading || (hasOnrampRows && (destInfo?.loading || !destInfo?.address))}
                     className="font-dl-mono text-xs border border-dl-navy bg-dl-navy text-white px-4 py-1.5 uppercase tracking-wider hover:bg-dl-navy-dark disabled:opacity-50"
                   >{isLoading ? 'Executing…' : 'Confirm — Execute All'}</button>
                 </div>

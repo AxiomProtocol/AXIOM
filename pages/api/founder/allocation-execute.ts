@@ -23,11 +23,11 @@ import { Pool } from 'pg';
 import { validateAdminKey } from '@/src/config/adminRoles';
 import { ALLOCATION_ASSETS, normalizeWeights, type AllocationAssetKey, type AllocationWeights } from '@/lib/allocation/assets';
 import { dispatchRail, ASSET_RAIL_MAP } from '@/lib/allocation/executionRails';
+import { resolveDestinationWallet } from '@/lib/allocation/walletResolver';
 
 let _pool: Pool | null = null;
 const pool = () => (_pool ??= new Pool({ connectionString: process.env.DATABASE_URL }));
 
-const TREASURY_DESTINATION = '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96'; // DEPLOYER_EOA — receives onramp purchases for now
 const ARBITRUM_CHAIN_ID = 42161;
 
 interface ExecutionRow {
@@ -43,6 +43,7 @@ interface ExecutionRow {
   external_ref: string | null;
   external_url: string | null;
   note: string | null;
+  destination_address: string | null;
   executed_at: string;
   pre_existing?: boolean;
 }
@@ -89,6 +90,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ success: false, error: 'No settlement extraction for this documentId' });
     }
 
+    // Resolve destination wallet (once per request — all rows in a scope use the same address)
+    const resolvedWallet = await resolveDestinationWallet(scope, documentId);
+    if (!resolvedWallet.address) {
+      return res.status(422).json({
+        success: false,
+        error: `Cannot execute — no driver wallet configured. ${resolvedWallet.description}`,
+      });
+    }
+    const destinationAddress = resolvedWallet.address;
+
     // Determine which assets to execute
     const targetAssets: AllocationAssetKey[] = onlyAssetKey
       ? [onlyAssetKey]
@@ -120,7 +131,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const full = await pool().query(
           `SELECT id, document_id, scope, asset_key, rail, weight_pct::float AS weight_pct,
                   usd_amount::float AS usd_amount, status, tx_hash, external_ref, external_url,
-                  note, executed_at
+                  note, destination_address, executed_at
              FROM pilot_allocation_executions
             WHERE document_id = $1 AND scope = $2 AND asset_key = $3`,
           [documentId, scope, assetKey],
@@ -139,6 +150,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           external_ref: row.external_ref,
           external_url: row.external_url,
           note: row.note,
+          destination_address: row.destination_address ?? null,
           executed_at: row.executed_at instanceof Date ? row.executed_at.toISOString() : String(row.executed_at),
           pre_existing: true,
         });
@@ -150,7 +162,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         assetKey,
         usdAmount,
         scope,
-        destinationAddress: TREASURY_DESTINATION,
+        destinationAddress,
         chainId: ARBITRUM_CHAIN_ID,
       });
 
@@ -159,19 +171,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         `INSERT INTO pilot_allocation_executions
             (document_id, scope, asset_key, rail, weight_pct, usd_amount, status,
              tx_hash, external_ref, external_url, note, weights_snapshot, rationale,
-             scope_amount, executed_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+             scope_amount, executed_by, destination_address)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
          ON CONFLICT (document_id, scope, asset_key) DO UPDATE SET
-           rail          = EXCLUDED.rail,
-           status        = EXCLUDED.status,
-           tx_hash       = EXCLUDED.tx_hash,
-           external_ref  = EXCLUDED.external_ref,
-           external_url  = EXCLUDED.external_url,
-           note          = EXCLUDED.note,
-           executed_at   = NOW()
+           rail                = EXCLUDED.rail,
+           status              = EXCLUDED.status,
+           tx_hash             = EXCLUDED.tx_hash,
+           external_ref        = EXCLUDED.external_ref,
+           external_url        = EXCLUDED.external_url,
+           note                = EXCLUDED.note,
+           destination_address = EXCLUDED.destination_address,
+           executed_at         = NOW()
          RETURNING id, document_id, scope, asset_key, rail, weight_pct::float AS weight_pct,
                    usd_amount::float AS usd_amount, status, tx_hash, external_ref,
-                   external_url, note, executed_at`,
+                   external_url, note, destination_address, executed_at`,
         [
           documentId,
           scope,
@@ -188,6 +201,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           rationale,
           scopeAmount,
           'operator',
+          destinationAddress,
         ],
       );
 
@@ -197,7 +211,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const refetch = await pool().query(
           `SELECT id, document_id, scope, asset_key, rail, weight_pct::float AS weight_pct,
                   usd_amount::float AS usd_amount, status, tx_hash, external_ref, external_url,
-                  note, executed_at
+                  note, destination_address, executed_at
              FROM pilot_allocation_executions
             WHERE document_id = $1 AND scope = $2 AND asset_key = $3`,
           [documentId, scope, assetKey],
@@ -218,6 +232,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           external_ref: row.external_ref,
           external_url: row.external_url,
           note: row.note,
+          destination_address: row.destination_address ?? null,
           executed_at: row.executed_at instanceof Date ? row.executed_at.toISOString() : String(row.executed_at),
         });
       }
@@ -227,6 +242,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       executions,
       skipped,
+      destination: { address: resolvedWallet.address, source: resolvedWallet.source, label: resolvedWallet.label },
       rail_map: ASSET_RAIL_MAP,
     });
   } catch (err) {
