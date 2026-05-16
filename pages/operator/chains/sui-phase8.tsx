@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
 import { validateEligibilityCsv, buildMerkleTree } from '../../../lib/sui/proofs/index';
+import type { MigrateStatusResponse } from '../../api/sui/campaigns/migrate-status';
 
 interface CampaignRow {
   id: string;
@@ -47,6 +48,10 @@ export default function SuiPhase8OperatorPage() {
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
 
+  const [migrateStatus, setMigrateStatus] = useState<MigrateStatusResponse | null>(null);
+  const [migrateLoading, setMigrateLoading] = useState(false);
+  const [migrateError, setMigrateError] = useState<string | null>(null);
+
   const fetchCampaigns = useCallback(async () => {
     setLoadingCampaigns(true);
     setCampaignsError(null);
@@ -59,6 +64,21 @@ export default function SuiPhase8OperatorPage() {
       setCampaignsError(e instanceof Error ? e.message : 'Failed to load campaigns');
     } finally {
       setLoadingCampaigns(false);
+    }
+  }, []);
+
+  const fetchMigrateStatus = useCallback(async () => {
+    setMigrateLoading(true);
+    setMigrateError(null);
+    try {
+      const res = await fetch('/api/sui/campaigns/migrate-status');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to load migration status');
+      setMigrateStatus(data);
+    } catch (e) {
+      setMigrateError(e instanceof Error ? e.message : 'Failed to load migration status');
+    } finally {
+      setMigrateLoading(false);
     }
   }, []);
 
@@ -193,6 +213,184 @@ export default function SuiPhase8OperatorPage() {
             )}
           </section>
 
+          {/* ── Campaign Migration Tracker ─────────────────────────────────── */}
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted">
+                  Label Typo Migration
+                </h2>
+                <p className="text-xs text-dl-muted mt-1">
+                  "AXOOM Genesis" → "Axiom Genesis" — close old campaign, create correctly-named replacement.
+                </p>
+              </div>
+              <button
+                onClick={fetchMigrateStatus}
+                disabled={migrateLoading}
+                className="text-xs font-mono uppercase tracking-widest text-dl-muted border border-dl-border px-3 py-1 hover:border-dl-primary disabled:opacity-40"
+              >
+                {migrateLoading ? 'Checking…' : 'Check Status'}
+              </button>
+            </div>
+
+            {migrateError && (
+              <div className="border border-red-400 p-3 text-xs font-mono text-red-500 mb-4">
+                {migrateError}
+              </div>
+            )}
+
+            {migrateStatus && (
+              <div className="border border-dl-border p-4 mb-4">
+                {/* Overall badge */}
+                <div className={`text-xs font-mono uppercase tracking-widest mb-4 ${
+                  migrateStatus.isComplete ? 'text-green-600' : 'text-yellow-600'
+                }`}>
+                  {migrateStatus.isComplete ? '✓ MIGRATION COMPLETE' : '◌ MIGRATION PENDING'}
+                </div>
+
+                {/* Step checklist */}
+                <div className="grid grid-cols-1 gap-1 mb-5 text-xs font-mono">
+                  {([
+                    ['oldClosed',  'Step 1 — Old "AXOOM Genesis" campaign closed'],
+                    ['newCreated', 'Step 2 — New "Axiom Genesis" campaign created'],
+                    ['newFunded',  'Step 3 — New campaign funded (pool > 0)'],
+                    ['newActive',  'Step 4 — New campaign activated'],
+                  ] as [keyof typeof migrateStatus.steps, string][]).map(([key, label]) => (
+                    <div key={key} className="flex items-center gap-3">
+                      <span className={migrateStatus.steps[key] ? 'text-green-600' : 'text-dl-muted'}>
+                        {migrateStatus.steps[key] ? '✓' : '○'}
+                      </span>
+                      <span className={migrateStatus.steps[key] ? 'text-dl-primary' : 'text-dl-muted'}>
+                        {label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Old campaign row */}
+                {migrateStatus.oldCampaign && (
+                  <div className="mb-3">
+                    <p className="text-xs font-mono text-dl-muted uppercase tracking-widest mb-1">Old Campaign</p>
+                    <div className="border border-dl-border p-3 text-xs font-mono">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-dl-muted">Label</span>
+                        <span className="text-red-400">{migrateStatus.oldCampaign.label}</span>
+                      </div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-dl-muted">Status</span>
+                        <span className={migrateStatus.oldCampaign.isClosed ? 'text-dl-muted' : 'text-yellow-600'}>
+                          {migrateStatus.oldCampaign.isClosed ? 'CLOSED' : 'STILL OPEN — close required'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-dl-muted">Object ID</span>
+                        <span className="text-dl-muted" title={migrateStatus.oldCampaign.id}>
+                          {migrateStatus.oldCampaign.id.slice(0, 14)}…
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* New campaign row */}
+                {migrateStatus.newCampaign ? (
+                  <div>
+                    <p className="text-xs font-mono text-dl-muted uppercase tracking-widest mb-1">New Campaign</p>
+                    <div className="border border-dl-border p-3 text-xs font-mono">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-dl-muted">Label</span>
+                        <span className="text-green-600">{migrateStatus.newCampaign.label}</span>
+                      </div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-dl-muted">Status</span>
+                        <span className={migrateStatus.newCampaign.isActive ? 'text-green-600' : 'text-yellow-600'}>
+                          {migrateStatus.newCampaign.isClosed ? 'CLOSED' :
+                           migrateStatus.newCampaign.isActive ? 'ACTIVE' : 'PAUSED'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-dl-muted">Pool Balance</span>
+                        <span className="text-dl-primary">{formatAmc(migrateStatus.newCampaign.poolBalance)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-dl-muted">Object ID</span>
+                        <span className="text-dl-muted font-mono break-all" title={migrateStatus.newCampaign.id}>
+                          {migrateStatus.newCampaign.id.slice(0, 14)}…
+                        </span>
+                      </div>
+                    </div>
+                    {migrateStatus.isComplete && (
+                      <div className="mt-3 border border-green-600 p-3 text-xs font-mono text-green-600">
+                        Update Replit secret AXIOM_SUI_CAMPAIGN_ID →{' '}
+                        <span className="break-all">{migrateStatus.newCampaign.id}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-xs font-mono text-dl-muted italic">
+                    New campaign not yet found — run migration script first.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* CLI command reference */}
+            <details className="border border-dl-border">
+              <summary className="px-4 py-2 text-xs font-mono uppercase tracking-widest text-dl-muted cursor-pointer hover:text-dl-primary">
+                CLI Command Reference
+              </summary>
+              <div className="px-4 pb-4 pt-2">
+                <p className="text-xs text-dl-muted mb-3">
+                  Run <code className="font-mono bg-dl-surface px-1">npx tsx scripts/sui-migrate-campaign.ts</code> with
+                  the required env vars set, or execute these commands manually via Sui CLI.
+                </p>
+                <div className="space-y-3">
+                  {[
+                    {
+                      step: '1. Close old campaign',
+                      code: `sui client call \\
+  --package ${process.env.NEXT_PUBLIC_AXIOM_SUI_PACKAGE_ID ?? '<AXIOM_SUI_PACKAGE_ID>'} \\
+  --module claim_campaign \\
+  --function close_campaign \\
+  --args 0x3d3023694c96f9a71f6737a9aa43166c2f0b376418147cb005db0e17a52b726e <ADMIN_CAP_ID> \\
+  --gas-budget 10000000 --json`,
+                    },
+                    {
+                      step: '2. Create "Axiom Genesis" campaign',
+                      code: `sui client call \\
+  --package ${process.env.NEXT_PUBLIC_AXIOM_SUI_PACKAGE_ID ?? '<AXIOM_SUI_PACKAGE_ID>'} \\
+  --module claim_campaign \\
+  --function create_campaign_entry \\
+  --args '[65,120,105,111,109,32,71,101,110,101,115,105,115]' <MERKLE_ROOT_HEX> <AMOUNT_PER_CLAIM> 0 \\
+  --gas-budget 10000000 --json`,
+                    },
+                    {
+                      step: '3. Fund + 4. Activate (use NEW AdminCap from step 2)',
+                      code: `# Fund
+sui client call --package <PKG> --module claim_campaign --function fund_campaign \\
+  --args <NEW_CAMPAIGN_ID> <AMC_COIN_ID> <NEW_ADMIN_CAP_ID> --gas-budget 10000000 --json
+
+# Activate
+sui client call --package <PKG> --module claim_campaign --function activate \\
+  --args <NEW_CAMPAIGN_ID> <NEW_ADMIN_CAP_ID> --gas-budget 10000000 --json`,
+                    },
+                  ].map(({ step, code }) => (
+                    <div key={step}>
+                      <p className="text-xs font-mono text-dl-muted uppercase tracking-widest mb-1">{step}</p>
+                      <pre className="text-xs font-mono text-dl-primary bg-dl-surface border border-dl-border p-3 overflow-x-auto whitespace-pre">
+                        {code}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs font-mono text-dl-muted mt-4">
+                  Label bytes: [65,120,105,111,109,32,71,101,110,101,115,105,115] = "Axiom Genesis"
+                </p>
+              </div>
+            </details>
+          </section>
+
+          {/* ── Campaign Lookup ─────────────────────────────────────────────── */}
           <section className="mb-10">
             <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-4">
               Campaign Lookup
