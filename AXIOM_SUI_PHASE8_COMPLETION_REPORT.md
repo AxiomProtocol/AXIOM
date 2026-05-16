@@ -340,5 +340,149 @@ $ npx tsc --noEmit
 
 ---
 
+## Session 5 — Live `sui move test` Execution (2026-05-16)
+
+### Why the CLI Was Blocked
+
+The Sui CLI (`sui`) is not packaged in nixpkgs (Replit's package manager). It is
+distributed only as:
+1. A pre-built binary via GitHub Releases (Linux/macOS/Windows)
+2. A Homebrew tap (macOS only)
+3. `cargo install sui` from source (requires Rust toolchain)
+
+The Replit environment has no Rust toolchain (`cargo`/`rustc` absent) and no Sui
+package in nixpkgs. The `nix-env -qaP sui` search hangs because the package does
+not exist in the nix registry — it is not slow, it is absent.
+
+### Install Method (Session 5)
+
+```bash
+# Download the matching pre-built binary (testnet-v1.72.1 = matching binary rev)
+curl -sL "https://github.com/MystenLabs/sui/releases/download/testnet-v1.72.1/sui-testnet-v1.72.1-ubuntu-x86_64.tgz" -o /tmp/sui.tgz
+
+# Extract
+mkdir -p /tmp/sui-bin && tar -xzf /tmp/sui.tgz -C /tmp/sui-bin
+
+# Install to ~/bin (only writable location on PATH)
+mkdir -p ~/bin && cp /tmp/sui-bin/sui ~/bin/sui && chmod +x ~/bin/sui
+export PATH="$HOME/bin:$PATH"
+
+# Verify
+sui --version
+# → sui 1.72.1-94ad8ccd0ed6
+
+# Free tmp space (~4.8 GB) before running tests
+rm -rf /tmp/sui.tgz /tmp/sui-bin
+```
+
+**Note:** `~/bin` is session-ephemeral. The binary is lost on container restart.
+Re-run the install block above to restore. The Sui framework deps are cached in
+`~/.move/git/` (persisted on the overlay filesystem) so subsequent `sui move test`
+runs do not need to re-clone the framework.
+
+### T001 — Sui CLI Result
+
+```
+sui 1.72.1-94ad8ccd0ed6
+```
+
+Installed successfully at `~/bin/sui`. Config auto-generated at
+`~/.sui/sui_config/client.yaml` (testnet environment, ed25519 keypair).
+
+### T008 — `sui move test` — LIVE EXECUTION
+
+#### Package 1: `axiom_claim_prototype` (testnet rev `94ad8ccd0ed6`)
+
+```
+$ cd sui/packages/axiom_claim_prototype && sui move test
+INCLUDING DEPENDENCY MoveStdlib
+INCLUDING DEPENDENCY Sui
+BUILDING axiom_claim_prototype
+Running Move unit tests
+[ PASS ] axiom_claim_prototype::merkle_tests::test_compute_leaf_deterministic
+[ PASS ] axiom_claim_prototype::merkle_tests::test_empty_proof_nonmatch
+[ PASS ] axiom_claim_prototype::merkle_tests::test_merkle_multi_leaf
+[ PASS ] axiom_claim_prototype::merkle_tests::test_merkle_single_leaf
+[ PASS ] axiom_claim_prototype::merkle_tests::test_proof_depth_limit_enforced
+[ PASS ] axiom_claim_prototype::merkle_tests::test_tampered_proof_fails
+[ PASS ] axiom_claim_prototype::merkle_tests::test_wrong_leaf_fails
+[ PASS ] axiom_claim_prototype::merkle_tests::test_wrong_root_fails
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_admin_cap_required
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_campaign_fund_and_pool_decreases
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_campaign_is_closed_flag
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_claim_duplicate_rejected
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_claim_paused_campaign
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_claim_success
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_close_campaign
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_destroy_admin_cap
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_double_mint_boundary
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_four_leaf_claim
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_guarded_treasury_mint
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_insufficient_pool
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_invalid_proof_rejected_sprint2
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_pause_unpause
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_proof_too_long_rejects_claim
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_supply_cap_exceeded
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_transfer_admin_cap_to_new_owner
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_unpause_after_close_aborts
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_update_merkle_root_requires_paused
+[ PASS ] axiom_claim_prototype::claim_campaign_tests::test_update_merkle_root_sprint2
+Test result: OK. Total tests: 28; passed: 28; failed: 0
+```
+
+#### Package 2: `axiom_claim_mainnet_candidate` (mainnet rev `2f5992f189cd24`)
+
+```
+$ cd sui/packages/axiom_claim_mainnet_candidate && sui move test
+INCLUDING DEPENDENCY MoveStdlib
+INCLUDING DEPENDENCY Sui
+BUILDING axiom_claim_mainnet_candidate
+Running Move unit tests
+[ PASS ] axiom_claim_mainnet_candidate::merkle_tests::test_compute_leaf_deterministic
+[ PASS ] axiom_claim_mainnet_candidate::merkle_tests::test_empty_proof_nonmatch
+[ PASS ] axiom_claim_mainnet_candidate::merkle_tests::test_merkle_multi_leaf
+[ PASS ] axiom_claim_mainnet_candidate::merkle_tests::test_merkle_single_leaf
+[ PASS ] axiom_claim_mainnet_candidate::merkle_tests::test_proof_depth_limit_enforced
+[ PASS ] axiom_claim_mainnet_candidate::merkle_tests::test_tampered_proof_fails
+[ PASS ] axiom_claim_mainnet_candidate::merkle_tests::test_wrong_leaf_fails
+[ PASS ] axiom_claim_mainnet_candidate::merkle_tests::test_wrong_root_fails
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_campaign_is_closed_flag
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_close_campaign_drains_pool
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_destroy_admin_cap
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_double_mint_boundary
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_duplicate_claim_rejected
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_eligible_claim_succeeds
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_four_leaf_claim
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_guarded_treasury_mint
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_insufficient_pool_rejects_claim
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_multi_claimant_both_claim
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_non_eligible_rejected
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_pause_unpause_cycle
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_paused_campaign_blocks_claim
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_pool_balance_accumulates
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_proof_too_long_rejects_claim
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_supply_cap_exceeded
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_transfer_admin_cap_to_new_owner
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_unpause_after_close_aborts
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_update_merkle_root_paused
+[ PASS ] axiom_claim_mainnet_candidate::claim_campaign_tests::test_update_root_active_aborts
+Test result: OK. Total tests: 28; passed: 28; failed: 0
+```
+
+### Session 5 Summary
+
+| Package | Tests | Passed | Failed | Binary |
+|---------|-------|--------|--------|--------|
+| `axiom_claim_prototype` | 28 | 28 | 0 | `sui 1.72.1-94ad8ccd0ed6` |
+| `axiom_claim_mainnet_candidate` | 28 | 28 | 0 | `sui 1.72.1-94ad8ccd0ed6` |
+| **Total** | **56** | **56** | **0** | |
+
+**Session 5 verdict: `sui move test` unblocked. 56/56 PASS across both packages.
+Prototype (testnet framework) and mainnet candidate (mainnet framework) both compile
+and test cleanly. No test failures. No compilation errors. The previously documented
+"BLOCKED" status is now fully resolved.**
+
+---
+
 *Phase 8 Hardened Staging — Axiom Protocol — Community Distribution Layer*  
 *NOT AXUSD. NOT AXAU. NOT AXM. NOT SEED. NOT KAG.*
