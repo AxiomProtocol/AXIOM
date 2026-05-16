@@ -5925,15 +5925,15 @@ export default function FounderOpsPage() {
                   <tbody>
                     {rows.map(r => {
                       const railLabel: Record<string, string> = {
-                        axau: 'AXAU mint (queued)',
-                        axusd: 'Camelot swap (queued)',
-                        paxg: 'Coinbase Onramp',
-                        usdc: 'Coinbase Onramp',
-                        wbtc: 'Coinbase Onramp',
-                        cbeth: 'Coinbase Onramp',
-                        kag: 'KAG mint (queued)',
-                        cash_reserve: 'Ledger entry',
-                        operating_spend: 'Stripe payout (queued)',
+                        axau:            'AXAU mint — live (on-chain tx)',
+                        axusd:           'Camelot USDC→AXUSD — queued (manual after onramp)',
+                        paxg:            'Coinbase Onramp — creates session URL (operator completes purchase)',
+                        usdc:            'Coinbase Onramp — creates session URL (operator completes purchase)',
+                        wbtc:            'Coinbase Onramp — creates session URL (operator completes purchase)',
+                        cbeth:           'Coinbase Onramp — creates session URL (operator completes purchase)',
+                        kag:             'Kinesis KAG — queued (purchase on Kinesis.money)',
+                        cash_reserve:    'Ledger entry — live (earmark only, no transfer)',
+                        operating_spend: 'Stripe payout — live (payout to bank account)',
                       };
                       return (
                         <tr key={r.asset.key} className="border-t border-dl-border">
@@ -5954,7 +5954,7 @@ export default function FounderOpsPage() {
                 </table>
                 <div className="border border-dl-border bg-dl-bg-alt p-3 mb-4">
                   <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
-                    Each row is dispatched to its rail and a receipt (tx hash, Coinbase Onramp intent, or ledger entry) is recorded to the audit log. Re-clicking Execute on rows that already have a receipt is a no-op.
+                    Live rails (AXAU mint, Stripe payout, cash ledger) submit immediately and record a real receipt. Onramp rows create a Coinbase session URL — the operator must open the link to complete the card purchase. Queued rows (Camelot, KAG) record a dispatch intent; complete them via the linked external platform. Already-<strong>executed</strong> rows are protected against double-dispatch and show receipt-only. <strong>Queued or failed</strong> rows can be retried — clicking Execute or Retry re-dispatches the rail and updates the record.
                   </p>
                 </div>
                 {errorMsg && <p className="font-dl-mono text-xs text-dl-error mb-3">{errorMsg}</p>}
