@@ -173,6 +173,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         chainId: ARBITRUM_CHAIN_ID,
       });
 
+      // Only persist destination_address for onramp rows — rails that do not
+      // transfer to a wallet (ledger, stripe_payout, axau_mint, camelot_swap,
+      // kag_mint) get null so the audit column retains clear semantics.
+      const rowDestinationAddress = ONRAMP_KEYS.includes(assetKey) ? destinationAddress : null;
+
       // Upsert: INSERT on first attempt; UPDATE on retry (queued/failed/skipped)
       const upsertRes = await pool().query(
         `INSERT INTO pilot_allocation_executions
@@ -208,7 +213,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           rationale,
           scopeAmount,
           'operator',
-          destinationAddress,
+          rowDestinationAddress,
         ],
       );
 

@@ -123,8 +123,11 @@ export async function resolveDestinationWallet(
         description: `Driver wallet (default) — ${wallet_address}`,
       };
     }
-  } catch {
-    // Fall through to env var
+  } catch (err: unknown) {
+    // DB error — log so fallback routing is observable in server logs,
+    // then continue to env-var fallback (fail-open is intentional for
+    // the default pilot where all drivers share one wallet).
+    console.error('[walletResolver] DB lookup failed, falling back to env var:', err instanceof Error ? err.message : err);
   }
 
   // 3. Environment variable fallback
