@@ -222,7 +222,8 @@ export default function SuiWalletConnect({
         if (!result?.digest) throw new Error('Wallet returned no transaction digest');
         onClaimSuccess(result.digest);
       } else if (SUI_SIGN_AND_EXECUTE_BLOCK in connected.features) {
-        const { toBase64 } = await import('@mysten/sui/utils');
+        // Legacy path: pass Transaction object directly so the wallet handles
+        // serialization — avoids tx.build() which requires an RPC client.
         const featureObj = connected.features[
           SUI_SIGN_AND_EXECUTE_BLOCK
         ] as Record<string, unknown>;
@@ -233,15 +234,14 @@ export default function SuiWalletConnect({
         }
         const signAndExecuteTransactionBlock =
           featureObj.signAndExecuteTransactionBlock as (input: {
-            transactionBlock: { serialize: () => string };
+            // Accept Transaction object directly; updated wallets handle serialization
+            transactionBlock: unknown;
             account: WalletAccount;
             chain: string;
             options?: Record<string, boolean>;
           }) => Promise<{ digest: string }>;
-        const bytes = await tx.build();
-        const serialized = toBase64(bytes);
         const result = await signAndExecuteTransactionBlock({
-          transactionBlock: { serialize: () => serialized },
+          transactionBlock: tx,
           account,
           chain,
           options: { showEffects: true },
