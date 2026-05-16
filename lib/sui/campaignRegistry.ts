@@ -19,14 +19,39 @@ export interface CampaignRegistryEntry {
 
 const CAMPAIGN_TYPE_SUFFIX = '::claim_campaign::ClaimCampaign';
 
+function hexToUtf8(hex: string): string {
+  try {
+    const bytes = hex.match(/.{1,2}/g)?.map(b => parseInt(b, 16)) ?? [];
+    return Buffer.from(bytes).toString('utf8');
+  } catch {
+    return hex;
+  }
+}
+
+function parsePoolBalance(pool: unknown): bigint {
+  if (typeof pool === 'string') return BigInt(pool);
+  if (typeof pool === 'number') return BigInt(pool);
+  if (pool && typeof pool === 'object') {
+    const p = pool as { fields?: { balance?: string }; value?: string };
+    if (p.value) return BigInt(p.value);
+    if (p.fields?.balance) return BigInt(p.fields.balance);
+  }
+  return 0n;
+}
+
 function parseCampaignFields(fields: Record<string, unknown>): CampaignInfo {
+  const rawLabel = (fields.label as string) ?? '';
+  const label = /^[0-9a-f]+$/i.test(rawLabel) && rawLabel.length % 2 === 0
+    ? hexToUtf8(rawLabel)
+    : rawLabel;
+
   return {
     id: fields.id as string,
-    label: (fields.label as string) ?? '',
+    label,
     merkleRoot: bufferFieldToHex(fields.merkle_root),
     amountPerClaim: BigInt((fields.amount_per_claim as string) ?? '0'),
     expiresAtEpoch: BigInt((fields.expires_at_epoch as string) ?? '0'),
-    poolBalance: BigInt((fields.pool as { fields?: { balance?: string } })?.fields?.balance ?? '0'),
+    poolBalance: parsePoolBalance(fields.pool),
     isActive: Boolean(fields.is_active),
     isClosed: Boolean(fields.is_closed),
   };

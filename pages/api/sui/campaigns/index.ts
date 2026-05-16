@@ -8,7 +8,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const limit = parseInt((req.query.limit as string) ?? '20', 10);
-    const campaigns = await fetchActiveCampaigns(Math.min(limit, 50));
+    let campaigns = await fetchActiveCampaigns(Math.min(limit, 50));
+
+    // If event query returned nothing, seed from the configured campaign ID
+    const configuredId = process.env.AXIOM_SUI_CAMPAIGN_ID;
+    if (campaigns.length === 0 && configuredId) {
+      const { fetchCampaign } = await import('../../../../lib/sui/campaignRegistry');
+      try {
+        const info = await fetchCampaign(configuredId);
+        campaigns = [{ objectId: configuredId, info, fetchedAt: Date.now() }];
+      } catch {
+        // leave empty — campaign may not exist yet
+      }
+    }
 
     return res.status(200).json({
       campaigns: campaigns.map(c => ({
