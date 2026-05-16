@@ -824,7 +824,7 @@ function DistributionsTab({ distributions }: { distributions: any[] }) {
         {distributions.map((d: any) => {
           const meta = d.meta || {};
           const txHash = meta.tx_hash;
-          const unitPaymentId = meta.unit_payment_id;
+          const bankingPaymentId = meta.unit_payment_id;
           return (
             <div key={d.id} className="border border-dl-border p-4">
               <div className="flex items-start justify-between mb-2">
@@ -861,8 +861,8 @@ function DistributionsTab({ distributions }: { distributions: any[] }) {
                     <a href={`https://arbiscan.io/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-[10px]">
                       {String(txHash).slice(0, 10)}...
                     </a>
-                  ) : unitPaymentId ? (
-                    <span className="text-dl-gray text-[10px]">ACH {String(unitPaymentId).slice(0, 8)}</span>
+                  ) : bankingPaymentId ? (
+                    <span className="text-dl-gray text-[10px]">ACH {String(bankingPaymentId).slice(0, 8)}</span>
                   ) : <span className="text-dl-navy">{'\u2014'}</span>}
                 </div>
               </div>

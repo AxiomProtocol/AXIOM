@@ -1,5 +1,5 @@
 /**
- * POST /api/capinfra/adapters/increase/config
+ * POST /api/capinfra/adapters/ach/config
  *
  * ACH adapter mode transition endpoint (Phase 3B.3).
  * Advances or retreats the adapter mode through the approved 4-stage sequence.

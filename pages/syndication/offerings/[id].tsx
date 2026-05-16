@@ -1923,16 +1923,16 @@ export default function OfferingBuilder() {
                                   <option value="AXUSD">AXUSD</option>
                                 </select>
                               </div>
-                              {capCallForm.currency === 'USD' && s.investor_meta?.unitCustomerId && (
+                              {capCallForm.currency === 'USD' && (
                                 <div className="flex items-center gap-2 pt-5">
                                   <input
                                     type="checkbox"
-                                    checked={capCallForm.triggerACH}
-                                    onChange={e => setCapCallForm(p => ({ ...p, triggerACH: e.target.checked }))}
+                                    checked={false}
+                                    disabled
                                     id={`ach-${s.id}`}
-                                    className="accent-dl-navy"
+                                    className="accent-dl-navy opacity-40"
                                   />
-                                  <label htmlFor={`ach-${s.id}`} className="font-dl-mono text-xs text-dl-muted">Trigger ACH debit</label>
+                                  <label htmlFor={`ach-${s.id}`} className="font-dl-mono text-xs text-dl-muted opacity-40">ACH debit (banking provider pending)</label>
                                 </div>
                               )}
                             </div>
@@ -2473,7 +2473,7 @@ export default function OfferingBuilder() {
                               )}
                               {d.status === 'completed' && d.meta?.unit_payment_id && (
                                 <span className="px-2 py-0.5 text-xs bg-gray-50 text-gray-600 font-dl-mono">
-                                  Unit: {d.meta.unit_payment_id}
+                                  Payment ref: {d.meta.unit_payment_id}
                                 </span>
                               )}
                               {d.status === 'failed' && (

@@ -1,5 +1,5 @@
 /**
- * POST /api/capinfra/adapters/increase/validate
+ * POST /api/capinfra/adapters/ach/validate
  *
  * Run the five ACH gate validation checks (Phase 3B.3).
  * Records each check as a single-actor admin action for traceability.

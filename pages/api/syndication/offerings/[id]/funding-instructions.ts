@@ -93,8 +93,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } catch {}
     }
 
-    const routingNumber = process.env.UNIT_ROUTING_NUMBER || null;
-    const accountNumber = process.env.UNIT_ACCOUNT_NUMBER || null;
+    const routingNumber = process.env.BANKING_ROUTING_NUMBER || null;
+    const accountNumber = process.env.BANKING_ACCOUNT_NUMBER || null;
     const bankConfigured = !!(routingNumber && accountNumber);
 
     const bankDetails = bankConfigured

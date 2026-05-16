@@ -129,7 +129,7 @@ async function _runDiff(
   run: CapReconciliationRun,
   input: AchDiffInput,
 ): Promise<{ comparedCount: number; driftCount: number }> {
-  // ── Step 1: Page all Increase transactions in the window ──────────
+  // ── Step 1: Page all ACH transactions in the window ──────────
   const remoteByRef = new Map<string, AchTransaction>();
   let cursor: string | null = null;
   let pages = 0;
@@ -155,7 +155,7 @@ async function _runDiff(
   }
 
   // ── Step 2: Fetch local ACH instructions with real externalRefs ───
-  // SUBMITTED instructions ARE included — they have real Increase transfer IDs.
+  // SUBMITTED instructions ARE included — they have real ACH transfer IDs.
   // PENDING_OPERATOR_APPROVAL instructions have PENDING-APPROVAL-* refs which
   // isNotNull will still match, but we'll classify them as INFORMATIONAL below.
   const localRows = await db
@@ -197,7 +197,7 @@ async function _runDiff(
         severity: 'MANUAL_INTERVENTION',
         externalRef: ref,
         detailJson: {
-          increaseTransactionId: tx.id,
+          achTransactionId: tx.id,
           matchCount: localMatches.length,
           localIds: localMatches.map((r) => r.id),
         },
@@ -226,7 +226,7 @@ async function _runDiff(
               idempotencyKey: idemKey,
               payloadJson: {
                 source: 'ach_recon_remediation',
-                increaseTransactionId: tx.id,
+                achTransactionId: tx.id,
                 direction: tx.amount > 0 ? 'CREDIT' : 'DEBIT',
               },
             },
@@ -253,7 +253,7 @@ async function _runDiff(
         severity: 'BLOCKING',
         externalRef: ref,
         detailJson: {
-          increaseTransactionId: tx.id,
+          achTransactionId: tx.id,
           amountCents: tx.amount,
           routeType: tx.route_type,
           description: tx.description,
@@ -338,7 +338,7 @@ async function _runDiff(
           instructionId: localInstruction.id,
           detailJson: {
             action: 'RECON_SETTLED',
-            increaseTransactionId: tx.id,
+            achTransactionId: tx.id,
             amountCents: tx.amount,
           },
           remediation: 'SETTLED_BY_RECON',
@@ -353,7 +353,7 @@ async function _runDiff(
           instructionId: localInstruction.id,
           detailJson: {
             action: 'ALREADY_SETTLED',
-            increaseTransactionId: tx.id,
+            achTransactionId: tx.id,
             note: 'Instruction already settled (likely by webhook); recon no-op.',
           },
           remediation: 'NONE',
@@ -368,7 +368,7 @@ async function _runDiff(
           instructionId: localInstruction.id,
           detailJson: {
             action: 'SETTLE_FAILED',
-            increaseTransactionId: tx.id,
+            achTransactionId: tx.id,
             error: reconSettleError,
           },
           remediation: 'ALERT_RAISED',
@@ -380,9 +380,9 @@ async function _runDiff(
 
   // ── Step 5: MISSING_REMOTE scan ───────────────────────────────────
   // Local-holding refs (DRYRUN-ACH-*, PENDING-APPROVAL-*) are INFORMATIONAL.
-  // Real Increase transfer IDs with no remote match are BLOCKING drift.
+  // Real ACH transfer IDs with no remote match are BLOCKING drift.
   // SUBMITTED instructions with no remote match are BLOCKING (the transfer
-  // was submitted to Increase but never appeared in the transaction feed).
+  // was submitted to the ACH provider but never appeared in the transaction feed).
   for (const [ref, instructions] of localByRef.entries()) {
     if (seenLocalRefs.has(ref)) continue;
     comparedCount++;

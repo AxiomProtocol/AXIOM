@@ -1,5 +1,5 @@
 /**
- * POST /api/capinfra/adapters/increase/emergency-disable/acknowledge
+ * POST /api/capinfra/adapters/ach/emergency-disable/acknowledge
  *
  * Dual-actor acknowledgment of an emergency disable action (Phase 3B.3).
  * Must be called by a DISTINCT second actor within 4 hours of the disable.
@@ -72,17 +72,6 @@ export default createRouter([
         }
 
         // Check not already acknowledged.
-        const [existing] = await db
-          .select()
-          .from(capAdminActions)
-          .where(
-            and(
-              eq(capAdminActions.actionType, 'ach.emergency_disable.acknowledged'),
-            ),
-          )
-          .limit(1);
-
-        // More precise: check if any ack references this disable action.
         const allAcks = await db
           .select()
           .from(capAdminActions)
@@ -115,7 +104,7 @@ export default createRouter([
           acknowledged: true,
           adminActionId: actionId,
           originalDisableActionId: body.originalDisableActionId,
-          note: 'Forward-gate freeze cleared. Use POST /api/capinfra/adapters/increase/config to restore the adapter mode.',
+          note: 'Forward-gate freeze cleared. Use POST /api/capinfra/adapters/ach/config to restore the adapter mode.',
         });
       } catch (err) {
         sendError(res, err);

@@ -153,7 +153,7 @@ export async function getBankingSnapshot(walletAddress: string): Promise<any> {
 
 export async function upsertCustomer(params: {
   walletAddress: string;
-  unitCustomerId: string;
+  externalCustomerId: string;
   kycStatus: string;
   firstName?: string;
   lastName?: string;
@@ -176,7 +176,7 @@ export async function upsertCustomer(params: {
      RETURNING *`,
     [
       params.walletAddress,
-      params.unitCustomerId,
+      params.externalCustomerId,
       params.kycStatus,
       params.firstName || null,
       params.lastName || null,
@@ -190,7 +190,7 @@ export async function upsertCustomer(params: {
 
 export async function createAccount(params: {
   walletAddress: string;
-  unitAccountId: string;
+  externalAccountId: string;
   accountType: string;
   status: string;
   routingNumber?: string;
@@ -213,7 +213,7 @@ export async function createAccount(params: {
      RETURNING *`,
     [
       params.walletAddress,
-      params.unitAccountId,
+      params.externalAccountId,
       params.accountType,
       params.status,
       params.routingNumber || null,
@@ -292,7 +292,7 @@ export async function getMemberAccount(walletAddress: string): Promise<any | nul
 
 export async function applyAchTransfer(params: {
   walletAddress: string;
-  unitAccountId: string;
+  externalAccountId: string;
   amountCents: number;
   direction: 'Debit' | 'Credit';
 }): Promise<void> {
@@ -305,7 +305,7 @@ export async function applyAchTransfer(params: {
          available_balance_cents = GREATEST(0, available_balance_cents + $1),
          updated_at = NOW()
      WHERE wallet_address = $2 AND unit_account_id = $3`,
-    [delta, params.walletAddress, params.unitAccountId]
+    [delta, params.walletAddress, params.externalAccountId]
   );
 }
 
@@ -505,7 +505,7 @@ export async function createTransfer(params: {
   cryptoAmountStr: string;
   status: string;
   quoteSnapshotId?: string;
-  unitAccountId?: string;
+  externalAccountId?: string;
   bitgoWalletId?: string;
 }): Promise<any> {
   await ensureSchema();
@@ -524,7 +524,7 @@ export async function createTransfer(params: {
       params.cryptoAmountStr,
       params.status,
       params.quoteSnapshotId || null,
-      params.unitAccountId || null,
+      params.externalAccountId || null,
       params.bitgoWalletId || null,
     ]
   );
@@ -547,17 +547,17 @@ export async function listTransfers(walletAddress: string): Promise<any[]> {
 // Webhook & reconciliation helpers
 // ---------------------------------------------------------------------------
 
-export async function getAccountByUnitId(unitAccountId: string): Promise<any | null> {
+export async function getAccountByExternalId(externalAccountId: string): Promise<any | null> {
   await ensureSchema();
   const result = await pool.query(
     `SELECT * FROM banking_accounts WHERE unit_account_id = $1`,
-    [unitAccountId]
+    [externalAccountId]
   );
   return result.rows[0] || null;
 }
 
 export async function updateAccountBalance(
-  unitAccountId: string,
+  externalAccountId: string,
   balanceCents: number,
   availableBalanceCents: number
 ): Promise<void> {
@@ -568,12 +568,12 @@ export async function updateAccountBalance(
          available_balance_cents = $2,
          updated_at = NOW()
      WHERE unit_account_id = $3`,
-    [balanceCents, availableBalanceCents, unitAccountId]
+    [balanceCents, availableBalanceCents, externalAccountId]
   );
 }
 
 export async function updateCustomerKycStatus(
-  unitCustomerId: string,
+  externalCustomerId: string,
   kycStatus: string
 ): Promise<void> {
   await ensureSchema();
@@ -582,7 +582,7 @@ export async function updateCustomerKycStatus(
      SET kyc_status = $1,
          updated_at = NOW()
      WHERE unit_customer_id = $2`,
-    [kycStatus, unitCustomerId]
+    [kycStatus, externalCustomerId]
   );
 }
 

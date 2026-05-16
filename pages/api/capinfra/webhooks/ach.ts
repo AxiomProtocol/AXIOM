@@ -1,5 +1,5 @@
 /**
- * Capital Infrastructure — Increase (ACH) webhook ingress endpoint (3B.2).
+ * Capital Infrastructure — ACH webhook ingress endpoint (3B.2).
  *
  * Public endpoint (signed, NOT admin-key gated). Persists raw body
  * first, delegates verification to the ACH adapter, and records the

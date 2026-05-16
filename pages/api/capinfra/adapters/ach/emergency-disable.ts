@@ -1,5 +1,5 @@
 /**
- * POST /api/capinfra/adapters/increase/emergency-disable
+ * POST /api/capinfra/adapters/ach/emergency-disable
  *
  * Immediately disable the ACH adapter (single-actor, instant effect).
  * Opens a 4-hour dual-actor acknowledgment window.
@@ -108,7 +108,7 @@ export default createRouter([
           prevMode,
           adminActionId: actionId,
           ackDeadline: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
-          note: 'ACH adapter disabled. Acknowledge via POST /api/capinfra/adapters/increase/emergency-disable/acknowledge with a distinct second actor within 4h.',
+          note: 'ACH adapter disabled. Acknowledge via POST /api/capinfra/adapters/ach/emergency-disable/acknowledge with a distinct second actor within 4h.',
         });
       } catch (err) {
         sendError(res, err);

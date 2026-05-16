@@ -145,16 +145,13 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
       } catch {}
     }
 
-    const routingNumber = process.env.UNIT_ROUTING_NUMBER || null;
-    const accountNumber = process.env.UNIT_ACCOUNT_NUMBER || null;
-
     let achTriggered = false;
-    let unitPaymentId: string | null = null;
+    let bankingPaymentId: string | null = null;
 
     if (callCurrency === 'USD' && triggerACH === true) {
       // ACH payment trigger via banking provider is not available.
       // Banking provider slot is open — see lib/banking/registry.ts.
-      // unitPaymentId remains null; achTriggered remains false.
+      // bankingPaymentId remains null; achTriggered remains false.
     }
 
     const callResult = await pool.query(
@@ -169,7 +166,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
         callAmount.toFixed(2),
         callCurrency,
         dueDate || null,
-        unitPaymentId,
+        bankingPaymentId,
         JSON.stringify({
           issuedBy: wallet,
           memoCode,
@@ -212,13 +209,11 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
               <p style="margin:0 0 8px;font-weight:bold;">Wire/ACH Instructions</p>
               <p style="margin:0 0 4px;">Bank: Axiom Protocol Treasury</p>
               <p style="margin:0 0 4px;">Beneficiary: Axiom Protocol LLC</p>
-              ${routingNumber ? `<p style="margin:0 0 4px;">Routing: ${routingNumber}</p>` : ''}
-              ${accountNumber ? `<p style="margin:0 0 4px;">Account: ${accountNumber}</p>` : ''}
               <p style="margin:0 0 4px;">Amount: $${callAmount.toLocaleString()}</p>
               <p style="margin:0;font-weight:bold;">Memo: ${memoCode}</p>
-              ${!routingNumber ? '<p style="margin:8px 0 0;font-size:12px;color:#666;">Wire details not yet configured. Contact operations for payment instructions.</p>' : ''}
+              <p style="margin:8px 0 0;font-size:12px;color:#666;">Wire details will be provided by operations. Contact Axiom for payment instructions.</p>
             </div>`;
-          instructionsText = `\nWire/ACH Instructions\nBank: Axiom Protocol Treasury\nBeneficiary: Axiom Protocol LLC\n${routingNumber ? `Routing: ${routingNumber}\n` : ''}${accountNumber ? `Account: ${accountNumber}\n` : ''}Amount: $${callAmount.toLocaleString()}\nMemo: ${memoCode}`;
+          instructionsText = `\nWire/ACH Instructions\nBank: Axiom Protocol Treasury\nBeneficiary: Axiom Protocol LLC\nAmount: $${callAmount.toLocaleString()}\nMemo: ${memoCode}\nContact operations for wire routing and account details.`;
         }
 
         const subject = `Capital Call — ${offering.name} — $${callAmount.toLocaleString()} due ${dueDateStr}`;

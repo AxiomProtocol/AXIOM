@@ -315,8 +315,8 @@ async function executeUsdPayment(
 ) {
   try {
     // Banking infrastructure (ACH credit) is pending partner selection.
-    // Unit Finance integration has been removed. A new fiat rails provider
-    // will be integrated here once onboarded.
+    // Fiat rails provider slot is open — see lib/banking/registry.ts.
+    // A new provider will be integrated here once onboarded.
     await setDistFailed(distributionId, offeringId, 'Banking infrastructure is being reconfigured. ACH distributions temporarily unavailable.');
     return res.status(200).json({
       success: false,

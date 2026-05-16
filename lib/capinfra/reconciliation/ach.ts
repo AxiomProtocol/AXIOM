@@ -22,8 +22,8 @@ import type { AchAdapterConfig } from '../adapters/ach/config';
 import { validateAchCredentials } from '../adapters/ach/sdk';
 import { findUnacknowledgedEmergencyDisable } from '../adapters/ach/expose';
 import { recordSingleActorAction } from '../adminActions';
-import { runAchDiff } from './increaseDiff';
-import type { AchDiffResult } from './increaseDiff';
+import { runAchDiff } from './achDiff';
+import type { AchDiffResult } from './achDiff';
 
 export interface RunAchReconciliationInput {
   since?: Date;

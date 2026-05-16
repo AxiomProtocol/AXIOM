@@ -1,5 +1,5 @@
 /**
- * POST /api/capinfra/adapters/increase/sweep-timeouts
+ * POST /api/capinfra/adapters/ach/sweep-timeouts
  *
  * Fail all PENDING_OPERATOR_APPROVAL ACH instructions older than
  * timeoutMinutes (default: 60 minutes). Safe to call from a cron job.
