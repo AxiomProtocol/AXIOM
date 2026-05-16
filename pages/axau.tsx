@@ -498,7 +498,6 @@ function SilverSleeveSection() {
               { label: 'Max basket weight', value: '30% of total AXAU reserve' },
               { label: 'Oracle',           value: 'Chainlink XAG/USD ÷ 31.1035 g/toz' },
               { label: 'Coverage floor',   value: '105% — same as gold sleeve' },
-              { label: 'KAG yield',        value: '0.45% annualised · compounds into reserve' },
               { label: 'Redemption',       value: 'AXAU → KAG (silver vault) or PAXG (gold vault)' },
               { label: 'Status',           value: 'Deployment ready · Gnosis Safe pending' },
             ].map(row => (

@@ -148,10 +148,16 @@ function PoolRow({ pool }: { pool: Pool }) {
               ? `${pool.tokenASymbol} / ${pool.tokenBSymbol}`
               : `Pool #${pool.id}`}
           </div>
-          <div style={{ color: DL_MUTED }} className="font-mono text-xs">
-            {pool.protocol ?? 'EulerSwap'}
-            {pool.pairAddress ? ` · ${truncAddr(pool.pairAddress)}` : ''}
-          </div>
+          {(pool.protocol == null || pool.protocol === 'EulerSwap') ? (
+            <div className="font-mono text-xs" style={{ color: '#991b1b' }}>
+              Empty — Legacy Integration (EulerSwap withdrawn)
+            </div>
+          ) : (
+            <div style={{ color: DL_MUTED }} className="font-mono text-xs">
+              {pool.protocol}
+              {pool.pairAddress ? ` · ${truncAddr(pool.pairAddress)}` : ''}
+            </div>
+          )}
         </div>
       </div>
 

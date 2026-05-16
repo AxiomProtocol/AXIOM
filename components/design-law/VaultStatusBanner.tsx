@@ -81,12 +81,12 @@ export function VaultStatusBanner({
   if (status === 'configured') {
     return (
       <div
-        className={`border border-dl-gold bg-dl-bg-alt p-6 mb-8 ${className}`}
+        className={`border border-dl-forest bg-dl-bg-alt p-6 mb-8 ${className}`}
         role="status"
         aria-label="Vault configured status"
       >
         <div className="flex items-center gap-3 mb-4">
-          <span className="font-dl-mono text-xs border border-dl-gold text-dl-gold px-2 py-0.5 uppercase tracking-widest">
+          <span className="font-dl-mono text-xs border border-dl-forest text-dl-forest px-2 py-0.5 uppercase tracking-widest">
             Configured
           </span>
           <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest">
@@ -139,19 +139,19 @@ export function VaultStatusBanner({
   if (status === 'withdrawn_empty') {
     return (
       <div
-        className={`border border-red-400 bg-dl-bg-alt p-6 mb-8 ${className}`}
+        className={`border border-dl-error bg-dl-bg-alt p-6 mb-8 ${className}`}
         role="alert"
         aria-label="Integration withdrawn"
       >
         <div className="flex items-center gap-3 mb-3">
-          <span className="font-dl-mono text-xs border border-red-400 text-red-600 px-2 py-0.5 uppercase tracking-widest">
+          <span className="font-dl-mono text-xs border border-dl-error text-dl-error px-2 py-0.5 uppercase tracking-widest">
             Withdrawn
           </span>
-          <span className="font-dl-mono text-xs text-red-600 uppercase tracking-widest">
+          <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest">
             Integration Decommissioned — No Active Position
           </span>
         </div>
-        <p className="text-dl-navy text-sm leading-relaxed">
+        <p className="text-dl-gray text-sm leading-relaxed">
           The {vaultName} integration on {network} has been withdrawn. All
           protocol-controlled positions associated with this integration have
           been exited. Endpoint returns HTTP 410. No user capital was at risk.
@@ -235,12 +235,12 @@ export function VaultStatusBanner({
   if (status === 'coming_soon') {
     return (
       <div
-        className={`border border-dl-gold bg-dl-bg-alt p-6 mb-8 ${className}`}
+        className={`border border-dl-navy bg-dl-bg-alt p-6 mb-8 ${className}`}
         role="status"
         aria-label="Coming soon"
       >
         <div className="flex items-center gap-3 mb-3">
-          <span className="font-dl-mono text-xs border border-dl-gold text-dl-gold px-2 py-0.5 uppercase tracking-widest">
+          <span className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-2 py-0.5 uppercase tracking-widest">
             Coming Soon
           </span>
         </div>
@@ -255,12 +255,12 @@ export function VaultStatusBanner({
   if (status === 'planned') {
     return (
       <div
-        className={`border border-dl-border bg-dl-bg p-6 mb-8 ${className}`}
+        className={`border border-dl-gold bg-dl-bg-alt p-6 mb-8 ${className}`}
         role="status"
         aria-label="Planned"
       >
         <div className="flex items-center gap-3 mb-3">
-          <span className="font-dl-mono text-xs border border-dl-border text-dl-gray px-2 py-0.5 uppercase tracking-widest">
+          <span className="font-dl-mono text-xs border border-dl-gold text-dl-gold px-2 py-0.5 uppercase tracking-widest">
             Planned
           </span>
         </div>
