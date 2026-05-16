@@ -21,7 +21,10 @@ export type LiquidityVenueStatus =
   | 'evaluation_only'
   | 'deferred'
   | 'existing_integration'
-  | 'withdrawn_empty';
+  | 'withdrawn_empty'
+  | 'planned'
+  | 'configured'
+  | 'disabled';
 
 export type LiquidityPoolStatus =
   | 'planned'

@@ -17,6 +17,12 @@
  * `internalBaseUrl` and are silently skipped when null/empty so that the
  * primary deliverable — a fresh, persisted snapshot — succeeds even when
  * sibling endpoints aren't reachable from the current execution context.
+ *
+ * EULER DECOMMISSION NOTE (2026-05-13):
+ * EVK Open Market Vault (eAXUSD-6), Euler Earn vault, and all EulerSwap pools
+ * were withdrawn and confirmed empty on 2026-05-13. All live fetches for those
+ * contracts have been removed. Payload sections are retained with WITHDRAWN status
+ * for audit continuity. Addresses are preserved for on-chain verification only.
  */
 
 import { ethers } from 'ethers';
@@ -25,9 +31,9 @@ import { pool } from '../../server/db';
 import {
   ACTIVE_AXUSD, ACTIVE_PSM, EULER_AXUSD, EULER_PSM,
   CANONICAL_PSM, isCanonicalPsmDeployed,
-  EVK_OPEN_MARKET_VAULT_ADDRESS, isEvkVaultDeployed,
-  EULER_EARN_VAULT_ADDRESS, isEulerEarnDeployed,
-  EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, isEulerSwapDeployed,
+  EVK_OPEN_MARKET_VAULT_ADDRESS,
+  EULER_EARN_VAULT_ADDRESS,
+  EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULER_SWAP_AXUSD_AXM_POOL_ADDRESS,
 } from '../../src/config/activeContracts.generated';
 import { AXUSD_ORACLE_ADAPTER, isOracleDeployed } from '../../src/config/oracleConfig';
 
@@ -133,7 +139,6 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
     eulerAxusdSupplyRaw,
     deployerEthRaw,
     deployerUsdcRaw,
-    evkVaultAxusdRaw,
   ] = await Promise.all([
     usdc.balanceOf(ACTIVE_PSM),
     usdc.balanceOf(EULER_PSM),
@@ -142,7 +147,7 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
     eulerAxusd.totalSupply(),
     provider.getBalance(DEPLOYER_ADDRESS),
     usdc.balanceOf(DEPLOYER_ADDRESS),
-    isEvkVaultDeployed() ? primaryAxusd.balanceOf(EVK_OPEN_MARKET_VAULT_ADDRESS) : Promise.resolve(0n),
+    // EVK vault withdrawn 2026-05-13 — balanceOf fetch removed; hardcoded to 0 below.
   ]);
 
   const primaryPsmUsdc = parseFloat(ethers.formatUnits(primaryPsmUsdcRaw, 6));
@@ -152,12 +157,14 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
   const eulerAxusdSupply = parseFloat(ethers.formatUnits(eulerAxusdSupplyRaw, 18));
   const deployerEth = parseFloat(ethers.formatEther(deployerEthRaw));
   const deployerUsdc = parseFloat(ethers.formatUnits(deployerUsdcRaw, 6));
-  const evkVaultAxusd = parseFloat(ethers.formatUnits(evkVaultAxusdRaw, 18));
 
-  const canonicalAxusdInternalUsd = Math.round(evkVaultAxusd * 100) / 100;
+  // EVK vault withdrawn 2026-05-13 — balance confirmed zero.
+  const evkVaultAxusd = 0;
+
+  const canonicalAxusdInternalUsd = 0; // EVK venue withdrawn; no protocol-held internal AXUSD
   const canonicalAxusdExternalUsd = Math.max(
     0,
-    Math.round((primaryAxusdSupply - evkVaultAxusd) * 100) / 100
+    Math.round(primaryAxusdSupply * 100) / 100
   );
 
   let ethPrice = 2600;
@@ -174,59 +181,12 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
   const deployerEthUsd = Math.round(deployerEth * ethPrice * 100) / 100;
   const psmReservesTotal = Math.round((primaryPsmUsdc + eulerPsmUsdc + canonicalPsmUsdc) * 100) / 100;
 
-  const VAULT_ABI_SIMPLE = ['function totalAssets() view returns (uint256)'];
-
-  let evkVaultTvlAxusd = 0;
-  if (isEvkVaultDeployed()) {
-    try {
-      const evkVault = new ethers.Contract(EVK_OPEN_MARKET_VAULT_ADDRESS, VAULT_ABI_SIMPLE, provider);
-      const tvlRaw: bigint = await evkVault.totalAssets();
-      evkVaultTvlAxusd = parseFloat(ethers.formatEther(tvlRaw));
-    } catch {
-      // Non-fatal
-    }
-  }
-
-  let eulerEarnTvlAxusd = 0;
-  if (isEulerEarnDeployed()) {
-    try {
-      const eulerEarnVault = new ethers.Contract(EULER_EARN_VAULT_ADDRESS, VAULT_ABI_SIMPLE, provider);
-      const tvlRaw: bigint = await eulerEarnVault.totalAssets();
-      eulerEarnTvlAxusd = parseFloat(ethers.formatUnits(tvlRaw, 6));
-    } catch {
-      // Non-fatal
-    }
-  }
-
-  const EULERSWAP_POOL_ABI_LITE = [
-    'function getReserves() view returns (uint256 reserve0, uint256 reserve1)',
-    'function token0() view returns (address)',
-  ];
-  const AXUSD_ADDR_LOWER = '0xd6110f59a978ada6ef5c0e9d6baa04455d46ade7';
-  let eulerSwapUsdcTvl = 0;
-  let eulerSwapAxmTvl = 0;
-  const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
-  if (isEulerSwapDeployed()) {
-    if ((EULER_SWAP_AXUSD_USDC_POOL_ADDRESS as string) !== ZERO_ADDR) {
-      try {
-        const usdcPool = new ethers.Contract(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULERSWAP_POOL_ABI_LITE, provider);
-        const [r, token0] = await Promise.all([usdcPool.getReserves(), usdcPool.token0()]);
-        eulerSwapUsdcTvl = parseFloat(ethers.formatUnits(r[0], 6)) + parseFloat(ethers.formatUnits(r[1], 6));
-        void token0;
-      } catch {}
-    }
-    if ((EULER_SWAP_AXUSD_AXM_POOL_ADDRESS as string) !== ZERO_ADDR) {
-      try {
-        const axmPool = new ethers.Contract(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, EULERSWAP_POOL_ABI_LITE, provider);
-        const [r, token0] = await Promise.all([axmPool.getReserves(), axmPool.token0()]);
-        const isAxusdToken0 = (token0 as string).toLowerCase() === AXUSD_ADDR_LOWER;
-        const axusdRaw = isAxusdToken0 ? r[0] : r[1];
-        const axusdReserve = parseFloat(ethers.formatUnits(axusdRaw, 6));
-        eulerSwapAxmTvl = axusdReserve * 2;
-      } catch {}
-    }
-  }
-  const eulerSwapTotalTvl = eulerSwapUsdcTvl + eulerSwapAxmTvl;
+  // Euler EVK, Earn, and EulerSwap — all withdrawn 2026-05-13. Values hardcoded to zero.
+  const evkVaultTvlAxusd = 0;
+  const eulerEarnTvlAxusd = 0;
+  const eulerSwapUsdcTvl = 0;
+  const eulerSwapAxmTvl = 0;
+  const eulerSwapTotalTvl = 0;
 
   const treasuryTotalUsd = Math.round((deployerEthUsd + deployerUsdc + psmReservesTotal) * 100) / 100;
 
@@ -278,12 +238,14 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
       canonicalExternalUsd: canonicalAxusdExternalUsd,
       eulerLegacySupplyUsd: Math.round(eulerAxusdSupply * 100) / 100,
       internalLiquidityVenue: {
-        name: 'EVK Open Money Market (eAXUSD-6)',
+        name: 'EVK Open Money Market (eAXUSD-6) — WITHDRAWN',
         address: EVK_OPEN_MARKET_VAULT_ADDRESS,
         axusdHeld: evkVaultAxusd,
+        withdrawnAt: '2026-05-13',
+        note: 'All positions withdrawn and confirmed zero. Address retained for audit reference only.',
       },
       nettingBasis:
-        'liabilitiesTotalUsd is the GROSS outstanding AXUSD (all consumers — metrics, AME, policy gates — read this). liabilitiesExternalUsd nets canonical AXUSD held in the deployer-controlled EVK Open Money Market vault, treating it as protocol-owned internal liquidity rather than external creditor exposure; surfaced on /disclosure for context only.',
+        'liabilitiesTotalUsd is the GROSS outstanding AXUSD (all consumers — metrics, AME, policy gates — read this). EVK Open Money Market vault was decommissioned 2026-05-13 (balance confirmed zero); canonicalInternalUsd is 0. liabilitiesExternalUsd equals the full canonical + Euler legacy supply.',
     },
     lossBufferUsd: 0,
     policyMode: 'BOOTSTRAP',
@@ -292,47 +254,46 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
     composition,
     evkOpenMarket: {
       vaultAddress: EVK_OPEN_MARKET_VAULT_ADDRESS,
-      deployed: isEvkVaultDeployed(),
+      deployed: false,
       tvlAxusd: evkVaultTvlAxusd,
-      status: isEvkVaultDeployed() ? 'LIVE' : 'PENDING_DEPLOYMENT',
-      note: isEvkVaultDeployed()
-        ? `EVK Open Money Market live — ${evkVaultTvlAxusd.toFixed(2)} AXUSD TVL`
-        : 'EVK Open Money Market vault pending on-chain deployment (Task #38)',
+      status: 'WITHDRAWN',
+      withdrawnAt: '2026-05-13',
+      note: 'EVK Open Money Market vault (eAXUSD-6) withdrawn 2026-05-13 — all balances confirmed zero. Audit ref: 0xacdA87801f6409bB5157BA78aF1BD9631d6609B2',
     },
     eulerEarn: {
       vaultAddress: EULER_EARN_VAULT_ADDRESS,
-      deployed: isEulerEarnDeployed(),
+      deployed: false,
       tvlAxusd: eulerEarnTvlAxusd,
-      strategies: ['Phase 6 Credit Market (40%)', 'EVK Open Money Market (40%)', 'T-Bill Reserve (20%)'],
+      strategies: [],
       perfFeeBps: 1000,
       smearingPeriodDays: 14,
-      status: isEulerEarnDeployed() ? 'LIVE' : 'PENDING_DEPLOYMENT',
-      note: isEulerEarnDeployed()
-        ? `Euler Earn AXUSD yield aggregation vault live — ${eulerEarnTvlAxusd.toFixed(2)} AXUSD TVL`
-        : 'Euler Earn AXUSD vault pending on-chain deployment (Task #39)',
+      status: 'WITHDRAWN',
+      withdrawnAt: '2026-05-13',
+      note: 'Euler Earn AXUSD vault (earnAXUSD) withdrawn 2026-05-13 — all balances confirmed zero. Audit ref: 0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B',
     },
     eulerSwap: {
-      deployed: isEulerSwapDeployed(),
+      deployed: false,
       pools: [
         {
           pair: 'AXUSD/USDC',
           address: EULER_SWAP_AXUSD_USDC_POOL_ADDRESS,
           tvlUsd: eulerSwapUsdcTvl,
-          status: (EULER_SWAP_AXUSD_USDC_POOL_ADDRESS as string) !== ZERO_ADDR ? 'LIVE' : 'PENDING_DEPLOYMENT',
+          status: 'WITHDRAWN',
+          withdrawnAt: '2026-05-13',
         },
         {
           pair: 'AXUSD/AXM',
           address: EULER_SWAP_AXUSD_AXM_POOL_ADDRESS,
           tvlUsd: eulerSwapAxmTvl,
-          status: (EULER_SWAP_AXUSD_AXM_POOL_ADDRESS as string) !== ZERO_ADDR ? 'LIVE' : 'PENDING_DEPLOYMENT',
+          status: 'WITHDRAWN',
+          withdrawnAt: '2026-05-13',
         },
       ],
       totalTvlUsd: eulerSwapTotalTvl,
       pegDepthUsd: eulerSwapUsdcTvl,
-      status: isEulerSwapDeployed() ? 'LIVE' : 'PENDING_DEPLOYMENT',
-      note: isEulerSwapDeployed()
-        ? `EulerSwap AXUSD pools live — ${eulerSwapTotalTvl.toFixed(2)} USD TVL (peg depth: ${eulerSwapUsdcTvl.toFixed(2)} USD)`
-        : 'EulerSwap AXUSD/USDC + AXUSD/AXM pools pending on-chain deployment (Task #40)',
+      status: 'WITHDRAWN',
+      withdrawnAt: '2026-05-13',
+      note: 'EulerSwap AXUSD/USDC and AXUSD/AXM pools withdrawn 2026-05-13 — all balances confirmed zero.',
     },
     oracle: {
       axusdUsdPrice: axusdOraclePrice,
@@ -349,8 +310,8 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
       { label: 'CoinGecko', detail: `ETH/USD spot price: $${ethPrice}` },
       { label: 'Contract Registry', detail: 'activeContracts.generated.ts — PSM, deployer addresses' },
       { label: 'ERC-7726 Oracle', detail: axusdOraclePrice ? `AXUSD/USD: $${axusdOraclePrice.toFixed(6)} via ${axusdOracleSource}` : 'Oracle price unavailable' },
-      { label: 'Euler Earn AXUSD', detail: isEulerEarnDeployed() ? `Multi-strategy vault live — ${eulerEarnTvlAxusd.toFixed(2)} AXUSD TVL` : 'Pending deployment (Task #39)' },
-      { label: 'EulerSwap Pools', detail: isEulerSwapDeployed() ? `AXUSD/USDC + AXUSD/AXM live — ${eulerSwapTotalTvl.toFixed(2)} USD TVL, peg depth ${eulerSwapUsdcTvl.toFixed(2)} USD` : 'Pending deployment (Task #40)' },
+      { label: 'Euler Earn AXUSD', detail: 'Withdrawn 2026-05-13 — balance confirmed zero. Decommissioned.' },
+      { label: 'EulerSwap Pools', detail: 'Withdrawn 2026-05-13 — all balances confirmed zero. Decommissioned.' },
     ],
   };
 

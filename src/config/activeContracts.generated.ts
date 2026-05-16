@@ -185,7 +185,7 @@ export const EULERSWAP_STATUS = 'WITHDRAWN_EMPTY' as const;
 
 /** Returns true when the AXM/AXUSD EulerSwap pool has been deployed */
 export function isAXMAXUSDPoolDeployed(): boolean {
-  return (EULER_SWAP_AXUSD_AXM_POOL_ADDRESS as string) !== '0x0000000000000000000000000000000000000000';
+  return false; // AXM/AXUSD EulerSwap pool withdrawn 2026-05-13 — all balances confirmed zero
 }
 
 /** Returns true when the AXM EVK vault has been deployed */
