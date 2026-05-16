@@ -8,7 +8,17 @@ import type {
   WalletAccount,
 } from '../../components/sui/SuiWalletConnect';
 
-const SUISCAN_BASE = 'https://suiscan.xyz/mainnet/tx';
+// Derive explorer base URL from the configured Sui network
+const SUI_NETWORK = process.env.NEXT_PUBLIC_AXIOM_SUI_NETWORK ?? 'mainnet';
+const SUISCAN_NETWORK =
+  SUI_NETWORK === 'mainnet'
+    ? 'mainnet'
+    : SUI_NETWORK === 'testnet'
+    ? 'testnet'
+    : SUI_NETWORK === 'devnet'
+    ? 'devnet'
+    : 'mainnet';
+const SUISCAN_BASE = `https://suiscan.xyz/${SUISCAN_NETWORK}/tx`;
 
 const SuiWalletConnect = dynamic(
   () => import('../../components/sui/SuiWalletConnect'),
@@ -217,7 +227,7 @@ export default function SuiClaimPage() {
             </h2>
             <p className="text-xs text-dl-muted mb-3 leading-relaxed">
               Connect your Sui browser wallet to auto-fill your address. You
-              can also enter your address manually in Step 3 if you prefer
+              can also enter your address manually in Step 2 if you prefer
               the CLI to submit.
             </p>
             <SuiWalletConnect
@@ -232,10 +242,10 @@ export default function SuiClaimPage() {
             />
           </section>
 
-          {/* Step 2 — Campaign */}
+          {/* Step 2 — Campaign & Address */}
           <section className="mb-8">
             <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-3">
-              Step 2 — Campaign
+              Step 2 — Campaign & Address
             </h2>
             <div className="flex gap-3">
               <input
@@ -293,69 +303,67 @@ export default function SuiClaimPage() {
                 </dl>
               </div>
             )}
-          </section>
 
-          {/* Step 3 — Your Address */}
-          <section className="mb-8">
-            <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-3">
-              Step 3 — Your Address
-            </h2>
-            <p className="text-xs text-dl-muted mb-3">
-              Auto-filled from your connected wallet, or enter manually.
-            </p>
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={walletAddress}
-                onChange={e => setWalletAddress(e.target.value)}
-                placeholder="0x... your Sui address"
-                className="flex-1 font-mono text-sm bg-dl-surface border border-dl-border text-dl-primary px-3 py-2 focus:outline-none focus:border-dl-accent"
-              />
-              <button
-                onClick={checkStatus}
-                disabled={
-                  loading || !walletAddress.trim() || !campaignId.trim()
-                }
-                className="px-4 py-2 text-xs font-mono uppercase tracking-widest bg-dl-primary text-white disabled:opacity-40"
-              >
-                Check
-              </button>
-            </div>
+            {/* Address input — in same section as campaign so Step 2 is self-contained */}
+            <div className="mt-6">
+              <p className="text-xs font-mono text-dl-muted uppercase tracking-widest mb-2">
+                Your Address
+              </p>
+              <p className="text-xs text-dl-muted mb-3">
+                Auto-filled from your connected wallet, or enter manually.
+              </p>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={walletAddress}
+                  onChange={e => setWalletAddress(e.target.value)}
+                  placeholder="0x... your Sui address"
+                  className="flex-1 font-mono text-sm bg-dl-surface border border-dl-border text-dl-primary px-3 py-2 focus:outline-none focus:border-dl-accent"
+                />
+                <button
+                  onClick={checkStatus}
+                  disabled={
+                    loading || !walletAddress.trim() || !campaignId.trim()
+                  }
+                  className="px-4 py-2 text-xs font-mono uppercase tracking-widest bg-dl-primary text-white disabled:opacity-40"
+                >
+                  Check
+                </button>
+              </div>
 
-            {claimStatus && (
-              <div className="mt-3 text-xs font-mono">
-                {claimStatus.hasClaimed && !txDigest && (
-                  <span className="text-green-600">
-                    Already claimed — reward has been distributed to your
-                    wallet.
-                  </span>
-                )}
-                {!claimStatus.hasClaimed &&
-                  claimStatus.eligible === true && (
+              {claimStatus && (
+                <div className="mt-3 text-xs font-mono">
+                  {claimStatus.hasClaimed && !txDigest && (
+                    <span className="text-green-600">
+                      Already claimed — reward has been distributed to your
+                      wallet.
+                    </span>
+                  )}
+                  {!claimStatus.hasClaimed && claimStatus.eligible === true && (
                     <span className="text-green-600">
                       Eligible — proof ready. Proceed to claim.
                     </span>
                   )}
-                {!claimStatus.hasClaimed &&
-                  claimStatus.eligible === false && (
-                    <span className="text-red-500">
-                      Address not found in eligibility list for this campaign.
-                    </span>
-                  )}
-                {!claimStatus.hasClaimed &&
-                  claimStatus.eligible === null && (
+                  {!claimStatus.hasClaimed &&
+                    claimStatus.eligible === false && (
+                      <span className="text-red-500">
+                        Address not found in eligibility list for this campaign.
+                      </span>
+                    )}
+                  {!claimStatus.hasClaimed && claimStatus.eligible === null && (
                     <span className="text-dl-muted">
                       Not yet claimed. Load eligibility CSV to generate proof.
                     </span>
                   )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </section>
 
-          {/* Step 4 — Eligibility Proof */}
+          {/* Step 3 — Eligibility Proof */}
           <section className="mb-8">
             <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-3">
-              Step 4 — Eligibility Proof
+              Step 3 — Eligibility Proof
             </h2>
             <p className="text-xs text-dl-muted mb-3">
               Paste the eligibility CSV (columns: address, amount). Your proof
@@ -388,7 +396,7 @@ export default function SuiClaimPage() {
                   {!campaignId.trim()
                     ? 'Enter campaign ID in Step 2 first.'
                     : !walletAddress.trim()
-                    ? 'Connect wallet or enter address in Step 3.'
+                    ? 'Connect wallet or enter your address in Step 2.'
                     : 'Paste your eligibility CSV above.'}
                 </p>
               )}
@@ -418,11 +426,11 @@ export default function SuiClaimPage() {
             )}
           </section>
 
-          {/* Step 5 — Submit Claim (shown when proof ready; persists while txDigest is set) */}
+          {/* Step 4 — Submit Claim (shown when proof ready; persists while txDigest is set) */}
           {showStep5 && (
             <section className="mb-8">
               <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-3">
-                Step 5 — Submit Claim
+                Step 4 — Submit Claim
               </h2>
 
               {/* Success panel persists even after hasClaimed refreshes to true */}
