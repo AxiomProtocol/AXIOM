@@ -22,9 +22,9 @@
  *     NOT the treasury wallet balance — the relevant question is
  *     "are reserves adequate to cover all outstanding AXUSD?"
  *
- * AXUSD scope: Treasury Revenue contract + Euler EVK Open Market Vault
- * (eAXUSD-6). Both locations must be included or the total understates
- * protocol-held AXUSD and diverges from the internal Founder Ops view.
+ * AXUSD scope: Treasury Revenue contract only.
+ * Euler EVK Open Market Vault (eAXUSD-6) withdrawn 2026-05-13 — balance
+ * confirmed zero; hardcoded to 0 below and excluded from the fetch batch.
  */
 
 import { ethers } from 'ethers';
@@ -33,7 +33,6 @@ import {
   CORE_CONTRACTS,
   AXUSD_GENIUS_CONTRACTS,
   STABLECOINS,
-  EULER_LENDING_CONTRACTS,
 } from '../../shared/contracts';
 import { ERC3643_CONTRACTS } from '../../shared/contracts-3643';
 import {
@@ -255,7 +254,6 @@ export async function getCanonicalReserveSnapshot(): Promise<CanonicalReserveSna
     axmTreasuryRaw,
     axmStakingRaw,
     axusdTreasuryRaw,
-    axusdEvkRaw,
     axusdTotalSupplyRaw,
     usdcCanonicalRaw,
     usdcLegacyRaw,
@@ -272,9 +270,6 @@ export async function getCanonicalReserveSnapshot(): Promise<CanonicalReserveSna
       withTimeout((async () => axm.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE))().catch(() => 0n),                     6_000, 0n),
       withTimeout((async () => axm.balanceOf(CORE_CONTRACTS.STAKING_EMISSIONS))().catch(() => 0n),                    6_000, 0n),
       withTimeout((async () => axusd.balanceOf(CORE_CONTRACTS.TREASURY_REVENUE))().catch(() => 0n),                   6_000, 0n),
-      // AXUSD scope: Treasury Revenue + EVK Open Market Vault (eAXUSD-6).
-      // Both locations MUST be included. Omitting EVK was the Phase-1 bug.
-      withTimeout((async () => axusd.balanceOf(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT))().catch(() => 0n),    6_000, 0n),
       // Coverage denominator: use totalSupply(), NOT the treasury wallet balance.
       // The treasury wallet balance is often 0, making coverage appear undefined.
       withTimeout((async () => axusd.totalSupply())().catch(() => 0n),                                                6_000, 0n),
@@ -358,9 +353,9 @@ export async function getCanonicalReserveSnapshot(): Promise<CanonicalReserveSna
   const usdcTotal     = usdcCanonical + usdcLegacy + usdcBackstop + usdcDeployer;
 
   // ── AXUSD ─────────────────────────────────────────────────────────────────
-  // Holdings scope: Treasury Revenue + Euler EVK Open Market Vault (eAXUSD-6).
+  // Holdings scope: Treasury Revenue only (EVK vault withdrawn 2026-05-13 — balance zero).
   const axusdTreasury         = Number(ethers.formatUnits(axusdTreasuryRaw as bigint, 18));
-  const axusdEvk              = Number(ethers.formatUnits(axusdEvkRaw as bigint, 18));
+  const axusdEvk              = 0; // EVK vault withdrawn 2026-05-13 — all balances confirmed zero
   const axusdTotal            = axusdTreasury + axusdEvk;
   // Coverage denominator is circulating supply, not protocol holdings.
   const axusdCirculatingSupply = Number(ethers.formatUnits(axusdTotalSupplyRaw as bigint, 18));
@@ -470,11 +465,11 @@ export async function getCanonicalReserveSnapshot(): Promise<CanonicalReserveSna
       bucketType: 'governance_inventory',
       includedInTotalReserve: true,
       includedInCoverageNumerator: false,
-      notes: 'Governance token held in Treasury Revenue and Staking Emissions contracts. Price derived from EulerSwap pool reserve ratio. No fixed AXUSD redemption peg.',
+      notes: 'Governance token held in Treasury Revenue and Staking Emissions contracts. Price unavailable — EulerSwap AXUSD/AXM pool withdrawn 2026-05-13. No fixed AXUSD redemption peg.',
       totalBalance: axmTotal,
       totalValueUsd: axmValue ?? 0,
       priceUsd: axmPrice ?? undefined,
-      pricingMethod: 'On-chain EulerSwap AXUSD/AXM pool reserve ratio (spot)',
+      pricingMethod: 'Pool withdrawn — price unavailable (EulerSwap AXUSD/AXM withdrawn 2026-05-13)',
       dataAgeSeconds: 0,
       locations: [
         {
@@ -552,7 +547,7 @@ export async function getCanonicalReserveSnapshot(): Promise<CanonicalReserveSna
       bucketType: 'protocol_stable_inventory',
       includedInTotalReserve: true,
       includedInCoverageNumerator: false,
-      notes: 'AXUSD held by the protocol (Treasury Revenue + Euler EVK vault). Not in coverage numerator — AXUSD is the liability being covered, not an asset backing it.',
+      notes: 'AXUSD held by the protocol (Treasury Revenue only). EVK vault withdrawn 2026-05-13 — balance confirmed zero. Not in coverage numerator — AXUSD is the liability being covered, not an asset backing it.',
       totalBalance: axusdTotal,
       totalValueUsd: axusdTotal,
       priceUsd: 1.0,
@@ -565,15 +560,6 @@ export async function getCanonicalReserveSnapshot(): Promise<CanonicalReserveSna
           sourceType: 'live_rpc',
           balance: axusdTreasury,
           valueUsd: axusdTreasury,
-          fetchedAt,
-          dataAgeSeconds: 0,
-        },
-        {
-          label: 'Euler EVK Open Market Vault (eAXUSD-6)',
-          address: EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT,
-          sourceType: 'live_rpc',
-          balance: axusdEvk,
-          valueUsd: axusdEvk,
           fetchedAt,
           dataAgeSeconds: 0,
         },

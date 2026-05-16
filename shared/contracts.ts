@@ -260,12 +260,11 @@ export const CAMELOT_DEX = {
   FACTORY: '0x6EcCab422D763aC031210895C81787E87B43A652'
 } as const;
 
-// EulerSwap AXUSD Liquidity Layer (Task #40)
-// EulerSwap integrates directly with EVK vaults — idle LP capital earns lending yield.
-// Factory addresses confirmed from euler-interfaces/addresses/42161 (EulerChains.json).
-// Pool deployment deferred: requires price curve parameters (priceX, priceY, concentration,
-// equilibriumReserves) + initial liquidity + Euler account setup. Use Euler UI for pool creation.
-// ERC-3643 prerequisite: all pool addresses must be registered in the LendingPlatformModule.
+// ═══ SECTION C — WITHDRAWN 2026-05-13 ══════════════════════════════════════
+// EulerSwap AXUSD Liquidity Layer (Task #40) — ALL POSITIONS WITHDRAWN
+// Both AXUSD/USDC and AXM/AXUSD pools confirmed empty as of 2026-05-13.
+// Addresses retained below for audit reference and on-chain verification only.
+// Do NOT route new liquidity to these pool addresses.
 export const EULER_SWAP = {
   // EulerSwap V2 factory — canonical Arbitrum One (euler-interfaces/addresses/42161)
   FACTORY: '0x138AB9B33741B25bb7BcDa466175c8B2E2b96dc4', // V2 — use for new pools
@@ -380,14 +379,14 @@ export const GOVERNANCE_CONTRACTS = {
   GOVERNANCE_HUB: '0x52Dc85fd653a75323b5307f4D2629ab9A070530E'
 } as const;
 
-// ═══ SECTION A: Euler V2 Lending Markets ════════════════════════════════
-// Actively used: EVK_OPEN_MARKET_VAULT, EVK_OPEN_MARKET_IRM, EVC, EULER_EARN_VAULT, EULER_EARN_FACTORY, AXIOM_FEE_BURNER
+// ═══ SECTION C — WITHDRAWN 2026-05-13 ══════════════════════════════════════
+// Euler V2 Lending Markets — ALL POSITIONS WITHDRAWN
+// EVK Open Market Vault (eAXUSD-6), Euler Earn Vault, and all EulerSwap positions
+// confirmed withdrawn and empty as of 2026-05-13.
+// Addresses retained below for audit reference and on-chain verification only.
+// Do NOT route new liquidity or rebalance operations to these vault addresses.
 // SECTION C (DEPRECATED): AXUSD_VAULT_V4_DEPRECATED, AXUSD_VAULT_V3_DEPRECATED, PRICE_ORACLE_DEPRECATED, VAULT_GOVERNOR
-// External Euler protocol infra (not Axiom-deployed): EVK_FACTORY, IRM_FACTORY, PROTOCOL_CONFIG, IMPLEMENTATION, COLLATERAL_* vaults
-// Euler V2 AXUSD Lending Markets
-// Status: DEPLOYED & LIVE | Arbitrum One | January 30, 2026
-// Features: Vault-to-vault collateral, external LP yield, supply/borrow enabled
-// V4 Upgrade: Fixed hook configuration issue, deposits/withdrawals fully operational
+// External Euler infra (not Axiom-deployed, retained for reference): EVK_FACTORY, IRM_FACTORY, PROTOCOL_CONFIG, IMPLEMENTATION, COLLATERAL_* vaults
 export const EULER_LENDING_CONTRACTS = {
   // DEPRECATED: AXUSD Lending Vault V4 (eAXUSD-4)
   // Status: WITHDRAW_ONLY — hook configuration issue in this vault prevents new deposits.

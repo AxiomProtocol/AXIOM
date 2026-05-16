@@ -149,15 +149,15 @@ export const LIQUIDITY_VENUES: Record<LiquidityVenueId, LiquidityVenue> = {
     blockedForAssets: ['AXAU'],
     notes: 'Selective later Arbitrum-native expansion only if it improves distribution without fragmenting liquidity.',
   },
-  eulerswap: {
-    id: 'eulerswap',
-    name: 'EulerSwap',
+  'axiom-reserve-access': {
+    id: 'axiom-reserve-access',
+    name: 'Axiom Reserve Access',
     chain: ARBITRUM_ONE_LIQUIDITY_CHAIN,
-    status: 'existing_integration',
-    firstWavePermitted: false,
+    status: 'approved_primary',
+    firstWavePermitted: true,
     approvedForAssets: ['AXUSD', 'AXM', 'USDC'],
     blockedForAssets: ['AXAU'],
-    notes: 'Existing in-app liquidity integration. Tracked for audit context, not the canonical first-wave venue in this strategy.',
+    notes: 'Axiom-native on-chain financial rails replacing the withdrawn Euler EVK/EulerSwap layer (withdrawn 2026-05-13). Protocol-controlled liquidity access.',
   },
 };
 

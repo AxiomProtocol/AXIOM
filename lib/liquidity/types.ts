@@ -13,14 +13,15 @@ export type LiquidityVenueId =
   | 'curve'
   | 'balancer'
   | 'camelot'
-  | 'eulerswap';
+  | 'axiom-reserve-access';
 
 export type LiquidityVenueStatus =
   | 'approved_primary'
   | 'approved_secondary'
   | 'evaluation_only'
   | 'deferred'
-  | 'existing_integration';
+  | 'existing_integration'
+  | 'withdrawn_empty';
 
 export type LiquidityPoolStatus =
   | 'planned'
@@ -82,7 +83,7 @@ export interface LiquidityVenue {
 }
 
 export interface LiquidityPoolFee {
-  kind: 'uniswap_v3_fee_tier' | 'curve_stableswap' | 'balancer_weighted' | 'camelot_pool' | 'eulerswap_curve';
+  kind: 'uniswap_v3_fee_tier' | 'curve_stableswap' | 'balancer_weighted' | 'camelot_pool';
   valueBps: number | null;
   status: 'recommended' | 'pending_venue_design' | 'existing';
   notes: string;

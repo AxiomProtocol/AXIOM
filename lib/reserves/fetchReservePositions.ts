@@ -14,7 +14,7 @@
  */
 
 import { GOVERNANCE_SAFE, DEPLOYER_EOA } from '../../src/config/adminRoles';
-import { CORE_CONTRACTS, EULER_LENDING_CONTRACTS, AXUSD_GENIUS_CONTRACTS } from '../../shared/contracts';
+import { CORE_CONTRACTS, AXUSD_GENIUS_CONTRACTS } from '../../shared/contracts';
 import { CANONICAL_PSM } from '../../src/config/activeContracts.generated';
 import { AXAU_ADDRESSES, ORACLE_STALE_THRESHOLD_SECONDS } from '../services/AXAUContractService';
 import { getCanonicalReserveSnapshot } from './getCanonicalReserveSnapshot';
@@ -186,8 +186,8 @@ export async function fetchReservePositions(): Promise<ReservePositionsResponse>
       balance: r.axmTotal, balanceFormatted: fmtBal(r.axmTotal, 2) + ' AXM',
       usdValue: axmValue, price: r.axmPrice,
       priceSource: r.axmPrice !== null
-        ? 'On-chain EulerSwap AXUSD/AXM pool reserve ratio'
-        : 'Price unavailable — pool reserve ratio failed',
+        ? 'On-chain pool reserve ratio'
+        : 'Price unavailable — EulerSwap AXUSD/AXM pool withdrawn 2026-05-13',
       status: r.axmTotal > 0 ? 'OK' : 'ZERO',
       statusDetail: `${fmtBal(r.axmTreasury, 2)} AXM in Treasury + ${fmtBal(r.axmStaking, 2)} AXM in Staking Emissions`,
       depositAddress: CORE_CONTRACTS.TREASURY_REVENUE,
@@ -225,16 +225,14 @@ export async function fetchReservePositions(): Promise<ReservePositionsResponse>
       balance: r.axusdTotal, balanceFormatted: fmtBal(r.axusdTotal, 2) + ' AXUSD',
       usdValue: r.axusdTotal, price: 1.0, priceSource: 'Stable peg — $1.00 AXUSD',
       status: r.axusdTotal > 0 ? 'OK' : 'ZERO',
-      statusDetail: `${fmtBal(r.axusdTreasury, 2)} in Treasury + ${fmtBal(r.axusdEvk, 2)} in Euler EVK Vault`,
+      statusDetail: `${fmtBal(r.axusdTreasury, 2)} in Treasury Revenue Hub only (EVK vault withdrawn 2026-05-13)`,
       depositAddress: CORE_CONTRACTS.TREASURY_REVENUE,
       depositLabel: 'Treasury Revenue Hub — send AXUSD here on Arbitrum One',
       depositArbiscanUrl: arbiUrl(CORE_CONTRACTS.TREASURY_REVENUE),
       locationBreakdown: [
         { label: 'Treasury Revenue Hub', address: CORE_CONTRACTS.TREASURY_REVENUE, balance: r.axusdTreasury, balanceFormatted: fmtBal(r.axusdTreasury, 2) + ' AXUSD', arbiscanUrl: arbiUrl(CORE_CONTRACTS.TREASURY_REVENUE) },
-        { label: 'Euler EVK Open Market Vault (eAXUSD-6)', address: EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT, balance: r.axusdEvk, balanceFormatted: fmtBal(r.axusdEvk, 2) + ' AXUSD', arbiscanUrl: arbiUrl(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT) },
       ],
-      actionType: 'open_contract', actionLabel: 'View EVK Vault',
-      actionUrl: arbiUrl(EULER_LENDING_CONTRACTS.EVK_OPEN_MARKET_VAULT),
+      actionType: 'copy_address', actionLabel: 'Copy Treasury Address',
       purchaseUrl: '/onramp', purchaseLabel: 'Fund via Card (USD → AXUSD)',
       secondFundingUrl: '/dex', secondFundingLabel: 'Swap USDC → AXUSD',
       lastUpdatedAt: at,
