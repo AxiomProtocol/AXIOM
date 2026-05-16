@@ -2,7 +2,7 @@
  * Axiom Rail — DAO Payroll Schema
  *
  * Two tables supporting the DAO Contributor Payroll product built on
- * Axiom Rail (SEP-31 / Increase ACH+Wire settled).
+ * Axiom Rail (SEP-31 / ACH+Wire settled).
  *
  * axiom_rail_payroll_runs       — one row per payroll run (batch of recipients)
  * axiom_rail_payroll_recipients — one row per recipient in a run

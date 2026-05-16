@@ -47,7 +47,7 @@ export class TreasuryLedgerService {
 
   private accountTrustSource(account: TreasuryAccount): TrustClassification {
     const sourceMap: Record<string, TrustSource> = {
-      increase: TrustSource.BANK_REPORTED,
+      ach: TrustSource.BANK_REPORTED,
       circle: TrustSource.PROVIDER_API_REPORTED,
       bitgo: TrustSource.CUSTODIAN_REPORTED,
       onchain: TrustSource.ONCHAIN_VERIFIED,

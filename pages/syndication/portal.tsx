@@ -824,7 +824,7 @@ function DistributionsTab({ distributions }: { distributions: any[] }) {
         {distributions.map((d: any) => {
           const meta = d.meta || {};
           const txHash = meta.tx_hash;
-          const bankingPaymentId = meta.unit_payment_id;
+          const bankingPaymentId = meta.banking_payment_id;
           return (
             <div key={d.id} className="border border-dl-border p-4">
               <div className="flex items-start justify-between mb-2">

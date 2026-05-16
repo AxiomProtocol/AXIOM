@@ -35,7 +35,7 @@ const ROLES: RoleRow[] = [
       'Live. BitGo CaaS multi-party authorization. No single key can move funds.',
   },
   {
-    contract: 'Increase (US banking)',
+    contract: 'Banking Provider (TBD)',
     role: 'Fiat operations',
     whatItDoes:
       'Authorises ACH, wire, and card-onramp settlement to and from the operating account. FDIC-insured at the depository layer.',

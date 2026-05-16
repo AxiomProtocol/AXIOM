@@ -258,7 +258,7 @@ export default function RentCollectionLandingPage() {
       {/* ── Fee note ──────────────────────────────────────────────────────── */}
       <p style={{ fontFamily: MONO, fontSize: '0.7rem', color: '#888', lineHeight: 1.6 }}>
         Fee: $0.50 flat + 0.1% per transaction. Minimum payment $10, maximum $25,000.
-        Wire transfer settlement incurs an additional $15 outgoing wire fee from Increase.
+        Wire transfer settlement incurs an additional $15 outgoing wire fee.
         Settlement is initiated by Axiom Rail operations; funds are not automatically swept.
       </p>
     </DesignLawLayout>

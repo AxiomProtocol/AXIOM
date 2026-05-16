@@ -2471,9 +2471,9 @@ export default function OfferingBuilder() {
                                   {d.meta.tx_hash.slice(0, 10)}...
                                 </a>
                               )}
-                              {d.status === 'completed' && d.meta?.unit_payment_id && (
+                              {d.status === 'completed' && d.meta?.banking_payment_id && (
                                 <span className="px-2 py-0.5 text-xs bg-gray-50 text-gray-600 font-dl-mono">
-                                  Payment ref: {d.meta.unit_payment_id}
+                                  Payment ref: {d.meta.banking_payment_id}
                                 </span>
                               )}
                               {d.status === 'failed' && (

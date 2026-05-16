@@ -161,8 +161,8 @@ export const capSettlementStatusEnum = pgEnum('cap_settlement_status', [
   'CANCELLED',
   // Phase 3B.3: ACH production rollout statuses
   // PENDING_OPERATOR_APPROVAL: instruction held for dual-actor human gate (MANUAL_APPROVAL mode).
-  //   No Increase API call has been made. Safe to auto-fail on rollback.
-  // SUBMITTED: Increase production API accepted the transfer (api.increase.com HTTP 200).
+  //   No banking API call has been made. Safe to auto-fail on rollback.
+  // SUBMITTED: banking provider accepted the transfer (HTTP 200 from active rails).
   //   NOT bank-final. ACH clearing confirmed only by reconciliation.
   //   Must NEVER be auto-failed on rollback — requires operator review + reconciliation.
   'PENDING_OPERATOR_APPROVAL',
@@ -796,14 +796,14 @@ export const capReconciliationDrift = pgTable('cap_reconciliation_drift', {
 }));
 
 // ────────────────────────────────────────────────────────────────────
-// Card onramp — card → USD treasury (Increase) and card → AXUSD mint
+// Card onramp — card → USD treasury and card → AXUSD mint
 // ────────────────────────────────────────────────────────────────────
 
 /**
  * Card-funded deposits via Stripe Checkout. Single row per checkout
  * session. Drives two intents:
  *   - TREASURY_FUND: funds land in Stripe balance, then payout to the
- *     Increase Nexus account (configured one-time in Stripe dashboard
+ *     treasury bank account (configured one-time in Stripe dashboard
  *     as an external bank account). Status walks
  *     PENDING -> PAID -> PAYOUT_INITIATED -> SETTLED.
  *   - AXUSD_MINT: on PAID, the system mints AXUSD 1:1 to
@@ -819,7 +819,7 @@ export const capCardDeposits = pgTable('cap_card_deposits', {
   stripeSessionId: varchar('stripe_session_id', { length: 200 }),
   stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 200 }),
   stripePayoutId: varchar('stripe_payout_id', { length: 200 }),
-  increaseTransferId: varchar('increase_transfer_id', { length: 200 }),
+  bankingTransferId: varchar('banking_transfer_id', { length: 200 }),
   mintTxHash: varchar('mint_tx_hash', { length: 80 }),
   status: varchar('status', { length: 32 }).notNull(),
   targetWalletAddress: varchar('target_wallet_address', { length: 80 }),

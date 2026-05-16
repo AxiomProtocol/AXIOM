@@ -2,7 +2,7 @@
  * Axiom Protocol — Stellar Payment Transfers Schema
  *
  * Tracks every payment initiated through Axiom Rail (SEP-10/24/31/38),
- * settled via Increase FDIC-insured ACH and domestic wire.
+ * settled via FDIC-insured ACH and domestic wire.
  * One row per transfer attempt. Status is updated via anchor polling.
  */
 

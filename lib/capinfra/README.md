@@ -489,7 +489,7 @@ Webhook reclassify endpoint: `POST /api/capinfra/webhooks/events/[id]/reclassify
 
 ---
 
-## Phase 3B.2 — ACH/Increase DRY_RUN Adapter
+## Phase 3B.2 — ACH DRY_RUN Adapter
 
 ### Adapter isolation contract
 
@@ -506,7 +506,7 @@ All Phase 3B.2 code obeys the capinfra adapter isolation rules:
 
 ```
 lib/capinfra/adapters/ach/
-  sdk.ts           ← fetchIncreaseTransactionsPage + decimalStringToCents (integer arithmetic)
+  sdk.ts           ← fetchAchTransactionsPage + decimalStringToCents (integer arithmetic)
   config.ts        ← ZConfig (mode: DRY_RUN | LIVE, environment, accountId), loadAchConfig
   webhook.ts       ← verifyAchSignature (HMAC-SHA256 from configJson only)
   dispatcher.ts    ← dispatchAch — DRY_RUN returns DRYRUN-ACH-{cuid} externalRef; no real API call
@@ -514,8 +514,8 @@ lib/capinfra/adapters/ach/
   index.ts         ← adapter registry export (kind='ACH')
 lib/capinfra/webhooks/achMapping.ts     ← mapAchEvent (inbound → QUARANTINED/UNSUPPORTED_INBOUND_EVENT)
 lib/capinfra/reconciliation/
-  ach.ts           ← runAchReconciliation (adapter config → runIncreaseDiff)
-  increaseDiff.ts  ← full diff engine: DRY_RUN short-circuits remote fetch
+  ach.ts           ← runAchReconciliation (adapter config → runAchDiff)
+  achDiff.ts  ← full diff engine: DRY_RUN short-circuits remote fetch
 ```
 
 ### Settlement lifecycle
@@ -526,11 +526,11 @@ lib/capinfra/reconciliation/
 
 ### DRY_RUN reconciliation
 
-When adapter `mode === 'DRY_RUN'`, `runIncreaseDiff` short-circuits immediately:
+When adapter `mode === 'DRY_RUN'`, `runAchDiff` short-circuits immediately:
 - Creates a `cap_reconciliation_runs` row (audit trail preserved).
 - Marks it `COMPLETED` with `comparedCount=0`, `driftCount=0`, note `DRY_RUN_SKIP`.
-- Never calls the Increase API (avoids 401 for mismatched env/key).
-- DRYRUN-ACH-* externalRefs have no counterpart in the real Increase transaction feed.
+- Never calls the banking provider API (avoids 401 for mismatched env/key).
+- DRYRUN-ACH-* externalRefs have no counterpart in the real banking provider transaction feed.
 
 ### UNSUPPORTED_INBOUND_EVENT quarantine
 
@@ -544,11 +544,11 @@ No position or reserve changes are made from webhook events.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `POST` | `/api/capinfra/webhooks/increase` | HMAC (configJson) | Increase webhook ingress |
-| `GET` | `/api/capinfra/adapters/increase/health` | admin | ACH adapter health (coarse) |
-| `POST` | `/api/capinfra/adapters/increase/reconcile` | admin | Manual reconcile run |
+| `POST` | `/api/capinfra/webhooks/ach` | HMAC (configJson) | ACH webhook ingress |
+| `GET` | `/api/capinfra/adapters/ach/health` | admin | ACH adapter health (coarse) |
+| `POST` | `/api/capinfra/adapters/ach/reconcile` | admin | Manual reconcile run |
 
-Operator UI page: `/operator/adapters/increase` — health, recent reconciliation runs, recent webhook events.
+Operator UI page: `/operator/adapters/ach` — health, recent reconciliation runs, recent webhook events.
 
 ### Smoke harness (checks 34–41)
 
@@ -569,7 +569,7 @@ Four-stage promotion sequence: `DRY_RUN → MANUAL_APPROVAL → LIVE_CANARY → 
 No mode promotion without all control-plane gates green.
 
 ### Core design constraints
-- **SUBMITTED ≠ bank-final**: `SUBMITTED` means the instruction passed dual-actor approval and was handed to Increase; it does NOT credit reserves or write portfolio positions.
+- **SUBMITTED ≠ bank-final**: `SUBMITTED` means the instruction passed dual-actor approval and was handed to the banking provider; it does NOT credit reserves or write portfolio positions.
 - **No auto-credit on SUBMITTED**: Portfolio writes only happen on confirmed `SETTLED` events delivered via webhook.
 - **Dual-actor mode transitions**: Every mode promotion (except emergency disable) requires two distinct actors.
 - **Emergency disable is single-actor, immediate**: One risk operator can freeze all ACH operations instantly; a distinct second actor must acknowledge within 4 hours to restore mode-transition capability.
@@ -577,20 +577,20 @@ No mode promotion without all control-plane gates green.
 - **Rail isolation boundary**: `asset.settlementType` must equal `instruction.settlementType`. ACH instructions require an ACH-typed asset.
 
 ### New instruction statuses
-- `PENDING_OPERATOR_APPROVAL` — instruction executed in MANUAL_APPROVAL mode; awaiting dual-actor approval before submission to Increase.
-- `SUBMITTED` — dual-actor approved; handed to Increase. Not bank-final.
+- `PENDING_OPERATOR_APPROVAL` — instruction executed in MANUAL_APPROVAL mode; awaiting dual-actor approval before submission to the banking provider.
+- `SUBMITTED` — dual-actor approved; handed to the banking provider. Not bank-final.
 
 ### HTTP surface (control plane additions)
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `GET` | `/api/capinfra/adapters/increase/config` | admin | Adapter mode, environment, configVersion |
-| `POST` | `/api/capinfra/adapters/increase/config` | admin (dual-actor) | Mode transition (requires distinct primaryActor/secondaryActor) |
-| `POST` | `/api/capinfra/adapters/increase/validate` | admin | Run all 5 gate checks; returns allPassed + checks array |
-| `POST` | `/api/capinfra/adapters/increase/sweep-timeouts` | admin | Sweep stale EXECUTING/PENDING instructions |
-| `GET` | `/api/capinfra/adapters/increase/emergency-disable` | admin | Current unacknowledged disable (if any) |
-| `POST` | `/api/capinfra/adapters/increase/emergency-disable` | admin (single-actor) | Immediately freeze ACH; opens 4h ack window |
-| `POST` | `/api/capinfra/adapters/increase/emergency-disable/acknowledge` | admin (dual-actor) | Acknowledge disable; restores mode-transition capability |
+| `GET` | `/api/capinfra/adapters/ach/config` | admin | Adapter mode, environment, configVersion |
+| `POST` | `/api/capinfra/adapters/ach/config` | admin (dual-actor) | Mode transition (requires distinct primaryActor/secondaryActor) |
+| `POST` | `/api/capinfra/adapters/ach/validate` | admin | Run all 5 gate checks; returns allPassed + checks array |
+| `POST` | `/api/capinfra/adapters/ach/sweep-timeouts` | admin | Sweep stale EXECUTING/PENDING instructions |
+| `GET` | `/api/capinfra/adapters/ach/emergency-disable` | admin | Current unacknowledged disable (if any) |
+| `POST` | `/api/capinfra/adapters/ach/emergency-disable` | admin (single-actor) | Immediately freeze ACH; opens 4h ack window |
+| `POST` | `/api/capinfra/adapters/ach/emergency-disable/acknowledge` | admin (dual-actor) | Acknowledge disable; restores mode-transition capability |
 | `POST` | `/api/capinfra/settlement/instructions/[id]/approve` | admin | Approve PENDING_OPERATOR_APPROVAL → SUBMITTED |
 | `POST` | `/api/capinfra/settlement/instructions/[id]/reject` | admin | Reject PENDING_OPERATOR_APPROVAL → FAILED |
 
@@ -680,10 +680,10 @@ but the webhook still returns 200 (Stripe must not retry once payment
 is on file).
 
 ### Operational prerequisite for treasury settlement
-Stripe payouts only flow once the Increase Nexus account is added in
+Stripe payouts only flow once the treasury bank account is added in
 the Stripe dashboard as a verified external bank account
 (routing 074920909, account 7192752995). Without this, payments
-accumulate in the Stripe balance and never settle to Increase. This is
+accumulate in the Stripe balance and never settle to the treasury account. This is
 documented inline on the operator console page.
 
 ## Collateral Risk Policy (`2026-04-21.1`)
@@ -751,7 +751,7 @@ publication only (Collateral Risk Policy §7).
 Stripe Checkout. Two intents are supported:
 
 * `TREASURY_FUND` — card payment lands in the Stripe balance; an
-  external-account payout to the Axiom Nexus account at Increase
+  external-account payout to the Axiom treasury bank account
   (routing 074920909 / account 7192752995, configured one-time in the
   Stripe dashboard) settles funds on Stripe's standard schedule
   (typically T+2). State walks `PENDING → PAID → PAYOUT_INITIATED →
@@ -789,6 +789,6 @@ Stripe Checkout. Two intents are supported:
 ### Operational note
 
 First card payment requires the Stripe dashboard external-account setup
-pointing to Increase routing 074920909 / account 7192752995 before
+pointing to treasury routing and account details before
 payouts can flow. Without this, funds remain in the Stripe balance and
 the deposit row stays at `PAID` indefinitely.

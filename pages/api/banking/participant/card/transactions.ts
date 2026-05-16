@@ -1,4 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-export default function handler(_req: NextApiRequest, res: NextApiResponse) {
-  return res.status(503).json({ error: 'BANKING_DISABLED', reason: 'No banking provider configured.' });
-}
+import { withBankingProvider } from '../../../../../lib/banking/apiGuard';
+
+export default withBankingProvider(async (_req: NextApiRequest, _res: NextApiResponse, _provider) => {
+  // TODO: implement handler with provider when a banking provider is onboarded
+});

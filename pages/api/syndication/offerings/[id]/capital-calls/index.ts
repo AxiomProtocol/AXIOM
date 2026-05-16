@@ -157,7 +157,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
     const callResult = await pool.query(
       `INSERT INTO syn_capital_calls (
         subscription_id, offering_id, amount_called, currency, due_date, status,
-        unit_payment_id, sent_at, meta, created_at, updated_at
+        banking_payment_id, sent_at, meta, created_at, updated_at
       ) VALUES ($1, $2, $3, $4, $5, 'sent', $6, now(), $7, now(), now())
       RETURNING id`,
       [

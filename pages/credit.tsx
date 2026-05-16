@@ -31,7 +31,7 @@ interface DrawRecord {
   sourceAmountAxusd: string;
   corridorId: string;
   status: string;
-  anchorRawResponse?: { type?: string; increaseTransferId?: string; repaymentAmountUsd?: number };
+  anchorRawResponse?: { type?: string; bankingTransferId?: string; repaymentAmountUsd?: number };
 }
 
 const fmtUsd = (val: string | number | null | undefined) => {

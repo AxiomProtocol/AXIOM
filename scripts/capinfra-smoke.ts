@@ -30,28 +30,28 @@
  *    20. GET  /api/capinfra/policy/decisions + GET /api/capinfra/reserve/config → 200
  *
  *   Phase 3B.3 (42–64): ACH Adapter Control Plane
- *    42. GET  /api/capinfra/adapters/increase/config                (mode + capTiers)
- *    43. POST /api/capinfra/adapters/increase/validate              (5 gate checks)
- *    44. POST /api/capinfra/adapters/increase/sweep-timeouts        (swept count)
- *    45. POST /api/capinfra/adapters/increase/emergency-disable     (same-actor → 422)
- *    46. POST /api/capinfra/adapters/increase/emergency-disable     (distinct → 200, aa_*)
- *    47. POST /api/capinfra/adapters/increase/emergency-disable/acknowledge  (nonexistent → 404)
- *    48. POST /api/capinfra/adapters/increase/emergency-disable/acknowledge  (valid → 200)
- *    49. POST /api/capinfra/adapters/increase/emergency-disable/acknowledge  (duplicate → 409)
- *    50. POST /api/capinfra/adapters/increase/config                (restore DRY_RUN → 200)
+ *    42. GET  /api/capinfra/adapters/ach/config                (mode + capTiers)
+ *    43. POST /api/capinfra/adapters/ach/validate              (5 gate checks)
+ *    44. POST /api/capinfra/adapters/ach/sweep-timeouts        (swept count)
+ *    45. POST /api/capinfra/adapters/ach/emergency-disable     (same-actor → 422)
+ *    46. POST /api/capinfra/adapters/ach/emergency-disable     (distinct → 200, aa_*)
+ *    47. POST /api/capinfra/adapters/ach/emergency-disable/acknowledge  (nonexistent → 404)
+ *    48. POST /api/capinfra/adapters/ach/emergency-disable/acknowledge  (valid → 200)
+ *    49. POST /api/capinfra/adapters/ach/emergency-disable/acknowledge  (duplicate → 409)
+ *    50. POST /api/capinfra/adapters/ach/config                (restore DRY_RUN → 200)
  *    51. POST /api/capinfra/settlement/instructions/[id]/approve    (nonexistent → 404)
  *    52. POST /api/capinfra/settlement/instructions/[id]/reject     (nonexistent → 404)
  *    53. POST /api/capinfra/settlement/instructions/[id]/reject     (no-body → 400)
- *    54. POST /api/capinfra/adapters/increase/config                (MANUAL_APPROVAL same-actor → 422)
- *    55. POST /api/capinfra/adapters/increase/config                (MANUAL_APPROVAL distinct → 200)
+ *    54. POST /api/capinfra/adapters/ach/config                (MANUAL_APPROVAL same-actor → 422)
+ *    55. POST /api/capinfra/adapters/ach/config                (MANUAL_APPROVAL distinct → 200)
  *    56. Full MANUAL_APPROVAL flow: create + auth + exec → PENDING_OPERATOR_APPROVAL
  *    57. POST /api/capinfra/settlement/instructions/[id]/approve    (→ SUBMITTED)
  *    58. Reject second instruction → FAILED
  *    59. Approve SUBMITTED (wrong state) → 409
  *    60. Reject FAILED (wrong state) → 409
- *    61. GET  /api/capinfra/adapters/increase/config                (mode = MANUAL_APPROVAL)
- *    62. POST /api/capinfra/adapters/increase/validate              (MANUAL_APPROVAL + reconcile_pass check)
- *    63. POST /api/capinfra/adapters/increase/sweep-timeouts        (MANUAL_APPROVAL → 200)
+ *    61. GET  /api/capinfra/adapters/ach/config                (mode = MANUAL_APPROVAL)
+ *    62. POST /api/capinfra/adapters/ach/validate              (MANUAL_APPROVAL + reconcile_pass check)
+ *    63. POST /api/capinfra/adapters/ach/sweep-timeouts        (MANUAL_APPROVAL → 200)
  *    64. Restore to starting mode
  *    65. Per-instruction cap denial ($10,001 > $10,000 → ACH_PER_INSTRUCTION_CAP_EXCEEDED)
  *    66. Daily aggregate cap denial (DB override cap=$1 → ACH_DAILY_CAP_EXCEEDED)
@@ -143,7 +143,7 @@ const KEY = process.env.ADMIN_SOLVENCY_KEY;
 // ─── Real Axiom Banking destination for ACH dispatch checks ────────
 // The ACH dispatcher (lib/capinfra/adapters/ach/dispatcher.ts) reads
 // payloadJson.routingNumber and payloadJson.accountNumber and forwards
-// them to Increase. Production Increase rejects synthetic test numbers,
+// them to ACH provider. Production ACH provider rejects synthetic test numbers,
 // so checks #56 and the GAP-001 block (#68/#69/#70) require real Axiom
 // Banking destination details. The account is expected to hold no funds
 // — debits will return NSF at the ACH network without moving money,
@@ -151,15 +151,15 @@ const KEY = process.env.ADMIN_SOLVENCY_KEY;
 // transfer-creation path end-to-end.
 const SMOKE_ROUTING_NUMBER = process.env.AXIOM_SMOKE_ROUTING_NUMBER;
 const SMOKE_ACCOUNT_NUMBER = process.env.AXIOM_SMOKE_ACCOUNT_NUMBER;
-// Increase is no longer the active ACH provider. Checks #56-#60 and GAP-001
+// ACH provider is not currently active. Checks #56-#60 and GAP-001
 // (#68-#72) that exercise real bank credentials are skipped when these vars
-// are absent. All other Increase adapter smoke checks (42-55, 61-67) remain
+// are absent. All other ACH adapter smoke checks (42-55, 61-67) remain
 // active because they use synthetic/mock data only.
 const HAVE_SMOKE_BANK_CREDS = Boolean(SMOKE_ROUTING_NUMBER && SMOKE_ACCOUNT_NUMBER);
 if (!HAVE_SMOKE_BANK_CREDS) {
   console.log(
     '[capinfra-smoke] AXIOM_SMOKE_ROUTING_NUMBER / AXIOM_SMOKE_ACCOUNT_NUMBER not set — ' +
-      'checks #56–#60 and GAP-001 (#68–#72) will be skipped (Increase not active).',
+      'checks #56–#60 and GAP-001 (#68–#72) will be skipped (ACH provider not active).',
   );
 }
 
@@ -764,7 +764,7 @@ async function main() {
   assert(typeof h33.status === 'string', 'health.status is string');
   assert(typeof h33.timestamp === 'string', 'health.timestamp is string');
 
-  // ── Phase 3B.2: ACH/Increase DRY_RUN adapter ─────────────────────
+  // ── Phase 3B.2: ACH DRY_RUN adapter ─────────────────────
 
   // 34. Register ACH adapter row (idempotent — skip if already exists).
   const achSecret = `smoke-ach-${Date.now().toString(36)}-hmac-secret-key`;
@@ -794,12 +794,12 @@ async function main() {
   // Pre-35 normalization: ensure adapter is in DRY_RUN before starting ACH checks
   // (guards against previous smoke run leaving adapter in DISABLED/MANUAL_APPROVAL).
   {
-    const preCheck = await call('/api/capinfra/adapters/increase/config');
+    const preCheck = await call('/api/capinfra/adapters/ach/config');
     if (preCheck.status === 200) {
       const preMode = (preCheck.body as { mode?: string }).mode;
       if (preMode && preMode !== 'DRY_RUN') {
         console.log(`  pre-35 normalize: restoring adapter from ${preMode} → DRY_RUN`);
-        await call('/api/capinfra/adapters/increase/config', {
+        await call('/api/capinfra/adapters/ach/config', {
           method: 'POST',
           body: JSON.stringify({
             toMode: 'DRY_RUN',
@@ -814,8 +814,8 @@ async function main() {
   }
 
   // 35. ACH admin health detail endpoint returns 200 with mode=DRY_RUN.
-  const achHealth35 = await call('/api/capinfra/adapters/increase/health');
-  console.log('  adapters/increase/health →', achHealth35.status);
+  const achHealth35 = await call('/api/capinfra/adapters/ach/health');
+  console.log('  adapters/ach/health →', achHealth35.status);
   assert(achHealth35.status === 200, 'ACH health 200');
   const ah35 = (achHealth35.body as { health: { mode: string; kind: string; quarantinedCount24h: number } }).health;
   assert(ah35.mode === 'DRY_RUN', `ACH mode === DRY_RUN (got ${ah35.mode})`);
@@ -905,9 +905,9 @@ async function main() {
 
   // 37. ACH webhook with BAD signature → 202 + QUARANTINED.
   const achBadBody = JSON.stringify({ id: `smoke-ach-bad-${Date.now()}`, category: 'transaction.created' });
-  const achBadRes = await fetch(`${BASE}/api/capinfra/webhooks/increase`, {
+  const achBadRes = await fetch(`${BASE}/api/capinfra/webhooks/ach`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'increase-webhook-signature': 't=1,v1=deadbeef' },
+    headers: { 'content-type': 'application/json', 'x-ach-webhook-signature': 't=1,v1=deadbeef' },
     body: achBadBody,
   });
   const achBadJson = (await achBadRes.json()) as { status: string };
@@ -926,11 +926,11 @@ async function main() {
     });
     const ts = Math.floor(Date.now() / 1000);
     const v1 = hmac('sha256', achSecret).update(`${ts}.${achGoodBody}`).digest('hex');
-    const achGoodRes = await fetch(`${BASE}/api/capinfra/webhooks/increase`, {
+    const achGoodRes = await fetch(`${BASE}/api/capinfra/webhooks/ach`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'increase-webhook-signature': `t=${ts},v1=${v1}`,
+        'x-ach-webhook-signature': `t=${ts},v1=${v1}`,
       },
       body: achGoodBody,
     });
@@ -941,11 +941,11 @@ async function main() {
     assert(achGoodJson.duplicate === false, 'ACH first delivery not duplicate');
 
     // 39. Duplicate delivery → 202 + duplicate=true.
-    const achDupRes = await fetch(`${BASE}/api/capinfra/webhooks/increase`, {
+    const achDupRes = await fetch(`${BASE}/api/capinfra/webhooks/ach`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'increase-webhook-signature': `t=${ts},v1=${v1}`,
+        'x-ach-webhook-signature': `t=${ts},v1=${v1}`,
       },
       body: achGoodBody,
     });
@@ -959,11 +959,11 @@ async function main() {
   }
 
   // 40. ACH reconciliation run returns rr_ runId and COMPLETED status.
-  const recon40 = await call('/api/capinfra/adapters/increase/reconcile', {
+  const recon40 = await call('/api/capinfra/adapters/ach/reconcile', {
     method: 'POST',
     body: JSON.stringify({}),
   });
-  console.log('  adapters/increase/reconcile →', recon40.status);
+  console.log('  adapters/ach/reconcile →', recon40.status);
   assert(recon40.status === 200, `ACH reconcile 200 (got ${recon40.status})`);
   const r40 = recon40.body as { runId: string; status: string; comparedCount: number; driftCount: number };
   assert(typeof r40.runId === 'string' && r40.runId.startsWith('rr_'), `ACH reconcile rr_ runId (got ${r40.runId})`);
@@ -979,7 +979,7 @@ async function main() {
   assert(Array.isArray(d41.drift), 'ACH drift is array');
   assert(typeof d41.total === 'number', 'ACH drift total numeric');
   // DRY_RUN refs from the smoke ACH instruction should appear as
-  // MISSING_REMOTE/INFORMATIONAL drift (no Increase transaction expected).
+  // MISSING_REMOTE/INFORMATIONAL drift (no ACH provider transaction expected).
   const driftRows = d41.drift as Array<{ kind: string; severity: string; externalRef: string | null }>;
   const dryRunDrift = driftRows.filter(
     (d) => d.externalRef?.startsWith('DRYRUN-ACH-') && d.kind === 'MISSING_REMOTE',
@@ -999,10 +999,10 @@ async function main() {
   {
     let staleCount = 0;
     for (let i = 0; i < 10; i++) {
-      const gGet = await call('/api/capinfra/adapters/increase/emergency-disable');
+      const gGet = await call('/api/capinfra/adapters/ach/emergency-disable');
       const gBody = gGet.body as { hasUnacknowledged: boolean; unacknowledgedDisableId: string | null };
       if (!gBody.hasUnacknowledged || !gBody.unacknowledgedDisableId) break;
-      await call('/api/capinfra/adapters/increase/emergency-disable/acknowledge', {
+      await call('/api/capinfra/adapters/ach/emergency-disable/acknowledge', {
         method: 'POST',
         body: JSON.stringify({
           originalDisableActionId: gBody.unacknowledgedDisableId,
@@ -1025,9 +1025,9 @@ async function main() {
     if (purged > 0) console.log(`  pre-3B.3 cleanup: purged ${purged} stale SUBMITTED/PENDING instructions`);
   }
 
-  // 42. GET /api/capinfra/adapters/increase/config → mode, environment, configVersion present.
-  const cfg42 = await call('/api/capinfra/adapters/increase/config');
-  console.log('  adapters/increase/config GET →', cfg42.status);
+  // 42. GET /api/capinfra/adapters/ach/config → mode, environment, configVersion present.
+  const cfg42 = await call('/api/capinfra/adapters/ach/config');
+  console.log('  adapters/ach/config GET →', cfg42.status);
   assert(cfg42.status === 200, `GET config 200 (got ${cfg42.status})`);
   const cfg42b = cfg42.body as {
     mode: string;
@@ -1043,12 +1043,12 @@ async function main() {
   // Record starting mode so we can restore at end.
   const startingMode = cfg42b.mode;
 
-  // 43. POST /api/capinfra/adapters/increase/validate → allPassed boolean, checks array.
-  const val43 = await call('/api/capinfra/adapters/increase/validate', {
+  // 43. POST /api/capinfra/adapters/ach/validate → allPassed boolean, checks array.
+  const val43 = await call('/api/capinfra/adapters/ach/validate', {
     method: 'POST',
     body: JSON.stringify({}),
   });
-  console.log('  adapters/increase/validate →', val43.status);
+  console.log('  adapters/ach/validate →', val43.status);
   assert(val43.status === 200, `validate 200 (got ${val43.status})`);
   const v43 = val43.body as { allPassed: boolean; passed: boolean; checks: unknown[]; adapterMode: string };
   assert(typeof v43.allPassed === 'boolean', 'validate.allPassed is boolean');
@@ -1056,12 +1056,12 @@ async function main() {
   assert(v43.checks.length === 5, `validate returns 5 gate checks (got ${v43.checks.length})`);
   assert(typeof v43.adapterMode === 'string', 'validate.adapterMode is string');
 
-  // 44. POST /api/capinfra/adapters/increase/sweep-timeouts → swept count, runAt timestamp.
-  const sweep44 = await call('/api/capinfra/adapters/increase/sweep-timeouts', {
+  // 44. POST /api/capinfra/adapters/ach/sweep-timeouts → swept count, runAt timestamp.
+  const sweep44 = await call('/api/capinfra/adapters/ach/sweep-timeouts', {
     method: 'POST',
     body: JSON.stringify({}),
   });
-  console.log('  adapters/increase/sweep-timeouts →', sweep44.status);
+  console.log('  adapters/ach/sweep-timeouts →', sweep44.status);
   assert(sweep44.status === 200, `sweep-timeouts 200 (got ${sweep44.status})`);
   const s44 = sweep44.body as { sweptCount: number; cutoffMs: number; instructionIds: string[] };
   assert(typeof s44.sweptCount === 'number', 'sweep.sweptCount is number');
@@ -1069,7 +1069,7 @@ async function main() {
   assert(Array.isArray(s44.instructionIds), 'sweep.instructionIds is array');
 
   // 45. POST emergency-disable (single actor, immediate) → 200, adminActionId starts aa_.
-  const dis45 = await call('/api/capinfra/adapters/increase/emergency-disable', {
+  const dis45 = await call('/api/capinfra/adapters/ach/emergency-disable', {
     method: 'POST',
     body: JSON.stringify({
       reasonCode: 'smoke-test-3b3-emergency',
@@ -1083,7 +1083,7 @@ async function main() {
   assert(d45.adminActionId.startsWith('aa_'), `emergency-disable adminActionId aa_ (got ${d45.adminActionId})`);
 
   // 46. POST emergency-disable/acknowledge: same primary/secondary → 422 dual-actor distinctness.
-  const ack46 = await call('/api/capinfra/adapters/increase/emergency-disable/acknowledge', {
+  const ack46 = await call('/api/capinfra/adapters/ach/emergency-disable/acknowledge', {
     method: 'POST',
     body: JSON.stringify({
       originalDisableActionId: d45.adminActionId,
@@ -1096,7 +1096,7 @@ async function main() {
   assert(ack46.status === 400, `ack same-actor 400 (got ${ack46.status})`);
 
   // 47. POST emergency-disable/acknowledge with nonexistent action id → 404.
-  const ack47 = await call('/api/capinfra/adapters/increase/emergency-disable/acknowledge', {
+  const ack47 = await call('/api/capinfra/adapters/ach/emergency-disable/acknowledge', {
     method: 'POST',
     body: JSON.stringify({
       originalDisableActionId: 'aa_does_not_exist',
@@ -1109,7 +1109,7 @@ async function main() {
   assert(ack47.status === 404, `ack nonexistent 404 (got ${ack47.status})`);
 
   // 48. POST emergency-disable/acknowledge referencing valid disable action → 200.
-  const ack48 = await call('/api/capinfra/adapters/increase/emergency-disable/acknowledge', {
+  const ack48 = await call('/api/capinfra/adapters/ach/emergency-disable/acknowledge', {
     method: 'POST',
     body: JSON.stringify({
       originalDisableActionId: d45.adminActionId,
@@ -1126,7 +1126,7 @@ async function main() {
   assert(a48.adminActionId.startsWith('aa_'), `ack adminActionId aa_ (got ${a48.adminActionId})`);
 
   // 49. POST emergency-disable/acknowledge same action again → 409 already acked.
-  const ack49 = await call('/api/capinfra/adapters/increase/emergency-disable/acknowledge', {
+  const ack49 = await call('/api/capinfra/adapters/ach/emergency-disable/acknowledge', {
     method: 'POST',
     body: JSON.stringify({
       originalDisableActionId: d45.adminActionId,
@@ -1139,7 +1139,7 @@ async function main() {
   assert(ack49.status === 409, `ack duplicate 409 (got ${ack49.status})`);
 
   // 50. Restore adapter to DRY_RUN mode (dual-actor config POST).
-  const restore50 = await call('/api/capinfra/adapters/increase/config', {
+  const restore50 = await call('/api/capinfra/adapters/ach/config', {
     method: 'POST',
     body: JSON.stringify({
       toMode: 'DRY_RUN',
@@ -1180,7 +1180,7 @@ async function main() {
   assert(rej53.status === 400, `reject no-body 400 (got ${rej53.status})`);
 
   // 54. Transition DRY_RUN → MANUAL_APPROVAL with same primary = secondary → 400.
-  const trans54 = await call('/api/capinfra/adapters/increase/config', {
+  const trans54 = await call('/api/capinfra/adapters/ach/config', {
     method: 'POST',
     body: JSON.stringify({
       toMode: 'MANUAL_APPROVAL',
@@ -1195,7 +1195,7 @@ async function main() {
   // 55. Transition DRY_RUN → MANUAL_APPROVAL with distinct actors → 200.
   //     skipGateCheck: true for idempotency — stale unacked disables from prior runs
   //     would otherwise block. Actor-distinctness was validated in check 54.
-  const trans55 = await call('/api/capinfra/adapters/increase/config', {
+  const trans55 = await call('/api/capinfra/adapters/ach/config', {
     method: 'POST',
     body: JSON.stringify({
       toMode: 'MANUAL_APPROVAL',
@@ -1213,7 +1213,7 @@ async function main() {
 
   // 56–60. Full MANUAL_APPROVAL ACH flow with real bank credentials.
   // Skipped when AXIOM_SMOKE_ROUTING_NUMBER / AXIOM_SMOKE_ACCOUNT_NUMBER are absent
-  // (Increase is no longer the active ACH provider).
+  // (ACH provider is no longer the active ACH provider).
   if (HAVE_SMOKE_BANK_CREDS) {
     // 56. In MANUAL_APPROVAL mode: create + authorize + execute ACH instruction → PENDING_OPERATOR_APPROVAL.
     const siBody56 = {
@@ -1318,17 +1318,17 @@ async function main() {
     console.log('  reject FAILED (already rejected) →', rej60.status);
     assert(rej60.status === 409, `reject already-failed 409 (got ${rej60.status})`);
   } else {
-    console.log('  [skip] checks #56–#60 (Increase bank credentials not configured)');
+    console.log('  [skip] checks #56–#60 (ACH provider bank credentials not configured)');
   }
 
   // 61. GET updated config → mode is MANUAL_APPROVAL.
-  const cfg61 = await call('/api/capinfra/adapters/increase/config');
+  const cfg61 = await call('/api/capinfra/adapters/ach/config');
   console.log('  config after MANUAL_APPROVAL transition →', cfg61.status, (cfg61.body as { mode: string }).mode);
   assert(cfg61.status === 200, `config GET 200 (got ${cfg61.status})`);
   assert((cfg61.body as { mode: string }).mode === 'MANUAL_APPROVAL', 'config mode still MANUAL_APPROVAL');
 
   // 62. Validate in MANUAL_APPROVAL mode → checks[4] (reconcile_pass) soft-passes (no COMPLETED run today).
-  const val62 = await call('/api/capinfra/adapters/increase/validate', {
+  const val62 = await call('/api/capinfra/adapters/ach/validate', {
     method: 'POST',
     body: JSON.stringify({}),
   });
@@ -1344,7 +1344,7 @@ async function main() {
   assert(typeof reconCheck!.detail === 'string', 'reconcile_pass.detail is string');
 
   // 63. Sweep timeouts in MANUAL_APPROVAL mode → 200, no error.
-  const sweep63 = await call('/api/capinfra/adapters/increase/sweep-timeouts', {
+  const sweep63 = await call('/api/capinfra/adapters/ach/sweep-timeouts', {
     method: 'POST',
     body: JSON.stringify({}),
   });
@@ -1354,7 +1354,7 @@ async function main() {
   // 64. Restore to starting mode (DRY_RUN) before finishing.
   // Always restore — at this point we are in MANUAL_APPROVAL from check 55.
   {
-    const restore64 = await call('/api/capinfra/adapters/increase/config', {
+    const restore64 = await call('/api/capinfra/adapters/ach/config', {
       method: 'POST',
       body: JSON.stringify({
         toMode: 'DRY_RUN',
@@ -1377,7 +1377,7 @@ async function main() {
 
   // Pre-cap-proof: switch back to MANUAL_APPROVAL so the cap gates are active.
   // (Cap enforcement is intentionally disabled in DRY_RUN mode; see policy.ts Gate 3.)
-  await call('/api/capinfra/adapters/increase/config', {
+  await call('/api/capinfra/adapters/ach/config', {
     method: 'POST',
     body: JSON.stringify({
       toMode: 'MANUAL_APPROVAL',
@@ -1468,7 +1468,7 @@ async function main() {
     // status (a COUNTED_STATUS). Then: (10+2)/1000 = 1.2% > 1% → the $2 instruction is denied.
     // The baseline $10 itself passes because 10/1000 = 1.0% which is not > 1% (strict).
     // This makes check 67 self-contained regardless of whether checks #56-#60 were skipped
-    // (they are skipped in CI when Increase bank credentials are absent).
+    // (they are skipped in CI when ACH provider bank credentials are absent).
     const policyId67 = await setAchCapPolicy({
       perInstructionCapUsd: 5000,
       dailyAggregateCapUsd: 1000,
@@ -1530,7 +1530,7 @@ async function main() {
   }
 
   // Post-cap-proof: restore DRY_RUN (we transitioned to MANUAL_APPROVAL before cap checks).
-  await call('/api/capinfra/adapters/increase/config', {
+  await call('/api/capinfra/adapters/ach/config', {
     method: 'POST',
     body: JSON.stringify({
       toMode: 'DRY_RUN',
@@ -1550,11 +1550,11 @@ async function main() {
   //   71. Reconciliation-confirmed fallback settles once if webhook was missed
   //   72. Mismatch/missing-remote stays unresolved without credit
   //
-  // Skipped when Increase bank credentials are absent (Increase not active).
+  // Skipped when ACH provider bank credentials are absent (ACH provider not active).
   if (HAVE_SMOKE_BANK_CREDS) {
     // ── 68. Prove SUBMITTED ≠ credited ─────────────────────────────────
     // Switch to MANUAL_APPROVAL mode for controlled SUBMITTED creation.
-    await call('/api/capinfra/adapters/increase/config', {
+    await call('/api/capinfra/adapters/ach/config', {
       method: 'POST',
       body: JSON.stringify({
         toMode: 'MANUAL_APPROVAL',
@@ -1634,11 +1634,11 @@ async function main() {
       const gapWebhookPayload = JSON.stringify(gapWebhookPayloadObj);
       const ts69 = Math.floor(Date.now() / 1000);
       const v169 = hmac69('sha256', achSecret).update(`${ts69}.${gapWebhookPayload}`).digest('hex');
-      const webhook69Res = await fetch(`${BASE}/api/capinfra/webhooks/increase`, {
+      const webhook69Res = await fetch(`${BASE}/api/capinfra/webhooks/ach`, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'increase-webhook-signature': `t=${ts69},v1=${v169}`,
+          'x-ach-webhook-signature': `t=${ts69},v1=${v169}`,
         },
         body: gapWebhookPayload,
       });
@@ -1706,12 +1706,12 @@ async function main() {
     // Create a second SUBMITTED instruction that did NOT receive a webhook.
     // Then run reconciliation — since there's no matching remote transaction
     // in the sandbox, it will appear as MISSING_REMOTE drift (correct).
-    // (Full reconciliation-settles requires a matching Increase transaction
+    // (Full reconciliation-settles requires a matching ACH provider transaction
     // in the remote, which only exists in production. But we verify the
     // reconciliation run completes and reports drift correctly.)
 
     // Restore to DRY_RUN to exit MANUAL_APPROVAL before cleanup.
-    await call('/api/capinfra/adapters/increase/config', {
+    await call('/api/capinfra/adapters/ach/config', {
       method: 'POST',
       body: JSON.stringify({
         toMode: 'DRY_RUN',
@@ -1723,7 +1723,7 @@ async function main() {
       }),
     });
 
-    const recon71 = await call('/api/capinfra/adapters/increase/reconcile', {
+    const recon71 = await call('/api/capinfra/adapters/ach/reconcile', {
       method: 'POST',
       body: JSON.stringify({}),
     });
@@ -1749,7 +1749,7 @@ async function main() {
 
     console.log('  [GAP-001] All 5 proof checks passed (68–72)');
   } else {
-    console.log('  [skip] GAP-001 checks #68–#72 (Increase bank credentials not configured)');
+    console.log('  [skip] GAP-001 checks #68–#72 (ACH provider bank credentials not configured)');
   }
 
   // ══════════════════════════════════════════════════════════════════

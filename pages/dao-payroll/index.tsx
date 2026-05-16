@@ -32,7 +32,7 @@ const FEATURES = [
   {
     label: 'PER-RECIPIENT MEMO',
     title: '28-character Stellar memo per contributor',
-    desc: 'Each recipient receives a unique memo derived from their transfer UUID. The memo ties the on-chain Stellar payment to the off-chain Increase settlement record.',
+    desc: 'Each recipient receives a unique memo derived from their transfer UUID. The memo ties the on-chain Stellar payment to the off-chain banking settlement record.',
   },
   {
     label: 'COMPLETE AUDIT TRAIL',
@@ -179,7 +179,7 @@ export default function DaoPayrollLandingPage() {
         </div>
         <p style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#888', marginTop: '0.75rem', lineHeight: 1.5 }}>
           Fees are deducted from each recipient amount. Net amount delivered to recipient bank account equals gross minus ($0.50 + 0.1% of gross).
-          Variable rate on USDC payments may change subject to Increase network conditions.
+          Variable rate on USDC payments may change subject to banking network conditions.
         </p>
       </section>
 

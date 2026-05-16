@@ -24,7 +24,7 @@ const OUT_DIR = path.join(ROOT, 'screenshots', 'plaid');
 const VENDORS: Array<{ slug: string; name: string; expects: string }> = [
   { slug: 'replit', name: 'Replit', expects: 'Account email + TOTP/WebAuthn enabled in account security settings' },
   { slug: 'neon', name: 'Neon (PostgreSQL)', expects: 'Account email + MFA method enabled in console.neon.tech account settings' },
-  { slug: 'increase', name: 'Increase', expects: 'Operator email + TOTP enabled in dashboard.increase.com user settings' },
+  { slug: 'banking-provider', name: 'Banking Provider (TBD)', expects: 'Operator email + MFA enabled in banking provider dashboard settings' },
   { slug: 'plaid', name: 'Plaid', expects: 'Operator email + MFA method enabled in dashboard.plaid.com team settings' },
   { slug: 'bitgo', name: 'BitGo', expects: 'Operator email + YubiKey/TOTP enabled in app.bitgo.com user settings' },
   { slug: 'auth0', name: 'Auth0', expects: 'Tenant admin email + MFA factor enabled in manage.auth0.com user profile' },

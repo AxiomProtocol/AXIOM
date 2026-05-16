@@ -4142,7 +4142,7 @@ export default function FounderOpsPage() {
                           };
 
                           const raw = row.anchorRawResponse as any ?? {};
-                          const increaseId = raw.increaseTransferId ?? raw.increaseInboundTxId ?? null;
+                          const increaseId = raw.bankingTransferId ?? raw.increaseInboundTxId ?? null;
 
                           return (
                             <tr key={row.id} className="border-b border-dl-border hover:bg-dl-bg-alt">

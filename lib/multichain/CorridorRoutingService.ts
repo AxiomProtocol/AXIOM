@@ -127,7 +127,7 @@ const PLANNED_CORRIDORS: CorridorRoute[] = [
     implementationBlockers: [],
   },
   {
-    id: 'fiat-increase-to-axusd',
+    id: 'fiat-ach-to-axusd',
     label: 'Fiat (ACH) → AXUSD (Banking Bridge)',
     sourceNetwork: 'banking_fiat',
     destinationNetwork: 'arbitrum',

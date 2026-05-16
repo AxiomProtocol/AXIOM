@@ -10,7 +10,7 @@
  *      create → authorize → execute lands in PENDING_OPERATOR_APPROVAL,
  *      not SETTLED.
  *
- *   C. Approve step gates correctly (attempts real Increase API;
+ *   C. Approve step gates correctly (attempts real banking provider API;
  *      synthetic credentials are expected to fail in sandbox/dev).
  *      Environmental failure is documented as a non-blocking blocker.
  *
@@ -26,7 +26,7 @@
  *
  * Invariants D–F are proven via the same in-process approach used by
  * scripts/capinfra-correctness.ts (direct DB insert + processEvent()).
- * This avoids the environmental dependency on a real Increase sandbox
+ * This avoids the environmental dependency on a real banking provider sandbox
  * account while producing a deterministic, repeatable proof.
  *
  * Usage:
@@ -154,7 +154,7 @@ async function phaseA_InspectAndTransition(): Promise<{
   console.log('\n[A] Inspect current adapter mode and dual-actor gate');
 
   // A1. Inspect current mode.
-  const cfg = await call('/api/capinfra/adapters/increase/config');
+  const cfg = await call('/api/capinfra/adapters/ach/config');
   assert(cfg.status === 200, `GET config 200 (got ${cfg.status})`);
   const cfgBody = cfg.body as {
     mode: string;
@@ -170,7 +170,7 @@ async function phaseA_InspectAndTransition(): Promise<{
   const startingMode = cfgBody.mode;
 
   // A2. Same-actor transition must be rejected (dual-actor guard).
-  const sameActorAttempt = await call('/api/capinfra/adapters/increase/config', {
+  const sameActorAttempt = await call('/api/capinfra/adapters/ach/config', {
     method: 'POST',
     body: JSON.stringify({
       toMode: 'MANUAL_APPROVAL',
@@ -188,7 +188,7 @@ async function phaseA_InspectAndTransition(): Promise<{
   );
 
   // A3. Distinct-actor transition to MANUAL_APPROVAL.
-  const trans = await call('/api/capinfra/adapters/increase/config', {
+  const trans = await call('/api/capinfra/adapters/ach/config', {
     method: 'POST',
     body: JSON.stringify({
       toMode: 'MANUAL_APPROVAL',
@@ -208,7 +208,7 @@ async function phaseA_InspectAndTransition(): Promise<{
   );
 
   // A4. Confirm mode is MANUAL_APPROVAL.
-  const cfgAfter = await call('/api/capinfra/adapters/increase/config');
+  const cfgAfter = await call('/api/capinfra/adapters/ach/config');
   const modeAfter = (cfgAfter.body as { mode: string }).mode;
   record(
     'A4 mode confirmed MANUAL_APPROVAL',
@@ -295,7 +295,7 @@ async function phaseB_ControlledFlow(achAsset: AssetRow): Promise<{
     return { instructionId, approveStatus: null, externalRef: null, approveBlocker: `unexpected status ${execStatus}` };
   }
 
-  // B4. Approve — attempts real Increase API submission.
+  // B4. Approve — attempts real banking provider API submission.
   //     With synthetic routing/account numbers this is expected to fail
   //     in sandbox/dev (environmental, not a code defect).
   const approve = await call(`/api/capinfra/settlement/instructions/${instructionId}/approve`, {
@@ -316,7 +316,7 @@ async function phaseB_ControlledFlow(achAsset: AssetRow): Promise<{
   if (approve.status === 200 && approveStatus === 'SUBMITTED') {
     const realRef = externalRef != null && !externalRef.startsWith('PENDING-APPROVAL-');
     record(
-      'B4 approve → SUBMITTED (live Increase)',
+      'B4 approve → SUBMITTED (live banking provider)',
       realRef,
       `status=${approveStatus} externalRef=${externalRef}`,
     );
@@ -324,7 +324,7 @@ async function phaseB_ControlledFlow(achAsset: AssetRow): Promise<{
     record(
       'B4 approve → SUBMITTED (environmental)',
       false,
-      `EXPECTED NON-BLOCKING: Increase rejected synthetic account numbers. HTTP ${approve.status}. ` +
+      `EXPECTED NON-BLOCKING: Banking provider rejected synthetic account numbers. HTTP ${approve.status}. ` +
         `This is environmental — production flow with real credentials will succeed. ` +
         `Settlement invariants D–F proven via controlled webhook simulation below.`,
     );
@@ -346,7 +346,7 @@ async function phaseC_SettlementInvariants(achAsset: AssetRow): Promise<void> {
   const idem = `sprint1-settlement-proof-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   // C1. Insert a SUBMITTED instruction directly — simulates what the
-  //     approve step produces after Increase accepts the transfer.
+  //     approve step produces after banking provider accepts the transfer.
   await db.insert(capSettlementInstructions).values({
     id: instructionId,
     userId: 'usr_capinfra_smoke',
@@ -452,7 +452,7 @@ async function phaseC_SettlementInvariants(achAsset: AssetRow): Promise<void> {
 
 async function phaseD_RestoreMode(startingMode: string): Promise<void> {
   console.log(`\n[D] Restore adapter mode → ${startingMode}`);
-  const restore = await call('/api/capinfra/adapters/increase/config', {
+  const restore = await call('/api/capinfra/adapters/ach/config', {
     method: 'POST',
     body: JSON.stringify({
       toMode: startingMode === 'MANUAL_APPROVAL' ? 'DRY_RUN' : startingMode,
@@ -510,11 +510,11 @@ function printReport(approveBlocker: string | null) {
 
   console.log('\n  ── Blockers ──');
   if (!approveBlocker) {
-    console.log('  None — all invariants proven including live Increase submission.');
+    console.log('  None — all invariants proven including live banking provider submission.');
   } else {
     console.log('  NON-BLOCKING (environmental):');
     console.log(`    B4 approve → SUBMITTED: ${approveBlocker}`);
-    console.log('    Cause: Increase rejects synthetic routing/account numbers.');
+    console.log('    Cause: Banking provider rejects synthetic routing/account numbers.');
     console.log('    Settlement invariants D–F proven via controlled webhook simulation.');
     console.log('    This is the same environmental failure documented in smoke check #57.');
   }
@@ -536,7 +536,7 @@ function printReport(approveBlocker: string | null) {
     console.log('    [3] duplicate confirmation does not double-credit — proven (C7–C8)');
     console.log('    [4] dual-actor mode gate enforced — proven (A2–A4)');
     console.log('    [5] PENDING_OPERATOR_APPROVAL correctly set — proven (B3)');
-    console.log('  Non-blocking: approve → SUBMITTED requires real Increase credentials (B4).');
+    console.log('  Non-blocking: approve → SUBMITTED requires real banking provider credentials (B4).');
     console.log('  Recommendation: retire or isolate smoke checks requiring synthetic ACH submission.');
   } else {
     console.log('  INCOMPLETE — see blocking failures above.');

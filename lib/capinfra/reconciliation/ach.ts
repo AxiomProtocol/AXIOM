@@ -1,5 +1,5 @@
 /**
- * Capital Infrastructure — ACH/Increase reconciliation orchestrator (3B.3).
+ * Capital Infrastructure — ACH reconciliation orchestrator (3B.3).
  *
  * Resolves the active ACH adapter config and delegates to the diff engine.
  *

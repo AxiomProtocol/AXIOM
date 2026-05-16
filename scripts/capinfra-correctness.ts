@@ -397,11 +397,11 @@ async function testAchTerminalReplayNoOp(axau: AssetRow): Promise<void> {
 // ──── Test 5: ACH SUBMITTED → confirmation lifecycle (GAP-001) ──────────
 //
 // Proves three production-only invariants that the smoke harness can only
-// observe by creating real Increase transfers (impossible against a
-// production Increase key with synthetic test routing/account numbers).
+// observe by creating real banking provider transfers (impossible against a
+// production banking provider key with synthetic test routing/account numbers).
 // We exercise the same code path the webhook processor uses in production
 // by directly seeding a SUBMITTED instruction at the DB boundary, then
-// driving processEvent — bypassing the live Increase API call without
+// driving processEvent — bypassing the live banking provider API call without
 // stubbing or mocking any application code.
 //
 // Behaviors proven in sequence:
@@ -438,7 +438,7 @@ async function testAchSubmittedConfirmLifecycle(axau: AssetRow): Promise<void> {
 
   // Seed a SUBMITTED instruction directly. This mirrors the post-approve
   // state in MANUAL_APPROVAL mode — bank-accepted but not bank-final —
-  // without invoking the live Increase transfer creation.
+  // without invoking the live banking provider transfer creation.
   await db.insert(capSettlementInstructions).values({
     id: instructionId,
     userId: SMOKE_USER,

@@ -188,7 +188,7 @@ export default function CardDepositsOperatorPage({ rows, status, intent, loadErr
         )}
         <p className="text-sm text-dl-muted font-mono mb-4">
           Operator-only Stripe Checkout entry. TREASURY_FUND lands in the
-          Stripe balance for payout to Increase. AXUSD_MINT triggers an
+          Stripe balance for payout to treasury bank account. AXUSD_MINT triggers an
           on-chain mint to the target wallet on PAID. AXAU_MINT queues for
           the AXAU operational pipeline. Consumer card payments still route
           through <Link href="/onramp" className="underline">/onramp</Link>.

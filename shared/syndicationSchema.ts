@@ -363,7 +363,7 @@ export const synCapitalCalls = pgTable("syn_capital_calls", {
   currency: varchar("currency", { length: 20 }).default('USD'),
   dueDate: timestamp("due_date"),
   status: varchar("status", { length: 30 }).default('sent').notNull(),
-  unitPaymentId: varchar("unit_payment_id", { length: 255 }),
+  bankingPaymentId: varchar("banking_payment_id", { length: 255 }),
   sentAt: timestamp("sent_at").defaultNow(),
   meta: jsonb("meta"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

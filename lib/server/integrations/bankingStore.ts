@@ -9,7 +9,7 @@ async function ensureSchema(): Promise<void> {
     CREATE TABLE IF NOT EXISTS banking_customers (
       id SERIAL PRIMARY KEY,
       wallet_address VARCHAR(42) UNIQUE NOT NULL,
-      unit_customer_id TEXT UNIQUE,
+      banking_customer_id TEXT UNIQUE,
       kyc_status TEXT NOT NULL DEFAULT 'pending',
       first_name TEXT,
       last_name TEXT,
@@ -22,7 +22,7 @@ async function ensureSchema(): Promise<void> {
     CREATE TABLE IF NOT EXISTS banking_accounts (
       id SERIAL PRIMARY KEY,
       wallet_address VARCHAR(42) NOT NULL,
-      unit_account_id TEXT UNIQUE NOT NULL,
+      banking_account_id TEXT UNIQUE NOT NULL,
       account_type TEXT NOT NULL DEFAULT 'member',
       status TEXT NOT NULL DEFAULT 'Open',
       balance_cents INTEGER NOT NULL DEFAULT 0,
@@ -116,7 +116,7 @@ async function ensureSchema(): Promise<void> {
       crypto_amount_str TEXT,
       status TEXT NOT NULL,
       quote_snapshot_id TEXT,
-      unit_account_id TEXT,
+      banking_account_id TEXT,
       bitgo_wallet_id TEXT,
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
@@ -130,13 +130,13 @@ export async function getBankingSnapshot(walletAddress: string): Promise<any> {
 
   const [customerRes, accountsRes] = await Promise.all([
     pool.query(
-      `SELECT wallet_address, unit_customer_id, kyc_status, first_name, last_name, email, created_at, updated_at
+      `SELECT wallet_address, banking_customer_id, kyc_status, first_name, last_name, email, created_at, updated_at
        FROM banking_customers
        WHERE wallet_address = $1`,
       [walletAddress]
     ),
     pool.query(
-      `SELECT id, wallet_address, unit_account_id, account_type, status, balance_cents, available_balance_cents,
+      `SELECT id, wallet_address, banking_account_id, account_type, status, balance_cents, available_balance_cents,
               routing_number, account_number_last4, masked_account_number, created_at
        FROM banking_accounts
        WHERE wallet_address = $1
@@ -163,10 +163,10 @@ export async function upsertCustomer(params: {
   await ensureSchema();
 
   const result = await pool.query(
-    `INSERT INTO banking_customers (wallet_address, unit_customer_id, kyc_status, first_name, last_name, email, metadata, updated_at)
+    `INSERT INTO banking_customers (wallet_address, banking_customer_id, kyc_status, first_name, last_name, email, metadata, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
      ON CONFLICT (wallet_address) DO UPDATE
-     SET unit_customer_id = EXCLUDED.unit_customer_id,
+     SET banking_customer_id = EXCLUDED.banking_customer_id,
          kyc_status = EXCLUDED.kyc_status,
          first_name = COALESCE(EXCLUDED.first_name, banking_customers.first_name),
          last_name = COALESCE(EXCLUDED.last_name, banking_customers.last_name),
@@ -201,10 +201,10 @@ export async function createAccount(params: {
 
   const result = await pool.query(
     `INSERT INTO banking_accounts (
-       wallet_address, unit_account_id, account_type, status, routing_number, account_number_last4, masked_account_number,
+       wallet_address, banking_account_id, account_type, status, routing_number, account_number_last4, masked_account_number,
        balance_cents, available_balance_cents, updated_at
      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 0, NOW())
-     ON CONFLICT (unit_account_id) DO UPDATE
+     ON CONFLICT (banking_account_id) DO UPDATE
      SET status = EXCLUDED.status,
          routing_number = COALESCE(EXCLUDED.routing_number, banking_accounts.routing_number),
          account_number_last4 = COALESCE(EXCLUDED.account_number_last4, banking_accounts.account_number_last4),
@@ -304,7 +304,7 @@ export async function applyAchTransfer(params: {
      SET balance_cents = GREATEST(0, balance_cents + $1),
          available_balance_cents = GREATEST(0, available_balance_cents + $1),
          updated_at = NOW()
-     WHERE wallet_address = $2 AND unit_account_id = $3`,
+     WHERE wallet_address = $2 AND banking_account_id = $3`,
     [delta, params.walletAddress, params.externalAccountId]
   );
 }
@@ -512,7 +512,7 @@ export async function createTransfer(params: {
   const result = await pool.query(
     `INSERT INTO bridge_transfers (
       transfer_id, wallet_address, direction, fiat_amount_cents, crypto_asset, crypto_amount_str,
-      status, quote_snapshot_id, unit_account_id, bitgo_wallet_id
+      status, quote_snapshot_id, banking_account_id, bitgo_wallet_id
     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
     RETURNING *`,
     [
@@ -550,7 +550,7 @@ export async function listTransfers(walletAddress: string): Promise<any[]> {
 export async function getAccountByExternalId(externalAccountId: string): Promise<any | null> {
   await ensureSchema();
   const result = await pool.query(
-    `SELECT * FROM banking_accounts WHERE unit_account_id = $1`,
+    `SELECT * FROM banking_accounts WHERE banking_account_id = $1`,
     [externalAccountId]
   );
   return result.rows[0] || null;
@@ -567,7 +567,7 @@ export async function updateAccountBalance(
      SET balance_cents = $1,
          available_balance_cents = $2,
          updated_at = NOW()
-     WHERE unit_account_id = $3`,
+     WHERE banking_account_id = $3`,
     [balanceCents, availableBalanceCents, externalAccountId]
   );
 }
@@ -581,7 +581,7 @@ export async function updateCustomerKycStatus(
     `UPDATE banking_customers
      SET kyc_status = $1,
          updated_at = NOW()
-     WHERE unit_customer_id = $2`,
+     WHERE banking_customer_id = $2`,
     [kycStatus, externalCustomerId]
   );
 }
