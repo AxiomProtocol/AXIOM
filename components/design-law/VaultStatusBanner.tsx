@@ -16,7 +16,8 @@ interface LaunchCondition {
   done: boolean;
 }
 
-type VaultStatus =
+/** Canonical status enum values (lowercase). Uppercase aliases are also accepted via the STATUS_MAP below. */
+export type VaultStatus =
   | 'bootstrap'
   | 'live'
   | 'configured'
@@ -26,6 +27,19 @@ type VaultStatus =
   | 'open_to_eligible_participants'
   | 'controlled'
   | 'planned';
+
+/** Uppercase alias map for callers using SCREAMING_SNAKE_CASE enum conventions. */
+const STATUS_MAP: Record<string, VaultStatus> = {
+  BOOTSTRAP:                   'bootstrap',
+  LIVE:                        'live',
+  CONFIGURED:                  'configured',
+  WITHDRAWN_EMPTY:             'withdrawn_empty',
+  COMING_SOON:                 'coming_soon',
+  FORMATION:                   'formation',
+  OPEN_TO_ELIGIBLE_PARTICIPANTS: 'open_to_eligible_participants',
+  CONTROLLED:                  'controlled',
+  PLANNED:                     'planned',
+};
 
 interface VaultStatusBannerProps {
   vaultName: string;
@@ -41,9 +55,10 @@ export function VaultStatusBanner({
   network,
   limitations = [],
   launchConditions = [],
-  status,
+  status: statusProp,
   className = '',
 }: VaultStatusBannerProps) {
+  const status: VaultStatus = STATUS_MAP[statusProp as string] ?? statusProp;
 
   if (status === 'live') {
     return (
