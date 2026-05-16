@@ -1,6 +1,14 @@
 # Never version git internals / generated git dir
 AXIOM.git/
 
+# Sui CLI binaries (extracted at runtime, never commit)
+sui-debug
+sui-fork
+sui-node
+sui-tool
+sui-bridge
+sui-bridge-cli
+
 # Dependencies
 node_modules/
 */node_modules/
