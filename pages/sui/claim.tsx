@@ -26,7 +26,6 @@ export default function SuiClaimPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [csvContent, setCsvContent] = useState('');
-  const [csvLoaded, setCsvLoaded] = useState(false);
 
   const fetchCampaign = useCallback(async () => {
     if (!campaignId.trim()) return;
@@ -213,18 +212,25 @@ export default function SuiClaimPage() {
             </p>
             <textarea
               value={csvContent}
-              onChange={e => { setCsvContent(e.target.value); setCsvLoaded(e.target.value.trim().length > 0); }}
+              onChange={e => setCsvContent(e.target.value)}
               placeholder={'address,amount\n0xABC...,1000000'}
-              rows={6}
+              rows={4}
               className="w-full font-mono text-xs bg-dl-surface border border-dl-border text-dl-primary px-3 py-2 focus:outline-none focus:border-dl-accent"
             />
-            <button
-              onClick={generateProof}
-              disabled={loading || !csvLoaded || !walletAddress.trim() || !campaignId.trim()}
-              className="mt-2 px-4 py-2 text-xs font-mono uppercase tracking-widest bg-dl-primary text-white disabled:opacity-40"
-            >
-              {loading ? 'Generating…' : 'Generate Proof'}
-            </button>
+            <div className="mt-3">
+              <button
+                onClick={generateProof}
+                disabled={loading || !csvContent.trim() || !walletAddress.trim() || !campaignId.trim()}
+                className="w-full py-3 text-sm font-mono uppercase tracking-widest border border-dl-primary text-dl-primary disabled:border-dl-border disabled:text-dl-muted enabled:bg-dl-primary enabled:text-white"
+              >
+                {loading ? 'Generating…' : 'Generate Proof →'}
+              </button>
+              {(!csvContent.trim() || !walletAddress.trim() || !campaignId.trim()) && (
+                <p className="text-xs text-dl-muted font-mono mt-2">
+                  {!campaignId.trim() ? 'Enter campaign ID in Step 1 first.' : !walletAddress.trim() ? 'Enter your wallet address in Step 2.' : 'Paste your eligibility CSV above.'}
+                </p>
+              )}
+            </div>
 
             {proof && (
               <div className="mt-4 border border-dl-border p-4">
