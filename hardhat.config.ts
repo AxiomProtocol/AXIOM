@@ -274,6 +274,24 @@ const config: HardhatUserConfig = {
       chainId: 421614,
       accounts: process.env.DEPLOYER_PK ? [process.env.DEPLOYER_PK] : [],
     },
+    avalanche: {
+      url: process.env.AVALANCHE_RPC_URL || "https://api.avax.network/ext/bc/C/rpc",
+      chainId: 43114,
+      accounts: process.env.AVALANCHE_DEPLOYER_PRIVATE_KEY
+        ? [process.env.AVALANCHE_DEPLOYER_PRIVATE_KEY]
+        : process.env.DEPLOYER_PRIVATE_KEY
+          ? [process.env.DEPLOYER_PRIVATE_KEY]
+          : [],
+    },
+    avalancheFuji: {
+      url: process.env.AVALANCHE_FUJI_RPC_URL || "https://api.avax-test.network/ext/bc/C/rpc",
+      chainId: 43113,
+      accounts: process.env.AVALANCHE_DEPLOYER_PRIVATE_KEY
+        ? [process.env.AVALANCHE_DEPLOYER_PRIVATE_KEY]
+        : process.env.DEPLOYER_PRIVATE_KEY
+          ? [process.env.DEPLOYER_PRIVATE_KEY]
+          : [],
+    },
     peaq: {
       url: process.env.PEAQ_RPC_URL || "",
       chainId: 3338,

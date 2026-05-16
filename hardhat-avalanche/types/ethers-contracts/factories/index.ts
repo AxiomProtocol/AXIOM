@@ -4,5 +4,6 @@
 export * as countryAllowModuleSol from './CountryAllowModule.sol/index.js';
 export * as interfaces from './interfaces/index.js';
 export { AbstractModule__factory } from './AbstractModule__factory.js';
+export { AxiomStable3643__factory } from './AxiomStable3643__factory.js';
 export { AxiomStable3643Fuji__factory } from './AxiomStable3643Fuji__factory.js';
 export { TransferLimitModule__factory } from './TransferLimitModule__factory.js';
