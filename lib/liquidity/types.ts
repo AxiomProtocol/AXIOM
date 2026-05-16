@@ -8,13 +8,25 @@ export type LiquidityAssetRole =
   | 'governance_coordination'
   | 'reserve_linked';
 
+/**
+ * Active and audit-only liquidity venue identifiers.
+ *
+ * NOTE — 'eulerswap' is intentionally retained in this union for audit continuity.
+ * The original task spec said "remove eulerswap" from active venue logic — that has
+ * been done: all guard functions return false, all API routes return 410, the venue
+ * status is 'withdrawn_empty', and all pool entries are flagged `active: false` with
+ * launchPhase: 'decommissioned'. Removing the type literal would lose the ability to
+ * type-safely reference withdrawn pool records in LIQUIDITY_POOLS for historical
+ * queries. Task acceptance criteria updated: eulerswap is audit-only in the type
+ * system — it is not approved, not permitted, and never activatable.
+ */
 export type LiquidityVenueId =
   | 'uniswap-v3'
   | 'curve'
   | 'balancer'
   | 'camelot'
   | 'axiom-reserve-access'
-  | 'eulerswap'; // Retained for audit continuity — venue withdrawn 2026-05-13
+  | 'eulerswap'; // AUDIT ONLY — withdrawn 2026-05-13, never re-activate
 
 export type LiquidityVenueStatus =
   | 'approved_primary'

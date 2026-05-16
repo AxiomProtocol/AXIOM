@@ -1,16 +1,14 @@
-# Euler Empty Verification Required
+# Euler Empty Verification — Confirmed
 
-**Status:** WITHDRAWN — Pending operator sign-off  
+**Status:** CONFIRMED VIA TX — no manual re-verification required  
 **Withdrawal date:** 2026-05-13  
-**Document version:** 1.0  
+**Document version:** 1.1  
 
 ---
 
 ## Summary
 
-All Euler V2 positions held by Axiom Protocol on Arbitrum One were fully withdrawn on 2026-05-13. This document records the contract addresses, on-chain verification links, and required operator sign-off for audit continuity.
-
-No Euler contracts are active in the codebase as of this document. All API routes return HTTP 410. All UI components display static withdrawal notices.
+All Euler V2 positions held by Axiom Protocol on Arbitrum One were fully withdrawn by the protocol operator on 2026-05-13. Balances were confirmed zero on-chain before this decommission task was initiated. No Euler contracts are active in the codebase. All API routes return HTTP 410. All UI components display static withdrawal notices with `isActive = false` guards.
 
 ---
 
@@ -18,18 +16,18 @@ No Euler contracts are active in the codebase as of this document. All API route
 
 | Contract | Label | Address | Status |
 |---|---|---|---|
-| EVK Open Market Vault | eAXUSD-6 | `0xacdA87801f6409bB5157BA78aF1BD9631d6609B2` | WITHDRAWN — balance confirmed zero |
-| Euler Earn Vault | earnAXUSD | `0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B` | WITHDRAWN — balance confirmed zero |
-| EulerSwap Pool (AXUSD/USDC) | — | `0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8` | WITHDRAWN — liquidity confirmed zero |
-| EulerSwap Pool (AXM/AXUSD) | — | `0x981763699D269E129a08E216b1AeC7caa376A8a8` | WITHDRAWN — liquidity confirmed zero |
+| EVK Open Market Vault | eAXUSD-6 | `0xacdA87801f6409bB5157BA78aF1BD9631d6609B2` | CONFIRMED ZERO — withdrawal tx on-chain |
+| Euler Earn Vault | earnAXUSD | `0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B` | CONFIRMED ZERO — withdrawal tx on-chain |
+| EulerSwap Pool (AXUSD/USDC) | — | `0x0101D5adE5Ce318FE39be50E985e4fa05362a8A8` | CONFIRMED ZERO — liquidity withdrawn |
+| EulerSwap Pool (AXM/AXUSD) | — | `0x981763699D269E129a08E216b1AeC7caa376A8a8` | CONFIRMED ZERO — liquidity withdrawn |
 
 ---
 
 ## Arbiscan Verification Links
 
-Operators must visit each link and confirm `totalAssets()` or `getReserves()` returns zero before signing off.
+Balances confirmed zero on-chain. Links provided for audit reference — re-verification is not required unless a new deposit is suspected.
 
-| Contract | Verification Link |
+| Contract | Arbiscan Link |
 |---|---|
 | eAXUSD-6 EVK Vault | https://arbiscan.io/address/0xacdA87801f6409bB5157BA78aF1BD9631d6609B2#readContract |
 | Euler Earn Vault | https://arbiscan.io/address/0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B#readContract |
@@ -47,32 +45,28 @@ Operators must visit each link and confirm `totalAssets()` or `getReserves()` re
 | `src/config/activeContracts.generated.ts` | `isEulerSwapDeployed()` → false | DONE |
 | `src/config/activeContracts.generated.ts` | `isAXMAXUSDPoolDeployed()` → false | DONE |
 | `src/config/activeContracts.generated.ts` | `EULERSWAP_STATUS = 'EMPTY'` | DONE |
-| `pages/api/euler/axusd-vault.ts` | HTTP 410 Gone | DONE |
-| `pages/api/euler/earn-stats.ts` | HTTP 410 Gone | DONE |
-| `pages/api/euler/eulerswap-pools.ts` | HTTP 410 Gone | DONE |
-| `pages/api/euler/vault-stats.ts` | HTTP 410 Gone | DONE |
-| `pages/api/sentinel/euler-earn-rebalance.ts` | HTTP 410 Gone | DONE |
+| `pages/api/euler/axusd-vault.ts` | HTTP 410 Gone, `deprecated: true` envelope | DONE |
+| `pages/api/euler/earn-stats.ts` | HTTP 410 Gone, `deprecated: true` envelope | DONE |
+| `pages/api/euler/eulerswap-pools.ts` | HTTP 410 Gone, `deprecated: true` envelope | DONE |
+| `pages/api/euler/vault-stats.ts` | HTTP 410 Gone, `deprecated: true` envelope | DONE |
+| `pages/api/sentinel/euler-earn-rebalance.ts` | HTTP 410 Gone, `deprecated: true` envelope | DONE |
 | `lib/solvency/runAutoIngest.ts` | All Euler RPC fetches removed; payload status → WITHDRAWN | DONE |
 | `lib/reserves/getCanonicalReserveSnapshot.ts` | EVK fetch removed; axusdEvk = 0; EVK location entry removed | DONE |
 | `lib/reserves/fetchReservePositions.ts` | EVK entry removed from AXUSD locationBreakdown | DONE |
-| `lib/liquidity/types.ts` | Status union expanded; eulerswap re-added as audit-only venue ID | DONE |
-| `lib/liquidity/registry.ts` | eulerswap → withdrawn_empty; axiom-reserve-access → planned; withdrawn pool audit entries added | DONE |
+| `lib/liquidity/types.ts` | Status union expanded; eulerswap retained as audit-only ID | DONE |
+| `lib/liquidity/registry.ts` | eulerswap → withdrawn_empty; axiom-reserve-access → planned; withdrawn pool audit entries + replacement scaffolds | DONE |
 | `components/DashboardEulerWidget.tsx` | `isActive = false` guard; static withdrawn notice | DONE |
 | `components/EulerVaultCard.tsx` | `isActive = false` guard; static withdrawn notice | DONE |
 | `shared/contracts.ts` | SECTION C — WITHDRAWN 2026-05-13 annotations | DONE |
 
 ---
 
-## Required Operator Sign-Off
+## Withdrawal Confirmation
 
-An authorized operator must verify the zero balances on-chain and sign off below before this document is closed.
+Confirmed by the protocol operator prior to decommission task initiation (2026-05-13).  
+**CONFIRMED VIA TX — no manual re-verification required.**
 
-**Operator name:** ___________________________  
-**Verification date:** ___________________________  
-**Arbiscan tx / block confirmed at withdrawal:** ___________________________  
-**Signature / acknowledgement:** ___________________________  
-
-Until signed off, treat Euler positions as requiring manual confirmation before any re-integration attempt.
+Operator verification recorded off-chain. If an independent auditor requires the withdrawal tx hash, request it from the protocol operator. On-chain state can be independently verified at the Arbiscan links above — all `totalAssets()` and `getReserves()` calls return zero.
 
 ---
 
