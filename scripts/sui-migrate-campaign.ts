@@ -161,16 +161,22 @@ async function main() {
 
   // ── Step 4: Update Merkle root if it was empty at creation ─────────────────
   if (!MERKLE_ROOT || MERKLE_ROOT === '0x') {
-    console.log('\n[migrate] ── Step 4/5 — Merkle root was empty at creation');
-    console.log('[migrate]    Skipping update_merkle_root — set AXIOM_SUI_MERKLE_ROOT and re-run');
-    console.log('[migrate]    Command reference:');
-    console.log(`[migrate]    ${SUI_BIN} client call ${pkg} ${mod} \\`);
-    console.log('[migrate]      --function update_merkle_root \\');
-    console.log(`[migrate]      --args ${newCampaignId} <MERKLE_ROOT_HEX> ${newAdminCapId} \\`);
-    console.log(`[migrate]      ${gasBudget} --json`);
+    console.log('\n[migrate] ── Step 4/5 — Merkle root deferred (AXIOM_SUI_MERKLE_ROOT not set)');
+    console.log('[migrate]    Campaign is funded but NOT yet activated. Set AXIOM_SUI_MERKLE_ROOT,');
+    console.log('[migrate]    then run update_merkle_root before activating:');
+    console.log(`[migrate]      ${SUI_BIN} client call \\`);
+    console.log(`[migrate]        ${pkg} ${mod} \\`);
+    console.log('[migrate]        --function update_merkle_root \\');
+    console.log(`[migrate]        --args ${newCampaignId} <MERKLE_ROOT_HEX> ${newAdminCapId} \\`);
+    console.log(`[migrate]        ${gasBudget} --json`);
+    console.log('[migrate]    Then re-run with DRY_RUN=0 SKIP_STEPS=1,2,3,4 or run activate manually.');
+    console.log('[migrate]    Exiting without activation — campaign is safe (inactive, funded).');
+    process.exit(0);
   } else {
-    run('Step 4/5 — Confirm Merkle root (already set at creation, verifying via read)', []);
-    console.log('[migrate]    Root was set during create_campaign_entry — no separate update needed');
+    // Root was already embedded in create_campaign_entry — no separate RPC needed.
+    console.log('\n[migrate] ── Step 4/5 — Merkle root already set at creation');
+    console.log(`[migrate]    Root: ${MERKLE_ROOT}`);
+    console.log('[migrate]    ✓ No separate update_merkle_root call required');
   }
 
   // ── Step 5: Activate new campaign ─────────────────────────────────────────

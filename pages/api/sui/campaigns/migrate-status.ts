@@ -5,7 +5,6 @@ import { fetchActiveCampaigns } from '../../../../lib/sui/campaignRegistry';
 const OLD_CAMPAIGN_ID =
   '0x3d3023694c96f9a71f6737a9aa43166c2f0b376418147cb005db0e17a52b726e';
 
-const TYPO_LABEL = 'AXOOM Genesis';
 const CORRECT_LABEL = 'Axiom Genesis';
 
 export interface MigrateStatusResponse {
