@@ -200,37 +200,53 @@ export default function SuiWalletConnect({
         'sui:mainnet') as `sui:${string}`;
 
       if (SUI_SIGN_AND_EXECUTE in connected.features) {
-        const feature = connected.features[SUI_SIGN_AND_EXECUTE] as {
-          signAndExecuteTransaction: (input: {
-            transaction: { toJSON: () => Promise<string> };
-            account: WalletAccount;
-            chain: string;
-          }) => Promise<{ digest: string }>;
-        };
-        const result = await feature.signAndExecuteTransaction({
+        const featureObj = connected.features[SUI_SIGN_AND_EXECUTE] as Record<
+          string,
+          unknown
+        >;
+        if (typeof featureObj?.signAndExecuteTransaction !== 'function') {
+          throw new Error(
+            `${connected.name} does not implement signAndExecuteTransaction correctly`
+          );
+        }
+        const signAndExecuteTransaction = featureObj.signAndExecuteTransaction as (input: {
+          transaction: { toJSON: () => Promise<string> };
+          account: WalletAccount;
+          chain: string;
+        }) => Promise<{ digest: string }>;
+        const result = await signAndExecuteTransaction({
           transaction: tx,
           account,
           chain,
         });
+        if (!result?.digest) throw new Error('Wallet returned no transaction digest');
         onClaimSuccess(result.digest);
       } else if (SUI_SIGN_AND_EXECUTE_BLOCK in connected.features) {
         const { toBase64 } = await import('@mysten/sui/utils');
-        const feature = connected.features[SUI_SIGN_AND_EXECUTE_BLOCK] as {
-          signAndExecuteTransactionBlock: (input: {
+        const featureObj = connected.features[
+          SUI_SIGN_AND_EXECUTE_BLOCK
+        ] as Record<string, unknown>;
+        if (typeof featureObj?.signAndExecuteTransactionBlock !== 'function') {
+          throw new Error(
+            `${connected.name} does not implement signAndExecuteTransactionBlock correctly`
+          );
+        }
+        const signAndExecuteTransactionBlock =
+          featureObj.signAndExecuteTransactionBlock as (input: {
             transactionBlock: { serialize: () => string };
             account: WalletAccount;
             chain: string;
             options?: Record<string, boolean>;
           }) => Promise<{ digest: string }>;
-        };
         const bytes = await tx.build();
         const serialized = toBase64(bytes);
-        const result = await feature.signAndExecuteTransactionBlock({
+        const result = await signAndExecuteTransactionBlock({
           transactionBlock: { serialize: () => serialized },
           account,
           chain,
           options: { showEffects: true },
         });
+        if (!result?.digest) throw new Error('Wallet returned no transaction digest');
         onClaimSuccess(result.digest);
       } else {
         throw new Error('Wallet does not support Sui transaction signing');

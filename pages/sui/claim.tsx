@@ -150,7 +150,11 @@ export default function SuiClaimPage() {
       );
       const data = await res.json();
       if (res.ok) {
-        setClaimStatus(prev => ({ ...prev!, hasClaimed: data.hasClaimed }));
+        // Use full state assignment (not spread) so null prev doesn't throw
+        setClaimStatus({
+          hasClaimed: data.hasClaimed,
+          eligible: data.eligible ?? null,
+        });
       }
     } catch {
       // non-critical — txDigest panel stays visible regardless
