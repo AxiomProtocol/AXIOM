@@ -46,7 +46,6 @@ interface Props {
 const SUI_SIGN_AND_EXECUTE = 'sui:signAndExecuteTransaction';
 const SUI_SIGN_AND_EXECUTE_BLOCK = 'sui:signAndExecuteTransactionBlock';
 const STANDARD_CONNECT = 'standard:connect';
-const SUISCAN_BASE = 'https://suiscan.xyz/mainnet/tx';
 
 function isSuiWallet(wallet: WalletLike): boolean {
   return (
@@ -177,11 +176,13 @@ export default function SuiWalletConnect({
         import('@mysten/sui/bcs'),
       ]);
 
-      const proofBytes = claimParams.proof.map(h =>
-        Uint8Array.from(
-          (h.match(/.{1,2}/g) ?? []).map(b => parseInt(b, 16))
-        )
-      );
+      // Strip optional 0x prefix before byte conversion to handle both formats
+      const proofBytes = claimParams.proof.map(h => {
+        const clean = h.replace(/^0x/i, '');
+        return Uint8Array.from(
+          (clean.match(/.{1,2}/g) ?? []).map(b => parseInt(b, 16))
+        );
+      });
 
       const tx = new Transaction();
       tx.setSender(account.address);
@@ -369,4 +370,3 @@ export default function SuiWalletConnect({
   );
 }
 
-export { SUISCAN_BASE };
