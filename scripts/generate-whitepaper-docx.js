@@ -287,12 +287,12 @@ const doc = new Document({
         bullet('A reference architecture for sovereign digital-physical economies'),
         bullet('A programmable group savings framework with deterministic scheduling and cryptographic audit trails'),
         bullet('An ERC-20 governance and fee-routing token ecosystem on Arbitrum One'),
-        bullet('An FDIC-insured banking rail (Unit Finance + BitGo) serving as the required entry gate for all capital-bearing activities'),
+        bullet('An FDIC-insured banking rail (ACH + BitGo) serving as the required entry gate for all capital-bearing activities'),
         bullet('A permissioned on-chain credit market for real asset acquisition and rehabilitation financing (Phase 6, deployed March 2026)'),
         spacer(),
         h3('Axiom Protocol is not:'),
         bullet('A bank, broker-dealer, or registered investment advisor'),
-        bullet('FDIC insured at the protocol level — banking accounts through Unit Finance carry FDIC insurance per standard limits for that account type; the protocol itself does not'),
+        bullet('FDIC insured at the protocol level — banking accounts carry FDIC insurance per standard limits for that account type; the protocol itself does not'),
         bullet('A yield guarantee or wealth outcome promise — all rates are variable'),
         bullet('An absolutist claim to primacy among capital formation platforms'),
 
@@ -325,7 +325,7 @@ const doc = new Document({
             ['Intelligence', 'AME (Deterministic) · MIRDT (Probabilistic) · Sentinel (Authorization) · AI Oracle (Gemini) · Lexicon Guard'],
             ['Data', 'PostgreSQL (Neon) · Drizzle ORM · 339 tables · Redis Cache'],
             ['Blockchain', 'Arbitrum One · 77 control layers · Alchemy RPC · ethers.js / viem · MetaMask SDK · SIWE · Safe Protocol'],
-            ['Banking (Capital Gate)', 'Unit Finance: FDIC-insured ACH/Debit · KYC at account opening · BitGo CaaS: Institutional crypto custody · Multi-party authorization · Fiat-to-digital bridge'],
+            ['Banking (Capital Gate)', 'ACH Banking Rail: FDIC-insured ACH/Debit · KYC at account opening · BitGo CaaS: Institutional crypto custody · Multi-party authorization · Fiat-to-digital bridge'],
             ['External Integrations', 'Google Gemini AI · Alpha Vantage · CoinGecko · ATTOM Data · Stripe · Resend · Discord · Google Cloud Storage · Storacha (IPFS)'],
           ],
           [2200, 6800]
@@ -592,7 +592,7 @@ const doc = new Document({
         h3('Fail-Closed Fund Flow'),
         bullet('Before approval: getLoan().state must equal PENDING; any other state causes the request to be rejected without submitting an on-chain transaction'),
         bullet('Repayment idempotency: transaction hash deduplication at the API layer prevents double-counting'),
-        bullet('Banking gate: BankingRequiredGate verifies Unit Finance account status before rendering any capital-bearing form'),
+        bullet('Banking gate: BankingRequiredGate verifies banking account status before rendering any capital-bearing form'),
 
         spacer(),
         h3('External Protocol Integrations'),
@@ -609,11 +609,11 @@ const doc = new Document({
 
         pageBreak(),
 
-        h1('7. Banking Infrastructure (Unit Finance + BitGo)'),
-        body('The Axiom Banking layer is a structural capital gate, not a UX feature. A verified, funded Unit Finance account is a required precondition for every capital-bearing action on the platform. No community pool, syndication offering, or credit application can be initiated without this verification in place.'),
+        h1('7. Banking Infrastructure (Banking Provider + BitGo)'),
+        body('The Axiom Banking layer is a structural capital gate, not a UX feature. A verified, funded banking account is a required precondition for every capital-bearing action on the platform. No community pool, syndication offering, or credit application can be initiated without this verification in place.'),
 
-        h3('7.1 Unit Finance Rail'),
-        body('Unit Finance provides FDIC-insured deposit accounts through its banking partner network. The platform API integrates Unit to:'),
+        h3('7.1 ACH Banking Rail'),
+        body('The ACH banking rail provides FDIC-insured deposit accounts through its banking partner network. The platform API integrates the banking provider to:'),
         bullet('Verify account existence and funded deposit status before any capital-bearing form is rendered'),
         bullet('Satisfy AML/BSA baseline KYC requirements at account opening'),
         bullet('Process ACH transfers for fiat deposits and withdrawals'),
@@ -622,9 +622,9 @@ const doc = new Document({
         makeTable(
           ['Surface', 'Condition Required'],
           [
-            ['Wealth Practice — Create Group', 'Verified Unit account + funded deposit'],
-            ['Syndication — Create Offering', 'Verified Unit account + funded deposit'],
-            ['Lending Fund — Borrow Application', 'Verified Unit account'],
+            ['Wealth Practice — Create Group', 'Verified banking account + funded deposit'],
+            ['Syndication — Create Offering', 'Verified banking account + funded deposit'],
+            ['Lending Fund — Borrow Application', 'Verified banking account'],
             ['Lending Fund — LP Investment', 'Verified Unit account + accreditation'],
           ],
           [4000, 5000]
@@ -636,7 +636,7 @@ const doc = new Document({
         bullet('On-chain settlement bridge connecting fiat deposits to AXUSD positions'),
 
         h3('7.3 Fiat-to-Digital Bridge'),
-        body('Unit Finance ACH (fiat) and BitGo (crypto) together form a bidirectional fiat-to-digital bridge. Fiat deposits clear through Unit ACH rails; digital asset custody and settlement route through BitGo. This bridge is the mechanism by which community savings denominated in US dollars become on-chain capital positions denominated in AXUSD.'),
+        body('The ACH banking rail (fiat) and BitGo (crypto) together form a bidirectional fiat-to-digital bridge. Fiat deposits clear through ACH rails; digital asset custody and settlement route through BitGo. This bridge is the mechanism by which community savings denominated in US dollars become on-chain capital positions denominated in AXUSD.'),
 
         h1('8. Adaptive Metrics Engine (AME)'),
         body('The AME is the deterministic financial computation engine at the heart of Axiom\'s solvency monitoring. Every calculation is a pure function — no randomness, no external dependencies at computation time, and fully reproducible given the same inputs.'),
@@ -811,7 +811,7 @@ const doc = new Document({
         ),
 
         h1('13. The Wealth Practice (Community Group Economics)'),
-        body('The Wealth Practice is the protocol\'s primary non-accredited entry point. Any participant with a verified banking account can initiate or join a Wealth Practice group without meeting accreditation thresholds. A verified Unit Finance account with a funded deposit is required to create a group.'),
+        body('The Wealth Practice is the protocol\'s primary non-accredited entry point. Any participant with a verified banking account can initiate or join a Wealth Practice group without meeting accreditation thresholds. A verified banking account with a funded deposit is required to create a group.'),
 
         h3('13.1 Three-Stage Trust Pipeline'),
         makeTable(
@@ -1090,7 +1090,7 @@ const doc = new Document({
             ['Email', 'Resend'],
             ['Payments', 'Stripe'],
             ['Storage', 'Google Cloud Storage, Storacha (IPFS/Web3Storage)'],
-            ['Banking', 'Unit Finance SDK v1.4.1 + BitGo CaaS REST API'],
+            ['Banking', 'ACH Banking Rail + BitGo CaaS REST API'],
             ['Charts', 'Recharts, Chart.js, Lightweight Charts'],
             ['Multi-party Auth', 'Safe Protocol SDK'],
             ['Deployment Target', 'Replit Autoscale'],
@@ -1114,7 +1114,7 @@ const doc = new Document({
             ['Adaptive Metrics Engine (AME)', 'LIVE'],
             ['MIRDT', 'LIVE'],
             ['Axiom Sentinel', 'LIVE'],
-            ['Axiom Banking (Unit Finance + BitGo)', 'LIVE'],
+            ['Axiom Banking (ACH + BitGo)', 'LIVE'],
             ['On-Chain Credit Market (Phase 6)', 'LIVE'],
             ['The Wealth Practice', 'STAGED'],
             ['Physical Asset Pipeline', 'PLANNED'],
@@ -1136,9 +1136,9 @@ const doc = new Document({
         bullet('Operational risk: system downtime, oracle failures, or governance attacks may disrupt platform operations'),
         bullet('Physical asset risk: land acquisition targets are subject to market conditions, regulatory requirements, title risk, and governance approval — no specific acquisition is guaranteed'),
         bullet('Credit risk: loans originated through AXIOMFixedLoan may default; LP capital in AXIOMCreditMarket may be written down in a charge-off event; no yield is guaranteed'),
-        bullet('Banking dependency risk: Unit Finance and BitGo are third-party providers; their operational continuity is outside the protocol\'s direct control'),
+        bullet('Banking dependency risk: The banking provider and BitGo are third-party providers; their operational continuity is outside the protocol\'s direct control'),
         spacer(),
-        body('The Axiom Protocol is not a bank, broker-dealer, or registered investment advisor. Tokens and stablecoins issued by the protocol are not FDIC insured at the protocol level. Banking accounts maintained through Unit Finance carry FDIC insurance per standard limits for that account type. All rates and yields are variable and subject to change based on market conditions and protocol policy mode.'),
+        body('The Axiom Protocol is not a bank, broker-dealer, or registered investment advisor. Tokens and stablecoins issued by the protocol are not FDIC insured at the protocol level. Banking accounts carry FDIC insurance per standard limits for that account type. All rates and yields are variable and subject to change based on market conditions and protocol policy mode.'),
         spacer(),
         body('The GENIUS Act alignment designation means the platform is designed to align with that framework — it does not constitute a claim of regulatory compliance with any specific law. No definitive legal conclusion is offered regarding the classification of AXM, AXUSD, SEED, or any other instrument issued by the protocol. Participants should consult independent legal and financial advisors before making any capital commitment.'),
         spacer(),
