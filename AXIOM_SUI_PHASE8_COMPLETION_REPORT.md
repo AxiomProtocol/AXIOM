@@ -245,5 +245,100 @@ Sui CLI remains unavailable in the Replit sandbox environment. `nix-env -iA nixp
 
 ---
 
+---
+
+## 10. Session 4 Re-Validation — 2026-05-16 (Current Session)
+
+Full re-validation against the live codebase. All prior deliverables (D1–D20) confirmed present and unmodified.
+
+### T001 — Sui CLI Install Attempt
+
+```
+$ nix-env -iA nixpkgs.sui
+error: attribute 'sui' in selection path 'nixpkgs.sui' not found
+$ nix profile install nixpkgs#sui
+error: flake 'flake:nixpkgs' does not provide attribute
+       'packages.x86_64-linux.sui', 'legacyPackages.x86_64-linux.sui' or 'sui'
+```
+
+**Result: BLOCKED** — `sui` is not packaged in nixpkgs for x86_64-linux. Unchanged from prior sessions. Reproducibility path: download `sui-testnet-v1.72.1-ubuntu-x86_64.tgz` from GitHub Releases.
+
+### T002 — Move Contract Hardening Verification
+
+All four source files confirmed present with A1–A7 fully applied:
+
+| File | Hardenings | Status |
+|------|-----------|--------|
+| `move/axiom_sui/sources/claim_campaign.move` | A1–A7 all | CONFIRMED |
+| `move/axiom_sui/sources/guarded_treasury.move` | A4, A5, A7 | CONFIRMED |
+| `move/axiom_sui/sources/merkle.move` | A1 | CONFIRMED |
+| `move/axiom_sui/sources/axiom_test_claim.move` | A4, A5 | CONFIRMED |
+
+### T003 — Test Suite Count Verification
+
+```
+$ grep -c "#[test]" move/axiom_sui/tests/claim_campaign_tests.move
+20
+$ grep -c "#[test]" move/axiom_sui/tests/merkle_tests.move
+8
+Total: 28  (target: >=28 — MET)
+```
+
+### T004 — TypeScript Proof Toolchain
+
+All proof infrastructure files confirmed present in `lib/sui/proofs/`:
+`buildMerkleTree.ts`, `generateProof.ts`, `verifyProofLocal.ts`, `validateEligibilityCsv.ts`, `serializeProof.ts`, `index.ts` — **6/6 PRESENT**
+
+### T005 — API Backend Verification
+
+All routes confirmed present and structurally correct:
+
+| Route | File | Status |
+|-------|------|--------|
+| `GET /api/sui/campaigns` | `pages/api/sui/campaigns.ts` | PRESENT |
+| `GET /api/sui/campaign/[id]` | `pages/api/sui/campaign/[id].ts` | PRESENT |
+| `POST /api/sui/eligibility` | `pages/api/sui/eligibility.ts` | PRESENT |
+| `GET /api/sui/claim-status` | `pages/api/sui/claim-status.ts` | PRESENT |
+| `POST /api/sui/claim-submit` | `pages/api/sui/claim-submit.ts` | PRESENT |
+| `POST /api/sui/proof-request` | `pages/api/sui/proof-request.ts` | PRESENT |
+
+Note: The session plan specified `campaigns/index.ts` and `campaigns/[id].ts`. The equivalent functionality is served by `campaigns.ts` (list) and `campaign/[id].ts` (single). Creating a parallel `campaigns/` directory would conflict with the existing `campaigns.ts` file in Next.js; the existing structure is correct and complete.
+
+### T006 — Claim UI + Operator Dashboard
+
+- `pages/sui/claim.tsx` — PRESENT (Phase 9 mainnet campaign, community disclaimers)
+- `pages/operator/chains/sui-phase8.tsx` — PRESENT (read-only; workstream + security tables)
+
+### T007 — Documents
+
+All three documents confirmed present:
+
+- `AXIOM_SUI_PHASE8_SECURITY_REVIEW.md` — PRESENT (236 lines; A1–A7 findings, residual risk registry)
+- `AXIOM_SUI_PHASE8_KEY_MANAGEMENT.md` — PRESENT (2-of-3 multisig custody design)
+- `AXIOM_SUI_PHASE8_AUTHORIZATION.md` — PRESENT (delivery authorization + Phase 9 gate conditions)
+
+### T008 — `sui move test`
+
+**Result: BLOCKED** — Sui CLI not in PATH. See T001.  
+**Prior confirmed result (Session 1):** 28/28 PASS with `sui 1.72.1-94ad8ccd0ed6`.
+
+### T009 — Build Validation
+
+```
+$ npx tsc --noEmit --skipLibCheck
+(no output — 0 errors)
+
+$ npx tsc --noEmit
+(no output — 0 errors)
+```
+
+**Full-project TypeScript check: 0 errors.** This is a clean result — no Phase 8 regressions and no pre-existing errors surfaced (the prior `app/field-intelligence/` issues from earlier sessions have been resolved upstream).
+
+---
+
+**Session 4 verdict: All 20 deliverables confirmed intact. Full `tsc --noEmit` exits 0. 28/28 tests authored. Sui CLI remains unavailable for live `sui move test` execution. No regressions detected.**
+
+---
+
 *Phase 8 Hardened Staging — Axiom Protocol — Community Distribution Layer*  
 *NOT AXUSD. NOT AXAU. NOT AXM. NOT SEED. NOT KAG.*
