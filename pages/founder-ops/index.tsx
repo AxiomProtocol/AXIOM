@@ -5955,7 +5955,7 @@ export default function FounderOpsPage() {
                       <>
                         <p className="font-dl-mono text-xs text-dl-navy break-all font-semibold">{destInfo.address}</p>
                         <p className="font-dl-mono text-[10px] text-dl-gray mt-0.5">
-                          {destInfo.label ?? scope === 'treasury' ? 'Protocol Treasury' : 'Driver wallet'} · source: {destInfo.source}
+                          {(destInfo.label ?? (scope === 'treasury' ? 'Protocol Treasury' : 'Driver wallet'))} · source: {destInfo.source}
                         </p>
                       </>
                     ) : (

@@ -56,23 +56,61 @@ export async function resolveDestinationWallet(
   }
 
   // scope === 'driver'
+  // Derive driver identity from settlement extraction payload (driver_code is the
+  // canonical identifier; driver_name is the human-readable fallback key).
+  // Priority chain for wallet resolution:
+  //   driver_wallets[driver_code]  — per-driver, keyed by driver's own code
+  //   driver_wallets[driver_name]  — per-driver, keyed by name (legacy)
+  //   driver_wallets['default']    — pilot single-driver fallback
+  //   DRIVER_DEFAULT_WALLET env    — operator-level env override
+  //   null                         — unresolved, blocks onramp execution
   try {
-    // 1. Per-document driver wallet (document-scoped key)
-    const docRow = await pool().query(
-      `SELECT wallet_address, label FROM driver_wallets WHERE driver_key = $1 LIMIT 1`,
+    // 1. Read driver identity from the settlement payload
+    const payloadRow = await pool().query(
+      `SELECT payload->>'driver_code' AS driver_code,
+              payload->>'driver_name' AS driver_name
+         FROM pilot_settlement_extractions
+        WHERE document_id = $1`,
       [documentId],
     );
-    if (docRow.rows[0]) {
-      const { wallet_address, label } = docRow.rows[0];
-      return {
-        address: wallet_address,
-        source:  'driver_wallets_document',
-        label:   label ?? 'Driver wallet (document-scoped)',
-        description: `Driver wallet (document-scoped) — ${wallet_address}`,
-      };
+    const driverCode = payloadRow.rows[0]?.driver_code?.trim() || null;
+    const driverName = payloadRow.rows[0]?.driver_name?.trim() || null;
+
+    // 2. Per-driver wallet (driver_code key)
+    if (driverCode) {
+      const codeRow = await pool().query(
+        `SELECT wallet_address, label FROM driver_wallets WHERE driver_key = $1 LIMIT 1`,
+        [driverCode],
+      );
+      if (codeRow.rows[0]) {
+        const { wallet_address, label } = codeRow.rows[0];
+        return {
+          address: wallet_address,
+          source:  'driver_wallets_document',
+          label:   label ?? `Driver wallet — code ${driverCode}`,
+          description: `Driver wallet (driver_code=${driverCode}) — ${wallet_address}`,
+        };
+      }
     }
 
-    // 2. Default driver wallet
+    // 3. Per-driver wallet (driver_name key fallback)
+    if (driverName) {
+      const nameRow = await pool().query(
+        `SELECT wallet_address, label FROM driver_wallets WHERE driver_key = $1 LIMIT 1`,
+        [driverName],
+      );
+      if (nameRow.rows[0]) {
+        const { wallet_address, label } = nameRow.rows[0];
+        return {
+          address: wallet_address,
+          source:  'driver_wallets_document',
+          label:   label ?? `Driver wallet — ${driverName}`,
+          description: `Driver wallet (driver_name=${driverName}) — ${wallet_address}`,
+        };
+      }
+    }
+
+    // 4. Default driver wallet
     const defRow = await pool().query(
       `SELECT wallet_address, label FROM driver_wallets WHERE driver_key = 'default' LIMIT 1`,
     );

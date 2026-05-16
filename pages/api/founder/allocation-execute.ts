@@ -23,7 +23,7 @@ import { Pool } from 'pg';
 import { validateAdminKey } from '@/src/config/adminRoles';
 import { ALLOCATION_ASSETS, normalizeWeights, type AllocationAssetKey, type AllocationWeights } from '@/lib/allocation/assets';
 import { dispatchRail, ASSET_RAIL_MAP } from '@/lib/allocation/executionRails';
-import { resolveDestinationWallet } from '@/lib/allocation/walletResolver';
+import { resolveDestinationWallet, TREASURY_DESTINATION } from '@/lib/allocation/walletResolver';
 
 let _pool: Pool | null = null;
 const pool = () => (_pool ??= new Pool({ connectionString: process.env.DATABASE_URL }));
@@ -90,20 +90,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ success: false, error: 'No settlement extraction for this documentId' });
     }
 
-    // Resolve destination wallet (once per request — all rows in a scope use the same address)
-    const resolvedWallet = await resolveDestinationWallet(scope, documentId);
-    if (!resolvedWallet.address) {
-      return res.status(422).json({
-        success: false,
-        error: `Cannot execute — no driver wallet configured. ${resolvedWallet.description}`,
-      });
-    }
-    const destinationAddress = resolvedWallet.address;
-
     // Determine which assets to execute
     const targetAssets: AllocationAssetKey[] = onlyAssetKey
       ? [onlyAssetKey]
       : ALLOCATION_ASSETS.map(a => a.key).filter(k => (weights[k] ?? 0) > 0);
+
+    // Resolve destination wallet only when onramp assets are in scope.
+    // Non-onramp rails (axau_mint, camelot_swap, kag_mint, ledger, stripe_payout)
+    // do not use a destination address and must not be blocked by a missing driver wallet.
+    const ONRAMP_KEYS: AllocationAssetKey[] = ['paxg', 'usdc', 'wbtc', 'cbeth'];
+    const hasOnrampTargets = targetAssets.some(k => ONRAMP_KEYS.includes(k));
+
+    let resolvedWallet = await resolveDestinationWallet(scope, documentId);
+    if (hasOnrampTargets && !resolvedWallet.address) {
+      return res.status(422).json({
+        success: false,
+        error: `Cannot execute onramp rows — no driver wallet configured. ${resolvedWallet.description}`,
+      });
+    }
+    // Non-onramp-only requests: use treasury destination as a safe default so
+    // the destination_address column is always populated (not left null).
+    const destinationAddress = resolvedWallet.address ?? TREASURY_DESTINATION;
 
     const executions: ExecutionRow[] = [];
     const skipped: string[] = [];
