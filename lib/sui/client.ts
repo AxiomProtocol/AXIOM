@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — @mysten/sui uses ESM subpath exports; resolved by Next.js bundler at runtime
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 
 type SuiNetwork = 'mainnet' | 'testnet' | 'devnet' | 'localnet';

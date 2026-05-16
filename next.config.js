@@ -80,6 +80,8 @@ const nextConfig = {
     ],
   },
 
+  transpilePackages: ['@mysten/sui', '@mysten/bcs'],
+
   experimental: {
     instrumentationHook: true,
     serverComponentsExternalPackages: [
