@@ -13,7 +13,8 @@ export type LiquidityVenueId =
   | 'curve'
   | 'balancer'
   | 'camelot'
-  | 'axiom-reserve-access';
+  | 'axiom-reserve-access'
+  | 'eulerswap'; // Retained for audit continuity — venue withdrawn 2026-05-13
 
 export type LiquidityVenueStatus =
   | 'approved_primary'
@@ -22,22 +23,27 @@ export type LiquidityVenueStatus =
   | 'deferred'
   | 'existing_integration'
   | 'withdrawn_empty'
-  | 'planned'
-  | 'configured'
-  | 'disabled';
+  | 'empty'        // Alias for confirmed-zero withdrawn state
+  | 'deprecated'   // Soft-deprecated — still visible, not deployable
+  | 'coming_soon'  // Planned for near-term activation
+  | 'planned'      // Scoped but not yet scheduled
+  | 'configured'   // Deployed/configured, not yet active
+  | 'disabled';    // Explicitly disabled
 
 export type LiquidityPoolStatus =
   | 'planned'
   | 'active'
   | 'inactive'
   | 'blocked'
-  | 'evaluation';
+  | 'evaluation'
+  | 'withdrawn'; // Positions fully withdrawn, balance confirmed zero
 
 export type LiquidityLaunchPhase =
   | 'phase_1'
   | 'phase_2'
   | 'phase_3'
-  | 'conditional_axau';
+  | 'conditional_axau'
+  | 'decommissioned'; // Withdrawn/retired — audit record only
 
 export type TreasuryPriority = 'highest' | 'high' | 'medium' | 'low' | 'none';
 

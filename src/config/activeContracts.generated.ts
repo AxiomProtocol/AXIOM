@@ -181,7 +181,7 @@ export function isEulerSwapDeployed(): boolean {
 }
 
 /** EulerSwap pool withdrawal status */
-export const EULERSWAP_STATUS = 'WITHDRAWN_EMPTY' as const;
+export const EULERSWAP_STATUS = 'EMPTY' as const;
 
 /** Returns true when the AXM/AXUSD EulerSwap pool has been deployed */
 export function isAXMAXUSDPoolDeployed(): boolean {
