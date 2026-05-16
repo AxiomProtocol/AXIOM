@@ -28,7 +28,6 @@ const ARBITRUM_CHAIN_ID = 42161;
 
 const ERC20_ABI = [
   'function balanceOf(address owner) view returns (uint256)',
-  'function decimals() view returns (uint8)',
 ] as const;
 
 /** Fetch PAXG/USD spot from CoinGecko; returns null on failure. */
