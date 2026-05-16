@@ -1,165 +1,183 @@
-# AXIOM SUI PHASE 8 — AUTHORIZATION MODEL
+# Axiom Protocol — Sui Phase 8 Authorization Model
 
-**Package:** `axiom_claim_mainnet_candidate`
+**Package:** `axiom`
 **Date:** 2026-05-16
 **Classification:** Internal Operations
 
 ---
 
-## 1. Authorization Primitive
+## Overview
 
-The `axiom_claim_mainnet_candidate` package uses **capability-based authorization** via Move's linear type system.
-
-**AdminCap** (`axiom_claim_mainnet_candidate::claim_campaign::AdminCap`) is the sole authorization object for campaign administration. It is:
-- A **Move object** (`has key, store`) — exists as a unique on-chain object
-- **Non-copyable** — cannot be duplicated or forged
-- **Transferable** — can be passed to a new address via `transfer_admin_cap`
-- **Destroyable** — can be permanently deleted via `destroy_admin_cap`
-
-No role-based or allowlist authorization is used. The AdminCap holder is authorized for all admin operations.
+The Phase 8 authorization model uses Sui's native object capability pattern. There are no role-based access control registries, no admin lists, and no oracle-controlled permissions. Authorization is entirely determined by object possession.
 
 ---
 
-## 2. Function Authorization Matrix
+## Capability Matrix
 
-### Public Entry Functions
-
-| Function | Authorization Required | Who Can Call |
+| Operation | Required Capability | Abort Code |
 |---|---|---|
-| `create_campaign_entry` | None | Any address |
-| `fund_campaign` | `&AdminCap` | AdminCap holder only |
-| `activate` | `&AdminCap` | AdminCap holder only |
-| `claim` | Merkle proof (caller is leaf) | Any address with valid proof |
-| `pause` | `&AdminCap` | AdminCap holder only |
-| `unpause` | `&AdminCap` | AdminCap holder only |
-| `update_merkle_root` | `&AdminCap` | AdminCap holder only |
-| `close_campaign` | `&AdminCap` | AdminCap holder only |
+| `create_campaign_entry` | None (anyone can create) | — |
+| `fund_campaign` | AdminCap (matching campaign_id) | E_WRONG_CAMPAIGN = 8 |
+| `activate` | AdminCap (matching campaign_id) | E_WRONG_CAMPAIGN = 8 |
+| `pause` | AdminCap (matching campaign_id) | E_WRONG_CAMPAIGN = 8 |
+| `close_campaign` | AdminCap (matching campaign_id) | E_WRONG_CAMPAIGN = 8 |
+| `drain_pool` | AdminCap (matching campaign_id) | E_WRONG_CAMPAIGN = 8 |
+| `claim` | Valid Merkle proof + active + not expired | E_INVALID_PROOF = 3 |
+| `guarded_treasury::deposit` | TreasuryOperatorCap | E_CAP_MISMATCH = 1 |
+| `guarded_treasury::withdraw` | TreasuryOperatorCap | E_CAP_MISMATCH = 1 |
 
-### Public Functions
+---
 
-| Function | Authorization Required | Who Can Call |
+## Authorization Flow
+
+### Campaign Admin Flow
+
+```
+Operator (multisig)
+  │
+  ├─ holds AdminCap (key, store object)
+  │
+  ├─ fund_campaign(campaign_mut, coins, &admin_cap)
+  │    └─ assert cap.campaign_id == campaign.id ──→ OK or E_WRONG_CAMPAIGN
+  │
+  ├─ activate(campaign_mut, &admin_cap, ctx)
+  │    └─ assert !is_closed ──→ OK or E_CAMPAIGN_CLOSED
+  │    └─ assert cap.campaign_id == campaign.id ──→ OK or E_WRONG_CAMPAIGN
+  │
+  ├─ pause(campaign_mut, &admin_cap, ctx)
+  │    └─ (same guards)
+  │
+  └─ close_campaign(campaign_mut, &admin_cap, ctx)
+       └─ Sets is_closed = true (permanent, no reopen)
+```
+
+### Claimant Flow
+
+```
+Claimant (any address)
+  │
+  └─ claim(campaign_mut, proof, amount, ctx)
+       │
+       ├─ Check: expires_at_epoch > 0 → epoch < expires_at_epoch
+       │         or abort E_EXPIRED (4)
+       │
+       ├─ Check: is_active == true or abort E_NOT_ACTIVE (0)
+       │
+       ├─ Check: !is_closed or abort E_CAMPAIGN_CLOSED (1)
+       │
+       ├─ Check: amount == amount_per_claim or abort E_ZERO_AMOUNT (5)
+       │
+       ├─ Check: pool_balance >= amount or abort E_POOL_EMPTY (6)
+       │
+       ├─ Compute: leaf = keccak256(sender_addr ++ amount_le8)
+       │
+       ├─ Verify: merkle::verify(leaf, proof, root) or abort E_INVALID_PROOF (3)
+       │          (A1: depth <= 32 or abort E_PROOF_TOO_DEEP)
+       │
+       ├─ Write: ClaimRecord → transfer to sender  (A5: record BEFORE payout)
+       │
+       └─ Transfer: Coin<AMC>(amount) → sender
+```
+
+### GuardedTreasury Flow
+
+```
+Treasury Operator (multisig)
+  │
+  ├─ holds TreasuryOperatorCap (key, store)
+  │
+  ├─ deposit(treasury_mut, &cap, coins, ctx)
+  │    └─ assert cap.treasury_id == treasury.id ──→ OK or E_CAP_MISMATCH
+  │
+  └─ withdraw(treasury_mut, &cap, amount, recipient, ctx)
+       └─ assert cap.treasury_id == treasury.id ──→ OK or E_CAP_MISMATCH
+       └─ assert balance >= amount ──→ OK or E_INSUFFICIENT_BALANCE
+```
+
+---
+
+## Object Capability Security Properties
+
+### Non-Forgeable
+Capabilities are Sui objects with `key` ability. They cannot be forged — only created by the module that defines them. `AdminCap` is created only in `create_campaign_entry`. `TreasuryOperatorCap` is created only in `guarded_treasury::create`.
+
+### Non-Duplicable
+Move's type system prevents copying of objects with `key` but not `copy`. `AdminCap` and `TreasuryOperatorCap` cannot be duplicated.
+
+### Bound by Identity
+Every authorization check validates `cap.campaign_id == object::id(campaign)`. Capabilities from one campaign cannot authorize operations on another campaign.
+
+### Transferable (Intentional)
+Both caps have `store` ability — they can be wrapped in multisig wallets or transferred between authorized parties. This is intentional for multisig management. The risk of unauthorized transfer is mitigated by the identity binding check.
+
+---
+
+## Error Code Reference
+
+| Code | Constant | Trigger |
 |---|---|---|
-| `destroy_admin_cap` | Ownership of `AdminCap` (consumes) | AdminCap holder only |
-| `transfer_admin_cap` | Ownership of `AdminCap` (consumes) | AdminCap holder only |
-
-### Test-Only Accessors
-Read-only; no authorization; `#[test_only]` gated — not accessible in production.
-
----
-
-## 3. Claim Authorization — Merkle Proof Flow
-
-The `claim` function uses **cryptographic authorization** via Merkle proof:
-
-```
-claimant address → BCS(address) || BCS(amount) → keccak256 → leaf hash
-proof = [sibling₀, sibling₁, ..., siblingₙ]
-verify_proof(proof, campaign.merkle_root, leaf) → true/false
-```
-
-The claimant is `tx_context::sender(ctx)` — derived from the transaction signature, not caller-supplied. A valid proof proves that the sender's address and their allocated amount are included in the Merkle tree committed to by the campaign's `merkle_root`.
-
-**Authorization chain:**
-1. Campaign operator generates eligibility list (off-chain)
-2. `validateEligibilityCsv` validates list format and deduplication
-3. `buildMerkleTree` constructs tree; root committed on-chain via `create_campaign` or `update_merkle_root`
-4. `generateProof` produces individual proofs for each eligible address
-5. Eligible user submits proof in `claim` transaction; on-chain verification in `merkle::verify_proof`
+| 0 | E_NOT_ACTIVE | Claim on paused campaign |
+| 1 | E_CAMPAIGN_CLOSED | Admin op on closed campaign |
+| 2 | E_ALREADY_CLAIMED | (Reserved — not currently enforced on-chain) |
+| 3 | E_INVALID_PROOF | Merkle proof verification fails |
+| 4 | E_EXPIRED | Claim after expires_at_epoch |
+| 5 | E_ZERO_AMOUNT | amount_per_claim = 0, or claim amount mismatch |
+| 6 | E_POOL_EMPTY | Pool has insufficient balance for payout |
+| 7 | E_LABEL_TOO_LONG | Campaign label > 128 bytes |
+| 8 | E_WRONG_CAMPAIGN | AdminCap campaign_id ≠ campaign object ID |
 
 ---
 
-## 4. Multi-Party Authorization (Operational Layer)
+## Authorization Gaps and Mitigations
 
-The smart contract enforces single-key AdminCap control. Operational multi-party authorization is enforced off-chain:
+### Gap 1: No On-Chain Claimant Deduplication
 
-### 4.1 Approval Thresholds
+**Description:** The contract does not prevent an address from claiming twice if it appears twice in the Merkle tree.
 
-| Operation Risk Level | Minimum Approvers | Method |
-|---|---|---|
-| Low (fund, activate, pause) | 1 authorized operator | Off-chain sign-off in ops log |
-| Medium (unpause, root update) | 2 authorized operators | Dual sign-off; root hash audit trail |
-| High (close, destroy/transfer cap) | 2 operators + Protocol Lead | Formal ceremony with audit log |
+**Mitigation:** The TypeScript `validateEligibilityCsv.ts` tool checks for duplicate addresses and rejects CSVs with duplicates. Merkle tree construction from unique-address CSV prevents duplicate leaves.
 
-### 4.2 Merkle Root Commit Authorization
-Root update is the highest-risk admin operation because it controls who can claim:
+**Recommendation for high-value campaigns:** Add `Table<address, bool>` inside `ClaimCampaign` and check/set before payout.
 
-1. **Eligibility author** generates CSV and root hash
-2. **Independent verifier** runs `validateEligibilityCsv` and `buildMerkleTree` independently; confirms root hash matches
-3. Both parties sign off in ops log with: timestamp, CSV hash (SHA-256), Merkle root hex
-4. Root update transaction submitted only after dual sign-off
+### Gap 2: AdminCap on EOA
 
-### 4.3 Multi-Sig Option
-For production deployments, transfer AdminCap to a Sui multi-sig address:
+**Description:** If `create_campaign_entry` is called from an EOA, AdminCap lands on the EOA. There is no on-chain enforcement requiring immediate multisig transfer.
 
-```bash
-# Example: 2-of-3 Sui multi-sig
-sui keytool multi-sig-address \
-  --pks <pubkey1> <pubkey2> <pubkey3> \
-  --weights 1 1 1 \
-  --threshold 2
-```
+**Mitigation:** Deploy procedures require multisig transfer in same PTB. Audited via `CampaignCreated` event — monitor `admin_cap_id` transfer destination.
 
-AdminCap can then only be exercised when 2 of 3 keyholders co-sign each transaction. All admin functions accept `&AdminCap` by reference — they work transparently with multi-sig owned caps.
+### Gap 3: No Emergency Pause Without AdminCap
+
+**Description:** If AdminCap is lost or the holding address is compromised, there is no emergency pause mechanism.
+
+**Mitigation:** Campaign expiry (`expires_at_epoch`) provides a time-limited backstop. All campaigns must have an expiry set. Incident response: create a new campaign, announce migration.
 
 ---
 
-## 5. Claim Lifecycle Authorization State Machine
+## PTB Construction Guidelines
+
+### Create + Activate in Single PTB (Recommended)
 
 ```
-[CREATED — not active, not closed]
-     │
-     │ activate() [AdminCap]
-     ▼
-[ACTIVE — claims open]
-     │                    │
-     │ pause() [AdminCap] │ claim() [Merkle proof, sender auth]
-     ▼                    ▼
-[PAUSED]          [ACTIVE — pool decremented]
-     │
-     │ unpause() [AdminCap] — only if !is_closed
-     │ update_merkle_root() [AdminCap] — only when !is_active
-     ▼
-[ACTIVE]
-     │
-     │ close_campaign() [AdminCap]
-     ▼
-[CLOSED — permanent, irrecoverable]
-  Pool drained → returned to AdminCap holder
-  unpause() → aborts ECampaignAlreadyClosed (8)
+PTB:
+  1. create_campaign_entry(label, root, amount, expiry)
+     → returns AdminCap to sender
+  2. activate(campaign_id, AdminCap, ctx)
+  3. transfer AdminCap to multisig_address
 ```
 
----
+This atomically creates, activates, and secures the cap in one transaction. If step 3 fails (multisig address wrong), the whole PTB reverts.
 
-## 6. Off-Chain Authorization — API Layer
+### Fund Campaign
 
-The Axiom API backend (`pages/api/sui/`) is read-only — it queries chain state and generates proofs but does not sign or submit transactions. No private keys are held by the API layer.
+```
+PTB (from multisig):
+  1. SplitCoins(Coin<AMC>, [fund_amount])
+  2. fund_campaign(campaign_id, split_coin, AdminCap)
+```
 
-| API Route | Authorization | Action |
-|---|---|---|
-| `GET /api/sui/campaigns` | None (public) | List active campaigns |
-| `GET /api/sui/campaigns/[id]` | None (public) | Campaign details + pool |
-| `GET /api/sui/eligibility` | None (public) | Proof generation for caller |
-| `GET /api/sui/claim-status` | None (public) | Whether address has claimed |
+### Close + Drain
 
-Proof generation is public — knowing your proof does not help a non-eligible address since the on-chain `verify_proof` still gates the actual claim.
-
----
-
-## 7. Emergency Authorization Procedures
-
-### Immediate Campaign Pause
-Any single authorized operator can pause without multi-party approval. Execute immediately upon:
-- Suspected merkle root compromise
-- Pool funding from unauthorized source
-- Any on-chain anomaly
-
-### AdminCap Emergency Transfer
-If operator key is suspected compromised and cap is still accessible:
-1. Transfer AdminCap to known-safe address immediately
-2. Pause campaign using new address
-3. Rotate operator key; update ops log
-
-### If AdminCap is inaccessible (key lost):
-- Campaign cannot be paused or closed via smart contract
-- Claims may continue until pool is exhausted or expiry epoch
-- Deploy new campaign in Phase 10 with remaining distribution
+```
+PTB (from multisig):
+  1. close_campaign(campaign_id, AdminCap)
+  2. drain_pool(campaign_id, AdminCap, treasury_address)
+```

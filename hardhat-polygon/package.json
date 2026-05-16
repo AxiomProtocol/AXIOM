@@ -1,0 +1,13 @@
+{
+  "name": "axiom-hardhat-polygon",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "ESM-isolated Hardhat workspace for Axiom Protocol Polygon PoS contracts.",
+  "devDependencies": {
+    "@onchain-id/solidity": "^2.2.1",
+    "@openzeppelin/contracts-upgradeable": "^5.6.1",
+    "@tokenysolutions/t-rex": "^4.1.6",
+    "hardhat": "^3.4.4"
+  }
+}

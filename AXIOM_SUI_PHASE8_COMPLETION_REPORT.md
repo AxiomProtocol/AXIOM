@@ -1,8 +1,8 @@
 # AXIOM SUI PHASE 8 — COMPLETION REPORT
 
-**Package:** `axiom_claim_mainnet_candidate` + `axiom_claim_prototype`
+**Package:** `contracts/sui/` (single canonical package)
 **Report Date:** 2026-05-16
-**Status:** COMPLETE (Session 7 — TypeScript fix, Move project structure, final validation)
+**Status:** COMPLETE (Session 8 — 28/28 tests PASS with Sui CLI v1.71.1)
 
 ---
 
@@ -17,6 +17,7 @@
 | Session 5 | 2026-05-16 | Sui CLI binary install, live test run, DB sync | COMPLETE |
 | Session 6 | 2026-05-16 | TypeScript toolchain, API, UI, documents, package structure | COMPLETE |
 | Session 7 | 2026-05-16 | TypeScript @mysten/sui module declarations, Move.toml + sources/, final tsc validation | COMPLETE |
+| Session 8 | 2026-05-16 | **28/28 `sui move test` PASS — CLI v1.71.1, harness-injection workaround resolved** | **COMPLETE** |
 
 ---
 
@@ -105,10 +106,56 @@ Both pages use `<DesignLawLayout>` with full Design Law styling (serif/monospace
 - **Session-ephemeral issue** — binary must be reinstalled each session
 - Reinstall command: `curl -sL https://github.com/MystenLabs/sui/releases/download/testnet-v1.72.1/sui-testnet-v1.72.1-ubuntu-x86_64.tgz | tar xz && chmod +x sui && mv sui ~/bin/`
 
-### T008 — Sui Move Test
-- Sui CLI binary not currently installed (session-ephemeral, see T001)
-- Last confirmed result: **56/56 PASS** (Session 5, Sui CLI testnet-v1.72.1)
-- Re-run command: `cd move/axiom_sui && sui move test`
+### T008 — Sui Move Test (Session 8 — FINAL)
+
+**Result: 28/28 PASS** — Sui CLI v1.71.1 — `contracts/sui/`
+
+```
+Test result: OK. Total tests: 28; passed: 28; failed: 0
+```
+
+| Test | Module | Coverage |
+|---|---|---|
+| test_01 – test_10 | merkle_tests | Single-leaf, two-leaf, wrong root, wrong sibling, pair_hash symmetry, bytes_lte ordering, leaf size, max depth (no abort), depth overflow abort |
+| test_11 | claim_campaign_tests | Happy path: create campaign, initial state |
+| test_12 | claim_campaign_tests | A7: label > 128 bytes → E_LABEL_TOO_LONG abort |
+| test_13 | claim_campaign_tests | A7: label = 128 bytes (max) succeeds |
+| test_14 | claim_campaign_tests | A5: zero amount_per_claim → E_ZERO_AMOUNT abort |
+| test_15 | claim_campaign_tests | A4: fund_for_test increases pool balance |
+| test_16 | claim_campaign_tests | A3: activate sets is_active = true |
+| test_17 | claim_campaign_tests | A2: pause unsets is_active |
+| test_18 | claim_campaign_tests | A2: close sets is_closed permanently |
+| test_19 | claim_campaign_tests | A2: activate closed campaign → E_CAMPAIGN_CLOSED abort |
+| test_20 | claim_campaign_tests | A4: fund closed campaign → E_CAMPAIGN_CLOSED abort |
+| test_21 | claim_campaign_tests | A5/A1: valid single-leaf claim succeeds; counters update |
+| test_22 | claim_campaign_tests | A1: invalid Merkle proof → E_INVALID_PROOF abort |
+| test_23 | claim_campaign_tests | A2: claim while paused → E_CAMPAIGN_INACTIVE abort |
+| test_24 | claim_campaign_tests | A4: claim with empty pool → E_POOL_EMPTY abort |
+| test_25 | claim_campaign_tests | A3: correct AdminCap bound to campaign (happy path) |
+| test_26 | claim_campaign_tests | A3: wrong AdminCap → E_WRONG_CAMPAIGN abort |
+| test_27 | claim_campaign_tests | A6: expiry logic — not expired cases |
+| test_28 | claim_campaign_tests | A6: expiry logic — expired cases |
+
+**CLI install method (Session 8):** Sui CLI v1.71.1 binary was extracted from a partial tarball download (316 MB compressed / 600 MB uncompressed) using Python gzip streaming. The `./sui` binary begins at uncompressed offset 235 MB and ends at 435 MB — fully within the downloaded portion. Binary is installed at `/tmp/sui` (session-ephemeral).
+
+**Session 8 reinstall command:**
+```bash
+# Stream-extract sui binary without downloading the full 970MB tarball
+python3 -c "
+import gzip, sys
+TARGET='/tmp/sui171.tgz'
+with gzip.open(TARGET,'rb') as gz:
+    data=gz.read(600*1024*1024)
+for i in range(0,len(data)-512,512):
+    name=data[i:i+100]
+    if name.startswith(b'./sui\x00') and not name.startswith(b'./sui-'):
+        sz=int(data[i+124:i+136].rstrip(b'\x00'),8)
+        open('/tmp/sui','wb').write(data[i+512:i+512+sz])
+        print('done',sz//1024//1024,'MB')
+        break
+"
+chmod +x /tmp/sui && /tmp/sui --version
+```
 
 ### T009 — Package Structure + Build Validation (Session 7)
 

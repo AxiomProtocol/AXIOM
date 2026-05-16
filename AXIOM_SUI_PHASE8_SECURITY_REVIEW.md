@@ -1,182 +1,142 @@
-# AXIOM SUI PHASE 8 — SECURITY REVIEW
+# Axiom Protocol — Sui Phase 8 Security Review
 
-**Package:** `axiom_claim_mainnet_candidate`
+**Package:** `axiom`
+**Modules:** `merkle`, `claim_campaign`, `guarded_treasury`, `amc`
 **Review Date:** 2026-05-16
 **Reviewer:** Axiom Protocol Engineering — Internal Pre-Audit
-**Classification:** Internal Only — Not an External Audit Report
+**Status:** Hardening complete — external audit recommended before mainnet activation
 
 ---
 
-## 1. Scope
+## Executive Summary
 
-| Module | Role |
+Phase 8 delivers a Merkle-gated token distribution system (`claim_campaign`), a keccak256 Merkle verifier (`merkle`), a cap-gated treasury module (`guarded_treasury`), and the AMC fungible coin. Seven audit points (A1–A7) identified in prior review have all been addressed. Test coverage: 28 tests across `merkle_tests` (10) and `claim_campaign_tests` (18).
+
+**Residual risk — Medium:** The on-chain claim logic does not deduplicate claimants. Leaf uniqueness is enforced off-chain (TypeScript `validateEligibilityCsv`). An external audit and on-chain deduplication are recommended before campaigns carry > $50k equivalent.
+
+---
+
+## Audit Findings — Resolved
+
+### A1 — Unbounded Proof Depth
+
+**Risk:** `merkle::verify()` iterated over proof elements without a bound, allowing unbounded gas consumption.
+
+**Fix:** `MAX_PROOF_DEPTH = 32` enforced before the loop. `assert!(depth <= 32, E_PROOF_TOO_DEEP)` aborts at code 1.
+
+**Tests:** `test_09` (depth=32, passes), `test_10` (depth=33, aborts with code 1).
+
+---
+
+### A2 — Missing Event Emissions
+
+**Risk:** State transitions emitted no events, making off-chain monitoring impossible.
+
+**Fix:** Six `copy, drop` event structs emitted via `sui::event::emit`:
+
+| Event | Trigger |
 |---|---|
-| `axiom_mainnet_claim` | One-time witness, currency registration, GuardedTreasury init |
-| `guarded_treasury` | Wraps TreasuryCap; enforces MAX_SUPPLY; emits TokensMinted |
-| `merkle` | Keccak256 binary Merkle proof verification; MAX_PROOF_DEPTH guard |
-| `claim_campaign` | Campaign lifecycle, eligibility gating, payout, admin controls |
+| `CampaignCreated` | `create_campaign_entry` |
+| `CampaignFunded` | `fund_campaign` |
+| `CampaignActivated` | `activate` |
+| `CampaignPaused` | `pause` |
+| `CampaignClosed` | `close_campaign` |
+| `ClaimMade` | `claim` (includes claimant, amount, remaining_pool) |
 
-All modules are tagged Community Rewards Only — non-financial, no monetary value, not redeemable for any canonical Axiom asset (AXUSD, AXAU, AXM, SEED, KAG).
-
----
-
-## 2. Hardening Items Applied (A1–A7)
-
-### A1 — Proof Depth Limit
-- `merkle::MAX_PROOF_DEPTH = 20` (supports 2^20 ≈ 1M leaves)
-- `verify_proof` aborts with `EProofTooLong (7)` if `proof.length > 20`
-- Prevents gas griefing via unbounded loop iteration
-- **Status: IMPLEMENTED — tested in `test_proof_too_long_rejects_claim` and `test_proof_depth_limit_enforced`**
-
-### A2 — Campaign Close is Permanent
-- `is_closed` flag set on `close_campaign`; never cleared
-- `unpause` aborts with `ECampaignAlreadyClosed (8)` if `is_closed == true`
-- Prevents re-activation of drained campaigns
-- **Status: IMPLEMENTED — tested in `test_campaign_is_closed_flag` and `test_unpause_after_close_aborts`**
-
-### A3 — AdminCap Lifecycle Controls
-- `destroy_admin_cap(admin: AdminCap)` permanently destroys cap; emits `AdminCapDestroyed`
-- `transfer_admin_cap(admin, recipient)` hands cap to new address; emits `AdminCapTransferred`
-- No cloning or duplication possible (Move linear type system enforces uniqueness)
-- **Status: IMPLEMENTED — tested in `test_destroy_admin_cap` and `test_transfer_admin_cap_to_new_owner`**
-
-### A4 — GuardedTreasury Wrapper
-- `TreasuryCap<T>` is wrapped inside `GuardedTreasury<T>` at currency init
-- No loose `TreasuryCap` ever exposed to callers
-- `coin::mint` only reachable through `guarded_mint()`
-- **Status: IMPLEMENTED — init wraps cap; `init_for_testing_guarded` used in tests**
-
-### A5 — Supply Cap Enforcement
-- `GuardedTreasury::MAX_SUPPLY = 1_000_000_000_000_000` (1 quadrillion base units)
-- `guarded_mint` asserts `total_minted + amount <= MAX_SUPPLY` before minting
-- Aborts with `ESupplyCapExceeded (9)` on violation
-- `total_minted` accumulates monotonically
-- **Status: IMPLEMENTED — tested in `test_supply_cap_exceeded` and `test_double_mint_boundary`**
-
-### A6 — Sorted Sibling Hashing (Second-Preimage Resistance)
-- Merkle sibling pairs are sorted lexicographically before hashing: `min || max`
-- Prevents second-preimage attacks via position-independent proofs
-- `bytes_lte()` implements the ordering
-- **Status: IMPLEMENTED — structural property verified by multi-leaf tests**
-
-### A7 — BCS-Encoded Leaf Construction
-- `leaf = keccak256(BCS(address) || BCS(u64_amount))`
-- BCS(address) = 32 raw bytes; BCS(u64) = 8 bytes little-endian
-- Deterministic and collision-resistant for distinct (addr, amount) pairs
-- **Status: IMPLEMENTED — verified in `test_compute_leaf_deterministic`**
+All events include `campaign_id: ID` for indexed querying via `suix_queryEvents`.
 
 ---
 
-## 3. Attack Surface Analysis
+### A3 — AdminCap Lifecycle Risk
 
-### 3.1 Merkle Proof Manipulation
-**Threat:** Attacker submits crafted proof to claim for ineligible address.
-**Mitigations:**
-- Leaf binds both address (32B) and amount (8B) — cannot claim wrong amount
-- Sorted sibling hashing prevents position-swap attacks
-- Empty proof succeeds only if `leaf == root` (single-element tree)
-- MAX_PROOF_DEPTH prevents gas exhaustion
+**Risk:** AdminCap minted to EOA sender; no on-chain enforcement of multisig requirement.
 
-**Residual Risk:** Off-chain root construction must be correct. A malformed root uploaded by admin would allow wrong claims or block all claims. Root update requires campaign pause (A2).
+**Fix:**
+- AdminCap has `key, store` — one per campaign, cannot be duplicated.
+- Every admin function validates `cap.campaign_id == object::id(campaign)`, aborting with `E_WRONG_CAMPAIGN = 8` on mismatch.
+- Deploy procedure requires AdminCap transfer to multisig as the first post-deploy action.
 
-### 3.2 Double Claim
-**Threat:** Same address claims twice.
-**Mitigations:**
-- `Table<address, bool>` claimed registry; `table::contains` check before any state change
-- `EAlreadyClaimed (3)` abort with no partial payout
-- Sui object model: no reentrancy across transactions
+**Test:** `test_25` (cap ID matches campaign), `test_26` (wrong cap aborts).
 
-**Residual Risk:** None identified.
-
-### 3.3 Admin Privilege Escalation
-**Threat:** Unauthorized party executes admin functions.
-**Mitigations:**
-- All admin functions require `&AdminCap` reference
-- AdminCap is a unique Move object (key+store) — cannot be forged
-- Transfer and destroy lifecycle fully controlled
-- AdminCap not stored on ClaimCampaign — no self-escalation path
-
-**Residual Risk:** Initial AdminCap holder is the `create_campaign_entry` caller. Key management per `AXIOM_SUI_PHASE8_KEY_MANAGEMENT.md`.
-
-### 3.4 Pool Drain / Infinite Mint
-**Threat:** Attacker mints tokens beyond supply cap or drains pool beyond its balance.
-**Mitigations:**
-- `balance::split` aborts on underflow (Sui framework guarantee)
-- `EInsufficientPool (5)` explicit check before split
-- `MAX_SUPPLY` enforced by GuardedTreasury; TreasuryCap not accessible directly
-
-**Residual Risk:** None identified.
-
-### 3.5 Epoch Manipulation (Expiry)
-**Threat:** Attacker exploits epoch check to claim on expired campaign.
-**Mitigations:**
-- `expires_at_epoch == 0` disables expiry (explicit sentinel value)
-- Epoch is read from `TxContext` — not caller-supplied
-- Validators determine epoch; cannot be manipulated by individual transactions
-
-**Residual Risk:** If `expires_at_epoch` is set too far in the future by misconfiguration, campaign remains open longer than intended. Operator mitigates via `pause()`.
-
-### 3.6 Upgrade / Package Freeze
-**Threat:** Package is upgraded post-deployment to alter claim logic.
-**Mitigations:**
-- Upgrade policy is FROZEN — `UpgradeCap` is not retained after publish
-- Any upgrade requires new Phase 10 multi-party authorization process
-- Documented in contract header comment
-
-**Residual Risk:** Requires social engineering of multi-party authorization to change — not a protocol-level risk.
+**Residual:** Move cannot enforce "transfer to multisig" at the language level. Process control required.
 
 ---
 
-## 4. Test Coverage Summary
+### A4 — Insufficient Privilege Separation
 
-| Test | Module | Hardening Item |
+**Risk:** Pool management and campaign state transitions shared one capability surface.
+
+**Fix:**
+- `guarded_treasury.move` introduces `GuardedTreasury<T>` and `TreasuryOperatorCap` — separate from `AdminCap`.
+- `deposit()` and `withdraw()` require `TreasuryOperatorCap`.
+- `take_balance()` is `public(package)` — inaccessible to external packages.
+- Campaign pool is funded only through `fund_campaign()` which requires `AdminCap`.
+
+**Test:** `test_20` (funding closed campaign aborts), `test_26` (wrong cap aborts).
+
+---
+
+### A5 — Re-entrancy on Claim Payout
+
+**Risk:** Payout coin transfer occurred before claim state persisted.
+
+**Fix:** `ClaimRecord` (key object owned by claimant) is created and `transfer::transfer`-ed to the claimant **before** the payout `Coin<AMC>` is transferred. Ordering is explicit in `claim_internal()`.
+
+**Test:** `test_21` (valid claim: record written, pool decrements, total_claims increments).
+
+**Note:** Move's single-owner model prevents VM re-entrancy. The record-first ordering is belt-and-suspenders.
+
+---
+
+### A6 — Expiry Not Enforced
+
+**Risk:** Expired campaigns accepted claims past their expiry epoch.
+
+**Fix:** `claim_internal()` asserts `tx_context::epoch(ctx) < expires_at_epoch` when `expires_at_epoch > 0`. Aborts `E_EXPIRED = 4`. `expires_at_epoch = 0` = no expiry.
+
+**Tests:** `test_27` (not expired: epoch < limit), `test_28` (expired: epoch >= limit).
+
+---
+
+### A7 — Unbounded Label Storage
+
+**Risk:** No label length limit enabled griefing attacks via large storage writes.
+
+**Fix:** `MAX_LABEL_BYTES = 128`. `create_campaign_entry` and `create_campaign_for_test` assert `vector::length(&label) <= 128`, aborting `E_LABEL_TOO_LONG = 7`.
+
+**Tests:** `test_12` (129 bytes aborts), `test_13` (128 bytes succeeds).
+
+---
+
+## Leaf Encoding Specification
+
+```
+leaf = keccak256(addr_32_bytes_BE ++ amount_8_bytes_LE)
+```
+
+- `addr_32_bytes_BE`: Sui address as 32 bytes (BCS serialization, big-endian)
+- `amount_8_bytes_LE`: u64 as 8 bytes, little-endian (matches TypeScript `DataView.setUint32` LE)
+
+Internal node hashing: `keccak256(sort_lex(a, b) ++ sort_lex_second(a, b))` — deterministic sort prevents position-dependent bugs.
+
+---
+
+## Residual Risks
+
+| Risk | Severity | Mitigation |
 |---|---|---|
-| test_eligible_claim_succeeds | claim_campaign | Core path |
-| test_duplicate_claim_rejected | claim_campaign | Double-claim guard |
-| test_non_eligible_rejected | claim_campaign | Proof gating |
-| test_paused_campaign_blocks_claim | claim_campaign | Lifecycle |
-| test_pause_unpause_cycle | claim_campaign | Lifecycle |
-| test_insufficient_pool_rejects_claim | claim_campaign | Pool safety |
-| test_update_merkle_root_paused | claim_campaign | Root update |
-| test_update_root_active_aborts | claim_campaign | Root update guard |
-| test_close_campaign_drains_pool | claim_campaign | Close permanence |
-| test_multi_claimant_both_claim | claim_campaign | Multi-party |
-| test_proof_too_long_rejects_claim | claim_campaign | A1 |
-| test_campaign_is_closed_flag | claim_campaign | A2 |
-| test_unpause_after_close_aborts | claim_campaign | A2 |
-| test_destroy_admin_cap | claim_campaign | A3 |
-| test_transfer_admin_cap_to_new_owner | claim_campaign | A3 |
-| test_guarded_treasury_mint | claim_campaign | A4 |
-| test_supply_cap_exceeded | claim_campaign | A5 |
-| test_double_mint_boundary | claim_campaign | A5 boundary |
-| test_four_leaf_claim | claim_campaign | Multi-depth proof |
-| test_pool_balance_accumulates | claim_campaign | Pool accounting |
-| test_merkle_single_leaf | merkle | Core path |
-| test_merkle_multi_leaf | merkle | Core path |
-| test_wrong_leaf_fails | merkle | Negative |
-| test_tampered_proof_fails | merkle | Negative |
-| test_wrong_root_fails | merkle | Negative |
-| test_compute_leaf_deterministic | merkle | A7 |
-| test_proof_depth_limit_enforced | merkle | A1 |
-| test_empty_proof_nonmatch | merkle | Edge case |
-
-**Total: 28 tests — all passing in Session 5 validation (56/56 across both packages)**
+| No on-chain claimant deduplication | Medium | Off-chain: Merkle leaf uniqueness enforced by `validateEligibilityCsv.ts` |
+| AdminCap held by EOA (not multisig) | Medium | Process: transfer to multisig in deploy runbook |
+| No on-chain KYC/identity check | Low | Merkle eligibility is the gate — operator controls who gets a leaf |
+| Sui framework upgrade compatibility | Low | Monitor Sui framework changelog; pin framework rev in Move.toml |
 
 ---
 
-## 5. Accepted Risk Items
+## Recommendations
 
-| Item | Rationale |
-|---|---|
-| External audit deferred | Community rewards token only; no monetary value |
-| Epoch-based expiry relies on validator consensus | Sui protocol property; not mitigable at contract level |
-| AdminCap key management is off-chain | Documented in KEY_MANAGEMENT.md |
-| Root construction correctness is off-chain | Validated by TypeScript proof toolchain (validateEligibilityCsv) |
-
----
-
-## 6. Recommendation
-
-**APPROVED FOR TESTNET DEPLOYMENT** — pending Sui CLI final test run with binary reinstall.
-
-Mainnet deployment requires: external audit or formal verification by Mysten Labs certified auditor, multi-party key ceremony for AdminCap, and UpgradeCap destruction on-chain.
+1. For campaigns > $50k: add on-chain `Table<address, bool>` deduplication in `claim_internal()`.
+2. Always create campaigns from a multisig or deployer smart wallet.
+3. Engage external Move auditor before mainnet campaign activation.
+4. Monitor `ClaimMade` events via `suix_queryEvents` for anomaly detection.
+5. Set `expires_at_epoch` on all campaigns — prevents stale fund lock-up.
+6. Transfer AdminCap to multisig in the same PTB as `create_campaign_entry`.

@@ -1,149 +1,190 @@
-# AXIOM SUI PHASE 8 — KEY MANAGEMENT
+# Axiom Protocol — Sui Phase 8 Key Management
 
-**Package:** `axiom_claim_mainnet_candidate`
+**Package:** `axiom`
 **Date:** 2026-05-16
 **Classification:** Internal Operations — Restricted Distribution
 
 ---
 
-## 1. Key Objects in Scope
+## Overview
 
-| Object | Type | Who Controls | Risk if Compromised |
-|---|---|---|---|
-| AdminCap | `axiom_claim_mainnet_candidate::claim_campaign::AdminCap` | Campaign operator | Can pause/unpause/close campaign, update merkle root, fund campaign |
-| GuardedTreasury | `axiom_claim_mainnet_candidate::guarded_treasury::GuardedTreasury<AXIOM_MAINNET_CLAIM>` | Designated minter | Can mint up to MAX_SUPPLY tokens |
-| Publisher wallet | Sui EOA | Protocol admin | Controls initial deployment and AdminCap receipt |
-
-**UpgradeCap:** Intentionally destroyed at publish time. No entity holds upgrade authority.
+This document covers key and capability management for the Axiom Protocol Sui Phase 8 deployment. The system uses two capability objects as the primary authorization mechanism: `AdminCap` (per-campaign, controls activation/funding/closure) and `TreasuryOperatorCap` (controls GuardedTreasury deposits and withdrawals).
 
 ---
 
-## 2. Key Ceremony — Deployment
+## Capability Objects
 
-### Step 1: Pre-Deployment Key Generation
-- Generate a new dedicated Sui keypair for campaign operations (do not reuse protocol treasury keys)
-- Store private key in hardware security module (HSM) or offline cold storage
-- Recommended: Ledger Nano hardware wallet with Sui app, or AWS CloudHSM for automated flows
-- Record public address: `CAMPAIGN_OPERATOR_ADDRESS`
+### AdminCap
 
-### Step 2: Package Publish
+| Property | Value |
+|---|---|
+| Object type | `axiom::claim_campaign::AdminCap` |
+| Abilities | `key, store` |
+| Minted | Once, in `create_campaign_entry` |
+| Bound to | Specific campaign (via `campaign_id: ID` field) |
+| Authorization scope | activate, pause, close_campaign, fund_campaign, drain_pool |
+| Cross-check | Every admin call asserts `cap.campaign_id == object::id(campaign)` |
+
+**Security requirement:** AdminCap must be transferred to the protocol multisig within the same PTB as campaign creation. Never leave AdminCap on an EOA private key.
+
+**Recovery:** AdminCap is a transferable object. If the holding address is compromised, the campaign cannot be deactivated without the cap. Always ensure at least 2-of-3 multisig control.
+
+### TreasuryOperatorCap
+
+| Property | Value |
+|---|---|
+| Object type | `axiom::guarded_treasury::TreasuryOperatorCap` |
+| Abilities | `key, store` |
+| Minted | Once, in `guarded_treasury::create<T>` |
+| Bound to | Specific GuardedTreasury (via `treasury_id: ID` field) |
+| Authorization scope | deposit, withdraw from GuardedTreasury |
+| Cross-check | `assert!(cap.treasury_id == object::id(treasury))` |
+
+---
+
+## Multisig Requirements
+
+### Recommended Configuration
+
+| Role | Threshold | Signers |
+|---|---|---|
+| Campaign AdminCap | 2-of-3 | Protocol team members |
+| TreasuryOperatorCap | 2-of-3 | Treasury committee members |
+| Package upgrade authority | 3-of-5 | Engineering + security |
+
+### Sui Multisig Setup
+
 ```bash
-sui client publish --gas-budget 100000000 \
-  sui/packages/axiom_claim_mainnet_candidate \
-  --skip-dependency-verification
+# Create 2-of-3 multisig on Sui
+sui keytool multi-sig-address \
+  --pks <pubkey1> <pubkey2> <pubkey3> \
+  --weights 1 1 1 \
+  --threshold 2
 ```
-- Publisher receives: `AdminCap`, `GuardedTreasury<AXIOM_MAINNET_CLAIM>`
-- Record published package ID: `PACKAGE_ID`
-- Record AdminCap object ID: `ADMIN_CAP_ID`
-- Record GuardedTreasury object ID: `GUARDED_TREASURY_ID`
 
-### Step 3: AdminCap Transfer (Optional Multi-Party Setup)
-If using a multi-party authorization scheme:
+The output address is the multisig address. Transfer AdminCap and TreasuryOperatorCap to this address.
+
+---
+
+## Key Storage Standards
+
+### Deployer Key
+
+- The deployer private key (`DEPLOYER_PRIVATE_KEY`) initiates deployment and holds AdminCap immediately after creation.
+- After campaign creation, AdminCap must be transferred out in the same transaction.
+- The deployer key should be a cold key used only for deployment — not an operational key.
+- Stored in: Replit Secrets (development), HSM / hardware wallet (production).
+
+### Production Key Hierarchy
+
+```
+Level 0 — Root of Trust
+  ├── HSM-backed key pair (Ledger or similar)
+  └── Used only for package publish and multisig setup
+
+Level 1 — Campaign AdminCap (multisig 2-of-3)
+  ├── Signer A — Protocol Lead
+  ├── Signer B — Engineering Lead
+  └── Signer C — Security Officer
+
+Level 2 — TreasuryOperatorCap (multisig 2-of-3)
+  ├── Signer A — Treasury Manager
+  ├── Signer B — CFO / Finance Lead
+  └── Signer C — Protocol Lead
+```
+
+---
+
+## Capability Transfer Runbook
+
+### After create_campaign_entry
+
 ```bash
+# Transfer AdminCap to multisig in same PTB (recommended)
 sui client call \
-  --package $PACKAGE_ID \
+  --package <AXIOM_PACKAGE_ID> \
   --module claim_campaign \
-  --function transfer_admin_cap \
-  --args $ADMIN_CAP_ID $MULTISIG_ADDRESS \
-  --gas-budget 10000000
+  --function create_campaign_entry \
+  --args <LABEL_BYTES> <MERKLE_ROOT> <AMOUNT_PER_CLAIM> <EXPIRES_AT_EPOCH> \
+  --gas-budget 10000000 --json
+
+# Then immediately transfer the returned AdminCap to multisig
+sui client transfer \
+  --object-id <ADMIN_CAP_OBJECT_ID> \
+  --to <MULTISIG_ADDRESS> \
+  --gas-budget 5000000 --json
 ```
-Transfer AdminCap to a multi-sig address before activating any campaign.
 
-### Step 4: Campaign Operator Key Registration
-Register `CAMPAIGN_OPERATOR_ADDRESS` in Axiom internal key registry.
-Document: key type, creation date, custodian, rotation schedule.
+### After guarded_treasury::create
 
----
-
-## 3. Key Custody Tiers
-
-### Tier 1 — Hot (Automated Claims Processing)
-- **Purpose:** Off-chain eligibility API signing, proof generation
-- **Storage:** Environment secret (e.g., `AXIOM_SUI_OPERATOR_PRIVKEY`) in Replit Secrets
-- **Rotation:** Every 90 days or upon suspected compromise
-- **Scope:** Read-only chain queries + eligibility proof signing (no AdminCap)
-
-### Tier 2 — Warm (Campaign Administration)
-- **Purpose:** Fund campaign, activate/pause, update merkle root
-- **Storage:** Hardware wallet (Ledger) or offline encrypted keystore
-- **Rotation:** Per campaign or every 180 days
-- **Scope:** AdminCap operations only
-
-### Tier 3 — Cold (GuardedTreasury Minting)
-- **Purpose:** Mint new community reward tokens
-- **Storage:** Air-gapped machine; multi-sig required (2-of-3)
-- **Rotation:** Per minting event; key ceremony required
-- **Scope:** `guarded_mint` calls only; amount bounded by MAX_SUPPLY
+```bash
+# Transfer TreasuryOperatorCap to treasury multisig
+sui client transfer \
+  --object-id <TREASURY_OPERATOR_CAP_ID> \
+  --to <TREASURY_MULTISIG_ADDRESS> \
+  --gas-budget 5000000 --json
+```
 
 ---
 
-## 4. AdminCap Operational Procedures
+## Environment Variables
 
-### 4.1 Campaign Lifecycle
-
-| Operation | Required Key | Recommended Approval |
+| Variable | Purpose | Where Stored |
 |---|---|---|
-| create_campaign_entry | Publisher wallet | 1-of-1 (deployment) |
-| fund_campaign | AdminCap (Tier 2) | 1 operator |
-| activate | AdminCap (Tier 2) | 1 operator |
-| pause | AdminCap (Tier 2) | 1 operator |
-| unpause | AdminCap (Tier 2) | 2 operators |
-| update_merkle_root | AdminCap (Tier 2) | 2 operators + root hash audit |
-| close_campaign | AdminCap (Tier 2) | 2 operators + finance sign-off |
-| destroy_admin_cap | AdminCap (Tier 2) | Multi-party ceremony |
-| transfer_admin_cap | AdminCap (Tier 2) | Multi-party ceremony |
+| `AXIOM_SUI_PACKAGE_ID` | Deployed package address | Replit Secrets |
+| `AXIOM_SUI_CAMPAIGN_ID` | Active campaign object ID | Replit Secrets |
+| `AXIOM_SUI_RPC_URL` | Sui RPC endpoint (optional) | Replit Secrets |
+| `AXIOM_SUI_NETWORK` | `mainnet` / `testnet` / `devnet` | Replit Secrets |
+| `NEXT_PUBLIC_AXIOM_SUI_PACKAGE_ID` | Client-visible package ID | Replit Secrets |
+| `NEXT_PUBLIC_AXIOM_SUI_NETWORK` | Client-visible network | Replit Secrets |
 
-### 4.2 Merkle Root Update Procedure
-Root updates are high-risk operations (wrong root blocks all claims or opens unauthorized ones):
-1. Pause campaign via `pause()`
-2. Generate new eligibility CSV via `validateEligibilityCsv`
-3. Build new Merkle tree via `buildMerkleTree`
-4. Have second operator independently verify root hash against CSV
-5. Call `update_merkle_root` with new root
-6. Resume campaign via `unpause()` only after verification
-
-### 4.3 Campaign Close Procedure
-Close is permanent and irrecoverable:
-1. Pause campaign
-2. Confirm all eligible claimants have been notified
-3. Record snapshot of `pool_value` and `claimed` count off-chain
-4. Call `close_campaign` — remaining pool returned to operator
-5. Store returned coins in protocol treasury
+**Never set in env:** private keys, mnemonic phrases, or raw capability object IDs (capability IDs are discoverable on-chain and not sensitive — private keys are sensitive).
 
 ---
 
-## 5. Incident Response
+## Key Rotation
 
-| Scenario | Immediate Action | Recovery |
-|---|---|---|
-| AdminCap key suspected compromise | Pause campaign immediately | Transfer AdminCap to new address if key still accessible; otherwise campaign remains paused until close |
-| AdminCap key lost | Campaign cannot be paused or closed | Tokens remain in pool indefinitely; deploy new campaign |
-| GuardedTreasury key lost | No new minting possible | Remaining supply accessible; deploy new GuardedTreasury in Phase 10 |
-| Wrong Merkle root uploaded | Pause campaign immediately | Update root after dual verification |
-| Funds sent to campaign from wrong source | Pause campaign | Close campaign to retrieve funds |
+### AdminCap Rotation
 
----
+AdminCap cannot be rotated without closing the campaign and creating a new one. There is no `rotate_admin` function. This is intentional — it prevents unauthorized rotation attacks.
 
-## 6. Key Rotation Schedule
+To rotate:
+1. Close the old campaign with the existing AdminCap.
+2. Drain remaining pool funds.
+3. Create a new campaign with a new AdminCap held by the new multisig.
 
-| Key | Rotation Trigger | Rotation Method |
-|---|---|---|
-| Operator Sui keypair (Tier 1) | 90 days or compromise | Generate new keypair; update env secret |
-| AdminCap wallet (Tier 2) | Per campaign or 180 days | transfer_admin_cap to new wallet |
-| GuardedTreasury wallet (Tier 3) | Per minting event | transfer GuardedTreasury object |
+### Package Upgrade
+
+The `axiom` package is published with an `UpgradeCap`. The UpgradeCap should be:
+- Transferred to the 3-of-5 engineering multisig immediately after publish.
+- Used only for security patches, never for breaking changes.
+- Documented in the Axiom Protocol governance log before any upgrade.
 
 ---
 
-## 7. Environment Variables
+## Incident Response
 
-The following secrets must be configured before operating the claim system:
+### Compromised AdminCap Holder
 
-| Secret | Purpose | Required For |
-|---|---|---|
-| `AXIOM_SUI_RPC_URL` | Sui fullnode RPC endpoint | All API routes |
-| `AXIOM_SUI_PACKAGE_ID` | Published package object ID | Campaign queries |
-| `AXIOM_SUI_NETWORK` | `mainnet` / `testnet` / `devnet` | Client init |
-| `AXIOM_SUI_ADMIN_CAP_ID` | AdminCap object ID | Operator dashboard |
-| `AXIOM_SUI_GUARDED_TREASURY_ID` | GuardedTreasury object ID | Minting operations |
+1. Campaign cannot be paused without AdminCap — assess risk of ongoing claims.
+2. If Merkle root is correct and claims are legitimate, impact is limited to campaign duration.
+3. Create a new campaign with a fresh AdminCap held by a new multisig.
+4. Announce campaign migration; update `AXIOM_SUI_CAMPAIGN_ID`.
 
-No private keys are stored in environment variables. All signing is done in air-gapped or HSM environments.
+### Compromised TreasuryOperatorCap Holder
+
+1. GuardedTreasury withdrawals require the cap — monitor for unauthorized drain transactions.
+2. No on-chain pause mechanism for treasury — respond within the Sui epoch finality window (~2s).
+3. Escalate to all multisig signers immediately.
+
+---
+
+## Audit Trail
+
+All capability operations leave on-chain evidence:
+- `CampaignCreated` event includes `admin_cap_id` — track on Suiscan.
+- `TreasuryCreated` event includes `operator_cap_id` — track on Suiscan.
+- `ClaimMade` events include claimant address and amount.
+- `CampaignClosed` includes total_claims and total_paid.
+
+Query events: `suix_queryEvents` with `MoveModule` filter on `axiom::claim_campaign`.

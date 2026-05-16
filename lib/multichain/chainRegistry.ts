@@ -190,35 +190,45 @@ export const CHAIN_REGISTRY: ChainRegistryEntry[] = [
   {
     id: 'polygon-mainnet',
     slug: 'polygon',
-    displayName: 'Polygon',
+    displayName: 'Polygon PoS',
     chainIdEvm: 137,
     category: 'evm',
-    roles: ['identity_bridge'],
-    status: 'researching',
+    roles: ['identity_bridge', 'capital_zone'],
+    status: 'configured',
     capabilities: {
-      settlementSupport: false,
+      settlementSupport: true,
       reserveSupport: false,
       identitySupport: true,
       complianceSupport: true,
       custodySupport: false,
       automatedControlLayerSupport: true,
-      paymentRailSupport: false,
+      paymentRailSupport: true,
     },
-    featureFlag: 'ENABLE_POLYGON_IDENTITY_BRIDGE',
-    sourceFilesStatus: 'missing',
-    sdkStatus: 'not_reviewed',
-    docsStatus: 'missing',
-    implementationReady: false,
+    featureFlag: 'CHAIN_POLYGON_ENABLED',
+    sourceFilesStatus: 'attached',
+    sdkStatus: 'reviewed',
+    docsStatus: 'attached',
+    implementationReady: true,
     notes:
-      'Planned identity bridge and credential expansion layer. ' +
-      'ERC-3643 ONCHAINID credentials issued on Arbitrum will be mirrored or ' +
-      'attested to Polygon identity infrastructure for institutional access ' +
-      'bridging. Polygon ID and identity framework source files not yet gathered. ' +
-      'No Polygon integration is live or configured.',
+      'Phase 2 — ERC-3643 AXUSD suite built and ready for Amoy testnet deployment. ' +
+      '8-contract suite (IdentityRegistryStorage, TrustedIssuersRegistry, ' +
+      'ClaimTopicsRegistry, IdentityRegistry, ModularCompliance, CountryAllowModule, ' +
+      'TransferLimitModule, AxiomStable3643) mirrors the live Avalanche deployment. ' +
+      'Identity bridge uses onchainid_mirror mode: Arbitrum ERC-3643 credentials ' +
+      'are attested to Polygon allowlist entries via PolygonIdentityAdapter. ' +
+      'Merkle proof toolchain (keccak256) ready for campaign claims. ' +
+      'Operator dashboard: /operator/chains/polygon-phase2. ' +
+      'Deploy: POLYGON_AMOY_REAL_DEPLOY=true npm run deploy:polygon:amoy',
     metadata: {
-      targetIntegration: 'polygon_id',
-      bridgeDesign: 'attestation_or_mirrored_credential',
-      dependsOn: 'Polygon SDK, Polygon ID documentation',
+      strategicRole: 'payments_settlement',
+      bridgeMode: 'onchainid_mirror',
+      testnet: 'Polygon Amoy (chainId 80002)',
+      deployScript: 'scripts/deploy/polygon/deploy-amoy.mts',
+      contracts: 'contracts/polygon/',
+      sharedRegistry: 'shared/contracts-polygon.ts',
+      operatorDashboard: '/operator/chains/polygon-phase2',
+      hardhatWorkspace: 'hardhat-polygon/',
+      featureFlag: 'CHAIN_POLYGON_ENABLED',
     },
   },
   {
@@ -228,7 +238,7 @@ export const CHAIN_REGISTRY: ChainRegistryEntry[] = [
     chainIdEvm: 43114,
     category: 'evm',
     roles: ['capital_zone'],
-    status: 'researching',
+    status: 'live',
     capabilities: {
       settlementSupport: false,
       reserveSupport: false,
