@@ -255,11 +255,25 @@ export default function SuiClaimPage() {
                 Step 4 — Submit Claim
               </h2>
               <p className="text-xs text-dl-muted mb-4 leading-relaxed">
-                Submit your claim transaction using a Sui wallet (Sui Wallet, Suiet, or Ethos).
-                Call <span className="font-mono text-dl-primary">claim_campaign::claim</span> on
-                campaign <span className="font-mono text-dl-primary">{campaignId}</span> with the
-                proof shown above.
+                Run the command below in your Sui CLI, or call{' '}
+                <span className="font-mono text-dl-primary">claim_campaign::claim</span> from any
+                Sui wallet (Sui Wallet, Suiet, Ethos).
               </p>
+
+              <div className="border border-dl-border p-4 bg-dl-surface mb-4">
+                <p className="text-xs font-mono text-dl-muted uppercase tracking-widest mb-2">CLI Command</p>
+                <pre className="text-xs font-mono text-dl-primary whitespace-pre-wrap break-all leading-relaxed">{[
+                  `sui client ptb \\`,
+                  proof.length === 0
+                    ? `  --make-move-vec "<vector<u8>>" "[]" \\`
+                    : `  --make-move-vec "<vector<u8>>" "${JSON.stringify(proof.map(h => h.match(/.{1,2}/g)?.map(b => parseInt(b, 16)) ?? []))}" \\`,
+                  `  --assign proof \\`,
+                  `  --move-call "${process.env.NEXT_PUBLIC_AXIOM_SUI_PACKAGE_ID ?? '<PACKAGE_ID>'}::claim_campaign::claim" \\`,
+                  `    @${campaignId} proof \\`,
+                  `  --gas-budget 10000000`,
+                ].join('\n')}</pre>
+              </div>
+
               <div className="border border-dl-border p-4 bg-dl-surface">
                 <p className="text-xs font-mono text-dl-muted uppercase tracking-widest mb-2">Transaction Parameters</p>
                 <dl className="grid grid-cols-2 gap-2 text-xs font-mono">
@@ -271,8 +285,8 @@ export default function SuiClaimPage() {
                   <dd className="text-dl-primary">claim</dd>
                   <dt className="text-dl-muted">Campaign Object</dt>
                   <dd className="text-dl-primary break-all">{campaignId}</dd>
-                  <dt className="text-dl-muted">Proof Length</dt>
-                  <dd className="text-dl-primary">{proof.length} nodes</dd>
+                  <dt className="text-dl-muted">Proof Nodes</dt>
+                  <dd className="text-dl-primary">{proof.length} {proof.length === 0 ? '(single-leaf — empty proof)' : ''}</dd>
                 </dl>
               </div>
             </section>

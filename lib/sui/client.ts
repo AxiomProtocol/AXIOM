@@ -99,7 +99,7 @@ export class SuiJsonRpcClient {
     order?: 'ascending' | 'descending';
     cursor?: unknown;
   }): Promise<SuiEventPage> {
-    return rpc<SuiEventPage>('sui_queryEvents', [
+    return rpc<SuiEventPage>('suix_queryEvents', [
       params.query,
       params.cursor ?? null,
       params.limit ?? 20,
