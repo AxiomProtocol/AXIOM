@@ -16,3 +16,12 @@ ALTER TABLE cap_card_deposits RENAME COLUMN increase_transfer_id TO banking_tran
 
 -- bridge_transfers: unit_account_id → banking_account_id
 ALTER TABLE bridge_transfers RENAME COLUMN unit_account_id TO banking_account_id;
+
+-- dao_account_applications: increase_account_* → banking_account_*
+ALTER TABLE dao_account_applications RENAME COLUMN increase_account_id TO banking_account_id;
+ALTER TABLE dao_account_applications RENAME COLUMN increase_account_number TO banking_account_number;
+ALTER TABLE dao_account_applications RENAME COLUMN increase_routing_number TO banking_routing_number;
+
+-- Rename legacy provider tables
+ALTER TABLE IF EXISTS increase_participants RENAME TO banking_participants;
+ALTER TABLE IF EXISTS increase_product_escrows RENAME TO banking_product_escrows;

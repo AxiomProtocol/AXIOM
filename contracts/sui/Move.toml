@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024.beta"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet" }
-MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "framework/mainnet" }
+Sui = { local = "vendor/sui-framework" }
+MoveStdlib = { local = "vendor/move-stdlib" }
 
 [addresses]
 axiom = "0x0"

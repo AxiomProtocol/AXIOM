@@ -43,7 +43,7 @@ import { centsToDecimalString as _centsToDecimalString } from '../money';
  */
 export const centsToDecimalString = _centsToDecimalString;
 
-export type IncreaseEventCategory =
+export type AchEventCategory =
   | 'transaction.created'
   | 'ach_transfer.returned'
   | 'wire_transfer.reversed'
@@ -84,7 +84,7 @@ export function mapAchEvent(
   const category = str(rawPayloadJson['category']) ?? '';
   const occurredAt = parseOccurredAt(rawPayloadJson['created_at']);
 
-  switch (category as IncreaseEventCategory) {
+  switch (category as AchEventCategory) {
     case 'transaction.created': {
       const tx = nested(rawPayloadJson, 'transaction');
       if (!tx) return null;

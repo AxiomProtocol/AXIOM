@@ -572,7 +572,7 @@ export default function FounderOpsPage() {
         setDaoProvisionMsg({
           id: applicationId,
           type: 'success',
-          text: `Provisioned — Account ID: ${json.data.increaseAccountId} · Token: ${json.data.accountToken}`,
+          text: `Provisioned — Account ID: ${json.data.bankingAccountId} · Token: ${json.data.accountToken}`,
         });
         await loadDaoAccounts(k);
       }
@@ -4313,8 +4313,8 @@ export default function FounderOpsPage() {
                                   </span>
                                 </td>
                                 <td className="px-4 py-3 font-dl-mono text-[10px] text-dl-gray">
-                                  {app.increaseAccountId ? (
-                                    <span title={app.increaseAccountId}>{app.increaseAccountId.slice(0, 12)}…</span>
+                                  {app.bankingAccountId ? (
+                                    <span title={app.bankingAccountId}>{app.bankingAccountId.slice(0, 12)}…</span>
                                   ) : '—'}
                                 </td>
                                 <td className="px-4 py-3 font-dl-mono text-xs text-dl-gray">

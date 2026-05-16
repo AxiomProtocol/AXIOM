@@ -33,7 +33,7 @@ export function withBankingProvider(handler: BankingHandler) {
     } catch (err) {
       if (err instanceof BankingProviderUnavailableError) {
         res.status(503).json({
-          error: 'BANKING_UNAVAILABLE',
+          error: 'BANKING_DISABLED',
           reason: err.message,
         });
         return;

@@ -5,7 +5,7 @@
  * The generic ingress pipeline delegates here for signature verification.
  *
  * ACH webhook signature scheme:
- *   Header: ACH-Webhook-Signature (historically "increase-webhook-signature" — preserved below for wire compat)
+ *   Header: X-ACH-Webhook-Signature
  *   Value:  t=<timestamp>,v1=<hex-hmac-sha256>
  *   Signed: HMAC-SHA256(webhookSigningSecret, "<t>.<rawBody>")
  *   Tolerance: |now - t| must be <= 300 seconds (replay guard).
@@ -66,7 +66,7 @@ export async function verifyAchWebhook(
   input: AdapterWebhookVerifyInput,
   cfg: AchAdapterConfig,
 ): Promise<AdapterWebhookVerifyResult> {
-  const sigHeader = header(input.headers, 'increase-webhook-signature');
+  const sigHeader = header(input.headers, 'x-ach-webhook-signature');
 
   if (!sigHeader) {
     return {

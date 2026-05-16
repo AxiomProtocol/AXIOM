@@ -104,13 +104,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // ── Insurance hold gate ──────────────────────────────────────────────────
-    // Require a funded insurance-hold escrow in increase_product_escrows for this
+    // Require a funded insurance-hold escrow in banking_product_escrows for this
     // participant + group before allowing them to join.
     // The required hold = 1 week equivalent (monthly contribution ÷ 4).
     // In development mode we skip this gate to enable local testing.
     if (process.env.NODE_ENV !== 'development') {
       const participantResult = await client.query(
-        `SELECT ip.id FROM increase_participants ip WHERE ip.wallet_address = $1 LIMIT 1`,
+        `SELECT ip.id FROM banking_participants ip WHERE ip.wallet_address = $1 LIMIT 1`,
         [memberAddress.toLowerCase()]
       );
 
@@ -118,16 +118,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         await client.query('ROLLBACK');
         return res.status(402).json({
           success: false,
-          error: 'Nexus account required — register your Axiom Nexus banking account before joining a group.',
-          code: 'NEXUS_NOT_REGISTERED',
+          error: 'Banking account required — register your banking account before joining a group.',
+          code: 'BANKING_NOT_REGISTERED',
         });
       }
 
       const participantId = participantResult.rows[0].id;
 
-      // Check for a funded insurance-hold in increase_product_escrows for this group
+      // Check for a funded insurance-hold in banking_product_escrows for this group
       const holdResult = await client.query(
-        `SELECT id, status FROM increase_product_escrows
+        `SELECT id, status FROM banking_product_escrows
          WHERE participant_id = $1
            AND product = 'wealth-practice'
            AND purpose = 'insurance-hold'

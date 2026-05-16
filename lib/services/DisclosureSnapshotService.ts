@@ -53,7 +53,7 @@ export class DisclosureSnapshotService {
       const sourceBreakdown: SourceBreakdownItem[] = [];
 
       if (composition.totalFiatUsd > 0) {
-        const increaseAccount = accounts.find((a) => a.provider === 'increase');
+        const increaseAccount = accounts.find((a) => a.provider === 'ach');
         sourceBreakdown.push({
           label: 'Fiat — USD (Banking Rail)',
           usdValue: composition.totalFiatUsd,

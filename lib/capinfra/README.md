@@ -555,12 +555,12 @@ Operator UI page: `/operator/adapters/ach` — health, recent reconciliation run
 | # | Check |
 |---|-------|
 | 34 | ACH adapter row present in `cap_adapters` |
-| 35 | `adapters/increase/health` → 200, `mode=DRY_RUN`, `kind=ACH` |
+| 35 | `adapters/ach/health` → 200, `mode=DRY_RUN`, `kind=ACH` |
 | 36 | DRY_RUN ACH full settlement lifecycle: PENDING → AUTHORIZED → SETTLED, `externalRef` prefixed `DRYRUN-ACH-` |
 | 37 | ACH webhook with bad signature → 202 `QUARANTINED` |
 | 38 | ACH webhook with valid signature → 202 `RECEIVED` (or skip if secret not provisioned) |
 | 39 | Duplicate ACH webhook → 202, `isDuplicate=true` |
-| 40 | `adapters/increase/reconcile` → 200, DRY_RUN short-circuit, `comparedCount=0` |
+| 40 | `adapters/ach/reconcile` → 200, DRY_RUN short-circuit, `comparedCount=0` |
 | 41 | `reconciliation/runs/[id]/drift` → 200, `rows=[]`, no spurious drift from DRYRUN-ACH-* refs |
 
 ## Phase 3B.3 — ACH Adapter Control Plane (production rollout)

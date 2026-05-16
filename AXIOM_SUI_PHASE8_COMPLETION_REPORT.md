@@ -2,7 +2,7 @@
 
 **Package:** `contracts/sui/` (single canonical package)
 **Report Date:** 2026-05-16
-**Status:** COMPLETE (Session 8 — 28/28 tests PASS with Sui CLI v1.71.1)
+**Status:** COMPLETE (Session 9 — 28/28 tests PASS with Sui CLI v1.72.1)
 
 ---
 
@@ -18,6 +18,7 @@
 | Session 6 | 2026-05-16 | TypeScript toolchain, API, UI, documents, package structure | COMPLETE |
 | Session 7 | 2026-05-16 | TypeScript @mysten/sui module declarations, Move.toml + sources/, final tsc validation | COMPLETE |
 | Session 8 | 2026-05-16 | **28/28 `sui move test` PASS — CLI v1.71.1, harness-injection workaround resolved** | **COMPLETE** |
+| Session 9 | 2026-05-16 | **28/28 `sui move test` PASS — CLI v1.72.1, local vendor deps bypass disk-quota git index issue** | **COMPLETE** |
 
 ---
 
