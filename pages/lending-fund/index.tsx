@@ -1057,7 +1057,7 @@ export default function LendingFundPage() {
               </div>
             )}
 
-            {!evkLoading && evkVault && (
+            {!evkLoading && evkVault && !evkVault.withdrawn && (
               <>
                 {evkVault.status === 'PENDING_DEPLOYMENT' && (
                   <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6">

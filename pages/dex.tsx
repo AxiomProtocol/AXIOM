@@ -160,7 +160,7 @@ export default function DexPage() {
     <DesignLawLayout>
       <Head>
         <title>Axiom Protocol Exchange — Layer 01.5 Exchange + Peg | AXUSD on Arbitrum One</title>
-        <meta name="description" content="The Axiom Protocol's Layer 01.5 exchange and peg layer. Swap AXUSD, provide liquidity via EulerSwap for dual swap and lending yield, and support PSM-backed peg maintenance on Arbitrum One." />
+        <meta name="description" content="The Axiom Protocol's Layer 01.5 exchange and peg layer. Swap AXUSD via Camelot V2 or the Canonical PSM and support PSM-backed peg maintenance on Arbitrum One. EulerSwap LP integration has been withdrawn." />
       </Head>
 
       <div className="mb-6">
@@ -233,8 +233,8 @@ export default function DexPage() {
         <div className="grid gap-0" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
           {[
             {
-              title: 'Concentrated Liquidity Depth',
-              desc: 'EulerSwap concentrates LP capital within a narrow band around $1.0000. High depth at the peg means large AXUSD ↔ USDC flows incur minimal slippage, reducing arbitrage opportunity and making sustained deviation harder to execute.',
+              title: 'Protocol Liquidity Depth',
+              desc: 'Camelot V2 provides the primary liquidity depth for the AXM/AXUSD settlement pair. High depth at the peg means large AXUSD ↔ USDC flows incur minimal slippage via the PSM, reducing arbitrage opportunity and making sustained deviation harder to execute. EulerSwap LP has been withdrawn.',
             },
             {
               title: 'Arbitrage Closure Loop',
