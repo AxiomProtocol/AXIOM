@@ -32,14 +32,14 @@ export interface AvalancheContractAddresses {
 
 /** Avalanche C-Chain mainnet (43114) — populated post-Phase 2 mainnet deploy. */
 export const AVALANCHE_CONTRACTS: AvalancheContractAddresses = {
-  IdentityRegistryStorage: '',
-  TrustedIssuersRegistry:  '',
-  ClaimTopicsRegistry:     '',
-  IdentityRegistry:        '',
-  ModularCompliance:       '',
-  CountryAllowModule:      '',
-  TransferLimitModule:     '',
-  AxiomStable3643:         '',
+  IdentityRegistryStorage: '0x586c739f80F14Bf119b631A3F82217393E7aD4b0',
+  TrustedIssuersRegistry:  '0x17AFdc00949Dd3f27e14dF7CC72BD2CcDaAEA44e',
+  ClaimTopicsRegistry:     '0x9B00f8b54580eCb2CFBdf6A25657285B9e8EC94b',
+  IdentityRegistry:        '0xc3bF0915bFb5F9210b8bA9AB2Df102E5B792F7eC',
+  ModularCompliance:       '0x7892EcA641Edd96E251F8267f1F5394886E7FA5F',
+  CountryAllowModule:      '0xBEfeeC85cB79923b1205c3Ca9E75742319C3b4DD',
+  TransferLimitModule:     '0x7122092c95e95C96Dd3098FB8d3236a2e4DB40d1',
+  AxiomStable3643:         '0x98F325185aDaD3D9079944a9bdd99dA315B72322',
 };
 
 /**

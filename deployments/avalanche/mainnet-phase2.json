@@ -1,0 +1,61 @@
+{
+  "network": "avalanche",
+  "chainId": 43114,
+  "deployedAt": "2026-05-16T15:33:24.901Z",
+  "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+  "dryRun": false,
+  "contracts": {
+    "IdentityRegistryStorage": {
+      "address": "0x586c739f80F14Bf119b631A3F82217393E7aD4b0",
+      "txHash": "0xd314909961fb49b5ef1c4e55666785e3617c07e4f2d9263e97ff58c8f2970377"
+    },
+    "TrustedIssuersRegistry": {
+      "address": "0x17AFdc00949Dd3f27e14dF7CC72BD2CcDaAEA44e",
+      "txHash": "0xacbe9366a9b81174f163d7156cd131d8b71bab23a88f9718754d70b8c31eb03b"
+    },
+    "ClaimTopicsRegistry": {
+      "address": "0x9B00f8b54580eCb2CFBdf6A25657285B9e8EC94b",
+      "txHash": "0xf7d2d1cb2fd88a8a7c868eebed9f65961895b0f2a7a582883d23e58b6cc97b53"
+    },
+    "IdentityRegistry": {
+      "address": "0xc3bF0915bFb5F9210b8bA9AB2Df102E5B792F7eC",
+      "txHash": "0xf3938eb799ede138111d06e93c4ede6f28e44dd8b01e9898242eed879842dfc7"
+    },
+    "ModularCompliance": {
+      "address": "0x7892EcA641Edd96E251F8267f1F5394886E7FA5F",
+      "txHash": "0x5dcc3dad463e6f52970198d94838767fcd0d80f1fad135f94d32d9674579c794"
+    },
+    "CountryAllowModule": {
+      "address": "0xBEfeeC85cB79923b1205c3Ca9E75742319C3b4DD",
+      "txHash": "0x64c4ea626c3ead34238c6b882c7aafe1b23f2ef6ffd2c91d0c0b689f26f5238d"
+    },
+    "TransferLimitModule": {
+      "address": "0x7122092c95e95C96Dd3098FB8d3236a2e4DB40d1",
+      "txHash": "0x8a43b5ec23219fc0cd3ad07fb54806063bd52372bf0112fa36820c6bd0d50070"
+    },
+    "AxiomStable3643": {
+      "address": "0x98F325185aDaD3D9079944a9bdd99dA315B72322",
+      "txHash": "0xa4768e91115d64de238d89af7a74ca6bcef5d43036aac4cba3fb8cfd0e3537b4"
+    }
+  },
+  "wiring": [
+    "IdentityRegistryStorage.init()",
+    "TrustedIssuersRegistry.init()",
+    "ClaimTopicsRegistry.init()",
+    "IdentityRegistry.init(TIR, CTR, IRS)",
+    "ModularCompliance.init()",
+    "IdentityRegistryStorage.bindIdentityRegistry(IR)",
+    "ModularCompliance.bindToken(AxiomStable3643)",
+    "ModularCompliance.addModule(CountryAllowModule)",
+    "ModularCompliance.addModule(TransferLimitModule)",
+    "CountryAllowModule.setAllowAll(MC, true)",
+    "IdentityRegistry.addAgent(deployer)",
+    "IdentityRegistry.registerIdentity(deployer)"
+  ],
+  "postDeployChecklist": [
+    "[ ] Verify all 8 contracts on Snowtrace: https://snowtrace.io",
+    "[ ] Update cap_assets DB: chain=avalanche-cchain, chainId=43114, contractAddress=<AxiomStable3643>",
+    "[ ] Retire AXUSD-FUJI row in cap_assets",
+    "[ ] Transfer AdminCap roles to multisig when ready"
+  ]
+}
