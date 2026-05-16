@@ -66,12 +66,12 @@ export function VaultStatusBanner({
   if (status === 'configured') {
     return (
       <div
-        className={`border border-dl-navy bg-dl-bg-alt p-6 mb-8 ${className}`}
+        className={`border border-dl-gold bg-dl-bg-alt p-6 mb-8 ${className}`}
         role="status"
         aria-label="Vault configured status"
       >
         <div className="flex items-center gap-3 mb-4">
-          <span className="font-dl-mono text-xs bg-dl-navy text-white px-2 py-0.5 uppercase tracking-widest">
+          <span className="font-dl-mono text-xs border border-dl-gold text-dl-gold px-2 py-0.5 uppercase tracking-widest">
             Configured
           </span>
           <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest">
@@ -124,15 +124,15 @@ export function VaultStatusBanner({
   if (status === 'withdrawn_empty') {
     return (
       <div
-        className={`border border-red-300 bg-dl-bg-alt p-6 mb-8 ${className}`}
+        className={`border border-red-400 bg-dl-bg-alt p-6 mb-8 ${className}`}
         role="alert"
         aria-label="Integration withdrawn"
       >
         <div className="flex items-center gap-3 mb-3">
-          <span className="font-dl-mono text-xs bg-red-700 text-white px-2 py-0.5 uppercase tracking-widest">
+          <span className="font-dl-mono text-xs border border-red-400 text-red-600 px-2 py-0.5 uppercase tracking-widest">
             Withdrawn
           </span>
-          <span className="font-dl-mono text-xs text-red-700 uppercase tracking-widest">
+          <span className="font-dl-mono text-xs text-red-600 uppercase tracking-widest">
             Integration Decommissioned — No Active Position
           </span>
         </div>
@@ -148,15 +148,15 @@ export function VaultStatusBanner({
   if (status === 'formation') {
     return (
       <div
-        className={`border border-dl-forest bg-dl-bg-alt p-6 mb-8 ${className}`}
+        className={`border border-dl-gold bg-dl-bg-alt p-6 mb-8 ${className}`}
         role="status"
         aria-label="In formation"
       >
         <div className="flex items-center gap-3 mb-3">
-          <span className="font-dl-mono text-xs bg-dl-forest text-white px-2 py-0.5 uppercase tracking-widest">
+          <span className="font-dl-mono text-xs border border-dl-gold text-dl-gold px-2 py-0.5 uppercase tracking-widest">
             Formation
           </span>
-          <span className="font-dl-mono text-xs text-dl-forest uppercase tracking-widest">
+          <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest">
             Architecture In Progress
           </span>
         </div>
@@ -220,12 +220,12 @@ export function VaultStatusBanner({
   if (status === 'coming_soon') {
     return (
       <div
-        className={`border border-dl-border bg-dl-bg-alt p-6 mb-8 ${className}`}
+        className={`border border-dl-gold bg-dl-bg-alt p-6 mb-8 ${className}`}
         role="status"
         aria-label="Coming soon"
       >
         <div className="flex items-center gap-3 mb-3">
-          <span className="font-dl-mono text-xs border border-dl-border text-dl-gray px-2 py-0.5 uppercase tracking-widest">
+          <span className="font-dl-mono text-xs border border-dl-gold text-dl-gold px-2 py-0.5 uppercase tracking-widest">
             Coming Soon
           </span>
         </div>

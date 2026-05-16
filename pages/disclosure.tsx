@@ -1388,12 +1388,15 @@ export default function DisclosurePage() {
           </SectionHeading>
           <div className="border border-dl-border">
             <div className="px-6 py-5 bg-dl-bg-alt border-b border-dl-border">
-              <p className="text-sm text-dl-gray leading-relaxed">
+              <p className="text-sm text-dl-gray leading-relaxed mb-3">
                 The Euler Finance V2 integration — including EulerSwap LP pools, the EVK AXUSD lending vault, and the
                 Euler Earn AXUSD wrapper — has been withdrawn from the Axiom Protocol stack effective Task #510. No user
                 capital was at risk; no public deposits were open at time of decommission. All Euler-dependent API
                 endpoints return HTTP 410. The following surfaces have been updated to reflect the Axiom-native
                 replacement posture.
+              </p>
+              <p className="text-xs text-dl-gray leading-relaxed border-t border-dl-border pt-3">
+                No returns are guaranteed. All yields, rewards, rates, and liquidity conditions are variable and subject to change without notice. Historical rate information, if any, does not indicate or guarantee future performance. No APY, yield rate, or income figure stated or implied in any protocol surface constitutes a commitment or projection. Infrastructure deployment status does not imply active yield availability, public offering readiness, or suitability for any particular participant.
               </p>
             </div>
             {[

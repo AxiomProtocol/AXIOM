@@ -853,6 +853,21 @@ export default function AxauPage() {
         ))}
       </div>
 
+      {/* Architecture Separation Callout */}
+      <div style={{ border: '1px solid #d1d5db', background: '#faf9f7', padding: '16px 20px', display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ flex: '1 1 280px' }}>
+          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#b8860b', letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 5px' }}>Architecture — Separation of Layers</p>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: '#6b7280', lineHeight: 1.65, margin: 0 }}>
+            AXAU is the Layer 02 reserve unit — distinct from AXUSD (Layer 01 settlement rail) and the Protocol Exchange (Layer 01.5). No public AMM access or DeFi collateral use is currently active for AXAU. Mint is controlled and identity-gated via ERC-3643. Redemption returns PAXG, not USD.
+          </p>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+          <a href="/axau-disclosure" style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#1e3a5f', textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid #1e3a5f', padding: '6px 12px', background: '#ffffff' }}>AXAU Disclosure →</a>
+          <a href="/reserves" style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#1e3a5f', textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid #d1d5db', padding: '6px 12px', background: '#ffffff' }}>Reserve Status →</a>
+          <a href="/axau-early-access" style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#ffffff', textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', background: '#1e3a5f' }}>Early Access →</a>
+        </div>
+      </div>
+
       <ReserveFlow />
       <HowItWorks />
       <LiveDashboard />

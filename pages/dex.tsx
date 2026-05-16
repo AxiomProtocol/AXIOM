@@ -3,7 +3,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { SwapInterface, PoolList, LiquidityManager, DexStats, UserRewards } from '../components/dex';
-import EulerVaultCard from '../components/EulerVaultCard';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
 
 
@@ -287,13 +286,13 @@ export default function DexPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', border: '1px solid #e5e0d8', background: '#faf9f7' }}>
                 <img src="/visuals/icon-exchange.png" alt="Exchange layer" style={{ width: 56, height: 56, objectFit: 'contain', flexShrink: 0 }} />
                 <div>
-                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#b8860b', margin: '0 0 4px' }}>Layer 01.5 · Settlement Conversion · EulerSwap Routing</p>
-                  <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: '#374151', lineHeight: 1.55, margin: 0 }}>All swaps route through EulerSwap. Quotes reflect live on-chain pool reserves. Slippage is minimal within the AXUSD/USDC peg band.</p>
+                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#b8860b', margin: '0 0 4px' }}>Layer 01.5 · Settlement Conversion · Camelot V2 + PSM</p>
+                  <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: '#374151', lineHeight: 1.55, margin: 0 }}>Swaps route through Camelot V2 and the Peg Stability Module. Quotes reflect live on-chain pool reserves. Slippage is minimal within the AXUSD/USDC peg band.</p>
                 </div>
               </div>
               <div className="bg-dl-bg-alt border border-dl-border p-3">
                 <p className="font-dl-mono text-xs text-dl-gray">
-                  Swap routing: <span className="text-dl-navy">EulerSwap</span>. Quotes reflect on-chain pool reserves.
+                  Swap routing: <span className="text-dl-navy">Camelot V2 + PSM</span>. Quotes reflect on-chain pool reserves.
                 </p>
               </div>
               <TradingViewChart />
@@ -353,44 +352,45 @@ export default function DexPage() {
           )}
           {activeTab === 'earn' && (
             <div className="space-y-6">
-              {/* Earn tab visual accent */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', border: '1px solid #e5e0d8', background: '#faf9f7' }}>
-                <img src="/visuals/dex-rewards.png" alt="Earn yield on AXUSD" style={{ width: 60, height: 60, objectFit: 'contain', flexShrink: 0 }} />
-                <div>
-                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#b8860b', margin: '0 0 4px' }}>Euler Finance · AXUSD Lending Market · Identity-Gated</p>
-                  <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: '#374151', lineHeight: 1.55, margin: 0 }}>Deposit AXUSD to earn lending interest from collateralized borrowers. Interest accrues continuously — claim at any time. No lock-up required.</p>
+              <div className="border-l-4 border-red-400 pl-4 py-1">
+                <p className="font-dl-mono text-xs text-red-600 uppercase tracking-widest mb-1">Integration Withdrawn</p>
+                <p className="text-sm text-dl-gray">The Euler Finance AXUSD lending market integration has been decommissioned. This tab shows the withdrawal record and Axiom-native replacement posture.</p>
+              </div>
+              <div className="border border-red-400 bg-dl-bg-alt p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="font-dl-mono text-xs border border-red-400 text-red-600 px-2 py-0.5 uppercase tracking-widest">Withdrawn</span>
+                  <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest">Euler AXUSD Lending Market — Decommissioned</span>
                 </div>
-              </div>
-              <div className="text-center mb-4">
-                <h2 className="font-dl-serif text-xl text-dl-navy">Earn Yield on AXUSD</h2>
-                <p className="text-dl-gray text-sm mt-1">Deposit AXUSD to earn interest from borrowers via Euler Finance</p>
-              </div>
-              <EulerVaultCard variant="full" showCollateral={true} />
-              <div className="bg-dl-bg-alt p-5 border border-dl-border">
-                <h3 className="text-dl-navy font-dl-serif mb-3">How It Works</h3>
-                <div className="space-y-3">
-                  {[
-                    ['Deposit AXUSD into the Euler vault', 'Your AXUSD is pooled with other lenders'],
-                    ['Borrowers use collateral to borrow AXUSD', 'Collateral: USDC, USDT, WETH, ARB vault shares'],
-                    ['Earn interest from borrowers', 'Interest accrues automatically to your position'],
-                  ].map(([title, detail], i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <div className="w-6 h-6 bg-dl-navy flex items-center justify-center text-white text-sm font-medium">{i + 1}</div>
-                      <div>
-                        <p className="text-dl-navy text-sm">{title}</p>
-                        <p className="text-dl-gray text-xs">{detail}</p>
+                <h2 className="font-dl-serif text-xl text-dl-navy mb-3">Euler Earn AXUSD — Legacy Integration</h2>
+                <p className="text-sm text-dl-gray leading-relaxed mb-4">
+                  The Euler Finance V2 AXUSD lending market — which enabled collateralized lending yield via the EVK AXUSD vault — has been
+                  withdrawn from the Axiom Protocol stack. No deposits were open to the public at time of withdrawal. No user capital was at risk.
+                  All Euler-dependent API endpoints return HTTP 410. Axiom-native earn infrastructure is in the formation phase.
+                </p>
+                <div className="border border-dl-border bg-dl-bg p-4 mb-4">
+                  <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Integration Status</p>
+                  <div className="space-y-1.5 font-dl-mono text-xs">
+                    {[
+                      ['Euler Earn strategy', 'Withdrawn — strategy cap zeroed', 'text-red-600'],
+                      ['EVK AXUSD vault API', 'HTTP 410 — Decommissioned', 'text-red-600'],
+                      ['Active yield', 'None — integration withdrawn', 'text-red-600'],
+                      ['User capital at risk', 'None — no public deposits were open', 'text-dl-forest'],
+                      ['Axiom-native replacement', 'In formation — not yet open', 'text-dl-navy'],
+                    ].map(([label, value, cls]) => (
+                      <div key={label} className="flex justify-between">
+                        <span className="text-dl-gray">{label}</span>
+                        <span className={cls}>{value}</span>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-3">
-                <a href="/earn" className="flex-1 py-3 bg-dl-bg-alt text-dl-navy text-center font-medium border border-dl-border font-dl-mono text-sm">
-                  View All Yield Opportunities
-                </a>
-                <a href="/borrow" className="flex-1 py-3 bg-dl-bg-alt text-dl-navy text-center font-medium border border-dl-border font-dl-mono text-sm">
-                  Borrow AXUSD
-                </a>
+                <p className="text-xs text-dl-gray leading-relaxed">
+                  See{' '}
+                  <Link href="/earn/axusd" className="text-dl-navy underline">Axiom AXUSD Earn Vault</Link>
+                  {' '}for the current configured-state posture and Axiom-native replacement path, or{' '}
+                  <Link href="/disclosure" className="text-dl-navy underline">Institutional Disclosure</Link>
+                  {' '}for the full transition record.
+                </p>
               </div>
             </div>
           )}

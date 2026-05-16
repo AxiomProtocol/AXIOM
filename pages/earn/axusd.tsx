@@ -26,7 +26,6 @@ import { VaultStatusBanner } from '../../components/design-law/VaultStatusBanner
 import {
   EARN_AXUSD_VAULT,
   ERC4626_ABI,
-  EARN_AXUSD_DEPOSITS_ENABLED,
   ARBITRUM_ONE_CHAIN_ID,
   formatUnits18,
   shortAddr,
@@ -342,34 +341,64 @@ export default function EarnAXUSDPage() {
         </div>
       </section>
 
+      {/* ── Legacy Integration Record ───────────────────────────────────── */}
+      <section className="mb-8">
+        <SectionLabel>Legacy Integration — Euler Earn</SectionLabel>
+        <details className="border border-red-400 bg-dl-bg-alt">
+          <summary className="px-5 py-3 cursor-pointer flex items-center gap-3 select-none">
+            <span className="font-dl-mono text-xs border border-red-400 text-red-600 px-2 py-0.5 uppercase tracking-widest">Withdrawn</span>
+            <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest">Euler Earn Integration — Empty · No Active Position</span>
+          </summary>
+          <div className="px-5 pb-5 pt-3 border-t border-red-200">
+            <p className="text-sm text-dl-gray leading-relaxed mb-3">
+              The Euler Earn AXUSD wrapper — which provided auto-compounding yield via
+              Euler V2 strategy allocation — has been withdrawn from the Axiom stack.
+              No user capital was at risk; no public deposits were open at time of withdrawal.
+              The vault retains its on-chain deployment for reference reads only.
+            </p>
+            <div className="border border-dl-border bg-dl-bg p-4 mb-3">
+              <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Integration Status</p>
+              <div className="space-y-1.5 font-dl-mono text-xs">
+                <div className="flex justify-between">
+                  <span className="text-dl-gray">Euler Earn strategy</span>
+                  <span className="text-red-600">Withdrawn — strategy cap zeroed</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-dl-gray">EVK vault API</span>
+                  <span className="text-red-600">HTTP 410 — Decommissioned</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-dl-gray">User capital at risk</span>
+                  <span className="text-dl-forest">None — no public deposits were open</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-dl-gray">earnAXUSD on-chain contract</span>
+                  <span className="text-dl-navy">Retained for reference reads only</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-dl-gray leading-relaxed">
+              See{' '}
+              <Link href="/disclosure" className="text-dl-navy underline">Institutional Disclosure</Link>
+              {' '}for the full Euler transition record, or{' '}
+              <Link href="/reserves" className="text-dl-navy underline">Reserves</Link>
+              {' '}for current reserve posture.
+            </p>
+          </div>
+        </details>
+      </section>
+
       {/* ── Deposit section ─────────────────────────────────────────────── */}
       <section className="mb-8">
         <SectionLabel>Deposit</SectionLabel>
-
-        {EARN_AXUSD_DEPOSITS_ENABLED ? (
-          <div className="border border-dl-border bg-dl-bg-alt p-5">
-            <div className="border border-dl-gold bg-dl-bg p-3 mb-4 text-xs text-dl-navy">
-              Deposits may be enabled for controlled testing only. The Euler Earn
-              integration has been withdrawn. No strategy yield is active. Capital
-              deposited at this stage does not earn income.
-            </div>
-            <button
-              disabled={!onCorrectChain}
-              className="w-full py-2.5 border border-dl-navy text-dl-navy text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
-              onClick={() => trackEvent('click_deposit_earn_axusd')}
-            >
-              Deposit AXUSD (controlled testing only)
-            </button>
-            <p className="text-dl-gray text-xs text-center mt-2">
-              Arbitrum One required. AXUSD identity registration required.
-            </p>
-          </div>
-        ) : (
-          <DisabledAction
-            title="Deposits not yet open"
-            reason="The Axiom AXUSD Earn Vault is configured but deposits are not yet open. The Euler Earn integration has been withdrawn. Axiom-native earn infrastructure is in formation. No yield, APY, or performance data is available."
-          />
-        )}
+        <DisabledAction
+          title="Deposits not yet open"
+          reason="The Axiom AXUSD Earn Vault is configured but deposits are not yet open. The Euler Earn integration has been withdrawn. Axiom-native earn infrastructure is in formation. No yield, APY, or performance data is available."
+        />
+        <div className="mt-3 flex flex-wrap gap-3">
+          <Link href="/disclosure" className="font-dl-mono text-xs text-dl-navy underline">Institutional Disclosure →</Link>
+          <Link href="/reserves" className="font-dl-mono text-xs text-dl-navy underline">Reserve Status →</Link>
+        </div>
       </section>
 
       {/* ── Borrow section ──────────────────────────────────────────────── */}
