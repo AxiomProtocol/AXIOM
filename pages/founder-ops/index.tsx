@@ -5650,7 +5650,8 @@ export default function FounderOpsPage() {
                                     </td>
                                     <td className="text-right font-dl-mono text-xs text-dl-navy px-3 py-2">{aAmt != null ? fmtUsd(aAmt) : '—'}</td>
                                     <td className="text-right px-3 py-2">
-                                      {exec ? (
+                                      {exec && exec.status === 'executed' ? (
+                                        /* Terminal success — show receipt only, no retry */
                                         <div className="flex flex-col items-end gap-0.5">
                                           <span className={`font-dl-mono text-[10px] border px-1.5 py-0.5 uppercase tracking-wider ${statusBadge(exec.status)}`}>
                                             {exec.status}
@@ -5676,13 +5677,30 @@ export default function FounderOpsPage() {
                                           )}
                                         </div>
                                       ) : aPct > 0 ? (
-                                        <button
-                                          onClick={() => executeAllocationRows(docId, scope, a.key)}
-                                          disabled={rowLoading || allLoading}
-                                          className="font-dl-mono text-[10px] border border-dl-navy text-dl-navy px-2 py-1 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50"
-                                        >
-                                          {rowLoading ? '…' : 'Execute'}
-                                        </button>
+                                        /* Not yet executed (or queued/failed) — show Execute + prior status badge */
+                                        <div className="flex flex-col items-end gap-0.5">
+                                          {exec && (
+                                            <span className={`font-dl-mono text-[10px] border px-1.5 py-0.5 uppercase tracking-wider ${statusBadge(exec.status)}`}>
+                                              {exec.status}
+                                            </span>
+                                          )}
+                                          {exec?.external_url && (
+                                            <a
+                                              href={exec.external_url}
+                                              target="_blank" rel="noopener noreferrer"
+                                              className="font-dl-mono text-[9px] text-dl-navy underline hover:text-dl-forest"
+                                            >
+                                              open rail →
+                                            </a>
+                                          )}
+                                          <button
+                                            onClick={() => executeAllocationRows(docId, scope, a.key)}
+                                            disabled={rowLoading || allLoading}
+                                            className="font-dl-mono text-[10px] border border-dl-navy text-dl-navy px-2 py-1 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50"
+                                          >
+                                            {rowLoading ? '…' : exec ? 'Retry' : 'Execute'}
+                                          </button>
+                                        </div>
                                       ) : (
                                         <span className="font-dl-mono text-[10px] text-dl-gray">—</span>
                                       )}
@@ -5696,22 +5714,30 @@ export default function FounderOpsPage() {
                         </table>
 
                         {/* Execute-all + status row */}
-                        {ai?.result && (
-                          <div className="border-t border-dl-border px-3 py-3 bg-dl-bg-alt flex items-center justify-between gap-3 flex-wrap">
-                            <div className="font-dl-mono text-xs text-dl-gray">
-                              {scopeExecutions.length === 0
-                                ? `Ready to dispatch ${Object.values(ai.result.weights).filter(w => w > 0).length} rows for ${fmtUsd(ai.result.scope_amount)}`
-                                : `${scopeExecutions.length} row${scopeExecutions.length === 1 ? '' : 's'} on file · click Execute on remaining rows`}
+                        {ai?.result && (() => {
+                          const nonZeroCount   = Object.values(ai.result.weights).filter(w => w > 0).length;
+                          const executedCount  = scopeExecutions.filter(e => e.status === 'executed').length;
+                          const pendingCount   = nonZeroCount - executedCount;
+                          const allDone        = executedCount >= nonZeroCount;
+                          return (
+                            <div className="border-t border-dl-border px-3 py-3 bg-dl-bg-alt flex items-center justify-between gap-3 flex-wrap">
+                              <div className="font-dl-mono text-xs text-dl-gray">
+                                {allDone
+                                  ? `All ${nonZeroCount} row${nonZeroCount === 1 ? '' : 's'} executed · ${fmtUsd(ai.result.scope_amount)} dispatched`
+                                  : executedCount === 0
+                                    ? `Ready to dispatch ${nonZeroCount} row${nonZeroCount === 1 ? '' : 's'} for ${fmtUsd(ai.result.scope_amount)}`
+                                    : `${executedCount} of ${nonZeroCount} rows executed · ${pendingCount} pending (queued/failed rows can be retried)`}
+                              </div>
+                              <button
+                                onClick={() => setAllocConfirmOpen({ docId, scope })}
+                                disabled={allLoading || allDone}
+                                className="font-dl-mono text-xs border border-dl-navy bg-dl-navy text-white px-4 py-1.5 uppercase tracking-wider hover:bg-dl-navy-dark disabled:opacity-50"
+                              >
+                                {allLoading ? 'Executing…' : allDone ? 'All executed' : 'Execute all →'}
+                              </button>
                             </div>
-                            <button
-                              onClick={() => setAllocConfirmOpen({ docId, scope })}
-                              disabled={allLoading || scopeExecutions.length >= Object.values(ai.result.weights).filter(w => w > 0).length}
-                              className="font-dl-mono text-xs border border-dl-navy bg-dl-navy text-white px-4 py-1.5 uppercase tracking-wider hover:bg-dl-navy-dark disabled:opacity-50"
-                            >
-                              {allLoading ? 'Executing…' : scopeExecutions.length >= Object.values(ai.result.weights).filter(w => w > 0).length ? 'All executed' : 'Execute all →'}
-                            </button>
-                          </div>
-                        )}
+                          );
+                        })()}
                         {allError && <p className="font-dl-mono text-xs text-dl-error px-3 py-2 border-t border-dl-border">{allError}</p>}
 
                         {ai?.error && <p className="font-dl-mono text-xs text-dl-error px-3 py-2 border-t border-dl-border">{ai.error}</p>}

@@ -22,6 +22,8 @@
  */
 
 import { createOnrampSession, isCdpOnrampConfigured } from '../onramp/sessionService';
+import { mintAxauFromUsd } from './axauMintHelper';
+import { stripeOperatingSpendPayout } from './stripePayoutHelper';
 import type { AllocationAssetKey } from './assets';
 
 export type RailKind =
@@ -129,36 +131,33 @@ export async function dispatchRail(input: RailDispatchInput): Promise<RailResult
       }
     }
 
-    // ── AXAU mint (queued — runs via dedicated mint endpoint with caps) ────
+    // ── AXAU mint (live — converts USD→PAXG via CoinGecko, on-chain mint) ──
     case 'axau_mint': {
-      return {
-        rail, status: 'queued',
-        txHash: null,
-        externalRef: null,
-        externalUrl: '/founder-ops?tab=reserves#axau-mint',
-        note: `AXAU mint queued for $${usdAmount.toFixed(2)} — open Reserves > Trigger Mint to execute (PAXG cap 100/call)`,
-      };
+      return mintAxauFromUsd(usdAmount);
     }
 
-    // ── AXUSD via Camelot swap (queued — manual treasury action) ───────────
+    // ── AXUSD via Camelot swap (queued — requires USDC in treasury wallet) ─
+    // The AXUSD allocation assumes USDC already landed from the Onramp step.
+    // Camelot swap requires an on-chain EOA call with the Camelot V3 router;
+    // wired as queued until the treasury USDC balance is confirmed available.
     case 'camelot_swap': {
       return {
         rail, status: 'queued',
         txHash: null,
         externalRef: null,
-        externalUrl: null,
-        note: `AXUSD acquisition queued for $${usdAmount.toFixed(2)} — execute via Camelot swap from treasury wallet`,
+        externalUrl: 'https://app.camelot.exchange/',
+        note: `AXUSD acquisition queued for $${usdAmount.toFixed(2)} — swap USDC→AXUSD on Camelot after USDC Onramp clears`,
       };
     }
 
-    // ── KAG silver reserve (queued — rail not yet wired) ───────────────────
+    // ── KAG silver reserve (queued — Kinesis API integration pending) ──────
     case 'kag_mint': {
       return {
         rail, status: 'queued',
         txHash: null,
         externalRef: null,
-        externalUrl: null,
-        note: `KAG silver reserve queued for $${usdAmount.toFixed(2)} — silver mint rail pending integration`,
+        externalUrl: 'https://kinesis.money/',
+        note: `KAG silver reserve queued for $${usdAmount.toFixed(2)} — Kinesis API integration pending; purchase KAG on Kinesis.money`,
       };
     }
 
@@ -173,15 +172,9 @@ export async function dispatchRail(input: RailDispatchInput): Promise<RailResult
       };
     }
 
-    // ── Operating spend: Stripe payout (queued — connected account needed) ─
+    // ── Operating spend: Stripe payout (live — balance payout to bank acct) ─
     case 'stripe_payout': {
-      return {
-        rail, status: 'queued',
-        txHash: null,
-        externalRef: null,
-        externalUrl: null,
-        note: `$${usdAmount.toFixed(2)} earmarked for operating spend — fund the operator card via Stripe payout (manual)`,
-      };
+      return stripeOperatingSpendPayout(usdAmount);
     }
 
     case 'noop':
