@@ -120,17 +120,23 @@ export async function swapUsdcToAxusd(usdAmount: number): Promise<RailResult> {
     }
 
     // ── Quote for minAmountOut (0.5% slippage on stable pair) ─────────────
-    let minAmountOut = 0n;
-    let quotedAxusd  = '(quote unavailable)';
+    // If the quote call reverts (pool is illiquid or unresponsive) we block
+    // execution rather than proceeding with minOut=0, which would allow
+    // unbounded slippage and potential treasury loss on bad fills.
+    let minAmountOut: bigint;
+    let quotedAxusd: string;
     try {
       const amountsOut: bigint[] = await router.getAmountsOut(usdcWei, USDC_TO_AXUSD_ROUTE);
       const expectedOut = amountsOut[amountsOut.length - 1];
       minAmountOut = expectedOut * 995n / 1000n; // 0.5% slippage
       quotedAxusd  = parseFloat(ethers.formatUnits(expectedOut, 18)).toFixed(4) + ' AXUSD';
-    } catch {
-      // Quote failed (likely no liquidity for this size). Fallback: proceed
-      // with minOut=0 so the swap either succeeds or reverts on-chain.
-      minAmountOut = 0n;
+    } catch (quoteErr: unknown) {
+      const qMsg = quoteErr instanceof Error ? quoteErr.message : 'quote reverted';
+      return {
+        rail, status: 'failed',
+        txHash: null, externalRef: null, externalUrl: null,
+        note: `Camelot quote failed — cannot establish a safe minAmountOut: ${qMsg.slice(0, 150)}. Pool may be illiquid or router unresponsive. Resolve before retrying.`,
+      };
     }
 
     // ── Approve USDC for Camelot router ───────────────────────────────────

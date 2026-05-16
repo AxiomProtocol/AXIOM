@@ -85,8 +85,20 @@ export async function mintAxauFromUsd(usdAmount: number): Promise<RailResult> {
   }
 
   const rawPaxgAmount = usdAmount / paxgPriceUsd;
-  const capped = rawPaxgAmount > MAX_PAXG_PER_CALL;
-  const paxgAmountFloat = capped ? MAX_PAXG_PER_CALL : Math.floor(rawPaxgAmount * 1e6) / 1e6;
+
+  // If the allocation exceeds the per-call cap, do NOT mint a partial amount.
+  // Return `queued` so the operator knows the row is unexecuted and must be
+  // split into multiple calls each ≤ MAX_PAXG_PER_CALL, or executed via the
+  // manual "Trigger Mint from PAXG" button in the Reserves tab.
+  if (rawPaxgAmount > MAX_PAXG_PER_CALL) {
+    return {
+      rail, status: 'queued',
+      txHash: null, externalRef: null, externalUrl: null,
+      note: `Allocation $${usdAmount.toFixed(2)} ≈ ${rawPaxgAmount.toFixed(4)} PAXG exceeds the ${MAX_PAXG_PER_CALL}-PAXG-per-call cap — split into smaller calls or use the manual mint button`,
+    };
+  }
+
+  const paxgAmountFloat = Math.floor(rawPaxgAmount * 1e6) / 1e6;
 
   if (paxgAmountFloat <= 0) {
     return {
@@ -158,16 +170,12 @@ export async function mintAxauFromUsd(usdAmount: number): Promise<RailResult> {
     const mintTx  = await controller.mintWithAsset(COMPONENT_IDS.XAU, paxgWei);
     await mintTx.wait(1);
 
-    const cappedNote = capped
-      ? ` (capped at ${MAX_PAXG_PER_CALL} PAXG; full allocation $${usdAmount.toFixed(2)} ≈ ${rawPaxgAmount.toFixed(4)} PAXG — re-run to exhaust remainder)`
-      : '';
-
     return {
       rail, status: 'executed',
       txHash: mintTx.hash as string,
       externalRef: `axau-mint-${Date.now()}`,
       externalUrl: `https://arbiscan.io/tx/${mintTx.hash}`,
-      note: `Minted ${quotedAxau || '?'} from ${paxgAmountFloat} PAXG ($${(paxgAmountFloat * paxgPriceUsd).toFixed(2)})${cappedNote}`,
+      note: `Minted ${quotedAxau || '?'} from ${paxgAmountFloat} PAXG ($${(paxgAmountFloat * paxgPriceUsd).toFixed(2)})`,
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'On-chain mint failed';
