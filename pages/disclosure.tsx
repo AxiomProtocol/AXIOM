@@ -952,7 +952,7 @@ export default function DisclosurePage() {
             <div className="px-6 py-3 border-b border-dl-border">
               <p className="text-xs text-dl-gray mb-2">Eight Execution Buckets</p>
               <div className="space-y-1">
-                <p className="text-sm text-dl-navy">1. AXUSD Liquidity — Active EulerSwap pool depth and vault deposits</p>
+                <p className="text-sm text-dl-navy">1. AXUSD Liquidity — PSM + Camelot V2 configured venues; EulerSwap LP integration withdrawn</p>
                 <p className="text-sm text-dl-navy">2. AXM Governance — On-chain governance participation and token management</p>
                 <p className="text-sm text-dl-navy">3. Digital Treasury — BTC/ETH/LINK accumulation based on intelligence signals</p>
                 <p className="text-sm text-dl-navy">4. Deal Intelligence — Properties underwritten and analyzed in the pipeline</p>
