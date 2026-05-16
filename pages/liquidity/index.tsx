@@ -27,17 +27,17 @@ const ASSET_GROUPS: AssetGroup[] = [
       {
         name: 'Peg Stability Module (PSM)',
         type: 'On-Chain Peg Mechanism',
-        status: 'active',
-        statusLabel: 'Active',
-        note: 'Absorbs arbitrage to maintain AXUSD at $1.00. Direct 1:1 on-chain swap against USDC reserve. No slippage within the peg band.',
+        status: 'configured',
+        statusLabel: 'Configured',
+        note: 'Contract deployed and configured on Arbitrum One. Absorbs arbitrage to maintain AXUSD at $1.00 via direct 1:1 on-chain swap against USDC reserve. Participation is identity-gated — not open to general public.',
         verifyHref: '/dex',
       },
       {
         name: 'Camelot V2',
         type: 'AMM Pool — AXM / AXUSD',
-        status: 'active',
-        statusLabel: 'Active',
-        note: 'Primary protocol liquidity venue for the AXM/AXUSD settlement pair. Identity-gated via ERC-3643. Arbitrum One.',
+        status: 'configured',
+        statusLabel: 'Configured',
+        note: 'Infrastructure configured for the AXM/AXUSD settlement pair on Arbitrum One. Active funding posture subject to governance. Identity-gated via ERC-3643.',
         verifyHref: '/dex',
       },
       {
@@ -70,9 +70,9 @@ const ASSET_GROUPS: AssetGroup[] = [
       {
         name: 'Camelot V2',
         type: 'AMM Pool — AXM / AXUSD',
-        status: 'active',
-        statusLabel: 'Active',
-        note: 'Primary AXM liquidity venue. AXM/AXUSD pair on Camelot V2, Arbitrum One. Emissions and LP incentives are governance-controlled.',
+        status: 'planned',
+        statusLabel: 'Planned',
+        note: 'Planned primary AXM liquidity venue. AXM/AXUSD pair on Camelot V2, Arbitrum One. Under governance evaluation — LP funding and emissions not yet active.',
         verifyHref: '/dex',
       },
       {
@@ -120,7 +120,7 @@ function StatusBadge({ status, label }: { status: VenueStatus; label: string }) 
     configured:      'border-dl-gold text-dl-gold',
     planned:         'border-dl-border text-dl-gray',
     disabled:        'border-dl-border text-dl-gray opacity-60',
-    withdrawn_empty: 'border-red-400 text-red-600',
+    withdrawn_empty: 'border-dl-error text-dl-error',
   };
   return (
     <span className={`font-dl-mono text-xs border px-2 py-0.5 whitespace-nowrap ${cls[status]}`}>
