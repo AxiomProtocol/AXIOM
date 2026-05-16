@@ -169,8 +169,13 @@ async function main() {
     console.log('[migrate]        --function update_merkle_root \\');
     console.log(`[migrate]        --args ${newCampaignId} <MERKLE_ROOT_HEX> ${newAdminCapId} \\`);
     console.log(`[migrate]        ${gasBudget} --json`);
-    console.log('[migrate]    Then re-run with DRY_RUN=0 SKIP_STEPS=1,2,3,4 or run activate manually.');
-    console.log('[migrate]    Exiting without activation — campaign is safe (inactive, funded).');
+    console.log('[migrate]    Then run activate manually (campaign is safe — inactive and funded):');
+    console.log(`[migrate]      ${SUI_BIN} client call \\`);
+    console.log(`[migrate]        ${pkg} ${mod} \\`);
+    console.log('[migrate]        --function activate \\');
+    console.log(`[migrate]        --args ${newCampaignId} ${newAdminCapId} \\`);
+    console.log(`[migrate]        ${gasBudget} --json`);
+    console.log('[migrate]    DO NOT re-run this script — the close/create/fund steps have already executed.');
     process.exit(0);
   } else {
     // Root was already embedded in create_campaign_entry — no separate RPC needed.
