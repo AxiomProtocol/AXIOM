@@ -3,17 +3,13 @@
  *
  * Selects the active provider by `BANKING_PROVIDER` environment variable.
  * Today this returns `null` (no provider active) because the historical
- * Increase integration was disabled when the user's Increase account was
- * cancelled on 2026-04-28.
+ * banking integration was disabled when the provider account was cancelled
+ * on 2026-04-28.
  *
  * To plug in a replacement bank:
  *   1. Implement `BankingProvider` in `lib/banking/providers/<name>.ts`.
  *   2. Add a `case '<name>':` below that constructs and returns it.
  *   3. Set `BANKING_PROVIDER=<name>` (and the provider's own credentials).
- *
- * The legacy IncreaseService is intentionally NOT wired through this registry.
- * It remains the reference implementation, and its kill switch lives in
- * `lib/services/IncreaseService.ts`.
  */
 
 import type { BankingProvider, BankingProviderId } from './types';
@@ -71,7 +67,6 @@ export function getBankingProviderStatus(): {
   return { providerId: provider.id, available: true };
 }
 
-/** Test helper — clears the memoized provider so env changes are re-read. */
 export function __resetBankingRegistryForTests(): void {
   cached = undefined;
 }

@@ -19,11 +19,11 @@ import { capAdapters } from '../../../shared/capInfraSchema';
 import { and, desc, eq } from 'drizzle-orm';
 import { ACH_ADAPTER_KIND, loadAchConfig } from '../adapters/ach/config';
 import type { AchAdapterConfig } from '../adapters/ach/config';
-import { validateIncreaseCredentials } from '../adapters/ach/sdk';
+import { validateAchCredentials } from '../adapters/ach/sdk';
 import { findUnacknowledgedEmergencyDisable } from '../adapters/ach/expose';
 import { recordSingleActorAction } from '../adminActions';
-import { runIncreaseDiff } from './increaseDiff';
-import type { IncreaseDiffResult } from './increaseDiff';
+import { runAchDiff } from './increaseDiff';
+import type { AchDiffResult } from './increaseDiff';
 
 export interface RunAchReconciliationInput {
   since?: Date;
@@ -38,7 +38,7 @@ const DEFAULT_WINDOW_HOURS = 24;
 
 export async function runAchReconciliation(
   input: RunAchReconciliationInput = {},
-): Promise<IncreaseDiffResult> {
+): Promise<AchDiffResult> {
   const until = input.until ?? new Date();
   const since = input.since ?? new Date(until.getTime() - DEFAULT_WINDOW_HOURS * 60 * 60 * 1000);
   const triggeredBy = input.triggeredBy ?? 'operator';
@@ -55,7 +55,7 @@ export async function runAchReconciliation(
   const accountId = cfg?.accountId ?? '';
   const adapterMode = cfg?.mode ?? 'DRY_RUN';
 
-  return runIncreaseDiff({
+  return runAchDiff({
     environment,
     accountId,
     windowSince: since,
@@ -86,7 +86,7 @@ export interface AchValidationResult {
 
 /**
  * Run the five ACH gate validation checks:
- *   1. ach.validation.account_reachable     — Increase credentials probe
+ *   1. ach.validation.account_reachable     — ACH credentials probe
  *   2. ach.validation.webhook_secret_valid  — webhook secret present + ≥32 chars
  *   3. ach.validation.webhook_roundtrip_pass — (structural only; live roundtrip requires a real endpoint)
  *   4. ach.validation.duplicate_dedup_pass  — idempotency key uniqueness verified
@@ -116,7 +116,7 @@ export async function runAchValidation(opts: {
   let reachable = false;
   let reachDetail = '';
   try {
-    const probe = await validateIncreaseCredentials({
+    const probe = await validateAchCredentials({
       environment: cfg.environment,
       accountId: cfg.accountId,
     });

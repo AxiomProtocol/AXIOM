@@ -3,7 +3,7 @@
  *
  * Implements Stellar SEP-10 (auth), SEP-24 (interactive ramp),
  * SEP-31 (direct payments), and SEP-38 (quotes) for Axiom Protocol's
- * own Stellar anchor, settled via Increase ACH/wire rails.
+ * own Stellar anchor. ACH/wire settlement pending replacement banking provider.
  *
  * Home domain: axiomprotocol.app
  * TRANSFER_SERVER_SEP0024: https://axiomprotocol.app/api/axiom-rail/sep24

@@ -5,7 +5,7 @@ import { getProviderStatus, type ProviderName } from '../../../lib/providers/pro
 import { systemStateService } from '../../../lib/services/SystemStateService';
 import { eq } from 'drizzle-orm';
 
-const PROVIDERS: ProviderName[] = ['increase', 'circle', 'bitgo', 'paxos'];
+const PROVIDERS: ProviderName[] = ['circle', 'bitgo', 'paxos'];
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });

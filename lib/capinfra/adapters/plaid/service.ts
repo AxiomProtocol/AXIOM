@@ -472,7 +472,7 @@ export interface PlaidAchNumbersResolved {
 /**
  * Resolve a stored Plaid item (and optionally a specific account
  * within it) into the cleartext routing+account numbers needed to
- * submit an ACH transfer to Increase. The cleartext is held in
+ * submit an ACH transfer to the banking provider. The cleartext is held in
  * process memory only and MUST NOT be written to instruction
  * payloadJson, audit payloads, or logs.
  *

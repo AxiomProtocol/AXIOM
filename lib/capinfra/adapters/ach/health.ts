@@ -11,7 +11,7 @@ import { db } from '../../../../server/db';
 import { capWebhookEvents } from '../../../../shared/capInfraSchema';
 import { and, desc, eq, gte, sql } from 'drizzle-orm';
 import { loadAchConfig, ACH_ADAPTER_KIND } from './config';
-import { validateIncreaseCredentials } from './sdk';
+import { validateAchCredentials } from './sdk';
 import type { AdapterHealth } from '../types';
 
 const PROBE_TIMEOUT_MS = 4_000;
@@ -71,7 +71,7 @@ export async function achHealth(): Promise<AdapterHealth> {
   }
 
   const probe = await withTimeout((signal) =>
-    validateIncreaseCredentials({
+    validateAchCredentials({
       environment: cfg.environment,
       accountId: cfg.accountId,
       signal,

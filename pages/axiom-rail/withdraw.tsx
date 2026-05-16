@@ -255,7 +255,7 @@ export default function AxiomRailWithdraw() {
               </div>
 
               <div style={{ background: '#fffbeb', border: '1px solid #b8860b', padding: '0.75rem', marginBottom: '1.5rem', fontSize: 12, color: '#374151' }}>
-                Axiom Rail charges a $0.50 flat fee + 0.1% of the transaction amount. Wire transfers incur an additional $15 outgoing wire fee from Increase.
+                Axiom Rail charges a $0.50 flat fee + 0.1% of the transaction amount. Wire transfers may incur an additional outgoing wire fee from the banking provider.
               </div>
 
               <button type="submit" style={primaryBtn}>

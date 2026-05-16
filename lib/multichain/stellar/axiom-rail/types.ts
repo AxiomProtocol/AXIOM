@@ -1,12 +1,11 @@
 /**
  * Axiom Rail — Internal Types
  *
- * Axiom Rail is Axiom Protocol's own Stellar SEP-24/31/38/10 anchor,
- * built on top of the Increase banking rail (FDIC-insured, ACH/wire).
+ * Axiom Rail is Axiom Protocol's own Stellar SEP-24/31/38/10 anchor.
  *
  * Architecture:
- *   User Stellar wallet → Axiom Rail SEP-24 → Increase ACH/Wire → User bank account
- *   User bank account  → Increase ACH/Wire → Axiom Rail SEP-24 → User Stellar wallet (USDC)
+ *   User Stellar wallet → Axiom Rail SEP-24 → ACH/Wire → User bank account
+ *   User bank account  → ACH/Wire → Axiom Rail SEP-24 → User Stellar wallet (USDC)
  */
 
 export type AxiomRailAssetCode = 'USDC' | 'AXUSD' | 'AXAU';
@@ -101,7 +100,7 @@ export interface AxiomRailQuote {
   };
 }
 
-export interface IncreaseTransferRequest {
+export interface AchTransferRequest {
   account_number: string;
   routing_number: string;
   amount_cents: number;
@@ -110,7 +109,7 @@ export interface IncreaseTransferRequest {
   type: 'ach' | 'wire';
 }
 
-export interface IncreaseTransferResult {
+export interface AchTransferResult {
   transfer_id: string;
   status: string;
   amount_cents: number;

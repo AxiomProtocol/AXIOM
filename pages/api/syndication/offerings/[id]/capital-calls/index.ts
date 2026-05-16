@@ -152,27 +152,9 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
     let unitPaymentId: string | null = null;
 
     if (callCurrency === 'USD' && triggerACH === true) {
-      const unitCustomerId = sub.investor_meta?.unitCustomerId;
-      if (unitCustomerId) {
-        try {
-          const { UnitPaymentService } = await import('../../../../../../lib/services/UnitPaymentService');
-          const paymentService = new UnitPaymentService();
-          const achResult = await paymentService.createAchDebit({
-            walletAddress: wallet,
-            toAccountId: process.env.UNIT_TREASURY_ACCOUNT_ID || '',
-            counterpartyId: unitCustomerId,
-            amountCents: Math.round(callAmount * 100),
-            description: `Capital Call — ${offering.name} — ${memoCode}`,
-            purpose: 'capital_call',
-          });
-          if (achResult.success && achResult.unitPaymentId) {
-            achTriggered = true;
-            unitPaymentId = achResult.unitPaymentId;
-          }
-        } catch (err) {
-          console.error('[CapitalCall] ACH trigger failed:', err);
-        }
-      }
+      // ACH payment trigger via banking provider is not available.
+      // Banking provider slot is open — see lib/banking/registry.ts.
+      // unitPaymentId remains null; achTriggered remains false.
     }
 
     const callResult = await pool.query(
@@ -228,7 +210,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, offeringId:
           instructionsHtml = `
             <div style="background:#f0f4ff;padding:20px;margin:16px 0;font-family:monospace;">
               <p style="margin:0 0 8px;font-weight:bold;">Wire/ACH Instructions</p>
-              <p style="margin:0 0 4px;">Bank: Axiom Protocol Treasury (Unit Finance / Evolve Bank & Trust)</p>
+              <p style="margin:0 0 4px;">Bank: Axiom Protocol Treasury</p>
               <p style="margin:0 0 4px;">Beneficiary: Axiom Protocol LLC</p>
               ${routingNumber ? `<p style="margin:0 0 4px;">Routing: ${routingNumber}</p>` : ''}
               ${accountNumber ? `<p style="margin:0 0 4px;">Account: ${accountNumber}</p>` : ''}

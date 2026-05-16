@@ -55,7 +55,7 @@ export type ReserveBucketType =
   | 'protocol_instrument'     // AXAU — do not double-count into coverage numerator
   | 'governance_inventory'    // AXM — governance token reserve
   | 'protocol_stable_inventory' // AXUSD held by protocol (the liability, not backing)
-  | 'fiat_reserve';           // Fiat USD (Increase bank, off-chain)
+  | 'fiat_reserve';           // Fiat USD (banking rail, off-chain)
 
 export type SourceType =
   | 'live_rpc'      // Direct on-chain eth_call / balanceOf

@@ -5,7 +5,7 @@
  * settlement event has been confirmed by the Axiom Rail settlement layer.
  *
  * This endpoint is called ONLY by:
- *   - The Axiom Rail monitor (after detecting a verified Increase ACH/wire receipt
+ *   - The Axiom Rail monitor (after detecting a verified ACH/wire receipt
  *     or SEP-24 deposit matching the escrow ID and amount).
  *   - An authorized admin after manual reconciliation of a confirmed deposit.
  *

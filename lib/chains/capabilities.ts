@@ -55,7 +55,7 @@ const ARBITRUM_CAPABILITIES: Record<ChainCapabilityKey, boolean> = {
   reserve: true,
   issuance: true,
   policy: true,
-  payments: false,    // Payments routed via Increase ACH, not Arbitrum itself
+  payments: false,    // Payments routed via ACH banking rail, not Arbitrum itself
   treasury: true,
   identity: true,
   distribution: false, // Distribution is Sui's strategic role

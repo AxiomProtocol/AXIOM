@@ -9,7 +9,7 @@
  *   - Founder Ops dashboard
  *
  * Active anchor: Axiom Rail (axiomprotocol.app) — Axiom Protocol's own
- * Stellar SEP-10/24/31/38 anchor, settled via Increase ACH/Wire rails.
+ * Stellar SEP-10/24/31/38 anchor. ACH/Wire settlement pending replacement banking provider.
  */
 
 // ─── Network ──────────────────────────────────────────────────────────────────
@@ -109,7 +109,7 @@ export const ANCHOR_CANDIDATES: AnchorCandidate[] = [
     sep38Support: true,
     partnershipRequired: false,
     evaluationStatus: 'live',
-    notes: 'Axiom Protocol\'s own Stellar anchor. Settled via Increase (FDIC-insured ACH/wire). No third-party partnership required. Full SEP-10/24/31/38 support. Home domain: axiomprotocol.app.',
+    notes: 'Axiom Protocol\'s own Stellar anchor. ACH/Wire settlement pending replacement banking provider. No third-party partnership required. Full SEP-10/24/31/38 support. Home domain: axiomprotocol.app.',
   },
   {
     anchorId: 'testanchor-sdf',
@@ -166,7 +166,7 @@ export const STELLAR_SEP_CAPABILITIES: SEPCapability[] = [
     description: 'Interactive Anchor Specification',
     status: 'implemented',
     specUrl: 'https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0024.md',
-    usedFor: 'Axiom Rail primary ramp protocol. USDC ↔ USD interactive deposit and withdrawal settled via Increase ACH/Wire.',
+    usedFor: 'Axiom Rail primary ramp protocol. USDC ↔ USD interactive deposit and withdrawal. ACH/Wire settlement pending replacement banking provider.',
   },
   {
     protocol: 'SEP-0031',

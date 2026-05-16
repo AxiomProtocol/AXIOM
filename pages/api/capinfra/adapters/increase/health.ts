@@ -1,5 +1,5 @@
 /**
- * Capital Infrastructure — Increase adapter admin-detail health endpoint (3B.2).
+ * Capital Infrastructure — ACH adapter admin-detail health endpoint (3B.2).
  * Admin-gated. The PUBLIC /api/capinfra/health is unchanged.
  * reachable=false with a synthetic sandbox accountId is expected in DRY_RUN
  * and must NOT propagate to the public health surface.

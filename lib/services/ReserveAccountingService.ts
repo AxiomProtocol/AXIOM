@@ -5,7 +5,7 @@
  * `reserve_positions` table and computes composition views.
  *
  * Two refresh paths:
- *   refreshPositions()         — existing path: BitGo custodian + fiat (Increase bank)
+ *   refreshPositions()         — existing path: BitGo custodian (fiat banking provider unavailable)
  *   refreshOnChainPositions()  — new path: live on-chain balances for all assets
  *                                via getCanonicalReserveSnapshot(). Call this to
  *                                keep the DB in sync with the canonical model.
@@ -29,7 +29,6 @@ import { db } from '../../server/db';
 import { reservePositions, disclosureSnapshots, treasuryAccounts } from '../../shared/treasurySchema';
 import { TrustSource, classify, type TrustClassification } from '../types/trustSource';
 import { bitGoTreasuryExtension } from './BitGoTreasuryExtension';
-import { increaseTreasuryService } from './IncreaseTreasuryService';
 import { getCanonicalReserveSnapshot, type ReserveBucketType, type SourceType } from '../reserves/getCanonicalReserveSnapshot';
 import { desc, eq } from 'drizzle-orm';
 import { ethers } from 'ethers';
@@ -101,7 +100,7 @@ export class ReserveAccountingService {
 
   /**
    * Existing custodian + fiat refresh path.
-   * Writes BitGo positions and Increase (fiat) balance to `reserve_positions`.
+   * Writes BitGo positions to `reserve_positions`. Fiat balance unavailable (banking provider slot open).
    * For on-chain assets (ETH, AXAU, AXUSD, AXM), use refreshOnChainPositions().
    */
   async refreshPositions(): Promise<{
@@ -110,10 +109,9 @@ export class ReserveAccountingService {
     error?: string;
   }> {
     try {
-      const [prices, bitgoPositions, fiatBalance] = await Promise.all([
+      const [prices, bitgoPositions] = await Promise.all([
         this.getMarkPrices(),
         bitGoTreasuryExtension.getReserveAssetBalances(),
-        increaseTreasuryService.getCurrentBalance(),
       ]);
 
       const inserts = [];
@@ -143,26 +141,7 @@ export class ReserveAccountingService {
         });
       }
 
-      if (fiatBalance.balanceUsd !== null) {
-        inserts.push({
-          assetSymbol:         'USD',
-          positionType:        'fiat_reserve',
-          quantity:            fiatBalance.balanceUsd.toFixed(8),
-          markPrice:           '1.00000000',
-          usdValue:            fiatBalance.balanceUsd.toFixed(2),
-          valuationSource:     'bank',
-          valuationConfidence: 'high',
-          snapshotAt:          now,
-          metadata: {
-            provider:                  'increase',
-            sourceType:                'internal_db' satisfies SourceType,
-            bucketType:                'fiat_reserve' satisfies ReserveBucketType,
-            includedInTotalReserve:    true,
-            includedInCoverageNumerator: false,
-            trustSource:               fiatBalance.trustSource,
-          },
-        });
-      }
+      // Fiat reserve (banking provider) unavailable — no USD position recorded.
 
       if (inserts.length > 0) {
         await db.insert(reservePositions).values(inserts);

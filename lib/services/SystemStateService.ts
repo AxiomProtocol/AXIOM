@@ -1,7 +1,6 @@
 import { db } from '../../server/db';
 import { partnerIntegrations } from '../../shared/treasurySchema';
 import { getProviderStatus, type ProviderName } from '../providers/providerStatus';
-import { increaseTreasuryService } from './IncreaseTreasuryService';
 import { circleTreasuryService } from './CircleTreasuryService';
 import { bitGoTreasuryExtension } from './BitGoTreasuryExtension';
 import { reserveAccountingService } from './ReserveAccountingService';
@@ -53,7 +52,6 @@ export interface SystemState {
     status: string;
   };
   integrations: {
-    increase: IntegrationStatus;
     circle: IntegrationStatus;
     bitgo: IntegrationStatus;
     paxos: IntegrationStatus;
@@ -63,19 +61,17 @@ export interface SystemState {
 
 export class SystemStateService {
   async getSystemState(): Promise<SystemState> {
-    const providers: ProviderName[] = ['increase', 'circle', 'bitgo', 'paxos'];
-    const [increaseStatus, circleStatus, bitgoStatus, paxosStatus] = providers.map(getProviderStatus);
+    const providers: ProviderName[] = ['circle', 'bitgo', 'paxos'];
+    const [circleStatus, bitgoStatus, paxosStatus] = providers.map(getProviderStatus);
 
-    const [fiatBalance, circleWallets, bitgoPositions, composition, latestSnapshot] =
+    const [circleWallets, bitgoPositions, composition, latestSnapshot] =
       await Promise.allSettled([
-        increaseTreasuryService.getCurrentBalance(),
         circleTreasuryService.getWalletRegistry(),
         bitGoTreasuryExtension.getReserveAssetBalances(),
         reserveAccountingService.getComposition(),
         disclosureSnapshotService.getLatestSnapshot(),
       ]);
 
-    const fiat = fiatBalance.status === 'fulfilled' ? fiatBalance.value : null;
     const circle = circleWallets.status === 'fulfilled' ? circleWallets.value : null;
     const bitgo = bitgoPositions.status === 'fulfilled' ? bitgoPositions.value : null;
     const comp = composition.status === 'fulfilled' ? composition.value : null;
@@ -83,10 +79,10 @@ export class SystemStateService {
 
     return {
       banking: {
-        status: increaseStatus.status,
-        provider: 'increase',
-        balanceUsd: fiat?.balanceUsd ?? null,
-        trustSource: fiat?.trustSource.source ?? TrustSource.UNAVAILABLE,
+        status: 'unavailable',
+        provider: 'none',
+        balanceUsd: null,
+        trustSource: TrustSource.UNAVAILABLE,
         lastSync: null,
       },
       settlement: {
@@ -117,7 +113,6 @@ export class SystemStateService {
         status: snapshot ? 'current' : 'no_snapshot',
       },
       integrations: {
-        increase: { provider: 'increase', ...increaseStatus },
         circle: { provider: 'circle', ...circleStatus },
         bitgo: { provider: 'bitgo', ...bitgoStatus },
         paxos: { provider: 'paxos', ...paxosStatus },
@@ -127,7 +122,6 @@ export class SystemStateService {
   }
 
   async refreshAll(): Promise<{
-    increase: { status: string; detail?: string };
     circle: { status: string; detail?: string };
     bitgo: { status: string; detail?: string };
     reserve: { status: string; positions?: number };
@@ -136,7 +130,6 @@ export class SystemStateService {
     completedAt: string;
   }> {
     const results = {
-      increase: { status: 'skipped', detail: undefined as string | undefined },
       circle: { status: 'skipped', detail: undefined as string | undefined },
       bitgo: { status: 'skipped', detail: undefined as string | undefined },
       reserve: { status: 'skipped', positions: undefined as number | undefined },
@@ -146,17 +139,6 @@ export class SystemStateService {
     };
 
     await Promise.allSettled([
-      (async () => {
-        try {
-          const r = await increaseTreasuryService.sync();
-          results.increase = {
-            status: r.accounts.success ? 'ok' : 'error',
-            detail: r.accounts.error,
-          };
-        } catch (e: any) {
-          results.increase = { status: 'error', detail: e?.message };
-        }
-      })(),
       (async () => {
         try {
           const r = await circleTreasuryService.sync();
@@ -207,9 +189,8 @@ export class SystemStateService {
   }
 
   async seedPartnerIntegrations(): Promise<void> {
-    const providers: ProviderName[] = ['increase', 'circle', 'bitgo', 'paxos'];
+    const providers: ProviderName[] = ['circle', 'bitgo', 'paxos'];
     const integrationTypes: Record<ProviderName, string> = {
-      increase: 'banking',
       circle: 'stablecoin',
       bitgo: 'custody',
       paxos: 'reserve_asset',

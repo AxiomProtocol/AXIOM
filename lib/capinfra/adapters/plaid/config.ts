@@ -1,11 +1,10 @@
 /**
  * Capital Infrastructure — Plaid adapter config (task #242).
  *
- * Plaid is configured purely from environment variables, mirroring the
- * approach Increase uses for INCREASE_API_KEY. There is no
+ * Plaid is configured purely from environment variables. There is no
  * cap_adapters row for Plaid because Plaid is not a settlement adapter
  * (it never originates a transfer — it only sources verified routing
- * and account numbers that the Increase ACH adapter consumes).
+ * and account numbers that the ACH adapter consumes).
  *
  * Required env vars:
  *   PLAID_CLIENT_ID  — Plaid client identifier (public-ish).

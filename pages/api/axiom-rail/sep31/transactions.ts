@@ -4,7 +4,7 @@
  * SEP-31 direct payment initiation.
  * Sending client POSTs a payment request; Axiom Rail returns a Stellar
  * account + memo for the client to send USDC to. Settlement is via
- * Increase ACH or domestic wire to the receiver's bank account.
+ * ACH or domestic wire to the receiver's bank account.
  *
  * Requires SEP-10 JWT in Authorization header.
  * Requires sender identity fields (BSA compliance) in fields.sender.

@@ -166,7 +166,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       propertyAddress: property.propertyAddress,
       landlordName: property.landlordName,
       status: safe.status,
-      message: `Rent payment recorded. Reference: ${memo}. Settlement via Increase ${transferType === 'Wire' ? 'wire (same business day)' : 'ACH (1–3 business days)'}.`,
+      message: `Rent payment recorded. Reference: ${memo}. Settlement via ${transferType === 'Wire' ? 'wire (same business day)' : 'ACH (1–3 business days)'}.`,
     });
   } catch (err) {
     console.error('[AxiomRail Rent] Pay error:', err);

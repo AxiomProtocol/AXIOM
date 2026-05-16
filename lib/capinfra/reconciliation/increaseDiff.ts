@@ -1,7 +1,7 @@
 /**
- * Capital Infrastructure — Increase (ACH) reconciliation diff engine (3B.3).
+ * Capital Infrastructure — ACH reconciliation diff engine.
  *
- * Real diff against the Increase transactions API. Mirrors stellarDiff.ts
+ * Real diff against the ACH provider transactions API. Mirrors stellarDiff.ts
  * in structure and all hard contracts:
  *
  *   - No portfolio, reserve, or settlement table writes.
@@ -10,10 +10,10 @@
  *   - Ambiguous match (>1 instruction per externalRef) → MANUAL_INTERVENTION.
  *   - DRYRUN-ACH-* externalRefs → INFORMATIONAL (expected in DRY_RUN).
  *   - PENDING-APPROVAL-* externalRefs → INFORMATIONAL (MANUAL_APPROVAL mode:
- *     no Increase transfer submitted yet; these are local holding refs).
+ *     no ACH transfer submitted yet; these are local holding refs).
  *   - SUBMITTED instructions ARE included in local lookup (they have a real
- *     Increase transfer id as externalRef and must be compared for drift).
- *   - MANUAL_APPROVAL mode: remote Increase fetch remains enabled because
+ *     ACH transfer id as externalRef and must be compared for drift).
+ *   - MANUAL_APPROVAL mode: remote ACH fetch remains enabled because
  *     approved instructions submit real transfers and may need
  *     reconciliation-confirmed settlement.
  *
@@ -25,10 +25,10 @@ import { db } from '../../../server/db';
 import { capSettlementInstructions } from '../../../shared/capInfraSchema';
 import { and, eq, gte, isNotNull, lte } from 'drizzle-orm';
 import {
-  fetchIncreaseTransactionsPage,
+  fetchAchTransactionsPage,
   decimalStringToCents,
-  type IncreaseTransaction,
-  type IncreaseEnvironment,
+  type AchTransaction,
+  type AchEnvironment,
 } from '../adapters/ach/sdk';
 import { createInstruction, externallySettleInstruction } from '../settlement';
 import { centsToDecimalString } from '../webhooks/achMapping';
@@ -47,12 +47,12 @@ const MAX_PAGES = 20;
 
 // Local-lookup inclusion: AUTHORIZED/EXECUTING/SETTLED + SUBMITTED.
 // PENDING_OPERATOR_APPROVAL uses PENDING-APPROVAL-* refs which have no
-// counterpart in Increase and are classified as INFORMATIONAL.
+// counterpart in the ACH provider and are classified as INFORMATIONAL.
 // PENDING/FAILED/CANCELLED have null externalRef and are excluded by isNotNull.
 const RECON_LOCAL_STATUSES = ['AUTHORIZED', 'EXECUTING', 'SETTLED', 'SUBMITTED'] as const;
 
-export interface IncreaseDiffInput {
-  environment: IncreaseEnvironment;
+export interface AchDiffInput {
+  environment: AchEnvironment;
   accountId: string;
   windowSince: Date;
   windowUntil: Date;
@@ -62,24 +62,24 @@ export interface IncreaseDiffInput {
   dryRun: boolean;
   /**
    * Adapter mode affects reconciliation behavior:
-   *   DRY_RUN       — skip remote Increase API fetch entirely (DRYRUN-* refs have no counterpart)
-   *   MANUAL_APPROVAL — full remote fetch (approved instructions submit to Increase)
+   *   DRY_RUN       — skip remote ACH provider API fetch entirely (DRYRUN-* refs have no counterpart)
+   *   MANUAL_APPROVAL — full remote fetch (approved instructions submit to ACH provider)
    *   LIVE_CANARY / LIVE — full remote fetch + diff
    */
   adapterMode?: string;
 }
 
-export interface IncreaseDiffResult {
+export interface AchDiffResult {
   run: CapReconciliationRun;
   comparedCount: number;
   driftCount: number;
 }
 
 /**
- * Derive the canonical externalRef from an Increase transaction.
+ * Derive the canonical externalRef from an ACH transaction.
  * Returns null when the route type is not yet mapped.
  */
-function deriveExternalRef(tx: IncreaseTransaction): string | null {
+function deriveExternalRef(tx: AchTransaction): string | null {
   const src = tx.source;
   if (!src) return null;
   if (tx.route_type === 'ach' && src.ach_transfer_id) return src.ach_transfer_id;
@@ -88,15 +88,15 @@ function deriveExternalRef(tx: IncreaseTransaction): string | null {
 }
 
 /**
- * Local-holding refs that should never be compared against Increase:
- *   DRYRUN-ACH-*      : synthetic DRY_RUN refs (no Increase account/API call)
- *   PENDING-APPROVAL-* : MANUAL_APPROVAL mode holding refs (no Increase call yet)
+ * Local-holding refs that should never be compared against the ACH provider:
+ *   DRYRUN-ACH-*      : synthetic DRY_RUN refs (no ACH account/API call)
+ *   PENDING-APPROVAL-* : MANUAL_APPROVAL mode holding refs (no ACH call yet)
  */
 function isLocalHoldingRef(ref: string): boolean {
   return ref.startsWith('DRYRUN-ACH-') || ref.startsWith('PENDING-APPROVAL-');
 }
 
-export async function runIncreaseDiff(input: IncreaseDiffInput): Promise<IncreaseDiffResult> {
+export async function runAchDiff(input: AchDiffInput): Promise<AchDiffResult> {
   const run = await createRun({
     adapterKey: 'ACH',
     windowSince: input.windowSince,
@@ -104,10 +104,10 @@ export async function runIncreaseDiff(input: IncreaseDiffInput): Promise<Increas
     triggeredBy: input.triggeredBy,
   });
 
-  // DRY_RUN: skip remote Increase API fetch entirely because DRYRUN-ACH-*
-  // refs are synthetic and never appear in Increase.
+  // DRY_RUN: skip remote ACH API fetch entirely because DRYRUN-ACH-*
+  // refs are synthetic and never appear in the ACH provider.
   if (input.adapterMode === 'DRY_RUN') {
-    const note = 'DRY_RUN_SKIP: remote Increase API fetch omitted in DRY_RUN mode';
+    const note = 'DRY_RUN_SKIP: remote ACH API fetch omitted in DRY_RUN mode';
     await markRunStarted(run.id);
     await markRunCompleted(run.id, 0, 0, note);
     return { run: { ...run, status: 'COMPLETED', comparedCount: 0, driftCount: 0 }, comparedCount: 0, driftCount: 0 };
@@ -127,15 +127,15 @@ export async function runIncreaseDiff(input: IncreaseDiffInput): Promise<Increas
 
 async function _runDiff(
   run: CapReconciliationRun,
-  input: IncreaseDiffInput,
+  input: AchDiffInput,
 ): Promise<{ comparedCount: number; driftCount: number }> {
   // ── Step 1: Page all Increase transactions in the window ──────────
-  const remoteByRef = new Map<string, IncreaseTransaction>();
+  const remoteByRef = new Map<string, AchTransaction>();
   let cursor: string | null = null;
   let pages = 0;
 
   while (pages < MAX_PAGES) {
-    const page = await fetchIncreaseTransactionsPage({
+    const page = await fetchAchTransactionsPage({
       environment: input.environment,
       accountId: input.accountId,
       since: input.windowSince,

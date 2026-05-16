@@ -142,7 +142,7 @@ const PLANNED_CORRIDORS: CorridorRoute[] = [
     minAmountUsd: '10',
     maxAmountUsd: '25000',
     notes:
-      'Configured fiat-to-AXUSD bridge via Increase.com banking rails. ' +
+      'Configured fiat-to-AXUSD bridge via ACH banking rails. ' +
       'User deposits fiat via ACH. Ops team mints AXUSD after ACH settles. ' +
       'This uses the existing BridgeService and is not a blockchain bridge.',
     implementationBlockers: [],

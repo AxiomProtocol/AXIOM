@@ -3,7 +3,7 @@
  *
  * SEP-31 direct payment server info.
  * Describes Axiom Rail's supported assets and required fields for
- * direct cross-border USDC payments settled via Increase ACH/Wire.
+ * direct cross-border USDC payments settled via ACH/Wire banking rail.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';

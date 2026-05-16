@@ -1,5 +1,5 @@
 /**
- * Capital Infrastructure — ACH/Increase adapter entry point (3B.2).
+ * Capital Infrastructure — ACH adapter entry point.
  *
  * The settlement adapter registry imports ONLY this file; partner HTTP
  * client calls are walled off inside ./sdk.ts. See §0.1 isolation rule.
@@ -13,7 +13,7 @@ import { loadAchConfig } from './config';
 
 export const achAdapter: SettlementAdapter = {
   kind: 'ACH',
-  name: 'capinfra-ach-increase',
+  name: 'capinfra-ach',
   async dispatch(input: AdapterDispatchInput) {
     return dispatchAch(input);
   },

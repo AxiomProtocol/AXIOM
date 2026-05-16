@@ -1,9 +1,9 @@
 /**
  * Launch mode configuration.
  *
- * Controls whether bank-rail (ACH / Plaid / Increase / Stellar SEP) surfaces
- * are reachable. Introduced 2026-04-28 alongside the Increase provider
- * deprecation, so the live launch surface is wallet-only until a replacement
+ * Controls whether bank-rail (ACH / Plaid / Stellar SEP) surfaces are
+ * reachable. Introduced 2026-04-28 when the banking provider account was
+ * cancelled, so the live launch surface is wallet-only until a replacement
  * banking provider is integrated.
  *
  * Values:
@@ -47,32 +47,23 @@ export const WALLET_ONLY_REASON =
  */
 export const WALLET_ONLY_GATED_PAGE_PREFIXES: readonly string[] = [
   '/axiom-payment-rails',
-  '/banking',             // /banking, /banking/my-account, /banking/dao-account/*
+  '/banking',
   '/credit',
-  '/dao-payroll',         // /dao-payroll, /dao-payroll/run
+  '/dao-payroll',
   '/direct-deposit',
   '/my-card',
-  '/rent-collection',     // index, setup, dashboard, pay/[slug]
+  '/rent-collection',
 ] as const;
 
 /**
  * API path prefixes gated to 503 in wallet-only mode. Matches the same
- * boundary semantics as the page list. Webhook endpoints are gated here in
- * addition to any handler-level kill switches in IncreaseService — defence
- * in depth.
- *
- * Note: /api/banking/**, /api/capinfra/adapters/increase/**, /api/credit/**,
- * /api/axiom-rail/payroll/**, /api/axiom-rail/rent/**, /api/axiom-rail/sep24/**,
- * /api/axiom-rail/sep31/**, /api/wealth-practice/loans/** etc. are NOT
- * listed here because they already short-circuit via IncreaseService's
- * INCREASE_DISABLED kill switch. Adding them here would be redundant.
- * The list below covers paths NOT routed through IncreaseService.
+ * boundary semantics as the page list. Webhook endpoints are gated here as
+ * defence in depth.
  */
 export const WALLET_ONLY_GATED_API_PREFIXES: readonly string[] = [
-  '/api/plaid',                           // bank linking (token, exchange, item/remove)
-  '/api/webhooks/unit',                   // Unit Finance (alternate banking provider)
-  '/api/capinfra/webhooks/stellar',       // Stellar SEP (carries ACH-leg events)
-  '/api/capinfra/webhooks/increase',      // Capinfra Increase webhook ingress
+  '/api/plaid',
+  '/api/capinfra/webhooks/stellar',
+  '/api/capinfra/webhooks/banking',
 ] as const;
 
 export function isGatedPagePath(pathname: string): boolean {

@@ -7,7 +7,7 @@
  *
  * Hard rules (Phase 2B):
  *   • READ-ONLY. No DB writes, no contract writes, no swaps executed.
- *   • No banking-rail dependencies (no Stripe / Coinbase / Plaid / Increase).
+ *   • No banking-rail dependencies (no Stripe / Coinbase / Plaid / ACH).
  *   • Pure on-chain reads + deterministic math. No slippage / pool-depth models yet.
  *
  * Data sources (no new external services):

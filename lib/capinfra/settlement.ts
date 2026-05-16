@@ -15,12 +15,12 @@
  *
  * ACH LIVE_CANARY / LIVE path:
  *     PENDING → AUTHORIZED → SUBMITTED → (webhook/recon confirmation) → SETTLED
- *                          → FAILED (Increase API error)
+ *                          → FAILED (ACH provider API error)
  *                                      → FAILED (returned/reversed/declined)
  *
  * Contract invariants:
  *   - SUBMITTED ≠ bank-final. No portfolio writes on SUBMITTED.
- *     SUBMITTED means Increase production API accepted the transfer.
+ *     SUBMITTED means ACH provider production API accepted the transfer.
  *     Clearing is confirmed by webhook or reconciliation only.
  *   - No workflow may infer economic completion, reserve credit, treasury
  *     availability, or bank-final settlement from SUBMITTED status alone.
@@ -389,8 +389,8 @@ export async function executeInstruction(
   // ── ACH mode-specific routing ─────────────────────────────────────
   // ACH instructions are routed before the EXECUTING transition based on the
   // current adapter mode. The dispatcher IS NOT called for MANUAL_APPROVAL
-  // (no Increase API call — instruction parks to PENDING_OPERATOR_APPROVAL).
-  // For LIVE_CANARY/LIVE, the dispatcher calls Increase and returns
+  // (no ACH provider API call — instruction parks to PENDING_OPERATOR_APPROVAL).
+  // For LIVE_CANARY/LIVE, the dispatcher calls the ACH provider and returns
   // submitted=true, which routes to SUBMITTED (no portfolio write).
   if (pre.settlementType === 'ACH') {
     return _executeAchInstruction(pre, asset, actor, correlationId);
@@ -573,12 +573,12 @@ async function _executeAchInstruction(
 
   const mode = achCfg.mode;
 
-  // DISABLED: reject immediately (single-actor, no Increase call).
+  // DISABLED: reject immediately (single-actor, no ACH provider call).
   if (mode === 'DISABLED') {
     return _failInstruction(instructionId, actor, correlationId, 'ach_adapter_disabled');
   }
 
-  // MANUAL_APPROVAL: park to PENDING_OPERATOR_APPROVAL. No Increase call.
+  // MANUAL_APPROVAL: park to PENDING_OPERATOR_APPROVAL. No ACH provider call.
   if (mode === 'MANUAL_APPROVAL') {
     const parked = await db.transaction(async (tx) => {
       const current = await reloadInstruction(tx, instructionId);
@@ -721,7 +721,7 @@ async function _executeAchInstruction(
           payloadJson: {
             achMode: mode,
             externalRef: receipt.externalRef,
-            note: 'SUBMITTED means Increase accepted. Clearing confirmed by reconciliation only.',
+            note: 'SUBMITTED means ACH provider accepted. Clearing confirmed by reconciliation only.',
           },
         },
         tx,
@@ -749,7 +749,7 @@ export interface AchApproveInput {
 
 /**
  * Approve a PENDING_OPERATOR_APPROVAL instruction.
- * Calls the Increase API via the adapter (LIVE_CANARY/LIVE mode) and
+ * Calls the ACH provider API via the adapter (LIVE_CANARY/LIVE mode) and
  * transitions to SUBMITTED. No portfolio write.
  *
  * Only valid when the instruction is in PENDING_OPERATOR_APPROVAL status.
@@ -855,7 +855,7 @@ export async function approveAchInstruction(
         payloadJson: {
           source: 'operator_approval',
           externalRef: receipt.externalRef,
-          note: 'Approved by operator. SUBMITTED means Increase accepted. Clearing by reconciliation only.',
+          note: 'Approved by operator. SUBMITTED means ACH provider accepted. Clearing by reconciliation only.',
         },
       },
       tx,
@@ -877,8 +877,8 @@ export interface AchRejectInput {
 
 /**
  * Reject a PENDING_OPERATOR_APPROVAL instruction → FAILED.
- * No Increase API call. Records a single-actor admin action (ach.rejection).
- * Safe to auto-fail on rollback (no Increase transfer was submitted).
+ * No ACH provider API call. Records a single-actor admin action (ach.rejection).
+ * Safe to auto-fail on rollback (no ACH transfer was submitted).
  */
 export async function rejectAchInstruction(
   input: AchRejectInput,
@@ -1037,7 +1037,7 @@ export async function externallySettleInstruction(
 
     // For SUBMITTED → SETTLED (ACH confirmation): skip the intermediate
     // EXECUTING step. The instruction already passed through the dispatch
-    // gate when it was first submitted to Increase. Transition directly
+    // gate when it was first submitted to the ACH provider. Transition directly
     // to SETTLED.
     const fromSubmitted = current.status === 'SUBMITTED';
 

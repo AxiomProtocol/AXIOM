@@ -1,17 +1,17 @@
 /**
- * Capital Infrastructure — Increase webhook verifier (3B.2).
+ * Capital Infrastructure — ACH webhook verifier.
  *
  * Pure function over (rawBody, headers, configRow). No database I/O.
  * The generic ingress pipeline delegates here for signature verification.
  *
- * Increase webhook signature scheme (published):
- *   Header: Increase-Webhook-Signature
+ * ACH webhook signature scheme:
+ *   Header: ACH-Webhook-Signature (historically "increase-webhook-signature" — preserved below for wire compat)
  *   Value:  t=<timestamp>,v1=<hex-hmac-sha256>
  *   Signed: HMAC-SHA256(webhookSigningSecret, "<t>.<rawBody>")
  *   Tolerance: |now - t| must be <= 300 seconds (replay guard).
  *
  * IMPORTANT — timestamp format:
- *   Increase production sends `t` as ISO 8601 (e.g. "2026-04-19T18:27:41Z").
+ *   Production sends `t` as ISO 8601 (e.g. "2026-04-19T18:27:41Z").
  *   Published docs describe Unix seconds; both formats are handled.
  *   The `t` value is used verbatim in the HMAC signed string regardless
  *   of format — only the replay-window check requires numeric conversion.
@@ -24,8 +24,8 @@
  *   BODY_NOT_JSON_AFTER_VERIFY — body not JSON despite valid signature
  *
  * Special case — UNSUPPORTED_INBOUND_EVENT:
- *   Increase `inbound_ach_transfer.created` events pass signature
- *   verification but are not eligible for settlement in Phase 3B.2.
+ *   `inbound_ach_transfer.created` events pass signature
+ *   verification but are not eligible for settlement.
  *   The verifier returns verified=true with quarantineReason set to
  *   'UNSUPPORTED_INBOUND_EVENT' so the ingress pipeline persists them
  *   as QUARANTINED with that stable reason code.
@@ -96,8 +96,8 @@ export async function verifyAchWebhook(
     };
   }
 
-  // Parse timestamp: Increase production sends ISO 8601 ("2026-04-19T18:27:41Z");
-  // docs describe Unix seconds. Handle both by trying numeric first, then ISO.
+  // Parse timestamp: ISO 8601 ("2026-04-19T18:27:41Z") or Unix seconds.
+  // Handle both by trying numeric first, then ISO.
   // The raw tsStr is still used verbatim in the HMAC signed string (correct).
   let tsSeconds: number;
   if (/^\d+$/.test(tsStr)) {

@@ -2,7 +2,7 @@
  * POST /api/capinfra/settlement/instructions/[id]/reject
  *
  * Reject a PENDING_OPERATOR_APPROVAL ACH instruction → FAILED (Phase 3B.3).
- * No Increase API call. Safe to auto-fail (no transfer submitted).
+ * No ACH provider API call. Safe to auto-fail (no transfer submitted).
  *
  * Records a single-actor admin action (ach.rejection).
  * Only valid for ACH instructions in PENDING_OPERATOR_APPROVAL status.

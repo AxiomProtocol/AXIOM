@@ -55,7 +55,7 @@ export class DisclosureSnapshotService {
       if (composition.totalFiatUsd > 0) {
         const increaseAccount = accounts.find((a) => a.provider === 'increase');
         sourceBreakdown.push({
-          label: 'Fiat — USD (Increase Banking)',
+          label: 'Fiat — USD (Banking Rail)',
           usdValue: composition.totalFiatUsd,
           source: TrustSource.BANK_REPORTED,
           confidence: 'high',

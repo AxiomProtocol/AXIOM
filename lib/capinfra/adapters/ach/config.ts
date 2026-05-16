@@ -1,17 +1,16 @@
 /**
- * Capital Infrastructure — ACH/Increase adapter config loader (3B.3).
+ * Capital Infrastructure — ACH adapter config loader.
  *
  * Reads the active cap_adapters row where kind='ACH'. configJson is
  * Zod-validated so any operator-typed config error surfaces immediately
- * rather than as a runtime explosion inside the Increase SDK call.
+ * rather than as a runtime explosion inside the ACH SDK call.
  *
- * Phase 3B.3 extensions:
- *  - mode enum expanded: DRY_RUN | MANUAL_APPROVAL | LIVE_CANARY | LIVE | DISABLED.
- *  - reconCutoffUtcHour: operator-configurable daily reconciliation deadline (UTC hour).
- *    Default 23 (11 PM UTC). Used by the ACH_RECONCILIATION_OVERDUE policy gate.
+ * Mode enum: DRY_RUN | MANUAL_APPROVAL | LIVE_CANARY | LIVE | DISABLED.
+ * reconCutoffUtcHour: operator-configurable daily reconciliation deadline (UTC hour).
+ *   Default 23 (11 PM UTC). Used by the ACH_RECONCILIATION_OVERDUE policy gate.
  *
- * The webhook signing secret is stored only in configJson (per approved
- * plan Q1 answer: configJson-only, no Replit secret mirror).
+ * The webhook signing secret is stored only in configJson (configJson-only,
+ * no platform secret mirror).
  */
 
 import { z } from 'zod';
@@ -20,7 +19,7 @@ import { capAdapters, type CapAdapter } from '../../../../shared/capInfraSchema'
 import { and, desc, eq } from 'drizzle-orm';
 import { ValidationError } from '../../errors';
 import type { AdapterMode } from '../types';
-import type { IncreaseEnvironment } from './sdk';
+import type { AchEnvironment } from './sdk';
 
 export const ACH_ADAPTER_KIND = 'ACH';
 
@@ -29,8 +28,7 @@ const ZConfig = z.object({
   environment: z.enum(['sandbox', 'production']),
   accountId: z.string().min(1),
   /**
-   * HMAC-SHA256 secret for verifying Increase webhook signatures.
-   * Set in the Increase dashboard per endpoint URL.
+   * HMAC-SHA256 secret for verifying ACH webhook signatures.
    * Stored here only — do NOT mirror in platform secrets.
    * Minimum 16 chars (existing rows); ≥32 required for MANUAL_APPROVAL+ gate.
    */
@@ -81,6 +79,6 @@ export function modeOf(cfg: AchAdapterConfig): AdapterMode {
   return cfg.mode as AdapterMode;
 }
 
-export function envOf(cfg: AchAdapterConfig): IncreaseEnvironment {
+export function envOf(cfg: AchAdapterConfig): AchEnvironment {
   return cfg.environment;
 }

@@ -1,22 +1,22 @@
 /**
- * Capital Infrastructure — ACH adapter dispatcher (3B.3).
+ * Capital Infrastructure — ACH adapter dispatcher.
  *
  * Mode contract:
  *
  *   DRY_RUN         : validate amount + probe credentials, return synthetic
- *                     DRYRUN-ACH-* ref. No Increase API mutation.
+ *                     DRYRUN-ACH-* ref. No ACH API mutation.
  *
  *   MANUAL_APPROVAL : validate amount only. Return pendingApproval=true.
  *                     settlement.ts transitions the instruction to
- *                     PENDING_OPERATOR_APPROVAL without calling Increase.
+ *                     PENDING_OPERATOR_APPROVAL without calling the ACH provider.
  *                     A human operator must approve before the transfer
  *                     is submitted.
  *
- *   LIVE_CANARY     : call Increase POST /ach_transfers (production).
- *   LIVE            : call Increase POST /ach_transfers (production).
+ *   LIVE_CANARY     : call ACH provider POST /ach_transfers (production).
+ *   LIVE            : call ACH provider POST /ach_transfers (production).
  *                     Both return submitted=true so settlement.ts
  *                     transitions to SUBMITTED (NOT SETTLED).
- *                     SUBMITTED means Increase accepted the transfer.
+ *                     SUBMITTED means the ACH provider accepted the transfer.
  *                     It is NOT bank-final settlement.
  *
  *   DISABLED        : throw AdapterDisabledError immediately.
@@ -39,7 +39,7 @@ import {
 import { requireAchConfig, modeOf, envOf } from './config';
 import {
   canonicalAchDryRunRef,
-  validateIncreaseCredentials,
+  validateAchCredentials,
   submitAchTransfer,
   decimalStringToCents,
 } from './sdk';
@@ -71,7 +71,7 @@ export async function dispatchAch(input: AdapterDispatchInput): Promise<AdapterD
     const timer = setTimeout(() => ac.abort(), DISPATCH_TIMEOUT_MS);
     let probe;
     try {
-      probe = await validateIncreaseCredentials({
+      probe = await validateAchCredentials({
         environment: envOf(cfg),
         accountId: cfg.accountId,
         signal: ac.signal,
@@ -105,7 +105,7 @@ export async function dispatchAch(input: AdapterDispatchInput): Promise<AdapterD
 
   // ── MANUAL_APPROVAL ───────────────────────────────────────────────────
   if (mode === 'MANUAL_APPROVAL') {
-    // No Increase API call. Settlement.ts will see pendingApproval=true
+    // No ACH provider API call. Settlement.ts will see pendingApproval=true
     // and transition the instruction to PENDING_OPERATOR_APPROVAL.
     // A human operator (dual-actor) must then approve before any real
     // transfer is submitted.
@@ -119,7 +119,7 @@ export async function dispatchAch(input: AdapterDispatchInput): Promise<AdapterD
         environment: envOf(cfg),
         accountId: cfg.accountId,
         configVersion: cfg.configVersion,
-        note: 'instruction held for operator approval — no Increase API call made',
+        note: 'instruction held for operator approval — no ACH provider API call made',
       },
     };
   }
@@ -137,7 +137,7 @@ export async function dispatchAch(input: AdapterDispatchInput): Promise<AdapterD
  * Approval-time submit path used only by ACH operator approval.
  *
  * This path is intentionally mode-locked to MANUAL_APPROVAL and always
- * performs a real Increase submission (never returns pendingApproval).
+ * performs a real ACH submission (never returns pendingApproval).
  */
 export async function dispatchAchAfterOperatorApproval(
   input: AdapterDispatchInput,
@@ -168,7 +168,7 @@ async function submitAchDispatch(
   // resolved at submit time from the encrypted store keyed by
   // `payloadJson.plaidItemId`. The cleartext is held in process memory
   // only — it is NEVER written back to instruction.payloadJson, audit
-  // payload, or the Increase response receiptJson.
+  // payload, or the ACH provider response receiptJson.
   //
   // For continuity with pre-Plaid integration tests and for the case
   // where a treasury operator submits an internal-account transfer,
@@ -237,7 +237,7 @@ async function submitAchDispatch(
 
   // submitted=true signals settlement.ts to transition to SUBMITTED, NOT SETTLED.
   // No portfolio writes. No reserve credit.
-  // SUBMITTED means Increase accepted. Not bank-final.
+  // SUBMITTED means ACH provider accepted. Not bank-final.
   //
   // receiptJson never carries the cleartext routing/account — only
   // the masked references and (when applicable) the plaidItemId for
@@ -251,15 +251,15 @@ async function submitAchDispatch(
       kind: 'ACH',
       environment: envOf(cfg),
       accountId: cfg.accountId,
-      increaseTransferId: transfer.id,
-      increaseStatus: transfer.status,
+      achTransferId: transfer.id,
+      achStatus: transfer.status,
       configVersion: cfg.configVersion,
       submittedAt: new Date().toISOString(),
       fundingSource: plaidItemId ? 'plaid_auth' : 'manual',
       plaidItemId,
       routingMask: plaidAccountResolution?.routingMask ?? null,
       accountMask: plaidAccountResolution?.accountMask ?? null,
-      note: 'SUBMITTED means Increase API accepted. Clearing confirmed by reconciliation only.',
+      note: 'SUBMITTED means ACH provider accepted. Clearing confirmed by reconciliation only.',
     },
   };
 }

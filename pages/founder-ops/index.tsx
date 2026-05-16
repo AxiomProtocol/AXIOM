@@ -4060,7 +4060,7 @@ export default function FounderOpsPage() {
                       {[
                         { label: 'Stellar Detected', value: railMonitorResult.phase1DetectedWithdraws ?? 0, color: 'text-dl-navy' },
                         { label: 'Payouts Initiated', value: railMonitorResult.phase2InitiatedPayouts ?? 0, color: 'text-dl-forest' },
-                        { label: 'Increase Settled', value: railMonitorResult.phase3ConfirmedWithdraws ?? 0, color: 'text-dl-forest' },
+                        { label: 'ACH Settled', value: railMonitorResult.phase3ConfirmedWithdraws ?? 0, color: 'text-dl-forest' },
                         { label: 'Deposits Matched', value: railMonitorResult.phase1DetectedDeposits ?? 0, color: 'text-blue-700' },
                         { label: 'Errors', value: railMonitorResult.errors?.length ?? 0, color: (railMonitorResult.errors?.length ?? 0) > 0 ? 'text-dl-error' : 'text-dl-gray' },
                       ].map(s => (
@@ -4284,7 +4284,7 @@ export default function FounderOpsPage() {
                       <table className="w-full text-left min-w-[900px]">
                         <thead>
                           <tr className="bg-dl-bg-alt border-b border-dl-border">
-                            {['ID', 'Entity Name', 'EIN', 'Address', 'Status', 'Increase Account', 'Applied', 'Actions'].map(h => (
+                            {['ID', 'Entity Name', 'EIN', 'Address', 'Status', 'ACH Account', 'Applied', 'Actions'].map(h => (
                               <th key={h} className="font-dl-mono text-[9px] text-dl-gray uppercase tracking-wider px-4 py-3">{h}</th>
                             ))}
                           </tr>

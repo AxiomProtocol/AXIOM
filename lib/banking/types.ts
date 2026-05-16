@@ -1,27 +1,24 @@
 /**
  * Provider-agnostic banking interface.
  *
- * Added 2026-04-28 when the Increase account was cancelled. The platform's
- * historical banking integration (lib/services/IncreaseService.ts) is now
- * disabled via a kill switch (INCREASE_DISABLED) but kept in tree as a
- * reference implementation. When a replacement banking provider is selected
- * (Mercury, Column, Brex, Bridge, Lead Bank, etc.) it should:
+ * The historical banking integration was disabled when the provider account
+ * was cancelled on 2026-04-28. The provider slot is open. When a replacement
+ * banking provider is selected (Mercury, Column, Brex, Bridge, Lead Bank, etc.)
+ * it should:
  *
  *   1. Implement `BankingProvider` in `lib/banking/providers/<name>.ts`.
  *   2. Register itself with `lib/banking/registry.ts`.
  *   3. Be selected via the `BANKING_PROVIDER` environment variable.
  *
  * Scope intentionally small. This interface covers only the operations that
- * existing route handlers actually call. Anything provider-specific (e.g.
- * Increase entity onboarding, Mercury treasury sweeps) lives behind the
- * adapter and is exposed through additional optional methods, not added to
- * this contract.
+ * existing route handlers actually call. Anything provider-specific lives
+ * behind the adapter and is exposed through additional optional methods.
  *
  * All amounts are in cents. Errors must extend `BankingProviderError` so HTTP
  * handlers can map them to a consistent shape.
  */
 
-export type BankingProviderId = 'increase' | 'mercury' | 'column' | 'brex' | 'bridge' | 'lead' | 'none';
+export type BankingProviderId = 'mercury' | 'column' | 'brex' | 'bridge' | 'lead' | 'none';
 
 export interface BankAccount {
   id: string;
@@ -93,42 +90,26 @@ export interface WireTransferInput {
 }
 
 export interface BankingProvider {
-  /** Stable provider id used by registry + status surfaces. */
   readonly id: BankingProviderId;
-  /** Human-readable display name. */
   readonly name: string;
 
-  // ── Accounts ──
   getAccount(accountId: string): Promise<BankAccount>;
   listAccounts(): Promise<BankAccount[]>;
   getAccountBalance(accountId: string): Promise<{ availableCents: number; currentCents: number; currency: string }>;
   listAccountNumbers(accountId: string): Promise<BankAccountNumber[]>;
 
-  // ── Transactions ──
   listTransactions(accountId: string, opts?: { limit?: number }): Promise<BankTransaction[]>;
 
-  // ── Transfers ──
   initiateAchTransfer(input: AchTransferInput): Promise<BankTransfer>;
   initiateWireTransfer(input: WireTransferInput): Promise<BankTransfer>;
   getTransfer(transferId: string, network: 'ach' | 'wire'): Promise<BankTransfer>;
 
-  // ── Cards (optional — not all providers issue cards) ──
   issueVirtualCard?(input: { accountId: string; description: string }): Promise<BankCard>;
   listCards?(accountId: string): Promise<BankCard[]>;
 
-  // ── Webhooks ──
-  /**
-   * Verify a webhook signature. Returns true on success. Implementations must
-   * use a constant-time comparison.
-   */
   verifyWebhook(rawBody: Buffer, headers: Record<string, string | string[] | undefined>): boolean;
 }
 
-/**
- * Base class for banking provider errors. HTTP handlers should map any
- * subclass to `{ error: message, code, providerId }` with the embedded HTTP
- * status code.
- */
 export class BankingProviderError extends Error {
   readonly code: string;
   readonly status: number;

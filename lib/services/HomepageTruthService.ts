@@ -287,10 +287,9 @@ export class HomepageTruthService {
     }
 
     // ── Source: provider env-derived status ───────────────────────────
-    const increase = getProviderStatus('increase');
     const bitgo = getProviderStatus('bitgo');
 
-    const bankingLive = sysState?.banking.status === 'live' || increase.status === 'live';
+    const bankingLive = sysState?.banking.status === 'live';
     const custodyLive = sysState?.custody.status === 'live' || bitgo.status === 'live';
     const snapshotAvailable = !!sysState?.disclosure.snapshotId;
 
@@ -426,7 +425,7 @@ export class HomepageTruthService {
     if (pageExists('/banking')) {
       status.push({
         system: 'Banking Infrastructure',
-        status: bankingLive ? 'live' : (increase.status === 'configured' ? 'configured' : 'inactive'),
+        status: bankingLive ? 'live' : 'inactive',
         ...(bankingLive ? { note: 'ACH/wire rails active. FDIC-insured banking partner connected.' } : {}),
         href: '/banking',
         verifiedFrom: 'SystemStateService.banking.status',

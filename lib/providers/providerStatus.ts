@@ -1,4 +1,4 @@
-export type ProviderName = 'increase' | 'circle' | 'bitgo' | 'paxos';
+export type ProviderName = 'circle' | 'bitgo' | 'paxos';
 
 export type ProviderStatus =
   | 'live'
@@ -12,50 +12,8 @@ export interface ProviderStatusResult {
   environment?: string;
 }
 
-function check(
-  vars: string[],
-  liveCheck?: () => boolean,
-  env?: string,
-): ProviderStatusResult {
-  const missing = vars.filter((v) => !process.env[v]);
-  if (missing.length > 0) {
-    return {
-      status: 'not_connected',
-      reason: `Missing env vars: ${missing.join(', ')}`,
-    };
-  }
-  const isLive = liveCheck ? liveCheck() : false;
-  return {
-    status: isLive ? 'live' : 'configured',
-    environment: env,
-  };
-}
-
 export function getProviderStatus(provider: ProviderName): ProviderStatusResult {
   switch (provider) {
-    case 'increase': {
-      // Kill switch: Increase account cancelled 2026-04-28. The legacy code
-      // and DB tables are preserved but every API call short-circuits via
-      // IncreaseService. Surface that here so the integrations console and
-      // any UI consuming this endpoint reflects the true operational state.
-      if (process.env.INCREASE_DISABLED === 'true') {
-        return {
-          status: 'unavailable',
-          reason: 'Increase account cancelled — provider disabled. Replacement banking provider not yet selected.',
-          environment: process.env.INCREASE_ENVIRONMENT ?? 'sandbox',
-        };
-      }
-      const missing = ['INCREASE_API_KEY'].filter((v) => !process.env[v]);
-      if (missing.length > 0) {
-        return { status: 'not_connected', reason: `Missing env vars: ${missing.join(', ')}` };
-      }
-      const env = process.env.INCREASE_ENVIRONMENT ?? 'sandbox';
-      return {
-        status: env === 'production' ? 'live' : 'configured',
-        environment: env,
-      };
-    }
-
     case 'circle': {
       const hasComplianceKey = !!process.env.CIRCLE_COMPLIANCE_API_KEY;
       const hasAppId = !!process.env.CIRCLE_APP_ID;

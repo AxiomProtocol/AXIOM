@@ -196,7 +196,7 @@ export class StellarPaymentAdapter implements StellarPaymentAdapterInterface {
       minAmountUsd: c.minAmountUsd,
       maxAmountUsd: c.maxAmountUsd,
       feeEstimatePercent: c.anchorId === 'axiom-rail' ? 0.1 : null,
-      notes: c.blockers.length > 0 ? `Blockers: ${c.blockers.join('; ')}` : 'Axiom Rail — settled via Increase ACH/Wire.',
+      notes: c.blockers.length > 0 ? `Blockers: ${c.blockers.join('; ')}` : 'Axiom Rail — ACH/Wire settlement pending banking provider.',
     }));
   }
 

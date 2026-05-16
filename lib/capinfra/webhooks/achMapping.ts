@@ -1,12 +1,12 @@
 /**
- * Capital Infrastructure — Increase (ACH) webhook payload mapper (3B.2).
+ * Capital Infrastructure — ACH webhook payload mapper.
  *
- * Pure function: verified Increase webhook payload → typed
+ * Pure function: verified ACH webhook payload → typed
  * SettlementTransitionIntent (or null when no settlement action applies).
  *
  * No database I/O. No imports beyond types.
  *
- * Increase webhook envelope shape:
+ * ACH webhook envelope shape:
  *   {
  *     id:                    "<event-uuid>",        ← externalEventId
  *     created_at:            "<ISO-8601>",
@@ -73,7 +73,7 @@ function parseOccurredAt(raw: unknown): Date {
 }
 
 /**
- * Map a verified Increase webhook payload to a settlement transition
+ * Map a verified ACH webhook payload to a settlement transition
  * intent. Returns null when the event type is advisory-only or when
  * the required externalRef (the transfer/transaction ID) cannot be
  * derived from the payload.

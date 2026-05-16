@@ -52,7 +52,6 @@ export async function register() {
       { key: 'STRIPE_WEBHOOK_SECRET',       service: 'Stripe webhook verification'                      },
       { key: 'BITGO_API_URL',               service: 'BitGo CaaS custody'                              },
       { key: 'BITGO_ENTERPRISE_ID',         service: 'BitGo enterprise ID'                             },
-      { key: 'INCREASE_API_KEY',            service: 'Increase banking'                                 },
       { key: 'STELLAR_SIGNING_SECRET_KEY',  service: 'Axiom Rail (Stellar SEP)'                        },
       { key: 'GEMINI_API_KEY',              service: 'Gemini AI (memo builder)'                        },
       { key: 'RENTCAST_API_KEY',            service: 'RentCast property data'                          },
@@ -82,7 +81,6 @@ export async function register() {
       NODE_ENV:               process.env.NODE_ENV              || 'unknown',
       AXIOM_ENV:              process.env.AXIOM_ENV             || 'unset',
       LAUNCH_MODE:            process.env.LAUNCH_MODE           || 'unset',
-      INCREASE_ENVIRONMENT:   process.env.INCREASE_ENVIRONMENT  || 'unset',
       BANKING_PROVIDER:       process.env.BANKING_PROVIDER      || 'unset',
       EVM_ADAPTER_MODE:       process.env.EVM_ADAPTER_MODE      || 'unset',
       // Presence flags — never log actual key values
@@ -91,7 +89,6 @@ export async function register() {
       stripe_ok:      !!process.env.STRIPE_SECRET_KEY,
       bitgo_ok:       !!(process.env.BITGO_API_URL && process.env.BITGO_ENTERPRISE_ID),
       stellar_ok:     !!process.env.STELLAR_SIGNING_SECRET_KEY,
-      increase_ok:    !!process.env.INCREASE_API_KEY,
       deployer_ok:    !!process.env.DEPLOYER_PRIVATE_KEY,
       gemini_ok:      !!process.env.GEMINI_API_KEY,
       solvency_ok:    !!process.env.ADMIN_SOLVENCY_KEY,

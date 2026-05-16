@@ -104,8 +104,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           accountNumber,
           accountType: 'Checking',
           beneficiary: 'Axiom Protocol LLC',
-          bankAddress: 'Unit Finance / Evolve Bank & Trust',
-          note: 'Wire routing and account details provided via Unit Finance.',
+          bankAddress: 'Axiom Protocol Treasury — banking provider TBD',
+          note: 'Wire routing and account details will be provided when banking provider is configured.',
           configured: true,
         }
       : {

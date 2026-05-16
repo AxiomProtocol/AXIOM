@@ -2,7 +2,7 @@
  * POST /api/capinfra/settlement/instructions/[id]/approve
  *
  * Approve a PENDING_OPERATOR_APPROVAL ACH instruction (Phase 3B.3).
- * Calls the Increase API and transitions to SUBMITTED.
+ * Calls the ACH provider API and transitions to SUBMITTED.
  * No portfolio write — SUBMITTED ≠ bank-final.
  *
  * Records a single-actor admin action (ach.approval).

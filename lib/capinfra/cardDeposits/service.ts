@@ -4,12 +4,12 @@
  * Card-funded onramp via Stripe Checkout. Two intents are supported:
  *   - TREASURY_FUND: card payment lands in Stripe balance, then
  *     subsequently pays out (operator-triggered or auto-scheduled) to
- *     the Increase Nexus account configured as a Stripe external bank
+ *     the banking provider account configured as a Stripe external bank
  *     account. Status walks: PENDING -> PAID -> PAYOUT_INITIATED ->
  *     SETTLED.
  *   - AXUSD_MINT: on PAID, the system mints AXUSD 1:1 to the
  *     targetWalletAddress on Arbitrum. Treasury USD accumulates in
- *     Stripe/Increase as backing.
+ *     Stripe as backing.
  *
  * The webhook handler is idempotent on Stripe event id; the deposit
  * row is idempotent on (userId-supplied or generated) idempotencyKey.
@@ -158,7 +158,7 @@ export async function createCheckoutSession(
         product_data: {
           name: intentLabel(input.intent),
           description: input.intent === 'TREASURY_FUND'
-            ? 'Funds Axiom Protocol USD treasury via Increase.'
+            ? 'Funds Axiom Protocol USD treasury via card payment.'
             : input.intent === 'AXUSD_MINT'
               ? `Mints AXUSD to ${input.targetWalletAddress}.`
               : input.intent === 'AXAU_MINT'

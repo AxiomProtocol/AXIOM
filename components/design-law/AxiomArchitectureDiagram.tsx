@@ -36,9 +36,9 @@ const LAYERS: Layer[] = [
   {
     id: '00',
     title: 'Banking / Fiat Entry',
-    desc: 'FDIC-insured fiat rails via Increase. Institutional crypto custody via BitGo. Primary dollar on-ramp and off-ramp for the stack.',
+    desc: 'Banking provider slot open (prev. provider decommissioned 2026-04-28). Institutional crypto custody via BitGo. Primary dollar on-ramp and off-ramp for the stack.',
     status: 'LIVE',
-    tokens: 'Increase · BitGo · ACH / Wire',
+    tokens: 'BitGo · ACH / Wire',
     href: '/banking',
     flowLabel: 'USD IN',
   },

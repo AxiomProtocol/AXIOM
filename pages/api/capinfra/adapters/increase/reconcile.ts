@@ -1,7 +1,7 @@
 /**
- * Capital Infrastructure — ACH/Increase manual reconciliation runner (3B.2).
+ * Capital Infrastructure — ACH manual reconciliation runner (3B.2).
  *
- * Admin-gated. POST runs the real diff engine against the Increase
+ * Admin-gated. POST runs the real diff engine against the ACH provider
  * transactions API and persists a cap_reconciliation_runs row + drift rows.
  * Returns the run id and summary; callers use
  * GET /reconciliation/runs/[id]/drift to read full drift detail.

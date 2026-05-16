@@ -42,13 +42,13 @@ export interface AdapterDispatchResult {
   /**
    * When true, settlement.ts must transition the instruction to
    * PENDING_OPERATOR_APPROVAL instead of EXECUTING → SETTLED.
-   * The Increase API was NOT called. Safe to auto-fail on rollback.
+   * The ACH provider API was NOT called. Safe to auto-fail on rollback.
    */
   pendingApproval?: boolean;
   /**
    * When true, settlement.ts must transition the instruction to
    * SUBMITTED instead of EXECUTING → SETTLED.
-   * The Increase production API was called and accepted the transfer.
+   * The ACH provider production API was called and accepted the transfer.
    * SUBMITTED ≠ bank-final. Portfolio writes must NOT happen.
    * No workflow may infer economic completion, reserve credit, treasury
    * availability, or bank-final settlement from SUBMITTED status alone.

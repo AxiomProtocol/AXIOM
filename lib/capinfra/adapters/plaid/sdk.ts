@@ -8,7 +8,7 @@
  *
  * A grep for "plaid.com" outside this file (within lib/capinfra) is a
  * regression and must be rejected in review. This mirrors the same
- * isolation rule that applies to the Increase SDK (./ach/sdk.ts).
+ * isolation rule that applies to the ACH SDK (./ach/sdk.ts).
  *
  * Surface (Auth + Balance scope only):
  *   plaidLinkTokenCreate         — POST /link/token/create

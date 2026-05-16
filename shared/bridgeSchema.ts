@@ -36,8 +36,6 @@ export const bridgeTransfers = pgTable('bridge_transfers', {
   fxSnapshotId: uuid('fx_snapshot_id'),
   feeCents: integer('fee_cents').default(0),
   estimatedSettlementMinutes: integer('estimated_settlement_minutes'),
-  unitAccountId: varchar('unit_account_id', { length: 100 }),
-  unitPaymentId: varchar('unit_payment_id', { length: 100 }),
   bitgoWalletId: varchar('bitgo_wallet_id', { length: 100 }),
   bitgoTxId: varchar('bitgo_tx_id', { length: 200 }),
   errorMessage: text('error_message'),
