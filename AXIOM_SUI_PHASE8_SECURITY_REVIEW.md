@@ -2,7 +2,7 @@
 
 **Phase:** 8 — Hardened Staging  
 **Date:** 2026-05-16  
-**Scope:** Move contract suite — `axiom_claim_prototype` package  
+**Scope:** Move contract suite — `claim_campaign` package  
 **Reviewer:** Engineering Lead, Axiom Protocol  
 **Status:** INTERNAL REVIEW COMPLETE — external audit pending (Phase 9 blocker)
 
@@ -18,10 +18,10 @@
 
 | Module | File | Phase 8 Version |
 |--------|------|-----------------|
-| `axiom_claim_prototype::merkle` | `sources/merkle.move` | Hardened (A1) |
-| `axiom_claim_prototype::guarded_treasury` | `sources/guarded_treasury.move` | New (A4/A5/A7) |
-| `axiom_claim_prototype::claim_campaign` | `sources/claim_campaign.move` | Hardened (A2/A3/A6/A7) |
-| `axiom_claim_prototype::axiom_test_claim` | `sources/axiom_test_claim.move` | Updated (A4) |
+| `claim_campaign::merkle` | `sources/merkle.move` | Hardened (A1) |
+| `claim_campaign::guarded_treasury` | `sources/guarded_treasury.move` | New (A4/A5) |
+| `claim_campaign::claim_campaign` | `sources/claim_campaign.move` | Hardened (A1–A7) |
+| `claim_campaign::axiom_test_claim` | `sources/axiom_test_claim.move` | Updated (A4/A5) |
 
 ---
 
@@ -180,18 +180,47 @@ assert!(
 
 ---
 
-## 4. Test Coverage Summary
+## 4. Test Coverage Map — 28 Tests
 
-28 total tests across 2 test modules — all hardening items have ≥1 dedicated test.
+28 total tests across 2 test modules. All hardening items covered by ≥1 dedicated test.
 
-| Hardening | Test(s) |
-|-----------|---------|
-| A1 | `test_proof_depth_limit_enforced` |
-| A2 | `test_campaign_is_closed_flag`, `test_unpause_after_close_aborts` |
-| A3 | `test_destroy_admin_cap`, `test_transfer_admin_cap_to_new_owner` |
-| A4/A5 | `test_guarded_treasury_mint`, `test_supply_cap_exceeded`, `test_double_mint_boundary` |
-| A6 | Policy (no test applicable) |
-| A7 | Events verified via scenario test assertions |
+**merkle_tests.move — 8 tests**
+
+| ID  | Test Name | Covers |
+|-----|-----------|--------|
+| M01 | `test_verify_single_entry_empty_proof` | Core |
+| M02 | `test_verify_valid_two_entry_tree_left_leaf` | Core |
+| M03 | `test_verify_valid_two_entry_tree_right_leaf` | Core |
+| M04 | `test_verify_invalid_wrong_root_fails` | Core |
+| M05 | `test_verify_invalid_wrong_leaf_fails` | Core |
+| M06 | `test_proof_too_deep_aborts` | A1 |
+| M07 | `test_proof_exactly_max_depth_accepted` | A1 boundary |
+| M08 | `test_verify_wrong_sibling_fails` | Core |
+
+**claim_campaign_tests.move — 20 tests**
+
+| ID  | Test Name | Covers |
+|-----|-----------|--------|
+| C01 | `test_create_campaign_success` | Core |
+| C02 | `test_claim_success` | Core |
+| C03 | `test_double_claim_aborts` | A2 |
+| C04 | `test_claim_inactive_campaign_aborts` | A2 |
+| C05 | `test_claim_closed_campaign_aborts` | A2 |
+| C06 | `test_claim_expired_aborts` | A3 |
+| C07 | `test_claim_not_expired_succeeds` | A3 |
+| C08 | `test_claim_no_expiry_succeeds` | A3 |
+| C09 | `test_claim_invalid_proof_aborts` | Core |
+| C10 | `test_claim_paused_aborts` | A7 |
+| C11 | `test_unpause_allows_claim` | A7 |
+| C12 | `test_supply_cap_exceeded_aborts` | A6 |
+| C13 | `test_fund_increases_pool` | A4 |
+| C14 | `test_close_campaign_returns_funds` | A2 |
+| C15 | `test_set_active_false_deactivates` | A2 |
+| C16 | `test_set_active_true_reactivates` | A2 |
+| C17 | `test_admin_cap_wrong_campaign_aborts` | A5 |
+| C18 | `test_pool_insufficient_aborts` | A4 |
+| C19 | `test_has_claimed_true_after_claim` | A2 |
+| C20 | `test_close_then_claim_aborts` | A2 |
 
 ---
 

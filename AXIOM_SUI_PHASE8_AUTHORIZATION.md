@@ -26,7 +26,7 @@ The following Phase 8 deliverables are authorized for staging:
 
 | Item | Detail |
 |------|--------|
-| Package | `axiom_claim_prototype` |
+| Package | `claim_campaign` |
 | Network | Sui Testnet |
 | Package ID | `0x4c3b1501e9567e237186766ccaa5137289dd683a044ce6b83e12459ff7c46602` |
 | Status | Deployed — frozen — testnet only |
@@ -36,7 +36,7 @@ The following Phase 8 deliverables are authorized for staging:
 
 | Item | Detail |
 |------|--------|
-| Package | `axiom_claim_prototype` |
+| Package | `claim_campaign` |
 | Network | Sui Mainnet |
 | Package ID | `0xc330a912193feaa7fe545405810732e494b57ece7bc7ecf0e4412e834c33a487` |
 | Campaign Object | `0xa6dea4cc02df669d45744be5ca3a1a740417b63a2f79838e7f01f5e2828b0982` |
@@ -79,7 +79,7 @@ The following Phase 8 deliverables are authorized for staging:
 ```
 PHASE 8 ENGINEERING DELIVERY
 
-Scope:      axiom_claim_prototype package — hardened staging
+Scope:      claim_campaign package — hardened staging
 Delivered:  2026-05-16
 Network:    Sui Testnet (archive) + Sui Mainnet (candidate)
 Token:      ATC (AXIOM TEST CLAIM) — testnet/community only

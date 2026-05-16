@@ -837,6 +837,22 @@ export default function AxauPage() {
       </Head>
 
       <Hero />
+
+      {/* Reserve Status Strip */}
+      <div style={{ borderTop: `1px solid #e5e0d8`, borderBottom: `1px solid #e5e0d8`, padding: '10px 0', background: '#faf9f7', display: 'flex', flexWrap: 'wrap', gap: 0 }}>
+        {([
+          { label: 'Reserve Access', value: 'Configured', color: '#1a3350' },
+          { label: 'Mint', value: 'Controlled', color: '#b45309' },
+          { label: 'Public AMM', value: 'Disabled', color: '#6b7280' },
+          { label: 'Collateral Use', value: 'Disabled', color: '#6b7280' },
+        ] as const).map(({ label, value, color }) => (
+          <div key={label} style={{ flex: '1 1 auto', minWidth: 120, padding: '6px 16px', textAlign: 'center', borderRight: '1px solid #e5e0d8' }}>
+            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: '#9ca3af', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 3 }}>{label}</p>
+            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color, fontWeight: 700 }}>{value}</p>
+          </div>
+        ))}
+      </div>
+
       <ReserveFlow />
       <HowItWorks />
       <LiveDashboard />

@@ -238,8 +238,14 @@ export default function LendingFundPage() {
     if (activeTab !== 'open-market' || evkVault) return;
     setEvkLoading(true);
     fetch('/api/euler/axusd-vault')
-      .then(r => r.json())
-      .then(d => setEvkVault(d))
+      .then(r => {
+        if (r.status === 410) {
+          setEvkVault({ withdrawn: true });
+          return null;
+        }
+        return r.json();
+      })
+      .then(d => { if (d) setEvkVault(d); })
       .catch(() => {})
       .finally(() => setEvkLoading(false));
   }, [activeTab]);
@@ -288,8 +294,8 @@ export default function LendingFundPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Lending Fund — Layer 03 Capital Deployment | Axiom Protocol</title>
-        <meta name="description" content="Axiom Protocol Lending Fund: SEC Reg D 506(c) bridge loan capital program for real asset acquisition. On-chain settlement and institutional reporting on Arbitrum One. Accredited participants only." />
+        <title>Axiom Credit Vault — Layer 03 Capital Deployment | Axiom Protocol</title>
+        <meta name="description" content="Axiom Credit Vault: SEC Reg D 506(c) bridge loan capital program for real asset acquisition. On-chain settlement and institutional reporting on Arbitrum One. Accredited participants only." />
       </Head>
 
       <div className="border-b border-dl-border mb-10 overflow-hidden">
@@ -301,7 +307,7 @@ export default function LendingFundPage() {
             </div>
             <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">SEC Reg D 506(c) | Accredited Participants Only</p>
             <h1 className="font-dl-serif text-3xl md:text-5xl text-dl-navy leading-tight mb-4">
-              Axiom Lending Fund<br />
+              Axiom Credit Vault<br />
               <span className="text-dl-gold" style={{ fontSize: '60%' }}>Layer 03 Capital Deployment</span>
             </h1>
             <p className="text-sm text-dl-gray max-w-xl leading-relaxed mb-5">
@@ -1017,18 +1023,33 @@ export default function LendingFundPage() {
           <div className="mb-6">
             <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
               <div>
-                <SectionHeading>AXUSD EVK Open Money Market</SectionHeading>
+                <SectionHeading>Axiom Credit Vault — Open Market</SectionHeading>
                 <p className="text-xs text-dl-gray max-w-2xl leading-relaxed">
-                  An Euler V2 vault that holds ERC-3643 compliant AXUSD as its base asset.
-                  Any identity-verified address may deposit USDC as collateral and borrow AXUSD at a variable rate
-                  determined by a Linear Kink IRM (1% base, 5% at 80% utilization, 100% max).
-                  No GEF operator tier required — identity verification and ERC-3643 compliance checks are enforced on-chain.
+                  An Axiom-native open credit market for identity-verified participants. The previous Euler V2 EVK AXUSD
+                  vault integration has been withdrawn. Axiom-native credit infrastructure is in the formation phase.
+                  Participation requirements: identity verification, ERC-3643 compliance, no GEF operator tier required.
                 </p>
               </div>
-              <Link href="/lending-fund/borrow?market=open" className="px-4 py-2 bg-dl-navy text-white text-xs font-medium font-dl-mono whitespace-nowrap">
-                Open Market Borrow &rarr;
-              </Link>
             </div>
+
+            {evkVault?.withdrawn && (
+              <div className="border border-dl-border bg-dl-bg-alt p-5 mb-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="font-dl-mono text-xs border border-red-400 text-red-600 px-2 py-0.5 uppercase tracking-widest">Withdrawn</span>
+                  <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest">Euler V2 Integration Decommissioned</span>
+                </div>
+                <p className="text-sm text-dl-navy font-medium mb-2">EVK AXUSD Vault — Integration Withdrawn</p>
+                <p className="text-xs text-dl-gray leading-relaxed mb-3">
+                  The Euler V2 EVK AXUSD vault that powered this open credit market has been decommissioned as part of
+                  the Euler architecture withdrawal (Task #510). No active liquidity is deployed to the Euler
+                  infrastructure. The API endpoint returns HTTP 410.
+                </p>
+                <p className="text-xs text-dl-gray leading-relaxed">
+                  The Axiom Credit Vault open market is in the formation phase. Axiom-native credit infrastructure
+                  will replace this integration. No participation is currently available through this tab.
+                </p>
+              </div>
+            )}
 
             {evkLoading && (
               <div className="border border-dl-border p-8 text-center">

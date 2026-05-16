@@ -182,12 +182,11 @@ export default function EarnAXUSDPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Axiom Earn AXUSD — Bootstrap / Pre-Live | Axiom Protocol</title>
+        <title>Axiom AXUSD Earn Vault — Configured | Axiom Protocol</title>
         <meta
           name="description"
-          content="Axiom Earn AXUSD (earnAXUSD) vault on Arbitrum One. Deployed and recognized by Euler, pending activation. Not yet a live yield product."
+          content="Axiom AXUSD Earn Vault on Arbitrum One. Configured — deposits not yet open. Euler Earn integration withdrawn. Axiom-native earn architecture in formation."
         />
-        <meta name="robots" content="noindex" />
       </Head>
 
       {/* ── Page header ────────────────────────────────────────────────── */}
@@ -197,28 +196,28 @@ export default function EarnAXUSDPage() {
           <span>/</span>
           <span className="text-dl-navy">AXUSD Vault</span>
         </div>
-        <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">{v.name}</h1>
+        <h1 className="font-dl-serif text-3xl text-dl-navy mb-1">Axiom AXUSD Earn Vault</h1>
         <p className="text-dl-gray text-sm">
-          ERC-4626 yield vault on Arbitrum One — Bootstrap / Pre-Live
+          Configured — Deposits Not Yet Open · Arbitrum One
         </p>
       </div>
 
       {/* ── Status badges ──────────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-2 mb-6">
-        <Badge label="Bootstrap"     variant="warning"  />
-        <Badge label="Euler Earn"    variant="neutral"  />
-        <Badge label="Arbitrum One"  variant="network"  />
-        <Badge label="Yield Inactive" variant="disabled" />
-        <Badge label="Borrow Disabled" variant="disabled" />
+        <Badge label="Configured"       variant="network"  />
+        <Badge label="Deposits Paused"  variant="warning"  />
+        <Badge label="Arbitrum One"     variant="network"  />
+        <Badge label="Yield Inactive"   variant="disabled" />
+        <Badge label="Euler — Legacy"   variant="disabled" />
       </div>
 
-      {/* ── Bootstrap/Pre-Live banner ───────────────────────────────────── */}
+      {/* ── Configured status banner ───────────────────────────────────── */}
       <VaultStatusBanner
-        vaultName={v.name}
+        vaultName="Axiom AXUSD Earn Vault"
         network="Arbitrum One"
         limitations={v.limitations}
         launchConditions={v.launchConditions}
-        status={v.status}
+        status="configured"
       />
 
       {/* ── Wrong network notice (client-side only) ─────────────────────── */}
@@ -236,22 +235,25 @@ export default function EarnAXUSDPage() {
           <Row label="Standard"        value={v.standard} mono={false} />
           <Row label="Underlying asset" value={`${v.asset.symbol} — ${v.asset.address}`} />
           <Row label="Chain"           value="Arbitrum One (42161)" />
-          <Row label="Factory"         value={v.factory} />
+          <Row label="Factory (Legacy)" value={v.factory} />
           <Row
-            label="Euler V2 UI"
+            label="Euler V2 UI (Archived)"
             value={
-              <a
-                href={v.eulerLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline text-dl-navy"
-              >
-                app.euler.finance
-              </a>
+              <span className="text-dl-gray text-xs">
+                Integration withdrawn — endpoint archived.{' '}
+                <a
+                  href={v.eulerLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline text-dl-gray"
+                >
+                  app.euler.finance ↗
+                </a>
+              </span>
             }
             mono={false}
           />
-          <Row label="Deployment status" value="Bootstrap / Pre-Live" mono={false} />
+          <Row label="Deployment status" value="Configured — Deposits Not Yet Open" mono={false} />
         </div>
       </section>
 
@@ -345,36 +347,27 @@ export default function EarnAXUSDPage() {
         <SectionLabel>Deposit</SectionLabel>
 
         {EARN_AXUSD_DEPOSITS_ENABLED ? (
-          /* Testing-mode deposit stub — never imply yield is active */
           <div className="border border-dl-border bg-dl-bg-alt p-5">
             <div className="border border-dl-gold bg-dl-bg p-3 mb-4 text-xs text-dl-navy">
-              Deposits may be enabled for testing purposes only. Active strategy
-              yield is not yet live. No earnings will accrue on deposited capital
-              at this stage.
+              Deposits may be enabled for controlled testing only. The Euler Earn
+              integration has been withdrawn. No strategy yield is active. Capital
+              deposited at this stage does not earn income.
             </div>
-            <p className="text-dl-gray text-sm mb-4">
-              Testing deposit UI — AXUSD will be sent to the vault but will not
-              earn yield until the supply queue is activated.
-            </p>
             <button
               disabled={!onCorrectChain}
               className="w-full py-2.5 border border-dl-navy text-dl-navy text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
-              onClick={() => {
-                trackEvent('click_deposit_earn_axusd');
-                // TODO: integrate approve + deposit call via wagmi useWriteContract
-                // when ENABLE_EARN_AXUSD_DEPOSITS is active
-              }}
+              onClick={() => trackEvent('click_deposit_earn_axusd')}
             >
-              Deposit AXUSD (testing mode)
+              Deposit AXUSD (controlled testing only)
             </button>
             <p className="text-dl-gray text-xs text-center mt-2">
-              Arbitrum One required. AXUSD identity registration may be required.
+              Arbitrum One required. AXUSD identity registration required.
             </p>
           </div>
         ) : (
           <DisabledAction
-            title="Deposits not yet enabled"
-            reason="The earnAXUSD vault is in bootstrap / pre-live state. Deposits may be enabled for controlled testing in the future, but active strategy yield is not yet live. No APY, earnings, or performance data is available at this stage."
+            title="Deposits not yet open"
+            reason="The Axiom AXUSD Earn Vault is configured but deposits are not yet open. The Euler Earn integration has been withdrawn. Axiom-native earn infrastructure is in formation. No yield, APY, or performance data is available."
           />
         )}
       </section>
@@ -383,13 +376,12 @@ export default function EarnAXUSDPage() {
       <section className="mb-8">
         <SectionLabel>Borrow / Collateral</SectionLabel>
         <div className="border border-dl-border bg-dl-bg-alt p-4">
-          <p className="text-dl-navy font-medium mb-1">Borrow-side functionality not live</p>
+          <p className="text-dl-navy font-medium mb-1">Borrow-side functionality not available</p>
           <p className="text-dl-gray text-xs mb-3">
-            Borrow-side functionality is not yet live for this vault. The
-            underlying eVault strategy has a broken oracle configuration and
-            unrenounced governance that prevents the Euler V2 risk engine from
-            pricing collateral. This will be resolved when the canonical EVK
-            vault is deployed and the supply queue is migrated.
+            Borrow-side functionality is not available. The Euler V2 integration
+            that powered collateralized borrowing against this vault has been
+            withdrawn. Axiom-native credit infrastructure is in formation under
+            the Axiom Credit Vault programme.
           </p>
           <button
             disabled
@@ -412,9 +404,10 @@ export default function EarnAXUSDPage() {
               Current Status
             </p>
             <ul className="space-y-1 text-sm text-dl-gray">
-              <li>— earnAXUSD is deployed and recognized as an Euler Earn vault</li>
-              <li>— Public live yield is not yet active</li>
-              <li>— Vault is visible in the Axiom Protocol interface for integration and testing</li>
+              <li>— Vault is deployed on Arbitrum One and retains on-chain configuration</li>
+              <li>— Euler Earn integration has been withdrawn (Task #510)</li>
+              <li>— No active yield — no strategy is deployed</li>
+              <li>— Deposits are disabled pending Axiom-native earn infrastructure</li>
             </ul>
           </div>
 
@@ -423,22 +416,20 @@ export default function EarnAXUSDPage() {
               What Works Today
             </p>
             <ul className="space-y-1 text-sm text-dl-gray">
-              <li>— Wallet connection and on-chain balance reads</li>
-              <li>— Vault visibility and identity verification</li>
+              <li>— Wallet connection and on-chain balance reads (reference only)</li>
               <li>— Read-only on-chain vault data (totalAssets, share price, maxDeposit)</li>
-              <li>— Controlled integration testing (deposits require feature flag)</li>
+              <li>— Identity verification visibility</li>
             </ul>
           </div>
 
           <div className="border-t border-dl-border pt-4">
             <p className="font-dl-mono text-xs text-dl-navy uppercase tracking-widest mb-2">
-              What Is Still Pending
+              What Is Pending — Axiom-Native Path
             </p>
             <ul className="space-y-1 text-sm text-dl-gray">
-              <li>— Euler governance registration of required oracle adapters</li>
-              <li>— Canonical EVK vault deployment and perspective-verification</li>
-              <li>— Strategy queue migration from legacy to canonical EVK vault</li>
-              <li>— Ownership transfer to the AXIOM Risk Council Safe</li>
+              <li>— Axiom-native earn vault architecture design and governance approval</li>
+              <li>— New vault deployment and verification on Arbitrum One</li>
+              <li>— Deposit activation for credentialed participants</li>
             </ul>
           </div>
 

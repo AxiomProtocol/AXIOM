@@ -20,238 +20,80 @@ const DEX_HEADER = {
   kicker: 'Layer 01.5 — Settlement Conversion + Peg Maintenance Layer',
   headline: 'Protocol Exchange',
   subheadline: 'Not a Generic DEX — the Settlement Infrastructure Between L01 and L02',
-  desc: 'The Protocol Exchange is the Layer 01.5 settlement conversion and peg maintenance system. Camelot V2 powers AXM/AXUSD trading pairs. The PSM maintains AXUSD at $1.00 by absorbing arbitrage directly against the USDC reserve. EulerSwap LP vaults add capital efficiency for credentialed participants. All liquidity activity is identity-gated via ERC-3643 — no anonymous LP positions. This layer sits between the AXUSD settlement rail (L01) and the AXAU reserve (L02), ensuring peg integrity without reliance on a single mechanism.',
+  desc: 'The Protocol Exchange is the Layer 01.5 settlement conversion and peg maintenance system. Camelot V2 powers AXM/AXUSD trading pairs. The PSM maintains AXUSD at $1.00 by absorbing arbitrage directly against the USDC reserve. All liquidity activity is identity-gated via ERC-3643 — no anonymous LP positions. This layer sits between the AXUSD settlement rail (L01) and the AXAU reserve (L02), ensuring peg integrity without reliance on a single mechanism.',
 };
 
 type Tab = 'swap' | 'pools' | 'liquidity' | 'eulerswap-lp' | 'rewards' | 'earn';
-
-interface EulerSwapPool {
-  id: string;
-  label: string;
-  address: string;
-  status: string;
-  tvlUsd: number;
-  reserve0: number;
-  reserve1: number;
-  reserve0Label: string;
-  reserve1Label: string;
-  equilibriumReserve0: number;
-  equilibriumReserve1: number;
-  feeBps: number;
-  swapFeeApyBps: number;
-  lendingApyBps: number;
-  blendedApyBps: number;
-  blendedApyLabel: string;
-  blendedApyPct: string;
-  erc3643WhitelistRequired: boolean;
-  note: string | null;
-}
-
-interface EulerSwapStats {
-  deployed: boolean;
-  totalTvlUsd: number;
-  evkLendingApyBps: number;
-  pools: EulerSwapPool[];
-}
 
 function Mono({ children }: { children: React.ReactNode }) {
   return <span className="font-dl-mono text-xs">{children}</span>;
 }
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === 'LIVE') return <span className="text-xs font-dl-mono text-dl-forest border border-dl-forest px-2 py-0.5">LIVE</span>;
-  return <span className="text-xs font-dl-mono text-dl-gold border border-dl-gold px-2 py-0.5">PENDING DEPLOYMENT</span>;
-}
-
-function EulerSwapLpTab() {
-  const [stats, setStats] = useState<EulerSwapStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedPool, setSelectedPool] = useState<string>('axusd_usdc');
-
-  useEffect(() => {
-    fetch('/api/euler/eulerswap-pools')
-      .then(r => r.json())
-      .then(d => { setStats(d); setLoading(false); })
-      .catch(() => { setError('Failed to load EulerSwap pool data'); setLoading(false); });
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-dl-bg-alt border border-dl-border p-4 animate-pulse h-24" />
-        ))}
-      </div>
-    );
-  }
-
-  if (error || !stats) {
-    return (
-      <div className="bg-dl-bg-alt border border-dl-border p-6 text-center">
-        <p className="text-dl-red font-dl-mono text-sm">{error || 'Failed to load pool data'}</p>
-      </div>
-    );
-  }
-
-  const selectedPoolData = stats.pools.find(p => p.id === selectedPool) ?? stats.pools[0];
-
+function LegacyLpTab() {
   return (
     <div className="space-y-6">
-      <div className="bg-dl-bg-alt border border-dl-border p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-1">Primary Liquidity Venue</p>
-            <h2 className="font-dl-serif text-xl text-dl-navy">EulerSwap AXUSD Pools</h2>
-            <p className="text-dl-gray text-sm mt-1">
-              LP capital earns dual yield — swap fees and lending income from the EVK AXUSD vault simultaneously.
-            </p>
-          </div>
-          <StatusBadge status={stats.deployed ? 'LIVE' : 'PENDING_DEPLOYMENT'} />
+      <div className="border border-dl-border bg-dl-bg-alt p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="font-dl-mono text-xs border border-red-400 text-red-600 px-2 py-0.5 uppercase tracking-widest">Withdrawn</span>
+          <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest">Integration Decommissioned</span>
         </div>
-        <div className="mt-4 grid grid-cols-3 gap-4 border-t border-dl-border pt-4">
-          <div>
-            <p className="font-dl-mono text-xs text-dl-gray uppercase">Total Pool TVL</p>
-            <p className="font-dl-mono text-lg text-dl-navy">${stats.totalTvlUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-          </div>
-          <div>
-            <p className="font-dl-mono text-xs text-dl-gray uppercase">EVK Lending Rate (Variable)</p>
-            <p className="font-dl-mono text-lg text-dl-navy">{(stats.evkLendingApyBps / 100).toFixed(2)}%</p>
-          </div>
-          <div>
-            <p className="font-dl-mono text-xs text-dl-gray uppercase">Pools</p>
-            <p className="font-dl-mono text-lg text-dl-navy">{stats.pools.length}</p>
+        <h2 className="font-dl-serif text-xl text-dl-navy mb-3">EulerSwap LP — Legacy Integration</h2>
+        <p className="text-sm text-dl-gray leading-relaxed mb-4">
+          The EulerSwap LP integration — which provided concentrated AXUSD/USDC liquidity with dual swap-and-lending yield via
+          the Euler V2 EVK AXUSD vault — has been withdrawn from the Axiom Protocol stack. All protocol-controlled positions
+          associated with this integration have been exited. No dual yield is currently available through this venue.
+        </p>
+        <div className="border border-dl-border bg-dl-bg p-4 mb-4">
+          <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-2">Integration Status</p>
+          <div className="space-y-1.5 font-dl-mono text-xs">
+            <div className="flex justify-between">
+              <span className="text-dl-gray">EulerSwap pools API</span>
+              <span className="text-red-600">HTTP 410 — Decommissioned</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dl-gray">EVK AXUSD vault API</span>
+              <span className="text-red-600">HTTP 410 — Decommissioned</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dl-gray">Protocol LP positions</span>
+              <span className="text-dl-navy">Exited — no active position</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dl-gray">User capital at risk</span>
+              <span className="text-dl-forest">None — no public deposits were open</span>
+            </div>
           </div>
         </div>
+        <p className="text-xs text-dl-gray leading-relaxed">
+          The Euler V2 architecture was withdrawn as part of Task #510. Axiom-native liquidity infrastructure
+          is in the formation phase. See the{' '}
+          <Link href="/liquidity" className="text-dl-navy underline">Liquidity Venues</Link>
+          {' '}page for current venue status, or{' '}
+          <Link href="/disclosure" className="text-dl-navy underline">Institutional Disclosure</Link>
+          {' '}for the full transition documentation.
+        </p>
       </div>
 
-      <div className="flex gap-2">
-        {stats.pools.map(pool => (
-          <button
-            key={pool.id}
-            onClick={() => setSelectedPool(pool.id)}
-            className={`px-4 py-2 font-dl-mono text-sm border ${
-              selectedPool === pool.id
-                ? 'bg-dl-navy text-white border-dl-navy'
-                : 'border-dl-border text-dl-gray'
-            }`}
-          >
-            {pool.label}
-          </button>
-        ))}
-      </div>
-
-      {selectedPoolData && (
-        <div className="border border-dl-border">
-          <div className="bg-dl-bg-alt border-b border-dl-border p-4 flex items-center justify-between">
-            <div>
-              <h3 className="font-dl-serif text-lg text-dl-navy">{selectedPoolData.label}</h3>
-              <Mono>{selectedPoolData.address === '0x0000000000000000000000000000000000000000' ? 'PENDING DEPLOYMENT' : `${selectedPoolData.address.slice(0, 8)}…${selectedPoolData.address.slice(-6)}`}</Mono>
-            </div>
-            <StatusBadge status={selectedPoolData.status} />
-          </div>
-
-          <div className="p-4 grid grid-cols-2 lg:grid-cols-4 gap-4 border-b border-dl-border">
-            <div>
-              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">TVL</p>
-              <p className="font-dl-mono text-base text-dl-navy">${selectedPoolData.tvlUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-            </div>
-            <div>
-              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Swap Fee</p>
-              <p className="font-dl-mono text-base text-dl-navy">{selectedPoolData.feeBps.toFixed(3)} bps</p>
-            </div>
-            <div>
-              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Swap Fee Yield (Variable)</p>
-              <p className="font-dl-mono text-base text-dl-navy">{(selectedPoolData.swapFeeApyBps / 100).toFixed(2)}%</p>
-            </div>
-            <div>
-              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Lending Yield (Variable)</p>
-              <p className="font-dl-mono text-base text-dl-navy">{(selectedPoolData.lendingApyBps / 100).toFixed(2)}%</p>
-            </div>
-          </div>
-
-          {selectedPoolData.status === 'LIVE' && (
-            <div className="p-4 border-b border-dl-border bg-dl-bg">
-              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-3">On-Chain Reserves</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="font-dl-mono text-xs text-dl-gray mb-1">{selectedPoolData.reserve0Label}</p>
-                  <p className="font-dl-mono text-sm text-dl-navy">{selectedPoolData.reserve0.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                  <p className="font-dl-mono text-xs text-dl-gray">Eq: {selectedPoolData.equilibriumReserve0.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                </div>
-                <div>
-                  <p className="font-dl-mono text-xs text-dl-gray mb-1">{selectedPoolData.reserve1Label}</p>
-                  <p className="font-dl-mono text-sm text-dl-navy">{selectedPoolData.reserve1.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                  <p className="font-dl-mono text-xs text-dl-gray">Eq: {selectedPoolData.equilibriumReserve1.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="p-4 bg-dl-bg-alt border-b border-dl-border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Blended Yield Rate (Swap Fees + Lending — Variable)</p>
-                <p className="font-dl-serif text-2xl text-dl-navy">{selectedPoolData.blendedApyPct}% <span className="text-sm text-dl-gray font-dl-mono">{selectedPoolData.blendedApyLabel}</span></p>
-                <p className="text-dl-gray text-xs mt-1">= {(selectedPoolData.swapFeeApyBps / 100).toFixed(2)}% swap fees + {(selectedPoolData.lendingApyBps / 100).toFixed(2)}% lending — both are variable and not guaranteed.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4">
-            <div className="mb-4">
-              <p className="font-dl-mono text-xs text-dl-gray uppercase mb-2">ERC-3643 Compliance</p>
-              <p className="text-dl-gray text-sm">AXUSD is ERC-3643 compliant. Identity verification is required before adding liquidity. Pool addresses must be registered in the Lending Platform Module.</p>
-            </div>
-
-            {selectedPoolData.status === 'PENDING_DEPLOYMENT' ? (
-              <div className="border border-dl-gold p-4">
-                <p className="font-dl-mono text-xs text-dl-gold uppercase mb-1">Pending Deployment</p>
-                <p className="text-dl-gray text-sm">This pool is pending on-chain deployment. Once live, identity-verified participants can add liquidity to earn dual yield.</p>
-                <p className="text-dl-gray text-xs mt-2">Run <Mono>npx hardhat run scripts/deploy-eulerswap-pools.js --network arbitrumOne</Mono> after confirming the factory address.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="font-dl-mono text-xs text-dl-gray uppercase">Pool Verification</p>
-                <a
-                  href={`https://arbiscan.io/address/${selectedPoolData.address}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full py-3 border border-dl-navy text-dl-navy text-center font-dl-mono text-sm hover:bg-dl-navy hover:text-white transition-colors"
-                >
-                  Verify Pool on Arbiscan →
-                </a>
-                <div className="border border-dl-border p-3 bg-dl-bg">
-                  <p className="font-dl-mono text-xs text-dl-gray uppercase mb-1">Pool Address</p>
-                  <p className="font-dl-mono text-xs text-dl-navy break-all">{selectedPoolData.address}</p>
-                </div>
-                <p className="text-dl-gray text-xs leading-relaxed">These are Axiom protocol-owned EulerSwap V2 pools deployed directly on Arbitrum One. They are not listed on Euler&apos;s public UI — use the Swap interface above to interact with them. Identity verification is required for AXUSD transfers.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="bg-dl-bg-alt border border-dl-border p-5">
-        <h3 className="text-dl-navy font-dl-serif mb-3">How EulerSwap Dual Yield Works</h3>
+      <div className="border border-dl-border p-5">
+        <p className="font-dl-mono text-xs text-dl-gray uppercase tracking-wider mb-3">Active Liquidity Venues</p>
         <div className="space-y-3">
           {[
-            ['Deposit AXUSD + USDC into the EulerSwap pool', 'Your LP position is backed by the EVK AXUSD lending vault'],
-            ['Earn swap fees on every trade', `${selectedPoolData?.feeBps ?? 30} bps fee on each swap routed through the pool`],
-            ['Earn lending yield on idle capital', 'Funds not needed for immediate swaps are deployed to the EVK vault and earn interest from borrowers'],
-            ['Both income streams are variable', 'Rates depend on swap volume and vault utilization — labeled Variable, not guaranteed'],
-          ].map(([title, detail], i) => (
-            <div key={i} className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-dl-navy flex items-center justify-center text-white text-sm font-dl-mono shrink-0">{i + 1}</div>
-              <div>
-                <p className="text-dl-navy text-sm font-medium">{title}</p>
-                <p className="text-dl-gray text-xs">{detail}</p>
+            { label: 'Camelot V2 — AXM/AXUSD', status: 'Active', href: '/dex' },
+            { label: 'PSM — AXUSD/USDC (1:1 peg mechanism)', status: 'Active', href: '/dex' },
+            { label: 'Axiom-Native Earn Vault', status: 'Configured — In Formation', href: '/earn/axusd' },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center justify-between border border-dl-border px-4 py-3 bg-dl-bg">
+              <span className="font-dl-serif text-sm text-dl-navy">{item.label}</span>
+              <div className="flex items-center gap-3">
+                <span className={`font-dl-mono text-xs border px-2 py-0.5 ${item.status === 'Active' ? 'border-dl-forest text-dl-forest' : 'border-dl-navy text-dl-navy'}`}>
+                  {item.status}
+                </span>
+                <Link href={item.href} className="font-dl-mono text-xs text-dl-gray underline">View →</Link>
               </div>
             </div>
           ))}
         </div>
       </div>
-
     </div>
   );
 }
@@ -308,7 +150,7 @@ export default function DexPage() {
 
   const tabs: { id: Tab; label: string; primary?: boolean }[] = [
     { id: 'swap',         label: 'Swap' },
-    { id: 'eulerswap-lp', label: 'EulerSwap LP', primary: true },
+    { id: 'eulerswap-lp', label: 'Legacy LP' },
     { id: 'pools',        label: 'Pools' },
     { id: 'liquidity',    label: 'Liquidity' },
     { id: 'rewards',      label: 'Rewards' },
@@ -325,12 +167,12 @@ export default function DexPage() {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <span className="font-dl-mono text-xs text-dl-gray border border-dl-border px-2 py-0.5">Layer 01.5 Exchange + Peg</span>
-          <span className="font-dl-mono text-xs text-dl-gold border border-dl-gold px-2 py-0.5">Camelot V2 + EulerSwap</span>
+          <span className="font-dl-mono text-xs text-dl-gold border border-dl-gold px-2 py-0.5">Camelot V2 + PSM</span>
           <span className="font-dl-mono text-xs text-dl-forest border border-dl-forest px-2 py-0.5">LIVE</span>
         </div>
         <h1 className="font-dl-serif text-3xl text-dl-navy mb-2">Protocol Exchange — Settlement Conversion Layer</h1>
         <p className="text-dl-gray text-sm max-w-2xl leading-relaxed">
-          The Axiom Protocol Exchange is not a generic DEX. It is Layer 01.5 of the financial operating system — the mandatory settlement conversion and peg maintenance layer for AXUSD. Camelot V2 infrastructure provides AXM/AXUSD liquidity; EulerSwap LP pools concentrate capital for dual swap-and-lending yield; and the PSM-backed conversion path enforces AXUSD peg integrity. All capital flows between layers route through this venue.
+          The Axiom Protocol Exchange is not a generic DEX. It is Layer 01.5 of the financial operating system — the mandatory settlement conversion and peg maintenance layer for AXUSD. Camelot V2 infrastructure provides AXM/AXUSD liquidity; the PSM-backed conversion path enforces AXUSD peg integrity at $1.00. All capital flows between layers route through this venue. The EulerSwap LP integration has been withdrawn — see the Legacy LP tab for details.
         </p>
       </div>
 
@@ -348,7 +190,7 @@ export default function DexPage() {
       <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6 flex flex-wrap gap-6">
         {[
           { label: 'Exchange Layer', value: 'Layer 01.5 / Peg + Liquidity' },
-          { label: 'Primary Venue', value: 'Camelot V2 + EulerSwap' },
+          { label: 'Primary Venue', value: 'Camelot V2 + PSM' },
           { label: 'Settlement Layer', value: 'Layer 01 / AXUSD' },
           { label: 'Reserve Layer', value: 'Layer 02 / AXAU' },
           { label: 'Network', value: 'Arbitrum One' },
@@ -462,16 +304,11 @@ export default function DexPage() {
           )}
           {activeTab === 'eulerswap-lp' && (
             <div className="space-y-6">
-              {/* EulerSwap LP visual accent */}
-              <div style={{ position: 'relative', width: '100%', height: 'clamp(140px, 18vw, 220px)', overflow: 'hidden', background: '#0e1c37' }}>
-                <img src="/visuals/dex-liquidity.png" alt="EulerSwap concentrated liquidity" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block', opacity: 0.82 }} />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(14,28,55,0.96) 0%, rgba(14,28,55,0.80) 45%, rgba(14,28,55,0.30) 100%)' }} />
-                <div style={{ position: 'absolute', bottom: 14, left: 20, padding: '8px 14px', background: 'rgba(14,28,55,0.5)' }}>
-                  <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#e8c96a', margin: '0 0 4px', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>EulerSwap · Concentrated Liquidity · Dual Yield</p>
-                  <p style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 20, fontWeight: 700, color: '#ffffff', margin: 0, textShadow: '0 2px 8px rgba(0,0,0,0.95)' }}>Concentrated liquidity. Swap fees + lending APR.</p>
-                </div>
+              <div className="border-l-4 border-red-400 pl-4 py-1">
+                <p className="font-dl-mono text-xs text-red-600 uppercase tracking-widest mb-1">Integration Withdrawn</p>
+                <p className="text-sm text-dl-gray">The EulerSwap LP integration has been decommissioned. This tab shows the legacy integration record for reference.</p>
               </div>
-              <EulerSwapLpTab />
+              <LegacyLpTab />
             </div>
           )}
           {activeTab === 'pools' && (
