@@ -32,8 +32,15 @@ const AXUSD_ARBITRUM  = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
 const CAMELOT_ROUTER  = '0xc873fEcbd354f5A56E00E710B90EF4201db2448d';
 const CAMELOT_FACTORY = '0x6EcCab422D763aC031210895C81787E87B43A652';
 
-/** $25,000 USDC safety cap per execution — larger allocations must re-execute. */
-const MAX_USDC_PER_SWAP = 25_000;
+/**
+ * Per-call USDC safety cap.
+ * Override with CAMELOT_MAX_USDC_PER_SWAP env var (positive number).
+ * Allocations above this threshold return status='queued'; no partial swap.
+ */
+const MAX_USDC_PER_SWAP = (() => {
+  const v = Number(process.env.CAMELOT_MAX_USDC_PER_SWAP ?? '25000');
+  return Number.isFinite(v) && v > 0 ? v : 25_000;
+})();
 
 const ROUTER_ABI = [
   'function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, tuple(address from, address to, bool stable)[] routes, address to, uint256 deadline) external',

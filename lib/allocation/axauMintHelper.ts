@@ -19,7 +19,16 @@ import {
 import type { RailResult } from './executionRails';
 
 const PAXG_ARBITRUM    = '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429';
-const MAX_PAXG_PER_CALL = 100;
+
+/**
+ * Per-call PAXG safety cap.
+ * Override with AXAU_MAX_PAXG_PER_CALL env var (positive integer).
+ * Allocations above this threshold return status='queued'; no partial mint.
+ */
+const MAX_PAXG_PER_CALL = (() => {
+  const v = Number(process.env.AXAU_MAX_PAXG_PER_CALL ?? '100');
+  return Number.isFinite(v) && v > 0 ? Math.floor(v) : 100;
+})();
 
 const WRITE_CONTROLLER_ABI = [
   'function mintWithAsset(bytes32 vaultId, uint256 tokenAmount) returns (uint256 axauMinted)',
