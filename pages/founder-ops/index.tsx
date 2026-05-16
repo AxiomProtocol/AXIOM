@@ -5717,23 +5717,33 @@ export default function FounderOpsPage() {
                         {ai?.result && (() => {
                           const nonZeroCount   = Object.values(ai.result.weights).filter(w => w > 0).length;
                           const executedCount  = scopeExecutions.filter(e => e.status === 'executed').length;
-                          const pendingCount   = nonZeroCount - executedCount;
-                          const allDone        = executedCount >= nonZeroCount;
+                          const queuedCount    = scopeExecutions.filter(e => e.status === 'queued').length;
+                          const failedCount    = scopeExecutions.filter(e => e.status === 'failed').length;
+                          // "All submitted" = every non-zero row has been dispatched once,
+                          // regardless of whether the outcome was executed or queued.
+                          // Queued rows represent rails that require manual/external completion
+                          // (Camelot swap, KAG purchase) — they are terminal for this flow.
+                          // Failed rows are NOT terminal — operator should retry.
+                          const submittedCount = executedCount + queuedCount;
+                          const allSubmitted   = submittedCount >= nonZeroCount && failedCount === 0;
+                          const noneDispatched = scopeExecutions.length === 0;
                           return (
                             <div className="border-t border-dl-border px-3 py-3 bg-dl-bg-alt flex items-center justify-between gap-3 flex-wrap">
                               <div className="font-dl-mono text-xs text-dl-gray">
-                                {allDone
-                                  ? `All ${nonZeroCount} row${nonZeroCount === 1 ? '' : 's'} executed · ${fmtUsd(ai.result.scope_amount)} dispatched`
-                                  : executedCount === 0
+                                {allSubmitted
+                                  ? executedCount === nonZeroCount
+                                    ? `All ${nonZeroCount} row${nonZeroCount === 1 ? '' : 's'} executed · ${fmtUsd(ai.result.scope_amount)} dispatched`
+                                    : `${executedCount} executed · ${queuedCount} queued for manual completion · ${fmtUsd(ai.result.scope_amount)} total`
+                                  : noneDispatched
                                     ? `Ready to dispatch ${nonZeroCount} row${nonZeroCount === 1 ? '' : 's'} for ${fmtUsd(ai.result.scope_amount)}`
-                                    : `${executedCount} of ${nonZeroCount} rows executed · ${pendingCount} pending (queued/failed rows can be retried)`}
+                                    : `${executedCount} executed · ${queuedCount} queued · ${failedCount} failed — retry failed rows`}
                               </div>
                               <button
                                 onClick={() => setAllocConfirmOpen({ docId, scope })}
-                                disabled={allLoading || allDone}
+                                disabled={allLoading || allSubmitted}
                                 className="font-dl-mono text-xs border border-dl-navy bg-dl-navy text-white px-4 py-1.5 uppercase tracking-wider hover:bg-dl-navy-dark disabled:opacity-50"
                               >
-                                {allLoading ? 'Executing…' : allDone ? 'All executed' : 'Execute all →'}
+                                {allLoading ? 'Executing…' : allSubmitted ? 'All submitted' : 'Execute all →'}
                               </button>
                             </div>
                           );

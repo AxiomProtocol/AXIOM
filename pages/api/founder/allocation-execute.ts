@@ -106,17 +106,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         continue;
       }
 
-      // Idempotency check — return existing row if already executed
+      // Idempotency: skip re-dispatch only for terminal-success rows.
+      // Rows with status='queued', 'failed', or 'skipped' are retried —
+      // the rail is dispatched again and the existing row is UPDATEd.
       const existing = await pool().query(
-        `SELECT id, document_id, scope, asset_key, rail, weight_pct::float AS weight_pct,
-                usd_amount::float AS usd_amount, status, tx_hash, external_ref, external_url,
-                note, executed_at
-           FROM pilot_allocation_executions
+        `SELECT id, status FROM pilot_allocation_executions
           WHERE document_id = $1 AND scope = $2 AND asset_key = $3`,
         [documentId, scope, assetKey],
       );
-      if (existing.rows.length > 0) {
-        const row = existing.rows[0];
+      const existingRow = existing.rows[0];
+      if (existingRow?.status === 'executed') {
+        // Terminal success — return as-is, never double-dispatch
+        const full = await pool().query(
+          `SELECT id, document_id, scope, asset_key, rail, weight_pct::float AS weight_pct,
+                  usd_amount::float AS usd_amount, status, tx_hash, external_ref, external_url,
+                  note, executed_at
+             FROM pilot_allocation_executions
+            WHERE document_id = $1 AND scope = $2 AND asset_key = $3`,
+          [documentId, scope, assetKey],
+        );
+        const row = full.rows[0];
         executions.push({
           id: row.id,
           document_id: row.document_id,
@@ -136,7 +145,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         continue;
       }
 
-      // Dispatch the rail
+      // Dispatch (first attempt, or retry after queued/failed/skipped)
       const result = await dispatchRail({
         assetKey,
         usdAmount,
@@ -145,14 +154,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         chainId: ARBITRUM_CHAIN_ID,
       });
 
-      // Persist
-      const insertRes = await pool().query(
+      // Upsert: INSERT on first attempt; UPDATE on retry (queued/failed/skipped)
+      const upsertRes = await pool().query(
         `INSERT INTO pilot_allocation_executions
             (document_id, scope, asset_key, rail, weight_pct, usd_amount, status,
              tx_hash, external_ref, external_url, note, weights_snapshot, rationale,
              scope_amount, executed_by)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-         ON CONFLICT (document_id, scope, asset_key) DO NOTHING
+         ON CONFLICT (document_id, scope, asset_key) DO UPDATE SET
+           rail          = EXCLUDED.rail,
+           status        = EXCLUDED.status,
+           tx_hash       = EXCLUDED.tx_hash,
+           external_ref  = EXCLUDED.external_ref,
+           external_url  = EXCLUDED.external_url,
+           note          = EXCLUDED.note,
+           executed_at   = NOW()
          RETURNING id, document_id, scope, asset_key, rail, weight_pct::float AS weight_pct,
                    usd_amount::float AS usd_amount, status, tx_hash, external_ref,
                    external_url, note, executed_at`,
@@ -175,9 +191,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ],
       );
 
-      // If a concurrent insert won the race, refetch
-      let row = insertRes.rows[0];
+      let row = upsertRes.rows[0];
       if (!row) {
+        // Concurrent write won — refetch
         const refetch = await pool().query(
           `SELECT id, document_id, scope, asset_key, rail, weight_pct::float AS weight_pct,
                   usd_amount::float AS usd_amount, status, tx_hash, external_ref, external_url,
