@@ -6,7 +6,6 @@ const nextConfig = {
     '@mysten/sui',
     '@mysten/bcs',
     '@mysten/wallet-standard',
-    '@mysten/signers',
   ],
   // Compression handled by reverse proxy (nginx/Cloudflare) in production
   compress: false,
