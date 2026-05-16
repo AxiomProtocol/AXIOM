@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
+import type { SuiClaimParams } from '../../components/sui/SuiWalletConnect';
+
+const SUISCAN_BASE = 'https://suiscan.xyz/mainnet/tx';
+
+const SuiWalletConnect = dynamic(
+  () => import('../../components/sui/SuiWalletConnect'),
+  { ssr: false, loading: () => null }
+);
 
 interface CampaignInfo {
   id: string;
@@ -26,13 +35,20 @@ export default function SuiClaimPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [csvContent, setCsvContent] = useState('');
+  const [txDigest, setTxDigest] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
+
+  const packageId =
+    process.env.NEXT_PUBLIC_AXIOM_SUI_PACKAGE_ID ?? '';
 
   const fetchCampaign = useCallback(async () => {
     if (!campaignId.trim()) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/sui/campaigns/${encodeURIComponent(campaignId.trim())}`);
+      const res = await fetch(
+        `/api/sui/campaigns/${encodeURIComponent(campaignId.trim())}`
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load campaign');
       setCampaign(data);
@@ -49,7 +65,9 @@ export default function SuiClaimPage() {
     setError(null);
     try {
       const res = await fetch(
-        `/api/sui/claim-status?address=${encodeURIComponent(walletAddress.trim())}&campaignId=${encodeURIComponent(campaignId.trim())}`
+        `/api/sui/claim-status?address=${encodeURIComponent(
+          walletAddress.trim()
+        )}&campaignId=${encodeURIComponent(campaignId.trim())}`
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Status check failed');
@@ -62,7 +80,8 @@ export default function SuiClaimPage() {
   }, [campaignId, walletAddress]);
 
   const generateProof = useCallback(async () => {
-    if (!campaignId.trim() || !walletAddress.trim() || !csvContent.trim()) return;
+    if (!campaignId.trim() || !walletAddress.trim() || !csvContent.trim())
+      return;
     setLoading(true);
     setError(null);
     try {
@@ -91,6 +110,42 @@ export default function SuiClaimPage() {
     }
   }, [campaignId, walletAddress, csvContent]);
 
+  const refreshStatus = useCallback(async () => {
+    if (!campaignId.trim() || !walletAddress.trim()) return;
+    try {
+      const res = await fetch(
+        `/api/sui/claim-status?address=${encodeURIComponent(
+          walletAddress.trim()
+        )}&campaignId=${encodeURIComponent(campaignId.trim())}`
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setClaimStatus(prev => ({
+          ...prev!,
+          hasClaimed: data.hasClaimed,
+        }));
+      }
+    } catch {
+    }
+  }, [campaignId, walletAddress]);
+
+  const handleClaimSuccess = useCallback(
+    async (digest: string) => {
+      setTxDigest(digest);
+      setClaimError(null);
+      await refreshStatus();
+    },
+    [refreshStatus]
+  );
+
+  const handleClaimError = useCallback((err: string) => {
+    setClaimError(err);
+  }, []);
+
+  const handleAddressFilled = useCallback((address: string) => {
+    setWalletAddress(address);
+  }, []);
+
   const formatAmount = (raw: string) => {
     try {
       const n = BigInt(raw);
@@ -100,11 +155,21 @@ export default function SuiClaimPage() {
     }
   };
 
+  const claimParams: SuiClaimParams | null =
+    proof && campaignId && packageId
+      ? { packageId, campaignId: campaignId.trim(), proof }
+      : null;
+
+  const alreadyClaimed = claimStatus?.hasClaimed === true;
+
   return (
     <>
       <Head>
         <title>Sui Community Claim — Axiom Protocol</title>
-        <meta name="description" content="Claim your Axiom Protocol community rewards on Sui." />
+        <meta
+          name="description"
+          content="Claim your Axiom Protocol community rewards on Sui."
+        />
       </Head>
       <DesignLawLayout>
         <div className="max-w-3xl mx-auto px-6 py-10">
@@ -118,7 +183,8 @@ export default function SuiClaimPage() {
             </h1>
             <p className="text-sm text-dl-muted leading-relaxed">
               This is a community rewards distribution only. No monetary value.
-              Not AXUSD, AXAU, AXM, SEED, or KAG. Not redeemable for any canonical Axiom asset.
+              Not AXUSD, AXAU, AXM, SEED, or KAG. Not redeemable for any
+              canonical Axiom asset.
             </p>
           </div>
 
@@ -145,19 +211,39 @@ export default function SuiClaimPage() {
 
             {campaign && (
               <div className="mt-4 border border-dl-border p-4">
-                <div className="font-serif text-lg text-dl-primary mb-3">{campaign.label}</div>
+                <div className="font-serif text-lg text-dl-primary mb-3">
+                  {campaign.label}
+                </div>
                 <dl className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs font-mono">
                   <dt className="text-dl-muted">Amount Per Claim</dt>
-                  <dd className="text-dl-primary">{formatAmount(campaign.amountPerClaim)}</dd>
+                  <dd className="text-dl-primary">
+                    {formatAmount(campaign.amountPerClaim)}
+                  </dd>
                   <dt className="text-dl-muted">Pool Balance</dt>
-                  <dd className="text-dl-primary">{formatAmount(campaign.poolBalance)}</dd>
+                  <dd className="text-dl-primary">
+                    {formatAmount(campaign.poolBalance)}
+                  </dd>
                   <dt className="text-dl-muted">Expires At Epoch</dt>
                   <dd className="text-dl-primary">
-                    {campaign.expiresAtEpoch === '0' ? 'No expiry' : campaign.expiresAtEpoch}
+                    {campaign.expiresAtEpoch === '0'
+                      ? 'No expiry'
+                      : campaign.expiresAtEpoch}
                   </dd>
                   <dt className="text-dl-muted">Status</dt>
-                  <dd className={campaign.isClosed ? 'text-red-500' : campaign.isActive ? 'text-green-600' : 'text-yellow-600'}>
-                    {campaign.isClosed ? 'CLOSED' : campaign.isActive ? 'ACTIVE' : 'PAUSED'}
+                  <dd
+                    className={
+                      campaign.isClosed
+                        ? 'text-red-500'
+                        : campaign.isActive
+                        ? 'text-green-600'
+                        : 'text-yellow-600'
+                    }
+                  >
+                    {campaign.isClosed
+                      ? 'CLOSED'
+                      : campaign.isActive
+                      ? 'ACTIVE'
+                      : 'PAUSED'}
                   </dd>
                 </dl>
               </div>
@@ -168,6 +254,21 @@ export default function SuiClaimPage() {
             <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-3">
               Step 2 — Your Wallet
             </h2>
+            <p className="text-xs text-dl-muted mb-3">
+              Connect your Sui browser wallet to auto-fill your address and
+              submit the claim in-browser, or enter your address manually.
+            </p>
+
+            <div className="mb-3">
+              <SuiWalletConnect
+                onAddressFilled={handleAddressFilled}
+                claimParams={null}
+                onClaimSuccess={handleClaimSuccess}
+                onClaimError={handleClaimError}
+                disabled={false}
+              />
+            </div>
+
             <div className="flex gap-3">
               <input
                 type="text"
@@ -178,7 +279,9 @@ export default function SuiClaimPage() {
               />
               <button
                 onClick={checkStatus}
-                disabled={loading || !walletAddress.trim() || !campaignId.trim()}
+                disabled={
+                  loading || !walletAddress.trim() || !campaignId.trim()
+                }
                 className="px-4 py-2 text-xs font-mono uppercase tracking-widest bg-dl-primary text-white disabled:opacity-40"
               >
                 Check
@@ -188,17 +291,29 @@ export default function SuiClaimPage() {
             {claimStatus && (
               <div className="mt-3 text-xs font-mono">
                 {claimStatus.hasClaimed && (
-                  <span className="text-green-600">Already claimed — reward has been distributed to your wallet.</span>
+                  <span className="text-green-600">
+                    Already claimed — reward has been distributed to your
+                    wallet.
+                  </span>
                 )}
-                {!claimStatus.hasClaimed && claimStatus.eligible === true && (
-                  <span className="text-green-600">Eligible — proof ready. Proceed to claim.</span>
-                )}
-                {!claimStatus.hasClaimed && claimStatus.eligible === false && (
-                  <span className="text-red-500">Address not found in eligibility list for this campaign.</span>
-                )}
-                {!claimStatus.hasClaimed && claimStatus.eligible === null && (
-                  <span className="text-dl-muted">Not yet claimed. Load eligibility CSV to generate proof.</span>
-                )}
+                {!claimStatus.hasClaimed &&
+                  claimStatus.eligible === true && (
+                    <span className="text-green-600">
+                      Eligible — proof ready. Proceed to claim.
+                    </span>
+                  )}
+                {!claimStatus.hasClaimed &&
+                  claimStatus.eligible === false && (
+                    <span className="text-red-500">
+                      Address not found in eligibility list for this campaign.
+                    </span>
+                  )}
+                {!claimStatus.hasClaimed &&
+                  claimStatus.eligible === null && (
+                    <span className="text-dl-muted">
+                      Not yet claimed. Load eligibility CSV to generate proof.
+                    </span>
+                  )}
               </div>
             )}
           </section>
@@ -208,7 +323,8 @@ export default function SuiClaimPage() {
               Step 3 — Eligibility Proof
             </h2>
             <p className="text-xs text-dl-muted mb-3">
-              Paste the eligibility CSV (columns: address, amount). Your proof is generated locally — the CSV is not stored.
+              Paste the eligibility CSV (columns: address, amount). Your proof
+              is generated locally — the CSV is not stored.
             </p>
             <textarea
               value={csvContent}
@@ -220,76 +336,167 @@ export default function SuiClaimPage() {
             <div className="mt-3">
               <button
                 onClick={generateProof}
-                disabled={loading || !csvContent.trim() || !walletAddress.trim() || !campaignId.trim()}
+                disabled={
+                  loading ||
+                  !csvContent.trim() ||
+                  !walletAddress.trim() ||
+                  !campaignId.trim()
+                }
                 className="w-full py-3 text-sm font-mono uppercase tracking-widest border border-dl-primary text-dl-primary disabled:border-dl-border disabled:text-dl-muted enabled:bg-dl-primary enabled:text-white"
               >
                 {loading ? 'Generating…' : 'Generate Proof →'}
               </button>
-              {(!csvContent.trim() || !walletAddress.trim() || !campaignId.trim()) && (
+              {(!csvContent.trim() ||
+                !walletAddress.trim() ||
+                !campaignId.trim()) && (
                 <p className="text-xs text-dl-muted font-mono mt-2">
-                  {!campaignId.trim() ? 'Enter campaign ID in Step 1 first.' : !walletAddress.trim() ? 'Enter your wallet address in Step 2.' : 'Paste your eligibility CSV above.'}
+                  {!campaignId.trim()
+                    ? 'Enter campaign ID in Step 1 first.'
+                    : !walletAddress.trim()
+                    ? 'Enter your wallet address in Step 2.'
+                    : 'Paste your eligibility CSV above.'}
                 </p>
               )}
             </div>
 
             {proof && (
               <div className="mt-4 border border-dl-border p-4">
-                <p className="text-xs font-mono text-dl-muted mb-2 uppercase tracking-widest">Proof ({proof.length} siblings)</p>
+                <p className="text-xs font-mono text-dl-muted mb-2 uppercase tracking-widest">
+                  Proof ({proof.length} siblings)
+                </p>
                 <div className="overflow-x-auto">
                   {proof.map((p, i) => (
-                    <div key={i} className="font-mono text-xs text-dl-primary break-all">
+                    <div
+                      key={i}
+                      className="font-mono text-xs text-dl-primary break-all"
+                    >
                       [{i}] 0x{p}
                     </div>
                   ))}
                   {proof.length === 0 && (
-                    <div className="font-mono text-xs text-dl-muted">Single-leaf tree — empty proof (leaf is root)</div>
+                    <div className="font-mono text-xs text-dl-muted">
+                      Single-leaf tree — empty proof (leaf is root)
+                    </div>
                   )}
                 </div>
               </div>
             )}
           </section>
 
-          {proof && !claimStatus?.hasClaimed && (
+          {proof && !alreadyClaimed && (
             <section className="mb-8">
               <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-3">
                 Step 4 — Submit Claim
               </h2>
-              <p className="text-xs text-dl-muted mb-4 leading-relaxed">
-                Run the command below in your Sui CLI, or call{' '}
-                <span className="font-mono text-dl-primary">claim_campaign::claim</span> from any
-                Sui wallet (Sui Wallet, Suiet, Ethos).
-              </p>
 
-              <div className="border border-dl-border p-4 bg-dl-surface mb-4">
-                <p className="text-xs font-mono text-dl-muted uppercase tracking-widest mb-2">CLI Command</p>
-                <pre className="text-xs font-mono text-dl-primary whitespace-pre-wrap break-all leading-relaxed">{[
-                  `sui client ptb \\`,
-                  proof.length === 0
-                    ? `  --make-move-vec "<vector<u8>>" "[]" \\`
-                    : `  --make-move-vec "<vector<u8>>" "${JSON.stringify(proof.map(h => h.match(/.{1,2}/g)?.map(b => parseInt(b, 16)) ?? []))}" \\`,
-                  `  --assign proof \\`,
-                  `  --move-call "${process.env.NEXT_PUBLIC_AXIOM_SUI_PACKAGE_ID ?? '<PACKAGE_ID>'}::claim_campaign::claim" \\`,
-                  `    @${campaignId} proof \\`,
-                  `  --gas-budget 10000000`,
-                ].join('\n')}</pre>
-              </div>
+              {txDigest ? (
+                <div className="border border-green-600 p-4 mb-4">
+                  <p className="text-xs font-mono text-green-600 uppercase tracking-widest mb-2">
+                    Claim Submitted Successfully
+                  </p>
+                  <p className="text-xs font-mono text-dl-muted mb-1">
+                    Transaction Digest
+                  </p>
+                  <p className="text-xs font-mono text-dl-primary break-all mb-3">
+                    {txDigest}
+                  </p>
+                  <a
+                    href={`${SUISCAN_BASE}/${txDigest}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block text-xs font-mono uppercase tracking-widest border border-dl-primary text-dl-primary px-4 py-2"
+                  >
+                    View on Suiscan →
+                  </a>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-dl-muted mb-4 leading-relaxed">
+                    Connect your Sui wallet below to submit the claim
+                    in-browser. Your proof will be signed and broadcast
+                    directly — no CLI required.
+                  </p>
 
-              <div className="border border-dl-border p-4 bg-dl-surface">
-                <p className="text-xs font-mono text-dl-muted uppercase tracking-widest mb-2">Transaction Parameters</p>
-                <dl className="grid grid-cols-2 gap-2 text-xs font-mono">
-                  <dt className="text-dl-muted">Package</dt>
-                  <dd className="text-dl-primary break-all">{process.env.NEXT_PUBLIC_AXIOM_SUI_PACKAGE_ID ?? 'See operator'}</dd>
-                  <dt className="text-dl-muted">Module</dt>
-                  <dd className="text-dl-primary">claim_campaign</dd>
-                  <dt className="text-dl-muted">Function</dt>
-                  <dd className="text-dl-primary">claim</dd>
-                  <dt className="text-dl-muted">Campaign Object</dt>
-                  <dd className="text-dl-primary break-all">{campaignId}</dd>
-                  <dt className="text-dl-muted">Proof Nodes</dt>
-                  <dd className="text-dl-primary">{proof.length} {proof.length === 0 ? '(single-leaf — empty proof)' : ''}</dd>
-                </dl>
-              </div>
+                  <div className="mb-4">
+                    <SuiWalletConnect
+                      onAddressFilled={handleAddressFilled}
+                      claimParams={claimParams}
+                      onClaimSuccess={handleClaimSuccess}
+                      onClaimError={handleClaimError}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  {claimError && (
+                    <div className="border border-red-400 p-3 text-xs font-mono text-red-500 mb-4">
+                      CLAIM ERROR: {claimError}
+                    </div>
+                  )}
+
+                  <details className="border border-dl-border">
+                    <summary className="px-4 py-3 text-xs font-mono uppercase tracking-widest text-dl-muted cursor-pointer select-none">
+                      CLI fallback — Sui CLI command
+                    </summary>
+                    <div className="p-4 border-t border-dl-border bg-dl-surface">
+                      <pre className="text-xs font-mono text-dl-primary whitespace-pre-wrap break-all leading-relaxed">
+                        {[
+                          `sui client ptb \\`,
+                          proof.length === 0
+                            ? `  --make-move-vec "<vector<u8>>" "[]" \\`
+                            : `  --make-move-vec "<vector<u8>>" "${JSON.stringify(
+                                proof
+                                  .map(h =>
+                                    h
+                                      .match(/.{1,2}/g)
+                                      ?.map(b => parseInt(b, 16)) ?? []
+                                  )
+                              )}" \\`,
+                          `  --assign proof \\`,
+                          `  --move-call "${
+                            packageId || '<PACKAGE_ID>'
+                          }::claim_campaign::claim" \\`,
+                          `    @${campaignId} proof \\`,
+                          `  --gas-budget 10000000`,
+                        ].join('\n')}
+                      </pre>
+                    </div>
+                  </details>
+
+                  <div className="mt-4 border border-dl-border p-4 bg-dl-surface">
+                    <p className="text-xs font-mono text-dl-muted uppercase tracking-widest mb-2">
+                      Transaction Parameters
+                    </p>
+                    <dl className="grid grid-cols-2 gap-2 text-xs font-mono">
+                      <dt className="text-dl-muted">Package</dt>
+                      <dd className="text-dl-primary break-all">
+                        {packageId || 'See operator'}
+                      </dd>
+                      <dt className="text-dl-muted">Module</dt>
+                      <dd className="text-dl-primary">claim_campaign</dd>
+                      <dt className="text-dl-muted">Function</dt>
+                      <dd className="text-dl-primary">claim</dd>
+                      <dt className="text-dl-muted">Campaign Object</dt>
+                      <dd className="text-dl-primary break-all">
+                        {campaignId}
+                      </dd>
+                      <dt className="text-dl-muted">Proof Nodes</dt>
+                      <dd className="text-dl-primary">
+                        {proof.length}{' '}
+                        {proof.length === 0
+                          ? '(single-leaf — empty proof)'
+                          : ''}
+                      </dd>
+                    </dl>
+                  </div>
+                </>
+              )}
             </section>
+          )}
+
+          {alreadyClaimed && !txDigest && (
+            <div className="mb-8 border border-green-600 p-4 text-xs font-mono text-green-600">
+              This address has already claimed rewards for this campaign.
+            </div>
           )}
 
           {error && (
@@ -299,9 +506,18 @@ export default function SuiClaimPage() {
           )}
 
           <div className="mt-10 border-t border-dl-border pt-6 text-xs text-dl-muted font-mono">
-            <p>COMMUNITY REWARDS ONLY. No monetary value. Not AXUSD, AXAU, AXM, SEED, or KAG.</p>
-            <p>Not backed by any reserve. Not redeemable for any canonical asset.</p>
-            <p className="mt-1">Network: {process.env.NEXT_PUBLIC_AXIOM_SUI_NETWORK ?? 'testnet'}</p>
+            <p>
+              COMMUNITY REWARDS ONLY. No monetary value. Not AXUSD, AXAU, AXM,
+              SEED, or KAG.
+            </p>
+            <p>
+              Not backed by any reserve. Not redeemable for any canonical
+              asset.
+            </p>
+            <p className="mt-1">
+              Network:{' '}
+              {process.env.NEXT_PUBLIC_AXIOM_SUI_NETWORK ?? 'testnet'}
+            </p>
           </div>
         </div>
       </DesignLawLayout>

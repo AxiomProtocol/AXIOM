@@ -2,6 +2,12 @@ const webpack = require('webpack');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: [
+    '@mysten/sui',
+    '@mysten/bcs',
+    '@mysten/wallet-standard',
+    '@mysten/signers',
+  ],
   // Compression handled by reverse proxy (nginx/Cloudflare) in production
   compress: false,
   allowedDevOrigins: ['*'],
