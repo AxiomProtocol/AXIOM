@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
@@ -38,8 +38,7 @@ export default function SuiClaimPage() {
   const [txDigest, setTxDigest] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
 
-  const packageId =
-    process.env.NEXT_PUBLIC_AXIOM_SUI_PACKAGE_ID ?? '';
+  const packageId = process.env.NEXT_PUBLIC_AXIOM_SUI_PACKAGE_ID ?? '';
 
   const fetchCampaign = useCallback(async () => {
     if (!campaignId.trim()) return;
@@ -126,6 +125,7 @@ export default function SuiClaimPage() {
         }));
       }
     } catch {
+      // non-critical — digest is still shown
     }
   }, [campaignId, walletAddress]);
 
@@ -133,6 +133,7 @@ export default function SuiClaimPage() {
     async (digest: string) => {
       setTxDigest(digest);
       setClaimError(null);
+      // Refresh in background — txDigest persists regardless of hasClaimed state
       await refreshStatus();
     },
     [refreshStatus]
@@ -142,6 +143,7 @@ export default function SuiClaimPage() {
     setClaimError(err);
   }, []);
 
+  // Step 1: wallet connect auto-fills address
   const handleAddressFilled = useCallback((address: string) => {
     setWalletAddress(address);
   }, []);
@@ -160,7 +162,8 @@ export default function SuiClaimPage() {
       ? { packageId, campaignId: campaignId.trim(), proof }
       : null;
 
-  const alreadyClaimed = claimStatus?.hasClaimed === true;
+  // Step 4 remains visible as long as proof exists AND either not yet claimed OR tx just submitted
+  const showStep4 = proof !== null && (claimStatus?.hasClaimed !== true || txDigest !== null);
 
   return (
     <>
@@ -188,9 +191,28 @@ export default function SuiClaimPage() {
             </p>
           </div>
 
+          {/* Step 1 — Connect Wallet */}
           <section className="mb-8">
             <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-3">
-              Step 1 — Campaign
+              Step 1 — Connect Wallet
+            </h2>
+            <p className="text-xs text-dl-muted mb-3 leading-relaxed">
+              Connect your Sui browser wallet to auto-fill your address. You can
+              also enter your address manually in Step 2 if you prefer to use
+              the CLI to submit.
+            </p>
+            <SuiWalletConnect
+              onAddressFilled={handleAddressFilled}
+              claimParams={null}
+              onClaimSuccess={handleClaimSuccess}
+              onClaimError={handleClaimError}
+            />
+          </section>
+
+          {/* Step 2 — Campaign */}
+          <section className="mb-8">
+            <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-3">
+              Step 2 — Campaign
             </h2>
             <div className="flex gap-3">
               <input
@@ -250,25 +272,14 @@ export default function SuiClaimPage() {
             )}
           </section>
 
+          {/* Step 3 — Your Address */}
           <section className="mb-8">
             <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-3">
-              Step 2 — Your Wallet
+              Step 3 — Your Address
             </h2>
             <p className="text-xs text-dl-muted mb-3">
-              Connect your Sui browser wallet to auto-fill your address and
-              submit the claim in-browser, or enter your address manually.
+              Auto-filled from your connected wallet, or enter manually.
             </p>
-
-            <div className="mb-3">
-              <SuiWalletConnect
-                onAddressFilled={handleAddressFilled}
-                claimParams={null}
-                onClaimSuccess={handleClaimSuccess}
-                onClaimError={handleClaimError}
-                disabled={false}
-              />
-            </div>
-
             <div className="flex gap-3">
               <input
                 type="text"
@@ -290,7 +301,7 @@ export default function SuiClaimPage() {
 
             {claimStatus && (
               <div className="mt-3 text-xs font-mono">
-                {claimStatus.hasClaimed && (
+                {claimStatus.hasClaimed && !txDigest && (
                   <span className="text-green-600">
                     Already claimed — reward has been distributed to your
                     wallet.
@@ -318,9 +329,10 @@ export default function SuiClaimPage() {
             )}
           </section>
 
+          {/* Step 4 — Eligibility Proof */}
           <section className="mb-8">
             <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-3">
-              Step 3 — Eligibility Proof
+              Step 4 — Eligibility Proof
             </h2>
             <p className="text-xs text-dl-muted mb-3">
               Paste the eligibility CSV (columns: address, amount). Your proof
@@ -351,9 +363,9 @@ export default function SuiClaimPage() {
                 !campaignId.trim()) && (
                 <p className="text-xs text-dl-muted font-mono mt-2">
                   {!campaignId.trim()
-                    ? 'Enter campaign ID in Step 1 first.'
+                    ? 'Enter campaign ID in Step 2 first.'
                     : !walletAddress.trim()
-                    ? 'Enter your wallet address in Step 2.'
+                    ? 'Connect wallet or enter address in Step 3.'
                     : 'Paste your eligibility CSV above.'}
                 </p>
               )}
@@ -383,12 +395,14 @@ export default function SuiClaimPage() {
             )}
           </section>
 
-          {proof && !alreadyClaimed && (
+          {/* Step 5 — Submit Claim (shown when proof ready; persists while txDigest is set) */}
+          {showStep4 && (
             <section className="mb-8">
               <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-3">
-                Step 4 — Submit Claim
+                Step 5 — Submit Claim
               </h2>
 
+              {/* Success panel — persists even after hasClaimed refreshes */}
               {txDigest ? (
                 <div className="border border-green-600 p-4 mb-4">
                   <p className="text-xs font-mono text-green-600 uppercase tracking-widest mb-2">
@@ -412,9 +426,8 @@ export default function SuiClaimPage() {
               ) : (
                 <>
                   <p className="text-xs text-dl-muted mb-4 leading-relaxed">
-                    Connect your Sui wallet below to submit the claim
-                    in-browser. Your proof will be signed and broadcast
-                    directly — no CLI required.
+                    Your connected wallet will sign and broadcast the claim.
+                    No CLI required.
                   </p>
 
                   <div className="mb-4">
@@ -441,15 +454,14 @@ export default function SuiClaimPage() {
                       <pre className="text-xs font-mono text-dl-primary whitespace-pre-wrap break-all leading-relaxed">
                         {[
                           `sui client ptb \\`,
-                          proof.length === 0
+                          proof!.length === 0
                             ? `  --make-move-vec "<vector<u8>>" "[]" \\`
                             : `  --make-move-vec "<vector<u8>>" "${JSON.stringify(
-                                proof
-                                  .map(h =>
-                                    h
-                                      .match(/.{1,2}/g)
-                                      ?.map(b => parseInt(b, 16)) ?? []
-                                  )
+                                proof!.map(h =>
+                                  h
+                                    .match(/.{1,2}/g)
+                                    ?.map(b => parseInt(b, 16)) ?? []
+                                )
                               )}" \\`,
                           `  --assign proof \\`,
                           `  --move-call "${
@@ -481,8 +493,8 @@ export default function SuiClaimPage() {
                       </dd>
                       <dt className="text-dl-muted">Proof Nodes</dt>
                       <dd className="text-dl-primary">
-                        {proof.length}{' '}
-                        {proof.length === 0
+                        {proof!.length}{' '}
+                        {proof!.length === 0
                           ? '(single-leaf — empty proof)'
                           : ''}
                       </dd>
@@ -491,12 +503,6 @@ export default function SuiClaimPage() {
                 </>
               )}
             </section>
-          )}
-
-          {alreadyClaimed && !txDigest && (
-            <div className="mb-8 border border-green-600 p-4 text-xs font-mono text-green-600">
-              This address has already claimed rewards for this campaign.
-            </div>
           )}
 
           {error && (
