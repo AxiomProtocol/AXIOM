@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
-interface WalletAccount {
+export interface WalletAccount {
   address: string;
   chains: string[];
   features: string[];
@@ -9,7 +9,7 @@ interface WalletAccount {
   publicKey: Uint8Array;
 }
 
-interface WalletLike {
+export interface WalletLike {
   name: string;
   icon?: string;
   version: string;
@@ -25,11 +25,22 @@ export interface SuiClaimParams {
 }
 
 interface Props {
+  /** Called when the user connects a wallet; also auto-fills the address field. */
   onAddressFilled: (address: string) => void;
+  /** Claim params — when provided and wallet connected, shows Submit Claim button. */
   claimParams: SuiClaimParams | null;
   onClaimSuccess: (digest: string) => void;
   onClaimError: (err: string) => void;
   disabled?: boolean;
+  /**
+   * Controlled wallet session lifted from the page so Step 1 and Step 5
+   * share the same connection. When provided, internal connect/disconnect
+   * state is synchronized with the parent.
+   */
+  sharedWallet?: WalletLike | null;
+  sharedAccount?: WalletAccount | null;
+  onSharedConnect?: (wallet: WalletLike, account: WalletAccount) => void;
+  onSharedDisconnect?: () => void;
 }
 
 const SUI_SIGN_AND_EXECUTE = 'sui:signAndExecuteTransaction';
@@ -52,14 +63,27 @@ export default function SuiWalletConnect({
   onClaimSuccess,
   onClaimError,
   disabled = false,
+  sharedWallet,
+  sharedAccount,
+  onSharedConnect,
+  onSharedDisconnect,
 }: Props) {
   const [wallets, setWallets] = useState<WalletLike[]>([]);
-  const [connected, setConnected] = useState<WalletLike | null>(null);
-  const [account, setAccount] = useState<WalletAccount | null>(null);
+  const [discoveryError, setDiscoveryError] = useState<string | null>(null);
+
+  // Local state used only when shared props are not provided
+  const [localConnected, setLocalConnected] = useState<WalletLike | null>(null);
+  const [localAccount, setLocalAccount] = useState<WalletAccount | null>(null);
+
   const [connecting, setConnecting] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const unsubRef = useRef<(() => void) | null>(null);
+
+  // Resolve whether we're in controlled (shared) mode or local mode
+  const isControlled = sharedWallet !== undefined;
+  const connected = isControlled ? sharedWallet : localConnected;
+  const account = isControlled ? sharedAccount : localAccount;
 
   useEffect(() => {
     let active = true;
@@ -71,6 +95,7 @@ export default function SuiWalletConnect({
         const allWallets = registry.get() as WalletLike[];
         if (active) {
           setWallets(allWallets.filter(isSuiWallet));
+          setDiscoveryError(null);
         }
 
         const unsub = registry.on('register', (...newWallets: unknown[]) => {
@@ -84,7 +109,13 @@ export default function SuiWalletConnect({
           }
         });
         unsubRef.current = unsub;
-      } catch {
+      } catch (e) {
+        if (active) {
+          const msg =
+            e instanceof Error ? e.message : 'Wallet discovery failed';
+          console.warn('[SuiWallet] discovery failed:', msg);
+          setDiscoveryError(msg);
+        }
       }
     }
 
@@ -95,30 +126,46 @@ export default function SuiWalletConnect({
     };
   }, []);
 
-  const connect = useCallback(async (wallet: WalletLike) => {
-    setConnecting(true);
-    setShowPicker(false);
-    try {
-      const feature = wallet.features[STANDARD_CONNECT] as {
-        connect: (input?: { silent?: boolean }) => Promise<{ accounts: WalletAccount[] }>;
-      };
-      const result = await feature.connect();
-      const acc = result.accounts[0];
-      if (!acc) throw new Error('No accounts returned from wallet');
-      setConnected(wallet);
-      setAccount(acc);
-      onAddressFilled(acc.address);
-    } catch (e) {
-      onClaimError(e instanceof Error ? e.message : 'Failed to connect wallet');
-    } finally {
-      setConnecting(false);
-    }
-  }, [onAddressFilled, onClaimError]);
+  const connect = useCallback(
+    async (wallet: WalletLike) => {
+      setConnecting(true);
+      setShowPicker(false);
+      try {
+        const feature = wallet.features[STANDARD_CONNECT] as {
+          connect: (input?: { silent?: boolean }) => Promise<{
+            accounts: WalletAccount[];
+          }>;
+        };
+        const result = await feature.connect();
+        const acc = result.accounts[0];
+        if (!acc) throw new Error('No accounts returned from wallet');
+
+        if (isControlled) {
+          onSharedConnect?.(wallet, acc);
+        } else {
+          setLocalConnected(wallet);
+          setLocalAccount(acc);
+        }
+        onAddressFilled(acc.address);
+      } catch (e) {
+        onClaimError(
+          e instanceof Error ? e.message : 'Failed to connect wallet'
+        );
+      } finally {
+        setConnecting(false);
+      }
+    },
+    [isControlled, onSharedConnect, onAddressFilled, onClaimError]
+  );
 
   const disconnect = useCallback(() => {
-    setConnected(null);
-    setAccount(null);
-  }, []);
+    if (isControlled) {
+      onSharedDisconnect?.();
+    } else {
+      setLocalConnected(null);
+      setLocalAccount(null);
+    }
+  }, [isControlled, onSharedDisconnect]);
 
   const submitClaim = useCallback(async () => {
     if (!connected || !account || !claimParams) return;
@@ -195,6 +242,7 @@ export default function SuiWalletConnect({
     }
   }, [connected, account, claimParams, onClaimSuccess, onClaimError]);
 
+  // — Connected state —
   if (account && connected) {
     return (
       <div className="space-y-3">
@@ -228,6 +276,17 @@ export default function SuiWalletConnect({
     );
   }
 
+  // — Discovery failure —
+  if (discoveryError) {
+    return (
+      <div className="border border-yellow-500 p-3 text-xs font-mono text-yellow-700">
+        Wallet detection encountered an error: {discoveryError}. Try refreshing
+        the page or check that your browser wallet extension is enabled.
+      </div>
+    );
+  }
+
+  // — No wallets found —
   if (wallets.length === 0) {
     return (
       <div className="border border-dl-border p-3 text-xs font-mono text-dl-muted">
@@ -254,6 +313,7 @@ export default function SuiWalletConnect({
     );
   }
 
+  // — Single wallet —
   if (wallets.length === 1) {
     return (
       <button
@@ -266,6 +326,7 @@ export default function SuiWalletConnect({
     );
   }
 
+  // — Multiple wallets — picker
   return (
     <div className="relative">
       <button

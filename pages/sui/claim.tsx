@@ -2,7 +2,11 @@ import React, { useState, useCallback } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { DesignLawLayout } from '../../components/design-law/DesignLawLayout';
-import type { SuiClaimParams } from '../../components/sui/SuiWalletConnect';
+import type {
+  SuiClaimParams,
+  WalletLike,
+  WalletAccount,
+} from '../../components/sui/SuiWalletConnect';
 
 const SUISCAN_BASE = 'https://suiscan.xyz/mainnet/tx';
 
@@ -38,7 +42,24 @@ export default function SuiClaimPage() {
   const [txDigest, setTxDigest] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
 
+  // Shared wallet session — lifted to page so Steps 1 and 5 reuse the same connection
+  const [sharedWallet, setSharedWallet] = useState<WalletLike | null>(null);
+  const [sharedAccount, setSharedAccount] = useState<WalletAccount | null>(null);
+
   const packageId = process.env.NEXT_PUBLIC_AXIOM_SUI_PACKAGE_ID ?? '';
+
+  const handleSharedConnect = useCallback(
+    (wallet: WalletLike, account: WalletAccount) => {
+      setSharedWallet(wallet);
+      setSharedAccount(account);
+    },
+    []
+  );
+
+  const handleSharedDisconnect = useCallback(() => {
+    setSharedWallet(null);
+    setSharedAccount(null);
+  }, []);
 
   const fetchCampaign = useCallback(async () => {
     if (!campaignId.trim()) return;
@@ -119,13 +140,10 @@ export default function SuiClaimPage() {
       );
       const data = await res.json();
       if (res.ok) {
-        setClaimStatus(prev => ({
-          ...prev!,
-          hasClaimed: data.hasClaimed,
-        }));
+        setClaimStatus(prev => ({ ...prev!, hasClaimed: data.hasClaimed }));
       }
     } catch {
-      // non-critical — digest is still shown
+      // non-critical — txDigest panel stays visible regardless
     }
   }, [campaignId, walletAddress]);
 
@@ -133,7 +151,6 @@ export default function SuiClaimPage() {
     async (digest: string) => {
       setTxDigest(digest);
       setClaimError(null);
-      // Refresh in background — txDigest persists regardless of hasClaimed state
       await refreshStatus();
     },
     [refreshStatus]
@@ -143,7 +160,7 @@ export default function SuiClaimPage() {
     setClaimError(err);
   }, []);
 
-  // Step 1: wallet connect auto-fills address
+  // Called from both Step 1 and Step 5 wallet instances
   const handleAddressFilled = useCallback((address: string) => {
     setWalletAddress(address);
   }, []);
@@ -162,8 +179,10 @@ export default function SuiClaimPage() {
       ? { packageId, campaignId: campaignId.trim(), proof }
       : null;
 
-  // Step 4 remains visible as long as proof exists AND either not yet claimed OR tx just submitted
-  const showStep4 = proof !== null && (claimStatus?.hasClaimed !== true || txDigest !== null);
+  // Step 5 remains visible as long as proof exists AND (not yet claimed OR tx just submitted)
+  const showStep5 =
+    proof !== null &&
+    (claimStatus?.hasClaimed !== true || txDigest !== null);
 
   return (
     <>
@@ -197,8 +216,8 @@ export default function SuiClaimPage() {
               Step 1 — Connect Wallet
             </h2>
             <p className="text-xs text-dl-muted mb-3 leading-relaxed">
-              Connect your Sui browser wallet to auto-fill your address. You can
-              also enter your address manually in Step 2 if you prefer to use
+              Connect your Sui browser wallet to auto-fill your address. You
+              can also enter your address manually in Step 3 if you prefer
               the CLI to submit.
             </p>
             <SuiWalletConnect
@@ -206,6 +225,10 @@ export default function SuiClaimPage() {
               claimParams={null}
               onClaimSuccess={handleClaimSuccess}
               onClaimError={handleClaimError}
+              sharedWallet={sharedWallet}
+              sharedAccount={sharedAccount}
+              onSharedConnect={handleSharedConnect}
+              onSharedDisconnect={handleSharedDisconnect}
             />
           </section>
 
@@ -396,13 +419,13 @@ export default function SuiClaimPage() {
           </section>
 
           {/* Step 5 — Submit Claim (shown when proof ready; persists while txDigest is set) */}
-          {showStep4 && (
+          {showStep5 && (
             <section className="mb-8">
               <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-3">
                 Step 5 — Submit Claim
               </h2>
 
-              {/* Success panel — persists even after hasClaimed refreshes */}
+              {/* Success panel persists even after hasClaimed refreshes to true */}
               {txDigest ? (
                 <div className="border border-green-600 p-4 mb-4">
                   <p className="text-xs font-mono text-green-600 uppercase tracking-widest mb-2">
@@ -427,16 +450,22 @@ export default function SuiClaimPage() {
                 <>
                   <p className="text-xs text-dl-muted mb-4 leading-relaxed">
                     Your connected wallet will sign and broadcast the claim.
-                    No CLI required.
+                    Already connected in Step 1? The session carries through —
+                    no need to reconnect.
                   </p>
 
                   <div className="mb-4">
+                    {/* Reuses the shared wallet session from Step 1 */}
                     <SuiWalletConnect
                       onAddressFilled={handleAddressFilled}
                       claimParams={claimParams}
                       onClaimSuccess={handleClaimSuccess}
                       onClaimError={handleClaimError}
                       disabled={loading}
+                      sharedWallet={sharedWallet}
+                      sharedAccount={sharedAccount}
+                      onSharedConnect={handleSharedConnect}
+                      onSharedDisconnect={handleSharedDisconnect}
                     />
                   </div>
 
