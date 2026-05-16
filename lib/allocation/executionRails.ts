@@ -23,6 +23,7 @@
 
 import { createOnrampSession, isCdpOnrampConfigured } from '../onramp/sessionService';
 import { mintAxauFromUsd } from './axauMintHelper';
+import { swapUsdcToAxusd } from './camelotSwapHelper';
 import { stripeOperatingSpendPayout } from './stripePayoutHelper';
 import type { AllocationAssetKey } from './assets';
 
@@ -136,28 +137,25 @@ export async function dispatchRail(input: RailDispatchInput): Promise<RailResult
       return mintAxauFromUsd(usdAmount);
     }
 
-    // ── AXUSD via Camelot swap (queued — requires USDC in treasury wallet) ─
-    // The AXUSD allocation assumes USDC already landed from the Onramp step.
-    // Camelot swap requires an on-chain EOA call with the Camelot V3 router;
-    // wired as queued until the treasury USDC balance is confirmed available.
+    // ── AXUSD via Camelot swap (live — USDC→AXUSD from deployer wallet) ────
+    // Requires USDC to be present in the deployer EOA first. Run the USDC
+    // Coinbase Onramp row before this row so funds are available.
+    // Safety cap: $25,000 USDC per call; re-execute to exhaust larger amounts.
     case 'camelot_swap': {
-      return {
-        rail, status: 'queued',
-        txHash: null,
-        externalRef: null,
-        externalUrl: 'https://app.camelot.exchange/',
-        note: `AXUSD acquisition queued for $${usdAmount.toFixed(2)} — swap USDC→AXUSD on Camelot after USDC Onramp clears`,
-      };
+      return swapUsdcToAxusd(usdAmount);
     }
 
     // ── KAG silver reserve (queued — Kinesis API integration pending) ──────
+    // No automated rail exists for KAG. Operator must purchase manually on
+    // Kinesis.money and record the receipt. See the Silver Reserve page for
+    // onboarding instructions.
     case 'kag_mint': {
       return {
         rail, status: 'queued',
         txHash: null,
         externalRef: null,
-        externalUrl: 'https://kinesis.money/',
-        note: `KAG silver reserve queued for $${usdAmount.toFixed(2)} — Kinesis API integration pending; purchase KAG on Kinesis.money`,
+        externalUrl: '/commodities/kag',
+        note: `KAG silver reserve queued for $${usdAmount.toFixed(2)} — no automated rail; purchase via Kinesis.money then record receipt manually`,
       };
     }
 

@@ -5926,7 +5926,7 @@ export default function FounderOpsPage() {
                     {rows.map(r => {
                       const railLabel: Record<string, string> = {
                         axau:            'AXAU mint — live (on-chain tx)',
-                        axusd:           'Camelot USDC→AXUSD — queued (manual after onramp)',
+                        axusd:           'Camelot USDC→AXUSD — live (deployer USDC required; run USDC onramp row first)',
                         paxg:            'Coinbase Onramp — creates session URL (operator completes purchase)',
                         usdc:            'Coinbase Onramp — creates session URL (operator completes purchase)',
                         wbtc:            'Coinbase Onramp — creates session URL (operator completes purchase)',
@@ -5954,7 +5954,7 @@ export default function FounderOpsPage() {
                 </table>
                 <div className="border border-dl-border bg-dl-bg-alt p-3 mb-4">
                   <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
-                    Live rails (AXAU mint, Stripe payout, cash ledger) submit immediately and record a real receipt. Onramp rows create a Coinbase session URL — the operator must open the link to complete the card purchase. Queued rows (Camelot, KAG) record a dispatch intent; complete them via the linked external platform. Already-<strong>executed</strong> rows are protected against double-dispatch and show receipt-only. <strong>Queued or failed</strong> rows can be retried — clicking Execute or Retry re-dispatches the rail and updates the record.
+                    Live rails (AXAU mint, AXUSD Camelot swap, Stripe payout, cash ledger) submit immediately and record a real receipt. The AXUSD row requires USDC in the deployer wallet — run the USDC onramp row first. Onramp rows create a Coinbase session URL — the operator must open the link to complete the card purchase. KAG stays queued (no automated rail) — link opens the Silver Reserve onboarding page. Already-<strong>executed</strong> rows are protected against double-dispatch and show receipt-only. <strong>Queued or failed</strong> rows can be retried — clicking Retry re-dispatches the rail and updates the record.
                   </p>
                 </div>
                 {errorMsg && <p className="font-dl-mono text-xs text-dl-error mb-3">{errorMsg}</p>}
