@@ -345,96 +345,6 @@ const COSMOS_ARTIFACTS: RequiredArtifact[] = [
   },
 ];
 
-// ─── Sui Artifacts ────────────────────────────────────────────────────────────
-
-const SUI_ARTIFACTS: RequiredArtifact[] = [
-  {
-    id: 'sui-distribution-architecture-decision',
-    chainSlug: 'sui',
-    name: 'Distribution Architecture Decision (airdrop / claim / bridge model)',
-    type: 'architecture_decision',
-    status: 'missing',
-    sourceUrl: null,
-    repoLocation: 'documents/chains/AXIOM_SUI_PHASE4_DISTRIBUTION_DESIGN.md',
-    rationale:
-      'Cannot build distribution contracts until the distribution model is decided: ' +
-      'direct airdrop to Sui wallets, claim contract, or a Wormhole/LayerZero bridge from Arbitrum.',
-    blocksImplementation: true,
-    requiresPartnerRelationship: false,
-  },
-  {
-    id: 'mysten-sui-sdk',
-    chainSlug: 'sui',
-    name: '@mysten/sui (TypeScript SDK)',
-    type: 'sdk_package',
-    status: 'missing',
-    sourceUrl: 'https://www.npmjs.com/package/@mysten/sui',
-    repoLocation: null,
-    rationale:
-      'Primary TypeScript SDK for all Sui network operations (transactions, coin operations, ' +
-      'object queries). Not installed in the Axiom project as of Phase 4.',
-    blocksImplementation: true,
-    requiresPartnerRelationship: false,
-  },
-  {
-    id: 'sui-move-language',
-    chainSlug: 'sui',
-    name: 'Move Language / Sui Move CLI Development Capability',
-    type: 'partner_docs',
-    status: 'missing',
-    sourceUrl: 'https://docs.sui.io/guides/developer/first-app',
-    repoLocation: null,
-    rationale:
-      'Sui contracts are written in Move (not Solidity). No Move files exist in the ' +
-      'Axiom codebase. Move expertise required for any Sui package deployment.',
-    blocksImplementation: true,
-    requiresPartnerRelationship: false,
-  },
-  {
-    id: 'sui-fullnode-docs',
-    chainSlug: 'sui',
-    name: 'Sui Developer Documentation (Mysten Labs)',
-    type: 'api_reference',
-    status: 'missing',
-    sourceUrl: 'https://docs.sui.io/',
-    repoLocation: 'documents/chains/AXIOM_SUI_PHASE4_BLUEPRINT.md',
-    rationale:
-      'Object model, Coin<T> standard, Move package publish flow, ' +
-      'full-node RPC JSON API reference required for integration design.',
-    blocksImplementation: false,
-    requiresPartnerRelationship: false,
-  },
-  {
-    id: 'sui-bridge-partner',
-    chainSlug: 'sui',
-    name: 'Bridge Partner Selection (Wormhole / LayerZero / Native Sui Bridge)',
-    type: 'partner_agreement',
-    status: 'missing',
-    sourceUrl: null,
-    repoLocation: 'documents/chains/AXIOM_SUI_PHASE4_DISTRIBUTION_DESIGN.md',
-    rationale:
-      'If a bridge-based distribution model is chosen (AXM on Sui bridged from Arbitrum), ' +
-      'a bridge partner must be selected and integrated. Only required for bridge model — ' +
-      'not required if native Sui distribution (no bridge) is chosen.',
-    blocksImplementation: false,
-    requiresPartnerRelationship: true,
-  },
-  {
-    id: 'sui-testnet-credentials',
-    chainSlug: 'sui',
-    name: 'Sui Testnet Wallet + Faucet Access',
-    type: 'testnet_credentials',
-    status: 'missing',
-    sourceUrl: 'https://faucet.devnet.sui.io/',
-    repoLocation: null,
-    rationale:
-      'Sui Testnet (or Devnet) wallet required for Move package deployment testing ' +
-      'before any Sui Mainnet operations. Faucet provides test SUI for gas.',
-    blocksImplementation: false,
-    requiresPartnerRelationship: false,
-  },
-];
-
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
 export const INTEGRATION_ARTIFACTS: Record<string, RequiredArtifact[]> = {
@@ -443,7 +353,6 @@ export const INTEGRATION_ARTIFACTS: Record<string, RequiredArtifact[]> = {
   stellar: STELLAR_ARTIFACTS,
   canton: CANTON_ARTIFACTS,
   cosmos: COSMOS_ARTIFACTS,
-  sui: SUI_ARTIFACTS,
 };
 
 // ─── DB state type ─────────────────────────────────────────────────────────────
@@ -597,7 +506,6 @@ export class IntegrationReadinessModel {
       stellar: 'Stellar',
       canton: 'Canton Network',
       cosmos: 'Cosmos / Axiom Hub',
-      sui: 'Sui',
     };
     return names[chainSlug] ?? chainSlug;
   }

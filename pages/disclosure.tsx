@@ -952,7 +952,7 @@ export default function DisclosurePage() {
             <div className="px-6 py-3 border-b border-dl-border">
               <p className="text-xs text-dl-gray mb-2">Eight Execution Buckets</p>
               <div className="space-y-1">
-                <p className="text-sm text-dl-navy">1. AXUSD Liquidity — PSM + Camelot V2 configured venues; EulerSwap LP integration withdrawn</p>
+                <p className="text-sm text-dl-navy">1. AXUSD Liquidity — Active EulerSwap pool depth and vault deposits</p>
                 <p className="text-sm text-dl-navy">2. AXM Governance — On-chain governance participation and token management</p>
                 <p className="text-sm text-dl-navy">3. Digital Treasury — BTC/ETH/LINK accumulation based on intelligence signals</p>
                 <p className="text-sm text-dl-navy">4. Deal Intelligence — Properties underwritten and analyzed in the pipeline</p>
@@ -1379,103 +1379,6 @@ export default function DisclosurePage() {
         </section>
 
         
-        <section className="mb-12">
-          <SectionHeading>
-            <span className="inline-flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-dl-navy" />
-              Euler Transition {'\u2014'} Axiom-Native Replacement Architecture
-            </span>
-          </SectionHeading>
-          <div className="border border-dl-border">
-            <div className="px-6 py-5 bg-dl-bg-alt border-b border-dl-border">
-              <p className="text-sm text-dl-gray leading-relaxed mb-3">
-                The Euler Finance V2 integration — including EulerSwap LP pools, the EVK AXUSD lending vault, and the
-                Euler Earn AXUSD wrapper — has been withdrawn from the Axiom Protocol stack effective Task #510. No user
-                capital was at risk; no public deposits were open at time of decommission. All Euler-dependent API
-                endpoints return HTTP 410. The following surfaces have been updated to reflect the Axiom-native
-                replacement posture.
-              </p>
-              <p className="text-xs text-dl-gray leading-relaxed border-t border-dl-border pt-3">
-                No returns are guaranteed. All yields, rewards, rates, and liquidity conditions are variable and subject to change without notice. Historical rate information, if any, does not indicate or guarantee future performance. No APY, yield rate, or income figure stated or implied in any protocol surface constitutes a commitment or projection. Infrastructure deployment status does not imply active yield availability, public offering readiness, or suitability for any particular participant.
-              </p>
-            </div>
-            {[
-              {
-                id: '01',
-                surface: 'Earn AXUSD Vault — /earn/axusd',
-                status: 'Configured — Deposits Not Yet Open',
-                note: 'The earnAXUSD ERC-4626 vault remains deployed on Arbitrum One for reference reads. Euler Earn strategy is archived as legacy. No active yield is being generated. Axiom-native earn infrastructure is in formation.',
-              },
-              {
-                id: '02',
-                surface: 'Protocol Exchange — /dex (EulerSwap LP tab)',
-                status: 'Withdrawn — Relabeled Legacy LP',
-                note: 'The EulerSwap LP tab has been relabeled "Legacy LP" and the EulerSwap LP integration replaced with a withdrawn notice. No protocol LP positions remain in EulerSwap pools. The primary venue designation has been removed.',
-              },
-              {
-                id: '03',
-                surface: 'Lending Fund Open Market — /lending-fund (Open Market tab)',
-                status: 'EVK Integration Withdrawn — Axiom Credit Vault In Formation',
-                note: 'The Euler V2 EVK AXUSD open money market tab has been updated. The EVK vault API returns 410; the UI now shows a withdrawn notice and explains the Axiom-native replacement posture. The heading has been updated to Axiom Credit Vault.',
-              },
-              {
-                id: '04',
-                surface: 'AXAU Reserve — /axau',
-                status: 'Reserve Access: Configured · Mint: Controlled · Public AMM: Disabled · Collateral Use: Disabled',
-                note: 'A reserve-linked status strip has been added to the AXAU page to clarify that no public AMM access or DeFi collateral use is currently active for AXAU. Mint access remains controlled and identity-gated.',
-              },
-              {
-                id: '05',
-                surface: 'Liquidity Venues — /liquidity (new page)',
-                status: 'New Page Added',
-                note: 'A new venue status table page at /liquidity provides the canonical list of all protocol liquidity venues, their current operational status, and integration notes. Accessible from the Stack navigation dropdown.',
-              },
-              {
-                id: '06',
-                surface: 'VaultStatusBanner — component',
-                status: 'Extended — New Status Variants',
-                note: 'The VaultStatusBanner component now supports: configured, withdrawn_empty, coming_soon, formation, open_to_eligible_participants, controlled, planned — in addition to the original bootstrap and live variants.',
-              },
-              {
-                id: '07',
-                surface: 'Earn API — /api/euler/earn-stats',
-                status: 'HTTP 410 — Decommissioned',
-                note: 'The /api/euler/earn-stats endpoint was decommissioned in Task #510. Any surface that fetched from this endpoint has been updated to handle 410 gracefully and show a withdrawn notice.',
-              },
-              {
-                id: '08',
-                surface: 'EVK Vault API — /api/euler/axusd-vault',
-                status: 'HTTP 410 — Decommissioned',
-                note: 'The /api/euler/axusd-vault endpoint was decommissioned in Task #510. The Lending Fund open market tab now handles a 410 response by displaying a withdrawn notice rather than an error state.',
-              },
-              {
-                id: '09',
-                surface: 'EulerSwap Pools API — /api/euler/eulerswap-pools',
-                status: 'HTTP 410 — Decommissioned',
-                note: 'The /api/euler/eulerswap-pools endpoint was decommissioned in Task #510. The Protocol Exchange Legacy LP tab no longer fetches from this endpoint — all content is now static withdrawn-notice copy.',
-              },
-            ].map((item, i, arr) => (
-              <div
-                key={item.id}
-                className={`grid grid-cols-1 md:grid-cols-[56px_1fr_1fr_2fr] gap-0 ${i < arr.length - 1 ? 'border-b border-dl-border' : ''} ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}
-              >
-                <div className="px-4 py-4 border-r border-dl-border flex items-start">
-                  <span className="font-dl-mono text-xs text-dl-gray">{item.id}</span>
-                </div>
-                <div className="px-4 py-4 md:border-r border-dl-border">
-                  <p className="font-dl-mono text-xs text-dl-navy font-semibold leading-relaxed">{item.surface}</p>
-                </div>
-                <div className="px-4 py-4 md:border-r border-dl-border">
-                  <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">{item.status}</p>
-                </div>
-                <div className="px-4 py-4">
-                  <p className="text-xs text-dl-gray leading-relaxed">{item.note}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
         <section className="mb-12">
           <SectionHeading><span className="inline-flex items-center gap-2"><BookOpen className="w-5 h-5 text-dl-navy" />Glossary {'\u2014'} Vocabulary Reference</span></SectionHeading>
           <div className="border border-dl-border">

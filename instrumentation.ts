@@ -4465,46 +4465,6 @@ END $seed$`, 'seed dp_listings');
         updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
       )`, 'pilot_treasury_buckets');
 
-      await exec(`CREATE TABLE IF NOT EXISTS pilot_allocation_policies (
-        scope TEXT PRIMARY KEY,
-        share_pct NUMERIC NOT NULL,
-        weights JSONB NOT NULL,
-        updated_at TIMESTAMP NOT NULL DEFAULT now(),
-        updated_by TEXT
-      )`, 'pilot_allocation_policies');
-
-      await exec(`CREATE TABLE IF NOT EXISTS pilot_allocation_executions (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        document_id UUID NOT NULL,
-        scope TEXT NOT NULL,
-        asset_key TEXT NOT NULL,
-        rail TEXT NOT NULL,
-        weight_pct NUMERIC NOT NULL,
-        usd_amount NUMERIC NOT NULL,
-        status TEXT NOT NULL,
-        tx_hash TEXT,
-        external_ref TEXT,
-        external_url TEXT,
-        note TEXT,
-        weights_snapshot JSONB,
-        rationale TEXT,
-        scope_amount NUMERIC,
-        executed_at TIMESTAMP NOT NULL DEFAULT now(),
-        executed_by TEXT,
-        destination_address TEXT
-      )`, 'pilot_allocation_executions');
-
-      await exec(`CREATE TABLE IF NOT EXISTS pilot_settlement_extractions (
-        document_id UUID PRIMARY KEY,
-        status TEXT NOT NULL,
-        confidence NUMERIC,
-        field_count INTEGER,
-        processing_time_ms INTEGER,
-        payload JSONB,
-        error TEXT,
-        extracted_at TIMESTAMP NOT NULL DEFAULT now()
-      )`, 'pilot_settlement_extractions');
-
       await exec(`CREATE TABLE IF NOT EXISTS portal_investors (
         id SERIAL PRIMARY KEY,
         user_id VARCHAR(100),
@@ -6485,14 +6445,6 @@ END $seed$`, 'seed dp_listings');
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )`, 'table custody_wallets');
-
-      await exec(`CREATE TABLE IF NOT EXISTS driver_wallets (
-        driver_key TEXT PRIMARY KEY,
-        wallet_address TEXT NOT NULL,
-        label TEXT,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-      )`, 'table driver_wallets');
 
       await exec(`CREATE TABLE IF NOT EXISTS custody_transactions (
         id SERIAL PRIMARY KEY,

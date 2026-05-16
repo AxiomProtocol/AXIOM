@@ -41,7 +41,6 @@ export const NAV_ITEMS: NavItem[] = [
       { href: '/axusd-3643', label: 'AXUSD Settlement Rail' },
       { href: '/earn/axusd', label: 'Earn AXUSD (Bootstrap)' },
       { href: '/dex', label: 'Protocol Exchange' },
-      { href: '/liquidity', label: 'Liquidity Venues' },
       { href: '/onramp', label: 'Card Onramp (Buy AXUSD / AXAU)' },
       { href: '/treasury/fund/card', label: 'Fund Treasury (Card → On-Chain)' },
       { href: '/escrow/new', label: 'Escrow' },

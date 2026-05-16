@@ -46,29 +46,16 @@ const PROVIDER = 'bitgo';
 // atomic-unit representation. Update here when adding new coin types.
 
 const COIN_DECIMALS: Record<string, number> = {
-  // ── Arbitrum One ────────────────────────────────────────────────
-  arbeth:    18,  // Arbitrum ETH (wei)
-  tarbeth:   18,  // Arbitrum testnet ETH (wei)
-  arbitrum:  18,  // Arbitrum native (wei)
-  tarbitrum: 18,  // Arbitrum testnet (wei)
-  // ── Ethereum ────────────────────────────────────────────────────
-  eth:       18,  // Ethereum mainnet ETH (wei)
-  teth:      18,  // Ethereum testnet ETH (wei)
-  // ── Axiom tokens (Arbitrum-canonical) ───────────────────────────
-  paxg:      18,  // PAX Gold ERC-20 (18 decimals on-chain)
-  axm:       18,  // AXM governance token (18 decimals)
-  axusd:     18,  // AXUSD stablecoin (18 decimals — ERC-3643)
-  usdc:       6,  // USD Coin (6 decimals on Arbitrum and Ethereum)
-  // ── Polygon PoS (Phase 5) ────────────────────────────────────────
-  // BitGo coin identifiers for Polygon assets.
-  // Decimal values mirror on-chain representations.
-  pol:                 18, // Polygon native token (formerly MATIC), 18 decimals
-  matic:               18, // Legacy Polygon native — BitGo may still use this
-  polygon:             18, // Polygon network identifier (generic)
-  'polygon:usdc':       6, // Native USDC on Polygon PoS — 6 decimals
-  polygonusdc:          6, // BitGo may normalise the colon away
-  'polygon:pol':       18, // POL on Polygon via BitGo colon notation
-  amoyeth:             18, // Polygon Amoy testnet ETH
+  arbeth:   18,  // Arbitrum ETH (wei)
+  tarbeth:  18,  // Arbitrum testnet ETH (wei)
+  eth:      18,  // Ethereum mainnet ETH (wei)
+  teth:     18,  // Ethereum testnet ETH (wei)
+  arbitrum: 18,  // Arbitrum native (wei)
+  tarbitrum: 18, // Arbitrum testnet (wei)
+  paxg:     18,  // PAX Gold ERC-20 (18 decimals on-chain)
+  axm:      18,  // AXM governance token (18 decimals)
+  axusd:    18,  // AXUSD stablecoin (18 decimals — ERC-3643)
+  usdc:      6,  // USD Coin (6 decimals on Arbitrum and Ethereum)
 };
 
 /**
@@ -163,7 +150,7 @@ export class BitGoTreasuryExtension {
           provider: PROVIDER,
           walletName: wallet.label ?? `BitGo — ${wallet.walletAddress.slice(0, 10)}`,
           walletAddress: wallet.walletAddress,
-          chain: this.coinToChain(wallet.coin ?? 'arbeth'),
+          chain: 'arbitrum',
           assetScope: wallet.coin ?? 'arbeth',
           purpose: 'custody',
           legalEntityName: 'Axiom Protocol',
@@ -319,46 +306,18 @@ export class BitGoTreasuryExtension {
 
   private coinToAsset(coin: string): string {
     const map: Record<string, string> = {
-      // ── Arbitrum One ──────────────────────────────────────────
-      arbeth:         'ETH',
-      tarbeth:        'ETH',
-      arbitrum:       'ETH',
-      tarbitrum:      'ETH',
-      // ── Ethereum ─────────────────────────────────────────────
-      eth:            'ETH',
-      teth:           'ETH',
-      // ── Axiom tokens (Arbitrum-canonical) ────────────────────
-      usdc:           'USDC',
-      axm:            'AXM',
-      axusd:          'AXUSD',
-      paxg:           'PAXG',
-      // ── Polygon PoS (Phase 5) ─────────────────────────────────
-      pol:            'POL',
-      matic:          'POL',       // BitGo legacy identifier for POL
-      polygon:        'POL',
-      'polygon:pol':  'POL',
-      'polygon:usdc': 'USDC-POLYGON',
-      polygonusdc:    'USDC-POLYGON',
-      amoyeth:        'ETH',       // Polygon Amoy testnet
+      arbeth:    'ETH',
+      tarbeth:   'ETH',
+      eth:       'ETH',
+      teth:      'ETH',
+      usdc:      'USDC',
+      axm:       'AXM',
+      axusd:     'AXUSD',
+      paxg:      'PAXG',
+      arbitrum:  'ETH',
+      tarbitrum: 'ETH',
     };
     return map[coin.toLowerCase()] ?? coin.toUpperCase();
-  }
-
-  /**
-   * Derive the canonical chain name for custody wallet registry `chain` field.
-   * Previously this was hardcoded to 'arbitrum' for all wallets. Phase 5
-   * adds Polygon support, so we derive chain from the BitGo coin identifier.
-   *
-   * Arbitrum is still the default for unknown coins — it was the only
-   * registered chain before Phase 5.
-   */
-  private coinToChain(coin: string): string {
-    const c = coin.toLowerCase();
-    if (c.startsWith('polygon') || c === 'pol' || c === 'matic' || c === 'amoyeth') {
-      return 'polygon';
-    }
-    // All other known coins are Arbitrum-canonical in current BitGo setup.
-    return 'arbitrum';
   }
 
   async sync(): Promise<{ wallets: any; balances: any }> {

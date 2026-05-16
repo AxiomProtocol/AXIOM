@@ -111,11 +111,8 @@ export const EVK_OPEN_MARKET_GOVERNOR_ADDRESS = '0x8d7892CF226B43d48B6e3ce988A12
 
 /** Returns true when the EVK Open Market vault has been deployed */
 export function isEvkVaultDeployed(): boolean {
-  return false; // EVK vault withdrawn 2026-05-13 — all balances confirmed zero
+  return true; // eAXUSD-6 is live at 0xacdA87801f6409bB5157BA78aF1BD9631d6609B2
 }
-
-/** EVK Open Market Vault withdrawal status */
-export const EVK_OPEN_MARKET_STATUS = 'WITHDRAWN_EMPTY' as const;
 
 /**
  * Euler Earn AXUSD Yield Aggregation Vault (Task #39) — DEPLOYED ✓
@@ -135,11 +132,8 @@ export const AXIOM_FEE_BURNER_ADDRESS = '0xF5d59581Eb0fd024aC1b2B67f1B290832eb8C
 
 /** Returns true when the Euler Earn AXUSD vault has been deployed */
 export function isEulerEarnDeployed(): boolean {
-  return false; // Euler Earn vault withdrawn 2026-05-13 — all balances confirmed zero
+  return true; // earnAXUSD is live at 0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B
 }
-
-/** Euler Earn vault withdrawal status */
-export const EULER_EARN_STATUS = 'WITHDRAWN_EMPTY' as const;
 
 // ── EulerSwap AXUSD Liquidity Layer (Task #40 + AXM/AXUSD pool) ──
 // Status: DEPLOYED ✓ | Both pools live on Arbitrum One
@@ -177,15 +171,12 @@ export const AXM_EVK_VAULT_ADDRESS = '0x8e28ffa89d168599156004db4f4d12c2af7c250e
 
 /** Returns true when the EulerSwap AXUSD/USDC pool has been deployed */
 export function isEulerSwapDeployed(): boolean {
-  return false; // EulerSwap pools withdrawn 2026-05-13 — all balances confirmed zero
+  return (EULER_SWAP_AXUSD_USDC_POOL_ADDRESS as string) !== '0x0000000000000000000000000000000000000000';
 }
-
-/** EulerSwap pool withdrawal status */
-export const EULERSWAP_STATUS = 'EMPTY' as const;
 
 /** Returns true when the AXM/AXUSD EulerSwap pool has been deployed */
 export function isAXMAXUSDPoolDeployed(): boolean {
-  return false; // AXM/AXUSD EulerSwap pool withdrawn 2026-05-13 — all balances confirmed zero
+  return (EULER_SWAP_AXUSD_AXM_POOL_ADDRESS as string) !== '0x0000000000000000000000000000000000000000';
 }
 
 /** Returns true when the AXM EVK vault has been deployed */

@@ -19,10 +19,9 @@
  *   avalanche      — Avalanche C-Chain mainnet (43114) [guarded — not for Phase 2]
  *
  * Env vars:
- *   AVALANCHE_MAINNET_RPC_URL      — mainnet C-Chain RPC (falls back to public https://api.avax.network/…)
- *   AVALANCHE_FUJI_RPC_URL         — Fuji testnet RPC (falls back to AVALANCHE_RPC_URL, then public endpoint)
- *   AVALANCHE_RPC_URL              — generic override; used only for Fuji fallback (NOT used for mainnet)
- *   AVALANCHE_DEPLOYER_PRIVATE_KEY — preferred deployer key (Fuji + mainnet); falls back to DEPLOYER_PRIVATE_KEY
+ *   AVALANCHE_RPC_URL              — optional override for mainnet RPC
+ *   AVALANCHE_FUJI_RPC_URL         — optional override for Fuji RPC
+ *   AVALANCHE_DEPLOYER_PRIVATE_KEY — Fuji-only deployer key
  *   SNOWTRACE_API_KEY              — Routescan API key for verification
  *
  * npm scripts (all run from workspace root):
@@ -40,10 +39,8 @@ const FUJI_RPC =
   process.env.AVALANCHE_RPC_URL ??
   'https://api.avax-test.network/ext/bc/C/rpc';
 
-// Mainnet RPC uses its own var so that AVALANCHE_RPC_URL (which may point to Fuji)
-// does not accidentally route mainnet deploys to the wrong chain.
 const MAINNET_RPC =
-  process.env.AVALANCHE_MAINNET_RPC_URL ??
+  process.env.AVALANCHE_RPC_URL ??
   'https://api.avax.network/ext/bc/C/rpc';
 
 const DEPLOYER_ACCOUNTS: string[] =

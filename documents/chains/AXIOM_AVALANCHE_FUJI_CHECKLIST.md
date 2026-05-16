@@ -1,7 +1,7 @@
 # Axiom Protocol — Avalanche Fuji Deployment Checklist
 
 **Network:** Avalanche Fuji Testnet (chainId 43113)  
-**Updated:** 2026-05-14 (Gates progress: G01 ✓ G09 ✓ SATISFIED; G02/G07 CODE READY; G10/G11/G12 IN PROGRESS/DOCUMENT COMPLETE; G03–G06/G08 OPEN; NO-GO for mainnet)  
+**Updated:** 2026-05-13 (Task #483 — Mainnet Readiness Gap Analysis complete; 1/12 gates satisfied; NO-GO)  
 **Deployer:** `0x8d7892CF226B43d48B6e3ce988A1274e6D114C96`  
 **DeployedAt:** 2026-05-13T19:58:41.116Z
 
@@ -116,27 +116,6 @@ Use this checklist before promoting a Fuji deployment to Avalanche C-Chain mainn
 - [x] `freezeAddress(wallet, false)` restores transfers
 - [x] Capinfra `AVALANCHE` adapter DRY_RUN dispatch returns expected receipt — Task #482, 22/22 checks, invariants A–G all PASS
 - [x] Capinfra `AVALANCHE` adapter LIVE dispatch mints on Fuji — Task #482, 2026-05-13T23:36:59Z, 22/22 checks passed, txHash: 0xf10d156a9328b9c4ad32f7bd6dd1df143f92449a270146b209c2129ddb69ef8c, block=55330858, receipt.status=1, Transfer event in logs, balanceOf delta=1 raw (attributed to this run), contract from shared/contracts-avalanche.ts
-- [x] `'AVALANCHE'` added to `capSettlementTypeEnum` — Task #483, migration 0059, 2026-05-14
-- [x] AXUSD-FUJI `settlement_type` updated `EVM → AVALANCHE` in DB and seed — Task #483
-- [x] `capinfra-seed.ts` idempotent settlementType update for existing rows — Task #483
-- [x] Invariant A4: `getAdapter(asset.settlementType)` resolves to AVALANCHE adapter (canonical routing) — Task #483
-- [x] G4: routing gap closed — LIVE proof under canonical routing, invariants A–G all PASS, EXIT=0, txHash: 0x738a90c5f3d6c1f37a133947e598155e58b92b7123ae6a575b00f06700b662ee, block=55331303
-
----
-
-## Gate 6 — Internal Security Review
-
-> **Completed:** 2026-05-14 — **SATISFIED**  
-> Documents: `AXIOM_AVALANCHE_GATE6_SECURITY_DISCOVERY.md`, `AXIOM_AVALANCHE_GATE6_THREAT_MODEL.md`, `AXIOM_AVALANCHE_GATE6_SECURITY_REVIEW.md`
-
-- [x] Phase A (Discovery): All surfaces documented — adapter, dispatcher, config, settlement, migration, schema, contracts, proof script
-- [x] Phase B (Threat Model): 16 threats catalogued with severity/likelihood/status
-- [x] Phase C (Code Review): All adapter files, settlement routing, schema, and proof script reviewed
-- [x] Phase D (Hardening fix): T03 — wrong-chain RPC verification added to `liveDispatch()` (`dispatcher.ts`)
-- [x] Phase E (Accepted risks documented): T05 (shared key → Task #484), T14 (no revert detect), T15 (setAllowAll → G02), T16 (single EOA → G03–G06), L-AV01 (no EIP-55 checksum)
-- [x] Phase F (Gate verdict): SATISFIED — no critical/high findings in capinfra layer; one medium fixed
-
-Note: Gate 6 (internal review) ≠ G08 (external security firm audit). G08 remains OPEN.
 
 ---
 
@@ -145,16 +124,8 @@ Note: Gate 6 (internal review) ≠ G08 (external security firm audit). G08 remai
 All of the following must be true before deploying to Avalanche mainnet (43114):
 
 - [ ] All Fuji checklist items above are complete
-- [x] Internal security review of Phase 2 capinfra stack (Gate 6) — SATISFIED 2026-05-14
-- [ ] External security review of ERC-3643 contracts signed off (G08)
-- [ ] Multi-party authorization wallet (Gnosis Safe on Avalanche) is funded (G03)
-- [ ] Deployer EOA renounces all roles after Safe assignment (G06)
-- [ ] Mainnet deployer key (separate from Fuji key) is prepared and secured (Task #484)
-- [x] Mainnet deploy script implements `setAllowedCountry` (not `setAllowAll`) — G02 CODE READY; pending compliance counsel jurisdiction list
-- [x] Production TransferLimitModule cap defined in mainnet deploy script (default 100,000 AXUSD/day) — G07 CAP DEFINED; pending compliance/product sign-off
-- [x] Incident response plan filed — `documents/operations/INCIDENT_RESPONSE_PLAN.md` (G11 DOCUMENT COMPLETE; pending ops leadership acceptance)
-- [x] Reserve reconciliation model filed — `documents/operations/RESERVE_RECONCILIATION_MODEL.md` (G12 DOCUMENT COMPLETE; pending test reconciliation run)
-- [x] Capinfra AVALANCHE adapter DRY_RUN tested — G09 SATISFIED (invariants A–B, Task #482)
-- [x] Invariant H (TRANSFER dispatch) added to proof script — G10 TRANSFER DRY_RUN proven; LIVE TRANSFER pending
+- [ ] Security review of Phase 2 contracts is signed off
+- [ ] Multi-party authorization wallet (Gnosis Safe on Avalanche) is funded
+- [ ] Mainnet deployer key (separate from Fuji key) is prepared and secured
 - [ ] Disclosure documents updated to include Avalanche C-Chain network
 - [ ] `AVALANCHE_CONTRACTS` in `shared/contracts-avalanche.ts` populated post-deploy

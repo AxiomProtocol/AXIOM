@@ -199,6 +199,8 @@ export default function LendingFundPage() {
   const [loansLoading, setLoansLoading] = useState(true);
   /** ID of the loan row currently expanded to show lifecycle detail + payment schedule. */
   const [expandedLoanId, setExpandedLoanId] = useState<string | null>(null);
+  const [evkVault, setEvkVault] = useState<any>(null);
+  const [evkLoading, setEvkLoading] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -232,6 +234,15 @@ export default function LendingFundPage() {
     checkWallet();
   }, []);
 
+  useEffect(() => {
+    if (activeTab !== 'open-market' || evkVault) return;
+    setEvkLoading(true);
+    fetch('/api/euler/axusd-vault')
+      .then(r => r.json())
+      .then(d => setEvkVault(d))
+      .catch(() => {})
+      .finally(() => setEvkLoading(false));
+  }, [activeTab]);
 
   const checkWallet = async () => {
     const eth = getEth();
@@ -277,8 +288,8 @@ export default function LendingFundPage() {
   return (
     <DesignLawLayout>
       <Head>
-        <title>Axiom Credit Vault — Layer 03 Capital Deployment | Axiom Protocol</title>
-        <meta name="description" content="Axiom Credit Vault: SEC Reg D 506(c) bridge loan capital program for real asset acquisition. On-chain settlement and institutional reporting on Arbitrum One. Accredited participants only." />
+        <title>Lending Fund — Layer 03 Capital Deployment | Axiom Protocol</title>
+        <meta name="description" content="Axiom Protocol Lending Fund: SEC Reg D 506(c) bridge loan capital program for real asset acquisition. On-chain settlement and institutional reporting on Arbitrum One. Accredited participants only." />
       </Head>
 
       <div className="border-b border-dl-border mb-10 overflow-hidden">
@@ -290,7 +301,7 @@ export default function LendingFundPage() {
             </div>
             <p className="text-xs text-dl-gray uppercase tracking-widest mb-4 font-dl-mono">SEC Reg D 506(c) | Accredited Participants Only</p>
             <h1 className="font-dl-serif text-3xl md:text-5xl text-dl-navy leading-tight mb-4">
-              Axiom Credit Vault<br />
+              Axiom Lending Fund<br />
               <span className="text-dl-gold" style={{ fontSize: '60%' }}>Layer 03 Capital Deployment</span>
             </h1>
             <p className="text-sm text-dl-gray max-w-xl leading-relaxed mb-5">
@@ -1004,49 +1015,114 @@ export default function LendingFundPage() {
       {activeTab === 'open-market' && (
         <div className="mb-12">
           <div className="mb-6">
-            <SectionHeading>Axiom Credit Vault — Open Market</SectionHeading>
-            <p className="text-xs text-dl-gray max-w-2xl leading-relaxed mb-6">
-              An Axiom-native open credit market for identity-verified participants. The previous Euler V2 EVK AXUSD
-              vault integration has been fully decommissioned. Axiom-native credit infrastructure is in the formation
-              phase. No participation is currently available through this tab.
-            </p>
-
-            {/* Permanent legacy record — EVK integration decommissioned */}
-            <div className="border border-dl-error bg-dl-bg-alt p-5 mb-6">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="font-dl-mono text-xs border border-dl-error text-dl-error px-2 py-0.5 uppercase tracking-widest">Withdrawn</span>
-                <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest">Euler V2 EVK Integration — Decommissioned</span>
+            <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
+              <div>
+                <SectionHeading>AXUSD EVK Open Money Market</SectionHeading>
+                <p className="text-xs text-dl-gray max-w-2xl leading-relaxed">
+                  An Euler V2 vault that holds ERC-3643 compliant AXUSD as its base asset.
+                  Any identity-verified address may deposit USDC as collateral and borrow AXUSD at a variable rate
+                  determined by a Linear Kink IRM (1% base, 5% at 80% utilization, 100% max).
+                  No GEF operator tier required — identity verification and ERC-3643 compliance checks are enforced on-chain.
+                </p>
               </div>
-              <p className="text-sm font-dl-mono text-dl-navy font-semibold mb-2">EVK AXUSD Vault — Integration Record</p>
-              <p className="text-xs text-dl-gray leading-relaxed mb-3">
-                The Euler V2 EVK AXUSD vault that powered this open credit market has been decommissioned as part of
-                the Euler architecture withdrawal (Task #510). All protocol-controlled positions have been exited.
-                No active liquidity is deployed to the Euler infrastructure. The API endpoint returns HTTP 410
-                and is no longer queried by this interface.
-              </p>
-              <p className="text-xs text-dl-gray leading-relaxed">
-                This record is retained for disclosure and audit trail purposes. No TVL, APY, or collateral
-                data from the former integration is shown — the integration is not active and cannot accept
-                participation.
-              </p>
+              <Link href="/lending-fund/borrow?market=open" className="px-4 py-2 bg-dl-navy text-white text-xs font-medium font-dl-mono whitespace-nowrap">
+                Open Market Borrow &rarr;
+              </Link>
             </div>
 
-            {/* Formation phase notice */}
-            <div className="border border-dl-border bg-dl-bg-alt p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="font-dl-mono text-xs border border-dl-navy text-dl-navy px-2 py-0.5 uppercase tracking-widest">Formation Phase</span>
-                <span className="font-dl-mono text-xs text-dl-gray uppercase tracking-widest">Axiom-Native Credit Infrastructure</span>
+            {evkLoading && (
+              <div className="border border-dl-border p-8 text-center">
+                <p className="text-sm text-dl-gray font-dl-mono">Loading vault data...</p>
               </div>
-              <p className="text-xs text-dl-gray leading-relaxed mb-2">
-                Axiom-native credit infrastructure is in the formation phase. When available, it will replace the
-                previous Euler integration with an identity-gated, ERC-3643 compliant credit market operating on
-                Arbitrum One. No timeline is guaranteed.
-              </p>
-              <p className="text-xs text-dl-gray leading-relaxed">
-                Participation requirements when live: identity verification, ERC-3643 compliance. No GEF operator
-                tier required.
-              </p>
-            </div>
+            )}
+
+            {!evkLoading && evkVault && (
+              <>
+                {evkVault.status === 'PENDING_DEPLOYMENT' && (
+                  <div className="border border-dl-border bg-dl-bg-alt p-4 mb-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-dl-mono text-xs font-semibold text-dl-gold bg-yellow-50 border border-dl-gold px-2 py-0.5">PENDING DEPLOYMENT</span>
+                      <span className="text-xs text-dl-gray font-dl-mono">Awaiting on-chain deployment</span>
+                    </div>
+                    <p className="text-xs text-dl-gray leading-relaxed mb-3">
+                      The EVK vault contract has not yet been deployed to Arbitrum One. All parameters below reflect
+                      the planned configuration. Deploy after the ERC-7726 oracle is live.
+                    </p>
+                    <div className="font-dl-mono text-xs text-dl-gray space-y-1">
+                      <p><span className="text-dl-navy">Step 1:</span> {evkVault.deployInstructions?.step1}</p>
+                      <p><span className="text-dl-navy">Step 2:</span> {evkVault.deployInstructions?.step2}</p>
+                      <p><span className="text-dl-navy">Step 3:</span> {evkVault.deployInstructions?.step3}</p>
+                      <p><span className="text-dl-navy">Step 4:</span> {evkVault.deployInstructions?.step4}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-dl-border mb-6">
+                  {[
+                    { label: 'TVL', value: `$${parseFloat(evkVault.vault?.tvlAxusd || '0').toLocaleString('en-US', { minimumFractionDigits: 0 })} AXUSD`, sub: 'Total Value Locked' },
+                    { label: 'Available', value: `$${parseFloat(evkVault.vault?.availableLiquidityAxusd || '0').toLocaleString('en-US', { minimumFractionDigits: 0 })} AXUSD`, sub: 'Undrawn liquidity' },
+                    { label: 'Utilization', value: `${evkVault.vault?.utilizationPct || '0'}%`, sub: 'Borrow / TVL' },
+                    { label: 'Borrow APY', value: `${evkVault.vault?.borrowApyPct || '1.0'}%`, sub: 'Variable (LinearKink IRM)' },
+                  ].map((m, i) => (
+                    <div key={m.label} className={`px-4 py-4 bg-dl-bg ${i < 3 ? 'border-r border-dl-border' : ''}`}>
+                      <p className="text-xs text-dl-gray mb-1 font-dl-mono uppercase">{m.label}</p>
+                      <p className="font-dl-mono text-base font-bold text-dl-navy">{m.value}</p>
+                      <p className="text-xs text-dl-muted mt-0.5">{m.sub}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="border border-dl-border">
+                    <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+                      <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Collateral Parameters</p>
+                    </div>
+                    {evkVault.vault?.collateral?.map((c: any, i: number) => (
+                      <div key={c.symbol} className={`px-4 py-3 text-xs font-dl-mono ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-dl-gray uppercase">{c.symbol}</span>
+                          <span className="text-dl-navy font-semibold">{c.address.slice(0, 6)}…{c.address.slice(-4)}</span>
+                        </div>
+                        <div className="flex justify-between text-dl-gray">
+                          <span>Borrow LTV: <span className="text-dl-forest">{c.borrowLTV}%</span></span>
+                          <span>Liq. LTV: <span className="text-dl-gold">{c.liquidationLTV}%</span></span>
+                        </div>
+                        <div className="text-dl-muted mt-1">Pool size: {parseFloat(c.poolSizeUsdc || '0').toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border border-dl-border">
+                    <div className="px-4 py-3 bg-dl-bg-alt border-b border-dl-border">
+                      <p className="text-xs font-semibold text-dl-navy font-dl-mono uppercase">Market Configuration</p>
+                    </div>
+                    {[
+                      { k: 'Asset', v: `ERC-3643 AXUSD` },
+                      { k: 'Vault', v: evkVault.vault?.vaultAddress === '0x0000000000000000000000000000000000000000' ? 'PENDING DEPLOYMENT' : `${evkVault.vault?.vaultAddress?.slice(0, 6)}…${evkVault.vault?.vaultAddress?.slice(-4)}` },
+                      { k: 'IRM', v: evkVault.vault?.irm === '0x0000000000000000000000000000000000000000' ? 'PENDING DEPLOYMENT' : `${evkVault.vault?.irm?.slice(0, 6)}…${evkVault.vault?.irm?.slice(-4)}` },
+                      { k: 'Oracle', v: evkVault.vault?.oracleDeployed ? `${evkVault.vault?.oracle?.slice(0, 6)}…${evkVault.vault?.oracle?.slice(-4)}` : 'PENDING DEPLOYMENT' },
+                      { k: 'Borrow Cap', v: `${parseFloat(evkVault.vault?.borrowCapAxusd || '500000').toLocaleString()} AXUSD` },
+                      { k: 'Supply Cap', v: `${parseFloat(evkVault.vault?.supplyCapAxusd || '1000000').toLocaleString()} AXUSD` },
+                      { k: 'EVC', v: `${evkVault.vault?.evc?.slice(0, 6)}…${evkVault.vault?.evc?.slice(-4)}` },
+                      { k: 'Network', v: 'Arbitrum One (42161)' },
+                    ].map((row, i) => (
+                      <div key={row.k} className={`flex justify-between px-4 py-2 text-xs font-dl-mono ${i % 2 === 0 ? 'bg-dl-bg' : 'bg-dl-bg-alt'}`}>
+                        <span className="text-dl-gray uppercase">{row.k}</span>
+                        <span className={`text-dl-navy ${row.v === 'PENDING DEPLOYMENT' ? 'text-dl-gold' : ''}`}>{row.v}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border border-dl-border bg-dl-bg-alt p-4">
+                  <p className="text-xs text-dl-gray leading-relaxed">
+                    <span className="font-semibold text-dl-navy">ERC-3643 Prerequisite:</span> The vault address and EVC must be registered
+                    in the LendingPlatformModule (<span className="font-dl-mono">{`0xC017...50Bb6F`}</span>) via <span className="font-dl-mono">addPlatform()</span> before
+                    the vault can receive or hold ERC-3643 AXUSD. This whitelist step runs during deployment.
+                    Borrowers must hold a verified on-chain identity to interact with this market.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

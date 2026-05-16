@@ -40,46 +40,46 @@ export const EARN_AXUSD_VAULT = {
    * Flip to "live" only after all four launch conditions are met and
    * ENABLE_EARN_AXUSD_DEPOSITS=true is set in the environment.
    */
-  status:            'configured' as 'bootstrap' | 'live' | 'configured',
+  status:            'bootstrap' as 'bootstrap' | 'live',
   liveYield:          false,
   publicLaunchReady:  false,
   borrowEnabled:      false,
 
-  // ── Activation checklist (Axiom-native replacement path) ─────────────────
+  // ── Pre-launch checklist (update once each condition is met) ──────────────
   launchConditions: [
     {
-      id:     'euler-withdrawal-confirmed',
-      label:  'Euler Earn integration withdrawn — legacy strategy archived',
-      done:   true,
-      detail: 'Task #510: Euler V2 integration decommissioned. earnAXUSD vault retains on-chain deployment for reference reads only.',
+      id:     'oracle-adapters',
+      label:  'Oracle adapters registered by Euler governance',
+      done:   false,
+      detail: 'Both AXUSD/USD and USDC/USD adapters must be added to oracleAdapterRegistry (0x3942…cbf).',
     },
     {
-      id:     'axiom-native-architecture',
-      label:  'Axiom-native earn architecture designed and approved',
+      id:     'canonical-evk',
+      label:  'Canonical EVK vault deployed and perspective-verified',
       done:   false,
-      detail: 'Replacement earn infrastructure spec pending governance approval.',
+      detail: 'Task #92: deploy-axusd-evk-vault-canonical.js with Ungoverned-0x preconditions satisfied.',
     },
     {
-      id:     'axiom-earn-deployment',
-      label:  'Axiom-native earn vault deployed and verified on Arbitrum One',
+      id:     'queue-switch',
+      label:  'Earn vault supply queue switched to the canonical EVK strategy',
       done:   false,
-      detail: 'New vault deployment pending architecture finalization.',
+      detail: 'switch-axusd-earn-strategy.js — replaces legacy eAXUSD-6 strategy with canonical vault.',
     },
     {
-      id:     'deposit-activation',
-      label:  'Deposits opened to credentialed participants',
+      id:     'governance-transfer',
+      label:  'Ownership and curator controls transferred to the AXIOM Risk Council Safe',
       done:   false,
-      detail: 'Set NEXT_PUBLIC_ENABLE_EARN_AXUSD_DEPOSITS=true only after all above conditions are met.',
+      detail: 'euler-axusd-risk-council-safe.md runbook: transferOwnership + acceptOwnership + setCurator.',
     },
   ],
 
   // ── Current limitations ───────────────────────────────────────────────────
   limitations: [
-    'Euler Earn integration has been withdrawn — no active strategy yield',
-    'Deposits are disabled pending Axiom-native earn architecture deployment',
-    'Borrow-side functionality is not available',
-    'The earnAXUSD vault remains deployed on-chain for reference reads only',
-    'Axiom-native replacement infrastructure is in formation',
+    'No active yield is being generated',
+    'Borrow-side functionality is not live',
+    'Strategy verification is still pending',
+    'Oracle adapter registration with Euler governance is still outstanding',
+    'Operational ownership transfer to the AXIOM Risk Council Safe is still pending',
   ],
 } as const;
 

@@ -22,13 +22,19 @@ const PSM_ABI = parseAbi([
   'function redeem(uint256 axusdAmount) external returns (uint256)',
 ]);
 
-type SwapStatus = 'idle' | 'approving' | 'swapping' | 'confirming' | 'success' | 'error';
+// EulerSwap V2 pool: Uniswap-V2-compatible swap
+// Caller must transfer tokenIn to pool before calling swap (push model)
+// token0=AXM (0x864F) < token1=AXUSD (0xD611) — confirmed from deployment
+const EULERSWAP_ABI = parseAbi([
+  'function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes data) external',
+]);
 
-/** AXM↔AXUSD via EulerSwap is withdrawn. Only PSM route is active. */
-function getRoute(tIn: string, tOut: string): 'psm' | 'withdrawn' | null {
+type SwapStatus = 'idle' | 'approving' | 'transferring' | 'swapping' | 'confirming' | 'success' | 'error';
+
+function getRoute(tIn: string, tOut: string): 'psm' | 'euler' | null {
   const a = tIn.toLowerCase(), b = tOut.toLowerCase();
   if ((a === USDC_ADDR && b === AXUSD_ADDR) || (a === AXUSD_ADDR && b === USDC_ADDR)) return 'psm';
-  if ((a === AXM_ADDR  && b === AXUSD_ADDR) || (a === AXUSD_ADDR && b === AXM_ADDR))  return 'withdrawn';
+  if ((a === AXM_ADDR  && b === AXUSD_ADDR) || (a === AXUSD_ADDR && b === AXM_ADDR))  return 'euler';
   return null;
 }
 
@@ -102,6 +108,7 @@ export default function SwapInterface() {
     try {
       if (route === 'psm') {
         // ── PSM route: approve tokenIn → mint/redeem ──
+        // PSM pulls tokenIn from msg.sender — no front-run risk
         setSwapStatus('approving');
         const allowance = await publicClient.readContract({
           address: tokenIn.address,
@@ -131,10 +138,33 @@ export default function SwapInterface() {
         setSwapTxHash(swapTx);
 
       } else {
-        // route === 'withdrawn' — EulerSwap AXM↔AXUSD decommissioned
-        setSwapError('AXM↔AXUSD route via EulerSwap has been withdrawn. This pair is not available for swapping.');
-        setSwapStatus('idle');
-        return;
+        // ── EulerSwap route: transfer tokenIn to pool → pool.swap ──
+        // token0=AXM (0x864F) < token1=AXUSD (0xD611)
+        const isTokenInToken0 = tokenIn.address.toLowerCase() === AXM_ADDR;
+
+        setSwapStatus('transferring');
+        const transferTx = await writeContractAsync({
+          address: tokenIn.address,
+          abi: erc20Abi,
+          functionName: 'transfer',
+          args: [AXM_AXUSD_POOL, amountInBig],
+        });
+        await publicClient.waitForTransactionReceipt({ hash: transferTx });
+
+        // amount0Out = AXM out, amount1Out = AXUSD out
+        const amount0Out = isTokenInToken0 ? 0n        : minOutBig;
+        const amount1Out = isTokenInToken0 ? minOutBig : 0n;
+
+        setSwapStatus('swapping');
+        const swapTx = await writeContractAsync({
+          address: AXM_AXUSD_POOL,
+          abi: EULERSWAP_ABI,
+          functionName: 'swap',
+          args: [amount0Out, amount1Out, address, '0x'],
+        });
+        setSwapStatus('confirming');
+        await publicClient.waitForTransactionReceipt({ hash: swapTx });
+        setSwapTxHash(swapTx);
       }
 
       setSwapStatus('success');
@@ -156,16 +186,17 @@ export default function SwapInterface() {
 
   const route    = getRoute(tokenIn.address, tokenOut.address);
   const isBusy   = swapStatus !== 'idle' && swapStatus !== 'error' && swapStatus !== 'success';
-  const isWithdrawnRoute = route === 'withdrawn';
-  const protocol = route === 'psm' ? 'Canonical PSM' : isWithdrawnRoute ? 'Route Withdrawn' : 'PSM';
+  const protocol = route === 'psm' ? 'Canonical PSM' : 'EulerSwap V2';
+  const isEulerRoute = route === 'euler';
 
   const statusLabel: Record<SwapStatus, string> = {
-    idle:       'SWAP',
-    approving:  'APPROVING…',
-    swapping:   'SWAPPING…',
-    confirming: 'CONFIRMING…',
-    success:    'SUCCESS',
-    error:      'SWAP',
+    idle:        'SWAP',
+    approving:   'APPROVING…',
+    transferring:'SENDING TO POOL…',
+    swapping:    'SWAPPING…',
+    confirming:  'CONFIRMING…',
+    success:     'SUCCESS',
+    error:       'SWAP',
   };
 
   const DL = {
@@ -254,20 +285,17 @@ export default function SwapInterface() {
         </div>
       </div>
 
-      {/* Withdrawn route notice */}
-      {isWithdrawnRoute && (
-        <div className="mx-5 mb-4 border border-red-400 bg-red-50 p-3">
-          <p className="font-mono text-xs text-red-700 font-semibold mb-1">Route Withdrawn</p>
-          <p className="font-mono text-[10px] text-red-700 leading-relaxed">
-            The AXM↔AXUSD route via EulerSwap has been withdrawn. No swap is available for this pair through this interface.
-            AXM liquidity via Camelot V2 is active — see the Pools tab.
-          </p>
-        </div>
-      )}
-
-      {/* Quote details — PSM only */}
-      {quote && !isWithdrawnRoute && (
+      {/* Quote details */}
+      {quote && (
         <div className="mx-5 mb-4 border border-[#1B2A4A]/10 bg-[#F8F6F0] p-3 space-y-2">
+          {route !== 'psm' && (
+            <div className="flex justify-between">
+              <span className={DL.label}>Price Impact</span>
+              <span className={`font-mono text-xs ${parseFloat(String(quote.priceImpact)) > 5 ? 'text-red-600' : 'text-[#1D3D2A]'}`}>
+                {parseFloat(String(quote.priceImpact)).toFixed(2)}%
+              </span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span className={DL.label}>Fee</span>
             <span className="font-mono text-xs text-[#1B2A4A]">{parseFloat(quote.fee).toFixed(6)} {tokenIn.symbol}</span>
@@ -276,6 +304,11 @@ export default function SwapInterface() {
             <span className={DL.label}>Protocol</span>
             <span className="font-mono text-xs text-[#B8973A]">{protocol}</span>
           </div>
+          {isEulerRoute && (
+            <p className="font-mono text-[10px] text-[#1B2A4A]/40 pt-1 leading-relaxed">
+              AXM↔AXUSD uses the EulerSwap pool. This route sends 2 transactions: one to fund the pool, one to execute the swap.
+            </p>
+          )}
           {route === 'psm' && (
             <p className="font-mono text-[10px] text-[#1B2A4A]/40 pt-1 leading-relaxed">
               USDC↔AXUSD routes through the Canonical PSM (1:1 rate, identity-gated). Requires an approved ERC-3643 identity.
@@ -310,20 +343,16 @@ export default function SwapInterface() {
       <div className="px-5 pb-5">
         <button
           onClick={handleSwap}
-          disabled={!isConnected || !quote || quoteLoading || isBusy || isWithdrawnRoute}
+          disabled={!isConnected || !quote || quoteLoading || isBusy}
           className={`w-full py-3.5 font-mono text-sm font-semibold tracking-wide transition-colors ${
-            isWithdrawnRoute
-              ? 'bg-red-100 text-red-600 border border-red-400 cursor-not-allowed'
-              : swapStatus === 'success'
+            swapStatus === 'success'
               ? 'bg-[#1D3D2A] text-white'
               : isConnected && quote && !quoteLoading && !isBusy
               ? 'bg-[#1B2A4A] text-white hover:bg-[#1D3D2A]'
               : 'bg-[#1B2A4A]/10 text-[#1B2A4A]/30 cursor-not-allowed'
           }`}
         >
-          {isWithdrawnRoute
-            ? 'ROUTE WITHDRAWN — NOT AVAILABLE'
-            : !isConnected
+          {!isConnected
             ? 'CONNECT WALLET'
             : !amountIn
             ? 'ENTER AMOUNT'
@@ -334,7 +363,7 @@ export default function SwapInterface() {
             : statusLabel[swapStatus]}
         </button>
         <p className="text-center text-[10px] font-mono text-[#1B2A4A]/30 mt-2">
-          Active routing: Canonical PSM (USDC↔AXUSD). EulerSwap LP withdrawn.
+          Powered by EulerSwap V2 + Canonical PSM on Arbitrum One
         </p>
       </div>
     </div>

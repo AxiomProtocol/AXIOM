@@ -238,38 +238,3 @@ AVALANCHE CAPINFRA GATE 5 SATISFIED
 | E — Explicit confirmation | ✅ PASS | `externallySettleInstruction` → SETTLED; portfolio credited delta=0.000001 |
 | F — No double-credit | ✅ PASS | ConflictError on duplicate; qty unchanged |
 | G — Final reconciliation | ✅ PASS | delta=1 raw (pre=744000004 post=744000005) == SMOKE_MINT_RAW; DB consistent |
-
----
-
-## Task #483 — Canonical Routing Closure (2026-05-14)
-
-Gate 5 was initially satisfied with Fuji assets stored as `settlementType='EVM'`, using
-`getAdapter('AVALANCHE')` directly in the proof script. Task #483 closed this routing gap.
-
-### Changes made
-
-| Item | Change |
-|---|---|
-| `shared/capInfraSchema.ts` | `'AVALANCHE'` added to `capSettlementTypeEnum` |
-| `migrations/0059_cap_settlement_type_avalanche.sql` | `ALTER TYPE "cap_settlement_type" ADD VALUE IF NOT EXISTS 'AVALANCHE'` |
-| `scripts/capinfra-seed.ts` | AXUSD-FUJI seeded with `settlementType: 'AVALANCHE'`; idempotent UPDATE for existing stale rows |
-| `scripts/vault-sprint-avalanche-fuji.ts` | All `settlementType: 'EVM'` replaced with `'AVALANCHE'`; Invariant A4 added; G4 updated |
-| DB `cap_assets` | AXUSD-FUJI `settlement_type` updated `EVM → AVALANCHE` |
-
-### Invariant A4 (new)
-
-```
-[✓] A4 executeInstruction routing: getAdapter(settlementType=AVALANCHE) resolves correctly
-     getAdapter('AVALANCHE') → kind=AVALANCHE — canonical routing confirmed
-```
-
-### Proof under canonical routing
-
-Two consecutive LIVE Fuji runs after Task #483 closed — all invariants A–G pass (EXIT=0):
-
-| Run | txHash | Block |
-|---|---|---|
-| Run 1 | `0x00c96e85b009…fecf1c9db5` | 55331174 |
-| Run 2 | `0x738a90c5f3d6…00b662ee` | 55331303 |
-
-**Gate 5 remains SATISFIED under canonical routing. Task #483 COMPLETE.**

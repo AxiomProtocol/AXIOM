@@ -498,6 +498,7 @@ function SilverSleeveSection() {
               { label: 'Max basket weight', value: '30% of total AXAU reserve' },
               { label: 'Oracle',           value: 'Chainlink XAG/USD ÷ 31.1035 g/toz' },
               { label: 'Coverage floor',   value: '105% — same as gold sleeve' },
+              { label: 'KAG yield',        value: '0.45% annualised · compounds into reserve' },
               { label: 'Redemption',       value: 'AXAU → KAG (silver vault) or PAXG (gold vault)' },
               { label: 'Status',           value: 'Deployment ready · Gnosis Safe pending' },
             ].map(row => (
@@ -836,37 +837,6 @@ export default function AxauPage() {
       </Head>
 
       <Hero />
-
-      {/* Reserve Status Strip */}
-      <div style={{ borderTop: `1px solid #e5e0d8`, borderBottom: `1px solid #e5e0d8`, padding: '10px 0', background: '#faf9f7', display: 'flex', flexWrap: 'wrap', gap: 0 }}>
-        {([
-          { label: 'Reserve Access', value: 'Configured', color: '#1a3350' },
-          { label: 'Mint', value: 'Controlled', color: '#b45309' },
-          { label: 'Public AMM', value: 'Disabled', color: '#6b7280' },
-          { label: 'Collateral Use', value: 'Disabled', color: '#6b7280' },
-        ] as const).map(({ label, value, color }) => (
-          <div key={label} style={{ flex: '1 1 auto', minWidth: 120, padding: '6px 16px', textAlign: 'center', borderRight: '1px solid #e5e0d8' }}>
-            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 8, color: '#9ca3af', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 3 }}>{label}</p>
-            <p style={{ fontFamily: '"Courier New", monospace', fontSize: 11, color, fontWeight: 700 }}>{value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Architecture Separation Callout */}
-      <div style={{ border: '1px solid #d1d5db', background: '#faf9f7', padding: '16px 20px', display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-        <div style={{ flex: '1 1 280px' }}>
-          <p style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#b8860b', letterSpacing: '0.16em', textTransform: 'uppercase', margin: '0 0 5px' }}>Architecture — Separation of Layers</p>
-          <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: '#6b7280', lineHeight: 1.65, margin: 0 }}>
-            AXAU is the Layer 02 reserve unit — distinct from AXUSD (Layer 01 settlement rail) and the Protocol Exchange (Layer 01.5). No public AMM access or DeFi collateral use is currently active for AXAU. Mint is controlled and identity-gated via ERC-3643. Redemption returns PAXG, not USD.
-          </p>
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-          <a href="/axau-disclosure" style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#1e3a5f', textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid #1e3a5f', padding: '6px 12px', background: '#ffffff' }}>AXAU Disclosure →</a>
-          <a href="/reserves" style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#1e3a5f', textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid #d1d5db', padding: '6px 12px', background: '#ffffff' }}>Reserve Status →</a>
-          <a href="/axau-early-access" style={{ fontFamily: '"Courier New", monospace', fontSize: 9, color: '#ffffff', textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', background: '#1e3a5f' }}>Early Access →</a>
-        </div>
-      </div>
-
       <ReserveFlow />
       <HowItWorks />
       <LiveDashboard />

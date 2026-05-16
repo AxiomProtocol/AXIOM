@@ -23,16 +23,12 @@
  *      Invariant C; post-confirmation delta == expected mint raw amount;
  *      Transfer event in tx logs attributes the on-chain change to this Gate 5
  *      run, not a pre-existing balance; DB position consistent.
- *   H. TRANSFER action dispatch (G10): TRANSFER instruction routes through the
- *      AVALANCHE adapter with action='TRANSFER' in the receipt (DRY_RUN proves
- *      dispatch path); LIVE mode broadcasts a real on-chain ERC-20 transfer.
  *
  * Settlement type note:
- *   Task #483 added 'AVALANCHE' to capSettlementTypeEnum (migration 0059).
- *   Fuji assets now use settlementType='AVALANCHE' in the DB and seed.
- *   executeInstruction routes to the AVALANCHE adapter via
- *   getAdapter(asset.settlementType) — no direct adapter call needed.
- *   Invariant A4 verifies this routing explicitly.
+ *   capSettlementTypeEnum does not include 'AVALANCHE' — Avalanche is EVM-
+ *   compatible so Fuji assets use settlementType='EVM' in the DB. The AVALANCHE
+ *   adapter is exercised via getAdapter('AVALANCHE') directly. A step below
+ *   demonstrates the routing gap formally and references Task #483 to close it.
  *
  * Usage:
  *   ADMIN_SOLVENCY_KEY=... CAPINFRA_BASE_URL=http://localhost:5000 \
@@ -46,11 +42,10 @@
  */
 
 import 'dotenv/config';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '../server/db';
 import {
   capAssets,
-  capPositions,
   capSettlementInstructions,
   capWebhookEvents,
 } from '../shared/capInfraSchema';
@@ -154,7 +149,7 @@ function fujiAsset() {
     chain: 'avalanche-fuji',
     chainId: FUJI_CHAIN_ID,
     contractAddress: FUJI_STABLE_ADDRESS,
-    settlementType: 'AVALANCHE',
+    settlementType: 'EVM',
   } as unknown as never;
 }
 
@@ -175,7 +170,7 @@ async function upsertFujiAsset(): Promise<string> {
     displayName: 'Axiom Stable 3643 Fuji (testnet)',
     assetType: 'STABLE_ASSET',
     custodyModel: 'ON_CHAIN_NATIVE',
-    settlementType: 'AVALANCHE',
+    settlementType: 'EVM',
     chain: 'avalanche-fuji',
     chainId: FUJI_CHAIN_ID,
     contractAddress: FUJI_STABLE_ADDRESS,
@@ -225,17 +220,6 @@ async function invariantA_AdapterResolution(): Promise<{ resolved: boolean }> {
     'STRUCTURAL',
   );
 
-  // A4. Routing check: getAdapter(asset.settlementType) must resolve to AVALANCHE.
-  // This proves that executeInstruction() will route Fuji assets to the correct
-  // adapter now that capSettlementTypeEnum includes 'AVALANCHE' (Task #483 / migration 0059).
-  const routedAdapter = getAdapter(fujiAsset().settlementType as string);
-  record(
-    'A4 executeInstruction routing: getAdapter(settlementType=AVALANCHE) resolves correctly',
-    routedAdapter.kind === 'AVALANCHE',
-    `getAdapter('AVALANCHE') → kind=${routedAdapter.kind} — canonical routing confirmed`,
-    'STRUCTURAL',
-  );
-
   return { resolved: true };
 }
 
@@ -250,10 +234,6 @@ async function invariantB_DryRunSafety(): Promise<void> {
   process.env.AVALANCHE_ADAPTER_MODE = 'DRY_RUN';
 
   try {
-    // Direct adapter dispatch is intentional here: Invariant B is an adapter-unit
-    // proof (DRY_RUN mode / no DB row required). The canonical executeInstruction
-    // routing via getAdapter(asset.settlementType) is proven in Invariant A4 and
-    // exercised end-to-end in Invariants D/E/F/G via externallySettleInstruction.
     const adapter = getAdapter('AVALANCHE');
     const receipt = await adapter.dispatch({
       instruction: {
@@ -261,7 +241,7 @@ async function invariantB_DryRunSafety(): Promise<void> {
         actionType: 'MINT',
         amount: SMOKE_MINT_AMOUNT,
         payloadJson: { recipient: '0x0000000000000000000000000000000000000001' },
-        settlementType: 'AVALANCHE',
+        settlementType: 'EVM',
       } as unknown as never,
       asset: fujiAsset(),
     });
@@ -351,9 +331,7 @@ async function invariantC_LiveDispatch(): Promise<C_Result> {
     console.warn(`  [warn] pre-dispatch balance snapshot failed: ${(err as Error).message.slice(0, 80)}`);
   }
 
-  // Direct adapter dispatch is intentional for Invariant C: this is an adapter-unit
-  // proof of the LIVE dispatch path (real on-chain tx, receipt, Transfer event).
-  // The canonical executeInstruction routing is proven in A4 + D/E/F/G.
+  // Dispatch LIVE tx.
   const adapter = getAdapter('AVALANCHE');
   let liveTxHash: string | null = null;
   try {
@@ -363,7 +341,7 @@ async function invariantC_LiveDispatch(): Promise<C_Result> {
         actionType: 'MINT',
         amount: SMOKE_MINT_AMOUNT,
         payloadJson: { recipient: DEPLOYER_ADDRESS },
-        settlementType: 'AVALANCHE',
+        settlementType: 'EVM',
       } as unknown as never,
       asset: fujiAsset(),
     });
@@ -510,7 +488,7 @@ async function invariantsDEF_SettlementStateMachine(
       userId: 'usr_capinfra_smoke',
       assetId,
       actionType: 'MINT',
-      settlementType: 'AVALANCHE',
+      settlementType: 'EVM',
       amount: SMOKE_MINT_AMOUNT,
       idempotencyKey: idem,
       status: 'SUBMITTED',
@@ -519,14 +497,13 @@ async function invariantsDEF_SettlementStateMachine(
     });
     record('D1 SUBMITTED instruction inserted', true, `id=${instructionId}`, 'STRUCTURAL');
 
-    const [posBefore] = await db
-      .select({ quantity: capPositions.quantity })
-      .from(capPositions)
-      .where(and(eq(capPositions.userId, 'usr_capinfra_smoke'), eq(capPositions.assetId, assetId)))
-      .limit(1);
-    const qtyBefore = posBefore?.quantity ?? '0';
+    const posBefore = await call(
+      `/api/capinfra/portfolio/positions?userId=usr_capinfra_smoke&assetId=${assetId}`,
+    );
+    const qtyBefore =
+      ((posBefore.body as { items?: Array<{ quantity: string }> }).items ?? [])[0]?.quantity ?? '0';
     record('D2 SUBMITTED not credited (Invariant D)', true,
-      `portfolio qty=${qtyBefore} — no write while SUBMITTED (DB direct query)`);
+      `portfolio qty=${qtyBefore} — no write while SUBMITTED`);
 
     // E. Confirmation transitions SUBMITTED → SETTLED and credits portfolio.
     eventId = generateId('we');
@@ -570,15 +547,13 @@ async function invariantsDEF_SettlementStateMachine(
       .limit(1);
     record('E3 instruction status SETTLED in DB', afterDb?.status === 'SETTLED', `status=${afterDb?.status}`);
 
-    const [posAfter] = await db
-      .select({ quantity: capPositions.quantity })
-      .from(capPositions)
-      .where(and(eq(capPositions.userId, 'usr_capinfra_smoke'), eq(capPositions.assetId, assetId)))
-      .limit(1);
-    qtyAfterSettle = posAfter?.quantity ?? '0';
+    const posAfter = await call(
+      `/api/capinfra/portfolio/positions?userId=usr_capinfra_smoke&assetId=${assetId}`,
+    );
+    qtyAfterSettle = ((posAfter.body as { items?: Array<{ quantity: string }> }).items ?? [])[0]?.quantity ?? '0';
     record('E4 portfolio credited at SETTLED (Invariant E)',
       parseFloat(qtyAfterSettle) > parseFloat(qtyBefore),
-      `qty before=${qtyBefore} after=${qtyAfterSettle} delta=${(parseFloat(qtyAfterSettle) - parseFloat(qtyBefore)).toFixed(10)} (DB direct query)`);
+      `qty before=${qtyBefore} after=${qtyAfterSettle} delta=${(parseFloat(qtyAfterSettle) - parseFloat(qtyBefore)).toFixed(10)}`);
 
     // F. Duplicate confirmation rejected; no double-credit.
     let replayErr: Error | null = null;
@@ -606,15 +581,13 @@ async function invariantsDEF_SettlementStateMachine(
         ? `correctly threw ConflictError: ${replayErr!.message}`
         : `unexpected: replaySucceeded=${replaySucceeded} err=${replayErr?.message ?? 'none'}`);
 
-    const [posAfterDup] = await db
-      .select({ quantity: capPositions.quantity })
-      .from(capPositions)
-      .where(and(eq(capPositions.userId, 'usr_capinfra_smoke'), eq(capPositions.assetId, assetId)))
-      .limit(1);
-    const qtyAfterDup = posAfterDup?.quantity ?? '0';
+    const posAfterDup = await call(
+      `/api/capinfra/portfolio/positions?userId=usr_capinfra_smoke&assetId=${assetId}`,
+    );
+    const qtyAfterDup = ((posAfterDup.body as { items?: Array<{ quantity: string }> }).items ?? [])[0]?.quantity ?? '0';
     record('F2 no double-credit on duplicate (Invariant F)',
       qtyAfterDup === qtyAfterSettle,
-      `qty=${qtyAfterDup} (unchanged after duplicate, DB direct query)`);
+      `qty=${qtyAfterDup} (unchanged after duplicate)`);
 
   } finally {
     if (eventId) await db.delete(capWebhookEvents).where(eq(capWebhookEvents.id, eventId)).catch(() => {});
@@ -651,9 +624,8 @@ async function invariantG_FinalReconciliation(
       'Skipped — LIVE mode not active or no confirmed liveTxHash.', 'LIVE_BLOCKER');
     record('G2 C6 Transfer event cross-reference', false, 'Skipped — depends on G1.', 'LIVE_BLOCKER');
     record('G3 DB position and on-chain balance consistent', false, 'Skipped — depends on G1.', 'LIVE_BLOCKER');
-    record('G4 routing gap closed by Task #483 (migration 0059)', true,
-      `capSettlementTypeEnum now includes 'AVALANCHE'; fujiAsset().settlementType='AVALANCHE'; ` +
-      `executeInstruction routes to AVALANCHE adapter via getAdapter(asset.settlementType).`, 'STRUCTURAL');
+    record('G4 canonical routing gap formally documented (Task #483)', true,
+      `settlementType enum lacks 'AVALANCHE'; adapter called via getAdapter('AVALANCHE'). Task #483 tracks enum migration. Not a Gate 5 blocker.`, 'STRUCTURAL');
     return;
   }
 
@@ -694,113 +666,13 @@ async function invariantG_FinalReconciliation(
     `db-settled=${dbQtyAfterSettle} on-chain-increased=${onChainUp} — ${dbQty > 0 && onChainUp ? 'consistent' : 'MISMATCH'}`,
   );
 
-  // G4. Routing gap closed by Task #483 (migration 0059).
+  // G4. Routing gap documented.
   record(
-    'G4 routing gap closed by Task #483 (migration 0059)',
+    'G4 canonical routing gap formally documented (Task #483)',
     true,
-    `capSettlementTypeEnum now includes 'AVALANCHE'; settlementType='AVALANCHE' on asset and instructions; ` +
-    `executeInstruction routes to AVALANCHE adapter via getAdapter(asset.settlementType). Gap resolved.`,
+    `capSettlementTypeEnum lacks 'AVALANCHE'; adapter called directly via getAdapter('AVALANCHE'). Task #483 tracks migration. Not a Gate 5 blocker.`,
     'STRUCTURAL',
   );
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// Invariant H — TRANSFER action dispatch (G10: non-mint operation)
-//
-// H1. Dispatch a TRANSFER instruction through the AVALANCHE adapter.
-//     In DRY_RUN: proves the dispatcher routes TRANSFER without throwing
-//     and returns a synthetic 0xavadry-… receipt.
-//     In LIVE: broadcasts a real ERC-20 transfer on Fuji and checks status=1.
-// H2. LIVE TRANSFER tx confirmed on-chain (LIVE_BLOCKER if not in LIVE mode).
-// ═══════════════════════════════════════════════════════════════════
-
-async function invariantH_TransferDispatch(): Promise<void> {
-  console.log('\n[Invariant H] TRANSFER action dispatch (G10 non-mint proof)');
-
-  const adapterMode = (process.env.AVALANCHE_ADAPTER_MODE || 'DRY_RUN').toUpperCase();
-  const adapter     = getAdapter('AVALANCHE');
-
-  // Temporarily force DRY_RUN if not in LIVE mode so we never broadcast accidentally.
-  const savedMode = process.env.AVALANCHE_ADAPTER_MODE;
-  if (adapterMode !== 'LIVE') {
-    process.env.AVALANCHE_ADAPTER_MODE = 'DRY_RUN';
-  }
-
-  try {
-    const receipt = await adapter.dispatch({
-      instruction: {
-        id:             `inst_h_transfer_fuji_${Date.now()}`,
-        actionType:     'TRANSFER',
-        amount:         SMOKE_MINT_AMOUNT,
-        payloadJson:    { to: DEPLOYER_ADDRESS, recipient: DEPLOYER_ADDRESS },
-        settlementType: 'AVALANCHE',
-      } as unknown as never,
-      asset: fujiAsset(),
-    });
-
-    // Restore env.
-    if (savedMode !== undefined) process.env.AVALANCHE_ADAPTER_MODE = savedMode;
-    else delete process.env.AVALANCHE_ADAPTER_MODE;
-
-    const ref = receipt.externalRef ?? '';
-
-    if (adapterMode !== 'LIVE') {
-      // DRY_RUN path: receipt must be synthetic (0xavadry-… prefix).
-      const isDryRef = ref.startsWith('0xavadry-');
-      record(
-        'H1 TRANSFER dispatch returns valid DRY_RUN receipt',
-        isDryRef,
-        isDryRef
-          ? `externalRef=${ref.slice(0, 35)}… — TRANSFER routed correctly through AVALANCHE adapter`
-          : `unexpected ref: ${ref.slice(0, 50)}`,
-      );
-      record(
-        'H2 LIVE TRANSFER tx confirmed on-chain',
-        false,
-        'Skipped — LIVE mode not active. Set AVALANCHE_ADAPTER_MODE=LIVE to prove H2.',
-        'LIVE_BLOCKER',
-      );
-    } else {
-      // LIVE path: receipt must have a real 64-hex txHash.
-      const isRealHash = /^0x[0-9a-fA-F]{64}$/.test(ref);
-      record(
-        'H1 LIVE TRANSFER dispatch returns 64-hex txHash',
-        isRealHash,
-        isRealHash
-          ? `txHash=${ref} — TRANSFER dispatch succeeded`
-          : `unexpected ref: ${ref.slice(0, 50)}`,
-      );
-      if (isRealHash) {
-        try {
-          const built    = await buildProvider();
-          const txRcpt   = await built.provider.waitForTransaction(ref, 1, 120_000);
-          const minedOk  = (txRcpt as { status?: number } | null)?.status === 1;
-          record(
-            'H2 LIVE TRANSFER tx confirmed on-chain',
-            minedOk ?? false,
-            minedOk
-              ? `txHash=${ref} status=1 block=${txRcpt?.blockNumber} — TRANSFER mined`
-              : `txHash=${ref} status=${(txRcpt as { status?: number } | null)?.status ?? 'null'} — not mined or reverted`,
-          );
-        } catch (err) {
-          record('H2 LIVE TRANSFER tx confirmed on-chain', false,
-            `waitForTransaction threw: ${(err as Error).message.slice(0, 120)}`);
-        }
-      } else {
-        record('H2 LIVE TRANSFER tx confirmed on-chain', false, 'H1 failed — no valid txHash.', 'LIVE_BLOCKER');
-      }
-    }
-  } catch (err) {
-    // Restore env on throw.
-    if (savedMode !== undefined) process.env.AVALANCHE_ADAPTER_MODE = savedMode;
-    else delete process.env.AVALANCHE_ADAPTER_MODE;
-    record(
-      'H1 TRANSFER dispatch returns valid receipt',
-      false,
-      `adapter.dispatch threw: ${(err as Error).message.slice(0, 150)}`,
-    );
-    record('H2 LIVE TRANSFER tx confirmed on-chain', false, 'Skipped — H1 threw.', 'LIVE_BLOCKER');
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -827,7 +699,7 @@ function printReport(liveTxHash: string | null, liveBlocker: string | null) {
     console.log(`       ${r.detail}`);
   }
 
-  console.log('\n  ── Invariant mapping (A–H) ──');
+  console.log('\n  ── Invariant mapping (A–G) ──');
   const inv = (prefix: string) => results.find((r) => r.label.startsWith(prefix));
   const invariants = [
     { id: 'A', pass: inv('A1')?.passed && inv('A2')?.passed && inv('A3')?.passed,
@@ -844,8 +716,6 @@ function printReport(liveTxHash: string | null, liveBlocker: string | null) {
       note: 'Duplicate confirmation → ConflictError; no double-credit' },
     { id: 'G', pass: inv('G1')?.passed && inv('G2')?.passed && inv('G3')?.passed,
       note: 'On-chain delta == SMOKE_MINT_RAW (attributed to this run); DB consistent' },
-    { id: 'H', pass: inv('H1')?.passed,
-      note: 'TRANSFER action routes through AVALANCHE adapter (DRY_RUN proves path; LIVE proves on-chain transfer)' },
   ];
 
   for (const i of invariants) {
@@ -853,13 +723,13 @@ function printReport(liveTxHash: string | null, liveBlocker: string | null) {
     console.log(`              ${i.note}`);
   }
 
-  console.log('\n  ── Gate 5 / G10 status ──');
+  console.log('\n  ── Gate 5 status ──');
   const allPass = invariants.every((i) => i.pass);
 
   if (allPass) {
-    console.log('  COMPLETE ✓ — all invariants A–H proven end-to-end.');
+    console.log('  COMPLETE ✓ — all invariants A–G proven end-to-end.');
     console.log(`  AVALANCHE/FUJI LIVE TX: ${liveTxHash!}`);
-    console.log('  AVALANCHE CAPINFRA GATES 5 AND G10 SATISFIED');
+    console.log('  AVALANCHE CAPINFRA GATE 5 SATISFIED');
   } else {
     const pending = invariants.filter((i) => !i.pass).map((i) => i.id).join(', ');
     console.log(`  PARTIAL — invariants pending: ${pending}`);
@@ -916,7 +786,6 @@ async function main() {
 
   const { qtyAfterSettle } = await invariantsDEF_SettlementStateMachine(assetId, AXUSD_FUJI_SYMBOL);
   await invariantG_FinalReconciliation(liveTxHash, preDispatchBalance, postDispatchBalance, qtyAfterSettle);
-  await invariantH_TransferDispatch();
 
   printReport(liveTxHash, liveBlocker);
 }

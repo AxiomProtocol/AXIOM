@@ -67,7 +67,7 @@ const DIFFERENTIATORS = [
 const LIVE_NOW = [
   { layer: '00', name: 'Banking Infrastructure', detail: 'ACH/wire settlement rail offline · BitGo institutional custody active', href: '/banking', status: 'OFFLINE' },
   { layer: '01', name: 'AXUSD Settlement Rail', detail: 'ERC-3643 stablecoin · PSM active · Identity-gated · Peg maintained via Camelot V2', href: '/axusd-3643', status: 'LIVE' },
-  { layer: '01.5', name: 'Protocol Exchange (DEX)', detail: 'Camelot V2 · AXM/AXUSD trading pairs · PSM-backed peg maintenance · EulerSwap LP withdrawn', href: '/dex', status: 'LIVE' },
+  { layer: '01.5', name: 'Protocol Exchange (DEX)', detail: 'Camelot V2 · AXM/AXUSD trading pairs · PSM-backed peg maintenance · EulerSwap LP', href: '/dex', status: 'LIVE' },
   { layer: '02', name: 'AXAU Reserve', detail: 'PAXG-backed positions · Direct on-chain mint/redeem · GoldVault contract · Coverage ratio enforced', href: '/axau', status: 'LIVE' },
   { layer: '03', name: 'Lending Fund (Reg D)', detail: 'Bridge loan mandate · LP fund · 506(c) · Accepting expressions of interest', href: '/lending-fund', status: 'FORMATION' },
   { layer: '03', name: 'Capital Program (SPVs)', detail: 'SPV-structured · 506(c) · Accredited investors · Formation stage', href: '/pilot', status: 'FORMATION' },

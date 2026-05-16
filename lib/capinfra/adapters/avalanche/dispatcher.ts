@@ -177,19 +177,6 @@ async function liveDispatch(input: AdapterDispatchInput): Promise<AdapterDispatc
   // Pass chainId to prefer AVALANCHE_FUJI_RPC_URL for Fuji (43113).
   const { ethers } = await import('ethers');
   const provider = new ethers.JsonRpcProvider(avalancheRpcUrl(chainId));
-
-  // T03 hardening: verify the RPC endpoint's actual network matches the
-  // expected asset chainId before broadcasting. Catches misconfigured
-  // AVALANCHE_RPC_URL / AVALANCHE_FUJI_RPC_URL (e.g. pointing to Arbitrum).
-  const rpcNetwork = await provider.getNetwork();
-  const rpcChainId = Number(rpcNetwork.chainId);
-  if (rpcChainId !== chainId) {
-    throw new Error(
-      `avalanche-adapter: RPC endpoint returned chainId=${rpcChainId} but ` +
-        `asset.chainId=${chainId} — possible wrong-RPC misconfiguration; refusing to broadcast`,
-    );
-  }
-
   const wallet = new ethers.Wallet(deployerPrivateKey(), provider);
   const contract = new ethers.Contract(asset.contractAddress, ERC20_MINIMAL_ABI, wallet);
 

@@ -666,34 +666,6 @@ export default function FounderOpsPage() {
   // Per-doc + per-scope AI cache: keyed `${docId}:${scope}`
   const [allocAiCache, setAllocAiCache] = useState<Record<string, { loading: boolean; result: AllocAiResult | null; error: string | null }>>({});
 
-  // ── Per-row allocation execution state ────────────────────────────────
-  // Persisted receipts from /api/founder/allocation-execute, keyed by document_id.
-  type AllocExecutionRow = {
-    id: string;
-    document_id: string;
-    scope: 'driver' | 'treasury';
-    asset_key: string;
-    rail: string;
-    weight_pct: number;
-    usd_amount: number;
-    status: 'executed' | 'queued' | 'failed' | 'skipped';
-    tx_hash: string | null;
-    external_ref: string | null;
-    external_url: string | null;
-    note: string | null;
-    destination_address: string | null;
-    executed_at: string;
-    pre_existing?: boolean;
-  };
-  const [allocExecutions, setAllocExecutions] = useState<Record<string, AllocExecutionRow[]>>({});
-  const [allocExecLoading, setAllocExecLoading] = useState<Record<string, boolean>>({}); // key = `${docId}:${scope}:${assetKey|all}`
-  const [allocExecError, setAllocExecError] = useState<Record<string, string | null>>({});
-  const [allocConfirmOpen, setAllocConfirmOpen] = useState<{ docId: string; scope: 'driver' | 'treasury' } | null>(null);
-
-  // Resolved destination wallet per scope — fetched when the confirm modal opens
-  type DestinationInfo = { address: string | null; source: string; label: string | null; loading: boolean; error: string | null };
-  const [allocDestination, setAllocDestination] = useState<Record<string, DestinationInfo>>({});
-
   // Latest settlement (used by Reserves tab to drive the allocation panel)
   type LatestSettlement = { document_id: string; title: string | null; statement_date: string | null; driver_name: string | null; net_pay: number | null; status: string | null };
   const [allocLatestSettlement, setAllocLatestSettlement] = useState<LatestSettlement | null>(null);
@@ -706,18 +678,6 @@ export default function FounderOpsPage() {
   const [walletFundingSource, setWalletFundingSource]   = useState<'settlement' | 'wallet' | 'custom'>('settlement');
   const [customFundingAmount, setCustomFundingAmount]   = useState('');
   const [walletTopupLoading, setWalletTopupLoading]     = useState(false);
-
-  // ── Deployer wallet balances (shown in allocation panel before Execute) ──
-  type DeployerWalletStatus = {
-    address: string | null;
-    paxg: number; paxgUsd: number; paxgPricePerOz: number | null;
-    usdc: number; eth: number;
-    fetchedAt: string | null; loading: boolean; error: string | null; warning: string | null;
-  };
-  const [deployerWallet, setDeployerWallet] = useState<DeployerWalletStatus>({
-    address: null, paxg: 0, paxgUsd: 0, paxgPricePerOz: null,
-    usdc: 0, eth: 0, fetchedAt: null, loading: false, error: null, warning: null,
-  });
 
   // ── Last AI auto-allocation (Reserves tab notice) ──────────────────────
   type AutoAllocBucket = { bucket: string; asset: string; usd_amount: number; pct: number | null };
@@ -881,7 +841,6 @@ export default function FounderOpsPage() {
       loadAllocPolicy(key);     // sets allocPolicies → populates Driver/Treasury columns
       loadWalletBalance(key);
       loadLastAutoAlloc(key);
-      fetchDeployerWallet();    // pre-loads PAXG/USDC/ETH balances for allocation panel warnings
     }, 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -973,119 +932,6 @@ export default function FounderOpsPage() {
     }
   };
 
-  // ── Allocation execution: per-row + execute-all ────────────────────────
-  const loadAllocationExecutions = async (docId: string) => {
-    const adminKey = reservesAdminKey || railAdminKey;
-    if (!adminKey || !docId) return;
-    try {
-      const res = await fetch(`/api/founder/allocation-executions?documentId=${encodeURIComponent(docId)}`, {
-        headers: { 'x-admin-key': adminKey },
-      });
-      const json = await res.json();
-      if (json.success) {
-        setAllocExecutions(prev => ({ ...prev, [docId]: json.executions as AllocExecutionRow[] }));
-      }
-    } catch { /* silent */ }
-  };
-
-  const executeAllocationRows = async (
-    docId: string,
-    scope: 'driver' | 'treasury',
-    assetKey: string | null, // null = execute all non-zero rows
-  ) => {
-    const adminKey = reservesAdminKey || railAdminKey;
-    if (!adminKey) {
-      alert('Admin key required');
-      return;
-    }
-    const aiKey = `${docId}:${scope}`;
-    const ai = allocAiCache[aiKey];
-    if (!ai?.result) {
-      alert('No allocation weights available — generate AI alternative or rely on policy weights');
-      return;
-    }
-    const loadingKey = `${docId}:${scope}:${assetKey ?? 'all'}`;
-    setAllocExecLoading(prev => ({ ...prev, [loadingKey]: true }));
-    setAllocExecError(prev => ({ ...prev, [loadingKey]: null }));
-    try {
-      const res = await fetch('/api/founder/allocation-execute', {
-        method: 'POST',
-        headers: { 'x-admin-key': adminKey, 'content-type': 'application/json' },
-        body: JSON.stringify({
-          documentId: docId,
-          scope,
-          weights: ai.result.weights,
-          scopeAmount: ai.result.scope_amount,
-          rationale: ai.result.rationale ?? null,
-          assetKey: assetKey ?? undefined,
-        }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        await loadAllocationExecutions(docId);
-        setAllocConfirmOpen(null);
-      } else {
-        setAllocExecError(prev => ({ ...prev, [loadingKey]: json.error ?? 'Execution failed' }));
-      }
-    } catch (e) {
-      setAllocExecError(prev => ({ ...prev, [loadingKey]: e instanceof Error ? e.message : 'Network error' }));
-    } finally {
-      setAllocExecLoading(prev => ({ ...prev, [loadingKey]: false }));
-    }
-  };
-
-  /** Fetch live deployer wallet balances for the allocation balance strip. */
-  const fetchDeployerWallet = async () => {
-    const adminKey = reservesAdminKey || railAdminKey;
-    if (!adminKey) return;
-    setDeployerWallet(prev => ({ ...prev, loading: true, error: null }));
-    try {
-      const res  = await fetch('/api/founder/allocation-wallet-status', {
-        headers: { 'x-admin-key': adminKey },
-      });
-      const json = await res.json();
-      if (json.success) {
-        setDeployerWallet({
-          address:        json.address ?? null,
-          paxg:           json.paxg    ?? 0,
-          paxgUsd:        json.paxgUsd ?? 0,
-          paxgPricePerOz: json.paxgPricePerOz ?? null,
-          usdc:           json.usdc    ?? 0,
-          eth:            json.eth     ?? 0,
-          fetchedAt:      json.fetchedAt ?? null,
-          loading:        false,
-          error:          null,
-          warning:        json.warning ?? null,
-        });
-      } else {
-        setDeployerWallet(prev => ({ ...prev, loading: false, error: json.error ?? 'Balance fetch failed' }));
-      }
-    } catch (e) {
-      setDeployerWallet(prev => ({ ...prev, loading: false, error: e instanceof Error ? e.message : 'Network error' }));
-    }
-  };
-
-  /** Fetch + cache the resolved destination wallet for a given doc+scope. */
-  const fetchAllocDestination = async (docId: string, scope: 'driver' | 'treasury') => {
-    const adminKey = reservesAdminKey || railAdminKey;
-    if (!adminKey) return;
-    const key = `${docId}:${scope}`;
-    setAllocDestination(prev => ({ ...prev, [key]: { address: null, source: '', label: null, loading: true, error: null } }));
-    try {
-      const res  = await fetch(`/api/founder/allocation-destination?documentId=${encodeURIComponent(docId)}&scope=${scope}`, {
-        headers: { 'x-admin-key': adminKey },
-      });
-      const json = await res.json();
-      if (json.success) {
-        setAllocDestination(prev => ({ ...prev, [key]: { address: json.address, source: json.source, label: json.label, loading: false, error: null } }));
-      } else {
-        setAllocDestination(prev => ({ ...prev, [key]: { address: null, source: '', label: null, loading: false, error: json.error ?? 'Lookup failed' } }));
-      }
-    } catch (e) {
-      setAllocDestination(prev => ({ ...prev, [key]: { address: null, source: '', label: null, loading: false, error: e instanceof Error ? e.message : 'Network error' } }));
-    }
-  };
-
   const generateAllocationAi = async (docId: string, scope: 'driver' | 'treasury') => {
     const key = `${docId}:${scope}`;
     const adminKey = reservesAdminKey || railAdminKey;
@@ -1099,9 +945,6 @@ export default function FounderOpsPage() {
       const json = await res.json();
       if (json.success) {
         setAllocAiCache(prev => ({ ...prev, [key]: { loading: false, result: { weights: json.weights, rationale: json.rationale ?? '', net_pay: json.net_pay, share_pct: json.share_pct, scope_amount: json.scope_amount, warnings: json.warnings }, error: null } }));
-        // Auto-load any prior executions for this document so Execute buttons
-        // immediately reflect "Already allocated" state.
-        loadAllocationExecutions(docId);
       } else {
         setAllocAiCache(prev => ({ ...prev, [key]: { loading: false, result: null, error: json.error || 'AI failed' } }));
       }
@@ -5631,26 +5474,6 @@ export default function FounderOpsPage() {
                   ) => {
                     const aiKey = latest ? `${latest.document_id}:${scope}` : '';
                     const ai = aiKey ? allocAiCache[aiKey] : undefined;
-                    const docId = latest?.document_id ?? '';
-                    const docExecutions = (docId ? allocExecutions[docId] : []) ?? [];
-                    const scopeExecutions = docExecutions.filter(e => e.scope === scope);
-                    const execByAsset: Record<string, AllocExecutionRow> = {};
-                    for (const e of scopeExecutions) execByAsset[e.asset_key] = e;
-                    const firstExecutedAt = scopeExecutions[0]?.executed_at;
-                    const allLoadingKey = `${docId}:${scope}:all`;
-                    const allLoading = !!allocExecLoading[allLoadingKey];
-                    const allError = allocExecError[allLoadingKey];
-
-                    const statusBadge = (status: string) => {
-                      const map: Record<string, string> = {
-                        executed: 'border-dl-forest text-dl-forest bg-green-50',
-                        queued:   'border-yellow-500 text-yellow-700 bg-yellow-50',
-                        failed:   'border-dl-error text-dl-error bg-red-50',
-                        skipped:  'border-dl-gray text-dl-gray',
-                      };
-                      return map[status] ?? 'border-dl-gray text-dl-gray';
-                    };
-
                     return (
                       <div className="border border-dl-border bg-white">
                         <div className="px-4 py-3 border-b border-dl-border bg-dl-navy flex items-center justify-between">
@@ -5670,16 +5493,6 @@ export default function FounderOpsPage() {
                             </button>
                           )}
                         </div>
-
-                        {/* Already-allocated banner (idempotency feedback) */}
-                        {firstExecutedAt && (
-                          <div className="px-4 py-2 border-b border-dl-border bg-green-50">
-                            <p className="font-dl-mono text-xs text-dl-forest">
-                              Already allocated on {new Date(firstExecutedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} · {scopeExecutions.length} row{scopeExecutions.length === 1 ? '' : 's'} executed
-                            </p>
-                          </div>
-                        )}
-
                         <table className="w-full">
                           <thead className="bg-dl-bg-alt">
                             <tr>
@@ -5689,7 +5502,6 @@ export default function FounderOpsPage() {
                               {ai?.result && <>
                                 <th className="text-right font-dl-mono text-xs uppercase tracking-wider text-dl-forest px-3 py-2">AI %</th>
                                 <th className="text-right font-dl-mono text-xs uppercase tracking-wider text-dl-forest px-3 py-2">AI $</th>
-                                <th className="text-right font-dl-mono text-xs uppercase tracking-wider text-dl-navy px-3 py-2">Execute</th>
                               </>}
                             </tr>
                           </thead>
@@ -5702,47 +5514,11 @@ export default function FounderOpsPage() {
                               const delta = ai?.result ? aPct - pPct : 0;
                               const isHidden = pPct === 0 && aPct === 0;
                               if (isHidden) return null;
-                              const exec = execByAsset[a.key];
-                              const rowLoadingKey = `${docId}:${scope}:${a.key}`;
-                              const rowLoading = !!allocExecLoading[rowLoadingKey];
-                              const rowError = allocExecError[rowLoadingKey];
                               return (
                                 <tr key={a.key} className="border-t border-dl-border">
                                   <td className="px-3 py-2">
                                     <p className="font-dl-mono text-xs text-dl-navy font-semibold">{a.label}</p>
                                     <p className="font-dl-mono text-[10px] text-dl-gray">{a.note}</p>
-                                    {/* Balance warnings — only when deployer balances are loaded and AI amounts are set */}
-                                    {deployerWallet.fetchedAt && !deployerWallet.loading && aAmt != null && aAmt > 0 && (() => {
-                                      if (a.key === 'axau') {
-                                        if (deployerWallet.paxgPricePerOz != null) {
-                                          const paxgNeeded = aAmt / deployerWallet.paxgPricePerOz;
-                                          if (deployerWallet.paxg < paxgNeeded) {
-                                            return (
-                                              <p className="font-dl-mono text-[9px] text-yellow-700 mt-0.5">
-                                                ⚠ Need ~{paxgNeeded.toFixed(3)} PAXG, deployer holds {deployerWallet.paxg.toFixed(3)}
-                                              </p>
-                                            );
-                                          }
-                                        } else {
-                                          // Price fetch failed — cannot estimate PAXG needed; surface warning so operator does not proceed blind
-                                          return (
-                                            <p className="font-dl-mono text-[9px] text-yellow-700 mt-0.5">
-                                              ⚠ PAXG price unavailable — verify deployer PAXG balance before executing
-                                            </p>
-                                          );
-                                        }
-                                      }
-                                      if (a.key === 'axusd') {
-                                        if (deployerWallet.usdc < aAmt) {
-                                          return (
-                                            <p className="font-dl-mono text-[9px] text-yellow-700 mt-0.5">
-                                              ⚠ Need ${aAmt.toFixed(2)} USDC, deployer holds ${deployerWallet.usdc.toFixed(2)}
-                                            </p>
-                                          );
-                                        }
-                                      }
-                                      return null;
-                                    })()}
                                   </td>
                                   <td className="text-right font-dl-mono text-xs text-dl-navy px-3 py-2">{pPct}%</td>
                                   <td className="text-right font-dl-mono text-xs text-dl-navy px-3 py-2">{pAmt != null ? fmtUsd(pAmt) : '—'}</td>
@@ -5751,107 +5527,12 @@ export default function FounderOpsPage() {
                                       {aPct}% {delta !== 0 && <span className="text-[10px]">({delta > 0 ? '+' : ''}{delta})</span>}
                                     </td>
                                     <td className="text-right font-dl-mono text-xs text-dl-navy px-3 py-2">{aAmt != null ? fmtUsd(aAmt) : '—'}</td>
-                                    <td className="text-right px-3 py-2">
-                                      {exec && exec.status === 'executed' ? (
-                                        /* Terminal success — show receipt only, no retry */
-                                        <div className="flex flex-col items-end gap-0.5">
-                                          <span className={`font-dl-mono text-[10px] border px-1.5 py-0.5 uppercase tracking-wider ${statusBadge(exec.status)}`}>
-                                            {exec.status}
-                                          </span>
-                                          {exec.tx_hash && (
-                                            <a
-                                              href={`https://arbiscan.io/tx/${exec.tx_hash}`}
-                                              target="_blank" rel="noopener noreferrer"
-                                              className="font-dl-mono text-[9px] text-dl-navy underline hover:text-dl-forest truncate max-w-[100px]"
-                                              title={exec.tx_hash}
-                                            >
-                                              tx: {exec.tx_hash.slice(0, 6)}…
-                                            </a>
-                                          )}
-                                          {exec.external_url && (
-                                            <a
-                                              href={exec.external_url}
-                                              target="_blank" rel="noopener noreferrer"
-                                              className="font-dl-mono text-[9px] text-dl-navy underline hover:text-dl-forest"
-                                            >
-                                              open rail →
-                                            </a>
-                                          )}
-                                        </div>
-                                      ) : aPct > 0 ? (
-                                        /* Not yet executed (or queued/failed) — show Execute + prior status badge */
-                                        <div className="flex flex-col items-end gap-0.5">
-                                          {exec && (
-                                            <span className={`font-dl-mono text-[10px] border px-1.5 py-0.5 uppercase tracking-wider ${statusBadge(exec.status)}`}>
-                                              {exec.status}
-                                            </span>
-                                          )}
-                                          {exec?.external_url && (
-                                            <a
-                                              href={exec.external_url}
-                                              target="_blank" rel="noopener noreferrer"
-                                              className="font-dl-mono text-[9px] text-dl-navy underline hover:text-dl-forest"
-                                            >
-                                              open rail →
-                                            </a>
-                                          )}
-                                          <button
-                                            onClick={() => executeAllocationRows(docId, scope, a.key)}
-                                            disabled={rowLoading || allLoading}
-                                            className="font-dl-mono text-[10px] border border-dl-navy text-dl-navy px-2 py-1 uppercase tracking-wider hover:bg-dl-navy hover:text-white disabled:opacity-50"
-                                          >
-                                            {rowLoading ? '…' : exec ? 'Retry' : 'Execute'}
-                                          </button>
-                                        </div>
-                                      ) : (
-                                        <span className="font-dl-mono text-[10px] text-dl-gray">—</span>
-                                      )}
-                                      {rowError && <p className="font-dl-mono text-[9px] text-dl-error mt-0.5 max-w-[120px]">{rowError}</p>}
-                                    </td>
                                   </>}
                                 </tr>
                               );
                             })}
                           </tbody>
                         </table>
-
-                        {/* Execute-all + status row */}
-                        {ai?.result && (() => {
-                          const nonZeroCount   = Object.values(ai.result.weights).filter(w => w > 0).length;
-                          const executedCount  = scopeExecutions.filter(e => e.status === 'executed').length;
-                          const queuedCount    = scopeExecutions.filter(e => e.status === 'queued').length;
-                          const failedCount    = scopeExecutions.filter(e => e.status === 'failed').length;
-                          // "All submitted" = every non-zero row has been dispatched once,
-                          // regardless of whether the outcome was executed or queued.
-                          // Queued rows represent rails that require manual/external completion
-                          // (Camelot swap, KAG purchase) — they are terminal for this flow.
-                          // Failed rows are NOT terminal — operator should retry.
-                          const submittedCount = executedCount + queuedCount;
-                          const allSubmitted   = submittedCount >= nonZeroCount && failedCount === 0;
-                          const noneDispatched = scopeExecutions.length === 0;
-                          return (
-                            <div className="border-t border-dl-border px-3 py-3 bg-dl-bg-alt flex items-center justify-between gap-3 flex-wrap">
-                              <div className="font-dl-mono text-xs text-dl-gray">
-                                {allSubmitted
-                                  ? executedCount === nonZeroCount
-                                    ? `All ${nonZeroCount} row${nonZeroCount === 1 ? '' : 's'} executed · ${fmtUsd(ai.result.scope_amount)} dispatched`
-                                    : `${executedCount} executed · ${queuedCount} queued for manual completion · ${fmtUsd(ai.result.scope_amount)} total`
-                                  : noneDispatched
-                                    ? `Ready to dispatch ${nonZeroCount} row${nonZeroCount === 1 ? '' : 's'} for ${fmtUsd(ai.result.scope_amount)}`
-                                    : `${executedCount} executed · ${queuedCount} queued · ${failedCount} failed — retry failed rows`}
-                              </div>
-                              <button
-                                onClick={() => { setAllocConfirmOpen({ docId, scope }); fetchAllocDestination(docId, scope); }}
-                                disabled={allLoading || allSubmitted}
-                                className="font-dl-mono text-xs border border-dl-navy bg-dl-navy text-white px-4 py-1.5 uppercase tracking-wider hover:bg-dl-navy-dark disabled:opacity-50"
-                              >
-                                {allLoading ? 'Executing…' : allSubmitted ? 'All submitted' : 'Execute all →'}
-                              </button>
-                            </div>
-                          );
-                        })()}
-                        {allError && <p className="font-dl-mono text-xs text-dl-error px-3 py-2 border-t border-dl-border">{allError}</p>}
-
                         {ai?.error && <p className="font-dl-mono text-xs text-dl-error px-3 py-2 border-t border-dl-border">{ai.error}</p>}
                         {ai?.result?.rationale && (
                           <div className="border-t border-dl-border px-3 py-3 bg-dl-bg-alt">
@@ -5974,50 +5655,6 @@ export default function FounderOpsPage() {
                         </div>
                       )}
 
-                      {/* ── Deployer wallet balance strip ── */}
-                      <div className="border border-dl-border bg-dl-bg-alt px-4 py-3 mb-4">
-                        <div className="flex items-center justify-between gap-3 flex-wrap">
-                          <div className="flex items-center gap-4 flex-wrap">
-                            <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Deployer Balances</p>
-                            {deployerWallet.loading ? (
-                              <p className="font-dl-mono text-xs text-dl-muted">Fetching…</p>
-                            ) : deployerWallet.error ? (
-                              <p className="font-dl-mono text-xs text-dl-error">{deployerWallet.error}</p>
-                            ) : deployerWallet.fetchedAt ? (
-                              <>
-                                <span className={`font-dl-mono text-xs font-semibold ${deployerWallet.paxg > 0 ? 'text-dl-navy' : 'text-dl-error'}`}>
-                                  {deployerWallet.paxg.toFixed(4)} PAXG
-                                  {deployerWallet.paxgUsd > 0 && <span className="font-normal text-dl-gray ml-1">(${deployerWallet.paxgUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })})</span>}
-                                </span>
-                                <span className={`font-dl-mono text-xs font-semibold ${deployerWallet.usdc > 0 ? 'text-dl-navy' : 'text-dl-error'}`}>
-                                  ${deployerWallet.usdc.toLocaleString('en-US', { maximumFractionDigits: 2 })} USDC
-                                </span>
-                                <span className={`font-dl-mono text-xs ${deployerWallet.eth >= 0.005 ? 'text-dl-gray' : 'text-yellow-600 font-semibold'}`}>
-                                  {deployerWallet.eth.toFixed(4)} ETH {deployerWallet.eth < 0.005 && '⚠ low gas'}
-                                </span>
-                                {deployerWallet.warning && (
-                                  <span className="font-dl-mono text-[10px] text-yellow-700">{deployerWallet.warning}</span>
-                                )}
-                              </>
-                            ) : (
-                              <p className="font-dl-mono text-xs text-dl-muted">Not loaded</p>
-                            )}
-                          </div>
-                          <button
-                            onClick={fetchDeployerWallet}
-                            disabled={deployerWallet.loading}
-                            className="font-dl-mono text-[10px] border border-dl-border text-dl-gray px-3 py-1 uppercase tracking-wider hover:text-dl-navy disabled:opacity-50"
-                          >
-                            {deployerWallet.loading ? '…' : deployerWallet.fetchedAt ? 'Refresh' : 'Load Balances'}
-                          </button>
-                        </div>
-                        {deployerWallet.address && (
-                          <p className="font-dl-mono text-[10px] text-dl-muted mt-1">
-                            {deployerWallet.address}{deployerWallet.fetchedAt && ` · as of ${new Date(deployerWallet.fetchedAt).toLocaleTimeString()}`}
-                          </p>
-                        )}
-                      </div>
-
                       {/* Side-by-side allocation columns */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {renderColumn('driver',   dp, driverAmount)}
@@ -6034,121 +5671,6 @@ export default function FounderOpsPage() {
             )}
           </>
       </PageShell>
-
-      {/* Allocation execution confirmation modal */}
-      {allocConfirmOpen && (() => {
-        const { docId, scope } = allocConfirmOpen;
-        const aiKey = `${docId}:${scope}`;
-        const ai = allocAiCache[aiKey];
-        if (!ai?.result) return null;
-        const fmtUsd = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
-        const rows = allocAssets
-          .map(a => ({ asset: a, pct: ai.result!.weights[a.key] ?? 0 }))
-          .filter(r => r.pct > 0)
-          .map(r => ({ ...r, usd: (ai.result!.scope_amount * r.pct) / 100 }));
-        const allLoadingKey = `${docId}:${scope}:all`;
-        const isLoading = !!allocExecLoading[allLoadingKey];
-        const errorMsg = allocExecError[allLoadingKey];
-        const destInfo = allocDestination[aiKey];
-        // onramp assets route to the resolved destination; other rails are not wallet-routed
-        const onrampAssets = new Set(['paxg','usdc','wbtc','cbeth']);
-        const hasOnrampRows = rows.some(r => onrampAssets.has(r.asset.key));
-        return (
-          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4" onClick={() => !isLoading && setAllocConfirmOpen(null)}>
-            <div className="bg-white border border-dl-navy max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-              <div className="px-6 py-4 border-b border-dl-border bg-dl-navy">
-                <p className="font-dl-mono text-xs uppercase tracking-wider text-white font-bold">Confirm Execute All — {scope === 'driver' ? 'Driver' : 'Treasury'} Allocation</p>
-                <p className="font-dl-mono text-xs text-blue-200 mt-1">
-                  {fmtUsd(ai.result.scope_amount)} across {rows.length} rail{rows.length === 1 ? '' : 's'} · idempotent (already-executed rows are skipped)
-                </p>
-              </div>
-              <div className="p-6">
-                {/* ── Destination wallet banner ── */}
-                {hasOnrampRows && (
-                  <div className={`border mb-4 p-3 ${destInfo?.error ? 'border-dl-error bg-red-50' : 'border-dl-border bg-dl-bg-alt'}`}>
-                    <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray mb-1">Onramp Destination Wallet</p>
-                    {!destInfo || destInfo.loading ? (
-                      <p className="font-dl-mono text-xs text-dl-muted">Resolving wallet…</p>
-                    ) : destInfo.error ? (
-                      <p className="font-dl-mono text-xs text-dl-error">{destInfo.error}</p>
-                    ) : destInfo.address ? (
-                      <>
-                        <p className="font-dl-mono text-xs text-dl-navy break-all font-semibold">{destInfo.address}</p>
-                        <p className="font-dl-mono text-[10px] text-dl-gray mt-0.5">
-                          {(destInfo.label ?? (scope === 'treasury' ? 'Protocol Treasury' : 'Driver wallet'))} · source: {destInfo.source}
-                        </p>
-                      </>
-                    ) : (
-                      <p className="font-dl-mono text-xs text-dl-error">No wallet resolved — configure driver_wallets table or DRIVER_DEFAULT_WALLET env var before executing</p>
-                    )}
-                  </div>
-                )}
-                <table className="w-full mb-4">
-                  <thead className="bg-dl-bg-alt">
-                    <tr>
-                      <th className="text-left font-dl-mono text-xs uppercase tracking-wider text-dl-gray px-3 py-2">Asset</th>
-                      <th className="text-right font-dl-mono text-xs uppercase tracking-wider text-dl-gray px-3 py-2">Weight</th>
-                      <th className="text-right font-dl-mono text-xs uppercase tracking-wider text-dl-gray px-3 py-2">USD</th>
-                      <th className="text-left font-dl-mono text-xs uppercase tracking-wider text-dl-gray px-3 py-2">Rail · Destination</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map(r => {
-                      const isOnramp = onrampAssets.has(r.asset.key);
-                      const shortAddr = destInfo?.address
-                        ? `→ ${destInfo.address.slice(0,6)}…${destInfo.address.slice(-4)}`
-                        : '';
-                      const railLabel: Record<string, string> = {
-                        axau:            'AXAU mint — live (on-chain tx, treasury deployer)',
-                        axusd:           'Camelot USDC→AXUSD — live (deployer USDC required; run USDC row first)',
-                        paxg:            `Coinbase Onramp — session URL${isOnramp && shortAddr ? ` ${shortAddr}` : ''}`,
-                        usdc:            `Coinbase Onramp — session URL${isOnramp && shortAddr ? ` ${shortAddr}` : ''}`,
-                        wbtc:            `Coinbase Onramp — session URL${isOnramp && shortAddr ? ` ${shortAddr}` : ''}`,
-                        cbeth:           `Coinbase Onramp — session URL${isOnramp && shortAddr ? ` ${shortAddr}` : ''}`,
-                        kag:             'Kinesis KAG — queued (purchase on Kinesis.money)',
-                        cash_reserve:    'Ledger entry — live (earmark only, no transfer)',
-                        operating_spend: 'Stripe payout — live (payout to bank account)',
-                      };
-                      return (
-                        <tr key={r.asset.key} className="border-t border-dl-border">
-                          <td className="px-3 py-2 font-dl-mono text-xs text-dl-navy font-semibold">{r.asset.label}</td>
-                          <td className="text-right px-3 py-2 font-dl-mono text-xs text-dl-navy">{r.pct}%</td>
-                          <td className="text-right px-3 py-2 font-dl-mono text-xs text-dl-navy">{fmtUsd(r.usd)}</td>
-                          <td className="px-3 py-2 font-dl-mono text-[10px] text-dl-gray">{railLabel[r.asset.key] ?? '—'}</td>
-                        </tr>
-                      );
-                    })}
-                    <tr className="border-t-2 border-dl-navy bg-dl-bg-alt">
-                      <td className="px-3 py-2 font-dl-mono text-xs uppercase text-dl-navy font-bold">Total</td>
-                      <td className="text-right px-3 py-2 font-dl-mono text-xs text-dl-navy font-bold">{rows.reduce((s, r) => s + r.pct, 0)}%</td>
-                      <td className="text-right px-3 py-2 font-dl-mono text-xs text-dl-forest font-bold">{fmtUsd(rows.reduce((s, r) => s + r.usd, 0))}</td>
-                      <td />
-                    </tr>
-                  </tbody>
-                </table>
-                <div className="border border-dl-border bg-dl-bg-alt p-3 mb-4">
-                  <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">
-                    Live rails (AXAU mint, AXUSD Camelot swap, Stripe payout, cash ledger) submit immediately and record a real receipt. The AXUSD row requires USDC in the deployer wallet — run the USDC onramp row first. Onramp rows create a Coinbase session URL routed to the destination wallet shown above — the operator must open the link to complete the card purchase. KAG stays queued (no automated rail) — link opens the Silver Reserve onboarding page. Already-<strong>executed</strong> rows are protected against double-dispatch and show receipt-only. <strong>Queued or failed</strong> rows can be retried — clicking Retry re-dispatches the rail and updates the record.
-                  </p>
-                </div>
-                {errorMsg && <p className="font-dl-mono text-xs text-dl-error mb-3">{errorMsg}</p>}
-                <div className="flex gap-2 justify-end">
-                  <button
-                    onClick={() => setAllocConfirmOpen(null)}
-                    disabled={isLoading}
-                    className="font-dl-mono text-xs border border-dl-border text-dl-gray px-4 py-1.5 uppercase tracking-wider hover:text-dl-navy disabled:opacity-50"
-                  >Cancel</button>
-                  <button
-                    onClick={() => executeAllocationRows(docId, scope, null)}
-                    disabled={isLoading || (hasOnrampRows && (destInfo?.loading || !destInfo?.address))}
-                    className="font-dl-mono text-xs border border-dl-navy bg-dl-navy text-white px-4 py-1.5 uppercase tracking-wider hover:bg-dl-navy-dark disabled:opacity-50"
-                  >{isLoading ? 'Executing…' : 'Confirm — Execute All'}</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
     </DesignLawLayout>
   );
 }

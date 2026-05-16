@@ -18,7 +18,6 @@
 import 'dotenv/config';
 import { eq } from 'drizzle-orm';
 import { createAsset, getAssetBySymbol } from '../lib/capinfra';
-import { capAssets } from '../shared/capInfraSchema';
 import {
   createAdapter,
   getAdapterRowByName,
@@ -92,32 +91,6 @@ const SEEDS: AssetCreateInput[] = [
     },
   },
   {
-    symbol: 'AXUSD-FUJI',
-    displayName: 'Axiom Stable 3643 Fuji (testnet)',
-    assetType: 'STABLE_ASSET',
-    assetSubtype: 'NONE',
-    custodyModel: 'ON_CHAIN_NATIVE',
-    redemptionType: 'NONE',
-    settlementType: 'AVALANCHE',
-    chain: 'avalanche-fuji',
-    chainId: 43113,
-    contractAddress: '0x5Cd7c15C32e0630239eDE74241Ad65f3302BcAF8',
-    decimals: 6,
-    issuer: 'Axiom Protocol',
-    exposureClass: 'RESTRICTED',
-    status: 'ACTIVE',
-    collateralClass: 'YELLOW',
-    collateralClassificationRationale:
-      'Fuji testnet asset. Not eligible for production collateral. YELLOW until mainnet promotion gate is satisfied.',
-    basePolicyJson: { perTransactionMax: '1', requiresIdentity: true },
-    metadataJson: {
-      testnet: true,
-      network: 'avalanche-fuji',
-      chainId: 43113,
-      gate5Satisfied: true,
-    },
-  },
-  {
     symbol: 'PAXG',
     displayName: 'Paxos Gold',
     assetType: 'PHYSICAL_METAL',
@@ -163,19 +136,7 @@ async function seedAssets() {
   for (const seed of SEEDS) {
     const existing = await getAssetBySymbol(seed.symbol);
     if (existing) {
-      // Idempotent settlementType migration: if the row exists but has a stale
-      // settlementType (e.g. AXUSD-FUJI was previously seeded as 'EVM' before
-      // migration 0059 added 'AVALANCHE' to capSettlementTypeEnum), update it
-      // in-place so routing via executeInstruction works without a re-insert.
-      if (existing.settlementType !== seed.settlementType) {
-        await db
-          .update(capAssets)
-          .set({ settlementType: seed.settlementType as typeof existing.settlementType, updatedAt: new Date() })
-          .where(eq(capAssets.id, existing.id));
-        console.log(`  ↺ ${seed.symbol} updated settlementType: ${existing.settlementType} → ${seed.settlementType} (id=${existing.id})`);
-      } else {
-        console.log(`  ↪ ${seed.symbol} already present (id=${existing.id})`);
-      }
+      console.log(`  ↪ ${seed.symbol} already present (id=${existing.id})`);
       continue;
     }
     const created = await createAsset(seed, 'capinfra-seed', 'capinfra-seed-bootstrap');

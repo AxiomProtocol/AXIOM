@@ -8,54 +8,32 @@ export type LiquidityAssetRole =
   | 'governance_coordination'
   | 'reserve_linked';
 
-/**
- * Active and audit-only liquidity venue identifiers.
- *
- * NOTE — 'eulerswap' is intentionally retained in this union for audit continuity.
- * The original task spec said "remove eulerswap" from active venue logic — that has
- * been done: all guard functions return false, all API routes return 410, the venue
- * status is 'withdrawn_empty', and all pool entries are flagged `active: false` with
- * launchPhase: 'decommissioned'. Removing the type literal would lose the ability to
- * type-safely reference withdrawn pool records in LIQUIDITY_POOLS for historical
- * queries. Task acceptance criteria updated: eulerswap is audit-only in the type
- * system — it is not approved, not permitted, and never activatable.
- */
 export type LiquidityVenueId =
   | 'uniswap-v3'
   | 'curve'
   | 'balancer'
   | 'camelot'
-  | 'axiom-reserve-access'
-  | 'eulerswap'; // AUDIT ONLY — withdrawn 2026-05-13, never re-activate
+  | 'eulerswap';
 
 export type LiquidityVenueStatus =
   | 'approved_primary'
   | 'approved_secondary'
   | 'evaluation_only'
   | 'deferred'
-  | 'existing_integration'
-  | 'withdrawn_empty'
-  | 'empty'        // Alias for confirmed-zero withdrawn state
-  | 'deprecated'   // Soft-deprecated — still visible, not deployable
-  | 'coming_soon'  // Planned for near-term activation
-  | 'planned'      // Scoped but not yet scheduled
-  | 'configured'   // Deployed/configured, not yet active
-  | 'disabled';    // Explicitly disabled
+  | 'existing_integration';
 
 export type LiquidityPoolStatus =
   | 'planned'
   | 'active'
   | 'inactive'
   | 'blocked'
-  | 'evaluation'
-  | 'withdrawn'; // Positions fully withdrawn, balance confirmed zero
+  | 'evaluation';
 
 export type LiquidityLaunchPhase =
   | 'phase_1'
   | 'phase_2'
   | 'phase_3'
-  | 'conditional_axau'
-  | 'decommissioned'; // Withdrawn/retired — audit record only
+  | 'conditional_axau';
 
 export type TreasuryPriority = 'highest' | 'high' | 'medium' | 'low' | 'none';
 
@@ -104,7 +82,7 @@ export interface LiquidityVenue {
 }
 
 export interface LiquidityPoolFee {
-  kind: 'uniswap_v3_fee_tier' | 'curve_stableswap' | 'balancer_weighted' | 'camelot_pool';
+  kind: 'uniswap_v3_fee_tier' | 'curve_stableswap' | 'balancer_weighted' | 'camelot_pool' | 'eulerswap_curve';
   valueBps: number | null;
   status: 'recommended' | 'pending_venue_design' | 'existing';
   notes: string;

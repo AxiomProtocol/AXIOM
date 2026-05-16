@@ -11,7 +11,6 @@ import * as Contracts from "./index.js";
 declare module "@nomicfoundation/hardhat-ethers/types" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
   getContractFactory(name: 'AbstractModule', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.AbstractModule__factory>
-getContractFactory(name: 'AxiomStable3643', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.AxiomStable3643__factory>
 getContractFactory(name: 'AxiomStable3643Fuji', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.AxiomStable3643Fuji__factory>
 getContractFactory(name: 'CountryAllowModule', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.CountryAllowModule__factory>
 getContractFactory(name: 'ITokenRegistryProvider', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.ITokenRegistryProvider__factory>
@@ -21,7 +20,6 @@ getContractFactory(name: 'IModularCompliance', signerOrOptions?: ethers.Signer |
 getContractFactory(name: 'IModule', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IModule__factory>
 
   getContractAt(name: 'AbstractModule', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.AbstractModule>
-getContractAt(name: 'AxiomStable3643', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.AxiomStable3643>
 getContractAt(name: 'AxiomStable3643Fuji', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.AxiomStable3643Fuji>
 getContractAt(name: 'CountryAllowModule', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.CountryAllowModule>
 getContractAt(name: 'ITokenRegistryProvider', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.ITokenRegistryProvider>
@@ -31,7 +29,6 @@ getContractAt(name: 'IModularCompliance', address: string | ethers.Addressable, 
 getContractAt(name: 'IModule', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IModule>
 
   deployContract(name: 'AbstractModule', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AbstractModule>
-deployContract(name: 'AxiomStable3643', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AxiomStable3643>
 deployContract(name: 'AxiomStable3643Fuji', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AxiomStable3643Fuji>
 deployContract(name: 'CountryAllowModule', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.CountryAllowModule>
 deployContract(name: 'ITokenRegistryProvider', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ITokenRegistryProvider>
@@ -41,7 +38,6 @@ deployContract(name: 'IModularCompliance', signerOrOptions?: ethers.Signer | Dep
 deployContract(name: 'IModule', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IModule>
 
   deployContract(name: 'AbstractModule', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AbstractModule>
-deployContract(name: 'AxiomStable3643', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AxiomStable3643>
 deployContract(name: 'AxiomStable3643Fuji', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AxiomStable3643Fuji>
 deployContract(name: 'CountryAllowModule', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.CountryAllowModule>
 deployContract(name: 'ITokenRegistryProvider', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ITokenRegistryProvider>

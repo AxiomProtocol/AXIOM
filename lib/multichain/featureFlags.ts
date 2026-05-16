@@ -21,8 +21,7 @@ export type ExpansionFlag =
   | 'AVALANCHE_CAPITAL_ENV'
   | 'STELLAR_PAYMENTS_RAIL'
   | 'CANTON_INSTITUTIONAL_BRIDGE'
-  | 'COSMOS_SOVEREIGN_PREP'
-  | 'SUI_DISTRIBUTION_LAYER';
+  | 'COSMOS_SOVEREIGN_PREP';
 
 const FLAG_DEFAULTS: Record<ExpansionFlag, false> = {
   POLYGON_IDENTITY_BRIDGE: false,
@@ -30,7 +29,6 @@ const FLAG_DEFAULTS: Record<ExpansionFlag, false> = {
   STELLAR_PAYMENTS_RAIL: false,
   CANTON_INSTITUTIONAL_BRIDGE: false,
   COSMOS_SOVEREIGN_PREP: false,
-  SUI_DISTRIBUTION_LAYER: false,
 };
 
 /**
@@ -68,7 +66,6 @@ export const CHAIN_SLUG_TO_FLAG: Record<string, ExpansionFlag | null> = {
   stellar: 'STELLAR_PAYMENTS_RAIL',
   canton: 'CANTON_INSTITUTIONAL_BRIDGE',
   cosmos: 'COSMOS_SOVEREIGN_PREP',
-  sui: 'SUI_DISTRIBUTION_LAYER',
 };
 
 export function isChainEnabled(slug: string): boolean {

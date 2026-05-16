@@ -66,8 +66,7 @@ export type ChainRole =
   | 'capital_zone'          // Permissioned capital deployment environment
   | 'payments_rail'         // Payment movement and remittance corridor
   | 'institutional_bridge'  // Enterprise / privacy finance bridge
-  | 'sovereign_future'      // Axiom-native chain / interchain hub planning
-  | 'distribution_layer';   // Wallet-facing token distribution / community / diaspora
+  | 'sovereign_future';     // Axiom-native chain / interchain hub planning
 
 export type ChainStatus =
   | 'live'         // Fully integrated, active today
@@ -191,94 +190,37 @@ export const CHAIN_REGISTRY: ChainRegistryEntry[] = [
   {
     id: 'polygon-mainnet',
     slug: 'polygon',
-    displayName: 'Polygon PoS',
+    displayName: 'Polygon',
     chainIdEvm: 137,
     category: 'evm',
-    // Phase 3 (2026-05-14): role expanded from identity_bridge only to include
-    // payments_settlement and payments_rail — Polygon's strategic designation is
-    // Payments / Treasury Routing / Enterprise Settlement. Identity bridging
-    // (Polygon ID credentials attested from Arbitrum) remains in scope but is
-    // secondary to the payments role.
-    roles: ['payments_rail', 'identity_bridge'],
-    status: 'configured',
+    roles: ['identity_bridge'],
+    status: 'researching',
     capabilities: {
-      settlementSupport: true,   // Enterprise settlement via native USDC
-      reserveSupport: false,     // Reserve is Arbitrum + Ethereum canonical
-      identitySupport: true,     // Polygon ID credential delivery (attested, not canonical)
+      settlementSupport: false,
+      reserveSupport: false,
+      identitySupport: true,
       complianceSupport: true,
-      custodySupport: false,     // BitGo custody wallet TBD
-      automatedControlLayerSupport: false, // No Axiom contracts deployed on Polygon
-      paymentRailSupport: true,  // Primary role — USDC payment and treasury routing
+      custodySupport: false,
+      automatedControlLayerSupport: true,
+      paymentRailSupport: false,
     },
     featureFlag: 'ENABLE_POLYGON_IDENTITY_BRIDGE',
-    sourceFilesStatus: 'attached',
-    sdkStatus: 'not_reviewed',
-    docsStatus: 'attached',
-    implementationReady: false,
-    notes:
-      'Phase 5 (2026-05-15): PRODUCTION AUTHORIZED — all 10 gates cleared and signed. ' +
-      'CHAIN_POLYGON_ENABLED=true, POLYGON_ADAPTER_MODE=LIVE. Strategic role: Payments / ' +
-      'Treasury Routing / Enterprise Settlement. Settlement token: native USDC on Polygon PoS ' +
-      '(0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359). First mainnet transfer BLOCKED — ' +
-      'deployer wallet has 0 USDC on Polygon mainnet (chainId 137). Preflight 10/11 pass. ' +
-      'Identity bridging (Polygon ID credential delivery attested from Arbitrum ERC-3643) ' +
-      'remains in scope but secondary to payments role. Arbitrum remains canonical.',
-    metadata: {
-      targetIntegration: 'polygon_pos_payments',
-      settlementToken: 'USDC_NATIVE_POLYGON',
-      settlementTokenAddress: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
-      bridgeDesign: 'attestation_or_mirrored_credential',
-      phase: 'phase5_production_authorized',
-      decisionMemo: 'documents/chains/AXIOM_POLYGON_PHASE3_DECISION_MEMO.md',
-      firstTransferStatus: 'BLOCKED_NO_USDC_IN_DEPLOYER_WALLET',
-      transferLedger: 'documents/chains/AXIOM_POLYGON_MAINNET_TRANSFER_STATUS.md',
-    },
-  },
-  {
-    id: 'sui-mainnet',
-    slug: 'sui',
-    displayName: 'Sui',
-    // No EVM chainId — Sui is a Move-based, non-EVM network.
-    // Network identification uses genesis hash, not a numeric chain ID.
-    category: 'non_evm',
-    roles: ['distribution_layer'],
-    status: 'planned',
-    capabilities: {
-      settlementSupport: false,    // Not Sui's role — settlement is Arbitrum/Polygon
-      reserveSupport: false,       // Reserve is Arbitrum + Ethereum canonical
-      identitySupport: false,      // Identity attestation read-only from Arbitrum ERC-3643
-      complianceSupport: false,    // Policy enforcement is Arbitrum/Avalanche
-      custodySupport: false,       // BitGo CaaS does not support Sui
-      automatedControlLayerSupport: null,  // Non-EVM: Move VM, not EVM-compatible
-      paymentRailSupport: false,   // Payments via Polygon / Stellar
-    },
-    featureFlag: 'ENABLE_SUI_DISTRIBUTION_LAYER',
     sourceFilesStatus: 'missing',
     sdkStatus: 'not_reviewed',
     docsStatus: 'missing',
     implementationReady: false,
     notes:
-      'Phase 4 (2026-05-15): Foundation and distribution-layer architecture phase. ' +
-      'Sui is NOT live — no mainnet transactions, no token issuance, no bridge. ' +
-      'Sui\'s strategic role is wallet-facing distribution / community / diaspora layer. ' +
-      'lib/chains/ scaffold complete (config, capabilities, providers, explorers, contracts). ' +
-      'shared/contracts-sui.ts added (all null). @mysten/sui SDK NOT installed. ' +
-      'No Move packages deployed. CHAIN_SUI_ENABLED=false in all current environments. ' +
-      'Arbitrum remains canonical. Polygon remains canonical payments layer. ' +
-      'Explorer updated: suiexplorer.com (deprecated) → suiscan.xyz.',
+      'Planned identity bridge and credential expansion layer. ' +
+      'ERC-3643 ONCHAINID credentials issued on Arbitrum will be mirrored or ' +
+      'attested to Polygon identity infrastructure for institutional access ' +
+      'bridging. Polygon ID and identity framework source files not yet gathered. ' +
+      'No Polygon integration is live or configured.',
     metadata: {
-      targetIntegration: 'sui_move_distribution',
-      distributionDesign: 'community_token_distribution',
-      sdkPackage: '@mysten/sui',
-      sdkUrl: 'https://www.npmjs.com/package/@mysten/sui',
-      moveLanguage: true,
-      evmCompatible: false,
-      phase: 'phase4_foundation',
-      decisionMemo: 'documents/chains/AXIOM_SUI_PHASE4_DECISION_MEMO.md',
-      dependsOn: '@mysten/sui SDK, Move package development, distribution architecture decision',
+      targetIntegration: 'polygon_id',
+      bridgeDesign: 'attestation_or_mirrored_credential',
+      dependsOn: 'Polygon SDK, Polygon ID documentation',
     },
   },
-
   {
     id: 'avalanche-cchain',
     slug: 'avalanche',
