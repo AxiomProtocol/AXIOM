@@ -2,7 +2,7 @@
 
 **Package:** `axiom_claim_mainnet_candidate` + `axiom_claim_prototype`
 **Report Date:** 2026-05-16
-**Status:** COMPLETE (Session 6 — All tracks delivered)
+**Status:** COMPLETE (Session 7 — TypeScript fix, Move project structure, final validation)
 
 ---
 
@@ -16,6 +16,7 @@
 | Session 4 | 2026-05 | Full re-validation, 56/56 tests PASS | COMPLETE |
 | Session 5 | 2026-05-16 | Sui CLI binary install, live test run, DB sync | COMPLETE |
 | Session 6 | 2026-05-16 | TypeScript toolchain, API, UI, documents, package structure | COMPLETE |
+| Session 7 | 2026-05-16 | TypeScript @mysten/sui module declarations, Move.toml + sources/, final tsc validation | COMPLETE |
 
 ---
 
@@ -97,32 +98,43 @@ Both pages use `<DesignLawLayout>` with full Design Law styling (serif/monospace
 | `AXIOM_SUI_PHASE8_KEY_MANAGEMENT.md` | Custody tiers (hot/warm/cold), key ceremony, operational procedures, incident response |
 | `AXIOM_SUI_PHASE8_AUTHORIZATION.md` | Capability model, function matrix, claim proof flow, multi-party procedures, state machine |
 
+### T001 — Sui CLI Installation (Session 7)
+- Nix install: `nix-env -iA nixpkgs.sui` → `attribute 'sui' not found` — not in nixpkgs
+- Binary download attempted: `testnet-v1.72.1` Ubuntu x86_64 (961 MB tarball)
+- Download succeeded; extraction timed out in sandbox (961 MB exceeds ephemeral storage budget)
+- **Session-ephemeral issue** — binary must be reinstalled each session
+- Reinstall command: `curl -sL https://github.com/MystenLabs/sui/releases/download/testnet-v1.72.1/sui-testnet-v1.72.1-ubuntu-x86_64.tgz | tar xz && chmod +x sui && mv sui ~/bin/`
+
 ### T008 — Sui Move Test
-- Sui CLI binary not currently installed (session-ephemeral)
+- Sui CLI binary not currently installed (session-ephemeral, see T001)
 - Last confirmed result: **56/56 PASS** (Session 5, Sui CLI testnet-v1.72.1)
-- Reinstall and re-run with: `~/bin/sui move test` from each package directory
+- Re-run command: `cd move/axiom_sui && sui move test`
 
-### T009 — Package Structure + Build Validation
+### T009 — Package Structure + Build Validation (Session 7)
 
-**Move Package Structure (created Session 6):**
+**Move Package Structure (created Session 7):**
 ```
-sui/packages/axiom_claim_mainnet_candidate/
-  Move.toml                    ← NEW (framework/mainnet)
+move/axiom_sui/
+  Move.toml                    ← NEW (edition 2024.beta, testnet-v1.72.1 dep)
   sources/
-    axiom_mainnet_claim.move
-    claim_campaign.move
-    guarded_treasury.move
-    merkle.move
-  tests/
-    claim_campaign_tests.move
-    merkle_tests.move
-
-sui/packages/axiom_claim_prototype/
-  Move.toml                    ← NEW (testnet-v1.72.1)
-  sources/ + tests/            ← NEW (copied from build)
+    axiom_test_claim.move      ← copied from build/
+    claim_campaign.move        ← copied from build/
+    claim_campaign_tests.move  ← copied from build/
+    guarded_treasury.move      ← copied from build/
+    merkle.move                ← copied from build/
+    merkle_tests.move          ← copied from build/
 ```
 
-**TypeScript build validation:** `tsc --noEmit` — run after adding AXIOM_SUI_* env vars.
+**TypeScript fix (Session 7):**
+- Added `components/sui/mysten-sui-modules.d.ts` — ambient module declarations for
+  `@mysten/sui/transactions` (Transaction class) and `@mysten/sui/bcs` (bcs root)
+- Root cause: `moduleResolution: "node"` in tsconfig.json does not resolve package.json
+  `exports` subpath fields; ambient declarations are the correct fix without changing
+  global tsconfig (which would risk breaking other modules)
+
+**TypeScript validation result (Session 7):**
+- `tsc --noEmit` → **0 Sui-specific errors**
+- 9 pre-existing errors in commodities files (unrelated to Phase 8 scope)
 
 ---
 
