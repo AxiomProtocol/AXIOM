@@ -1,4 +1,4 @@
-import { getSuiClient, getPackageId } from './client';
+import { getSuiClient, getPackageId, getDeployerAddress } from './client';
 
 export interface CampaignInfo {
   id: string;
@@ -85,36 +85,83 @@ export async function fetchActiveCampaigns(limit = 20): Promise<CampaignRegistry
   const packageId = getPackageId();
   const campaignType = `${packageId}${CAMPAIGN_TYPE_SUFFIX}`;
 
+  const seenIds = new Set<string>();
   const result: CampaignRegistryEntry[] = [];
+  const now = Date.now();
 
-  try {
-    const objects = await client.queryEvents({
-      query: { MoveEventType: `${packageId}::claim_campaign::CampaignCreated` },
-      limit,
-      order: 'descending',
-    });
+  // --- Primary source: suix_getOwnedObjects filtered by ClaimCampaign type ---
+  // Uses the deployer address when configured; skipped when address is unknown.
+  const deployerAddress = getDeployerAddress();
+  if (deployerAddress) {
+    try {
+      const page = await client.getOwnedObjects({
+        owner: deployerAddress,
+        structType: campaignType,
+        limit,
+      });
 
-    type SuiEvent = { parsedJson?: unknown };
-    const campaignIds: string[] = (objects.data as SuiEvent[])
-      .map((e): string | undefined => {
-        const parsed = e.parsedJson as { campaign_id?: string } | null;
-        return parsed?.campaign_id;
-      })
-      .filter((id): id is string => typeof id === 'string' && id.length > 0);
+      for (const item of page.data) {
+        const objectId = item.data?.objectId;
+        if (!objectId || seenIds.has(objectId)) continue;
 
-    const deduped = [...new Set(campaignIds)];
-
-    for (const objectId of deduped) {
-      try {
-        const info = await fetchCampaign(objectId);
-        result.push({ objectId, info, fetchedAt: Date.now() });
-      } catch {
-        // Skip inaccessible campaigns
+        const content = item.data?.content;
+        if (content?.dataType === 'moveObject' && content.fields) {
+          const info = parseCampaignFields({
+            ...(content.fields as Record<string, unknown>),
+            id: objectId,
+          });
+          seenIds.add(objectId);
+          result.push({ objectId, info, fetchedAt: now });
+        } else {
+          // Content not inlined — fetch separately
+          try {
+            const info = await fetchCampaign(objectId);
+            seenIds.add(objectId);
+            result.push({ objectId, info, fetchedAt: now });
+          } catch {
+            // Skip inaccessible object
+          }
+        }
+      }
+    } catch (err) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[SuiCampaignRegistry] getOwnedObjects failed:', err);
       }
     }
-  } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[SuiCampaignRegistry] fetchActiveCampaigns failed:', err);
+  }
+
+  // --- Secondary source: suix_queryEvents (CampaignCreated) ---
+  // Always runs; adds any campaign IDs not already discovered above.
+  if (result.length < limit) {
+    try {
+      const events = await client.queryEvents({
+        query: { MoveEventType: `${packageId}::claim_campaign::CampaignCreated` },
+        limit,
+        order: 'descending',
+      });
+
+      type SuiEvent = { parsedJson?: unknown };
+      const eventIds: string[] = (events.data as SuiEvent[])
+        .map((e): string | undefined => {
+          const parsed = e.parsedJson as { campaign_id?: string } | null;
+          return parsed?.campaign_id;
+        })
+        .filter((id): id is string => typeof id === 'string' && id.length > 0);
+
+      for (const objectId of eventIds) {
+        if (seenIds.has(objectId)) continue;
+        try {
+          const info = await fetchCampaign(objectId);
+          seenIds.add(objectId);
+          result.push({ objectId, info, fetchedAt: now });
+        } catch {
+          // Skip inaccessible campaigns
+        }
+      }
+    } catch (err) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[SuiCampaignRegistry] queryEvents failed:', err);
+      }
     }
   }
 

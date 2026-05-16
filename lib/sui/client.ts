@@ -65,6 +65,12 @@ export interface SuiEventPage {
   hasNextPage: boolean;
 }
 
+export interface SuiOwnedObjectsPage {
+  data: SuiObjectResponse[];
+  nextCursor?: unknown;
+  hasNextPage: boolean;
+}
+
 export class SuiJsonRpcClient {
   async getObject(params: {
     id: string;
@@ -106,6 +112,30 @@ export class SuiJsonRpcClient {
       params.order === 'descending',
     ]);
   }
+
+  async getOwnedObjects(params: {
+    owner: string;
+    structType: string;
+    limit?: number;
+    cursor?: unknown;
+  }): Promise<SuiOwnedObjectsPage> {
+    return rpc<SuiOwnedObjectsPage>('suix_getOwnedObjects', [
+      params.owner,
+      {
+        filter: { StructType: params.structType },
+        options: {
+          showContent: true,
+          showType: true,
+          showOwner: false,
+          showPreviousTransaction: false,
+          showStorageRebate: false,
+          showDisplay: false,
+        },
+      },
+      params.cursor ?? null,
+      params.limit ?? 50,
+    ]);
+  }
 }
 
 let _client: SuiJsonRpcClient | null = null;
@@ -131,6 +161,10 @@ export function getGuardedTreasuryId(): string {
   const id = process.env.AXIOM_SUI_GUARDED_TREASURY_ID;
   if (!id) throw new Error('AXIOM_SUI_GUARDED_TREASURY_ID not configured');
   return id;
+}
+
+export function getDeployerAddress(): string | undefined {
+  return process.env.AXIOM_SUI_DEPLOYER_ADDRESS ?? undefined;
 }
 
 export { getNetwork };
