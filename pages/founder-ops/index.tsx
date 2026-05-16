@@ -707,6 +707,18 @@ export default function FounderOpsPage() {
   const [customFundingAmount, setCustomFundingAmount]   = useState('');
   const [walletTopupLoading, setWalletTopupLoading]     = useState(false);
 
+  // ── Deployer wallet balances (shown in allocation panel before Execute) ──
+  type DeployerWalletStatus = {
+    address: string | null;
+    paxg: number; paxgUsd: number; paxgPricePerOz: number | null;
+    usdc: number; eth: number;
+    fetchedAt: string | null; loading: boolean; error: string | null; warning: string | null;
+  };
+  const [deployerWallet, setDeployerWallet] = useState<DeployerWalletStatus>({
+    address: null, paxg: 0, paxgUsd: 0, paxgPricePerOz: null,
+    usdc: 0, eth: 0, fetchedAt: null, loading: false, error: null, warning: null,
+  });
+
   // ── Last AI auto-allocation (Reserves tab notice) ──────────────────────
   type AutoAllocBucket = { bucket: string; asset: string; usd_amount: number; pct: number | null };
   type LastAutoAlloc = { run_id: string; created_at: string; amount_usd: number; bucket_count: number; source_label: string; rationale: string | null; deposit_id: string | null; execution_status: string | null; buckets: AutoAllocBucket[] };
@@ -1018,6 +1030,37 @@ export default function FounderOpsPage() {
       setAllocExecError(prev => ({ ...prev, [loadingKey]: e instanceof Error ? e.message : 'Network error' }));
     } finally {
       setAllocExecLoading(prev => ({ ...prev, [loadingKey]: false }));
+    }
+  };
+
+  /** Fetch live deployer wallet balances for the allocation balance strip. */
+  const fetchDeployerWallet = async () => {
+    const adminKey = reservesAdminKey || railAdminKey;
+    if (!adminKey) return;
+    setDeployerWallet(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      const res  = await fetch('/api/founder/allocation-wallet-status', {
+        headers: { 'x-admin-key': adminKey },
+      });
+      const json = await res.json();
+      if (json.success) {
+        setDeployerWallet({
+          address:        json.address ?? null,
+          paxg:           json.paxg    ?? 0,
+          paxgUsd:        json.paxgUsd ?? 0,
+          paxgPricePerOz: json.paxgPricePerOz ?? null,
+          usdc:           json.usdc    ?? 0,
+          eth:            json.eth     ?? 0,
+          fetchedAt:      json.fetchedAt ?? null,
+          loading:        false,
+          error:          null,
+          warning:        json.warning ?? null,
+        });
+      } else {
+        setDeployerWallet(prev => ({ ...prev, loading: false, error: json.error ?? 'Balance fetch failed' }));
+      }
+    } catch (e) {
+      setDeployerWallet(prev => ({ ...prev, loading: false, error: e instanceof Error ? e.message : 'Network error' }));
     }
   };
 
@@ -5667,6 +5710,29 @@ export default function FounderOpsPage() {
                                   <td className="px-3 py-2">
                                     <p className="font-dl-mono text-xs text-dl-navy font-semibold">{a.label}</p>
                                     <p className="font-dl-mono text-[10px] text-dl-gray">{a.note}</p>
+                                    {/* Balance warnings — only when deployer balances are loaded and AI amounts are set */}
+                                    {deployerWallet.fetchedAt && !deployerWallet.loading && aAmt != null && aAmt > 0 && (() => {
+                                      if (a.key === 'axau' && deployerWallet.paxgPricePerOz != null) {
+                                        const paxgNeeded = aAmt / deployerWallet.paxgPricePerOz;
+                                        if (deployerWallet.paxg < paxgNeeded) {
+                                          return (
+                                            <p className="font-dl-mono text-[9px] text-yellow-700 mt-0.5">
+                                              ⚠ Need ~{paxgNeeded.toFixed(3)} PAXG, deployer holds {deployerWallet.paxg.toFixed(3)}
+                                            </p>
+                                          );
+                                        }
+                                      }
+                                      if (a.key === 'axusd') {
+                                        if (deployerWallet.usdc < aAmt) {
+                                          return (
+                                            <p className="font-dl-mono text-[9px] text-yellow-700 mt-0.5">
+                                              ⚠ Need ${aAmt.toFixed(2)} USDC, deployer holds ${deployerWallet.usdc.toFixed(2)}
+                                            </p>
+                                          );
+                                        }
+                                      }
+                                      return null;
+                                    })()}
                                   </td>
                                   <td className="text-right font-dl-mono text-xs text-dl-navy px-3 py-2">{pPct}%</td>
                                   <td className="text-right font-dl-mono text-xs text-dl-navy px-3 py-2">{pAmt != null ? fmtUsd(pAmt) : '—'}</td>
@@ -5897,6 +5963,50 @@ export default function FounderOpsPage() {
                           </div>
                         </div>
                       )}
+
+                      {/* ── Deployer wallet balance strip ── */}
+                      <div className="border border-dl-border bg-dl-bg-alt px-4 py-3 mb-4">
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <div className="flex items-center gap-4 flex-wrap">
+                            <p className="font-dl-mono text-xs uppercase tracking-wider text-dl-gray">Deployer Balances</p>
+                            {deployerWallet.loading ? (
+                              <p className="font-dl-mono text-xs text-dl-muted">Fetching…</p>
+                            ) : deployerWallet.error ? (
+                              <p className="font-dl-mono text-xs text-dl-error">{deployerWallet.error}</p>
+                            ) : deployerWallet.fetchedAt ? (
+                              <>
+                                <span className={`font-dl-mono text-xs font-semibold ${deployerWallet.paxg > 0 ? 'text-dl-navy' : 'text-dl-error'}`}>
+                                  {deployerWallet.paxg.toFixed(4)} PAXG
+                                  {deployerWallet.paxgUsd > 0 && <span className="font-normal text-dl-gray ml-1">(${deployerWallet.paxgUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })})</span>}
+                                </span>
+                                <span className={`font-dl-mono text-xs font-semibold ${deployerWallet.usdc > 0 ? 'text-dl-navy' : 'text-dl-error'}`}>
+                                  ${deployerWallet.usdc.toLocaleString('en-US', { maximumFractionDigits: 2 })} USDC
+                                </span>
+                                <span className={`font-dl-mono text-xs ${deployerWallet.eth >= 0.005 ? 'text-dl-gray' : 'text-yellow-600 font-semibold'}`}>
+                                  {deployerWallet.eth.toFixed(4)} ETH {deployerWallet.eth < 0.005 && '⚠ low gas'}
+                                </span>
+                                {deployerWallet.warning && (
+                                  <span className="font-dl-mono text-[10px] text-yellow-700">{deployerWallet.warning}</span>
+                                )}
+                              </>
+                            ) : (
+                              <p className="font-dl-mono text-xs text-dl-muted">Not loaded</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={fetchDeployerWallet}
+                            disabled={deployerWallet.loading}
+                            className="font-dl-mono text-[10px] border border-dl-border text-dl-gray px-3 py-1 uppercase tracking-wider hover:text-dl-navy disabled:opacity-50"
+                          >
+                            {deployerWallet.loading ? '…' : deployerWallet.fetchedAt ? 'Refresh' : 'Load Balances'}
+                          </button>
+                        </div>
+                        {deployerWallet.address && (
+                          <p className="font-dl-mono text-[10px] text-dl-muted mt-1">
+                            {deployerWallet.address}{deployerWallet.fetchedAt && ` · as of ${new Date(deployerWallet.fetchedAt).toLocaleTimeString()}`}
+                          </p>
+                        )}
+                      </div>
 
                       {/* Side-by-side allocation columns */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
