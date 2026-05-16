@@ -881,6 +881,7 @@ export default function FounderOpsPage() {
       loadAllocPolicy(key);     // sets allocPolicies → populates Driver/Treasury columns
       loadWalletBalance(key);
       loadLastAutoAlloc(key);
+      fetchDeployerWallet();    // pre-loads PAXG/USDC/ETH balances for allocation panel warnings
     }, 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -5712,12 +5713,21 @@ export default function FounderOpsPage() {
                                     <p className="font-dl-mono text-[10px] text-dl-gray">{a.note}</p>
                                     {/* Balance warnings — only when deployer balances are loaded and AI amounts are set */}
                                     {deployerWallet.fetchedAt && !deployerWallet.loading && aAmt != null && aAmt > 0 && (() => {
-                                      if (a.key === 'axau' && deployerWallet.paxgPricePerOz != null) {
-                                        const paxgNeeded = aAmt / deployerWallet.paxgPricePerOz;
-                                        if (deployerWallet.paxg < paxgNeeded) {
+                                      if (a.key === 'axau') {
+                                        if (deployerWallet.paxgPricePerOz != null) {
+                                          const paxgNeeded = aAmt / deployerWallet.paxgPricePerOz;
+                                          if (deployerWallet.paxg < paxgNeeded) {
+                                            return (
+                                              <p className="font-dl-mono text-[9px] text-yellow-700 mt-0.5">
+                                                ⚠ Need ~{paxgNeeded.toFixed(3)} PAXG, deployer holds {deployerWallet.paxg.toFixed(3)}
+                                              </p>
+                                            );
+                                          }
+                                        } else {
+                                          // Price fetch failed — cannot estimate PAXG needed; surface warning so operator does not proceed blind
                                           return (
                                             <p className="font-dl-mono text-[9px] text-yellow-700 mt-0.5">
-                                              ⚠ Need ~{paxgNeeded.toFixed(3)} PAXG, deployer holds {deployerWallet.paxg.toFixed(3)}
+                                              ⚠ PAXG price unavailable — verify deployer PAXG balance before executing
                                             </p>
                                           );
                                         }
