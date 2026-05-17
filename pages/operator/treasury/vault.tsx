@@ -109,6 +109,14 @@ interface RebalanceForm {
   fromStrategy: 'aave_v3' | 'camelot';
   toStrategy: 'aave_v3' | 'camelot';
   amountUsdc: string;
+  currentAaveApy: string;
+  currentCamelotApy: string;
+}
+
+interface SentinelAuth {
+  token: string;
+  expiry: number;
+  decision: { plainLanguage: string; aaveApyPct: number | null; camelotApyPct: number | null; spreadBps: number | null };
 }
 
 export default function TreasuryVaultPage({ summary, events, monthly, quarterly, ytd, loadError }: Props) {
@@ -116,37 +124,85 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
     fromStrategy: 'aave_v3',
     toStrategy: 'camelot',
     amountUsdc: '',
+    currentAaveApy: '',
+    currentCamelotApy: '',
   });
-  const [rebalancing, setRebalancing] = useState(false);
-  const [rebalanceResult, setRebalanceResult] = useState<{ success: boolean; message: string; txHash?: string | null } | null>(null);
+  const [authorizing, setAuthorizing] = useState(false);
+  const [executing, setExecuting] = useState(false);
+  const [sentinelAuth, setSentinelAuth] = useState<SentinelAuth | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [executeResult, setExecuteResult] = useState<{ success: boolean; txHash?: string | null } | null>(null);
 
-  async function handleRebalance(e: React.FormEvent) {
+  function authExpired(): boolean {
+    return sentinelAuth !== null && Date.now() > sentinelAuth.expiry;
+  }
+
+  /** Step 1 — Request Sentinel authorization token. */
+  async function handleRequestAuth(e: React.FormEvent) {
     e.preventDefault();
     const amt = parseFloat(rebalanceForm.amountUsdc);
     if (!amt || amt <= 0) return;
-    setRebalancing(true);
-    setRebalanceResult(null);
+    setAuthorizing(true);
+    setSentinelAuth(null);
+    setAuthError(null);
+    setExecuteResult(null);
     try {
-      const res = await fetch('/api/treasury/vault/rebalance', {
+      const body: Record<string, unknown> = {
+        fromStrategy: rebalanceForm.fromStrategy,
+        toStrategy:   rebalanceForm.toStrategy,
+        amountUsdc:   amt,
+      };
+      if (rebalanceForm.currentAaveApy)    body.currentAaveApy    = parseFloat(rebalanceForm.currentAaveApy);
+      if (rebalanceForm.currentCamelotApy) body.currentCamelotApy = parseFloat(rebalanceForm.currentCamelotApy);
+      const res  = await fetch('/api/sentinel/rebalance-auth', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (res.ok && json.authorized) {
+        setSentinelAuth({ token: json.token, expiry: json.expiry, decision: json.sentinelDecision });
+      } else {
+        setAuthError(json.sentinelDecision?.plainLanguage ?? json.error ?? 'Sentinel denied the request');
+      }
+    } catch (err: unknown) {
+      setAuthError(err instanceof Error ? err.message : 'Network error');
+    } finally {
+      setAuthorizing(false);
+    }
+  }
+
+  /** Step 2 — Execute on-chain rebalance with Sentinel token. */
+  async function handleExecute() {
+    if (!sentinelAuth || authExpired()) {
+      setAuthError('Authorization token expired. Please re-authorize.');
+      setSentinelAuth(null);
+      return;
+    }
+    setExecuting(true);
+    setExecuteResult(null);
+    try {
+      const res  = await fetch('/api/treasury/vault/rebalance', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fromStrategy: rebalanceForm.fromStrategy,
-          toStrategy: rebalanceForm.toStrategy,
-          amountUsdc: amt,
+          toStrategy:   rebalanceForm.toStrategy,
+          amountUsdc:   parseFloat(rebalanceForm.amountUsdc),
+          token:        sentinelAuth.token,
+          expiry:       sentinelAuth.expiry,
         }),
       });
       const json = await res.json();
-      setRebalanceResult({
-        success: json.success,
-        message: json.sentinelDecision?.plainLanguage ?? json.error ?? 'Unknown response',
-        txHash: json.txHash,
-      });
-    } catch (err: any) {
-      setRebalanceResult({ success: false, message: err.message });
+      setExecuteResult({ success: json.success, txHash: json.txHash });
+      if (json.success) setSentinelAuth(null);
+    } catch (err: unknown) {
+      setExecuteResult({ success: false });
+      setAuthError(err instanceof Error ? err.message : 'Network error during execution');
     } finally {
-      setRebalancing(false);
+      setExecuting(false);
     }
   }
 
@@ -255,21 +311,29 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
           </div>
         </section>
 
-        {/* Sentinel-Gated Rebalance */}
+        {/* Sentinel-Gated Rebalance — Two-Step Authorization Flow */}
         <section>
           <h2 className="font-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-1">Rebalance (Sentinel-Gated)</h2>
-          <p className="text-sm text-dl-gray mb-4">
-            All rebalance requests are evaluated by the Axiom Sentinel before any on-chain transaction is submitted.
-            A 0.50% APY spread is required. The Sentinel will deny if data is unavailable or the circuit breaker is active.
+          <p className="text-sm text-dl-gray mb-1">
+            Two-step authorization: Step 1 evaluates the Axiom Sentinel and issues a 5-minute authorization token.
+            Step 2 presents the token to execute the on-chain transaction. A 0.50% APY spread is required.
           </p>
-          <form onSubmit={handleRebalance} className="space-y-4 max-w-lg">
+          <p className="text-xs text-dl-gray font-mono mb-4">
+            Provide current APYs if Sentinel lacks live data (Camelot has no on-chain APY feed).
+          </p>
+
+          {/* Step 1: Authorization form */}
+          <form onSubmit={handleRequestAuth} className="space-y-4 max-w-lg">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-mono text-dl-gray uppercase mb-1">From Strategy</label>
                 <select
                   className="w-full border border-dl-border p-2 font-mono text-sm bg-white"
                   value={rebalanceForm.fromStrategy}
-                  onChange={(e) => setRebalanceForm((f) => ({ ...f, fromStrategy: e.target.value as 'aave_v3' | 'camelot' }))}
+                  onChange={(e) => {
+                    setSentinelAuth(null);
+                    setRebalanceForm((f) => ({ ...f, fromStrategy: e.target.value as 'aave_v3' | 'camelot' }));
+                  }}
                 >
                   <option value="aave_v3">Aave v3</option>
                   <option value="camelot">Camelot</option>
@@ -280,7 +344,10 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                 <select
                   className="w-full border border-dl-border p-2 font-mono text-sm bg-white"
                   value={rebalanceForm.toStrategy}
-                  onChange={(e) => setRebalanceForm((f) => ({ ...f, toStrategy: e.target.value as 'aave_v3' | 'camelot' }))}
+                  onChange={(e) => {
+                    setSentinelAuth(null);
+                    setRebalanceForm((f) => ({ ...f, toStrategy: e.target.value as 'aave_v3' | 'camelot' }));
+                  }}
                 >
                   <option value="camelot">Camelot</option>
                   <option value="aave_v3">Aave v3</option>
@@ -290,41 +357,90 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             <div>
               <label className="block text-xs font-mono text-dl-gray uppercase mb-1">Amount (USDC)</label>
               <input
-                type="number"
-                min="1"
-                max="500000"
-                step="100"
+                type="number" min="1" max="500000" step="100"
                 className="w-full border border-dl-border p-2 font-mono text-sm"
                 placeholder="e.g. 10000"
                 value={rebalanceForm.amountUsdc}
-                onChange={(e) => setRebalanceForm((f) => ({ ...f, amountUsdc: e.target.value }))}
+                onChange={(e) => { setSentinelAuth(null); setRebalanceForm((f) => ({ ...f, amountUsdc: e.target.value })); }}
                 required
               />
               <p className="text-xs text-dl-gray mt-1">Max per rebalance: $500,000</p>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-mono text-dl-gray uppercase mb-1">Current Aave APY % <span className="normal-case">(optional override)</span></label>
+                <input
+                  type="number" min="0" max="100" step="0.01"
+                  className="w-full border border-dl-border p-2 font-mono text-sm"
+                  placeholder="e.g. 5.12"
+                  value={rebalanceForm.currentAaveApy}
+                  onChange={(e) => setRebalanceForm((f) => ({ ...f, currentAaveApy: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-mono text-dl-gray uppercase mb-1">Current Camelot APY % <span className="normal-case">(required if env unset)</span></label>
+                <input
+                  type="number" min="0" max="100" step="0.01"
+                  className="w-full border border-dl-border p-2 font-mono text-sm"
+                  placeholder="e.g. 6.80"
+                  value={rebalanceForm.currentCamelotApy}
+                  onChange={(e) => setRebalanceForm((f) => ({ ...f, currentCamelotApy: e.target.value }))}
+                />
+              </div>
+            </div>
             <button
               type="submit"
-              disabled={rebalancing}
+              disabled={authorizing || executing}
               className="px-6 py-2 bg-dl-navy text-white font-mono text-sm disabled:opacity-50"
             >
-              {rebalancing ? 'Requesting Sentinel Authorization…' : 'Request Rebalance'}
+              {authorizing ? 'Contacting Sentinel…' : 'Step 1 — Request Sentinel Authorization'}
             </button>
           </form>
 
-          {rebalanceResult && (
-            <div className={`mt-4 border p-4 font-mono text-sm ${rebalanceResult.success ? 'border-green-300 bg-green-50 text-green-800' : 'border-red-300 bg-red-50 text-red-800'}`}>
-              <p className="font-semibold">{rebalanceResult.success ? 'Rebalance Authorized' : 'Rebalance Denied'}</p>
-              <p className="mt-1 text-xs">{rebalanceResult.message}</p>
-              {rebalanceResult.txHash && (
+          {/* Sentinel denial or error */}
+          {authError && !sentinelAuth && (
+            <div className="mt-4 border border-red-300 bg-red-50 p-4 font-mono text-sm text-red-800">
+              <p className="font-semibold">Sentinel Denied</p>
+              <p className="mt-1 text-xs">{authError}</p>
+            </div>
+          )}
+
+          {/* Sentinel approval + Step 2 Execute */}
+          {sentinelAuth && !executeResult && (
+            <div className="mt-4 border border-green-300 bg-green-50 p-4 font-mono text-sm text-green-800 space-y-3">
+              <p className="font-semibold">Sentinel Authorized — Token Issued</p>
+              <p className="text-xs">{sentinelAuth.decision.plainLanguage}</p>
+              <div className="text-xs text-green-700 space-y-0.5">
+                {sentinelAuth.decision.aaveApyPct !== null && (
+                  <p>Aave APY: {sentinelAuth.decision.aaveApyPct.toFixed(2)}%</p>
+                )}
+                {sentinelAuth.decision.camelotApyPct !== null && (
+                  <p>Camelot APY: {sentinelAuth.decision.camelotApyPct.toFixed(2)}%</p>
+                )}
+                {sentinelAuth.decision.spreadBps !== null && (
+                  <p>Spread: {sentinelAuth.decision.spreadBps} bps</p>
+                )}
+                <p>Token expires: {new Date(sentinelAuth.expiry).toLocaleTimeString()}</p>
+              </div>
+              <button
+                onClick={handleExecute}
+                disabled={executing}
+                className="px-6 py-2 bg-green-700 text-white font-mono text-sm disabled:opacity-50"
+              >
+                {executing ? 'Submitting On-Chain…' : 'Step 2 — Execute Rebalance'}
+              </button>
+            </div>
+          )}
+
+          {/* Execution result */}
+          {executeResult && (
+            <div className={`mt-4 border p-4 font-mono text-sm ${executeResult.success ? 'border-green-300 bg-green-50 text-green-800' : 'border-red-300 bg-red-50 text-red-800'}`}>
+              <p className="font-semibold">{executeResult.success ? 'Rebalance Submitted On-Chain' : 'Execution Failed'}</p>
+              {executeResult.txHash && (
                 <p className="mt-1 text-xs">
                   Tx:{' '}
-                  <a
-                    href={`https://arbiscan.io/tx/${rebalanceResult.txHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline"
-                  >
-                    {short(rebalanceResult.txHash)}
+                  <a href={`https://arbiscan.io/tx/${executeResult.txHash}`} target="_blank" rel="noopener noreferrer" className="underline">
+                    {short(executeResult.txHash)}
                   </a>
                 </p>
               )}

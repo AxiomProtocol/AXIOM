@@ -9,10 +9,13 @@
  * all recorded correctly and that replaying the same log never creates
  * duplicate rows.
  *
- * Tracked events:
- *   Deposit            → event_type = 'deposit'
- *   Withdrawal         → event_type = 'withdraw'
+ * Tracked events (ERC-4626 + custom):
+ *   Deposit(caller,owner,assets,shares) [ERC-4626] → event_type = 'deposit'
+ *   Withdraw(caller,receiver,owner,assets,shares) [ERC-4626] → event_type = 'withdraw'
+ *   TokenDeposited(asset,amount,depositor) → event_type = 'deposit'  (secondary assets)
+ *   TokenWithdrawn(asset,amount,recipient) → event_type = 'withdraw' (secondary assets)
  *   StrategyAllocated  → event_type = 'allocate'
+ *   StrategyRecalled   → event_type = 'recall'
  *   StrategyHarvested  → event_type = 'harvest'
  *   Rebalanced         → event_type = 'rebalance'
  *   EmergencyWithdraw  → event_type = 'emergency_withdraw'
@@ -33,8 +36,13 @@ const POLL_MS        = 60_000;
 const BLOCK_LOOKBACK = 200;
 
 const VAULT_ABI = [
-  'event Deposit(address indexed asset, uint256 amount, address indexed depositor)',
-  'event Withdrawal(address indexed asset, uint256 amount, address indexed recipient)',
+  // ERC-4626 standard primary-asset events (USDC)
+  'event Deposit(address indexed caller, address indexed owner, uint256 assets, uint256 shares)',
+  'event Withdraw(address indexed caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares)',
+  // Secondary-asset events (AXUSD and future non-primary tokens)
+  'event TokenDeposited(address indexed asset, uint256 amount, address indexed depositor)',
+  'event TokenWithdrawn(address indexed asset, uint256 amount, address indexed recipient)',
+  // Strategy lifecycle events
   'event StrategyAllocated(address indexed strategy, address indexed asset, uint256 amount)',
   'event StrategyRecalled(address indexed strategy, address indexed asset, uint256 amount)',
   'event StrategyHarvested(address indexed strategy, address indexed asset, uint256 yieldAmount)',
@@ -112,10 +120,22 @@ async function fetchAndStoreEvents() {
 
       switch (parsed.name) {
         case 'Deposit':
+          // ERC-4626: Deposit(caller, owner, assets, shares) — assets at index 2
+          eventType = 'deposit';
+          amountRaw = parsed.args[2] as bigint;
+          break;
+        case 'Withdraw':
+          // ERC-4626: Withdraw(caller, receiver, owner, assets, shares) — assets at index 3
+          eventType = 'withdraw';
+          amountRaw = parsed.args[3] as bigint;
+          break;
+        case 'TokenDeposited':
+          // Secondary asset: TokenDeposited(asset, amount, depositor) — amount at index 1
           eventType = 'deposit';
           amountRaw = parsed.args[1] as bigint;
           break;
-        case 'Withdrawal':
+        case 'TokenWithdrawn':
+          // Secondary asset: TokenWithdrawn(asset, amount, recipient) — amount at index 1
           eventType = 'withdraw';
           amountRaw = parsed.args[1] as bigint;
           break;

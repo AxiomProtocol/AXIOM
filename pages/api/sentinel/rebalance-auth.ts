@@ -43,17 +43,27 @@ function buildTokenPayload(
   return `${fromStrategy}|${toStrategy}|${amountUsdc}|${expiry}`;
 }
 
+/**
+ * Sign a rebalance authorization token.
+ * Throws if ADMIN_SOLVENCY_KEY is not configured — never falls back to empty key.
+ */
 export function signRebalanceToken(
   fromStrategy: string,
   toStrategy: string,
   amountUsdc: number,
   expiry: number
 ): string {
-  const key = process.env.ADMIN_SOLVENCY_KEY ?? '';
+  const key = process.env.ADMIN_SOLVENCY_KEY;
+  if (!key) throw new Error('ADMIN_SOLVENCY_KEY is not configured — cannot sign rebalance token');
   const payload = buildTokenPayload(fromStrategy, toStrategy, amountUsdc, expiry);
   return createHmac('sha256', key).update(payload).digest('hex');
 }
 
+/**
+ * Verify a rebalance authorization token.
+ * Returns false (fail closed) if ADMIN_SOLVENCY_KEY is absent, token is expired,
+ * or the HMAC does not match. Never uses an empty or fallback key.
+ */
 export function verifyRebalanceToken(
   fromStrategy: string,
   toStrategy: string,
@@ -61,8 +71,12 @@ export function verifyRebalanceToken(
   expiry: number,
   token: string
 ): boolean {
-  const expected = signRebalanceToken(fromStrategy, toStrategy, amountUsdc, expiry);
-  if (Date.now() > expiry) return false;
+  const key = process.env.ADMIN_SOLVENCY_KEY;
+  if (!key) return false;          // fail closed — no key configured
+  if (Date.now() > expiry) return false;  // token expired
+  const expected = createHmac('sha256', key)
+    .update(buildTokenPayload(fromStrategy, toStrategy, amountUsdc, expiry))
+    .digest('hex');
   // Constant-time comparison to prevent timing attacks
   if (expected.length !== token.length) return false;
   let diff = 0;
@@ -128,7 +142,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const expiry = Date.now() + TOKEN_TTL_SECONDS * 1000;
-  const token  = signRebalanceToken(fromStrategy, toStrategy, amountUsdc, expiry);
+  let token: string;
+  try {
+    token = signRebalanceToken(fromStrategy, toStrategy, amountUsdc, expiry);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return res.status(503).json({ error: msg });
+  }
 
   return res.status(200).json({
     authorized:       true,
