@@ -193,7 +193,7 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
             })
         );
         // Guard against a zero-liquidity mint (both tokens needed for stable pair).
-        require(liquidity > 0, "CamelotStrategy: zero liquidity minted — check paired asset balance");
+        require(liquidity > 0, "CamelotStrategy: zero liquidity minted - check paired asset balance");
         tokenId = tid;
 
         // Track actual consumed amounts (not pre-mint wallet balances) so principal

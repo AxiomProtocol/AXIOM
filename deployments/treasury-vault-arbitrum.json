@@ -1,0 +1,19 @@
+{
+  "network": "arbitrum-one",
+  "chainId": 42161,
+  "deployedAt": "2026-05-17T02:57:14.845Z",
+  "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+  "contracts": {
+    "StrategyManager": "0x22aAB6892cC0486d42d011BeB19B69143A05e72B",
+    "AxiomTreasuryVault": "0xFc6b1Ee7001C202fA4660b2E8eb2174154F4d3b2",
+    "AaveV3Strategy_USDC": "0xFD110481Cc571Ab806Eb95926298DF56675EA7DD",
+    "CamelotStrategy": "0xA247e43692Dea73a5eF1d1Ec2CFD6Fed3831bFC4"
+  },
+  "roles": {
+    "VAULT_ADMIN": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+    "STRATEGY_ADMIN": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+    "SENTINEL_EXECUTOR": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
+    "note": "All roles held by deployer — rotate to multisig/Sentinel key before mainnet use"
+  },
+  "axusdNote": "AXUSD_ADDRESS not set — set env var and call vault.setAxusd() to activate AXUSD strategies"
+}
