@@ -45,8 +45,11 @@ interface IAavePool {
 contract AaveV3Strategy is IStrategy, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    /// @notice Must match the role constant used by StrategyManager and AxiomTreasuryVault.
-    bytes32 public constant STRATEGY_ADMIN = keccak256("STRATEGY_ADMIN");
+    /// Role constants — must match AxiomTreasuryVault and StrategyManager exactly.
+    /// Only STRATEGY_ADMIN is granted/used here (to the StrategyManager).
+    bytes32 public constant VAULT_ADMIN       = keccak256("VAULT_ADMIN");
+    bytes32 public constant STRATEGY_ADMIN    = keccak256("STRATEGY_ADMIN");
+    bytes32 public constant SENTINEL_EXECUTOR = keccak256("SENTINEL_EXECUTOR");
 
     // ── Immutables ────────────────────────────────────────────────────────────
     address public immutable override asset;

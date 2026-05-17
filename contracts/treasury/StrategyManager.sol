@@ -37,7 +37,10 @@ import "./IStrategy.sol";
 contract StrategyManager is AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    bytes32 public constant STRATEGY_ADMIN = keccak256("STRATEGY_ADMIN");
+    /// Role set — must match AxiomTreasuryVault role constants exactly.
+    bytes32 public constant VAULT_ADMIN       = keccak256("VAULT_ADMIN");
+    bytes32 public constant STRATEGY_ADMIN    = keccak256("STRATEGY_ADMIN");
+    bytes32 public constant SENTINEL_EXECUTOR = keccak256("SENTINEL_EXECUTOR");
 
     // ── Strategy registry ─────────────────────────────────────────────────────
     struct StrategyInfo {
@@ -282,15 +285,22 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Total value of `assetAddr` currently deployed, including both:
-     *   (a) Strategies whose primary registered asset is `assetAddr`
-     *       → summed via IStrategy.currentValue() (live yield-adjusted value)
-     *   (b) Paired (secondary) asset amounts forwarded via fundPairedAsset()
-     *       → tracked in totalPairedDeployed[assetAddr]
+     * @notice Total value of `assetAddr` currently deployed across all active strategies
+     *         whose PRIMARY registered asset is `assetAddr`.
      *
-     *   This ensures AXUSD deployed to CamelotStrategy (registered with USDC
-     *   as primary asset) is correctly included in totalDeployed(AXUSD), giving
-     *   vaultService an accurate AXUSD AUM figure.
+     *         Summation uses IStrategy.currentValue() which for multi-asset strategies
+     *         (e.g. CamelotStrategy USDC+AXUSD LP) already incorporates the full
+     *         two-sided position value.  Therefore `totalPairedDeployed` is intentionally
+     *         NOT added here — it is an internal accounting variable only (see
+     *         strategyPairedAmount / strategyPairedAssetOf for per-strategy tracking).
+     *
+     *         AUM accounting rationale:
+     *           • SM.totalDeployed(USDC) = Camelot LP total (USDC+AXUSD+fees) + Aave USDC
+     *           • SM.totalDeployed(AXUSD) = AaveV3Strategy(AXUSD) only
+     *           • vaultService: aumUsdc = vault.totalAssets()  ← includes Camelot LP
+     *                                   + axusdIdle
+     *                                   + SM.totalDeployed(AXUSD)
+     *           No double-counting of AXUSD.
      */
     function totalDeployed(address assetAddr) external view returns (uint256 total) {
         uint256 len = strategyAddresses.length;
@@ -299,7 +309,8 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
                 total += IStrategy(strategyAddresses[i]).currentValue();
             }
         }
-        // Include amounts deployed as paired (secondary) asset via fundPairedAsset().
-        total += totalPairedDeployed[assetAddr];
+        // Note: totalPairedDeployed[assetAddr] is NOT added here.
+        // CamelotStrategy.currentValue() already returns principal + pairedPrincipal + fees,
+        // so adding totalPairedDeployed would double-count the AXUSD side.
     }
 }

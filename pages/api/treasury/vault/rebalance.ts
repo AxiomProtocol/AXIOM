@@ -148,7 +148,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const provider  = new ethers.JsonRpcProvider(RPC);
-    const signer    = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, provider);
+    // rebalance() is gated by SENTINEL_EXECUTOR role on-chain.
+    // The signing key must hold that role — use a dedicated key, NOT the deployer key.
+    const sentinelKey = process.env.SENTINEL_EXECUTOR_PRIVATE_KEY;
+    if (!sentinelKey) {
+      return res.status(503).json({
+        error: 'SENTINEL_EXECUTOR_PRIVATE_KEY is not configured. '
+             + 'Set this to the private key of the address holding the '
+             + 'SENTINEL_EXECUTOR role on AxiomTreasuryVault.',
+      });
+    }
+    const signer    = new ethers.Wallet(sentinelKey, provider);
     const vault     = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, signer);
     const amountWei = BigInt(Math.round(amountUsdc * 1e6));
 
