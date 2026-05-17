@@ -32,12 +32,13 @@ const CONTRACTS = [
 ];
 
 const API_ENDPOINTS = [
-  { method: 'GET',  path: '/api/polygon/status',              desc: 'Integration phase and feature-flag status' },
-  { method: 'GET',  path: '/api/polygon/chain-health',        desc: 'RPC connectivity and block freshness' },
-  { method: 'GET',  path: '/api/polygon/contracts',           desc: 'Deployed automated control layer addresses' },
-  { method: 'GET',  path: '/api/polygon/identity/[wallet]',   desc: 'Credential bridge state for a wallet' },
-  { method: 'POST', path: '/api/polygon/identity/bridge',     desc: 'Bridge Arbitrum credential to Polygon' },
-  { method: 'POST', path: '/api/polygon/proofs/verify',       desc: 'Off-chain Merkle proof verification' },
+  { method: 'GET',  path: '/api/polygon/status',                         desc: 'Integration phase and feature-flag status' },
+  { method: 'GET',  path: '/api/polygon/chain-health',                   desc: 'RPC connectivity and block freshness' },
+  { method: 'GET',  path: '/api/polygon/contracts',                      desc: 'Deployed automated control layer addresses' },
+  { method: 'GET',  path: '/api/polygon/identity?address=0x…',           desc: 'On-chain ERC-3643 identity state for a wallet' },
+  { method: 'GET',  path: '/api/polygon/identity/[wallet]',              desc: 'Credential bridge state (mirror mode)' },
+  { method: 'POST', path: '/api/polygon/identity/bridge',                desc: 'Bridge Arbitrum credential to Polygon' },
+  { method: 'POST', path: '/api/polygon/proofs/verify',                  desc: 'Off-chain Merkle proof verification' },
 ];
 
 const DL = {
