@@ -1,11 +1,19 @@
 /**
  * Minimal Hardhat v3 config — treasury contracts only.
  * Supports both 0.8.20 (treasury/axusd/openzeppelin) and 0.8.24 (land/other).
+ *
+ * paths.sources is scoped to contracts/treasury to avoid compiling the full
+ * contracts/ tree (avalanche, axau, lending, nft, oracle, etc.) which contain
+ * pragma versions and EVM targets incompatible with this compiler profile.
+ * Use the root hardhat.config.ts for full cross-chain builds.
  */
 import type { HardhatUserConfig } from 'hardhat/config';
 import '@nomicfoundation/hardhat-ethers';
 
 const config: HardhatUserConfig = {
+  paths: {
+    sources: './contracts/treasury',
+  },
   solidity: {
     compilers: [
       {

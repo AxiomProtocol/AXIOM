@@ -1,0 +1,72 @@
+{
+  "_comment": "Machine-readable deployment evidence — Axiom vault stack redeploy (Task #544, 2026-05). Tx hashes printed to console at execution time; addresses confirmed via Arbiscan read-contract calls documented in VAULT_REDEPLOY_RUNBOOK.md Appendix.",
+  "network": "arbitrum-one",
+  "chainId": 42161,
+  "deployedAt": "2026-05",
+  "taskRef": "#544",
+  "contracts": {
+    "newVault": {
+      "address": "0x8c9761D465CB95306266a68FF8935C4690EC6092",
+      "envVar": "AXIOM_TREASURY_VAULT_ADDRESS",
+      "arbiscan": "https://arbiscan.io/address/0x8c9761D465CB95306266a68FF8935C4690EC6092"
+    },
+    "newVaultOnchainId": {
+      "address": "0x8771b290A5976eEc205809149cC3d4e84B2ec729",
+      "note": "EIP-1167 minimal proxy; initialized with deployer as MANAGEMENT_KEY"
+    },
+    "aaveV3Strategy": {
+      "address": "0x7d500015C5765456C16Ce2CF38AAF14075C01DD4",
+      "envVar": "AXIOM_AAVE_V3_STRATEGY_ADDRESS",
+      "arbiscan": "https://arbiscan.io/address/0x7d500015C5765456C16Ce2CF38AAF14075C01DD4"
+    },
+    "strategyManager": {
+      "address": "0x432dFEe1DAb2D7d423690819DC65C033FE266E8e"
+    },
+    "camelotStrategy": {
+      "address": "0x511441D31e629d7513004a692c2dB67438151696"
+    },
+    "oldVault": {
+      "address": "0x0d04742A8b5A8e3351B9273e585E980f6e0F46F8",
+      "status": "drained — 25 USDC withdrawn to deployer via rescue-vault-usdc.ts"
+    }
+  },
+  "erc3643": {
+    "identityRegistry": "0x58f64a1262d5434d6C7637a2309b0999bB6D1970",
+    "identityFactory": "0x1A7c55AC9A4AB318039f8E2BDfA82500332c86B9",
+    "onchainIdImplementation": "0xD18632586d723234e302B240A65A6eD92E24a0c0",
+    "claimIssuer": "0x579A367eaDa7606edc58f43165B53D2526D1B313",
+    "lendingPlatformModule": "0xC0177120Fb5922813031a5857f4dF7F01750Bb6F"
+  },
+  "externalContracts": {
+    "usdc": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+    "axusd": "0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7",
+    "aaveV3Pool": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+    "aUsdcAtoken": "0x724dc807b04555b71ed48a6896b6F41593b8C637"
+  },
+  "smokeCheckResults": {
+    "vault_totalAssets_usdc": "25.000000",
+    "strategy_currentValue_usdc": "24.999900",
+    "registry_contains_vault": true,
+    "isVerified_vault": false,
+    "isVerified_note": "Open — follow-up #547. Claims are on-chain; isVerified() = false because deployer key is not registered as CLAIM_SIGNER_KEY on ClaimIssuer. Does not affect USDC→Aave yield path."
+  },
+  "knownLimitations": [
+    {
+      "ref": "#547",
+      "description": "Deployer key not registered as CLAIM_SIGNER_KEY on ClaimIssuer; isVerified(vault) = false; AXUSD-gated flows blocked",
+      "status": "open"
+    },
+    {
+      "ref": "#547",
+      "description": "LendingPlatformModule.addPlatform reverts COMPLIANCE_NOT_BOUND",
+      "status": "open"
+    },
+    {
+      "ref": "#548",
+      "description": "NEXT_PUBLIC_AXIOM_CAMELOT_STRATEGY_ADDRESS missing; frontend cannot read Camelot position",
+      "status": "open"
+    }
+  ],
+  "activeYieldPath": "USDC → vault.deposit() → AaveV3Strategy → Aave v3 Pool → aUSDC",
+  "activeYieldStatus": "confirmed — currentValue 24.9999 USDC"
+}
