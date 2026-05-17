@@ -19,36 +19,48 @@
  *   Operator session cookie (cap_operator_key) +
  *   Valid one-time Sentinel HMAC token from /api/sentinel/rebalance-auth.
  *
- * Security: nonce is tracked in-process (module-level Map). Each nonce can be
- * used exactly once — replay with a valid but already-consumed token is rejected
- * with 409 Conflict. Map entries are purged after their token TTL expires.
+ * Security: nonces are persisted in the `sentinel_rebalance_nonces` DB table.
+ * The PRIMARY KEY on nonce provides a unique constraint enforced at the DB level,
+ * giving cross-instance and cross-restart replay protection.  Expired rows are
+ * pruned lazily before each insert.  Each nonce is single-use — replay with a
+ * valid but already-consumed token is rejected with 409 Conflict.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
+import { lt } from 'drizzle-orm';
 import { readOperatorCookie, isValidOperatorKey } from '../../../../lib/capinfra/operatorAuth';
 import { verifyRebalanceToken } from '../../sentinel/rebalance-auth';
 import { db } from '../../../../server/db';
-import { treasuryVaultEvents } from '../../../../shared/treasuryVaultSchema';
-
-// ── One-time nonce tracking ────────────────────────────────────────────────
-// Maps nonce → expiry (ms). Entries are purged lazily on each request once
-// their TTL passes, keeping the Map bounded without a background timer.
-const _consumedNonces = new Map<string, number>();
+import {
+  sentinelRebalanceNonces,
+  treasuryVaultEvents,
+} from '../../../../shared/treasuryVaultSchema';
 
 /**
- * Attempt to consume a nonce.
- * Returns true (nonce accepted + marked) or false (already consumed / missing).
- * Must be called BEFORE the on-chain transaction to prevent double-spend.
+ * Persist a nonce to the DB, returning true if accepted (first use) or false
+ * if already consumed (duplicate key) or expired.
+ *
+ * Uses the DB PRIMARY KEY constraint as the race-safe atomic gate:
+ *   - Concurrent requests with the same nonce → exactly one INSERT succeeds.
+ *   - ON CONFLICT → the loser gets a duplicate-key error → returns false.
+ * Expired rows are pruned lazily before each insert.
  */
-function consumeNonce(nonce: string, expiry: number): boolean {
-  const now = Date.now();
-  for (const [k, exp] of _consumedNonces) {
-    if (now > exp) _consumedNonces.delete(k);
+async function consumeNonceDb(nonce: string, expiry: number): Promise<boolean> {
+  const expiresAt = new Date(expiry);
+  if (expiresAt <= new Date()) return false; // already expired
+
+  try {
+    // Prune expired nonces lazily to bound table growth
+    await db.delete(sentinelRebalanceNonces)
+      .where(lt(sentinelRebalanceNonces.expiresAt, new Date()));
+
+    await db.insert(sentinelRebalanceNonces).values({ nonce, expiresAt });
+    return true;
+  } catch {
+    // Duplicate primary key → nonce already consumed
+    return false;
   }
-  if (_consumedNonces.has(nonce)) return false;
-  _consumedNonces.set(nonce, expiry);
-  return true;
 }
 
 // ── Environment ────────────────────────────────────────────────────────────
@@ -130,7 +142,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // ── Auth check 3: one-time nonce (anti-replay) ────────────────────────────
-  const nonceAccepted = consumeNonce(nonce, expiry);
+  // DB-backed: PRIMARY KEY on sentinel_rebalance_nonces enforces cross-instance
+  // uniqueness.  consumeNonceDb returns false on duplicate key (already used).
+  const nonceAccepted = await consumeNonceDb(nonce, expiry);
   if (!nonceAccepted) {
     return res.status(409).json({
       error: 'Rebalance token has already been used. '
@@ -170,12 +184,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
     const receipt = await tx.wait();
 
+    // Use logIndex -1 as the dedicated sentinel value for manually-recorded events
+    // so the (txHash, logIndex) unique constraint never collides with a real log index 0
+    // emitted by the chain's event poller for the same transaction.
     await db.insert(treasuryVaultEvents).values({
       eventType:   'rebalance',
       strategy:    `${fromStrategy}→${toStrategy}`,
       amountUsd:   amountUsdc.toFixed(6),
       txHash:      receipt.hash,
-      logIndex:    0,
+      logIndex:    -1,
       blockNumber: receipt.blockNumber,
     });
 

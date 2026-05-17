@@ -224,6 +224,13 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
      * USDC/AXUSD stable pair, so both r0 and r1 from collect() are in USDC-
      * equivalent units for an equal-weight stable pool.
      */
+    // ── Multi-asset recall note ───────────────────────────────────────────────
+    // withdraw() returns r0 + r1 (USDC + AXUSD) as a single uint256 sum.  The
+    // vault's syncIdleBalance() subsequently reads the vault's per-token balance
+    // delta to reconcile idle tracking.  This convention assumes a near-peg
+    // AXUSD/USDC ratio; if the peg drifts materially, reported idle balances will
+    // diverge from true token-denominated values.  Tighten by splitting the return
+    // into per-asset amounts before the next major version.
     function withdraw(uint256 amount) external override onlyRole(STRATEGY_ADMIN) nonReentrant returns (uint256 actualAmount) {
         require(tokenId != 0, "CamelotStrategy: no open position");
         require(amount > 0,   "CamelotStrategy: zero amount");
