@@ -1,19 +1,18 @@
 {
   "network": "arbitrum-one",
   "chainId": 42161,
-  "deployedAt": "2026-05-17T02:57:14.845Z",
+  "deployedAt": "2026-05-17T03:02:45.332Z",
   "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
   "contracts": {
     "StrategyManager": "0x22aAB6892cC0486d42d011BeB19B69143A05e72B",
-    "AxiomTreasuryVault": "0xFc6b1Ee7001C202fA4660b2E8eb2174154F4d3b2",
-    "AaveV3Strategy_USDC": "0xFD110481Cc571Ab806Eb95926298DF56675EA7DD",
-    "CamelotStrategy": "0xA247e43692Dea73a5eF1d1Ec2CFD6Fed3831bFC4"
+    "AxiomTreasuryVault": "0x0d04742A8b5A8e3351B9273e585E980f6e0F46F8",
+    "AaveV3Strategy_USDC": "0xf01456B53546031568E83726A9F9C0A8ce5c68C2",
+    "CamelotStrategy": "0xa82d47eA0c82B4c7E6A4b3BaFC703706407E3f70"
   },
+  "axusd": "0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7",
   "roles": {
     "VAULT_ADMIN": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
     "STRATEGY_ADMIN": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
-    "SENTINEL_EXECUTOR": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
-    "note": "All roles held by deployer — rotate to multisig/Sentinel key before mainnet use"
-  },
-  "axusdNote": "AXUSD_ADDRESS not set — set env var and call vault.setAxusd() to activate AXUSD strategies"
+    "SENTINEL_EXECUTOR": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96"
+  }
 }
