@@ -10,6 +10,6 @@ export default function handler(_req: NextApiRequest, res: NextApiResponse) {
   return res.status(410).json({
     deprecated: true,
     replacement: 'Aave v3',
-    message: 'Euler Finance integration removed. Use /api/uniswap/pools or /api/aave/polygon/market.',
+    message: 'Euler Finance integration removed.',
   });
 }

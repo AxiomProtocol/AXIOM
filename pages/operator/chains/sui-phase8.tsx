@@ -102,7 +102,7 @@ function SuiDefiPanel() {
             </table>
           </div>
           <p className="text-xs font-mono text-dl-muted">
-            Total TVL: {navi.totalTvlUsd.toLocaleString()} · Fetched: {navi.fetchedAt} ·{' '}
+            Total Supply (units): {navi.totalTvlTokens.toLocaleString()} · Fetched: {navi.fetchedAt} ·{' '}
             <code className="text-dl-accent">GET /api/sui/navi/market</code>
           </p>
         </div>

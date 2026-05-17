@@ -37,10 +37,10 @@ function AavePolygonPanel() {
           <dl style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: '8px 12px', fontFamily: 'monospace', fontSize: '11px', marginBottom: '16px' }}>
             <dt style={{ color: '#64748b' }}>Protocol</dt>
             <dd style={{ margin: 0, color: '#e2e8f0' }}>Aave v3 · Polygon PoS (chainId 137)</dd>
-            <dt style={{ color: '#64748b' }}>Total TVL</dt>
-            <dd style={{ margin: 0, color: '#4ade80' }}>${data.totalTvlUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })}</dd>
-            <dt style={{ color: '#64748b' }}>Total Borrows</dt>
-            <dd style={{ margin: 0 }}>{mono('$' + data.totalBorrowsUsd.toLocaleString(undefined, { maximumFractionDigits: 0 }))}</dd>
+            <dt style={{ color: '#64748b' }}>Total Supply (units)</dt>
+            <dd style={{ margin: 0, color: '#4ade80' }}>{data.totalTvlTokens.toLocaleString(undefined, { maximumFractionDigits: 0 })}</dd>
+            <dt style={{ color: '#64748b' }}>Total Borrows (units)</dt>
+            <dd style={{ margin: 0 }}>{mono(data.totalBorrowsTokens.toLocaleString(undefined, { maximumFractionDigits: 0 }))}</dd>
             <dt style={{ color: '#64748b' }}>Fetched At</dt>
             <dd style={{ margin: 0 }}>{mono(data.fetchedAt)}</dd>
           </dl>
@@ -57,8 +57,8 @@ function AavePolygonPanel() {
                 {data.markets.map((m: AavePolygonMarketEntry) => (
                   <tr key={m.tokenAddress} style={{ borderBottom: '1px solid #0f172a' }}>
                     <td style={{ padding: '5px 8px', color: '#e2e8f0', fontWeight: 'bold' }}>{m.symbol}</td>
-                    <td style={{ padding: '5px 8px', color: '#94a3b8' }}>{m.totalSupplyUsd.toLocaleString()}</td>
-                    <td style={{ padding: '5px 8px', color: '#94a3b8' }}>{m.totalBorrowsUsd.toLocaleString()}</td>
+                    <td style={{ padding: '5px 8px', color: '#94a3b8' }}>{m.totalSupplyTokens.toLocaleString()}</td>
+                    <td style={{ padding: '5px 8px', color: '#94a3b8' }}>{m.totalBorrowsTokens.toLocaleString()}</td>
                     <td style={{ padding: '5px 8px', color: m.utilizationPct > 80 ? '#f87171' : '#94a3b8' }}>{m.utilizationPct.toFixed(1)}%</td>
                     <td style={{ padding: '5px 8px', color: '#4ade80' }}>{m.supplyApyPct.toFixed(2)}%</td>
                     <td style={{ padding: '5px 8px', color: '#fbbf24' }}>{m.variableBorrowApyPct.toFixed(2)}%</td>

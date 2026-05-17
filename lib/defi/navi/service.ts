@@ -4,20 +4,43 @@
  * Read-only Navi Protocol market data service — Sui.
  * Uses Navi public REST API. Null-on-failure error policy.
  * Cache: 60 s in-process.
+ *
+ * NOTE: Supply/borrow figures are in underlying token units from the API.
+ * totalTvlTokens is the sum of totalSupply across pools (token units, NOT USD).
  */
 
 const NAVI_API_BASE = 'https://api-defi.naviprotocol.io';
 const CACHE_TTL = 60_000;
 
+const AXUSD_COIN_TYPES = [
+  'axusd', 'AXUSD',
+];
+
+function isAxusdRelevant(symbol: string, coinType: string): boolean {
+  const s = symbol.toLowerCase();
+  const c = coinType.toLowerCase();
+  return (
+    AXUSD_COIN_TYPES.some(t => s.includes(t.toLowerCase()) || c.includes(t.toLowerCase())) ||
+    s === 'usdc' ||
+    s === 'usdt' ||
+    s === 'sui'
+  );
+}
+
 export interface NaviPoolEntry {
   coinType: string;
   symbol: string;
+  /** Token units — NOT USD */
   totalSupply: number;
+  /** Token units — NOT USD */
   totalBorrow: number;
+  /** Token units — NOT USD */
   availableLiquidity: number;
   utilizationPct: number;
   supplyApyPct: number;
   borrowApyPct: number;
+  /** True if this pool is relevant AXUSD context (AXUSD or primary collateral assets) */
+  axusdRelevant: boolean;
 }
 
 export interface NaviMarket {
@@ -25,7 +48,8 @@ export interface NaviMarket {
   chain: 'sui';
   chainType: 'non_evm';
   pools: NaviPoolEntry[];
-  totalTvlUsd: number;
+  /** Sum of totalSupply across pools in token units (NOT USD) */
+  totalTvlTokens: number;
   fetchedAt: string;
 }
 
@@ -42,12 +66,13 @@ function normalizePool(raw: Record<string, unknown>): NaviPoolEntry | null {
     return {
       coinType,
       symbol,
-      totalSupply: parseFloat(supply.toFixed(4)),
-      totalBorrow: parseFloat(borrow.toFixed(4)),
+      totalSupply:        parseFloat(supply.toFixed(4)),
+      totalBorrow:        parseFloat(borrow.toFixed(4)),
       availableLiquidity: parseFloat(avail.toFixed(4)),
-      utilizationPct: parseFloat(util.toFixed(2)),
-      supplyApyPct: parseFloat(supApy.toFixed(4)),
-      borrowApyPct: parseFloat(borApy.toFixed(4)),
+      utilizationPct:     parseFloat(util.toFixed(2)),
+      supplyApyPct:       parseFloat(supApy.toFixed(4)),
+      borrowApyPct:       parseFloat(borApy.toFixed(4)),
+      axusdRelevant:      isAxusdRelevant(symbol, coinType),
     };
   } catch {
     return null;
@@ -79,13 +104,13 @@ export async function getNaviMarket(): Promise<NaviMarket | null> {
       .map(normalizePool)
       .filter((p): p is NaviPoolEntry => p !== null);
 
-    const totalTvlUsd = pools.reduce((s, p) => s + p.totalSupply, 0);
+    const totalTvlTokens = pools.reduce((s, p) => s + p.totalSupply, 0);
     const result: NaviMarket = {
       protocol: 'navi',
       chain: 'sui',
       chainType: 'non_evm',
       pools,
-      totalTvlUsd,
+      totalTvlTokens,
       fetchedAt: new Date().toISOString(),
     };
     _cache = { data: result, ts: Date.now() };
