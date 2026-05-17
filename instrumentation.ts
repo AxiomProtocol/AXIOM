@@ -8744,6 +8744,30 @@ END $seed$`, 'seed dp_listings');
       )`, 'table network_missed_opportunities');
       await exec(`CREATE INDEX IF NOT EXISTS network_missed_opportunities_area_idx ON network_missed_opportunities(market_area)`, 'index network_missed_opportunities_area_idx');
 
+      // ── Treasury Vault ────────────────────────────────────────────────────
+      await exec(`CREATE TABLE IF NOT EXISTS treasury_vault_events (
+        id          SERIAL PRIMARY KEY,
+        event_type  VARCHAR(40) NOT NULL,
+        strategy    VARCHAR(255),
+        amount_usd  NUMERIC(18,6) NOT NULL DEFAULT 0,
+        tx_hash     VARCHAR(66),
+        log_index   INTEGER,
+        block_number INTEGER,
+        created_at  TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table treasury_vault_events');
+      await exec(`CREATE INDEX IF NOT EXISTS treasury_vault_events_event_type_idx ON treasury_vault_events(event_type)`, 'index treasury_vault_events_event_type_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS treasury_vault_events_created_at_idx ON treasury_vault_events(created_at)`, 'index treasury_vault_events_created_at_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS treasury_vault_events_tx_hash_idx   ON treasury_vault_events(tx_hash)`, 'index treasury_vault_events_tx_hash_idx');
+      await exec(`CREATE UNIQUE INDEX IF NOT EXISTS treasury_vault_events_tx_log_uniq ON treasury_vault_events(tx_hash, log_index)`, 'unique index treasury_vault_events_tx_log_uniq');
+
+      // ── Sentinel rebalance nonces (cross-instance replay protection) ──────
+      await exec(`CREATE TABLE IF NOT EXISTS sentinel_rebalance_nonces (
+        nonce       TEXT PRIMARY KEY,
+        expires_at  TIMESTAMP NOT NULL,
+        consumed_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`, 'table sentinel_rebalance_nonces');
+      await exec(`CREATE INDEX IF NOT EXISTS sentinel_rebalance_nonces_expires_idx ON sentinel_rebalance_nonces(expires_at)`, 'index sentinel_rebalance_nonces_expires_idx');
+
       console.log('[instrumentation] Database setup complete');
 
       // ── Redis warm-up ─────────────────────────────────────────────────────
