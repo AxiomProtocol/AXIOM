@@ -28,56 +28,66 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createHmac } from 'node:crypto';
+import { createHmac, randomBytes } from 'node:crypto';
 import { readOperatorCookie, isValidOperatorKey } from '../../../lib/capinfra/operatorAuth';
 import { evaluateTreasuryRebalance } from '../../../lib/sentinel/strategies/treasuryRebalance';
 
 const TOKEN_TTL_SECONDS = 5 * 60;   // 5-minute window to execute after auth
 
+/**
+ * The token payload includes a random nonce so that two authorization requests
+ * with identical parameters produce distinct, non-replayable tokens.
+ * The nonce is returned in the auth response and must be supplied when executing.
+ */
 function buildTokenPayload(
   fromStrategy: string,
   toStrategy: string,
   amountUsdc: number,
-  expiry: number
+  expiry: number,
+  nonce: string
 ): string {
-  return `${fromStrategy}|${toStrategy}|${amountUsdc}|${expiry}`;
+  return `${fromStrategy}|${toStrategy}|${amountUsdc}|${expiry}|${nonce}`;
 }
 
 /**
  * Sign a rebalance authorization token.
+ * Returns both the HMAC token and the nonce — both must be stored and presented
+ * when calling POST /api/treasury/vault/rebalance.
  * Throws if ADMIN_SOLVENCY_KEY is not configured — never falls back to empty key.
  */
 export function signRebalanceToken(
   fromStrategy: string,
   toStrategy: string,
   amountUsdc: number,
-  expiry: number
+  expiry: number,
+  nonce: string
 ): string {
   const key = process.env.ADMIN_SOLVENCY_KEY;
   if (!key) throw new Error('ADMIN_SOLVENCY_KEY is not configured — cannot sign rebalance token');
-  const payload = buildTokenPayload(fromStrategy, toStrategy, amountUsdc, expiry);
+  const payload = buildTokenPayload(fromStrategy, toStrategy, amountUsdc, expiry, nonce);
   return createHmac('sha256', key).update(payload).digest('hex');
 }
 
 /**
- * Verify a rebalance authorization token.
+ * Verify a rebalance authorization token (including nonce).
  * Returns false (fail closed) if ADMIN_SOLVENCY_KEY is absent, token is expired,
- * or the HMAC does not match. Never uses an empty or fallback key.
+ * the HMAC does not match, or the nonce is missing. Never uses an empty key.
  */
 export function verifyRebalanceToken(
   fromStrategy: string,
   toStrategy: string,
   amountUsdc: number,
   expiry: number,
+  nonce: string,
   token: string
 ): boolean {
   const key = process.env.ADMIN_SOLVENCY_KEY;
-  if (!key) return false;          // fail closed — no key configured
-  if (Date.now() > expiry) return false;  // token expired
+  if (!key) return false;
+  if (!nonce) return false;
+  if (Date.now() > expiry) return false;
   const expected = createHmac('sha256', key)
-    .update(buildTokenPayload(fromStrategy, toStrategy, amountUsdc, expiry))
+    .update(buildTokenPayload(fromStrategy, toStrategy, amountUsdc, expiry, nonce))
     .digest('hex');
-  // Constant-time comparison to prevent timing attacks
   if (expected.length !== token.length) return false;
   let diff = 0;
   for (let i = 0; i < expected.length; i++) {
@@ -142,9 +152,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const expiry = Date.now() + TOKEN_TTL_SECONDS * 1000;
+  // Nonce makes every issued token unique even when params are identical,
+  // preventing replay across multiple rebalance executions.
+  const nonce = randomBytes(16).toString('hex');
   let token: string;
   try {
-    token = signRebalanceToken(fromStrategy, toStrategy, amountUsdc, expiry);
+    token = signRebalanceToken(fromStrategy, toStrategy, amountUsdc, expiry, nonce);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return res.status(503).json({ error: msg });
@@ -154,6 +167,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     authorized:       true,
     sentinelDecision: sentinelResult,
     token,
+    nonce,
     expiry,
     expiresIn:        TOKEN_TTL_SECONDS,
   });

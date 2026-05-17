@@ -55,7 +55,8 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
     // ── Events ────────────────────────────────────────────────────────────────
     event StrategyRegistered(address indexed strategy, string name, address asset);
     event StrategyDeactivated(address indexed strategy);
-    event Allocated(address indexed strategy, uint256 amount);
+    event Allocated(address indexed strategy, address indexed assetAddr, uint256 amount);
+    event FundedPairedAsset(address indexed strategy, address indexed assetAddr, uint256 amount);
     event Recalled(address indexed strategy, uint256 amount);
     event Harvested(address indexed strategy, uint256 yieldAmount);
 
@@ -109,9 +110,12 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
     // ── Execution (STRATEGY_ADMIN — vault delegates here) ────────────────────
 
     /**
-     * @notice Deploy `amount` of asset to `strategy`.
-     *         Caller (vault) must transfer `amount` to this contract before calling.
-     *         SM forwards the tokens to strategy then calls deploy().
+     * @notice Deploy `amount` of `strategyInfo.asset` to `strategy`.
+     *         Retained for backward-compatibility with single-asset strategies.
+     *         Caller (vault) must transfer `amount` of the strategy's primary asset
+     *         to this contract before calling.
+     * @dev    For multi-asset strategies (e.g. Camelot LP), use fundPairedAsset()
+     *         for the secondary asset first, then allocateAsset() with the primary.
      */
     function allocate(address strategy, uint256 amount)
         external onlyRole(STRATEGY_ADMIN) nonReentrant
@@ -121,7 +125,59 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
         IERC20(info.asset).safeTransfer(strategy, amount);
         IStrategy(strategy).deploy(amount);
         info.allocatedPrincipal += amount;
-        emit Allocated(strategy, amount);
+        emit Allocated(strategy, info.asset, amount);
+    }
+
+    /**
+     * @notice Deploy `amount` of the explicitly specified `assetAddr` to `strategy`.
+     *         Enables multi-asset capital flows:
+     *           - AXUSD → AaveV3Strategy configured with AXUSD as primary asset
+     *           - USDC  → CamelotStrategy (primary side) after AXUSD is pre-funded
+     *         Caller (vault) must transfer `amount` of `assetAddr` to this contract
+     *         before calling. SM transfers `assetAddr` to strategy, then calls deploy().
+     *
+     * @param  strategy  Registered IStrategy adapter.
+     * @param  assetAddr Token address to forward. Must match what strategy expects
+     *                   for this deployment (USDC for CamelotStrategy primary call,
+     *                   AXUSD for AaveV3StrategyAXUSD primary call).
+     * @param  amount    Amount in token's native decimals.
+     */
+    function allocateAsset(address strategy, address assetAddr, uint256 amount)
+        external onlyRole(STRATEGY_ADMIN) nonReentrant
+    {
+        StrategyInfo storage info = strategyInfo[strategy];
+        require(info.active, "StrategyManager: strategy not active");
+        IERC20(assetAddr).safeTransfer(strategy, amount);
+        IStrategy(strategy).deploy(amount);
+        info.allocatedPrincipal += amount;
+        emit Allocated(strategy, assetAddr, amount);
+    }
+
+    /**
+     * @notice Transfer `assetAddr` to `strategy` WITHOUT calling deploy().
+     *         Used to pre-fund the secondary (paired) asset of a multi-asset
+     *         strategy before the primary allocation triggers deploy().
+     *
+     *         Camelot USDC+AXUSD LP flow:
+     *           1. vault calls SM.fundPairedAsset(camelot, AXUSD, axusdAmt)
+     *              → AXUSD arrives at CamelotStrategy
+     *           2. vault calls SM.allocateAsset(camelot, USDC, usdcAmt)
+     *              → USDC arrives at CamelotStrategy, then deploy() reads both balances
+     *
+     *         allocatedPrincipal is NOT updated here — the strategy's own principal
+     *         tracking and the primary allocateAsset() call cover accounting.
+     *
+     * @param  strategy  Registered IStrategy adapter.
+     * @param  assetAddr Secondary token to pre-fund (e.g. AXUSD).
+     * @param  amount    Amount in token's native decimals.
+     */
+    function fundPairedAsset(address strategy, address assetAddr, uint256 amount)
+        external onlyRole(STRATEGY_ADMIN) nonReentrant
+    {
+        StrategyInfo storage info = strategyInfo[strategy];
+        require(info.active, "StrategyManager: strategy not active");
+        IERC20(assetAddr).safeTransfer(strategy, amount);
+        emit FundedPairedAsset(strategy, assetAddr, amount);
     }
 
     /**

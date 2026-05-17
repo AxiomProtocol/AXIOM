@@ -17,14 +17,30 @@ interface IAavePool {
 
 /**
  * @title  AaveV3Strategy
- * @notice IStrategy adapter that supplies vault capital into the Aave v3
- *         USDC market on Arbitrum One and withdraws yield back to the vault.
+ * @notice Generic IStrategy adapter that supplies vault capital into any Aave v3
+ *         lending market on Arbitrum One and harvests yield back to the vault.
  *
- * Arbitrum One addresses (verified 2026-05)
- * ─────────────────────────────────────────
- *   Aave v3 Pool   : 0x794a61358D6845594F94dc1DB02A252b5b4814aD
- *   USDC            : 0xaf88d065e77c8cC2239327C5EDb3A432268e5831
- *   aUSDC (aToken) : 0x724dc807b04555b71ed48a6896b6F41593b8C637
+ *         The adapter is fully parameterised at construction — deploy one instance
+ *         per Aave market (USDC, AXUSD, USDT, etc.) and register each with the
+ *         StrategyManager under a distinct name.
+ *
+ * Arbitrum One market addresses (verified 2026-05)
+ * ──────────────────────────────────────────────────
+ *   Aave v3 Pool     : 0x794a61358D6845594F94dc1DB02A252b5b4814aD
+ *
+ *   USDC market
+ *     asset  (USDC)  : 0xaf88d065e77c8cC2239327C5EDb3A432268e5831
+ *     aToken (aUSDC) : 0x724dc807b04555b71ed48a6896b6F41593b8C637
+ *
+ *   AXUSD market (deploy a second instance for AXUSD Aave yield)
+ *     asset  (AXUSD) : see contracts.ts / NEXT_PUBLIC_AXUSD_ADDRESS env var
+ *     aToken (aAXUSD): set via AAVE_V3_AXUSD_ATOKEN env var at deploy time
+ *
+ * Capital flows for AXUSD market via multi-asset SM:
+ *   vault.depositToken(AXUSD, amt)                         — AXUSD enters vault
+ *   vault.allocate(axusdAaveStrategy, AXUSD, amt)          — calls SM.allocateAsset
+ *   SM.allocateAsset(axusdAaveStrategy, AXUSD, amt)        — forwards AXUSD + deploy()
+ *   AaveV3Strategy(AXUSD).deploy(amt)                      — supply to Aave AXUSD market
  */
 contract AaveV3Strategy is IStrategy, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;

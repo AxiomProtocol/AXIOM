@@ -116,7 +116,8 @@ interface RebalanceForm {
 }
 
 interface SentinelAuth {
-  token: string;
+  token:  string;
+  nonce:  string;
   expiry: number;
   decision: { plainLanguage: string; aaveApyPct: number | null; camelotApyPct: number | null; spreadBps: number | null };
 }
@@ -266,7 +267,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
       });
       const json = await res.json();
       if (res.ok && json.authorized) {
-        setSentinelAuth({ token: json.token, expiry: json.expiry, decision: json.sentinelDecision });
+        setSentinelAuth({ token: json.token, nonce: json.nonce, expiry: json.expiry, decision: json.sentinelDecision });
       } else {
         setAuthError(json.sentinelDecision?.plainLanguage ?? json.error ?? 'Sentinel denied the request');
       }
@@ -296,6 +297,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
           toStrategy:   rebalanceForm.toStrategy,
           amountUsdc:   parseFloat(rebalanceForm.amountUsdc),
           token:        sentinelAuth.token,
+          nonce:        sentinelAuth.nonce,
           expiry:       sentinelAuth.expiry,
         }),
       });

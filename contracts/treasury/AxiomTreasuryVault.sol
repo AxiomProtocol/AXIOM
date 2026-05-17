@@ -15,7 +15,12 @@ import "./IStrategy.sol";
 interface IStrategyManager {
     function addStrategy(address strategy, string calldata name) external;
     function removeStrategy(address strategy) external;
+    /// @notice Single-asset allocation (backward-compat, forwards strategyInfo.asset).
     function allocate(address strategy, uint256 amount) external;
+    /// @notice Explicit-asset allocation — forwards the specified assetAddr to strategy.
+    function allocateAsset(address strategy, address assetAddr, uint256 amount) external;
+    /// @notice Pre-fund secondary (paired) asset without triggering deploy().
+    function fundPairedAsset(address strategy, address assetAddr, uint256 amount) external;
     function recall(address strategy, uint256 amount) external returns (uint256);
     function harvest(address strategy) external returns (uint256);
     function totalDeployed(address asset) external view returns (uint256);
@@ -274,8 +279,17 @@ contract AxiomTreasuryVault is ERC4626, AccessControl, ReentrancyGuard {
 
     /**
      * @notice Allocate `amount` of `assetAddr` to a strategy via StrategyManager.
-     *         For primary asset (USDC): vault transfers from its balance directly.
-     *         For secondary assets: draws from idleBalance mapping.
+     *         Calls SM.allocateAsset() which explicitly forwards `assetAddr` to the
+     *         strategy (not the strategy's registered primary asset), enabling AXUSD
+     *         allocation to an AaveV3Strategy(AXUSD) or the primary-asset side of
+     *         a multi-asset CamelotStrategy.
+     *
+     *         For the primary asset (USDC): draws from vault's IERC20 balance.
+     *         For secondary assets (AXUSD etc.): draws from idleBalance mapping.
+     *
+     * @dev    For CamelotStrategy USDC+AXUSD LP, call fundStrategyPairedAsset()
+     *         with AXUSD first so AXUSD arrives at the strategy, then call this
+     *         with USDC — CamelotStrategy.deploy() reads both balances.
      */
     function allocate(address strategy, address assetAddr, uint256 amount)
         external onlyRole(STRATEGY_ADMIN) whenNotPaused nonReentrant
@@ -291,7 +305,42 @@ contract AxiomTreasuryVault is ERC4626, AccessControl, ReentrancyGuard {
             idleBalance[assetAddr] -= amount;
         }
         IERC20(assetAddr).safeTransfer(address(strategyManager), amount);
-        strategyManager.allocate(strategy, amount);
+        // Use allocateAsset() — explicitly routes assetAddr, not strategyInfo.asset.
+        // This is the correct path for both single-asset (USDC→Aave) and
+        // explicit-asset (AXUSD→AaveAXUSD) allocations.
+        strategyManager.allocateAsset(strategy, assetAddr, amount);
+        emit StrategyAllocated(strategy, assetAddr, amount);
+    }
+
+    /**
+     * @notice Pre-fund a multi-asset strategy with its secondary (paired) asset
+     *         WITHOUT triggering deploy().
+     *
+     *         CamelotStrategy USDC+AXUSD LP flow:
+     *           Step 1: fundStrategyPairedAsset(camelotStrategy, AXUSD, axusdAmt)
+     *                   → AXUSD arrives at CamelotStrategy
+     *           Step 2: allocate(camelotStrategy, USDC, usdcAmt)
+     *                   → USDC arrives + deploy() executes with both balances present
+     *
+     * @param  strategy  Registered multi-asset IStrategy adapter (e.g. CamelotStrategy).
+     * @param  assetAddr Secondary token (e.g. AXUSD). Must be in acceptedAssets.
+     * @param  amount    Amount in token's native decimals.
+     */
+    function fundStrategyPairedAsset(address strategy, address assetAddr, uint256 amount)
+        external onlyRole(STRATEGY_ADMIN) whenNotPaused nonReentrant
+    {
+        require(acceptedAssets[assetAddr], "AxiomTreasuryVault: asset not accepted");
+        if (assetAddr == asset()) {
+            require(
+                IERC20(assetAddr).balanceOf(address(this)) >= amount,
+                "AxiomTreasuryVault: insufficient balance"
+            );
+        } else {
+            require(idleBalance[assetAddr] >= amount, "AxiomTreasuryVault: insufficient idle");
+            idleBalance[assetAddr] -= amount;
+        }
+        IERC20(assetAddr).safeTransfer(address(strategyManager), amount);
+        strategyManager.fundPairedAsset(strategy, assetAddr, amount);
         emit StrategyAllocated(strategy, assetAddr, amount);
     }
 
@@ -327,9 +376,13 @@ contract AxiomTreasuryVault is ERC4626, AccessControl, ReentrancyGuard {
      * @notice Sentinel-gated rebalance: recall from `fromStrategy`, forward to `toStrategy`.
      *
      *         Flow (no vault→SM approval required):
-     *           1. SM.recall(from) → strategy sends funds to vault
-     *           2. Vault transfers to SM
-     *           3. SM.allocate(to) → SM forwards to destination strategy
+     *           1. SM.recall(from) → strategy sends `assetAddr` back to this vault
+     *           2. Vault transfers `assetAddr` to SM
+     *           3. SM.allocateAsset(to, assetAddr, received) → SM forwards to destination
+     *
+     *         Using allocateAsset() (not allocate()) ensures the recalled asset
+     *         (which may be AXUSD, not the strategy's registered primary asset) is
+     *         routed correctly to the destination strategy without ambiguity.
      */
     function rebalance(
         address fromStrategy,
@@ -337,11 +390,12 @@ contract AxiomTreasuryVault is ERC4626, AccessControl, ReentrancyGuard {
         address assetAddr,
         uint256 amount
     ) external onlyRole(SENTINEL_EXECUTOR) whenNotPaused nonReentrant {
-        // Step 1: recall from source — funds arrive at this vault
+        require(acceptedAssets[assetAddr], "AxiomTreasuryVault: asset not accepted");
+        // Step 1: recall from source — assetAddr arrives at this vault
         uint256 received = strategyManager.recall(fromStrategy, amount);
-        // Step 2: forward to destination via SM
+        // Step 2: forward received assetAddr to SM, then deploy to destination
         IERC20(assetAddr).safeTransfer(address(strategyManager), received);
-        strategyManager.allocate(toStrategy, received);
+        strategyManager.allocateAsset(toStrategy, assetAddr, received);
         emit Rebalanced(fromStrategy, toStrategy, received);
     }
 
