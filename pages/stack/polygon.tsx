@@ -31,6 +31,16 @@ const CONTRACTS = [
   { name: 'AxiomStable3643',         role: 'ERC-3643 AXUSD stablecoin on Polygon PoS' },
 ];
 
+const DEFI_YIELD_LAYER = [
+  { protocol: 'Aave v3',     role: 'Yield layer',    asset: 'USDC / AXUSD',   status: 'READ-ONLY', note: 'Supply APY monitoring; AXUSD reserve earning context' },
+  { protocol: 'Aave v3',     role: 'Yield layer',    asset: 'WBTC / WETH',    status: 'READ-ONLY', note: 'Collateral market depth for AXUSD backing context' },
+];
+
+const DEFI_DEX_LAYER = [
+  { protocol: 'Uniswap v3',  role: 'DEX layer',      pair: 'AXUSD / USDC',    status: 'PLANNED',   note: 'Primary AXUSD liquidity venue on Polygon; pending AXUSD Polygon deployment' },
+  { protocol: 'Uniswap v3',  role: 'DEX layer',      pair: 'USDC / POL',      status: 'ACTIVE',    note: 'Reference liquidity pool — read-only market intelligence' },
+];
+
 const API_ENDPOINTS = [
   { method: 'GET',  path: '/api/polygon/status',                         desc: 'Integration phase and feature-flag status' },
   { method: 'GET',  path: '/api/polygon/chain-health',                   desc: 'RPC connectivity and block freshness' },
@@ -318,6 +328,82 @@ export default function PolygonStackPage() {
                 <span style={{ color: DL.muted, fontSize: 10 }}>{note}</span>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ── DeFi Infrastructure ── */}
+        <section style={{ marginBottom: 40 }}>
+          <SectionHeading>On-Chain Financial Rails — DeFi Infrastructure</SectionHeading>
+          <p style={{ fontFamily: SERIF, fontSize: 14, color: DL.body, lineHeight: 1.75, marginBottom: 20, maxWidth: 680 }}>
+            Polygon PoS hosts two complementary on-chain financial rail layers: Aave v3 as
+            the yield and collateral market layer, and Uniswap v3 as the DEX layer for
+            AXUSD liquidity. Both are integrated as read-only market intelligence services
+            at this phase of the Axiom Polygon deployment.
+          </p>
+          <p style={{ fontFamily: MONO, fontSize: 10, color: DL.gold, letterSpacing: '0.08em', marginBottom: 12, textTransform: 'uppercase' }}>
+            Aave v3 — Yield Layer
+          </p>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: MONO, fontSize: 11, marginBottom: 24 }}>
+            <thead>
+              <tr style={{ borderBottom: `1px solid ${DL.border}` }}>
+                <th style={{ textAlign: 'left', padding: '6px 8px', color: DL.muted, fontWeight: 'normal' }}>Protocol</th>
+                <th style={{ textAlign: 'left', padding: '6px 8px', color: DL.muted, fontWeight: 'normal' }}>Role</th>
+                <th style={{ textAlign: 'left', padding: '6px 8px', color: DL.muted, fontWeight: 'normal' }}>Asset</th>
+                <th style={{ textAlign: 'left', padding: '6px 8px', color: DL.muted, fontWeight: 'normal' }}>Status</th>
+                <th style={{ textAlign: 'left', padding: '6px 8px', color: DL.muted, fontWeight: 'normal' }}>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {DEFI_YIELD_LAYER.map(({ protocol, role, asset, status, note }) => (
+                <tr key={asset} style={{ borderBottom: `1px solid #0a0f1a` }}>
+                  <td style={{ padding: '7px 8px', color: DL.blue }}>{protocol}</td>
+                  <td style={{ padding: '7px 8px', color: DL.gold }}>{role}</td>
+                  <td style={{ padding: '7px 8px', color: DL.light }}>{asset}</td>
+                  <td style={{ padding: '7px 8px' }}>
+                    <Badge ok={status === 'ACTIVE'} labelTrue="ACTIVE" labelFalse={status} />
+                  </td>
+                  <td style={{ padding: '7px 8px', color: DL.muted }}>{note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p style={{ fontFamily: MONO, fontSize: 10, color: DL.gold, letterSpacing: '0.08em', marginBottom: 12, textTransform: 'uppercase' }}>
+            Uniswap v3 — DEX Layer
+          </p>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: MONO, fontSize: 11 }}>
+            <thead>
+              <tr style={{ borderBottom: `1px solid ${DL.border}` }}>
+                <th style={{ textAlign: 'left', padding: '6px 8px', color: DL.muted, fontWeight: 'normal' }}>Protocol</th>
+                <th style={{ textAlign: 'left', padding: '6px 8px', color: DL.muted, fontWeight: 'normal' }}>Role</th>
+                <th style={{ textAlign: 'left', padding: '6px 8px', color: DL.muted, fontWeight: 'normal' }}>Pair</th>
+                <th style={{ textAlign: 'left', padding: '6px 8px', color: DL.muted, fontWeight: 'normal' }}>Status</th>
+                <th style={{ textAlign: 'left', padding: '6px 8px', color: DL.muted, fontWeight: 'normal' }}>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {DEFI_DEX_LAYER.map(({ protocol, role, pair, status, note }) => (
+                <tr key={pair} style={{ borderBottom: `1px solid #0a0f1a` }}>
+                  <td style={{ padding: '7px 8px', color: DL.blue }}>{protocol}</td>
+                  <td style={{ padding: '7px 8px', color: DL.gold }}>{role}</td>
+                  <td style={{ padding: '7px 8px', color: DL.light }}>{pair}</td>
+                  <td style={{ padding: '7px 8px' }}>
+                    <Badge ok={status === 'ACTIVE'} labelTrue="ACTIVE" labelFalse={status} />
+                  </td>
+                  <td style={{ padding: '7px 8px', color: DL.muted }}>{note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{
+            marginTop: 14,
+            padding: '10px 14px',
+            border: `1px solid ${DL.border}`,
+            fontFamily: MONO,
+            fontSize: 10,
+            color: DL.muted,
+            lineHeight: 1.7,
+          }}>
+            API: <span style={{ color: DL.blue }}>/api/aave/polygon/market</span> · <span style={{ color: DL.blue }}>/api/uniswap/pools</span>
           </div>
         </section>
 

@@ -16,6 +16,12 @@ export const ARBITRUM_ONE_LIQUIDITY_CHAIN: LiquidityChain = {
   explorerUrl: 'https://arbiscan.io',
 };
 
+export const POLYGON_LIQUIDITY_CHAIN: LiquidityChain = {
+  id: 137,
+  name: 'Polygon PoS',
+  explorerUrl: 'https://polygonscan.com',
+};
+
 const axauInternalAsset = getInternalAsset('AXAU');
 
 function requireAddress(value: string | null | undefined, label: string): string {
@@ -152,7 +158,7 @@ export const LIQUIDITY_VENUES: Record<LiquidityVenueId, LiquidityVenue> = {
   'uniswap-v3-polygon': {
     id: 'uniswap-v3-polygon',
     name: 'Uniswap V3 (Polygon)',
-    chain: ARBITRUM_ONE_LIQUIDITY_CHAIN,
+    chain: POLYGON_LIQUIDITY_CHAIN,
     status: 'approved_secondary',
     firstWavePermitted: false,
     approvedForAssets: ['USDC'],

@@ -1,4 +1,4 @@
-export type ChainId = 42161;
+export type ChainId = 42161 | 137;
 
 export type LiquidityAssetSymbol = 'USDC' | 'AXUSD' | 'AXM' | 'AXAU';
 
@@ -45,7 +45,7 @@ export type ComplianceRiskLevel = 'low' | 'medium' | 'high' | 'blocked';
 
 export interface LiquidityChain {
   id: ChainId;
-  name: 'Arbitrum One';
+  name: string;
   explorerUrl: string;
 }
 
