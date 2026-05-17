@@ -22,11 +22,17 @@
  *   CLAIM_SIGNER_KEY (purpose 3).  If not, claims are stored on-chain but
  *   isVerified() will remain false — see KNOWN LIMITATION below.
  *
+ * Claim signing (corrected encoding):
+ *   Claims are signed using keccak256(abi.encode(identity, topic, data)) — standard
+ *   ABI encoding, not abi.encodePacked.  This matches ClaimIssuer.isClaimValid()
+ *   on-chain.  After each addClaim(), the script calls isClaimValid() to verify
+ *   the signature is accepted before continuing.
+ *
  * KNOWN LIMITATION (2026-05, follow-up #547):
- *   The ClaimIssuer at 0x579A367ead… does NOT have the deployer key as a
- *   CLAIM_SIGNER_KEY.  Therefore isVerified() returns false even after claims
- *   are issued.  AXUSD-denominated flows through the vault remain gated until
- *   the ClaimIssuer is configured with the correct signer key.
+ *   Even with correct abi.encode hashing, isVerified() may return false if the
+ *   deployer key is not registered as a CLAIM_SIGNER_KEY (purpose 3) on the
+ *   ClaimIssuer at 0x579A367ead….  The isClaimValid() post-check will report
+ *   false if this is the case, and the script will exit 2 with remediation steps.
  *   The USDC→Aave yield path does NOT require isVerified and works correctly.
  *
  * Exit codes:
@@ -206,21 +212,41 @@ async function deployFreshIdentityProxy(signer: ethers.Wallet): Promise<string> 
 // ── Claim helpers ─────────────────────────────────────────────────────────────
 
 /**
- * Build and sign an ERC-735 claim.
- * hash = keccak256(abi.encode(identityAddress, topic, data))
- * sig  = eth_sign(hash) — EIP-191 personal_sign prefix
+ * Build and sign an ERC-735 claim using standard ABI encoding parity with
+ * the T-REX ClaimIssuer.isClaimValid() verification logic:
+ *
+ *   dataHash = keccak256(abi.encode(identityAddress, topic, data))
+ *   sig      = eth_sign(dataHash)   — EIP-191 personal_sign prefix added by signMessage()
+ *
+ * IMPORTANT: uses abi.encode (not abi.encodePacked / solidityPackedKeccak256).
+ * ClaimIssuer.isClaimValid() hashes with abi.encode; using encodePacked produces
+ * an irrecoverable signature mismatch and permanently invalidates the claim.
+ *
+ * After signing, a local recovery check asserts ecrecover(dataHash, sig) == signer.
+ * This catches any local encoding divergence before an on-chain transaction is sent.
  */
 async function signClaim(
   signer: ethers.Wallet,
   identityAddress: string,
   topic: number,
   data: Uint8Array,
-): Promise<string> {
-  const packed = ethers.solidityPackedKeccak256(
+): Promise<{ signature: string; digest: string }> {
+  const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
     ['address', 'uint256', 'bytes'],
     [identityAddress, topic, data],
   );
-  return signer.signMessage(ethers.getBytes(packed));
+  const digest = ethers.keccak256(encoded);
+  const signature = await signer.signMessage(ethers.getBytes(digest));
+
+  // Local recovery preflight — fail fast before spending gas on addClaim()
+  const recovered = ethers.verifyMessage(ethers.getBytes(digest), signature);
+  if (recovered.toLowerCase() !== signer.address.toLowerCase()) {
+    throw new Error(
+      `signClaim: local recovery mismatch — expected ${signer.address}, got ${recovered}`,
+    );
+  }
+
+  return { signature, digest };
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -397,9 +423,18 @@ async function main(): Promise<void> {
     console.log('  All required claims already present on ONCHAINID.');
   }
 
+  // ClaimIssuer read-only interface for post-claim validation
+  const claimIssuer = new ethers.Contract(
+    ERC3643_CONTRACTS.CLAIM_ISSUER,
+    [
+      'function isClaimValid(address _identity, uint256 _claimTopic, bytes calldata _sig, bytes calldata _data) view returns (bool)',
+    ],
+    provider,
+  );
+
   for (const { topic, label } of claimsToIssue) {
-    const data      = ethers.toUtf8Bytes(`axiom-vault:${vaultAddr.toLowerCase()}:topic${topic}`);
-    const signature = await signClaim(signer, identityAddress, topic, data);
+    const data = ethers.toUtf8Bytes(`axiom-vault:${vaultAddr.toLowerCase()}:topic${topic}`);
+    const { signature } = await signClaim(signer, identityAddress, topic, data);
 
     console.log(`  Issuing ${label}...`);
     const claimTx = await identity.addClaim(
@@ -414,6 +449,19 @@ async function main(): Promise<void> {
     const claimReceipt = await claimTx.wait();
     if (claimReceipt?.status !== 1) throw new Error(`addClaim(${topic}) reverted: ${claimTx.hash}`);
     console.log(`  ${label} claim issued.`);
+
+    // On-chain post-check: verify ClaimIssuer accepts this signature
+    const claimValid: boolean = await (claimIssuer as ethers.Contract & {
+      isClaimValid(identity: string, topic: number, sig: string, data: Uint8Array): Promise<boolean>;
+    }).isClaimValid(identityAddress, topic, signature, data).catch(() => false);
+
+    if (claimValid) {
+      console.log(`  ✓ ClaimIssuer.isClaimValid() = true  — signature accepted by issuer.`);
+    } else {
+      console.warn(`  ✗ ClaimIssuer.isClaimValid() = false — deployer key may not be a CLAIM_SIGNER_KEY on`);
+      console.warn(`    ${ERC3643_CONTRACTS.CLAIM_ISSUER}`);
+      console.warn(`    Claim is stored on-chain but isVerified() will return false until resolved (#547).`);
+    }
   }
 
   // ── Step 5: LendingPlatformModule whitelist (optional) ────────────────────

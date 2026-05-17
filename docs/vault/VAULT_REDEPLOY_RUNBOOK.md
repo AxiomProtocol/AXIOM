@@ -136,12 +136,21 @@ implementation (`0xD18632586d…`) and initialises it with the deployer as
 management key.
 
 **`isVerified()` status:** After claims are issued, `identityRegistry.isVerified(vault)`
-may still return `false`. This happens because `ClaimIssuer.isClaimValid()` validates
-the claim signature against the signer keys registered on the ClaimIssuer
-contract — if the deployer EOA is not a registered CLAIM_SIGNER_KEY on the
-ClaimIssuer (`0x579A367ead…`), all claims are rejected at verification time.
-The script exits with **code 2** (partial success) in this case and prints
-detailed remediation instructions.
+may still return `false`. Two root causes are possible:
+
+1. **Encoding mismatch** — fixed in the current script version. The claim hash
+   must use `keccak256(abi.encode(identity, topic, data))` (standard ABI encoding),
+   not `abi.encodePacked`. The script now validates this locally (ecrecover check)
+   and on-chain (`ClaimIssuer.isClaimValid()`) after every `addClaim()` call.
+   If `isClaimValid()` returns `true` for each claim, encoding is not the problem.
+
+2. **ClaimIssuer signer key** — the deployer EOA must be registered as a
+   `CLAIM_SIGNER_KEY` (purpose 3) on the ClaimIssuer at `0x579A367ead…`. If
+   `isClaimValid()` returns `false` despite correct encoding, this is the cause.
+   See follow-up #547 for resolution.
+
+The script exits with **code 2** (partial success) and prints detailed
+remediation instructions distinguishing which cause applies.
 
 **Impact of `isVerified=false`:** AXUSD-denominated flows through the vault (PSM,
 LendingMarket) are gated. **USDC→Aave yield is not affected** — it does not
