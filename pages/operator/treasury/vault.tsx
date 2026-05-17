@@ -146,7 +146,7 @@ type DepositStep  = 'idle' | 'approving' | 'approved' | 'depositing' | 'success'
 function WalletDepositPanel() {
   const { address, isConnected } = useAccount();
   const chainId                  = useChainId();
-  const publicClient             = usePublicClient();
+  const publicClient             = usePublicClient({ chainId: ARBITRUM_ONE });
   const { writeContractAsync }   = useWriteContract();
 
   const vaultAddress = (process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS ?? '') as `0x${string}`;
@@ -237,7 +237,11 @@ function WalletDepositPanel() {
   }
 
   async function handleDeposit() {
-    if (!address || !vaultAddress || !publicClient) return;
+    if (!address || !vaultAddress) return;
+    if (!publicClient) {
+      setErrMsg('Arbitrum One RPC client not ready — ensure your wallet is connected to Arbitrum One and try again.');
+      return;
+    }
     setErrMsg(null);
     setStep('depositing');
     try {
