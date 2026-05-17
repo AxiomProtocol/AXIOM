@@ -341,21 +341,4 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
         emit EmergencyExit(r0, r1);
     }
 
-    // ── Internal helpers ──────────────────────────────────────────────────────
-
-    function _sortAssets(uint256 amount) internal view returns (
-        address token0, address token1, uint256 a0, uint256 a1
-    ) {
-        if (asset < pairedAsset) {
-            token0 = asset;
-            token1 = pairedAsset;
-            a0     = amount;
-            a1     = 0;
-        } else {
-            token0 = pairedAsset;
-            token1 = asset;
-            a0     = 0;
-            a1     = amount;
-        }
-    }
 }
