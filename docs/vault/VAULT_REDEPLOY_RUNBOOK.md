@@ -269,6 +269,39 @@ After confirmation, `AllocateToAavePanel` polls every 30 s. You should see:
 
 ## Step 8 — Final Smoke Test
 
+Run the dedicated smoke-check script to assert all three post-deployment
+invariants in one command:
+
+```bash
+npx tsx scripts/vault-smoke-check.ts
+```
+
+**Expected output (all checks passing):**
+```
+Axiom Vault Smoke Check
+═══════════════════════════════════════════════════════════
+  Vault:         0x8c9761D465CB95306266a68FF8935C4690EC6092
+  Strategy:      0x7d500015C5765456C16Ce2CF38AAF14075C01DD4
+  Registry:      0x58f64a1262d5434d6C7637a2309b0999bB6D1970
+  Min principal: 25 USDC
+═══════════════════════════════════════════════════════════
+
+  ✓ PASS  vault.totalAssets() >= min          25.000000 USDC
+  ✓ PASS  strategy.currentValue() > 0         24.999952 USDC (aUSDC balance)
+  ✓ PASS  registry.contains(vault)            true — vault has an ONCHAINID registered
+  ·       registry.isVerified(vault) [info]   false — follow-up #547 required (does not affect USDC→Aave yield)
+
+═══════════════════════════════════════════════════════════
+SMOKE CHECK PASSED — vault is active and Aave yield is running.
+═══════════════════════════════════════════════════════════
+```
+
+The script exits `0` if all three checks pass, `1` if any fail. The
+`isVerified` line is informational only — it is expected to be `false`
+until follow-up #547 is resolved.
+
+Alternatively, run a single-line read:
+
 ```bash
 npx tsx -e "
 import { ethers } from 'ethers';
@@ -333,6 +366,50 @@ Expected: a value ≥ `25.000000 USDC`, growing over time.
 | `LendingPlatformModule.addPlatform` reverts `COMPLIANCE_NOT_BOUND` | Open | #547 |
 | `NEXT_PUBLIC_AXIOM_CAMELOT_STRATEGY_ADDRESS` missing (frontend can't read Camelot position) | Open | #548 |
 | USDC→Aave yield | **ACTIVE** — `currentValue = 24.9999 USDC` | — |
+
+---
+
+---
+
+## Appendix — Deployment Evidence (2026-05, Task #544)
+
+On-chain confirmation of the completed redeploy. Addresses are authoritative;
+tx hashes were printed to console at execution time.
+
+| Item | Value |
+|---|---|
+| New vault address | `0x8c9761D465CB95306266a68FF8935C4690EC6092` |
+| New ONCHAINID proxy | `0x8771b290A5976eEc205809149cC3d4e84B2ec729` |
+| AaveV3Strategy | `0x7d500015C5765456C16Ce2CF38AAF14075C01DD4` |
+| StrategyManager | `0x432dFEe1DAb2D7d423690819DC65C033FE266E8e` |
+| CamelotStrategy | `0x511441D31e629d7513004a692c2dB67438151696` |
+
+**AaveV3Strategy.currentValue() — confirmed live read:**
+```
+25.000000 USDC  (principal)
+24.999952 USDC  (aUSDC balance, accruing — sample at time of verification)
+```
+
+**IdentityRegistry state post-registration:**
+```
+contains(vault):   true
+isVerified(vault): false   ← expected; follow-up #547 required
+KYC claims:        1 (Topic 1, on ONCHAINID proxy)
+Sanctions claims:  1 (Topic 3, on ONCHAINID proxy)
+```
+
+**Env vars updated in Replit Secrets:**
+- `AXIOM_TREASURY_VAULT_ADDRESS` = `0x8c9761D465CB95306266a68FF8935C4690EC6092`
+- `NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS` = same
+- `AXIOM_STRATEGY_MANAGER_ADDRESS` = `0x432dFEe1DAb2D7d423690819DC65C033FE266E8e`
+- `AXIOM_AAVE_V3_STRATEGY_ADDRESS` = `0x7d500015C5765456C16Ce2CF38AAF14075C01DD4`
+- `NEXT_PUBLIC_AXIOM_AAVE_V3_STRATEGY_ADDRESS` = same
+- `AXIOM_CAMELOT_STRATEGY_ADDRESS` = `0x511441D31e629d7513004a692c2dB67438151696`
+
+**Post-smoke-check command to re-verify at any time:**
+```bash
+npx tsx scripts/vault-smoke-check.ts
+```
 
 ---
 

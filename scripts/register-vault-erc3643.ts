@@ -69,6 +69,55 @@ import {
   LENDING_PLATFORM_MODULE_ABI,
 } from '../shared/contracts-3643';
 
+// ── Narrow typed interfaces for ethers.Contract casts ─────────────────────────
+// These replace (contract as any) calls with typed surfaces that match the ABIs
+// declared in shared/contracts-3643.ts and MINIMAL_REGISTRY_ABI below.
+
+interface IIdentityRegistry {
+  contains(wallet: string): Promise<boolean>;
+  identity(wallet: string): Promise<string>;
+  isVerified(wallet: string): Promise<boolean>;
+  isAgent(account: string): Promise<boolean>;
+  registerIdentity(
+    wallet: string,
+    identity: string,
+    country: number,
+  ): Promise<ethers.ContractTransactionResponse>;
+  updateIdentity(
+    wallet: string,
+    newIdentity: string,
+  ): Promise<ethers.ContractTransactionResponse>;
+}
+
+interface IIdentityFactory {
+  walletToIdentity(wallet: string): Promise<string>;
+  createIdentity(
+    wallet: string,
+    managementKey: string,
+  ): Promise<ethers.ContractTransactionResponse>;
+}
+
+interface IIdentity {
+  getKeysByPurpose(purpose: number): Promise<string[]>;
+  getClaimIdsByTopic(topic: number): Promise<string[]>;
+  addClaim(
+    topic: number,
+    scheme: number,
+    issuer: string,
+    signature: string,
+    data: Uint8Array,
+    uri: string,
+  ): Promise<ethers.ContractTransactionResponse>;
+}
+
+interface ILendingPlatformModule {
+  isPlatformWhitelisted(token: string, platform: string): Promise<boolean>;
+  addPlatform(
+    token: string,
+    platform: string,
+  ): Promise<ethers.ContractTransactionResponse>;
+}
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const COUNTRY_US = 840;
@@ -136,8 +185,10 @@ async function deployFreshIdentityProxy(signer: ethers.Wallet): Promise<string> 
   console.log(`  Initialized.  tx: ${initTx.hash}`);
 
   // Verify deployer holds management key (purpose 1)
-  const idRO = new ethers.Contract(proxyAddr, IDENTITY_ABI, signer.provider!);
-  const mgmtKeys: string[] = await (idRO as any).getKeysByPurpose(1).catch(() => []);
+  const idRO = new ethers.Contract(
+    proxyAddr, IDENTITY_ABI, signer.provider!,
+  ) as ethers.Contract & IIdentity;
+  const mgmtKeys: string[] = await idRO.getKeysByPurpose(1).catch((): string[] => []);
   const deployerHash = ethers.keccak256(
     ethers.AbiCoder.defaultAbiCoder().encode(['address'], [signer.address]),
   );
@@ -199,22 +250,22 @@ async function main(): Promise<void> {
     ERC3643_CONTRACTS.IDENTITY_REGISTRY,
     MINIMAL_REGISTRY_ABI,
     signer,
-  );
+  ) as ethers.Contract & IIdentityRegistry;
   const factory = new ethers.Contract(
     ERC3643_CONTRACTS.IDENTITY_FACTORY,
     IDENTITY_FACTORY_ABI,
     signer,
-  );
+  ) as ethers.Contract & IIdentityFactory;
 
   // ── Step 1: Check existing state ──────────────────────────────────────────
 
   console.log('[1/5] Checking existing registry state...');
-  const alreadyContains: boolean = await (registry as any).contains(vaultAddr);
+  const alreadyContains: boolean = await registry.contains(vaultAddr);
   const existingRegistryIdentity: string = alreadyContains
-    ? await (registry as any).identity(vaultAddr)
+    ? await registry.identity(vaultAddr)
     : ethers.ZeroAddress;
   const alreadyVerified: boolean = alreadyContains
-    ? await (registry as any).isVerified(vaultAddr)
+    ? await registry.isVerified(vaultAddr)
     : false;
 
   console.log(`  contains(vault):   ${alreadyContains}`);
@@ -233,8 +284,7 @@ async function main(): Promise<void> {
   let identityAddress: string;
 
   if (dryRun) {
-    const factoryIdentity: string = await (factory as any)
-      .walletToIdentity(vaultAddr)
+    const factoryIdentity: string = await factory.walletToIdentity(vaultAddr)
       .catch(() => ethers.ZeroAddress);
     const hasFactoryEntry = factoryIdentity && factoryIdentity !== ethers.ZeroAddress;
 
@@ -255,8 +305,7 @@ async function main(): Promise<void> {
   }
 
   // Live path: prefer factory if it hasn't recorded this wallet yet
-  const factoryIdentity: string = await (factory as any)
-    .walletToIdentity(vaultAddr)
+  const factoryIdentity: string = await factory.walletToIdentity(vaultAddr)
     .catch(() => ethers.ZeroAddress);
   const hasFactoryEntry = factoryIdentity && factoryIdentity !== ethers.ZeroAddress;
 
@@ -268,11 +317,11 @@ async function main(): Promise<void> {
   } else if (!hasFactoryEntry) {
     // Factory does not know this wallet — use createIdentity with deployer as mgmt key
     console.log(`  Calling factory.createIdentity(vault=${vaultAddr}, mgmtKey=${signer.address})...`);
-    const createTx = await (factory as any).createIdentity(vaultAddr, signer.address);
+    const createTx = await factory.createIdentity(vaultAddr, signer.address);
     console.log(`  tx: ${createTx.hash}`);
     const createReceipt = await createTx.wait();
     if (createReceipt?.status !== 1) throw new Error(`createIdentity reverted: ${createTx.hash}`);
-    identityAddress = await (factory as any).walletToIdentity(vaultAddr);
+    identityAddress = await factory.walletToIdentity(vaultAddr);
     console.log(`  Identity created: ${identityAddress}`);
   } else {
     // IDENTITY_EXISTS in factory (vault was registered before with vault as mgmt key).
@@ -286,7 +335,7 @@ async function main(): Promise<void> {
 
   console.log('\n[3/5] Registering / updating identity in IdentityRegistry...');
 
-  const isAgent: boolean = await (registry as any).isAgent(signer.address);
+  const isAgent: boolean = await registry.isAgent(signer.address);
   if (!isAgent) {
     throw new Error(
       `Signer ${signer.address} is NOT an agent on IdentityRegistry.\n` +
@@ -294,20 +343,20 @@ async function main(): Promise<void> {
     );
   }
 
-  const nowContainsBefore: boolean = await (registry as any).contains(vaultAddr);
+  const nowContainsBefore: boolean = await registry.contains(vaultAddr);
   if (!nowContainsBefore) {
     console.log(`  Calling registry.registerIdentity(${vaultAddr}, ${identityAddress}, ${COUNTRY_US})...`);
-    const regTx = await (registry as any).registerIdentity(vaultAddr, identityAddress, COUNTRY_US);
+    const regTx = await registry.registerIdentity(vaultAddr, identityAddress, COUNTRY_US);
     console.log(`  tx: ${regTx.hash}`);
     const regReceipt = await regTx.wait();
     if (regReceipt?.status !== 1) throw new Error(`registerIdentity reverted: ${regTx.hash}`);
     console.log('  Identity registered.');
   } else {
     // Already in registry — update if identity address differs
-    const currentIdentity: string = await (registry as any).identity(vaultAddr);
+    const currentIdentity: string = await registry.identity(vaultAddr);
     if (currentIdentity.toLowerCase() !== identityAddress.toLowerCase()) {
       console.log(`  Updating registry entry: ${currentIdentity} → ${identityAddress}`);
-      const updTx = await (registry as any).updateIdentity(vaultAddr, identityAddress);
+      const updTx = await registry.updateIdentity(vaultAddr, identityAddress);
       console.log(`  tx: ${updTx.hash}`);
       const updReceipt = await updTx.wait();
       if (updReceipt?.status !== 1) throw new Error(`updateIdentity reverted: ${updTx.hash}`);
@@ -321,14 +370,16 @@ async function main(): Promise<void> {
 
   console.log('\n[4/5] Issuing KYC (topic 1) and Sanctions (topic 3) claims...');
 
-  const identity = new ethers.Contract(identityAddress, IDENTITY_ABI, signer);
+  const identity = new ethers.Contract(
+    identityAddress, IDENTITY_ABI, signer,
+  ) as ethers.Contract & IIdentity;
 
-  const existingKycClaims: string[] = await (identity as any)
+  const existingKycClaims: string[] = await identity
     .getClaimIdsByTopic(CLAIM_TOPICS.KYC_VERIFIED)
-    .catch(() => []);
-  const existingSanClaims: string[] = await (identity as any)
+    .catch((): string[] => []);
+  const existingSanClaims: string[] = await identity
     .getClaimIdsByTopic(CLAIM_TOPICS.SANCTIONS_CLEAR)
-    .catch(() => []);
+    .catch((): string[] => []);
 
   console.log(`  Existing KYC claims on-chain:      ${existingKycClaims.length}`);
   console.log(`  Existing Sanctions claims on-chain:${existingSanClaims.length}`);
@@ -351,7 +402,7 @@ async function main(): Promise<void> {
     const signature = await signClaim(signer, identityAddress, topic, data);
 
     console.log(`  Issuing ${label}...`);
-    const claimTx = await (identity as any).addClaim(
+    const claimTx = await identity.addClaim(
       topic,
       1,
       ERC3643_CONTRACTS.CLAIM_ISSUER,
@@ -373,19 +424,19 @@ async function main(): Promise<void> {
       ERC3643_CONTRACTS.LENDING_PLATFORM_MODULE,
       LENDING_PLATFORM_MODULE_ABI,
       signer,
-    );
+    ) as ethers.Contract & ILendingPlatformModule;
     const axusd = process.env.AXUSD_ADDRESS ?? '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
 
-    const alreadyWhitelisted: boolean = await (lendingModule as any)
+    const alreadyWhitelisted: boolean = await lendingModule
       .isPlatformWhitelisted(axusd, vaultAddr)
-      .catch(() => false);
+      .catch((): boolean => false);
 
     if (alreadyWhitelisted) {
       console.log('  Already whitelisted on LendingPlatformModule.');
     } else {
       try {
         console.log(`  Calling lendingModule.addPlatform(${axusd}, ${vaultAddr})...`);
-        const lpTx = await (lendingModule as any).addPlatform(axusd, vaultAddr);
+        const lpTx = await lendingModule.addPlatform(axusd, vaultAddr);
         console.log(`  tx: ${lpTx.hash}  |  https://arbiscan.io/tx/${lpTx.hash}`);
         const lpReceipt = await lpTx.wait();
         if (lpReceipt?.status !== 1) throw new Error(`addPlatform reverted: ${lpTx.hash}`);
@@ -410,17 +461,19 @@ async function main(): Promise<void> {
   // ── Final verification ─────────────────────────────────────────────────────
 
   console.log('\n[verification] Post-registration on-chain state...');
-  const nowContains: boolean = await (registry as any).contains(vaultAddr);
-  const nowVerified: boolean = await (registry as any).isVerified(vaultAddr);
-  const nowIdentity: string  = await (registry as any).identity(vaultAddr);
+  const nowContains: boolean = await registry.contains(vaultAddr);
+  const nowVerified: boolean = await registry.isVerified(vaultAddr);
+  const nowIdentity: string  = await registry.identity(vaultAddr);
 
-  const idContract = new ethers.Contract(nowIdentity, IDENTITY_ABI, provider);
-  const kycClaims: string[] = await (idContract as any)
+  const idContract = new ethers.Contract(
+    nowIdentity, IDENTITY_ABI, provider,
+  ) as ethers.Contract & IIdentity;
+  const kycClaims: string[] = await idContract
     .getClaimIdsByTopic(CLAIM_TOPICS.KYC_VERIFIED)
-    .catch(() => []);
-  const sanClaims: string[] = await (idContract as any)
+    .catch((): string[] => []);
+  const sanClaims: string[] = await idContract
     .getClaimIdsByTopic(CLAIM_TOPICS.SANCTIONS_CLEAR)
-    .catch(() => []);
+    .catch((): string[] => []);
 
   console.log(`  contains(vault):          ${nowContains}`);
   console.log(`  identity(vault):          ${nowIdentity}`);
