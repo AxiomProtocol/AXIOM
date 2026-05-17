@@ -36,10 +36,13 @@ const NOTIONAL_LIMITS: Record<string, number> = {
   ReportGenerated: 0,
   EulerEarnRebalance: 500000,
   EULER_EARN_REBALANCE: 500000,
+  TreasuryVaultRebalance: 500000,
+  TREASURY_VAULT_REBALANCE: 500000,
 };
 
 const DB_ACTION_TYPE_MAP: Record<string, PilotActionType> = {
   EULER_EARN_REBALANCE: 'EulerEarnRebalance',
+  TREASURY_VAULT_REBALANCE: 'TreasuryVaultRebalance',
 };
 
 function getActionRiskLevel(actionType: string): 'HIGH' | 'MEDIUM' | 'LOW' {

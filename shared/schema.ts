@@ -9717,5 +9717,7 @@ export type SentinelSubscription = typeof sentinelSubscriptions.$inferSelect;
 export type InsertSentinelSubscription = typeof sentinelSubscriptions.$inferInsert;
 export type SentinelSubscriptionWebhookEvent = typeof sentinelSubscriptionWebhookEvents.$inferSelect;
 
+// ── Treasury Vault Events — see shared/treasuryVaultSchema.ts ─────────────
+// Kept in a separate file to avoid the SWC bundler drop-at-bottom issue.
 // launch_attestations moved to shared/launchAttestationsSchema.ts because the
 // SWC bundler dropped exports appended at the bottom of this 9700-line file.

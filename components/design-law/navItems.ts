@@ -92,6 +92,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Operations',
     children: [
+      { href: '/operator/treasury/vault', label: 'Treasury Vault' },
       { href: '/proof-of-execution', label: 'Proof of Execution' },
       { href: '/cdp-wallets', label: 'CDP Wallets' },
       { href: '/solvency', label: 'Solvency' },

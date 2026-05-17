@@ -11,6 +11,7 @@ import * as capInfraSchema from '../shared/capInfraSchema';
 import * as launchAttestationsSchema from '../shared/launchAttestationsSchema';
 import * as reserveAlertsSchema from '../shared/reserveAlertsSchema';
 import * as reserveSnapshotsSchema from '../shared/reserveSnapshotsSchema';
+import * as treasuryVaultSchema from '../shared/treasuryVaultSchema';
 import {
   index,
   pgTable,
@@ -39,6 +40,7 @@ const dbSchema = {
   ...launchAttestationsSchema,
   ...reserveAlertsSchema,
   ...reserveSnapshotsSchema,
+  ...treasuryVaultSchema,
 };
 
 function getPool(): Pool {

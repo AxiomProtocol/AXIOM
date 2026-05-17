@@ -486,6 +486,16 @@ export const NODE_ECONOMY_CONTRACTS = {
 } as const;
 
 // All contracts in a single object for easy access
+// ── Treasury Vault Stack (Task #530) ─────────────────────────────────────
+// Deployed on Arbitrum One. Addresses are populated after running
+// `npx hardhat run scripts/deploy-treasury-vault.ts --network arbitrum`.
+export const TREASURY_VAULT_CONTRACTS = {
+  AXIOM_TREASURY_VAULT:    process.env.AXIOM_TREASURY_VAULT_ADDRESS    ?? '',
+  AXIOM_STRATEGY_MANAGER:  process.env.AXIOM_STRATEGY_MANAGER_ADDRESS  ?? '',
+  AXIOM_AAVE_V3_STRATEGY:  process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS  ?? '',
+  AXIOM_CAMELOT_STRATEGY:  process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS  ?? '',
+} as const;
+
 export const ALL_CONTRACTS = {
   ...CORE_CONTRACTS,
   ...REAL_ESTATE_CONTRACTS,
@@ -504,7 +514,7 @@ export const ALL_CONTRACTS = {
   ...GOVERNANCE_CONTRACTS,
   ...EULER_LENDING_CONTRACTS,
   ...ERC7726_ORACLE_CONTRACTS,
-  ...NODE_ECONOMY_CONTRACTS
+  ...NODE_ECONOMY_CONTRACTS,
 } as const;
 
 // Deployer Address

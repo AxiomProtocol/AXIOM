@@ -58,7 +58,8 @@ export type PilotActionType =
   | 'ConfigurationChanged'
   | 'DocumentUploaded'
   | 'ReportGenerated'
-  | 'EulerEarnRebalance';
+  | 'EulerEarnRebalance'
+  | 'TreasuryVaultRebalance';
 
 export type PilotDecisionOutcome = 'APPROVED' | 'DENIED' | 'CONDITIONAL';
 
@@ -127,6 +128,7 @@ export const RISK_ACTION_CLASSIFICATION: Record<PilotActionType, 'HIGH' | 'MEDIU
   DocumentUploaded: 'LOW',
   ReportGenerated: 'LOW',
   EulerEarnRebalance: 'MEDIUM',
+  TreasuryVaultRebalance: 'HIGH',
 };
 
 export type ScoreBand = 'WEAK' | 'MODERATE' | 'STRONG' | 'EXCEPTIONAL';
