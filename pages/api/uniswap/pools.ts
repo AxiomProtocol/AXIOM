@@ -12,6 +12,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: 'Uniswap v3 Polygon pool data is temporarily unavailable.',
     });
   }
+  if (data.pools.length === 0) {
+    return res.status(503).json({
+      error: 'No pool data',
+      message: 'Uniswap v3 Polygon subgraph returned no pool data — subgraph or network failure.',
+    });
+  }
   res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
   return res.status(200).json(data);
 }

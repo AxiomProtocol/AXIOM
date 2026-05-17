@@ -4,26 +4,47 @@
  * Read-only Aftermath Finance pool data service — Sui.
  * Uses Aftermath public REST API. Null-on-failure error policy.
  * Cache: 60 s in-process.
+ *
+ * Filtering: Prioritises AXUSD-relevant pools (AXUSD, USDC, USDT, SUI stablecoin pairs).
+ * All other pools are included in a secondary bucket ordered by TVL.
  */
 
 const AFTERMATH_API_BASE = 'https://aftermath.finance/api';
 const CACHE_TTL = 60_000;
 
+const AXUSD_RELEVANCE_KEYWORDS = [
+  'axusd', 'usdc', 'usdt', 'buck', 'suiusd', 'stable',
+];
+
+function isAxusdRelevant(tokens: string[], name: string): boolean {
+  const combined = [...tokens, name].map(s => s.toLowerCase()).join(' ');
+  return AXUSD_RELEVANCE_KEYWORDS.some(kw => combined.includes(kw));
+}
+
 export interface AftermathPoolEntry {
   poolId: string;
   name: string;
+  /** USD-denominated TVL from Aftermath API */
   tvlUsd: number;
+  /** USD-denominated 24h volume from Aftermath API */
   volume24hUsd: number;
   feeAprPct: number;
   tokens: string[];
+  /** True if this pool contains AXUSD or a primary AXUSD collateral/pairing asset */
+  axusdRelevant: boolean;
 }
 
 export interface AftermathPools {
   protocol: 'aftermath';
   chain: 'sui';
   chainType: 'non_evm';
+  /** All returned pools, sorted by TVL (top 20) */
   pools: AftermathPoolEntry[];
+  /** Pools containing AXUSD or primary AXUSD-pairing assets */
+  axusdRelevantPools: AftermathPoolEntry[];
+  /** USD-denominated aggregate from Aftermath API */
   totalTvlUsd: number;
+  /** USD-denominated aggregate from Aftermath API */
   totalVolume24hUsd: number;
   fetchedAt: string;
 }
@@ -39,12 +60,13 @@ function normalizePool(raw: Record<string, unknown>, id: string): AftermathPoolE
       ? (coins as unknown[]).map(c => String(c).split('::').pop() ?? String(c))
       : [];
     return {
-      poolId: id,
+      poolId:       id,
       name,
       tvlUsd:       parseFloat(tvl.toFixed(2)),
       volume24hUsd: parseFloat(vol.toFixed(2)),
       feeAprPct:    parseFloat(fee.toFixed(4)),
       tokens,
+      axusdRelevant: isAxusdRelevant(tokens, name),
     };
   } catch {
     return null;
@@ -84,11 +106,14 @@ export async function getAftermathPools(): Promise<AftermathPools | null> {
     }
 
     const sorted = pools.sort((a, b) => b.tvlUsd - a.tvlUsd).slice(0, 20);
+    const axusdRelevantPools = sorted.filter(p => p.axusdRelevant);
+
     const result: AftermathPools = {
       protocol: 'aftermath',
       chain: 'sui',
       chainType: 'non_evm',
       pools: sorted,
+      axusdRelevantPools,
       totalTvlUsd:       sorted.reduce((s, p) => s + p.tvlUsd, 0),
       totalVolume24hUsd: sorted.reduce((s, p) => s + p.volume24hUsd, 0),
       fetchedAt: new Date().toISOString(),

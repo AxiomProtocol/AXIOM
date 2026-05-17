@@ -4,6 +4,15 @@
  * Read-only Benqi Finance market data service — Avalanche C-Chain.
  * Queries CToken contracts directly via Avalanche public RPC.
  * Cache: 60 s in-process. Null-on-failure error policy.
+ *
+ * Focus: USDC.e and AVAX markets are the primary AXUSD-context assets on Avalanche.
+ * USDC.e is the Avalanche-bridge USDC (primary stablecoin), and AVAX is the native
+ * collateral asset. All five monitored markets are included; axusdRelevant flags
+ * USDC.e and AVAX as the required focus pair.
+ *
+ * Implementation note: Uses direct ethers.js contract calls rather than
+ * @aave/contract-helpers (which targets Aave, not Benqi). Benqi exposes
+ * Compound-compatible CToken interfaces, which are best queried directly.
  */
 
 import { ethers } from 'ethers';
@@ -23,16 +32,13 @@ const CTOKEN_ABI = [
   'function underlying() view returns (address)',
 ];
 
-const ERC20_ABI = [
-  'function decimals() view returns (uint8)',
-  'function symbol() view returns (string)',
-];
-
 interface QiTokenConfig {
   address: string;
   label: string;
   underlyingDecimals: number;
   isNative?: boolean;
+  /** True = primary AXUSD-context asset (USDC.e for stablecoin, AVAX for collateral) */
+  axusdRelevant: boolean;
 }
 
 const QI_TOKENS: QiTokenConfig[] = [
@@ -40,27 +46,32 @@ const QI_TOKENS: QiTokenConfig[] = [
     address: '0xBEb5d47A3f720Ec0a390d04b4d41ED7d9688bC7F',
     label: 'USDC.e',
     underlyingDecimals: 6,
+    axusdRelevant: true,
   },
   {
     address: '0xc7198437980c041c805A1EDcbA50c1Ce5db95118',
     label: 'USDT.e',
     underlyingDecimals: 6,
+    axusdRelevant: false,
   },
   {
     address: '0x5C0401e81Bc07Ca70fAD469b0c89aE18A82eef96',
     label: 'AVAX',
     underlyingDecimals: 18,
     isNative: true,
+    axusdRelevant: true,
   },
   {
     address: '0xe194c4c5aC32a3C9ffDb358d9Bfd523a0B6d1568',
     label: 'WBTC.e',
     underlyingDecimals: 8,
+    axusdRelevant: false,
   },
   {
     address: '0x334AD834Cd4481BB02d09615E7c11a352914004D',
     label: 'WETH.e',
     underlyingDecimals: 18,
+    axusdRelevant: false,
   },
 ];
 
@@ -68,12 +79,17 @@ export interface BenqiMarketEntry {
   symbol: string;
   qiTokenAddress: string;
   underlyingDecimals: number;
+  /** Token units — NOT USD */
   totalSupplyUnderlying: number;
+  /** Token units — NOT USD */
   totalBorrowsUnderlying: number;
+  /** Token units — NOT USD */
   availableLiquidityUnderlying: number;
   utilizationPct: number;
   supplyApyPct: number;
   borrowApyPct: number;
+  /** True if this market is the primary AXUSD-context pair (USDC.e / AVAX) */
+  axusdRelevant: boolean;
 }
 
 export interface BenqiMarket {
@@ -81,6 +97,8 @@ export interface BenqiMarket {
   chain: 'avalanche';
   chainId: 43114;
   markets: BenqiMarketEntry[];
+  /** Markets flagged as AXUSD-relevant (USDC.e and AVAX) */
+  axusdRelevantMarkets: BenqiMarketEntry[];
   totalMarketsCount: number;
   fetchedAt: string;
 }
@@ -123,15 +141,16 @@ export async function getBenqiMarket(): Promise<BenqiMarket | null> {
             : 0;
 
           return {
-            symbol: cfg.label,
-            qiTokenAddress: cfg.address,
-            underlyingDecimals: cfg.underlyingDecimals,
-            totalSupplyUnderlying:      parseFloat(totalSupplyUnderlying.toFixed(4)),
-            totalBorrowsUnderlying:     parseFloat(totalBorrowsUnderlying.toFixed(4)),
-            availableLiquidityUnderlying: parseFloat(cashUnderlying.toFixed(4)),
-            utilizationPct:             parseFloat(utilization.toFixed(2)),
-            supplyApyPct:               parseFloat(rateToApy(BigInt(supplyRate)).toFixed(4)),
-            borrowApyPct:               parseFloat(rateToApy(BigInt(borrowRate)).toFixed(4)),
+            symbol:                        cfg.label,
+            qiTokenAddress:                cfg.address,
+            underlyingDecimals:            cfg.underlyingDecimals,
+            totalSupplyUnderlying:         parseFloat(totalSupplyUnderlying.toFixed(4)),
+            totalBorrowsUnderlying:        parseFloat(totalBorrowsUnderlying.toFixed(4)),
+            availableLiquidityUnderlying:  parseFloat(cashUnderlying.toFixed(4)),
+            utilizationPct:                parseFloat(utilization.toFixed(2)),
+            supplyApyPct:                  parseFloat(rateToApy(BigInt(supplyRate)).toFixed(4)),
+            borrowApyPct:                  parseFloat(rateToApy(BigInt(borrowRate)).toFixed(4)),
+            axusdRelevant:                 cfg.axusdRelevant,
           };
         } catch {
           return null;
@@ -145,6 +164,7 @@ export async function getBenqiMarket(): Promise<BenqiMarket | null> {
       chain: 'avalanche',
       chainId: 43114,
       markets,
+      axusdRelevantMarkets: markets.filter(m => m.axusdRelevant),
       totalMarketsCount: markets.length,
       fetchedAt: new Date().toISOString(),
     };
