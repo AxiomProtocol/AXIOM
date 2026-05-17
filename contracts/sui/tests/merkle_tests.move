@@ -1,6 +1,6 @@
 /// Axiom Protocol — Merkle Verification Unit Tests
 ///
-/// 10 tests (tests 1–10 of the ≥28 target):
+/// 11 tests (tests 1–11 of the ≥28 target):
 ///   - Single-leaf trees (empty proof)
 ///   - Two-leaf trees (sibling proof)
 ///   - Sorted-pair hash symmetry
@@ -158,5 +158,31 @@ module axiom::merkle_tests {
 
         // Must abort (expected_failure annotation)
         merkle::verify(leaf, proof, fake_root);
+    }
+
+    // ─── Test 11 ──────────────────────────────────────────────────────────────
+    // Three-leaf tree with odd-leaf duplication (right-padding) verifies correctly.
+    //
+    // Standard Merkle construction for an odd number of leaves duplicates the
+    // last leaf when building interior nodes: [A, B, C] → root = hash(hash(A,B), hash(C,C)).
+    // bytes_lte sort ensures hash_pair is symmetric (test_06), so hash(C,C) = hash(C,C).
+    #[test]
+    fun test_11_three_leaf_odd_duplication_verifies() {
+        let leaf_a = fill_32(0xAA);
+        let leaf_b = fill_32(0xBB);
+        let leaf_c = fill_32(0xCC);
+
+        // Level 1: interior nodes
+        let node_ab = merkle::hash_pair_for_test(leaf_a, leaf_b);
+        let node_cc = merkle::hash_pair_for_test(leaf_c, leaf_c); // odd duplication
+        // Root
+        let root = merkle::hash_pair_for_test(node_ab, node_cc);
+
+        // Prove leaf_c: proof = [leaf_c (sibling), node_ab (uncle)]
+        let mut proof = vector::empty<vector<u8>>();
+        vector::push_back(&mut proof, leaf_c);   // sibling at level 0 (duplicated)
+        vector::push_back(&mut proof, node_ab);  // sibling at level 1
+
+        assert!(merkle::verify(leaf_c, proof, root), 0);
     }
 }
