@@ -1,0 +1,1128 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AXIOM PROTOCOL
+WHITE PAPER
+Sovereign Digital-Physical Economy:
+A Governance-First Framework for Real-Asset-Anchored Wealth
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Version 1.0  |  2026  |  axiomprotocol.app
+
+DISCLAIMER
+This white paper is published for informational and educational
+purposes only. It does not constitute financial advice, legal advice,
+or an offer to sell securities in any jurisdiction. All yield rates
+referenced are variable and not guaranteed. No specific return is
+promised or implied. Token classification is subject to applicable
+law. Readers should conduct independent due diligence and consult
+their legal, tax, and financial advisors before engaging with any
+Axiom Protocol product or instrument.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TABLE OF CONTENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  I.    Abstract
+  II.   The Problem: Infrastructure That Was Never Built For You
+  III.  The Vision: A Sovereign Digital-Physical Economy
+  IV.   Protocol Architecture
+  V.    AXUSD — The Settlement Stablecoin
+  VI.   AXAU — The Gold Reserve Instrument
+  VII.  AXM — The Governance Token
+  VIII. The Axiom Treasury
+  IX.   The Land Pipeline
+  X.    The Wealth Practice
+  XI.   Lending, Yield, and Capital Products
+  XII.  DePIN Integration
+  XIII. Cross-Chain Strategy
+  XIV.  Compliance and Regulatory Framework
+  XV.   Technology Stack
+  XVI.  Tokenomics
+  XVII. Risk Disclosure
+  XVIII.Conclusion
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+I. ABSTRACT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Wealth creation in the modern era runs on infrastructure. Not
+ideas. Not intentions. Infrastructure — the rails, instruments,
+and institutions through which capital flows, compounds, and
+transfers across generations. That infrastructure has been
+deliberately and systematically built for a narrow slice of
+the world's population.
+
+Axiom Protocol is a blockchain-native infrastructure protocol
+that rewrites this dynamic — not through redistribution, but
+through access. We are constructing a sovereign digital-physical
+economy: a governed, modular, and institutionally-anchored protocol
+stack that connects programmable on-chain financial rails to
+real-world assets, community wealth mechanics, compliant lending
+facilities, and transparent treasury operations.
+
+The protocol is live on Arbitrum One and governed in real time
+by AXM token holders. Its core instruments — AXUSD, an ERC-3643
+compliant stablecoin, and AXAU, a PAXG-backed programmable gold
+reserve — anchor a broader ecosystem that includes a live land
+acquisition pipeline, community rotating credit (The Wealth
+Practice), a multi-strategy treasury secured by the Sentinel
+authorization engine, DePIN physical infrastructure integration,
+and a suite of Reg D 506(c) compliant lending and capital products.
+
+This paper describes how these layers work, how they connect
+to one another, and why the architecture is designed the way it is.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+II. THE PROBLEM: INFRASTRUCTURE THAT WAS NEVER BUILT FOR YOU
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2.1 The Wealth Infrastructure Gap
+
+The tools that generate and compound durable wealth — diversified
+real asset portfolios, gold-backed instruments, rotating credit
+facilities, institutional lending markets, and governed treasury
+management — have never been available to most people. Not because
+most people lack the intelligence or discipline to use them. Because
+the infrastructure was never built for them.
+
+This is not an accident. Financial infrastructure reflects the
+interests of those who build it. Institutions build tools for
+institutions. The result is a system where access to wealth
+creation compounds in one direction — toward those who already
+hold capital — and closes itself off from those who do not.
+
+Blockchain technology promised to change this. In many ways,
+it has succeeded in creating new primitives: permissionless
+lending, self-custody assets, transparent liquidity pools,
+and programmable settlement. But it has largely failed to
+connect those primitives to physical reality, build compliance
+infrastructure rather than avoid it, or create wealth mechanics
+that reflect community rather than just capital.
+
+2.2 The DeFi Gap
+
+Decentralized finance has created real access to financial
+primitives. But most DeFi protocols are optimized for those
+who already have crypto assets and technical literacy. They are
+not designed for the communities that need financial infrastructure
+most urgently. They do not connect to real estate, real land, or
+real community wealth practices. They treat regulatory compliance
+as an enemy rather than a design requirement. And they are governed,
+in most cases, by founder teams and early token holders whose
+interests may not align with those of the broader community.
+
+2.3 The Real Asset Promise, Mostly Unfulfilled
+
+The "real-world asset tokenization" narrative has been prominent
+in blockchain for years. But the actual delivery of accessible,
+community-governed, real-asset-backed instruments has lagged
+dramatically behind the narrative. Most "tokenized asset" projects
+are either institutional-only, theoretical, or structurally similar
+to the same closed-access systems they claim to be disrupting.
+
+Axiom Protocol is the answer to this gap — built from the ground up
+to be governed, real-asset-backed, compliance-aware, and accessible
+to the communities that have historically been shut out.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+III. THE VISION: A SOVEREIGN DIGITAL-PHYSICAL ECONOMY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3.1 What "Sovereign" Means Here
+
+Sovereignty is not about nationality or politics. In the context
+of Axiom Protocol, sovereignty means three specific things:
+
+  SELF-CUSTODY   Your assets are yours. AXAU lives in your wallet,
+                 not our custody account. AXUSD is transferred
+                 through your wallet, not through our bank account.
+                 Where technical constraints require custody —
+                 such as BitGo CaaS for treasury assets — it is
+                 institutional-grade, multi-party authorized, and
+                 disclosed transparently.
+
+  GOVERNANCE     No hidden admin keys. No founder multisig.
+                 Protocol parameters, capital allocation, and
+                 upgrade decisions are made by AXM holders
+                 through on-chain governance. The protocol
+                 serves its participants, not its builders.
+
+  REAL BACKING   The word "backed" is used precisely here.
+                 AXAU is backed by PAXG — a token that
+                 represents one troy ounce of physical gold.
+                 The land pipeline targets real properties
+                 and issues on-chain receipts for real
+                 acquisitions. This is not synthetic exposure
+                 or algorithmic backing.
+
+3.2 Digital-Physical Integration
+
+The "digital-physical" in our name describes a deliberate design
+choice: that the protocol must connect the digital economy to the
+physical world in ways that are meaningful and real — not just
+in marketing.
+
+  Digital:       On-chain settlement, programmable instruments,
+                 governance tokens, automated authorization,
+                 yield markets, identity compliance.
+
+  Physical:      Real estate properties, troy ounces of gold,
+                 DePIN nodes providing actual storage infrastructure,
+                 community rotating credit circles with real
+                 participants making real contributions.
+
+The integration between these layers — through oracle pricing,
+on-chain asset receipts, DePIN node registration, and community
+credit scoring — is what distinguishes Axiom Protocol from
+both traditional finance and from most DeFi projects.
+
+3.3 The Four Pillars
+
+Everything Axiom Protocol builds rests on four structural pillars:
+
+  PILLAR I — PROGRAMMABLE SETTLEMENT
+  AXUSD is the protocol's base settlement layer: a compliant,
+  yield-bearing stablecoin that can be used across the full
+  protocol stack — lending, savings, treasury operations,
+  community credit, and real asset settlement.
+
+  PILLAR II — HARD ASSET RESERVES
+  AXAU (gold) and KAG (silver) are programmable reserve
+  instruments that hold value outside the digital asset
+  ecosystem. They are redeemable for the physical assets
+  that back them, not just their dollar equivalent.
+
+  PILLAR III — REAL ASSET ONBOARDING
+  The land pipeline and DePIN integration create two pathways
+  for physical assets to enter the protocol's on-chain registry:
+  real estate through a structured acquisition and issuance
+  process, and digital infrastructure through DePIN node
+  registration and governance.
+
+  PILLAR IV — COMMUNITY WEALTH MECHANICS
+  The Wealth Practice formalizes rotating credit on-chain.
+  Community Credit extends credit access based on participation.
+  These systems are rooted in community traditions that
+  predate institutional finance — not invented by a protocol team.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IV. PROTOCOL ARCHITECTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4.1 Design Philosophy
+
+Axiom Protocol is designed as a modular system with a unified
+governance layer. Each module can operate independently but is
+designed to be composable with the others. The protocol does not
+require participants to use every layer — a community user can
+engage with the Wealth Practice without holding AXAU, and an
+allocator can hold AXAU without participating in the land pipeline.
+
+But the layers become more powerful when combined. Community credit
+earned through the Wealth Practice opens access to the lending fund.
+AXUSD earned through the savings layer can be deployed into Euler V2
+yield markets. AXM governance determines which land assets enter
+the registry. Every layer feeds the others.
+
+4.2 The capinfra Backend
+
+The protocol's infrastructure backbone is capinfra — a modular
+monolith that manages the asset registry, identity layer, policy
+engine, market data ingestion, and audit event recording. Settlement
+adapters route transactions through INTERNAL, STELLAR, PLAID, and
+EVM settlement paths depending on the nature of each operation.
+
+capinfra is not a public API. It is the internal coordination layer
+that ensures every on-chain action is recorded, every identity check
+is applied, and every policy parameter is enforced consistently.
+
+4.3 Smart Contract Architecture (Arbitrum One)
+
+The protocol's smart contract layer handles:
+
+  Token contracts:       AXUSD (ERC-20 + ERC-3643), AXM (ERC-20)
+  Treasury vault:        Multi-strategy ERC-4626 vault
+  StrategyManager:       Routes capital between Aave V3 and Camelot
+  Parity Stability Module: Maintains AXUSD peg integrity
+  Oracle layer:          ERC-7726 pricing | LandNAVOracle for land
+  Identity registry:     ERC-3643 on-chain identity enforcement
+  NFT instruments:       AxiomFounderBadge | AxiomParticipation
+                         | AxiomLandReceipt
+  Governance:            AXM staking, emissions, and voting registry
+
+4.4 Data Architecture
+
+  PostgreSQL + Drizzle ORM   Core relational database for asset
+                             registry, treasury events, audit trail,
+                             identity records, and allocation policy
+
+  MongoDB                    Analytics and time-series data
+
+  Redis                      Caching layer with in-memory fallback
+                             for zero-downtime resilience
+
+  Storacha (IPFS)            Decentralized storage for protocol
+  Google Cloud Storage       documents, property records, and NFT
+                             metadata
+
+4.5 Instrumentation Layer
+
+On every application cold start, an idempotent instrumentation
+process runs. It creates any missing database tables, indexes,
+sequences, and schema objects — ensuring that production always
+matches the protocol's current schema definition without
+requiring destructive migration scripts. This design choice
+eliminates an entire category of production deployment risk.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+V. AXUSD — THE SETTLEMENT STABLECOIN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5.1 The Design Choice: Compliance First
+
+When most stablecoin teams think about compliance, they think
+about legal disclaimers and off-chain processes that can be
+switched off if regulators look away. Axiom Protocol took a
+fundamentally different approach: encode compliance into the
+contract itself.
+
+AXUSD implements ERC-3643 — the T-REX standard for compliant
+digital securities and tokens. This means:
+
+  - Identity verification is enforced at the contract level,
+    not the application layer. An address that has not completed
+    KYC cannot receive AXUSD, full stop.
+  - Transfer restrictions are programmable and governed.
+    Compliance rules can be updated through governance votes,
+    not by a founder with an admin key.
+  - Identity expiry is monitored automatically. A daily cron
+    process checks for expiring KYC records and flags them
+    for renewal before they affect participant access.
+
+This architecture makes AXUSD genuinely compliance-ready for
+the regulatory environment that is emerging — not just the
+environment that existed when it was designed.
+
+5.2 The Parity Stability Module
+
+The PSM maintains AXUSD's peg through automated control layers
+that monitor collateral ratios, mint and burn dynamics, and
+reserve backing in real time. The Active Contract Verification
+System runs continuous integrity checks on PSM contracts and
+triggers alerts on any deviation from defined parameters.
+
+This is not a passive mechanism. The PSM is actively managed
+and monitored, with full audit trails of every intervention.
+
+5.3 Euler V2 Yield Integration
+
+AXUSD is integrated with Euler V2 lending markets on Arbitrum One.
+Participants who supply AXUSD earn variable yield determined by
+utilization rates in the lending pool. This yield is real and
+on-chain. It is also variable — utilization rates change with
+market conditions, and no yield figure is guaranteed.
+
+5.4 GENIUS Act Alignment
+
+AXUSD is designed to align with the principles of the GENIUS Act
+framework for payment stablecoin issuers. The protocol uses the
+phrase "designed to align with" deliberately — not "compliant with"
+— because legal compliance determinations require jurisdiction-specific
+legal analysis that each participant must conduct independently.
+
+5.5 Settlement Across the Protocol
+
+AXUSD is the common settlement currency across the Axiom stack:
+lending fund contributions, savings positions, community credit
+flows, treasury operations, and real asset settlement all
+denominate in AXUSD. This creates a coherent monetary layer
+across the entire protocol ecosystem.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VI. AXAU — THE GOLD RESERVE INSTRUMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+6.1 Why Gold
+
+Gold has been a store of value for over five thousand years.
+It is not correlated with most financial assets. It is not
+controlled by any central bank. It does not require counterparty
+trust to maintain its intrinsic properties. And it has historically
+served as a hedge against currency debasement and inflation —
+two forces that disproportionately affect communities with
+the least access to inflation-protected assets.
+
+For all of these reasons, gold belongs in any serious wealth
+infrastructure stack. AXAU is how it gets there, on-chain,
+in self-custody, accessible through Stripe or a Coinbase
+card swipe.
+
+6.2 How AXAU Works
+
+AXAU is backed by PAXG — the Paxos Gold token, where each
+unit represents one troy ounce of physical gold stored in
+LBMA-accredited vaults. PAXG itself is one of the most
+credible physical gold representations in digital markets.
+AXAU builds on that foundation, adding:
+
+  - Arbitrum One settlement (faster and cheaper than mainnet)
+  - ERC-7726 oracle pricing for accurate on-chain valuation
+  - LandNAVOracle integration for protocol-wide asset pricing
+  - Stripe and Coinbase Onramp fiat entry rails
+  - BitGo CaaS custody for treasury-held reserves
+
+6.3 The Redemption Design
+
+This is a critical design point: AXAU redemption returns PAXG,
+not USD. This is intentional. We do not want to add a fiat
+conversion step that introduces counterparty risk, banking
+dependency, and regulatory friction at the moment a participant
+wants to realize the value of their gold holding.
+
+Returning PAXG means your gold stays programmable. You received
+a digital representation of physical gold. You can redeem it
+for a digital representation of physical gold that you can
+then hold, trade, or convert on your own terms.
+
+6.4 Fiat Entry: What Is and Is Not Live
+
+The AXAU launch is a crypto-native, Stripe and Coinbase fiat
+entry launch. The following are active:
+
+  ACTIVE:    Stripe (card/payment), Coinbase Onramp (card-to-crypto),
+             Arbitrum One settlement, BitGo CaaS custody
+
+  DEFERRED:  ACH transfers, wire transfers, virtual bank accounts,
+             direct deposit, rent collection, payroll, fiat
+             redemption to bank accounts
+
+This is not a limitation. It is a deliberate sequencing decision.
+The crypto-native launch proves the settlement infrastructure
+before adding the complexity of traditional banking rails.
+
+6.5 KAG — Silver Reserve
+
+KAG is the silver reserve instrument, positioned as the natural
+pair to AXAU in the protocol's hard asset reserve layer. It
+follows the same structural architecture with silver as the
+physical reference asset, and is listed as a first-class
+instrument in the protocol stack.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VII. AXM — THE GOVERNANCE TOKEN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+7.1 What Governance Actually Means Here
+
+Governance is one of the most overused words in blockchain. In
+most protocols, "governance" means a token holder can submit
+proposals that a core team then chooses whether to implement.
+In Axiom Protocol, governance means AXM holders actually control
+the protocol — structurally, not just rhetorically.
+
+There are no admin keys. There are no founder override mechanisms.
+Protocol parameters, treasury allocation policy, asset onboarding
+decisions, bridge allowlists, and upgrade authorizations all
+require on-chain AXM governance votes. If the governance community
+doesn't approve it, it doesn't happen.
+
+7.2 What AXM Holders Govern
+
+  TREASURY POLICY         Target allocation percentages per bucket,
+                          rebalancing triggers, strategy parameters
+
+  ASSET ONBOARDING        Which land properties enter the registry,
+                          which DePIN nodes are authorized, which
+                          commodities are added to the protocol stack
+
+  PROTOCOL PARAMETERS     Fee structures, yield distribution,
+                          PSM parameters, identity requirements
+
+  EMISSIONS SCHEDULES     AXM staking yield rates, lockup periods,
+                          distribution to protocol contributors
+
+  BRIDGE ALLOWLIST        Which bridge contracts are authorized
+                          for cross-chain asset movement
+
+  UPGRADE AUTHORIZATION   Any structural contract upgrade requires
+                          a multi-party governance vote — no single
+                          actor can unilaterally upgrade the protocol
+
+7.3 Staking and Participation Lockup
+
+AXM holders can participate in "participation lockup" — the
+protocol's term for staking — to earn variable yield from
+protocol emissions while signaling long-term alignment.
+Lockup parameters are governed by AXM holders themselves.
+No fixed rate is promised. Yield is variable and emission-dependent.
+
+7.4 The L3 Migration Path
+
+AXM is currently on Arbitrum One. The planned migration to
+Universe Blockchain — an Arbitrum Orbit L3 — will enable
+higher governance throughput, lower transaction costs, and
+protocol-native cross-chain interoperability. The migration
+requires AXM governance authorization and will be executed
+with full continuity guarantees for all existing positions.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VIII. THE AXIOM TREASURY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+8.1 A Treasury That Actually Works
+
+The Axiom Treasury is not a promise of a treasury. It is a
+deployed, operational, multi-strategy vault on Arbitrum One —
+routing capital through Aave V3 lending and Camelot liquidity
+strategies, with every movement gated through the Sentinel
+authorization system and every event recorded in a permanent
+on-chain and database audit trail.
+
+Deployed contract addresses:
+
+  Treasury Vault:      0x0d04742A8b5A8e3351B9273e585E980f6e0F46F8
+  Strategy Manager:    0x22aAB6892cC0486d42d011BeB19B69143A05e72B
+  Aave V3 Strategy:    0xf01456B53546031568E83726A9F9C0A8ce5c68C2
+  Camelot Strategy:    0xa82d47eA0c82B4c7E6A4b3BaFC703706407E3f70
+  AXUSD:               0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7
+
+8.2 Axiom Sentinel
+
+Every capital movement through the Axiom Treasury is gated by
+Sentinel — the protocol's capital risk and authorization engine.
+
+The process is deliberately two-step:
+
+  STEP 1   Sentinel evaluates current market conditions, treasury
+           health, and allocation parameters. If conditions pass,
+           it issues a cryptographically signed, 5-minute
+           authorization token. This token is non-transferable
+           and time-bound.
+
+  STEP 2   The authorization token is presented to execute the
+           on-chain rebalance. No valid token means no execution.
+           No exceptions.
+
+Authorization nonces are persisted in the database to prevent
+replay attacks across server instances. The system is designed
+to fail safely — if Sentinel cannot evaluate conditions, no
+capital moves.
+
+8.3 MIRDT Capital Intelligence Terminal
+
+The MIRDT Terminal is the protocol's macro-regime detection and
+capital intelligence system. It combines the Adaptive Metrics
+Engine (AME) — a real-time allocation signal processor — with
+an AI Oracle powered by Google Gemini for narrative-aware market
+interpretation. MIRDT outputs inform Sentinel evaluation but
+do not override governance-authorized policy parameters.
+
+Think of MIRDT as the protocol's strategic intelligence layer
+and Sentinel as its authorization layer. Strategy flows from
+intelligence. Authorization enforces strategy. Capital moves
+only when both are satisfied.
+
+8.4 BitGo CaaS Custody
+
+Treasury assets are held in BitGo CaaS — institutional-grade
+custody with multi-party authorization required for any asset
+movement. No single key can unilaterally access treasury funds.
+This is the same custody infrastructure used by major institutions
+and exchanges. We use it because protocol participants deserve
+the same level of custodial protection that institutions receive.
+
+8.5 Axiom Rail
+
+Axiom Rail is a Stellar SEP-compliant payment infrastructure
+layer that enables cross-border settlement for protocol
+transactions. For participants in jurisdictions where
+Arbitrum One settlement creates friction, Axiom Rail provides
+an alternative settlement path that maintains full audit trails
+and protocol connectivity.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IX. THE LAND PIPELINE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+9.1 Land as a Protocol Layer
+
+Real estate is the world's largest asset class. It is also one
+of the most powerful mechanisms for intergenerational wealth
+transfer. And it is almost entirely inaccessible to communities
+without existing capital, credit history, or institutional
+relationships.
+
+Axiom Protocol does not promise to solve real estate access through
+a single product. It is building the infrastructure layer — the
+pipeline, the underwriting tools, the on-chain issuance mechanism,
+and the governance framework — through which real property can be
+identified, acquired, recorded, and governed on-chain.
+
+9.2 The Six-Stage Pipeline
+
+  STAGE 1 — IDENTIFICATION
+  The Distressed Property Feed surfaces acquisition opportunities
+  through data-driven analysis of market conditions, property
+  distress signals, and strategic alignment with the protocol's
+  land acquisition framework.
+
+  STAGE 2 — ANALYSIS
+  Every property that passes Stage 1 is analyzed through the
+  Property Analysis Tool, which integrates RentCast API for
+  rental market comparables and Walk Score API for location
+  quality scoring. AI-powered document ingestion (Gemini)
+  processes property records, title documents, and inspection
+  reports into structured data.
+
+  STAGE 3 — UNDERWRITING
+  The IVCEE (Investment Value and Capital Efficiency Engine)
+  produces formal underwriting memos for each property.
+  The AI Acquisition Memo Builder generates structured investment
+  summaries formatted for governance review.
+
+  STAGE 4 — GOVERNANCE AUTHORIZATION
+  No capital is committed to a property without an AXM
+  governance vote. The governance community reviews the
+  IVCEE underwriting memo, the AI acquisition summary, and
+  the Property Analysis output before voting. If the vote
+  fails, the property does not proceed. Governance is not
+  a rubber stamp — it is a structural gate.
+
+  STAGE 5 — FIELD CAPTURE (LAYER 5)
+  Upon governance authorization, the Field Capture System
+  initiates structured on-site data collection: photography,
+  condition assessments, utility records, environmental data,
+  and neighborhood context. This data is linked to the
+  property's record in the protocol's asset registry.
+
+  STAGE 6 — ON-CHAIN ISSUANCE
+  Upon acquisition, an AxiomLandReceipt NFT is issued on
+  Arbitrum One. This NFT is the on-chain record of the
+  acquired property — linked to the asset registry, priced
+  through LandNAVOracle, and permanently associated with
+  the acquisition documentation.
+
+9.3 Full Lifecycle Tracking
+
+The protocol tracks every acquired property through its full
+lifecycle:
+
+  Acquisition        Date, price, strategy type, condition grade
+  Rehabilitation     Scope, cost, timeline, contractor records
+  Disposition        Sale price, outcome vs. underwriting model
+  Variance Analysis  Actual vs. projected return, deviation analysis
+  Lessons Learned    Governance-facing post-mortem for each asset
+
+This creates a permanent, auditable, and improving record of
+real asset operations — one that makes every subsequent acquisition
+more informed than the last.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+X. THE WEALTH PRACTICE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+10.1 An Ancient System With Modern Infrastructure
+
+Across cultures and continents, communities have used rotating
+savings and credit associations to pool capital and provide
+lump-sum access to funds that no individual member could
+accumulate alone. In West Africa, it is called "susu." In the
+Caribbean, "partner." In East Asia, "hui." In Latin America,
+"tanda." In Ethiopia, "iqub." In India, "chit fund."
+
+These systems share a fundamental architecture: a group of trusted
+members contribute a fixed amount on a regular schedule, and each
+cycle one member receives the full pool. The rotation continues
+until every member has received. The system requires no credit
+score, no collateral, no bank account, and no institutional
+intermediary. It requires community trust — which many communities
+have in abundance.
+
+Axiom Protocol's Wealth Practice is not an attempt to reinvent
+this system. It is an attempt to formalize it on infrastructure
+that eliminates the limitations of the informal version — without
+destroying the community logic that makes it work.
+
+10.2 What the On-Chain Version Enables
+
+When rotating credit operates entirely on trust and handshake
+agreements, several limitations emerge:
+  - It cannot scale beyond the trust radius of a single community
+  - It generates no formal credit history that benefits members
+    in other financial contexts
+  - Disputes have no formal resolution mechanism
+  - Members who move or disconnect from the community lose access
+
+The on-chain version addresses each of these:
+
+  SCALE         Groups can form and operate without geographic
+                proximity. Protocol rules enforce the mechanics.
+
+  CREDIT RECORD Participation history is permanently recorded
+                on-chain and used to generate Community Credit
+                scores that unlock protocol lending access.
+
+  DISPUTE RESOLUTION  Protocol rules are enforced by automated
+                      control layers, not by group consensus alone.
+
+  PORTABILITY   Membership and credit history persist on-chain
+                and are not lost when members move or change
+                their social context.
+
+10.3 Connection to the Protocol Ecosystem
+
+The Wealth Practice is not a standalone product. It is a gateway
+into the full Axiom Protocol ecosystem:
+
+  COMMUNITY CREDIT     Participation history generates credit
+                       scores that unlock protocol lending access
+                       without requiring traditional creditworthiness
+
+  GOVERNANCE ACCESS    Active Wealth Practice participants gain
+                       pathways to AXM governance participation
+
+  SAVINGS INTEGRATION  Members can direct Wealth Practice receipts
+                       into AXUSD savings positions automatically
+
+  LAND PIPELINE ACCESS Future governance votes may allocate land
+                       pipeline capacity to Wealth Practice groups
+                       as a community wealth building mechanism
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+XI. LENDING, YIELD, AND CAPITAL PRODUCTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+11.1 The Lending Fund
+
+The Axiom Lending Fund is a private placement vehicle structured
+under SEC Regulation D, Rule 506(c). Under 506(c), general
+solicitation is permitted — the protocol can publicly discuss
+the fund's existence — but participation is restricted to
+verified accredited investors.
+
+The fund deploys capital into Euler V2 AXUSD Lending Markets
+on Arbitrum One. Yield is variable and determined by utilization
+rates. This is not a promise of any specific return.
+
+Participants must complete identity verification before accessing
+the fund. This is not bureaucratic friction — it is the legal
+requirement for 506(c) participation, and the protocol's ERC-3643
+identity infrastructure makes it significantly less friction than
+traditional private placement processes.
+
+11.2 Savings
+
+On-chain savings positions connected to the AXUSD yield
+infrastructure. Variable rate. The savings product is designed
+for protocol participants who want exposure to AXUSD yield
+without the accredited investor requirements of the lending fund.
+
+11.3 Community Credit
+
+Community Credit is a protocol-native credit facility that uses
+Wealth Practice participation history as its primary credit signal.
+This is a deliberate design choice: we want to extend credit access
+based on demonstrated community participation and reliability —
+not based on the credit bureau scores that encode historical
+financial exclusion.
+
+Participants with strong Wealth Practice participation records
+can access Community Credit without traditional collateral
+requirements. The credit facility operates within the AXUSD
+settlement layer.
+
+11.4 The Syndication Module
+
+The Syndication Module enables SEC Reg D 506(c) compliant capital
+raises for real estate and infrastructure investments that connect
+to the protocol's land pipeline and asset registry. The Investor
+Portal provides verified accredited investors with structured
+access to deal documentation, underwriting summaries, and
+participation mechanics.
+
+11.5 Earn AXUSD
+
+The Earn AXUSD layer is a bootstrap yield program for early AXUSD
+allocators, designed to incentivize initial liquidity in the AXUSD
+ecosystem. Yield is variable and governed by the emissions schedule
+approved through AXM governance.
+
+All yield products referenced in this section carry variable rates.
+No return is guaranteed. Participants should read all applicable
+disclosures before participating.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+XII. DEPIN INTEGRATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+12.1 Physical Infrastructure as a Protocol Asset Class
+
+The "digital-physical" vision of Axiom Protocol extends beyond
+real estate. Just as land can be acquired, documented, and governed
+on-chain, so can digital physical infrastructure — the storage
+nodes, compute resources, and connectivity infrastructure that
+underpin the digital economy.
+
+Decentralized Physical Infrastructure Networks (DePIN) represent
+the application of blockchain governance to physical infrastructure
+ownership. Participants who operate infrastructure nodes earn
+protocol rewards for providing real services — not for holding
+tokens passively.
+
+12.2 DeNet Integration
+
+Axiom Protocol's first DePIN integration is with DeNet — a
+decentralized storage network where participants provide storage
+capacity to the network and earn in return. The integration:
+
+  - Allows protocol participants to register DeNet nodes as
+    assets in the Axiom Protocol asset registry
+  - Connects node performance data to the protocol's
+    analytics layer
+  - Enables governance votes on DePIN infrastructure policy
+  - Creates a pathway for DePIN rewards to flow into
+    AXUSD-denominated protocol positions
+
+12.3 Why DePIN Belongs in This Stack
+
+The Wealth Practice gives communities access to credit. The land
+pipeline gives communities access to real estate. DePIN gives
+communities access to ownership of the infrastructure layer
+of the digital economy. These are not separate ideas — they are
+the same idea applied to different asset classes.
+
+A community that owns land, holds gold reserves, participates in
+governed lending markets, and operates digital infrastructure
+nodes is not dependent on any single institution or market.
+That is what sovereignty looks like in practice.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+XIII. CROSS-CHAIN STRATEGY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+13.1 Arbitrum One: Today's Home
+
+All production infrastructure operates on Arbitrum One. The choice
+of Arbitrum One reflects a deliberate tradeoff: EVM compatibility
+for maximum tooling and integration support, an established DeFi
+ecosystem (Aave V3, Camelot, Euler V2), and institutional
+familiarity for allocator-facing products.
+
+13.2 Universe Blockchain (L3): Tomorrow's Home
+
+Universe Blockchain is an Arbitrum Orbit L3 planned as the
+protocol's long-term home. An L3 built on Arbitrum's stack provides:
+
+  - Protocol-native transaction fee structure
+    (fees can be denominated in AXUSD)
+  - Higher throughput for governance and settlement operations
+  - Custom precompiles for identity and compliance functions
+  - Reduced bridging surface area and attack vectors
+
+The migration to Universe Blockchain will be authorized by AXM
+governance and executed with full continuity for all participant
+positions. No position will be lost or stranded in the migration.
+
+13.3 Sui Blockchain: Community Layer
+
+Axiom Protocol is building a community rewards claim layer on
+the Sui blockchain, structurally separate from the core
+financial infrastructure. This layer issues AXIOM_MAINNET_CLAIM
+tokens — community coordination instruments with no monetary
+value, not backed by any protocol reserve, and not AXUSD, AXAU,
+AXM, SEED, or KAG.
+
+The Sui layer uses a Merkle-based claim architecture with:
+  - MAX_PROOF_DEPTH enforcement (depth 20, supporting 1M+ recipients)
+  - GuardedTreasury supply cap (1,000,000,000,000,000 units maximum)
+  - On-chain proof verification for all claims
+
+13.4 Bridge Governance
+
+Cross-chain asset movements are governed by the Bridge Allowlist —
+an on-chain registry of authorized bridge contracts and asset
+routes. No asset can bridge through an unauthorized contract.
+Allowlist updates require AXM governance votes, preventing any
+unauthorized cross-chain exposure.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+XIV. COMPLIANCE AND REGULATORY FRAMEWORK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+14.1 Our Approach to Compliance
+
+Compliance is not a legal department problem at Axiom Protocol.
+It is an architecture problem, and we solve it at the architecture
+level.
+
+ERC-3643 identity enforcement is in the AXUSD contract — not in
+a terms-of-service document. Multi-party authorization is in the
+BitGo CaaS custody setup — not in a policy memo. Bridge allowlists
+are in governance — not in a founder's discretion.
+
+When compliance is built into the structure, it cannot be
+accidentally removed, conveniently forgotten under competitive
+pressure, or overridden by a bad actor with admin access.
+
+14.2 The Glossary Standard
+
+Axiom Protocol maintains a canonical glossary (lib/glossary.ts)
+that defines approved terms, forbidden phrases, and institutional
+vocabulary for all allocator-facing communication. This is
+enforced across the protocol's interface, documentation, and
+content.
+
+  APPROVED INSTITUTIONAL VOCABULARY:
+    "automated control layers"       not "smart contracts"
+    "multi-party authorization"      not "multi-sig"
+    "on-chain financial rails"       not "DeFi"
+    "asset onboarding/issuance"      not "tokenization"
+    "participation lockup"           not "staking"
+
+Technical terms are available in the protocol glossary at
+/disclosure for participants who want the precise definitions.
+
+14.3 Forbidden Positioning
+
+The protocol maintains strict prohibitions on:
+  - Absolutist market claims ("only platform," "the standard")
+  - Unqualified physical asset claims without evidence
+  - Wealth outcome promises of any kind
+  - Fixed APY claims (all yield is described as variable)
+  - Definitive legal conclusions about token classification
+  - GENIUS Act "compliance" claims (only "alignment" language used)
+
+14.4 SEC Reg D 506(c)
+
+The Lending Fund and Syndication Module operate under SEC
+Regulation D, Rule 506(c). General solicitation is permitted.
+Participation is restricted to verified accredited investors.
+No registration statement has been filed with the SEC. This
+is not an offer to sell securities in any jurisdiction where
+such an offer would be unlawful without registration.
+
+14.5 GENIUS Act Framework
+
+AXUSD is designed to align with the principles of the GENIUS
+Act framework for payment stablecoin issuers, including:
+  - Reserve backing and transparency requirements
+  - Redemption at par value on demand
+  - Prohibition on algorithmic backing mechanisms
+  - Regulatory reporting principles
+
+"Designed to align with" means the protocol's architecture
+reflects these principles. It does not mean the protocol has
+received a regulatory determination of compliance.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+XV. TECHNOLOGY STACK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BLOCKCHAIN
+  Primary Network:     Arbitrum One (L2)
+  L3 Roadmap:          Universe Blockchain (Arbitrum Orbit)
+  Community Layer:     Sui Blockchain (claim campaigns)
+  Contract Framework:  Hardhat | OpenZeppelin | @onchain-id/solidity
+  Token Standards:     ERC-20, ERC-3643, ERC-4626, ERC-7726, ERC-721
+  Libraries:           Ethers.js, viem, wagmi
+
+CUSTODY AND SETTLEMENT
+  Institutional:       BitGo CaaS (REST API, multi-party auth)
+  Cross-border:        Axiom Rail (Stellar SEP-compliant)
+  Fiat Entry:          Stripe Checkout | Coinbase Onramp
+
+IDENTITY AND AUTH
+  On-chain:            ERC-3643 identity registry
+  Application:         Auth0 (@auth0/nextjs-auth0 v3) + SIWE
+  KYC Enforcement:     Automated through identity contract layer
+
+DATA AND STORAGE
+  Primary Database:    PostgreSQL + Neon Database + Drizzle ORM
+  Analytics:           MongoDB
+  Cache:               Redis (with in-memory fallback)
+  Decentralized:       Storacha (IPFS/Web3.Storage)
+  Cloud:               Google Cloud Storage
+
+AI AND INTELLIGENCE
+  LLM:                 Google Gemini AI
+  Protocol AI:         MIRDT Terminal | AME Oracle
+  Document AI:         AI Acquisition Memo Builder
+
+FRONTEND
+  Framework:           Next.js (pages router)
+  Styling:             Tailwind CSS (Design Law system)
+  Wallet:              MetaMask SDK | Wagmi | Reown AppKit
+
+EXTERNAL DATA
+  Market Data:         Alpha Vantage | CoinGecko
+  Property Data:       RentCast API | Walk Score API
+  RPC:                 Alchemy API
+  Comms:               Resend (email) | ElevenLabs (TTS)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+XVI. TOKENOMICS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NOTE: Specific tokenomics figures are governed by AXM holders
+and subject to governance votes. The following describes
+structural design intent, not fixed figures.
+
+AXM — GOVERNANCE TOKEN
+  Function:            On-chain governance and protocol direction
+  Network:             Arbitrum One → Universe Blockchain (L3)
+  Emission Control:    Governed by on-chain emissions registry
+  Participation:       Participation lockup with variable yield
+  Utility:             Governance voting | Protocol access
+                       | Emissions participation
+
+AXUSD — SETTLEMENT STABLECOIN
+  Function:            Protocol-wide settlement currency
+  Backing:             Collateral-based, PSM-governed
+  Yield:               Variable (Euler V2 utilization-based)
+  Compliance:          ERC-3643 identity enforcement
+  Peg Mechanism:       Parity Stability Module + oracle monitoring
+
+AXAU — GOLD RESERVE
+  Function:            Programmable gold reserve instrument
+  Backing:             PAXG (1 troy oz physical gold per unit)
+  Redemption:          Returns PAXG (not USD)
+  Oracle:              ERC-7726 | LandNAVOracle
+  Entry:               Stripe | Coinbase Onramp
+
+KAG — SILVER RESERVE
+  Function:            Paired hard asset reserve instrument
+  Backing:             Physical silver reference asset
+  Structure:           Mirrors AXAU architecture
+
+COMMUNITY INSTRUMENTS
+  AXIOM_MAINNET_CLAIM  Community rewards token on Sui
+                       No monetary value. Not protocol-backed.
+                       Max supply: 1,000,000,000,000,000 units
+
+  AxiomFounderBadge    NFT — governance access and recognition
+  AxiomParticipation   NFT — proof of protocol participation
+  AxiomLandReceipt     NFT — on-chain real estate ownership record
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+XVII. RISK DISCLOSURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This is not an exhaustive risk list. Independent due diligence,
+legal advice, and financial advice are required before participating
+in any Axiom Protocol product or instrument.
+
+SMART CONTRACT RISK
+Automated control layers may contain bugs, vulnerabilities, or
+logic errors. The Sui community layer has deferred external audit.
+Core Arbitrum contracts are reviewed internally. No contract is
+fully risk-free. Contract exploits can result in permanent loss
+of funds with no recovery mechanism.
+
+REGULATORY RISK
+Digital asset regulation is evolving rapidly and unpredictably.
+Changes in law, regulatory interpretation, or enforcement action
+may affect protocol operations, product availability, token
+classification, or participant access without warning.
+
+ORACLE RISK
+Asset pricing depends on ERC-7726 and LandNAVOracle. Oracle
+failures, manipulation, or stale data could affect collateral
+valuations, liquidations, and protocol operations.
+
+LIQUIDITY RISK
+AXUSD, AXAU, and AXM may have limited secondary market liquidity.
+Participants may be unable to exit positions at expected prices
+or within expected timeframes.
+
+REAL ASSET RISK
+Real estate values are subject to market cycles, regulatory
+changes, environmental conditions, and operator execution.
+Land pipeline projections are not guarantees of acquisition,
+return, or timeline.
+
+VARIABLE YIELD RISK
+All protocol yield rates are variable. No rate is fixed or
+guaranteed. Utilization rates, market conditions, and governance
+decisions all affect realized yield. Past yield rates are not
+indicative of future rates.
+
+CUSTODY RISK
+BitGo CaaS provides institutional-grade custody but is not
+a guarantee against loss. Participants using self-custody wallets
+bear full responsibility for private key management.
+
+COUNTERPARTY RISK
+Protocol integrations introduce counterparty dependencies.
+Failure, insolvency, or regulatory action affecting Aave,
+Euler, Camelot, Coinbase, Stripe, BitGo, or DeNet could
+affect protocol operations.
+
+GOVERNANCE RISK
+Governance decisions made by AXM holders may not align with
+the interests of all participants. Governance attacks, voter
+apathy, or capture by a concentrated holder group could result
+in adverse protocol changes.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+XVIII. CONCLUSION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+There is a version of this conclusion that promises you the world.
+That talks about disrupting finance, democratizing wealth, and
+changing everything. We are not writing that version.
+
+We are writing this version instead: Axiom Protocol is building
+infrastructure that works. A treasury that is live and operational.
+A stablecoin with compliance built into its contract, not its
+terms of service. A gold reserve you can hold in your own wallet.
+A land pipeline with six structured stages and governance gates
+at the critical decisions. A community credit system rooted in
+cultural practices that have survived for centuries. A governance
+token that actually controls the protocol.
+
+None of this is speculative. All of it is present tense.
+
+The people who need institutional-grade financial infrastructure
+most urgently have been told for decades that it is coming.
+Axiom Protocol is building it now — in public, on Arbitrum One,
+governed by AXM holders, backed by real assets, and connected
+to the community wealth traditions that have always existed
+outside institutional finance.
+
+Gold. Land. Credit. Governance. Infrastructure.
+
+This is the sovereign digital-physical economy.
+
+axiomprotocol.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AXIOM PROTOCOL WHITE PAPER v1.0  |  2026
+axiomprotocol.app
+
+This document is for informational purposes only. Not financial
+advice. Not legal advice. Not an offer to sell securities.
+All yield rates are variable and not guaranteed. Token
+classification is subject to applicable law in each jurisdiction.
+Participants must conduct independent due diligence and consult
+appropriate advisors before participating in any protocol product.
+
+© 2026 Axiom Protocol. Sovereign Digital-Physical Economy.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

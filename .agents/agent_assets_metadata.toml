@@ -1013,3 +1013,15 @@ id = "jxTrb50j5aPnAt0XirnO7"
 uri = "file://.local/reserve-audit.md"
 type = "text"
 title = "Reserve Audit — Mismatch Matrix, Canonical Model & 7-Phase Plan"
+
+[[outputs]]
+id = "F8QjbjbAuFZzBZNf0-4T0"
+uri = "file://public/documents/axiom-executive-summary.txt"
+type = "text"
+title = "Axiom Protocol — Executive Summary"
+
+[[outputs]]
+id = "hqb4fuealD4EVOJiNQdLQ"
+uri = "file://public/documents/axiom-white-paper.txt"
+type = "text"
+title = "Axiom Protocol — White Paper v1.0"
