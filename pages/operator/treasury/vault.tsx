@@ -1,6 +1,6 @@
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { OperatorConsoleLayout } from '../../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../../lib/capinfra/operatorAuth';
 import { getVaultSummary, getVaultEventHistory, getIncomeSummary } from '../../../lib/treasury/vault/vaultService';
@@ -71,6 +71,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       aumUsdc: 0,
       idleUsdc: 0,
       deployedUsdc: 0,
+      axusdIdleUsdc: 0,
+      axusdDeployedUsdc: 0,
       aavePosition: { address: '', name: 'Not deployed', currentValueUsdc: 0, principalUsdc: 0, unrealizedYieldUsdc: 0, allocationPct: 0, lastRebalancedAt: null, apyEstimatePct: null },
       camelotPosition: { address: '', name: 'Not deployed', currentValueUsdc: 0, principalUsdc: 0, unrealizedYieldUsdc: 0, allocationPct: 0, lastRebalancedAt: null, apyEstimatePct: null },
       blendedApyEstimatePct: null,
@@ -117,6 +119,108 @@ interface SentinelAuth {
   token: string;
   expiry: number;
   decision: { plainLanguage: string; aaveApyPct: number | null; camelotApyPct: number | null; spreadBps: number | null };
+}
+
+// ── Deposit Record Form ────────────────────────────────────────────────────────
+// Allows vault operators to log a completed on-chain deposit to the audit trail.
+function DepositRecordForm() {
+  const [asset,  setAsset]  = useState<'USDC' | 'AXUSD'>('USDC');
+  const [amount, setAmount] = useState('');
+  const [txHash, setTxHash] = useState('');
+  const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [busy,   setBusy]   = useState(false);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus(null);
+    const amountNum = parseFloat(amount);
+    if (!isFinite(amountNum) || amountNum <= 0) {
+      setStatus({ ok: false, msg: 'Amount must be a positive number.' });
+      return;
+    }
+    if (!/^0x[0-9a-fA-F]{64}$/.test(txHash)) {
+      setStatus({ ok: false, msg: 'Transaction hash must be a 0x-prefixed 64-hex-char string.' });
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch('/api/treasury/vault/record-deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ asset, amountUsdc: amountNum, txHash }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setStatus({ ok: true, msg: `Deposit recorded (event ID ${data.id}). Refresh to see it in the audit log.` });
+        setAmount('');
+        setTxHash('');
+      } else {
+        setStatus({ ok: false, msg: data.error ?? 'Failed to record deposit.' });
+      }
+    } catch {
+      setStatus({ ok: false, msg: 'Network error — deposit not recorded.' });
+    } finally {
+      setBusy(false);
+    }
+  }, [asset, amount, txHash]);
+
+  return (
+    <form onSubmit={handleSubmit} className="border border-dl-border p-4 max-w-2xl space-y-4 mb-4">
+      <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Record On-Chain Deposit</p>
+      <p className="text-xs text-dl-gray">
+        After executing the on-chain deposit transaction, enter the details below to link it to the vault audit log.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="space-y-1">
+          <label className="text-xs font-mono text-dl-gray uppercase">Asset</label>
+          <select
+            value={asset}
+            onChange={e => setAsset(e.target.value as 'USDC' | 'AXUSD')}
+            className="w-full border border-dl-border px-2 py-1.5 text-xs font-mono text-dl-navy bg-white"
+          >
+            <option value="USDC">USDC</option>
+            <option value="AXUSD">AXUSD</option>
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-mono text-dl-gray uppercase">Amount (USD)</label>
+          <input
+            type="number"
+            min="0"
+            step="any"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            placeholder="e.g. 10000"
+            className="w-full border border-dl-border px-2 py-1.5 text-xs font-mono text-dl-navy"
+          />
+        </div>
+        <div className="space-y-1 sm:col-span-1">
+          <label className="text-xs font-mono text-dl-gray uppercase">Tx Hash</label>
+          <input
+            type="text"
+            value={txHash}
+            onChange={e => setTxHash(e.target.value.trim())}
+            placeholder="0x..."
+            className="w-full border border-dl-border px-2 py-1.5 text-xs font-mono text-dl-navy"
+          />
+        </div>
+      </div>
+      <div className="flex items-center gap-4">
+        <button
+          type="submit"
+          disabled={busy}
+          className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide bg-dl-navy text-white disabled:opacity-50"
+        >
+          {busy ? 'Recording…' : 'Record Deposit'}
+        </button>
+        {status && (
+          <p className={`text-xs font-mono ${status.ok ? 'text-dl-forest' : 'text-red-600'}`}>
+            {status.msg}
+          </p>
+        )}
+      </div>
+    </form>
+  );
 }
 
 export default function TreasuryVaultPage({ summary, events, monthly, quarterly, ytd, loadError }: Props) {
@@ -507,9 +611,9 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             Deposits are executed on-chain by the vault admin address.
             For USDC (primary), pre-approve the vault and call the ERC-4626 <code className="bg-gray-100 px-1 font-mono text-xs">deposit(uint256 assets, address receiver)</code>.
             For AXUSD and other secondary assets, call <code className="bg-gray-100 px-1 font-mono text-xs">depositToken(address asset, uint256 amount)</code>.
-            Use the calldata below with your wallet or multisig.
+            After executing on-chain, record the deposit below to link it to the vault audit log.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mb-4">
             <div className="border border-dl-border p-4 space-y-2">
               <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Vault Address</p>
               <p className="font-mono text-xs break-all text-dl-navy">
@@ -524,8 +628,12 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
               </div>
             </div>
           </div>
+
+          {/* Record Deposit Form */}
+          <DepositRecordForm />
+
           <div className="mt-4 border border-dl-border p-4 bg-gray-50 max-w-2xl space-y-3">
-            <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Deposit ABI</p>
+            <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Deposit ABI Reference</p>
             <div>
               <p className="text-xs font-mono text-dl-gray mb-1">Primary asset (USDC) — ERC-4626:</p>
               <pre className="text-xs font-mono text-dl-navy whitespace-pre-wrap break-all">{`function deposit(uint256 assets, address receiver) external returns (uint256 shares)

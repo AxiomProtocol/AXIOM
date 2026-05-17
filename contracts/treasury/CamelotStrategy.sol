@@ -128,14 +128,40 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Deploy `amount` of `asset` (USDC) into a new or existing Camelot position.
-     *         Caller (StrategyManager) must transfer `amount` of USDC to this address first.
+     * @notice Deploy into a two-sided USDC/AXUSD Camelot V3 LP position.
+     *
+     * Capital model
+     * ─────────────
+     * The StrategyManager sends `amount` USDC to this contract before calling
+     * deploy(). The AXUSD side MUST be pre-funded by the vault admin via a
+     * direct transfer (or vault.rebalance()) before calling deploy() — an LP
+     * position on a stable pair requires both tokens to mint non-zero liquidity.
+     *
+     * deploy() uses the full live USDC and AXUSD balances of this contract so
+     * that any leftover amounts from a prior partial harvest are included. The
+     * `amount` parameter acts as a minimum USDC check; principal is tracked as
+     * the total USDC contributed.
+     *
+     * @dev Reverts with "CamelotStrategy: zero liquidity minted" when the pool
+     *      returns liquidity == 0, which would happen if AXUSD has not been
+     *      pre-funded. This prevents a silent zero-value deployment.
      */
     function deploy(uint256 amount) external override onlyRole(STRATEGY_ADMIN) nonReentrant {
         require(amount > 0, "CamelotStrategy: zero amount");
         require(tokenId == 0, "CamelotStrategy: position already open; withdraw first");
 
-        (address token0, address token1, uint256 a0, uint256 a1) = _sortAssets(amount);
+        // Use the full live balances of both tokens held by this strategy.
+        uint256 usdcBal  = IERC20(asset).balanceOf(address(this));
+        uint256 axusdBal = IERC20(pairedAsset).balanceOf(address(this));
+        require(usdcBal >= amount,  "CamelotStrategy: insufficient USDC; SM transfer may have failed");
+        require(axusdBal > 0,       "CamelotStrategy: AXUSD not pre-funded; vault admin must transfer paired asset");
+
+        // Determine canonical (token0, token1) order required by Algebra/Camelot V3.
+        (address token0, address token1) = asset < pairedAsset
+            ? (asset, pairedAsset)
+            : (pairedAsset, asset);
+        uint256 a0 = asset < pairedAsset ? usdcBal : axusdBal;
+        uint256 a1 = asset < pairedAsset ? axusdBal : usdcBal;
 
         IERC20(token0).forceApprove(address(positionManager), a0);
         IERC20(token1).forceApprove(address(positionManager), a1);
@@ -154,8 +180,10 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
                 deadline:       block.timestamp + DEADLINE_BUFFER
             })
         );
+        // Guard against a zero-liquidity mint (both tokens needed for stable pair).
+        require(liquidity > 0, "CamelotStrategy: zero liquidity minted — check paired asset balance");
         tokenId = tid;
-        principal += amount;
+        principal += usdcBal;   // principal = total USDC contributed to this position
         lastRebalancedAt = block.timestamp;
         emit PositionMinted(tid, liquidity, used0, used1);
     }
