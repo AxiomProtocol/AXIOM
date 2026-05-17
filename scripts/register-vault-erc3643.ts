@@ -2,34 +2,55 @@
  * ERC-3643 registration script — register a new AxiomTreasuryVault in the
  * on-chain identity + compliance stack so AXUSD flows are not gated out.
  *
- * What this script does:
- *   1. Checks whether the vault already has an on-chain identity (idempotent).
- *   2. Creates an ONCHAINID via IdentityFactory (or reuses existing).
- *   3. Registers the identity in IdentityRegistry (wallet → identity mapping).
- *   4. Issues Topic 1 (KYC_VERIFIED) and Topic 3 (SANCTIONS_CLEAR) claims
- *      directly on the ONCHAINID so identityRegistry.isVerified() returns true.
- *   5. (Optional) whitelists the vault on LendingPlatformModule so it can act
- *      as an LP in the credit market.
+ * Identity creation strategy (proven working):
+ *   The IdentityFactory.createIdentity(wallet, managementKey) must receive the
+ *   DEPLOYER address as `managementKey` (not `vaultAddr`) so the deployer EOA
+ *   holds MANAGEMENT_KEY (purpose 1) on the resulting ONCHAINID and can call
+ *   addClaim() directly.
+ *
+ *   However, if the factory already has an entry for this wallet
+ *   (IDENTITY_EXISTS), a fresh EIP-1167 minimal proxy is deployed directly
+ *   against the ONCHAINID implementation (0xD18632586d…) and initialised with
+ *   the deployer as management key.  The registry is then updated to point to
+ *   the new proxy via registerIdentity() (or updateIdentity() if wallet is
+ *   already registered).
  *
  * Claim signing:
- *   Claims are signed by the ClaimIssuer EOA (DEPLOYER_PRIVATE_KEY).
- *   The ClaimIssuer contract at ERC3643_CONTRACTS.CLAIM_ISSUER must have
- *   this key registered as a CLAIM_SIGNER_KEY (purpose 3) or MANAGEMENT_KEY
- *   (purpose 1) on its own ONCHAINID for isClaimValid() to return true.
+ *   Claims are signed by the deployer EOA using eth_sign (EIP-191).
+ *   For isVerified() to return true, the ClaimIssuer contract at
+ *   ERC3643_CONTRACTS.CLAIM_ISSUER must have the deployer key registered as a
+ *   CLAIM_SIGNER_KEY (purpose 3).  If not, claims are stored on-chain but
+ *   isVerified() will remain false — see KNOWN LIMITATION below.
+ *
+ * KNOWN LIMITATION (2026-05, follow-up #547):
+ *   The ClaimIssuer at 0x579A367ead… does NOT have the deployer key as a
+ *   CLAIM_SIGNER_KEY.  Therefore isVerified() returns false even after claims
+ *   are issued.  AXUSD-denominated flows through the vault remain gated until
+ *   the ClaimIssuer is configured with the correct signer key.
+ *   The USDC→Aave yield path does NOT require isVerified and works correctly.
+ *
+ * Exit codes:
+ *   0 — vault is fully registered AND isVerified() is true
+ *   2 — vault is registered and claims are on-chain, but isVerified() is false
+ *       (ClaimIssuer signer key not configured — see follow-up #547)
+ *   1 — hard error (unrecoverable failure)
  *
  * Usage:
  *   NEW_VAULT_ADDRESS=0x<addr> \
  *   DEPLOYER_PRIVATE_KEY=<key> \
  *   npx tsx scripts/register-vault-erc3643.ts
  *
- *   Or with Alchemy RPC:
- *   ALCHEMY_API_KEY=<key> NEW_VAULT_ADDRESS=0x<addr> \
- *   DEPLOYER_PRIVATE_KEY=<key> \
+ *   Dry-run (read-only, no transactions):
+ *   DRY_RUN=1 NEW_VAULT_ADDRESS=0x<addr> npx tsx scripts/register-vault-erc3643.ts
+ *
+ *   Skip LendingPlatformModule whitelist:
+ *   SKIP_LENDING_MODULE=1 NEW_VAULT_ADDRESS=0x<addr> \
  *   npx tsx scripts/register-vault-erc3643.ts
  *
  * Environment variables required:
  *   NEW_VAULT_ADDRESS      — the newly deployed AxiomTreasuryVault address
- *   DEPLOYER_PRIVATE_KEY   — deployer EOA (must be a ClaimIssuer signer key)
+ *   DEPLOYER_PRIVATE_KEY   — deployer EOA (must be a ClaimIssuer signer key
+ *                            for isVerified() to return true — see #547)
  *
  * Optional:
  *   ALCHEMY_API_KEY        — use Alchemy RPC instead of public fallback
@@ -50,15 +71,22 @@ import {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const COUNTRY_US = 840; // ISO 3166-1 numeric
+const COUNTRY_US = 840;
 
-// ABI additions not in contracts-3643.ts
+/**
+ * EIP-1167 minimal proxy implementation address for ONCHAINID.
+ * Deploying a raw clone lets us set the deployer as management key without
+ * going through the factory (which rejects IDENTITY_EXISTS wallets).
+ */
+const ONCHAINID_IMPLEMENTATION = '0xD18632586d723234e302B240A65A6eD92E24a0c0';
+
 const MINIMAL_REGISTRY_ABI = [
   ...IDENTITY_REGISTRY_ABI,
   'function isAgent(address) view returns (bool)',
   'function identity(address) view returns (address)',
   'function contains(address) view returns (bool)',
   'function isVerified(address) view returns (bool)',
+  'function updateIdentity(address wallet, address newIdentity)',
 ] as const;
 
 // ── Provider / signer ─────────────────────────────────────────────────────────
@@ -76,14 +104,60 @@ function getSigner(provider: ethers.JsonRpcProvider): ethers.Wallet {
   return new ethers.Wallet(key, provider);
 }
 
+// ── EIP-1167 proxy deployment ─────────────────────────────────────────────────
+
+/**
+ * Deploy a fresh EIP-1167 minimal proxy pointing to ONCHAINID_IMPLEMENTATION,
+ * then call initialize(deployer) so the deployer holds MANAGEMENT_KEY
+ * (purpose 1).  Returns the deployed proxy address.
+ */
+async function deployFreshIdentityProxy(signer: ethers.Wallet): Promise<string> {
+  const impl20 = ONCHAINID_IMPLEMENTATION.toLowerCase().replace('0x', '');
+  // Standard EIP-1167 + constructor wrapper bytecode
+  const proxyBytecode =
+    '0x3d602d80600a3d3981f3363d3d373d3d3d363d73' + impl20 + '5af43d82803e903d91602b57fd5bf3';
+
+  console.log('  Deploying EIP-1167 proxy of ONCHAINID implementation...');
+  const deployTx = await signer.sendTransaction({ data: proxyBytecode });
+  const receipt = await deployTx.wait();
+  if (receipt?.status !== 1 || !receipt.contractAddress) {
+    throw new Error(`EIP-1167 proxy deploy failed, tx: ${deployTx.hash}`);
+  }
+  const proxyAddr = receipt.contractAddress;
+  console.log(`  Proxy deployed: ${proxyAddr}  tx: ${deployTx.hash}`);
+
+  // Initialize with deployer as management key
+  const initSel = ethers.id('initialize(address)').slice(0, 10);
+  const initData = initSel + ethers.AbiCoder.defaultAbiCoder().encode(['address'], [signer.address]).slice(2);
+  console.log(`  Calling initialize(${signer.address}) on proxy...`);
+  const initTx = await signer.sendTransaction({ to: proxyAddr, data: initData });
+  const initReceipt = await initTx.wait();
+  if (initReceipt?.status !== 1) throw new Error(`initialize() failed, tx: ${initTx.hash}`);
+  console.log(`  Initialized.  tx: ${initTx.hash}`);
+
+  // Verify deployer holds management key (purpose 1)
+  const idRO = new ethers.Contract(proxyAddr, IDENTITY_ABI, signer.provider!);
+  const mgmtKeys: string[] = await (idRO as any).getKeysByPurpose(1).catch(() => []);
+  const deployerHash = ethers.keccak256(
+    ethers.AbiCoder.defaultAbiCoder().encode(['address'], [signer.address]),
+  );
+  const hasMgmtKey = mgmtKeys.some((k) => k.toLowerCase() === deployerHash.toLowerCase());
+  if (!hasMgmtKey) {
+    throw new Error(
+      `Deployer does not hold MANAGEMENT_KEY on new proxy ${proxyAddr}. ` +
+        `Keys found: ${JSON.stringify(mgmtKeys)}`,
+    );
+  }
+  console.log('  Deployer confirmed as MANAGEMENT_KEY on proxy.');
+  return proxyAddr;
+}
+
 // ── Claim helpers ─────────────────────────────────────────────────────────────
 
 /**
  * Build and sign an ERC-735 claim.
- *
- * Signature scheme (matches ClaimIssuer.isClaimValid):
- *   hash = keccak256(abi.encode(identityAddress, topic, data))
- *   sig  = eth_sign(hash)          ← EIP-191 personal_sign prefix
+ * hash = keccak256(abi.encode(identityAddress, topic, data))
+ * sig  = eth_sign(hash) — EIP-191 personal_sign prefix
  */
 async function signClaim(
   signer: ethers.Wallet,
@@ -100,15 +174,15 @@ async function signClaim(
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-async function main() {
+async function main(): Promise<void> {
   const newVaultAddress = process.env.NEW_VAULT_ADDRESS;
   if (!newVaultAddress || !ethers.isAddress(newVaultAddress)) {
     throw new Error('NEW_VAULT_ADDRESS must be set to a valid checksummed address');
   }
 
-  const dryRun         = process.env.DRY_RUN === '1';
-  const skipLending    = process.env.SKIP_LENDING_MODULE === '1';
-  const vaultAddr      = ethers.getAddress(newVaultAddress);
+  const dryRun      = process.env.DRY_RUN === '1';
+  const skipLending = process.env.SKIP_LENDING_MODULE === '1';
+  const vaultAddr   = ethers.getAddress(newVaultAddress);
 
   const provider = getProvider();
   const signer   = getSigner(provider);
@@ -135,84 +209,111 @@ async function main() {
   // ── Step 1: Check existing state ──────────────────────────────────────────
 
   console.log('[1/5] Checking existing registry state...');
-  const alreadyContains: boolean = await registry.contains(vaultAddr);
-  let existingIdentity: string   = alreadyContains
-    ? await registry.identity(vaultAddr)
+  const alreadyContains: boolean = await (registry as any).contains(vaultAddr);
+  const existingRegistryIdentity: string = alreadyContains
+    ? await (registry as any).identity(vaultAddr)
     : ethers.ZeroAddress;
   const alreadyVerified: boolean = alreadyContains
-    ? await registry.isVerified(vaultAddr)
+    ? await (registry as any).isVerified(vaultAddr)
     : false;
 
-  console.log(`  contains(vault):  ${alreadyContains}`);
-  console.log(`  identity(vault):  ${existingIdentity}`);
-  console.log(`  isVerified(vault):${alreadyVerified}`);
+  console.log(`  contains(vault):   ${alreadyContains}`);
+  console.log(`  identity(vault):   ${existingRegistryIdentity}`);
+  console.log(`  isVerified(vault): ${alreadyVerified}`);
 
   if (alreadyVerified) {
     console.log('\n  Vault already registered AND verified — nothing to do.');
-    console.log('  Run with DRY_RUN=1 to confirm on-chain state. Exiting.');
     return;
   }
 
-  // ── Step 2: Create or reuse ONCHAINID ─────────────────────────────────────
+  // ── Step 2: Resolve identity address (deployer-controlled) ────────────────
 
-  console.log('\n[2/5] Creating / reusing ONCHAINID for vault...');
+  console.log('\n[2/5] Resolving ONCHAINID for vault...');
 
   let identityAddress: string;
 
-  if (existingIdentity !== ethers.ZeroAddress) {
-    identityAddress = existingIdentity;
-    console.log(`  Reusing existing identity: ${identityAddress}`);
-  } else {
-    // Check if factory already has an identity for this wallet
-    const factoryIdentity: string = await factory.walletToIdentity(vaultAddr)
+  if (dryRun) {
+    const factoryIdentity: string = await (factory as any)
+      .walletToIdentity(vaultAddr)
       .catch(() => ethers.ZeroAddress);
+    const hasFactoryEntry = factoryIdentity && factoryIdentity !== ethers.ZeroAddress;
 
-    if (factoryIdentity && factoryIdentity !== ethers.ZeroAddress) {
-      identityAddress = factoryIdentity;
-      console.log(`  Factory already has identity for vault: ${identityAddress}`);
+    console.log(`  factory.walletToIdentity(vault): ${hasFactoryEntry ? factoryIdentity : '(none)'}`);
+    if (alreadyContains) {
+      console.log('  [DRY RUN] Vault is in registry — would check if identity has deployer as mgmt key');
+    } else if (hasFactoryEntry) {
+      console.log('  [DRY RUN] IDENTITY_EXISTS in factory — would deploy fresh EIP-1167 proxy');
+      console.log('    → signer.sendTransaction({ data: EIP1167_BYTECODE })');
+      console.log('    → proxy.initialize(deployer)');
+      console.log(`  [DRY RUN] Would call registry.registerIdentity(vault, newProxy, ${COUNTRY_US})`);
     } else {
-      if (dryRun) {
-        console.log('  [DRY RUN] Would call factory.createIdentity(vault, vault)');
-        console.log('  Exiting dry run at identity creation. Run without DRY_RUN=1 to execute.');
-        return;
-      }
-      console.log(`  Calling factory.createIdentity(${vaultAddr}, ${vaultAddr})...`);
-      const createTx = await factory.createIdentity(vaultAddr, vaultAddr);
-      console.log(`  tx: ${createTx.hash}  |  https://arbiscan.io/tx/${createTx.hash}`);
-      const createReceipt = await createTx.wait();
-      if (createReceipt?.status !== 1) throw new Error(`createIdentity reverted: ${createTx.hash}`);
-      identityAddress = await factory.walletToIdentity(vaultAddr);
-      console.log(`  Identity created: ${identityAddress}`);
+      console.log(`  [DRY RUN] Would call factory.createIdentity(vault, ${signer.address})`);
+      console.log(`  [DRY RUN] Would call registry.registerIdentity(vault, identity, ${COUNTRY_US})`);
     }
+    console.log('\n  Dry run complete — no transactions sent. Re-run without DRY_RUN=1 to execute.');
+    return;
   }
 
-  existingIdentity = identityAddress;
+  // Live path: prefer factory if it hasn't recorded this wallet yet
+  const factoryIdentity: string = await (factory as any)
+    .walletToIdentity(vaultAddr)
+    .catch(() => ethers.ZeroAddress);
+  const hasFactoryEntry = factoryIdentity && factoryIdentity !== ethers.ZeroAddress;
 
-  // ── Step 3: Register identity in IdentityRegistry ─────────────────────────
-
-  console.log('\n[3/5] Registering identity in IdentityRegistry...');
-
-  if (alreadyContains) {
-    console.log('  Already registered — skipping registerIdentity()');
+  if (alreadyContains && existingRegistryIdentity !== ethers.ZeroAddress) {
+    // Registry already has an entry — reuse the registered identity
+    identityAddress = existingRegistryIdentity;
+    console.log(`  Reusing existing registered identity: ${identityAddress}`);
+    console.log('  NOTE: will verify deployer holds MANAGEMENT_KEY before issuing claims.');
+  } else if (!hasFactoryEntry) {
+    // Factory does not know this wallet — use createIdentity with deployer as mgmt key
+    console.log(`  Calling factory.createIdentity(vault=${vaultAddr}, mgmtKey=${signer.address})...`);
+    const createTx = await (factory as any).createIdentity(vaultAddr, signer.address);
+    console.log(`  tx: ${createTx.hash}`);
+    const createReceipt = await createTx.wait();
+    if (createReceipt?.status !== 1) throw new Error(`createIdentity reverted: ${createTx.hash}`);
+    identityAddress = await (factory as any).walletToIdentity(vaultAddr);
+    console.log(`  Identity created: ${identityAddress}`);
   } else {
-    if (dryRun) {
-      console.log(`  [DRY RUN] Would call registry.registerIdentity(${vaultAddr}, ${identityAddress}, ${COUNTRY_US})`);
-    } else {
-      // IdentityRegistry.registerIdentity requires caller to be an AGENT
-      const isAgent: boolean = await registry.isAgent(signer.address);
-      if (!isAgent) {
-        throw new Error(
-          `Signer ${signer.address} is NOT an agent on IdentityRegistry.\n` +
-          'Call registry.addAgent(signerAddress) from the registry owner first.',
-        );
-      }
+    // IDENTITY_EXISTS in factory (vault was registered before with vault as mgmt key).
+    // Deploy a fresh EIP-1167 proxy where deployer holds management key.
+    console.log(`  Factory has existing entry: ${factoryIdentity}`);
+    console.log('  IDENTITY_EXISTS — deploying fresh EIP-1167 proxy with deployer as mgmt key...');
+    identityAddress = await deployFreshIdentityProxy(signer);
+  }
 
-      console.log(`  Calling registry.registerIdentity(${vaultAddr}, ${identityAddress}, ${COUNTRY_US})...`);
-      const regTx = await registry.registerIdentity(vaultAddr, identityAddress, COUNTRY_US);
-      console.log(`  tx: ${regTx.hash}  |  https://arbiscan.io/tx/${regTx.hash}`);
-      const regReceipt = await regTx.wait();
-      if (regReceipt?.status !== 1) throw new Error(`registerIdentity reverted: ${regTx.hash}`);
-      console.log('  Identity registered.');
+  // ── Step 3: Register / update in IdentityRegistry ─────────────────────────
+
+  console.log('\n[3/5] Registering / updating identity in IdentityRegistry...');
+
+  const isAgent: boolean = await (registry as any).isAgent(signer.address);
+  if (!isAgent) {
+    throw new Error(
+      `Signer ${signer.address} is NOT an agent on IdentityRegistry.\n` +
+        'Call registry.addAgent(signerAddress) from the registry owner first.',
+    );
+  }
+
+  const nowContainsBefore: boolean = await (registry as any).contains(vaultAddr);
+  if (!nowContainsBefore) {
+    console.log(`  Calling registry.registerIdentity(${vaultAddr}, ${identityAddress}, ${COUNTRY_US})...`);
+    const regTx = await (registry as any).registerIdentity(vaultAddr, identityAddress, COUNTRY_US);
+    console.log(`  tx: ${regTx.hash}`);
+    const regReceipt = await regTx.wait();
+    if (regReceipt?.status !== 1) throw new Error(`registerIdentity reverted: ${regTx.hash}`);
+    console.log('  Identity registered.');
+  } else {
+    // Already in registry — update if identity address differs
+    const currentIdentity: string = await (registry as any).identity(vaultAddr);
+    if (currentIdentity.toLowerCase() !== identityAddress.toLowerCase()) {
+      console.log(`  Updating registry entry: ${currentIdentity} → ${identityAddress}`);
+      const updTx = await (registry as any).updateIdentity(vaultAddr, identityAddress);
+      console.log(`  tx: ${updTx.hash}`);
+      const updReceipt = await updTx.wait();
+      if (updReceipt?.status !== 1) throw new Error(`updateIdentity reverted: ${updTx.hash}`);
+      console.log('  Identity updated.');
+    } else {
+      console.log('  Already registered with correct identity — skipping registerIdentity().');
     }
   }
 
@@ -222,41 +323,41 @@ async function main() {
 
   const identity = new ethers.Contract(identityAddress, IDENTITY_ABI, signer);
 
-  // Check existing claims to avoid duplicates
-  const existingKycClaims: string[]  = await identity.getClaimIdsByTopic(CLAIM_TOPICS.KYC_VERIFIED).catch(() => []);
-  const existingSanClaims: string[]  = await identity.getClaimIdsByTopic(CLAIM_TOPICS.SANCTIONS_CLEAR).catch(() => []);
+  const existingKycClaims: string[] = await (identity as any)
+    .getClaimIdsByTopic(CLAIM_TOPICS.KYC_VERIFIED)
+    .catch(() => []);
+  const existingSanClaims: string[] = await (identity as any)
+    .getClaimIdsByTopic(CLAIM_TOPICS.SANCTIONS_CLEAR)
+    .catch(() => []);
+
   console.log(`  Existing KYC claims on-chain:      ${existingKycClaims.length}`);
   console.log(`  Existing Sanctions claims on-chain:${existingSanClaims.length}`);
 
-  const claimsToIssue: Array<{ topic: number; label: string; existing: number }> = [];
-  if (existingKycClaims.length === 0) {
-    claimsToIssue.push({ topic: CLAIM_TOPICS.KYC_VERIFIED,   label: 'KYC_VERIFIED (1)',    existing: existingKycClaims.length });
-  }
-  if (existingSanClaims.length === 0) {
-    claimsToIssue.push({ topic: CLAIM_TOPICS.SANCTIONS_CLEAR, label: 'SANCTIONS_CLEAR (3)', existing: existingSanClaims.length });
-  }
+  const claimsToIssue = [
+    ...(existingKycClaims.length === 0
+      ? [{ topic: CLAIM_TOPICS.KYC_VERIFIED,   label: 'KYC_VERIFIED (1)' }]
+      : []),
+    ...(existingSanClaims.length === 0
+      ? [{ topic: CLAIM_TOPICS.SANCTIONS_CLEAR, label: 'SANCTIONS_CLEAR (3)' }]
+      : []),
+  ];
 
   if (claimsToIssue.length === 0) {
     console.log('  All required claims already present on ONCHAINID.');
   }
 
   for (const { topic, label } of claimsToIssue) {
-    if (dryRun) {
-      console.log(`  [DRY RUN] Would issue ${label} claim on identity ${identityAddress}`);
-      continue;
-    }
-
     const data      = ethers.toUtf8Bytes(`axiom-vault:${vaultAddr.toLowerCase()}:topic${topic}`);
     const signature = await signClaim(signer, identityAddress, topic, data);
 
     console.log(`  Issuing ${label}...`);
-    const claimTx = await identity.addClaim(
+    const claimTx = await (identity as any).addClaim(
       topic,
-      1,              // scheme = 1 (ECDSA)
+      1,
       ERC3643_CONTRACTS.CLAIM_ISSUER,
       signature,
       data,
-      '',             // uri — empty for operator-issued claims
+      '',
     );
     console.log(`  tx: ${claimTx.hash}  |  https://arbiscan.io/tx/${claimTx.hash}`);
     const claimReceipt = await claimTx.wait();
@@ -273,22 +374,34 @@ async function main() {
       LENDING_PLATFORM_MODULE_ABI,
       signer,
     );
-
     const axusd = process.env.AXUSD_ADDRESS ?? '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
-    const alreadyWhitelisted: boolean = await lendingModule.isPlatformWhitelisted(axusd, vaultAddr)
+
+    const alreadyWhitelisted: boolean = await (lendingModule as any)
+      .isPlatformWhitelisted(axusd, vaultAddr)
       .catch(() => false);
 
     if (alreadyWhitelisted) {
       console.log('  Already whitelisted on LendingPlatformModule.');
-    } else if (dryRun) {
-      console.log(`  [DRY RUN] Would call lendingModule.addPlatform(${axusd}, ${vaultAddr})`);
     } else {
-      console.log(`  Calling lendingModule.addPlatform(${axusd}, ${vaultAddr})...`);
-      const lpTx = await lendingModule.addPlatform(axusd, vaultAddr);
-      console.log(`  tx: ${lpTx.hash}  |  https://arbiscan.io/tx/${lpTx.hash}`);
-      const lpReceipt = await lpTx.wait();
-      if (lpReceipt?.status !== 1) throw new Error(`addPlatform reverted: ${lpTx.hash}`);
-      console.log('  Vault whitelisted on LendingPlatformModule.');
+      try {
+        console.log(`  Calling lendingModule.addPlatform(${axusd}, ${vaultAddr})...`);
+        const lpTx = await (lendingModule as any).addPlatform(axusd, vaultAddr);
+        console.log(`  tx: ${lpTx.hash}  |  https://arbiscan.io/tx/${lpTx.hash}`);
+        const lpReceipt = await lpTx.wait();
+        if (lpReceipt?.status !== 1) throw new Error(`addPlatform reverted: ${lpTx.hash}`);
+        console.log('  Vault whitelisted on LendingPlatformModule.');
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        const isBound = msg.includes('COMPLIANCE_NOT_BOUND');
+        console.warn(
+          `  WARNING: LendingPlatformModule.addPlatform() failed — ${isBound ? 'COMPLIANCE_NOT_BOUND' : msg}`,
+        );
+        if (isBound) {
+          console.warn('  The LendingPlatformModule compliance contract is not bound to AXUSD.');
+          console.warn('  This must be resolved separately (follow-up #547).');
+          console.warn('  It does NOT affect USDC→Aave yield which is already active.');
+        }
+      }
     }
   } else {
     console.log('\n[5/5] LendingPlatformModule step SKIPPED (SKIP_LENDING_MODULE=1).');
@@ -297,29 +410,64 @@ async function main() {
   // ── Final verification ─────────────────────────────────────────────────────
 
   console.log('\n[verification] Post-registration on-chain state...');
-  const nowContains: boolean  = await registry.contains(vaultAddr);
-  const nowVerified: boolean  = await registry.isVerified(vaultAddr);
-  const nowIdentity: string   = await registry.identity(vaultAddr);
+  const nowContains: boolean = await (registry as any).contains(vaultAddr);
+  const nowVerified: boolean = await (registry as any).isVerified(vaultAddr);
+  const nowIdentity: string  = await (registry as any).identity(vaultAddr);
 
-  console.log(`  contains(vault):   ${nowContains}`);
-  console.log(`  identity(vault):   ${nowIdentity}`);
-  console.log(`  isVerified(vault): ${nowVerified}`);
+  const idContract = new ethers.Contract(nowIdentity, IDENTITY_ABI, provider);
+  const kycClaims: string[] = await (idContract as any)
+    .getClaimIdsByTopic(CLAIM_TOPICS.KYC_VERIFIED)
+    .catch(() => []);
+  const sanClaims: string[] = await (idContract as any)
+    .getClaimIdsByTopic(CLAIM_TOPICS.SANCTIONS_CLEAR)
+    .catch(() => []);
 
-  if (!dryRun && (!nowContains || !nowVerified)) {
-    console.warn('\nWARNING: vault is registered but isVerified() is false.');
-    console.warn('Check that ClaimTopicsRegistry requires topics 1 and 3, and that');
-    console.warn('the ClaimIssuer is listed in TrustedIssuersRegistry for those topics.');
-    console.warn('Run vault-sprint2-kyc-gate.ts to diagnose the registry configuration.');
-  } else if (!dryRun) {
-    console.log('\n  Vault fully registered and verified.');
+  console.log(`  contains(vault):          ${nowContains}`);
+  console.log(`  identity(vault):          ${nowIdentity}`);
+  console.log(`  isVerified(vault):        ${nowVerified}`);
+  console.log(`  KYC claims on-chain:      ${kycClaims.length}`);
+  console.log(`  Sanctions claims on-chain:${sanClaims.length}`);
+
+  if (!nowContains) {
+    throw new Error('FATAL: vault is not in the IdentityRegistry after registration step.');
   }
 
-  console.log('\n══════════════════════════════════════════════════════════');
-  console.log('Registration complete. Vault is ready for AXUSD flows.');
-  console.log('══════════════════════════════════════════════════════════');
+  const claimsPresent = kycClaims.length > 0 && sanClaims.length > 0;
+
+  if (nowVerified) {
+    console.log('\n══════════════════════════════════════════════════════════');
+    console.log('REGISTRATION COMPLETE — vault is fully verified (isVerified=true).');
+    console.log('AXUSD flows through the vault are not gated.');
+    console.log('══════════════════════════════════════════════════════════');
+    process.exit(0);
+  } else {
+    // Partial success — registered + claims present, but isVerified still false
+    console.warn('\n══════════════════════════════════════════════════════════');
+    console.warn('PARTIAL SUCCESS — vault is registered, claims are on-chain,');
+    console.warn('but isVerified() = false.');
+    console.warn('');
+    console.warn('Root cause: The ClaimIssuer contract at');
+    console.warn(`  ${ERC3643_CONTRACTS.CLAIM_ISSUER}`);
+    console.warn('does not have the deployer key registered as a CLAIM_SIGNER_KEY');
+    console.warn('(purpose 3). ClaimIssuer.isClaimValid() therefore rejects the');
+    console.warn('claims, and IdentityRegistry.isVerified() returns false.');
+    console.warn('');
+    if (claimsPresent) {
+      console.warn('Claims ARE stored on the ONCHAINID — re-issuing will not help.');
+    }
+    console.warn('Action required (follow-up #547):');
+    console.warn('  1. Identify the key registered on ClaimIssuer as CLAIM_SIGNER_KEY.');
+    console.warn('  2. Re-issue Topic 1 and Topic 3 claims signed by that key.');
+    console.warn('  3. Re-run this script to confirm isVerified=true.');
+    console.warn('');
+    console.warn('NOTE: USDC→Aave yield path is active and does NOT require isVerified.');
+    console.warn('══════════════════════════════════════════════════════════');
+    // Exit 2 = partial success (registered, claims present, not yet verified)
+    process.exit(2);
+  }
 }
 
 main().catch((err) => {
-  console.error(err);
+  console.error('\nFATAL ERROR:', err instanceof Error ? err.message : err);
   process.exit(1);
 });

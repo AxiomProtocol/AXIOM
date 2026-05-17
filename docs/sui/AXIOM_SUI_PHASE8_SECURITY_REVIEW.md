@@ -24,11 +24,11 @@ Attack surface:
 
 **Finding**: Unbounded loops inside Move byte-code are subject to gas exhaustion DoS if an attacker supplies an arbitrarily deep proof vector.
 
-**Mitigation**: `merkle::verify()` asserts `depth <= MAX_PROOF_DEPTH` (32) before entering the loop. E_PROOF_TOO_DEEP (code 1) is raised on violation.
+**Mitigation**: `merkle::verify()` asserts `depth <= MAX_PROOF_DEPTH` (20) before entering the loop. E_PROOF_TOO_DEEP (code 1) is raised on violation.
 
-**Client parity**: `verifyProofLocal.ts` previously had `MAX_PROOF_DEPTH = 20`. Fixed to 32 in Phase 8. Both client and contract now enforce the same bound.
+**Client parity**: `verifyProofLocal.ts` previously had `MAX_PROOF_DEPTH = 32`. Fixed to 20 in Phase 8 to match the Move constant. Before this fix any proof of depth 21–32 would have been accepted by the TypeScript verifier but rejected on-chain — a silent eligibility mismatch. Both client and contract now enforce the same bound.
 
-**Test coverage**: `test_09_proof_at_max_depth_no_abort` (depth=32 passes) and `test_10_proof_depth_exceeds_max_aborts` (depth=33 aborts) confirm on-chain enforcement. These tests cover 2^32 theoretical leaves — far beyond any realistic campaign.
+**Test coverage**: `test_proof_at_max_depth_does_not_abort` (depth=20 accepted) and `test_proof_exceeds_max_depth_aborts` (depth=21 aborts with E_PROOF_TOO_DEEP) confirm on-chain enforcement. `test_max_proof_depth_is_twenty` asserts the constant via the public accessor.
 
 ---
 

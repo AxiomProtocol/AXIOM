@@ -43,7 +43,7 @@ All four Move source modules are hardened:
 - A7: MAX_LABEL_BYTES = 128; create_campaign aborts on violation
 
 **merkle.move** — A1 applied:
-- MAX_PROOF_DEPTH = 32 constant
+- MAX_PROOF_DEPTH = 20 constant
 - assert!(depth <= MAX_PROOF_DEPTH, E_PROOF_TOO_DEEP) before while loop
 - max_proof_depth() public accessor for external inspection
 
@@ -70,7 +70,7 @@ All four Move source modules are hardened:
 - Hash pair symmetry
 - bytes_lte ordering
 - compute_leaf output size (32 bytes)
-- MAX_PROOF_DEPTH boundary: depth=32 no abort, depth=33 aborts with E_PROOF_TOO_DEEP
+- MAX_PROOF_DEPTH boundary: depth=20 no abort (test_proof_at_max_depth_does_not_abort), depth=21 aborts with E_PROOF_TOO_DEEP (test_proof_exceeds_max_depth_aborts)
 - Three-leaf odd-duplication verification
 
 **claim_campaign_tests.move**: 29 tests (tests 11–39)
@@ -93,12 +93,12 @@ All four Move source modules are hardened:
 | lib/sui/client.ts | SuiJsonRpcClient (JSON-RPC raw client, no SDK dependency) | Complete |
 | lib/sui/proofs/buildMerkleTree.ts | Merkle tree builder with keccak_256, sorted-pair hashing | Complete |
 | lib/sui/proofs/generateProof.ts | Proof generator + generateProofFromEntries() | Complete |
-| lib/sui/proofs/verifyProofLocal.ts | Local proof verifier — MAX_PROOF_DEPTH fixed to 32 | Complete (fixed) |
+| lib/sui/proofs/verifyProofLocal.ts | Local proof verifier — MAX_PROOF_DEPTH fixed to 20 (matched Move constant) | Complete (fixed) |
 | lib/sui/proofs/validateEligibilityCsv.ts | CSV parser with dedup, address normalization, amount validation | Complete |
 | lib/sui/proofs/serializeProof.ts | Proof serialization to Uint8Array/number[] for PTB construction | Complete |
 | lib/sui/proofs/index.ts | Barrel re-export for all proof utilities | Complete |
 
-**Bug fixed in this session**: `verifyProofLocal.ts` had `MAX_PROOF_DEPTH = 20`, which did not match the Move contract's value of 32. Any proof between depth 21–32 would have been rejected by the client but accepted on-chain — a functional mismatch. Fixed to 32.
+**Bug fixed in this session**: `verifyProofLocal.ts` had `MAX_PROOF_DEPTH = 32`, which did not match the Move contract's value of 20. Any proof between depth 21–32 would have been accepted by the TypeScript verifier but rejected on-chain — a silent eligibility mismatch that would surface only at claim time. Fixed to 20 to match the Move constant. Both layers now enforce the same bound.
 
 ---
 

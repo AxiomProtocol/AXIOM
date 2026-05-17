@@ -1,6 +1,7 @@
 import { bytesLte, hashPair, hexToBytes, computeLeafHex } from './buildMerkleTree';
 
-const MAX_PROOF_DEPTH = 32;
+/** Must match MAX_PROOF_DEPTH in move/axiom_sui/sources/merkle.move */
+const MAX_PROOF_DEPTH = 20;
 
 export function verifyProofLocal(
   proof: string[],
