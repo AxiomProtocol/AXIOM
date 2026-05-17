@@ -190,6 +190,7 @@ function WalletDepositPanel() {
     const amtNum = parseFloat(amount);
     fetch('/api/treasury/vault/record-deposit', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ asset, amountUsdc: amtNum, txHash: depositTx }),
     }).finally(() => setStep('success'));
@@ -307,7 +308,7 @@ function WalletDepositPanel() {
             View on Arbiscan → {depositTx.slice(0, 12)}…{depositTx.slice(-6)}
           </a>
         )}
-        <button onClick={reset} className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide border border-dl-border text-dl-navy">
+        <button type="button" onClick={reset} className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide border border-dl-border text-dl-navy">
           Make Another Deposit
         </button>
       </div>
@@ -386,6 +387,7 @@ function WalletDepositPanel() {
         {/* Step 1 — Approve */}
         {(step === 'idle' || step === 'approving') && (
           <button
+            type="button"
             onClick={handleApprove}
             disabled={step === 'approving' || !amount}
             className="px-5 py-2 text-xs font-mono uppercase tracking-wide bg-dl-navy text-white disabled:opacity-50"
@@ -397,6 +399,7 @@ function WalletDepositPanel() {
         {/* Step 2 — Deposit (shown after approval confirms) */}
         {step === 'approved' && (
           <button
+            type="button"
             onClick={handleDeposit}
             className="px-5 py-2 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white"
           >
@@ -405,13 +408,13 @@ function WalletDepositPanel() {
         )}
 
         {step === 'depositing' && (
-          <button disabled className="px-5 py-2 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white opacity-50">
+          <button type="button" disabled className="px-5 py-2 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white opacity-50">
             Confirming deposit…
           </button>
         )}
 
         {step !== 'idle' && (
-          <button onClick={reset} className="text-xs font-mono text-dl-gray underline">
+          <button type="button" onClick={reset} className="text-xs font-mono text-dl-gray underline">
             Start over
           </button>
         )}
