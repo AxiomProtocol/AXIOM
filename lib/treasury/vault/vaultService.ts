@@ -4,7 +4,8 @@
  * Read-only service that aggregates live on-chain vault state from
  * AxiomTreasuryVault + StrategyManager and combines it with DB event history.
  *
- * All USD figures assume USDC / AXUSD are 1:1 with USD (6 decimals).
+ * All USD figures assume USDC / AXUSD are 1:1 with USD.
+ * USDC: 6 decimals. AXUSD (ERC-3643): 18 decimals — see AXUSD_DECIMALS below.
  */
 
 import { ethers } from 'ethers';

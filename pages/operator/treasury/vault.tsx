@@ -540,6 +540,12 @@ function AllocateToAavePanel() {
 
   useEffect(() => { refreshStats(); }, [refreshStats, step]);
 
+  // Poll strategy position every 30 s so accrued yield stays live
+  useEffect(() => {
+    const id = setInterval(refreshStats, 30_000);
+    return () => clearInterval(id);
+  }, [refreshStats]);
+
   useEffect(() => {
     if (confirmed && step === 'sending') {
       refreshStats();
