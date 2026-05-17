@@ -147,17 +147,17 @@ export const LIQUIDITY_VENUES: Record<LiquidityVenueId, LiquidityVenue> = {
     firstWavePermitted: false,
     approvedForAssets: [],
     blockedForAssets: ['AXAU'],
-    notes: 'Selective later Arbitrum-native expansion only if it improves distribution without fragmenting liquidity.',
+    notes: 'Arbitrum-native DEX. Deferred — activate only if distribution improves without fragmenting primary Uniswap v3 liquidity.',
   },
-  eulerswap: {
-    id: 'eulerswap',
-    name: 'EulerSwap',
+  'uniswap-v3-polygon': {
+    id: 'uniswap-v3-polygon',
+    name: 'Uniswap V3 (Polygon)',
     chain: ARBITRUM_ONE_LIQUIDITY_CHAIN,
-    status: 'existing_integration',
+    status: 'approved_secondary',
     firstWavePermitted: false,
-    approvedForAssets: ['AXUSD', 'AXM', 'USDC'],
+    approvedForAssets: ['USDC'],
     blockedForAssets: ['AXAU'],
-    notes: 'Existing in-app liquidity integration. Tracked for audit context, not the canonical first-wave venue in this strategy.',
+    notes: 'Uniswap V3 deployment on Polygon PoS. Read-only market intelligence integration for USDC pool depth monitoring.',
   },
 };
 

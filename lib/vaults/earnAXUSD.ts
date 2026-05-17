@@ -1,13 +1,19 @@
 /**
  * lib/vaults/earnAXUSD.ts
  *
- * Canonical configuration and metadata for the Axiom Earn AXUSD vault
- * (earnAXUSD, ERC-4626 Euler Earn wrapper, Arbitrum One).
+ * DEPRECATED — 2026-05-17
+ * The Euler Earn AXUSD vault integration has been removed from Axiom Protocol.
+ * This file is retained for historical reference and import compatibility only.
  *
- * STATUS: Bootstrap / Pre-Live
- * This vault is deployed and perspective-recognized, but it is NOT
- * operating as a fully live public yield product. Do not present it
- * as live yield infrastructure in any user-facing copy.
+ * Do NOT use this file in new features.
+ * Archived copy: lib/vaults/earnAXUSD.deprecated.ts
+ *
+ * Replacement integrations:
+ *   Aave v3 Arbitrum  → lib/defi/aave/arbitrumService.ts
+ *   Aave v3 Polygon   → lib/defi/aave/polygonService.ts
+ *   Benqi (Avalanche) → lib/defi/benqi/service.ts
+ *   Navi (Sui)        → lib/defi/navi/service.ts
+ *   Aftermath (Sui)   → lib/defi/aftermath/service.ts
  */
 
 // ── Chain ────────────────────────────────────────────────────────────────────

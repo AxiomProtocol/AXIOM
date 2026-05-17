@@ -13,7 +13,7 @@ export type LiquidityVenueId =
   | 'curve'
   | 'balancer'
   | 'camelot'
-  | 'eulerswap';
+  | 'uniswap-v3-polygon';
 
 export type LiquidityVenueStatus =
   | 'approved_primary'
@@ -82,7 +82,7 @@ export interface LiquidityVenue {
 }
 
 export interface LiquidityPoolFee {
-  kind: 'uniswap_v3_fee_tier' | 'curve_stableswap' | 'balancer_weighted' | 'camelot_pool' | 'eulerswap_curve';
+  kind: 'uniswap_v3_fee_tier' | 'curve_stableswap' | 'balancer_weighted' | 'camelot_pool' | 'uniswap_v3_polygon';
   valueBps: number | null;
   status: 'recommended' | 'pending_venue_design' | 'existing';
   notes: string;

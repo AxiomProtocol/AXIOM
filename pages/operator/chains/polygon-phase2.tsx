@@ -2,6 +2,84 @@ import React, { useEffect, useState } from 'react';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
 import type { PolygonHealthReport } from '../../../lib/polygon/chainHealth';
 import type { PolygonStatusResponse } from '../../api/polygon/status';
+import type { AavePolygonMarket, AavePolygonMarketEntry } from '../../../lib/defi/aave/polygonService';
+
+function AavePolygonPanel() {
+  const [data, setData] = useState<AavePolygonMarket | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/aave/polygon/market')
+      .then(r => r.ok ? r.json() as Promise<AavePolygonMarket> : Promise.reject(new Error(`HTTP ${r.status}`)))
+      .then(d => setData(d))
+      .catch(e => setError(e instanceof Error ? e.message : 'Failed to load'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const mono = (v: string | number | null | undefined) => (
+    <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#94a3b8' }}>{v ?? '—'}</span>
+  );
+
+  return (
+    <section style={{ marginBottom: '40px' }}>
+      <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '16px', color: '#cbd5e1', borderBottom: '1px solid #1e293b', paddingBottom: '8px', marginBottom: '16px' }}>
+        DeFi Integrations — Aave v3 (Polygon)
+      </h2>
+      <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#64748b', marginBottom: '12px' }}>
+        Read-only market intelligence. Data sourced on-chain via AaveProtocolDataProvider ·{' '}
+        <code style={{ color: '#60a5fa' }}>0x69FA688f1Dc47d4B5d8029D5a35FB7a548310654</code>
+      </p>
+      {loading && <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#64748b' }}>Loading Aave v3 Polygon data…</p>}
+      {error && <p style={{ fontFamily: 'monospace', fontSize: '11px', color: '#f87171' }}>⚠ {error}</p>}
+      {data && (
+        <>
+          <dl style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: '8px 12px', fontFamily: 'monospace', fontSize: '11px', marginBottom: '16px' }}>
+            <dt style={{ color: '#64748b' }}>Protocol</dt>
+            <dd style={{ margin: 0, color: '#e2e8f0' }}>Aave v3 · Polygon PoS (chainId 137)</dd>
+            <dt style={{ color: '#64748b' }}>Total TVL</dt>
+            <dd style={{ margin: 0, color: '#4ade80' }}>${data.totalTvlUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })}</dd>
+            <dt style={{ color: '#64748b' }}>Total Borrows</dt>
+            <dd style={{ margin: 0 }}>{mono('$' + data.totalBorrowsUsd.toLocaleString(undefined, { maximumFractionDigits: 0 }))}</dd>
+            <dt style={{ color: '#64748b' }}>Fetched At</dt>
+            <dd style={{ margin: 0 }}>{mono(data.fetchedAt)}</dd>
+          </dl>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'monospace', fontSize: '11px' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #1e293b' }}>
+                  {['Asset', 'Supply (units)', 'Borrows (units)', 'Util %', 'Supply APY', 'Borrow APY', 'LTV', 'Active'].map(h => (
+                    <th key={h} style={{ textAlign: 'left', padding: '6px 8px', color: '#64748b', fontWeight: 'normal', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.markets.map((m: AavePolygonMarketEntry) => (
+                  <tr key={m.tokenAddress} style={{ borderBottom: '1px solid #0f172a' }}>
+                    <td style={{ padding: '5px 8px', color: '#e2e8f0', fontWeight: 'bold' }}>{m.symbol}</td>
+                    <td style={{ padding: '5px 8px', color: '#94a3b8' }}>{m.totalSupplyUsd.toLocaleString()}</td>
+                    <td style={{ padding: '5px 8px', color: '#94a3b8' }}>{m.totalBorrowsUsd.toLocaleString()}</td>
+                    <td style={{ padding: '5px 8px', color: m.utilizationPct > 80 ? '#f87171' : '#94a3b8' }}>{m.utilizationPct.toFixed(1)}%</td>
+                    <td style={{ padding: '5px 8px', color: '#4ade80' }}>{m.supplyApyPct.toFixed(2)}%</td>
+                    <td style={{ padding: '5px 8px', color: '#fbbf24' }}>{m.variableBorrowApyPct.toFixed(2)}%</td>
+                    <td style={{ padding: '5px 8px', color: '#94a3b8' }}>{m.ltv.toFixed(0)}%</td>
+                    <td style={{ padding: '5px 8px', color: m.isActive && !m.isFrozen ? '#4ade80' : '#f87171' }}>
+                      {m.isActive && !m.isFrozen ? 'ACTIVE' : m.isFrozen ? 'FROZEN' : 'INACTIVE'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p style={{ fontFamily: 'monospace', fontSize: '10px', color: '#475569', marginTop: '8px' }}>
+            Supply/borrow figures are in underlying token units (not USD). TVL approximation uses token unit counts.
+            Full API: <code style={{ color: '#60a5fa' }}>GET /api/aave/polygon/market</code>
+          </p>
+        </>
+      )}
+    </section>
+  );
+}
 
 export default function PolygonPhase2Page() {
   const [health, setHealth]   = useState<PolygonHealthReport | null>(null);
@@ -202,6 +280,8 @@ POLYGON_AMOY_REAL_DEPLOY=true npm run deploy:polygon:amoy`}
             <p style={{ color: '#e2e8f0', paddingLeft: '16px' }}>Update cap_assets DB with mainnet AXUSD address</p>
           </div>
         </section>
+
+        <AavePolygonPanel />
 
         <section>
           <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '16px', color: '#cbd5e1', borderBottom: '1px solid #1e293b', paddingBottom: '8px', marginBottom: '16px' }}>

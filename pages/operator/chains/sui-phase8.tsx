@@ -3,6 +3,8 @@ import Head from 'next/head';
 import { DesignLawLayout } from '../../../components/design-law/DesignLawLayout';
 import { validateEligibilityCsv, buildMerkleTree } from '../../../lib/sui/proofs/index';
 import type { MigrateStatusResponse } from '../../api/sui/campaigns/migrate-status';
+import type { NaviMarket, NaviPoolEntry } from '../../../lib/defi/navi/service';
+import type { AftermathPools, AftermathPoolEntry } from '../../../lib/defi/aftermath/service';
 
 interface CampaignRow {
   id: string;
@@ -33,6 +35,116 @@ function formatAmc(raw: string): string {
   } catch {
     return raw;
   }
+}
+
+function SuiDefiPanel() {
+  const [navi, setNavi] = useState<NaviMarket | null>(null);
+  const [aftermath, setAftermath] = useState<AftermathPools | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState<string[]>([]);
+
+  useEffect(() => {
+    Promise.allSettled([
+      fetch('/api/sui/navi/market').then(r => r.ok ? r.json() as Promise<NaviMarket> : Promise.reject(new Error(`Navi HTTP ${r.status}`))),
+      fetch('/api/sui/aftermath/pools').then(r => r.ok ? r.json() as Promise<AftermathPools> : Promise.reject(new Error(`Aftermath HTTP ${r.status}`))),
+    ]).then(([naviResult, aftermathResult]) => {
+      const errs: string[] = [];
+      if (naviResult.status === 'fulfilled') setNavi(naviResult.value);
+      else errs.push(naviResult.reason instanceof Error ? naviResult.reason.message : 'Navi unavailable');
+      if (aftermathResult.status === 'fulfilled') setAftermath(aftermathResult.value);
+      else errs.push(aftermathResult.reason instanceof Error ? aftermathResult.reason.message : 'Aftermath unavailable');
+      setErrors(errs);
+    }).finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <section className="mb-10">
+      <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-4">
+        DeFi Integrations — Sui Chain
+      </h2>
+      <p className="text-xs text-dl-muted mb-4">
+        Read-only market intelligence from Navi Protocol and Aftermath Finance on Sui.
+        Data sourced via public REST APIs · 60 s cache.
+      </p>
+      {loading && <p className="text-xs font-mono text-dl-muted">Loading Sui DeFi data…</p>}
+      {errors.map((e, i) => (
+        <p key={i} className="text-xs font-mono text-dl-error mb-1">⚠ {e}</p>
+      ))}
+
+      {navi && (
+        <div className="mb-8">
+          <p className="text-xs font-mono text-dl-muted mb-2 uppercase tracking-widest">
+            Navi Protocol · Lending Markets
+          </p>
+          <div className="border border-dl-border overflow-x-auto mb-2">
+            <table className="w-full text-xs font-mono">
+              <thead>
+                <tr className="border-b border-dl-border">
+                  {['Asset', 'Total Supply', 'Total Borrows', 'Util %', 'Supply APY', 'Borrow APY'].map(h => (
+                    <th key={h} className="text-left text-dl-muted px-4 py-2 font-normal uppercase tracking-widest whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {navi.pools.length === 0 ? (
+                  <tr><td colSpan={6} className="px-4 py-3 text-dl-muted">No pool data available</td></tr>
+                ) : navi.pools.map((p: NaviPoolEntry) => (
+                  <tr key={p.coinType || p.symbol} className="border-b border-dl-border last:border-b-0">
+                    <td className="px-4 py-2 text-dl-primary font-bold">{p.symbol}</td>
+                    <td className="px-4 py-2 text-dl-muted">{p.totalSupply.toLocaleString()}</td>
+                    <td className="px-4 py-2 text-dl-muted">{p.totalBorrow.toLocaleString()}</td>
+                    <td className="px-4 py-2" style={{ color: p.utilizationPct > 80 ? '#f87171' : '#94a3b8' }}>{p.utilizationPct.toFixed(1)}%</td>
+                    <td className="px-4 py-2" style={{ color: '#4ade80' }}>{p.supplyApyPct.toFixed(2)}%</td>
+                    <td className="px-4 py-2" style={{ color: '#fbbf24' }}>{p.borrowApyPct.toFixed(2)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs font-mono text-dl-muted">
+            Total TVL: {navi.totalTvlUsd.toLocaleString()} · Fetched: {navi.fetchedAt} ·{' '}
+            <code className="text-dl-accent">GET /api/sui/navi/market</code>
+          </p>
+        </div>
+      )}
+
+      {aftermath && (
+        <div>
+          <p className="text-xs font-mono text-dl-muted mb-2 uppercase tracking-widest">
+            Aftermath Finance · Top Liquidity Pools
+          </p>
+          <div className="border border-dl-border overflow-x-auto mb-2">
+            <table className="w-full text-xs font-mono">
+              <thead>
+                <tr className="border-b border-dl-border">
+                  {['Pool', 'Tokens', 'TVL (USD)', 'Vol 24h (USD)', 'Fee APR'].map(h => (
+                    <th key={h} className="text-left text-dl-muted px-4 py-2 font-normal uppercase tracking-widest whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {aftermath.pools.length === 0 ? (
+                  <tr><td colSpan={5} className="px-4 py-3 text-dl-muted">No pool data available</td></tr>
+                ) : aftermath.pools.slice(0, 10).map((p: AftermathPoolEntry) => (
+                  <tr key={p.poolId} className="border-b border-dl-border last:border-b-0">
+                    <td className="px-4 py-2 text-dl-primary">{p.name}</td>
+                    <td className="px-4 py-2 text-dl-muted">{p.tokens.join(' / ') || '—'}</td>
+                    <td className="px-4 py-2 text-dl-muted">${p.tvlUsd.toLocaleString()}</td>
+                    <td className="px-4 py-2 text-dl-muted">${p.volume24hUsd.toLocaleString()}</td>
+                    <td className="px-4 py-2" style={{ color: '#4ade80' }}>{p.feeAprPct.toFixed(2)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs font-mono text-dl-muted">
+            Total TVL: ${aftermath.totalTvlUsd.toLocaleString()} · Fetched: {aftermath.fetchedAt} ·{' '}
+            <code className="text-dl-accent">GET /api/sui/aftermath/pools</code>
+          </p>
+        </div>
+      )}
+    </section>
+  );
 }
 
 export default function SuiPhase8OperatorPage() {
@@ -502,6 +614,8 @@ sui client call --package <PKG> --module claim_campaign --function activate \\
               </div>
             )}
           </section>
+
+          <SuiDefiPanel />
 
           <section className="mb-10">
             <h2 className="text-xs font-mono uppercase tracking-widest text-dl-muted mb-4">

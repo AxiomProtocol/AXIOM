@@ -173,7 +173,7 @@ export const INTERNAL_ASSET_REGISTRY: InternalAsset[] = [
     productTruth:
       'Axiom ERC-20 governance and utility token on Arbitrum One. ' +
       'Used for governance voting, DePIN node purchase discounts (15%), ' +
-      'and AXM/AXUSD EulerSwap liquidity.',
+      'and AXM/AXUSD on-chain financial rail liquidity.',
     activationNotes: null,
   },
 
