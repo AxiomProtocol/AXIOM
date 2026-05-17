@@ -12,3 +12,4 @@
 export * from './chainHealth';
 export * from './proofs/buildMerkleTree';
 export * from './proofs/verifyProof';
+export * from './identity/identityAdapter';
