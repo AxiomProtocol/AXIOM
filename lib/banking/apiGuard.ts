@@ -34,7 +34,7 @@ export function withBankingProvider(handler: BankingHandler) {
       if (err instanceof BankingProviderUnavailableError) {
         res.status(503).json({
           error: 'BANKING_DISABLED',
-          reason: err.message,
+          reason: 'No banking provider configured.',
         });
         return;
       }
