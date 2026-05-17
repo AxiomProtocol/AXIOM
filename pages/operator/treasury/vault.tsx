@@ -1,6 +1,8 @@
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
+import { erc20Abi, parseAbi, parseUnits, formatUnits } from 'viem';
 import { OperatorConsoleLayout } from '../../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../../lib/capinfra/operatorAuth';
 import { getVaultSummary, getVaultEventHistory, getIncomeSummary } from '../../../lib/treasury/vault/vaultService';
@@ -122,6 +124,316 @@ interface SentinelAuth {
   asset:  string;
   expiry: number;
   decision: { plainLanguage: string; aaveApyPct: number | null; camelotApyPct: number | null; spreadBps: number | null };
+}
+
+// ── Constants ──────────────────────────────────────────────────────────────────
+const ARBITRUM_ONE = 42161;
+const USDC_ADDRESS  = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831' as `0x${string}`;
+const AXUSD_ADDRESS = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7' as `0x${string}`;
+
+const VAULT_ABI = parseAbi([
+  'function deposit(uint256 assets, address receiver) external returns (uint256 shares)',
+  'function depositToken(address asset, uint256 amount) external',
+  'function paused() view returns (bool)',
+]);
+
+type DepositAsset = 'USDC' | 'AXUSD';
+type DepositStep  = 'idle' | 'approving' | 'approved' | 'depositing' | 'success' | 'error';
+
+// ── Wallet Deposit Panel ───────────────────────────────────────────────────────
+// Connects to the operator's wallet and executes approve → deposit on-chain,
+// then auto-records the deposit in the vault audit log.
+function WalletDepositPanel() {
+  const { address, isConnected } = useAccount();
+  const chainId                  = useChainId();
+  const publicClient             = usePublicClient();
+  const { writeContractAsync }   = useWriteContract();
+
+  const vaultAddress = (process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS ?? '') as `0x${string}`;
+  const isWrongChain = isConnected && chainId !== ARBITRUM_ONE;
+  const isReady      = isConnected && !isWrongChain && !!vaultAddress;
+
+  const [asset,  setAsset]  = useState<DepositAsset>('USDC');
+  const [amount, setAmount] = useState('');
+  const [step,   setStep]   = useState<DepositStep>('idle');
+  const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [approveTx, setApproveTx] = useState<`0x${string}` | null>(null);
+  const [depositTx, setDepositTx] = useState<`0x${string}` | null>(null);
+  const [usdcBalance, setUsdcBalance] = useState<string | null>(null);
+
+  const { isSuccess: approveConfirmed } = useWaitForTransactionReceipt({ hash: approveTx ?? undefined });
+  const { isSuccess: depositConfirmed } = useWaitForTransactionReceipt({ hash: depositTx ?? undefined });
+
+  // Fetch USDC/AXUSD balance when wallet connects
+  useEffect(() => {
+    if (!address || !publicClient) return;
+    const tokenAddr = asset === 'USDC' ? USDC_ADDRESS : AXUSD_ADDRESS;
+    const decimals  = asset === 'USDC' ? 6 : 18;
+    publicClient.readContract({
+      address: tokenAddr,
+      abi: erc20Abi,
+      functionName: 'balanceOf',
+      args: [address],
+    }).then((raw) => {
+      setUsdcBalance(parseFloat(formatUnits(raw as bigint, decimals)).toFixed(2));
+    }).catch(() => setUsdcBalance(null));
+  }, [address, asset, publicClient, step]);
+
+  // Move to "approved" once approval tx confirms
+  useEffect(() => {
+    if (approveConfirmed && step === 'approving') setStep('approved');
+  }, [approveConfirmed, step]);
+
+  // Auto-record and mark success once deposit tx confirms
+  useEffect(() => {
+    if (!depositConfirmed || step !== 'depositing' || !depositTx) return;
+    const amtNum = parseFloat(amount);
+    fetch('/api/treasury/vault/record-deposit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ asset, amountUsdc: amtNum, txHash: depositTx }),
+    }).finally(() => setStep('success'));
+  }, [depositConfirmed, step, depositTx, asset, amount]);
+
+  function reset() {
+    setStep('idle');
+    setAmount('');
+    setApproveTx(null);
+    setDepositTx(null);
+    setErrMsg(null);
+  }
+
+  async function handleApprove() {
+    if (!address || !vaultAddress) return;
+    const amtNum = parseFloat(amount);
+    if (!isFinite(amtNum) || amtNum <= 0) {
+      setErrMsg('Enter a valid amount greater than zero.');
+      return;
+    }
+    setErrMsg(null);
+    setStep('approving');
+    try {
+      const decimals  = asset === 'USDC' ? 6 : 18;
+      const tokenAddr = asset === 'USDC' ? USDC_ADDRESS : AXUSD_ADDRESS;
+      const rawAmt    = parseUnits(amount, decimals);
+      const hash = await writeContractAsync({
+        address: tokenAddr,
+        abi: erc20Abi,
+        functionName: 'approve',
+        args: [vaultAddress, rawAmt],
+      });
+      setApproveTx(hash);
+    } catch (e: unknown) {
+      setErrMsg(e instanceof Error ? e.message : 'Approval rejected or failed.');
+      setStep('idle');
+    }
+  }
+
+  async function handleDeposit() {
+    if (!address || !vaultAddress) return;
+    setErrMsg(null);
+    setStep('depositing');
+    try {
+      const decimals  = asset === 'USDC' ? 6 : 18;
+      const rawAmt    = parseUnits(amount, decimals);
+      let hash: `0x${string}`;
+      if (asset === 'USDC') {
+        hash = await writeContractAsync({
+          address: vaultAddress,
+          abi: VAULT_ABI,
+          functionName: 'deposit',
+          args: [rawAmt, address],
+        });
+      } else {
+        hash = await writeContractAsync({
+          address: vaultAddress,
+          abi: VAULT_ABI,
+          functionName: 'depositToken',
+          args: [AXUSD_ADDRESS, rawAmt],
+        });
+      }
+      setDepositTx(hash);
+    } catch (e: unknown) {
+      setErrMsg(e instanceof Error ? e.message : 'Deposit transaction rejected or failed.');
+      setStep('approved');
+    }
+  }
+
+  // ── Not connected ──────────────────────────────────────────────────────────
+  if (!isConnected) {
+    return (
+      <div className="border border-dl-border p-5 max-w-2xl mb-6 bg-gray-50">
+        <p className="text-xs font-mono text-dl-gray uppercase tracking-wide mb-2">Wallet Deposit</p>
+        <p className="text-sm text-dl-gray">Connect your wallet using the <span className="font-semibold text-dl-navy">Access Platform</span> button in the navigation to deposit directly from your wallet.</p>
+      </div>
+    );
+  }
+
+  // ── Wrong network ──────────────────────────────────────────────────────────
+  if (isWrongChain) {
+    return (
+      <div className="border border-amber-300 p-5 max-w-2xl mb-6 bg-amber-50">
+        <p className="text-xs font-mono text-amber-700 uppercase tracking-wide mb-2">Wrong Network</p>
+        <p className="text-sm text-amber-800">Switch your wallet to <span className="font-semibold">Arbitrum One</span> (Chain ID 42161) to deposit.</p>
+      </div>
+    );
+  }
+
+  // ── Vault address missing ──────────────────────────────────────────────────
+  if (!vaultAddress) {
+    return (
+      <div className="border border-red-300 p-5 max-w-2xl mb-6 bg-red-50">
+        <p className="text-xs font-mono text-red-700 uppercase tracking-wide mb-2">Configuration Required</p>
+        <p className="text-sm text-red-800">Set <code className="bg-red-100 px-1 font-mono text-xs">NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS</code> in your environment to enable wallet deposits.</p>
+      </div>
+    );
+  }
+
+  // ── Success ────────────────────────────────────────────────────────────────
+  if (step === 'success') {
+    return (
+      <div className="border border-dl-forest p-5 max-w-2xl mb-6">
+        <p className="text-xs font-mono text-dl-forest uppercase tracking-wide mb-2">Deposit Complete</p>
+        <p className="text-sm text-dl-navy mb-3">
+          Your deposit of <span className="font-semibold">{amount} {asset}</span> has been confirmed on-chain and recorded in the vault audit log.
+        </p>
+        {depositTx && (
+          <a
+            href={`https://arbiscan.io/tx/${depositTx}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-mono text-dl-forest underline block mb-4"
+          >
+            View on Arbiscan → {depositTx.slice(0, 12)}…{depositTx.slice(-6)}
+          </a>
+        )}
+        <button onClick={reset} className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide border border-dl-border text-dl-navy">
+          Make Another Deposit
+        </button>
+      </div>
+    );
+  }
+
+  // ── Main panel ─────────────────────────────────────────────────────────────
+  const stepNum = step === 'idle' ? 1 : step === 'approving' ? 1 : step === 'approved' ? 2 : 2;
+
+  return (
+    <div className="border border-dl-border p-5 max-w-2xl mb-6 space-y-5">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Wallet Deposit</p>
+        <span className="text-xs font-mono text-dl-gray">{address?.slice(0, 6)}…{address?.slice(-4)} · Arbitrum One</span>
+      </div>
+
+      {/* Step indicators */}
+      <div className="flex gap-4 text-xs font-mono">
+        <div className={`flex items-center gap-1.5 ${stepNum === 1 ? 'text-dl-navy font-semibold' : 'text-dl-gray'}`}>
+          <span className={`w-5 h-5 flex items-center justify-center border text-xs ${step === 'approved' || step === 'depositing' ? 'bg-dl-forest border-dl-forest text-white' : 'border-dl-border'}`}>
+            {step === 'approved' || step === 'depositing' ? '✓' : '1'}
+          </span>
+          Approve
+        </div>
+        <div className="text-dl-border self-center">→</div>
+        <div className={`flex items-center gap-1.5 ${stepNum === 2 ? 'text-dl-navy font-semibold' : 'text-dl-gray'}`}>
+          <span className="w-5 h-5 flex items-center justify-center border text-xs border-dl-border">
+            2
+          </span>
+          Deposit
+        </div>
+      </div>
+
+      {/* Asset + Amount inputs (only editable before approve) */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <label className="text-xs font-mono text-dl-gray uppercase">Asset</label>
+          <select
+            value={asset}
+            onChange={e => { setAsset(e.target.value as DepositAsset); setUsdcBalance(null); }}
+            disabled={step !== 'idle'}
+            className="w-full border border-dl-border px-2 py-1.5 text-xs font-mono text-dl-navy bg-white disabled:opacity-60"
+          >
+            <option value="USDC">USDC</option>
+            <option value="AXUSD">AXUSD</option>
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-mono text-dl-gray uppercase flex justify-between">
+            Amount
+            {usdcBalance !== null && (
+              <button
+                type="button"
+                onClick={() => setAmount(usdcBalance)}
+                className="text-dl-forest underline normal-case"
+              >
+                Max: {usdcBalance}
+              </button>
+            )}
+          </label>
+          <input
+            type="number"
+            min="0"
+            step="any"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            placeholder="e.g. 10000"
+            disabled={step !== 'idle'}
+            className="w-full border border-dl-border px-2 py-1.5 text-xs font-mono text-dl-navy disabled:opacity-60"
+          />
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Step 1 — Approve */}
+        {(step === 'idle' || step === 'approving') && (
+          <button
+            onClick={handleApprove}
+            disabled={step === 'approving' || !amount}
+            className="px-5 py-2 text-xs font-mono uppercase tracking-wide bg-dl-navy text-white disabled:opacity-50"
+          >
+            {step === 'approving' ? 'Waiting for approval…' : `Step 1 — Approve ${asset}`}
+          </button>
+        )}
+
+        {/* Step 2 — Deposit (shown after approval confirms) */}
+        {step === 'approved' && (
+          <button
+            onClick={handleDeposit}
+            className="px-5 py-2 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white"
+          >
+            Step 2 — Deposit to Vault
+          </button>
+        )}
+
+        {step === 'depositing' && (
+          <button disabled className="px-5 py-2 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white opacity-50">
+            Confirming deposit…
+          </button>
+        )}
+
+        {step !== 'idle' && (
+          <button onClick={reset} className="text-xs font-mono text-dl-gray underline">
+            Start over
+          </button>
+        )}
+      </div>
+
+      {/* Tx hash links */}
+      {approveTx && (
+        <p className="text-xs font-mono text-dl-gray">
+          Approval tx:{' '}
+          <a href={`https://arbiscan.io/tx/${approveTx}`} target="_blank" rel="noopener noreferrer" className="text-dl-forest underline">
+            {approveTx.slice(0, 12)}…{approveTx.slice(-6)}
+          </a>
+          {step === 'approved' && <span className="ml-2 text-dl-forest">✓ Confirmed</span>}
+        </p>
+      )}
+
+      {/* Errors */}
+      {errMsg && (
+        <p className="text-xs font-mono text-red-600">{errMsg}</p>
+      )}
+    </div>
+  );
 }
 
 // ── Deposit Record Form ────────────────────────────────────────────────────────
@@ -628,46 +940,60 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
         {/* Deposit Capital */}
         <section>
           <h2 className="font-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-1">Deposit Capital</h2>
-          <p className="text-sm text-dl-gray mb-4">
-            Deposits are executed on-chain by the vault admin address.
-            For USDC (primary), pre-approve the vault and call the ERC-4626 <code className="bg-gray-100 px-1 font-mono text-xs">deposit(uint256 assets, address receiver)</code>.
-            For AXUSD and other secondary assets, call <code className="bg-gray-100 px-1 font-mono text-xs">depositToken(address asset, uint256 amount)</code>.
-            After executing on-chain, record the deposit below to link it to the vault audit log.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mb-4">
-            <div className="border border-dl-border p-4 space-y-2">
+
+          {/* Vault address info strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mb-5">
+            <div className="border border-dl-border p-3 space-y-1">
               <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Vault Address</p>
               <p className="font-mono text-xs break-all text-dl-navy">
-                {process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS ?? '(configure NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS)'}
+                {process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS
+                  ? <a href={`https://arbiscan.io/address/${process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS}`} target="_blank" rel="noopener noreferrer" className="text-dl-forest underline">{process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS}</a>
+                  : <span className="text-red-500">(configure NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS)</span>}
               </p>
             </div>
-            <div className="border border-dl-border p-4 space-y-2">
+            <div className="border border-dl-border p-3 space-y-1">
               <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Accepted Assets</p>
-              <div className="space-y-1 text-xs font-mono text-dl-navy">
+              <div className="space-y-0.5 text-xs font-mono text-dl-navy">
                 <div>USDC — 0xaf88d065e77c8cC2239327C5EDb3A432268e5831</div>
-                <div>AXUSD — Arbitrum One (see contracts.ts)</div>
+                <div>AXUSD — 0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7</div>
               </div>
             </div>
           </div>
 
-          {/* Record Deposit Form */}
-          <DepositRecordForm />
+          {/* Wallet-connected deposit — primary flow */}
+          <WalletDepositPanel />
 
-          <div className="mt-4 border border-dl-border p-4 bg-gray-50 max-w-2xl space-y-3">
-            <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Deposit ABI Reference</p>
-            <div>
-              <p className="text-xs font-mono text-dl-gray mb-1">Primary asset (USDC) — ERC-4626:</p>
-              <pre className="text-xs font-mono text-dl-navy whitespace-pre-wrap break-all">{`function deposit(uint256 assets, address receiver) external returns (uint256 shares)
+          {/* Manual record form — fallback for external wallet / hardware signer */}
+          <details className="max-w-2xl">
+            <summary className="text-xs font-mono text-dl-gray uppercase tracking-wide cursor-pointer select-none mb-3 hover:text-dl-navy">
+              Manual record (used a hardware wallet or external signer?)
+            </summary>
+            <p className="text-xs text-dl-gray mb-3">
+              If you executed the deposit from a hardware wallet, Gnosis Safe, or Arbiscan directly, paste the confirmed TX hash below to link it to the vault audit log.
+            </p>
+            <DepositRecordForm />
+          </details>
+
+          {/* ABI reference */}
+          <details className="max-w-2xl mt-4">
+            <summary className="text-xs font-mono text-dl-gray uppercase tracking-wide cursor-pointer select-none hover:text-dl-navy">
+              ABI Reference
+            </summary>
+            <div className="mt-3 border border-dl-border p-4 bg-gray-50 space-y-3">
+              <div>
+                <p className="text-xs font-mono text-dl-gray mb-1">Primary asset (USDC) — ERC-4626:</p>
+                <pre className="text-xs font-mono text-dl-navy whitespace-pre-wrap break-all">{`function deposit(uint256 assets, address receiver) external returns (uint256 shares)
 // Prerequisite: IERC20(USDC).approve(vaultAddress, assets)
 // Mints ATVS shares to receiver. Caller: must hold VAULT_ADMIN role.`}</pre>
-            </div>
-            <div>
-              <p className="text-xs font-mono text-dl-gray mb-1">Secondary assets (AXUSD, etc.) — non-ERC4626:</p>
-              <pre className="text-xs font-mono text-dl-navy whitespace-pre-wrap break-all">{`function depositToken(address asset, uint256 amount) external
+              </div>
+              <div>
+                <p className="text-xs font-mono text-dl-gray mb-1">Secondary assets (AXUSD, etc.) — non-ERC4626:</p>
+                <pre className="text-xs font-mono text-dl-navy whitespace-pre-wrap break-all">{`function depositToken(address asset, uint256 amount) external
 // Prerequisite: IERC20(asset).approve(vaultAddress, amount)
 // Tracked in idleBalance mapping — no ATVS shares minted. Caller: must hold VAULT_ADMIN role.`}</pre>
+              </div>
             </div>
-          </div>
+          </details>
         </section>
 
         {/* Quick links */}
