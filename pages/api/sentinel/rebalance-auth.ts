@@ -44,9 +44,10 @@ function buildTokenPayload(
   toStrategy: string,
   amountUsdc: number,
   expiry: number,
-  nonce: string
+  nonce: string,
+  asset: string
 ): string {
-  return `${fromStrategy}|${toStrategy}|${amountUsdc}|${expiry}|${nonce}`;
+  return `${fromStrategy}|${toStrategy}|${amountUsdc}|${expiry}|${nonce}|${asset}`;
 }
 
 /**
@@ -60,18 +61,22 @@ export function signRebalanceToken(
   toStrategy: string,
   amountUsdc: number,
   expiry: number,
-  nonce: string
+  nonce: string,
+  asset: string
 ): string {
   const key = process.env.ADMIN_SOLVENCY_KEY;
   if (!key) throw new Error('ADMIN_SOLVENCY_KEY is not configured — cannot sign rebalance token');
-  const payload = buildTokenPayload(fromStrategy, toStrategy, amountUsdc, expiry, nonce);
+  const payload = buildTokenPayload(fromStrategy, toStrategy, amountUsdc, expiry, nonce, asset);
   return createHmac('sha256', key).update(payload).digest('hex');
 }
 
 /**
- * Verify a rebalance authorization token (including nonce).
+ * Verify a rebalance authorization token (including nonce and asset).
  * Returns false (fail closed) if ADMIN_SOLVENCY_KEY is absent, token is expired,
- * the HMAC does not match, or the nonce is missing. Never uses an empty key.
+ * HMAC does not match, nonce is missing, or asset is missing. Never uses empty key.
+ *
+ * The asset field is included in the HMAC payload to prevent a valid USDC-authorized
+ * token from being replayed for an AXUSD rebalance (or vice versa).
  */
 export function verifyRebalanceToken(
   fromStrategy: string,
@@ -79,14 +84,16 @@ export function verifyRebalanceToken(
   amountUsdc: number,
   expiry: number,
   nonce: string,
+  asset: string,
   token: string
 ): boolean {
   const key = process.env.ADMIN_SOLVENCY_KEY;
   if (!key) return false;
   if (!nonce) return false;
+  if (!asset) return false;
   if (Date.now() > expiry) return false;
   const expected = createHmac('sha256', key)
-    .update(buildTokenPayload(fromStrategy, toStrategy, amountUsdc, expiry, nonce))
+    .update(buildTokenPayload(fromStrategy, toStrategy, amountUsdc, expiry, nonce, asset))
     .digest('hex');
   if (expected.length !== token.length) return false;
   let diff = 0;
@@ -108,18 +115,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     fromStrategy,
     toStrategy,
     amountUsdc,
+    asset,
     currentAaveApy,
     currentCamelotApy,
   } = req.body as {
     fromStrategy?:       string;
     toStrategy?:         string;
     amountUsdc?:         number;
+    asset?:              string;
     currentAaveApy?:     number;
     currentCamelotApy?:  number;
   };
 
-  if (!fromStrategy || !toStrategy || !amountUsdc) {
-    return res.status(400).json({ error: 'fromStrategy, toStrategy, and amountUsdc are required' });
+  if (!fromStrategy || !toStrategy || !amountUsdc || !asset) {
+    return res.status(400).json({ error: 'fromStrategy, toStrategy, amountUsdc, and asset are required' });
   }
   if (fromStrategy !== 'aave_v3' && fromStrategy !== 'camelot') {
     return res.status(400).json({ error: 'fromStrategy must be aave_v3 or camelot' });
@@ -129,6 +138,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   if (fromStrategy === toStrategy) {
     return res.status(400).json({ error: 'fromStrategy and toStrategy must differ' });
+  }
+  if (asset !== 'usdc' && asset !== 'axusd') {
+    return res.status(400).json({ error: 'asset must be usdc or axusd' });
   }
 
   const sentinelResult = await evaluateTreasuryRebalance({
@@ -157,7 +169,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const nonce = randomBytes(16).toString('hex');
   let token: string;
   try {
-    token = signRebalanceToken(fromStrategy, toStrategy, amountUsdc, expiry, nonce);
+    token = signRebalanceToken(fromStrategy, toStrategy, amountUsdc, expiry, nonce, asset);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return res.status(503).json({ error: msg });
@@ -168,6 +180,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     sentinelDecision: sentinelResult,
     token,
     nonce,
+    asset,
     expiry,
     expiresIn:        TOKEN_TTL_SECONDS,
   });

@@ -53,18 +53,26 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
     address[] public strategyAddresses;
 
     /**
-     * @notice Total amount of each asset deployed as a *paired* (non-primary)
-     *         asset via fundPairedAsset().
+     * @notice Per-asset total deployed as a *paired* (non-primary) asset across
+     *         all strategies via fundPairedAsset(). Decremented proportionally in
+     *         recall(). Used by totalDeployed() for full cross-strategy AUM.
      *
-     *         Example: When AXUSD is pre-funded to CamelotStrategy (which is
-     *         registered with primary asset = USDC), the AXUSD amount is
-     *         recorded here under totalPairedDeployed[AXUSD_ADDRESS].
-     *         This allows totalDeployed(AXUSD) to return the correct full AUM
-     *         even though no strategy has AXUSD as its registered primary asset.
-     *
-     *         assetAddr → total amount currently deployed as paired asset
+     *         assetAddr → aggregate amount currently deployed as paired asset
      */
     mapping(address => uint256) public totalPairedDeployed;
+
+    /**
+     * @notice Per-strategy single paired-asset address.
+     *         Set the first time fundPairedAsset() is called for a strategy.
+     *         A strategy may have at most one paired asset (e.g. CamelotStrategy → AXUSD).
+     */
+    mapping(address => address) public strategyPairedAssetOf;
+
+    /**
+     * @notice Per-strategy amount deployed as the paired (secondary) asset.
+     *         Decremented proportionally in recall() to mirror allocatedPrincipal.
+     */
+    mapping(address => uint256) public strategyPairedAmount;
 
     // ── Events ────────────────────────────────────────────────────────────────
     event StrategyRegistered(address indexed strategy, string name, address asset);
@@ -191,7 +199,9 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
         StrategyInfo storage info = strategyInfo[strategy];
         require(info.active, "StrategyManager: strategy not active");
         IERC20(assetAddr).safeTransfer(strategy, amount);
-        totalPairedDeployed[assetAddr] += amount;
+        strategyPairedAssetOf[strategy]  = assetAddr;    // idempotent for same asset
+        strategyPairedAmount[strategy]   += amount;
+        totalPairedDeployed[assetAddr]   += amount;
         emit FundedPairedAsset(strategy, assetAddr, amount);
     }
 
@@ -206,12 +216,43 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
     {
         StrategyInfo storage info = strategyInfo[strategy];
         require(info.active, "StrategyManager: strategy not active");
+
+        // Snapshot before-recall principal for proportional paired accounting below.
+        uint256 beforePrincipal = info.allocatedPrincipal;
+
         received = IStrategy(strategy).withdraw(amount);
+
+        // ── Primary principal accounting ──────────────────────────────────────
         if (info.allocatedPrincipal >= received) {
             info.allocatedPrincipal -= received;
         } else {
             info.allocatedPrincipal = 0;
         }
+
+        // ── Paired principal accounting ───────────────────────────────────────
+        // Decrement strategyPairedAmount and totalPairedDeployed proportionally
+        // to the fraction of primary principal that was recalled.
+        //
+        // Full exit (received >= beforePrincipal): paired tracking is fully cleared.
+        // Partial exit: proportional decrement using 1e18 fixed-point arithmetic.
+        //
+        // This prevents totalDeployed(AXUSD) from permanently overstating AXUSD AUM
+        // after CamelotStrategy LP withdrawals.
+        address paired = strategyPairedAssetOf[strategy];
+        if (paired != address(0) && strategyPairedAmount[strategy] > 0 && beforePrincipal > 0) {
+            uint256 fraction = received >= beforePrincipal
+                ? 1e18
+                : received * 1e18 / beforePrincipal;
+            uint256 pairedDecrement = strategyPairedAmount[strategy] * fraction / 1e18;
+            if (pairedDecrement > strategyPairedAmount[strategy]) {
+                pairedDecrement = strategyPairedAmount[strategy];
+            }
+            strategyPairedAmount[strategy]  -= pairedDecrement;
+            totalPairedDeployed[paired]      = totalPairedDeployed[paired] >= pairedDecrement
+                ? totalPairedDeployed[paired] - pairedDecrement
+                : 0;
+        }
+
         emit Recalled(strategy, received);
     }
 

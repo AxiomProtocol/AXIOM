@@ -57,6 +57,14 @@ const AAVE_STRATEGY    = process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS ?? '';
 const CAMELOT_STRATEGY = process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS ?? '';
 const RPC              = process.env.ARBITRUM_RPC_URL ?? 'https://arb1.arbitrum.io/rpc';
 const USDC             = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+const AXUSD_ADDRESS    = process.env.AXUSD_ADDRESS ?? '';
+
+/** Map the caller-facing asset key to its on-chain token address. */
+function resolveAssetAddress(asset: string): string {
+  if (asset === 'usdc')  return USDC;
+  if (asset === 'axusd') return AXUSD_ADDRESS;
+  return '';
+}
 
 const VAULT_ABI = [
   'function rebalance(address fromStrategy, address toStrategy, address asset, uint256 amount) external',
@@ -76,20 +84,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthorized — valid operator session required' });
   }
 
-  const { fromStrategy, toStrategy, amountUsdc, token, nonce, expiry } = req.body as {
+  const { fromStrategy, toStrategy, amountUsdc, asset, token, nonce, expiry } = req.body as {
     fromStrategy?: string;
     toStrategy?:   string;
     amountUsdc?:   number;
+    asset?:        string;
     token?:        string;
     nonce?:        string;
     expiry?:       number;
   };
 
-  if (!fromStrategy || !toStrategy || !amountUsdc || !token || !nonce || !expiry) {
+  if (!fromStrategy || !toStrategy || !amountUsdc || !asset || !token || !nonce || !expiry) {
     return res.status(400).json({
-      error: 'fromStrategy, toStrategy, amountUsdc, token, nonce, and expiry are required. '
+      error: 'fromStrategy, toStrategy, amountUsdc, asset, token, nonce, and expiry are required. '
            + 'Obtain a one-time token from POST /api/sentinel/rebalance-auth.',
     });
+  }
+
+  if (asset !== 'usdc' && asset !== 'axusd') {
+    return res.status(400).json({ error: 'asset must be usdc or axusd' });
+  }
+  const onChainAsset = resolveAssetAddress(asset);
+  if (!onChainAsset) {
+    return res.status(503).json({ error: `Asset address for ${asset} is not configured (check env vars)` });
   }
   if (fromStrategy !== 'aave_v3' && fromStrategy !== 'camelot') {
     return res.status(400).json({ error: 'fromStrategy must be aave_v3 or camelot' });
@@ -103,7 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // ── Auth check 2: Sentinel HMAC token (includes nonce in payload) ─────────
   const tokenValid = verifyRebalanceToken(
-    fromStrategy, toStrategy, amountUsdc, expiry, nonce, token
+    fromStrategy, toStrategy, amountUsdc, expiry, nonce, asset, token
   );
   if (!tokenValid) {
     return res.status(403).json({
@@ -138,7 +155,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const tx = await vault.rebalance(
       strategyAddress(fromStrategy as 'aave_v3' | 'camelot'),
       strategyAddress(toStrategy   as 'aave_v3' | 'camelot'),
-      USDC,
+      onChainAsset,
       amountWei
     );
     const receipt = await tx.wait();

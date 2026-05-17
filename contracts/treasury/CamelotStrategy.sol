@@ -80,7 +80,8 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
 
     // ── State ─────────────────────────────────────────────────────────────────
     uint256 public tokenId;                    // active LP position token ID (0 = no position)
-    uint256 public override principal;
+    uint256 public override principal;         // USDC (primary asset) contributed to active LP
+    uint256 public pairedPrincipal;            // AXUSD (paired asset) contributed to active LP
     uint256 public override lastRebalancedAt;
 
     // Full-range ticks for a concentrated liquidity pool
@@ -111,13 +112,21 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
 
     // ── IStrategy implementation ──────────────────────────────────────────────
 
+    /**
+     * @notice USD-equivalent value locked in this strategy:
+     *
+     *   principal       — USDC contributed to LP (tracked from actual used0/used1)
+     *   pairedPrincipal — AXUSD contributed to LP (1:1 USD peg for a stable pair)
+     *   owed0 + owed1   — accumulated fee revenues pending collection
+     *
+     * This ensures StrategyManager.totalDeployed(USDC) captures the full two-sided
+     * LP position value when CamelotStrategy is registered with primary asset = USDC.
+     */
     function currentValue() external view override returns (uint256) {
         if (tokenId == 0) return 0;
-        (, , , , , , uint128 liquidity, , , uint128 owed0, uint128 owed1) =
+        (, , , , , , , , , uint128 owed0, uint128 owed1) =
             positionManager.positions(tokenId);
-        // Approximate: current value = principal + owed fees in asset terms
-        // A full oracle-based valuation is handled off-chain by the poller.
-        return principal + uint256(owed0) + uint256(owed1);
+        return principal + pairedPrincipal + uint256(owed0) + uint256(owed1);
     }
 
     function unrealizedYield() external view override returns (int256) {
@@ -183,7 +192,15 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
         // Guard against a zero-liquidity mint (both tokens needed for stable pair).
         require(liquidity > 0, "CamelotStrategy: zero liquidity minted — check paired asset balance");
         tokenId = tid;
-        principal += usdcBal;   // principal = total USDC contributed to this position
+
+        // Track actual consumed amounts (not pre-mint wallet balances) so principal
+        // reflects only capital genuinely locked in the LP, not dust or rounding.
+        // Map used0/used1 back to USDC/AXUSD based on canonical sort order.
+        uint256 usedUsdc  = asset < pairedAsset ? used0 : used1;
+        uint256 usedAxusd = asset < pairedAsset ? used1 : used0;
+        principal        += usedUsdc;
+        pairedPrincipal  += usedAxusd;
+
         lastRebalancedAt = block.timestamp;
         emit PositionMinted(tid, liquidity, used0, used1);
     }
@@ -211,7 +228,8 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
         // Inline currentValue() to avoid external-call overhead and reentrancy surface
         (, , , , , , uint128 posLiquidity, , , uint128 owed0, uint128 owed1) =
             positionManager.positions(tokenId);
-        uint256 total = principal + uint256(owed0) + uint256(owed1);
+        // Total position value = USDC principal + AXUSD principal + owed fees
+        uint256 total = principal + pairedPrincipal + uint256(owed0) + uint256(owed1);
 
         // Full exit when amount covers the entire position value (or within dust)
         if (amount >= total || total == 0) {
@@ -236,8 +254,19 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
             amount1Max: type(uint128).max
         }));
         actualAmount = r0 + r1;
-        if (principal >= actualAmount) principal -= actualAmount;
-        else principal = 0;
+
+        // Decrement principal and pairedPrincipal proportionally to the share exited.
+        // Uses total pre-collection for the fraction so owed fees are included.
+        if (total > 0) {
+            uint256 fraction = actualAmount >= total ? 1e18 : actualAmount * 1e18 / total;
+            uint256 primDecrement   = principal       * fraction / 1e18;
+            uint256 pairedDecrement = pairedPrincipal * fraction / 1e18;
+            if (primDecrement   > principal)       primDecrement   = principal;
+            if (pairedDecrement > pairedPrincipal) pairedDecrement = pairedPrincipal;
+            principal       -= primDecrement;
+            pairedPrincipal -= pairedDecrement;
+        }
+
         lastRebalancedAt = block.timestamp;
         emit Withdrawn(tokenId, r0, r1);
     }
@@ -260,8 +289,9 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
             amount0Max: type(uint128).max,
             amount1Max: type(uint128).max
         }));
-        tokenId = 0;
-        principal = 0;
+        tokenId         = 0;
+        principal       = 0;
+        pairedPrincipal = 0;
         lastRebalancedAt = block.timestamp;
         actualAmount = r0 + r1;
         emit Withdrawn(prevId, r0, r1);
@@ -301,8 +331,9 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
             amount0Max: type(uint128).max,
             amount1Max: type(uint128).max
         }));
-        tokenId = 0;
-        principal = 0;
+        tokenId         = 0;
+        principal       = 0;
+        pairedPrincipal = 0;
         amount = r0 + r1;
         emit EmergencyExit(r0, r1);
     }

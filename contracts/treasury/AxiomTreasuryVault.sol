@@ -88,6 +88,7 @@ contract AxiomTreasuryVault is ERC4626, AccessControl, ReentrancyGuard {
     event AssetAccepted(address indexed asset);
     event AssetRejected(address indexed asset);
     event Rebalanced(address indexed fromStrategy, address indexed toStrategy, uint256 amount);
+    event IdleBalanceSynced(address indexed assetAddr, uint256 newBalance);
     event VaultPaused(address indexed by);
     event VaultUnpaused(address indexed by);
     event EmergencyWithdraw(address indexed strategy, uint256 amount);
@@ -375,14 +376,18 @@ contract AxiomTreasuryVault is ERC4626, AccessControl, ReentrancyGuard {
     /**
      * @notice Sentinel-gated rebalance: recall from `fromStrategy`, forward to `toStrategy`.
      *
-     *         Flow (no vault→SM approval required):
-     *           1. SM.recall(from) → strategy sends `assetAddr` back to this vault
-     *           2. Vault transfers `assetAddr` to SM
-     *           3. SM.allocateAsset(to, assetAddr, received) → SM forwards to destination
+     *         Safe for both single-asset and multi-asset strategies:
+     *           1. Snapshot `assetAddr` balance before recall
+     *           2. SM.recall(from) → strategy sends tokens to vault
+     *              (multi-asset strategies, e.g. CamelotStrategy, may return TWO tokens)
+     *           3. Compute `assetReceived` = balance delta for `assetAddr` only
+     *              → any secondary tokens (e.g. AXUSD from a USDC Camelot recall)
+     *                 remain in vault and can be reconciled via syncIdleBalance()
+     *           4. Forward `assetReceived` of `assetAddr` to SM → destination strategy
      *
-     *         Using allocateAsset() (not allocate()) ensures the recalled asset
-     *         (which may be AXUSD, not the strategy's registered primary asset) is
-     *         routed correctly to the destination strategy without ambiguity.
+     *         This prevents the double-count / transfer-failure that would occur if
+     *         the `received` return value (which may combine two token types) were used
+     *         directly as an `assetAddr`-denominated transfer amount.
      */
     function rebalance(
         address fromStrategy,
@@ -391,12 +396,40 @@ contract AxiomTreasuryVault is ERC4626, AccessControl, ReentrancyGuard {
         uint256 amount
     ) external onlyRole(SENTINEL_EXECUTOR) whenNotPaused nonReentrant {
         require(acceptedAssets[assetAddr], "AxiomTreasuryVault: asset not accepted");
-        // Step 1: recall from source — assetAddr arrives at this vault
-        uint256 received = strategyManager.recall(fromStrategy, amount);
-        // Step 2: forward received assetAddr to SM, then deploy to destination
-        IERC20(assetAddr).safeTransfer(address(strategyManager), received);
-        strategyManager.allocateAsset(toStrategy, assetAddr, received);
-        emit Rebalanced(fromStrategy, toStrategy, received);
+
+        // Snapshot before recall to measure what actually arrives as assetAddr.
+        uint256 assetBefore   = IERC20(assetAddr).balanceOf(address(this));
+        strategyManager.recall(fromStrategy, amount);
+        uint256 assetAfter    = IERC20(assetAddr).balanceOf(address(this));
+        uint256 assetReceived = assetAfter > assetBefore ? assetAfter - assetBefore : 0;
+
+        require(assetReceived > 0, "AxiomTreasuryVault: assetAddr not received from recall");
+
+        IERC20(assetAddr).safeTransfer(address(strategyManager), assetReceived);
+        strategyManager.allocateAsset(toStrategy, assetAddr, assetReceived);
+        emit Rebalanced(fromStrategy, toStrategy, assetReceived);
+    }
+
+    /**
+     * @notice Reconcile `idleBalance[assetAddr]` with the contract's actual ERC20 balance.
+     *
+     *         Required after a multi-asset LP recall (e.g. CamelotStrategy returns both
+     *         USDC and AXUSD): only the `assetAddr` specified in vault.rebalance() is
+     *         forwarded to the destination strategy — the remaining secondary token
+     *         (e.g. AXUSD) arrives in the vault but is not automatically credited to
+     *         idleBalance.  Call syncIdleBalance(AXUSD) afterward to reconcile.
+     *
+     *         NOT applicable to the primary ERC-4626 asset (USDC) — use ERC-4626
+     *         accounting (totalAssets / balanceOf) for that.
+     *
+     * @param  assetAddr  Secondary accepted asset (e.g. AXUSD) to reconcile.
+     */
+    function syncIdleBalance(address assetAddr) external onlyRole(VAULT_ADMIN) {
+        require(assetAddr != asset(), "AxiomTreasuryVault: use ERC-4626 accounting for primary asset");
+        require(acceptedAssets[assetAddr], "AxiomTreasuryVault: asset not accepted");
+        uint256 actual = IERC20(assetAddr).balanceOf(address(this));
+        idleBalance[assetAddr] = actual;
+        emit IdleBalanceSynced(assetAddr, actual);
     }
 
     /**

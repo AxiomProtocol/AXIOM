@@ -111,6 +111,7 @@ interface RebalanceForm {
   fromStrategy: 'aave_v3' | 'camelot';
   toStrategy: 'aave_v3' | 'camelot';
   amountUsdc: string;
+  asset: 'usdc' | 'axusd';
   currentAaveApy: string;
   currentCamelotApy: string;
 }
@@ -118,6 +119,7 @@ interface RebalanceForm {
 interface SentinelAuth {
   token:  string;
   nonce:  string;
+  asset:  string;
   expiry: number;
   decision: { plainLanguage: string; aaveApyPct: number | null; camelotApyPct: number | null; spreadBps: number | null };
 }
@@ -229,6 +231,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
     fromStrategy: 'aave_v3',
     toStrategy: 'camelot',
     amountUsdc: '',
+    asset: 'usdc',
     currentAaveApy: '',
     currentCamelotApy: '',
   });
@@ -256,6 +259,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
         fromStrategy: rebalanceForm.fromStrategy,
         toStrategy:   rebalanceForm.toStrategy,
         amountUsdc:   amt,
+        asset:        rebalanceForm.asset,
       };
       if (rebalanceForm.currentAaveApy)    body.currentAaveApy    = parseFloat(rebalanceForm.currentAaveApy);
       if (rebalanceForm.currentCamelotApy) body.currentCamelotApy = parseFloat(rebalanceForm.currentCamelotApy);
@@ -267,7 +271,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
       });
       const json = await res.json();
       if (res.ok && json.authorized) {
-        setSentinelAuth({ token: json.token, nonce: json.nonce, expiry: json.expiry, decision: json.sentinelDecision });
+        setSentinelAuth({ token: json.token, nonce: json.nonce, asset: json.asset, expiry: json.expiry, decision: json.sentinelDecision });
       } else {
         setAuthError(json.sentinelDecision?.plainLanguage ?? json.error ?? 'Sentinel denied the request');
       }
@@ -296,6 +300,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
           fromStrategy: rebalanceForm.fromStrategy,
           toStrategy:   rebalanceForm.toStrategy,
           amountUsdc:   parseFloat(rebalanceForm.amountUsdc),
+          asset:        sentinelAuth.asset,
           token:        sentinelAuth.token,
           nonce:        sentinelAuth.nonce,
           expiry:       sentinelAuth.expiry,
@@ -461,7 +466,21 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
               </div>
             </div>
             <div>
-              <label className="block text-xs font-mono text-dl-gray uppercase mb-1">Amount (USDC)</label>
+              <label className="block text-xs font-mono text-dl-gray uppercase mb-1">Asset</label>
+              <select
+                className="w-full border border-dl-border p-2 font-mono text-sm bg-white"
+                value={rebalanceForm.asset}
+                onChange={(e) => {
+                  setSentinelAuth(null);
+                  setRebalanceForm((f) => ({ ...f, asset: e.target.value as 'usdc' | 'axusd' }));
+                }}
+              >
+                <option value="usdc">USDC</option>
+                <option value="axusd">AXUSD</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-mono text-dl-gray uppercase mb-1">Amount</label>
               <input
                 type="number" min="1" max="500000" step="100"
                 className="w-full border border-dl-border p-2 font-mono text-sm"
