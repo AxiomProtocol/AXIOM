@@ -1,6 +1,6 @@
 import { bytesLte, hashPair, hexToBytes, computeLeafHex } from './buildMerkleTree';
 
-const MAX_PROOF_DEPTH = 20;
+const MAX_PROOF_DEPTH = 32;
 
 export function verifyProofLocal(
   proof: string[],

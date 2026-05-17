@@ -134,7 +134,14 @@ const AXUSD_ADDRESS = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7' as `0x${strin
 const VAULT_ABI = parseAbi([
   'function deposit(uint256 assets, address receiver) external returns (uint256 shares)',
   'function depositToken(address asset, uint256 amount) external',
+  'function allocate(address strategy, address assetAddr, uint256 amount) external',
   'function paused() view returns (bool)',
+]);
+
+const AAVE_STRATEGY_ABI = parseAbi([
+  'function currentValue() view returns (uint256)',
+  'function principal() view returns (uint256)',
+  'function unrealizedYield() view returns (int256)',
 ]);
 
 type DepositAsset = 'USDC' | 'AXUSD';
@@ -482,6 +489,232 @@ function WalletDepositPanel() {
       {errMsg && (
         <p className="text-xs font-mono text-red-600">{errMsg}</p>
       )}
+    </div>
+  );
+}
+
+// ── Allocate to Aave v3 Panel ──────────────────────────────────────────────────
+// STRATEGY_ADMIN-gated panel that pushes idle USDC from the vault into the
+// AaveV3Strategy adapter, starting yield generation on Aave v3 Arbitrum.
+// Requires new vault (with SM wired) to be deployed first.
+
+const AAVE_STRATEGY_ADDRESS = (process.env.NEXT_PUBLIC_AXIOM_AAVE_V3_STRATEGY_ADDRESS ?? '') as `0x${string}`;
+
+function AllocateToAavePanel() {
+  const { address, isConnected } = useAccount();
+  const chainId                  = useChainId();
+  const publicClient             = usePublicClient({ chainId: ARBITRUM_ONE });
+  const { writeContractAsync }   = useWriteContract();
+
+  const vaultAddress    = (process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS ?? '') as `0x${string}`;
+  const strategyAddress = AAVE_STRATEGY_ADDRESS;
+  const isWrongChain    = isConnected && chainId !== ARBITRUM_ONE;
+
+  const [amount,     setAmount]     = useState('');
+  const [step,       setStep]       = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [errMsg,     setErrMsg]     = useState<string | null>(null);
+  const [allocateTx, setAllocateTx] = useState<`0x${string}` | null>(null);
+  const [idleUsdc,   setIdleUsdc]   = useState<number | null>(null);
+  const [deployed,   setDeployed]   = useState<number | null>(null);
+  const [principal,  setPrincipal]  = useState<number | null>(null);
+
+  const { isSuccess: confirmed } = useWaitForTransactionReceipt({ hash: allocateTx ?? undefined });
+
+  // Fetch vault idle USDC and strategy position
+  const refreshStats = useCallback(() => {
+    if (!publicClient || !vaultAddress) return;
+    // Vault idle USDC
+    publicClient.readContract({ address: USDC_ADDRESS, abi: erc20Abi, functionName: 'balanceOf', args: [vaultAddress] })
+      .then((raw) => setIdleUsdc(parseFloat(formatUnits(raw as bigint, 6))))
+      .catch(() => setIdleUsdc(null));
+    // Strategy position
+    if (!strategyAddress) return;
+    Promise.all([
+      publicClient.readContract({ address: strategyAddress, abi: AAVE_STRATEGY_ABI, functionName: 'currentValue' }),
+      publicClient.readContract({ address: strategyAddress, abi: AAVE_STRATEGY_ABI, functionName: 'principal' }),
+    ]).then(([cv, pr]) => {
+      setDeployed(parseFloat(formatUnits(cv as bigint, 6)));
+      setPrincipal(parseFloat(formatUnits(pr as bigint, 6)));
+    }).catch(() => { setDeployed(null); setPrincipal(null); });
+  }, [publicClient, vaultAddress, strategyAddress]);
+
+  useEffect(() => { refreshStats(); }, [refreshStats, step]);
+
+  useEffect(() => {
+    if (confirmed && step === 'sending') {
+      refreshStats();
+      setStep('success');
+    }
+  }, [confirmed, step, refreshStats]);
+
+  async function handleAllocate() {
+    if (!address || !vaultAddress || !strategyAddress || !publicClient) return;
+    const amtNum = parseFloat(amount);
+    if (!isFinite(amtNum) || amtNum <= 0) { setErrMsg('Enter a valid amount greater than zero.'); return; }
+    setErrMsg(null);
+    setStep('sending');
+    try {
+      const rawAmt = parseUnits(amount, 6);
+      // Simulate first
+      try {
+        await publicClient.simulateContract({
+          address: vaultAddress, abi: VAULT_ABI, functionName: 'allocate',
+          args: [strategyAddress, USDC_ADDRESS, rawAmt], account: address,
+        });
+      } catch (simErr: unknown) {
+        const msg = simErr instanceof Error ? simErr.message : String(simErr);
+        const match = msg.match(/reverted with reason string '([^']+)'/);
+        setErrMsg(`Transaction would fail: ${match ? match[1] : msg.slice(0, 160)}`);
+        setStep('error');
+        return;
+      }
+      const hash = await writeContractAsync({
+        address: vaultAddress, abi: VAULT_ABI, functionName: 'allocate',
+        args: [strategyAddress, USDC_ADDRESS, rawAmt],
+      });
+      setAllocateTx(hash);
+    } catch (e: unknown) {
+      setErrMsg(e instanceof Error ? e.message : 'Transaction rejected or failed.');
+      setStep('error');
+    }
+  }
+
+  function reset() { setStep('idle'); setAmount(''); setAllocateTx(null); setErrMsg(null); }
+
+  if (!isConnected || isWrongChain) return null;
+
+  // ── Vault redeploy pending ────────────────────────────────────────────────────
+  if (!vaultAddress || !strategyAddress) {
+    return (
+      <div className="border border-dl-border p-5 max-w-2xl mb-4">
+        <p className="text-xs font-mono text-dl-gray uppercase tracking-wide mb-2">Allocate to Aave v3</p>
+        <div className="border border-yellow-300 bg-yellow-50 p-3 text-xs font-mono text-yellow-800">
+          Pending vault redeploy. Once the new vault stack is deployed with StrategyManager
+          wired, set NEXT_PUBLIC_AXIOM_AAVE_V3_STRATEGY_ADDRESS and restart to enable this panel.
+        </div>
+      </div>
+    );
+  }
+
+  // ── Success ───────────────────────────────────────────────────────────────────
+  if (step === 'success') {
+    return (
+      <div className="border border-dl-forest p-5 max-w-2xl mb-4 space-y-3">
+        <p className="text-xs font-mono text-dl-forest uppercase tracking-wide">Allocation Complete</p>
+        <p className="text-sm text-dl-navy">
+          <span className="font-semibold">${amount} USDC</span> deployed into Aave v3 via AaveV3Strategy.
+        </p>
+        {allocateTx && (
+          <a href={`https://arbiscan.io/tx/${allocateTx}`} target="_blank" rel="noopener noreferrer"
+            className="text-xs font-mono text-dl-forest underline block">
+            View on Arbiscan → {allocateTx.slice(0, 12)}…{allocateTx.slice(-6)}
+          </a>
+        )}
+        {deployed !== null && (
+          <p className="text-xs font-mono text-dl-navy">
+            Strategy currentValue(): <span className="font-semibold">${deployed.toFixed(6)}</span> aUSDC
+          </p>
+        )}
+        <button type="button" onClick={reset}
+          className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide border border-dl-border text-dl-navy">
+          Allocate Again
+        </button>
+      </div>
+    );
+  }
+
+  const unrealized = deployed !== null && principal !== null ? deployed - principal : null;
+
+  return (
+    <div className="border border-dl-border p-5 max-w-2xl mb-4 space-y-5">
+      {/* Header */}
+      <div>
+        <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Allocate to Aave v3</p>
+        <p className="text-xs font-mono text-dl-gray mt-0.5">
+          Push idle USDC from vault into AaveV3Strategy — starts earning yield immediately
+        </p>
+      </div>
+
+      {/* Live position stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="border border-dl-border p-3">
+          <p className="text-xs font-mono text-dl-gray uppercase mb-1">Vault Idle</p>
+          <p className="text-sm font-mono font-semibold text-dl-navy">
+            {idleUsdc !== null ? `$${idleUsdc.toFixed(2)}` : '—'}
+          </p>
+        </div>
+        <div className="border border-dl-border p-3">
+          <p className="text-xs font-mono text-dl-gray uppercase mb-1">In Aave</p>
+          <p className="text-sm font-mono font-semibold text-dl-navy">
+            {deployed !== null ? `$${deployed.toFixed(6)}` : '—'}
+          </p>
+        </div>
+        <div className="border border-dl-border p-3">
+          <p className="text-xs font-mono text-dl-gray uppercase mb-1">Accrued Yield</p>
+          <p className={`text-sm font-mono font-semibold ${unrealized !== null && unrealized > 0 ? 'text-dl-forest' : 'text-dl-navy'}`}>
+            {unrealized !== null ? `$${unrealized.toFixed(6)}` : '—'}
+          </p>
+        </div>
+      </div>
+
+      {/* Role note */}
+      <div className="text-xs font-mono text-dl-gray border-l-2 border-dl-border pl-3">
+        Requires STRATEGY_ADMIN role — connect the deployer wallet ({address?.slice(0,6)}…{address?.slice(-4)}).
+        Vault calls allocate(aaveStrategy, USDC, amount) → StrategyManager → AaveV3Strategy.deploy().
+      </div>
+
+      {/* Amount input */}
+      <div className="space-y-2">
+        <label className="text-xs font-mono text-dl-gray uppercase">Amount (USDC)</label>
+        <div className="flex gap-2">
+          <input
+            type="number" min="0" step="any" value={amount}
+            onChange={(e) => { if (step === 'idle' || step === 'error') setAmount(e.target.value); }}
+            placeholder="e.g. 25.00"
+            className="flex-1 border border-dl-border px-2 py-1.5 text-xs font-mono text-dl-navy"
+          />
+          {idleUsdc !== null && idleUsdc > 0 && (
+            <button type="button" onClick={() => setAmount(idleUsdc.toFixed(2))}
+              className="text-xs font-mono text-dl-forest underline whitespace-nowrap">
+              Max {idleUsdc.toFixed(2)}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Error */}
+      {errMsg && (
+        <div className="border border-red-300 bg-red-50 p-3 text-xs font-mono text-red-700 break-all">{errMsg}</div>
+      )}
+
+      {/* Action */}
+      <div className="flex gap-3">
+        {(step === 'idle' || step === 'error') && (
+          <button type="button" onClick={handleAllocate}
+            disabled={!amount || parseFloat(amount) <= 0}
+            className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white disabled:opacity-40">
+            Allocate to Aave v3
+          </button>
+        )}
+        {step === 'sending' && (
+          <button type="button" disabled
+            className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white opacity-60">
+            Sending…
+          </button>
+        )}
+        {step === 'error' && (
+          <button type="button" onClick={reset}
+            className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide border border-dl-border text-dl-gray">
+            Reset
+          </button>
+        )}
+      </div>
+
+      {/* Addresses */}
+      <div className="text-xs font-mono text-dl-gray space-y-0.5">
+        <div>Vault: <span className="text-dl-navy">{vaultAddress}</span></div>
+        <div>Strategy: <span className="text-dl-navy">{strategyAddress}</span></div>
+      </div>
     </div>
   );
 }
@@ -1278,6 +1511,9 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
 
           {/* Wallet-connected deposit — primary flow */}
           <WalletDepositPanel />
+
+          {/* Allocate idle USDC into Aave v3 for yield — STRATEGY_ADMIN only */}
+          <AllocateToAavePanel />
 
           {/* Genesis reserve backing — USDC deposits against the 10,000 genesis mint */}
           <UsdcBackingPanel />

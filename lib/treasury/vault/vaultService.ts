@@ -22,10 +22,10 @@ const CAMELOT_STRATEGY = process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS   ?? '';
 const USDC             = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
 
 // AXUSD is an ERC-3643 stablecoin; address configured at deploy time.
-// AXUSD decimals are assumed 6 (standard for stablecoins). Both USDC and AXUSD
+// AXUSD has 18 decimals (ERC-20 standard, confirmed on-chain). Both USDC and AXUSD
 // are treated 1:1 with USD for AUM reporting purposes.
 const AXUSD_ADDRESS    = process.env.AXUSD_ADDRESS ?? '';
-const AXUSD_DECIMALS   = 6;
+const AXUSD_DECIMALS   = 18;
 
 const VAULT_ABI = [
   'function balanceOf(address) view returns (uint256)',          // ERC20 share balance
