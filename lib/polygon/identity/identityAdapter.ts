@@ -178,6 +178,9 @@ export async function getPolygonIdentityState(
       checkedAt: new Date().toISOString(),
     };
   } catch (err) {
+    // Log full error server-side only — never expose raw RPC messages or
+    // API-key-bearing URLs to API clients.
+    console.error('[polygon/identity] IdentityRegistry read failed:', err);
     return {
       walletAddress,
       network,
@@ -188,7 +191,7 @@ export async function getPolygonIdentityState(
       onchainId:       null,
       investorCountry: null,
       rpcReachable:    false,
-      error: `RPC error: ${err instanceof Error ? err.message : String(err)}`,
+      error: `Identity registry read failed on Polygon ${network}. Check server logs for details.`,
       checkedAt: new Date().toISOString(),
     };
   }
