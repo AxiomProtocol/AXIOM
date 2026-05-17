@@ -482,7 +482,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             <div>
               <label className="block text-xs font-mono text-dl-gray uppercase mb-1">Amount</label>
               <input
-                type="number" min="1" max="500000" step="100"
+                type="number" min="1" max="500000" step="any"
                 className="w-full border border-dl-border p-2 font-mono text-sm"
                 placeholder="e.g. 10000"
                 value={rebalanceForm.amountUsdc}
