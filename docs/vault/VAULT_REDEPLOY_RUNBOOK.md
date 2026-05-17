@@ -30,7 +30,9 @@ deposit.  Drain it back to the deployer wallet before redeploying.
 ```bash
 OLD_VAULT_ADDRESS=0x0d04742A8b5A8e3351B9273e585E980f6e0F46F8 \
 DRY_RUN=1 \
-npx hardhat run scripts/rescue-vault-usdc.ts --network arbitrum
+npx hardhat run scripts/rescue-vault-usdc.ts \
+  --config hardhat.treasury.config.ts \
+  --network arbitrum
 ```
 
 **Expected output (key lines):**
@@ -49,7 +51,9 @@ old vault.
 
 ```bash
 OLD_VAULT_ADDRESS=0x0d04742A8b5A8e3351B9273e585E980f6e0F46F8 \
-npx hardhat run scripts/rescue-vault-usdc.ts --network arbitrum
+npx hardhat run scripts/rescue-vault-usdc.ts \
+  --config hardhat.treasury.config.ts \
+  --network arbitrum
 ```
 
 **Expected output:**
@@ -83,8 +87,14 @@ to the deployer address.
 
 ### 2b — Run the deploy script
 
+> **Config note:** Use `--config hardhat.treasury.config.ts` for all Hardhat
+> invocations in this runbook. This config compiles only the treasury contracts
+> (Solidity 0.8.20/0.8.24) and avoids conflicts with other contract sets.
+
 ```bash
-npx hardhat run scripts/deploy-treasury-vault.ts --network arbitrum
+npx hardhat run scripts/deploy-treasury-vault.ts \
+  --config hardhat.treasury.config.ts \
+  --network arbitrum
 ```
 
 **Expected output:**

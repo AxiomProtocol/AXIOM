@@ -419,10 +419,6 @@ async function main(): Promise<void> {
       : []),
   ];
 
-  if (claimsToIssue.length === 0) {
-    console.log('  All required claims already present on ONCHAINID.');
-  }
-
   // ClaimIssuer read-only interface for post-claim validation
   const claimIssuer = new ethers.Contract(
     ERC3643_CONTRACTS.CLAIM_ISSUER,
@@ -431,6 +427,58 @@ async function main(): Promise<void> {
     ],
     provider,
   );
+
+  if (claimsToIssue.length === 0) {
+    console.log('  All required claims already present on ONCHAINID.');
+    console.log('  Validating existing claims against ClaimIssuer (checking for encoding issues)...');
+
+    // For each pre-existing claim topic, retrieve the stored signature and
+    // validate it.  This catches claims signed with a wrong encoding (e.g. the
+    // old abi.encodePacked pattern) that would cause isVerified() to stay false
+    // even though the claims appear present.
+    const CLAIM_ISSUER_EXT_ABI = [
+      'function isClaimValid(address _identity, uint256 _claimTopic, bytes calldata _sig, bytes calldata _data) view returns (bool)',
+    ];
+    const IDENTITY_CLAIM_READ_ABI = [
+      'function getClaim(bytes32 claimId) view returns (uint256 topic, uint256 scheme, address issuer, bytes memory signature, bytes memory data, string memory uri)',
+    ];
+    const idReader = new ethers.Contract(identityAddress, IDENTITY_CLAIM_READ_ABI, provider);
+    const ciReader = new ethers.Contract(ERC3643_CONTRACTS.CLAIM_ISSUER, CLAIM_ISSUER_EXT_ABI, provider);
+
+    for (const [topicId, topicLabel] of [
+      [CLAIM_TOPICS.KYC_VERIFIED, 'KYC_VERIFIED (1)'],
+      [CLAIM_TOPICS.SANCTIONS_CLEAR, 'SANCTIONS_CLEAR (3)'],
+    ] as [number, string][]) {
+      const claimIds: string[] = await identity
+        .getClaimIdsByTopic(topicId)
+        .catch((): string[] => []);
+
+      if (claimIds.length === 0) continue;
+
+      for (const claimId of claimIds) {
+        try {
+          const [, , , sig, data]: [number, number, string, string, string, string] =
+            await (idReader as ethers.Contract & {
+              getClaim(id: string): Promise<[number, number, string, string, string, string]>;
+            }).getClaim(claimId);
+
+          const valid: boolean = await (ciReader as ethers.Contract & {
+            isClaimValid(id: string, topic: number, sig: string, data: string): Promise<boolean>;
+          }).isClaimValid(identityAddress, topicId, sig, data).catch(() => false);
+
+          if (valid) {
+            console.log(`  ✓ Existing ${topicLabel} claim (${claimId.slice(0, 10)}…) — isClaimValid=true`);
+          } else {
+            console.warn(`  ✗ Existing ${topicLabel} claim (${claimId.slice(0, 10)}…) — isClaimValid=false`);
+            console.warn(`    This claim may have been signed with incorrect encoding.`);
+            console.warn(`    Set FORCE_REISSUE=1 to replace it with a correctly-encoded claim.`);
+          }
+        } catch {
+          console.warn(`  ? Could not fetch claim ${claimId.slice(0, 10)}… — skipping validation`);
+        }
+      }
+    }
+  }
 
   for (const { topic, label } of claimsToIssue) {
     const data = ethers.toUtf8Bytes(`axiom-vault:${vaultAddr.toLowerCase()}:topic${topic}`);
