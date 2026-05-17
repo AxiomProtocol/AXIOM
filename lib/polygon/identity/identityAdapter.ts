@@ -23,6 +23,26 @@ import { getPolygonRpcUrl } from '../../chains/providers';
 import { isChainEnabled } from '../../chains/capabilities';
 import { POLYGON_CONTRACTS, AMOY_CONTRACTS, isPolygonContractsPopulated } from '../../../shared/contracts-polygon';
 
+// ─── Amoy RPC resolution ───────────────────────────────────────────────────────
+// Amoy (chainId 80002) has a distinct RPC endpoint from Polygon mainnet (137).
+// Resolution order:
+//   1. POLYGON_AMOY_RPC_URL env override
+//   2. Alchemy polygon-amoy network (if ALCHEMY_API_KEY is set)
+//   3. Public Amoy RPC fallback
+
+function getAmoyRpcUrl(): string | null {
+  if (!isChainEnabled('polygon')) return null;
+
+  if (process.env.POLYGON_AMOY_RPC_URL) return process.env.POLYGON_AMOY_RPC_URL;
+
+  const alchemyKey = process.env.ALCHEMY_API_KEY;
+  if (alchemyKey) {
+    return `https://polygon-amoy.g.alchemy.com/v2/${alchemyKey}`;
+  }
+
+  return 'https://rpc-amoy.polygon.technology';
+}
+
 // ─── Minimal ERC-3643 IdentityRegistry ABI ────────────────────────────────────
 
 const IDENTITY_REGISTRY_ABI = [
@@ -110,11 +130,12 @@ export async function getPolygonIdentityState(
     return chainDisabledState(walletAddress);
   }
 
-  const rpcUrl = getPolygonRpcUrl();
+  // Select the correct RPC endpoint for the requested network
+  const rpcUrl = network === 'amoy' ? getAmoyRpcUrl() : getPolygonRpcUrl();
   if (!rpcUrl) {
     return {
       ...notDeployedState(walletAddress, network, chainId),
-      error: 'No Polygon RPC URL configured. Set POLYGON_RPC_URL or ALCHEMY_API_KEY.',
+      error: `No RPC URL configured for Polygon ${network}. Set ${network === 'amoy' ? 'POLYGON_AMOY_RPC_URL' : 'POLYGON_RPC_URL'} or ALCHEMY_API_KEY.`,
     };
   }
 

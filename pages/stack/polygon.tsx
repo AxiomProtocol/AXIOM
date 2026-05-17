@@ -208,6 +208,58 @@ export default function PolygonStackPage() {
           </dl>
         </section>
 
+        {/* ── Native USDC and CCTP ── */}
+        <section style={{ marginBottom: 40 }}>
+          <SectionHeading>Native USDC &amp; Circle CCTP</SectionHeading>
+          <p style={{ fontFamily: SERIF, fontSize: 14, color: DL.body, lineHeight: 1.75, marginBottom: 20, maxWidth: 680 }}>
+            Polygon PoS hosts Circle&apos;s native USDC — not a bridged representation, but a
+            token issued directly by Circle on Polygon. This makes Polygon a natural
+            enterprise settlement layer for protocols that need dollar-denominated liquidity
+            without bridge custody risk. Axiom&apos;s Polygon integration is designed to
+            co-settle AXUSD positions against native USDC reserves held on-chain.
+          </p>
+          <dl style={{
+            display: 'grid',
+            gridTemplateColumns: '220px 1fr',
+            gap: '8px 16px',
+            fontFamily: MONO,
+            fontSize: 11,
+            marginBottom: 20,
+          }}>
+            <dt style={{ color: DL.muted }}>USDC Issuance</dt>
+            <dd style={{ margin: 0, color: DL.light }}>Native — issued by Circle directly on Polygon PoS</dd>
+            <dt style={{ color: DL.muted }}>USDC Contract</dt>
+            <dd style={{ margin: 0 }}>
+              <a href="https://polygonscan.com/token/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+                target="_blank" rel="noreferrer" style={{ color: DL.blue, textDecoration: 'none' }}>
+                0x3c499c…c3359 (Polygonscan)
+              </a>
+            </dd>
+            <dt style={{ color: DL.muted }}>Cross-Chain Transfer</dt>
+            <dd style={{ margin: 0, color: DL.light }}>Circle CCTP (Cross-Chain Transfer Protocol)</dd>
+            <dt style={{ color: DL.muted }}>CCTP Routes</dt>
+            <dd style={{ margin: 0, color: DL.light }}>Polygon ↔ Ethereum · Polygon ↔ Arbitrum One</dd>
+            <dt style={{ color: DL.muted }}>Transfer Mechanism</dt>
+            <dd style={{ margin: 0, color: DL.light }}>Burn-and-mint — no bridge custody or wrapped tokens</dd>
+            <dt style={{ color: DL.muted }}>Axiom Integration</dt>
+            <dd style={{ margin: 0, color: DL.body }}>Planned — AXUSD co-settlement against native USDC on Polygon</dd>
+          </dl>
+          <div style={{
+            padding: '12px 16px',
+            background: DL.card,
+            border: `1px solid ${DL.border}`,
+            fontFamily: MONO,
+            fontSize: 10,
+            color: DL.muted,
+            lineHeight: 1.7,
+          }}>
+            CCTP enables atomic cross-chain USDC moves without custodial bridge risk. When Axiom
+            deploys AXUSD on Polygon, native USDC via CCTP provides a composable dollar liquidity
+            layer for enterprise treasury routing — settling positions between Arbitrum One (core
+            execution) and Polygon (payments settlement) without wrapping or bridge exposure.
+          </div>
+        </section>
+
         {/* ── Automated Control Layer Suite ── */}
         <section style={{ marginBottom: 40 }}>
           <SectionHeading>Automated Control Layer Suite</SectionHeading>
