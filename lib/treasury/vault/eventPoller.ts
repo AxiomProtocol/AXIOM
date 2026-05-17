@@ -4,6 +4,11 @@
  * Polls AxiomTreasuryVault on-chain events every 60 seconds and writes
  * them to the `treasury_vault_events` PostgreSQL table.
  *
+ * Deduplicated by (tx_hash, log_index) — a unique composite constraint in the
+ * schema guarantees that multiple events emitted in a single transaction are
+ * all recorded correctly and that replaying the same log never creates
+ * duplicate rows.
+ *
  * Tracked events:
  *   Deposit            → event_type = 'deposit'
  *   Withdrawal         → event_type = 'withdraw'
@@ -20,18 +25,19 @@
 import { ethers } from 'ethers';
 import { db } from '../../../server/db';
 import { treasuryVaultEvents } from '../../../shared/treasuryVaultSchema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
-const RPC           = process.env.ARBITRUM_RPC_URL ?? 'https://arb1.arbitrum.io/rpc';
-const VAULT_ADDRESS = process.env.AXIOM_TREASURY_VAULT_ADDRESS ?? '';
-const POLL_MS       = 60_000;
+const RPC            = process.env.ARBITRUM_RPC_URL ?? 'https://arb1.arbitrum.io/rpc';
+const VAULT_ADDRESS  = process.env.AXIOM_TREASURY_VAULT_ADDRESS ?? '';
+const POLL_MS        = 60_000;
 const BLOCK_LOOKBACK = 200;
 
 const VAULT_ABI = [
   'event Deposit(address indexed asset, uint256 amount, address indexed depositor)',
   'event Withdrawal(address indexed asset, uint256 amount, address indexed recipient)',
   'event StrategyAllocated(address indexed strategy, address indexed asset, uint256 amount)',
-  'event StrategyHarvested(address indexed strategy, uint256 yieldAmount)',
+  'event StrategyRecalled(address indexed strategy, address indexed asset, uint256 amount)',
+  'event StrategyHarvested(address indexed strategy, address indexed asset, uint256 yieldAmount)',
   'event Rebalanced(address indexed fromStrategy, address indexed toStrategy, uint256 amount)',
   'event EmergencyWithdraw(address indexed strategy, uint256 amount)',
 ];
@@ -74,7 +80,6 @@ async function fetchAndStoreEvents() {
 
   if (fromBlock > currentBlock) return;
 
-  const vault  = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, provider);
   const filter = { address: VAULT_ADDRESS, fromBlock, toBlock: currentBlock };
   const logs   = await provider.getLogs(filter);
   const iface  = new ethers.Interface(VAULT_ABI);
@@ -84,13 +89,20 @@ async function fetchAndStoreEvents() {
       const parsed = iface.parseLog({ topics: log.topics as string[], data: log.data });
       if (!parsed) continue;
 
-      const txHash     = log.transactionHash;
+      const txHash   = log.transactionHash;
+      const logIndex = log.index;
       const blockNumber = log.blockNumber;
 
+      // Deduplicate by (txHash, logIndex) — catches multiple events in one tx
       const alreadyExists = await db
         .select({ id: treasuryVaultEvents.id })
         .from(treasuryVaultEvents)
-        .where(eq(treasuryVaultEvents.txHash, txHash))
+        .where(
+          and(
+            eq(treasuryVaultEvents.txHash, txHash),
+            eq(treasuryVaultEvents.logIndex, logIndex)
+          )
+        )
         .limit(1);
       if (alreadyExists.length > 0) continue;
 
@@ -112,10 +124,15 @@ async function fetchAndStoreEvents() {
           strategy  = parsed.args[0] as string;
           amountRaw = parsed.args[2] as bigint;
           break;
+        case 'StrategyRecalled':
+          eventType = 'recall';
+          strategy  = parsed.args[0] as string;
+          amountRaw = parsed.args[2] as bigint;
+          break;
         case 'StrategyHarvested':
           eventType = 'harvest';
           strategy  = parsed.args[0] as string;
-          amountRaw = parsed.args[1] as bigint;
+          amountRaw = parsed.args[2] as bigint;  // args: [strategy, asset, yieldAmount]
           break;
         case 'Rebalanced':
           eventType = 'rebalance';
@@ -138,6 +155,7 @@ async function fetchAndStoreEvents() {
         strategy,
         amountUsd: amountUsd.toFixed(6),
         txHash,
+        logIndex,
         blockNumber,
       });
     } catch (err) {

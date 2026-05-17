@@ -1,24 +1,28 @@
 /**
  * POST /api/treasury/vault/rebalance
  *
- * Sentinel-gated rebalance trigger. Validates the Sentinel authorization
- * by calling the rebalance evaluation strategy, then (when a vault address
- * is configured) calls StrategyManager.rebalance() on-chain.
+ * Sentinel-gated rebalance trigger. Validates the Sentinel rebalance
+ * strategy (APY spread check, circuit breaker, direction check), then
+ * calls StrategyManager.rebalance() on-chain with the deployer signer
+ * (which holds SENTINEL_EXECUTOR role on StrategyManager).
  *
  * Body:
  *   fromStrategy  — 'aave_v3' | 'camelot'
  *   toStrategy    — 'aave_v3' | 'camelot'
  *   amountUsdc    — number (e.g. 10000 = $10,000)
  *
- * Authorization header:
- *   x-axiom-admin — must match ADMIN_SOLVENCY_KEY env var (operator-only endpoint)
+ * Authorization:
+ *   Caller must present the operator session cookie (cap_operator_key)
+ *   set during operator login. Uses the same constant-time validation
+ *   as the operator console layout.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { evaluateTreasuryRebalance } from '../../../../lib/sentinel/strategies/treasuryRebalance';
-import { db } from '../../../../lib/db';
-import { treasuryVaultEvents } from '../../../../shared/schema';
+import { readOperatorCookie, isValidOperatorKey } from '../../../../lib/capinfra/operatorAuth';
+import { db } from '../../../../server/db';
+import { treasuryVaultEvents } from '../../../../shared/treasuryVaultSchema';
 
 const STRATEGY_MANAGER_ADDRESS = process.env.AXIOM_STRATEGY_MANAGER_ADDRESS ?? '';
 const AAVE_STRATEGY            = process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS ?? '';
@@ -36,9 +40,9 @@ function strategyAddress(key: 'aave_v3' | 'camelot'): string {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const adminKey = req.headers['x-axiom-admin'];
-  if (!adminKey || adminKey !== process.env.ADMIN_SOLVENCY_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  const cookie = readOperatorCookie(req);
+  if (!isValidOperatorKey(cookie)) {
+    return res.status(401).json({ error: 'Unauthorized — valid operator session required' });
   }
 
   const { fromStrategy, toStrategy, amountUsdc } = req.body as {
@@ -84,9 +88,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const provider = new ethers.JsonRpcProvider(RPC);
-    const signer   = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, provider);
-    const sm       = new ethers.Contract(STRATEGY_MANAGER_ADDRESS, SM_ABI, signer);
+    const provider  = new ethers.JsonRpcProvider(RPC);
+    const signer    = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, provider);
+    const sm        = new ethers.Contract(STRATEGY_MANAGER_ADDRESS, SM_ABI, signer);
     const amountWei = BigInt(Math.round(amountUsdc * 1e6));
     const tx = await sm.rebalance(
       strategyAddress(fromStrategy as 'aave_v3' | 'camelot'),
@@ -96,10 +100,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const receipt = await tx.wait();
 
     await db.insert(treasuryVaultEvents).values({
-      eventType: 'rebalance',
-      strategy:  `${fromStrategy}→${toStrategy}`,
-      amountUsd: amountUsdc.toFixed(6),
-      txHash:    receipt.hash,
+      eventType:   'rebalance',
+      strategy:    `${fromStrategy}→${toStrategy}`,
+      amountUsd:   amountUsdc.toFixed(6),
+      txHash:      receipt.hash,
+      logIndex:    0,
       blockNumber: receipt.blockNumber,
     });
 
@@ -108,8 +113,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       sentinelDecision: sentinelResult,
       txHash: receipt.hash,
     });
-  } catch (err: any) {
-    console.error('[api/treasury/vault/rebalance]', err?.message);
-    return res.status(500).json({ success: false, error: 'On-chain rebalance failed', detail: err?.message });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[api/treasury/vault/rebalance]', msg);
+    return res.status(500).json({ success: false, error: 'On-chain rebalance failed', detail: msg });
   }
 }

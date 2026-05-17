@@ -129,7 +129,8 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
     try {
       const res = await fetch('/api/treasury/vault/rebalance', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-axiom-admin': '' },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fromStrategy: rebalanceForm.fromStrategy,
           toStrategy: rebalanceForm.toStrategy,
@@ -381,6 +382,38 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
               </table>
             </div>
           )}
+        </section>
+
+        {/* Deposit Capital */}
+        <section>
+          <h2 className="font-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-1">Deposit Capital</h2>
+          <p className="text-sm text-dl-gray mb-4">
+            Deposits are executed on-chain by the vault admin address.
+            The vault admin must pre-approve the vault contract to spend the deposit amount,
+            then call <code className="bg-gray-100 px-1 font-mono text-xs">deposit(asset, amount)</code>.
+            Use the calldata below with your wallet or multisig.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
+            <div className="border border-dl-border p-4 space-y-2">
+              <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Vault Address</p>
+              <p className="font-mono text-xs break-all text-dl-navy">
+                {process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS ?? '(configure NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS)'}
+              </p>
+            </div>
+            <div className="border border-dl-border p-4 space-y-2">
+              <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Accepted Assets</p>
+              <div className="space-y-1 text-xs font-mono text-dl-navy">
+                <div>USDC — 0xaf88d065e77c8cC2239327C5EDb3A432268e5831</div>
+                <div>AXUSD — Arbitrum One (see contracts.ts)</div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 border border-dl-border p-4 bg-gray-50 max-w-2xl">
+            <p className="text-xs font-mono text-dl-gray uppercase tracking-wide mb-2">Deposit ABI</p>
+            <pre className="text-xs font-mono text-dl-navy whitespace-pre-wrap break-all">{`function deposit(address asset, uint256 amount) external
+// Prerequisite: IERC20(asset).approve(vaultAddress, amount)
+// Caller: must hold VAULT_ADMIN role on the vault contract`}</pre>
+          </div>
         </section>
 
         {/* Quick links */}

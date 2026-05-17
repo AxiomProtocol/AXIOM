@@ -8,23 +8,39 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./IStrategy.sol";
 
 /**
+ * @title  IStrategyManager
+ * @notice Minimal interface the vault uses to delegate all strategy operations.
+ */
+interface IStrategyManager {
+    function addStrategy(address strategy, string calldata name) external;
+    function removeStrategy(address strategy) external;
+    function allocate(address strategy, uint256 amount) external;
+    function recall(address strategy, uint256 amount) external returns (uint256);
+    function harvest(address strategy) external returns (uint256);
+    function rebalance(address fromStrategy, address toStrategy, uint256 amount) external;
+    function totalDeployed(address asset) external view returns (uint256);
+}
+
+/**
  * @title  AxiomTreasuryVault
  * @notice Operator-only treasury vault that holds USDC / AXUSD protocol capital
- *         and allocates it to authorised strategy adapters for yield generation.
+ *         and delegates all yield-strategy operations to StrategyManager.
  *
- * Role hierarchy
- * ─────────────
- *   VAULT_ADMIN         — add/remove accepted assets; pause the vault
- *   STRATEGY_ADMIN      — allocate capital to / harvest from strategies
- *   SENTINEL_EXECUTOR   — trigger rebalances between strategies (Axiom Sentinel)
- *
- * Design notes
+ * Architecture
  * ────────────
- * • No public deposits. The operator (VAULT_ADMIN) deposits directly.
- * • ERC-4626 interface is approximated via totalAssets(); full share
- *   tokenisation is deferred to the Reg D offering milestone.
- * • Events are emitted on every state change so the off-chain event
- *   poller can reconstruct a full audit trail.
+ *   Vault   — custody, deposit/withdraw, idle-balance accounting.
+ *   StrategyManager — registers strategies, holds MANAGER_ROLE on each,
+ *                     executes allocate / recall / harvest / rebalance.
+ *
+ * The vault NEVER calls strategy adapters directly; it always delegates
+ * through StrategyManager. This enforces a clean separation of concerns and
+ * prevents parallel control-plane conflicts.
+ *
+ * Role hierarchy (on the Vault)
+ * ─────────────────────────────
+ *   VAULT_ADMIN       — deposit / withdraw / pause / add-remove accepted assets
+ *   STRATEGY_ADMIN    — delegate allocate / recall / harvest / add-remove strategies
+ *   SENTINEL_EXECUTOR — trigger rebalances between strategies
  */
 contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -34,15 +50,14 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
     bytes32 public constant STRATEGY_ADMIN    = keccak256("STRATEGY_ADMIN");
     bytes32 public constant SENTINEL_EXECUTOR = keccak256("SENTINEL_EXECUTOR");
 
+    // ── Immutables ────────────────────────────────────────────────────────────
+    IStrategyManager public immutable strategyManager;
+
     // ── State ─────────────────────────────────────────────────────────────────
     bool public paused;
 
-    /// @notice Accepted deposit assets (e.g. USDC, AXUSD).
+    /// @notice Accepted deposit assets (USDC, AXUSD).
     mapping(address => bool) public acceptedAssets;
-
-    /// @notice Registered strategy adapters.
-    mapping(address => bool) public strategies;
-    address[] public strategyList;
 
     /// @notice Per-asset idle balance held in this contract (not deployed).
     mapping(address => uint256) public idleBalance;
@@ -51,7 +66,8 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
     event Deposit(address indexed asset, uint256 amount, address indexed depositor);
     event Withdrawal(address indexed asset, uint256 amount, address indexed recipient);
     event StrategyAllocated(address indexed strategy, address indexed asset, uint256 amount);
-    event StrategyHarvested(address indexed strategy, uint256 yieldAmount);
+    event StrategyRecalled(address indexed strategy, address indexed asset, uint256 amount);
+    event StrategyHarvested(address indexed strategy, address indexed asset, uint256 yieldAmount);
     event StrategyAdded(address indexed strategy);
     event StrategyRemoved(address indexed strategy);
     event AssetAccepted(address indexed asset);
@@ -72,13 +88,16 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
         address vaultAdmin,
         address strategyAdmin,
         address sentinelExecutor,
+        address _strategyManager,
         address usdc,
         address axusd
     ) {
         _grantRole(DEFAULT_ADMIN_ROLE, vaultAdmin);
-        _grantRole(VAULT_ADMIN,       vaultAdmin);
-        _grantRole(STRATEGY_ADMIN,    strategyAdmin);
-        _grantRole(SENTINEL_EXECUTOR, sentinelExecutor);
+        _grantRole(VAULT_ADMIN,        vaultAdmin);
+        _grantRole(STRATEGY_ADMIN,     strategyAdmin);
+        _grantRole(SENTINEL_EXECUTOR,  sentinelExecutor);
+
+        strategyManager = IStrategyManager(_strategyManager);
 
         acceptedAssets[usdc]  = true;
         acceptedAssets[axusd] = true;
@@ -94,28 +113,6 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
         if (accepted) emit AssetAccepted(asset); else emit AssetRejected(asset);
     }
 
-    function addStrategy(address strategy) external onlyRole(STRATEGY_ADMIN) {
-        require(!strategies[strategy], "AxiomTreasuryVault: already registered");
-        strategies[strategy] = true;
-        strategyList.push(strategy);
-        emit StrategyAdded(strategy);
-    }
-
-    function removeStrategy(address strategy) external onlyRole(STRATEGY_ADMIN) {
-        require(strategies[strategy], "AxiomTreasuryVault: not registered");
-        require(IStrategy(strategy).currentValue() == 0, "AxiomTreasuryVault: strategy still deployed");
-        strategies[strategy] = false;
-        uint256 len = strategyList.length;
-        for (uint256 i = 0; i < len; i++) {
-            if (strategyList[i] == strategy) {
-                strategyList[i] = strategyList[len - 1];
-                strategyList.pop();
-                break;
-            }
-        }
-        emit StrategyRemoved(strategy);
-    }
-
     function pause() external onlyRole(VAULT_ADMIN) {
         paused = true;
         emit VaultPaused(msg.sender);
@@ -126,12 +123,27 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
         emit VaultUnpaused(msg.sender);
     }
 
-    // ── Deposit / Withdraw (operator only) ───────────────────────────────────
+    // ── Strategy registry (delegated to StrategyManager) ──────────────────────
+
+    function addStrategy(address strategy, string calldata name) external onlyRole(STRATEGY_ADMIN) {
+        strategyManager.addStrategy(strategy, name);
+        emit StrategyAdded(strategy);
+    }
+
+    function removeStrategy(address strategy) external onlyRole(STRATEGY_ADMIN) {
+        strategyManager.removeStrategy(strategy);
+        emit StrategyRemoved(strategy);
+    }
+
+    // ── Deposit / Withdraw (operator only) ────────────────────────────────────
 
     /**
      * @notice Operator deposits `amount` of `asset` into the vault idle balance.
+     *         Caller must pre-approve the vault to spend `amount`.
      */
-    function deposit(address asset, uint256 amount) external onlyRole(VAULT_ADMIN) whenNotPaused nonReentrant {
+    function deposit(address asset, uint256 amount)
+        external onlyRole(VAULT_ADMIN) whenNotPaused nonReentrant
+    {
         require(acceptedAssets[asset], "AxiomTreasuryVault: asset not accepted");
         require(amount > 0, "AxiomTreasuryVault: zero amount");
         IERC20(asset).safeTransferFrom(msg.sender, address(this), amount);
@@ -140,64 +152,66 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Operator withdraws idle (un-deployed) `amount` of `asset`.
+     * @notice Operator withdraws idle (un-deployed) capital.
      */
     function withdraw(address asset, uint256 amount, address recipient)
         external onlyRole(VAULT_ADMIN) whenNotPaused nonReentrant
     {
-        require(idleBalance[asset] >= amount, "AxiomTreasuryVault: insufficient idle balance");
+        require(idleBalance[asset] >= amount, "AxiomTreasuryVault: insufficient idle");
         idleBalance[asset] -= amount;
         IERC20(asset).safeTransfer(recipient, amount);
         emit Withdrawal(asset, amount, recipient);
     }
 
-    // ── Strategy operations ───────────────────────────────────────────────────
+    // ── Strategy operations (delegated through StrategyManager) ───────────────
 
     /**
-     * @notice Allocate `amount` of `asset` to a registered strategy.
-     * @dev    Only STRATEGY_ADMIN may call. Transfers from idle balance.
+     * @notice Allocate `amount` of `asset` to a strategy via StrategyManager.
+     *         Vault transfers tokens to StrategyManager; SM transfers to strategy
+     *         then calls strategy.deploy().
      */
     function allocate(address strategy, address asset, uint256 amount)
         external onlyRole(STRATEGY_ADMIN) whenNotPaused nonReentrant
     {
-        require(strategies[strategy], "AxiomTreasuryVault: strategy not registered");
         require(acceptedAssets[asset], "AxiomTreasuryVault: asset not accepted");
-        require(idleBalance[asset] >= amount, "AxiomTreasuryVault: insufficient idle balance");
+        require(idleBalance[asset] >= amount, "AxiomTreasuryVault: insufficient idle");
         idleBalance[asset] -= amount;
-        IERC20(asset).safeTransfer(strategy, amount);
-        IStrategy(strategy).deploy(amount);
+        IERC20(asset).safeTransfer(address(strategyManager), amount);
+        strategyManager.allocate(strategy, amount);
         emit StrategyAllocated(strategy, asset, amount);
     }
 
     /**
-     * @notice Withdraw `amount` from strategy back to idle balance.
+     * @notice Recall `amount` from a strategy back to idle.
+     *         StrategyManager calls strategy.withdraw() which sends funds
+     *         directly back to this vault address.
      */
     function recallFromStrategy(address strategy, address asset, uint256 amount)
         external onlyRole(STRATEGY_ADMIN) whenNotPaused nonReentrant
     {
-        require(strategies[strategy], "AxiomTreasuryVault: strategy not registered");
-        uint256 received = IStrategy(strategy).withdraw(amount);
+        uint256 received = strategyManager.recall(strategy, amount);
         idleBalance[asset] += received;
-        emit Withdrawal(asset, received, address(this));
+        emit StrategyRecalled(strategy, asset, received);
     }
 
     /**
-     * @notice Harvest yield from a strategy, crediting idle balance.
+     * @notice Harvest yield from a strategy.
+     *         StrategyManager calls strategy.harvest() which sends yield
+     *         directly to this vault address.
      */
     function harvest(address strategy, address asset)
         external onlyRole(STRATEGY_ADMIN) nonReentrant
     {
-        require(strategies[strategy], "AxiomTreasuryVault: strategy not registered");
-        uint256 yieldAmount = IStrategy(strategy).harvest();
+        uint256 yieldAmount = strategyManager.harvest(strategy);
         if (yieldAmount > 0) {
             idleBalance[asset] += yieldAmount;
         }
-        emit StrategyHarvested(strategy, yieldAmount);
+        emit StrategyHarvested(strategy, asset, yieldAmount);
     }
 
     /**
-     * @notice Sentinel-gated rebalance: withdraw `amount` from `fromStrategy`,
-     *         then allocate the proceeds to `toStrategy`.
+     * @notice Sentinel-gated rebalance: moves `amount` from `fromStrategy`
+     *         to `toStrategy` via StrategyManager.
      */
     function rebalance(
         address fromStrategy,
@@ -205,21 +219,17 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
         address asset,
         uint256 amount
     ) external onlyRole(SENTINEL_EXECUTOR) whenNotPaused nonReentrant {
-        require(strategies[fromStrategy], "AxiomTreasuryVault: fromStrategy not registered");
-        require(strategies[toStrategy],   "AxiomTreasuryVault: toStrategy not registered");
-        uint256 received = IStrategy(fromStrategy).withdraw(amount);
-        IERC20(asset).safeTransfer(toStrategy, received);
-        IStrategy(toStrategy).deploy(received);
-        emit Rebalanced(fromStrategy, toStrategy, received);
+        strategyManager.rebalance(fromStrategy, toStrategy, amount);
+        emit Rebalanced(fromStrategy, toStrategy, amount);
     }
 
     /**
-     * @notice Emergency exit from a strategy — pulls all funds to idle.
+     * @notice Emergency exit — calls strategy.emergencyWithdraw() directly
+     *         via DEFAULT_ADMIN_ROLE (vault is DEFAULT_ADMIN on strategies).
      */
     function emergencyWithdrawFromStrategy(address strategy, address asset)
         external onlyRole(VAULT_ADMIN) nonReentrant
     {
-        require(strategies[strategy], "AxiomTreasuryVault: strategy not registered");
         uint256 amount = IStrategy(strategy).emergencyWithdraw();
         idleBalance[asset] += amount;
         emit EmergencyWithdraw(strategy, amount);
@@ -228,27 +238,9 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
     // ── View helpers ──────────────────────────────────────────────────────────
 
     /**
-     * @notice Total AUM = idle balances across all accepted assets
-     *         + deployed value across all strategies.
-     * @dev    Returns USD-denominated total only when all assets are 1:1 USD
-     *         (USDC / AXUSD). Update this logic when non-stablecoin assets
-     *         are accepted.
+     * @notice Total AUM = idle + deployed capital for `asset`.
      */
-    function totalAssets(address asset) public view returns (uint256 total) {
-        total = idleBalance[asset];
-        uint256 len = strategyList.length;
-        for (uint256 i = 0; i < len; i++) {
-            if (IStrategy(strategyList[i]).asset() == asset) {
-                total += IStrategy(strategyList[i]).currentValue();
-            }
-        }
-    }
-
-    function strategyCount() external view returns (uint256) {
-        return strategyList.length;
-    }
-
-    function getStrategyList() external view returns (address[] memory) {
-        return strategyList;
+    function totalAssets(address asset) public view returns (uint256) {
+        return idleBalance[asset] + strategyManager.totalDeployed(asset);
     }
 }

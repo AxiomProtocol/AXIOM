@@ -8,7 +8,6 @@
  * Imported by server/db.ts alongside the other schema shards.
  */
 
-import { sql } from 'drizzle-orm';
 import {
   decimal,
   index,
@@ -16,6 +15,7 @@ import {
   pgTable,
   serial,
   timestamp,
+  unique,
   varchar,
 } from 'drizzle-orm/pg-core';
 
@@ -25,12 +25,14 @@ export const treasuryVaultEvents = pgTable('treasury_vault_events', {
   strategy:    varchar('strategy',   { length: 255 }),
   amountUsd:   decimal('amount_usd', { precision: 18, scale: 6 }).notNull().default('0'),
   txHash:      varchar('tx_hash',    { length: 66 }),
+  logIndex:    integer('log_index'),
   blockNumber: integer('block_number'),
   createdAt:   timestamp('created_at').notNull().defaultNow(),
 }, (table) => ({
-  eventTypeIdx: index('treasury_vault_events_event_type_idx').on(table.eventType),
-  createdAtIdx: index('treasury_vault_events_created_at_idx').on(table.createdAt),
-  txHashIdx:    index('treasury_vault_events_tx_hash_idx').on(table.txHash),
+  eventTypeIdx:  index('treasury_vault_events_event_type_idx').on(table.eventType),
+  createdAtIdx:  index('treasury_vault_events_created_at_idx').on(table.createdAt),
+  txHashIdx:     index('treasury_vault_events_tx_hash_idx').on(table.txHash),
+  uniqTxLog:     unique('treasury_vault_events_tx_log_uniq').on(table.txHash, table.logIndex),
 }));
 
 export type TreasuryVaultEvent       = typeof treasuryVaultEvents.$inferSelect;
