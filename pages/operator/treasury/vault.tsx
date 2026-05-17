@@ -1,7 +1,7 @@
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import { useState, useCallback, useEffect } from 'react';
-import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
+import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt, usePublicClient, useBalance } from 'wagmi';
 import { erc20Abi, parseAbi, parseUnits, formatUnits } from 'viem';
 import { OperatorConsoleLayout } from '../../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../../lib/capinfra/operatorAuth';
@@ -164,6 +164,12 @@ function WalletDepositPanel() {
   const { isSuccess: approveConfirmed } = useWaitForTransactionReceipt({ hash: approveTx ?? undefined });
   const { isSuccess: depositConfirmed } = useWaitForTransactionReceipt({ hash: depositTx ?? undefined });
 
+  // Native ETH balance (for gas awareness)
+  const { data: ethBalanceData } = useBalance({ address });
+  const ethBalance = ethBalanceData
+    ? parseFloat(formatUnits(ethBalanceData.value, 18)).toFixed(4)
+    : null;
+
   // Fetch USDC/AXUSD balance when wallet connects
   useEffect(() => {
     if (!address || !publicClient) return;
@@ -231,12 +237,42 @@ function WalletDepositPanel() {
   }
 
   async function handleDeposit() {
-    if (!address || !vaultAddress) return;
+    if (!address || !vaultAddress || !publicClient) return;
     setErrMsg(null);
     setStep('depositing');
     try {
       const decimals  = asset === 'USDC' ? 6 : 18;
       const rawAmt    = parseUnits(amount, decimals);
+
+      // Pre-simulate to surface revert reasons before MetaMask opens
+      try {
+        if (asset === 'USDC') {
+          await publicClient.simulateContract({
+            address: vaultAddress,
+            abi: VAULT_ABI,
+            functionName: 'deposit',
+            args: [rawAmt, address],
+            account: address,
+          });
+        } else {
+          await publicClient.simulateContract({
+            address: vaultAddress,
+            abi: VAULT_ABI,
+            functionName: 'depositToken',
+            args: [AXUSD_ADDRESS, rawAmt],
+            account: address,
+          });
+        }
+      } catch (simErr: unknown) {
+        const msg = simErr instanceof Error ? simErr.message : String(simErr);
+        // Extract the revert reason if present
+        const revertMatch = msg.match(/reverted with reason string '([^']+)'/);
+        const reason = revertMatch ? revertMatch[1] : msg.slice(0, 120);
+        setErrMsg(`Transaction would fail: ${reason}. Check your USDC balance and that the vault is not paused.`);
+        setStep('approved');
+        return;
+      }
+
       let hash: `0x${string}`;
       if (asset === 'USDC') {
         hash = await writeContractAsync({
@@ -322,7 +358,14 @@ function WalletDepositPanel() {
     <div className="border border-dl-border p-5 max-w-2xl mb-6 space-y-5">
       <div className="flex items-center justify-between">
         <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Wallet Deposit</p>
-        <span className="text-xs font-mono text-dl-gray">{address?.slice(0, 6)}…{address?.slice(-4)} · Arbitrum One</span>
+        <div className="text-right space-y-0.5">
+          <div className="text-xs font-mono text-dl-gray">{address?.slice(0, 6)}…{address?.slice(-4)} · Arbitrum One</div>
+          {ethBalance !== null && (
+            <div className="text-xs font-mono text-dl-gray">
+              Gas balance: <span className={parseFloat(ethBalance) < 0.001 ? 'text-red-600 font-semibold' : 'text-dl-navy'}>{ethBalance} ETH</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Step indicators */}
