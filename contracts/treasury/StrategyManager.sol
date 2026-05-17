@@ -52,6 +52,20 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
     mapping(address => StrategyInfo) public strategyInfo;
     address[] public strategyAddresses;
 
+    /**
+     * @notice Total amount of each asset deployed as a *paired* (non-primary)
+     *         asset via fundPairedAsset().
+     *
+     *         Example: When AXUSD is pre-funded to CamelotStrategy (which is
+     *         registered with primary asset = USDC), the AXUSD amount is
+     *         recorded here under totalPairedDeployed[AXUSD_ADDRESS].
+     *         This allows totalDeployed(AXUSD) to return the correct full AUM
+     *         even though no strategy has AXUSD as its registered primary asset.
+     *
+     *         assetAddr → total amount currently deployed as paired asset
+     */
+    mapping(address => uint256) public totalPairedDeployed;
+
     // ── Events ────────────────────────────────────────────────────────────────
     event StrategyRegistered(address indexed strategy, string name, address asset);
     event StrategyDeactivated(address indexed strategy);
@@ -177,6 +191,7 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
         StrategyInfo storage info = strategyInfo[strategy];
         require(info.active, "StrategyManager: strategy not active");
         IERC20(assetAddr).safeTransfer(strategy, amount);
+        totalPairedDeployed[assetAddr] += amount;
         emit FundedPairedAsset(strategy, assetAddr, amount);
     }
 
@@ -225,6 +240,17 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
         return strategyAddresses;
     }
 
+    /**
+     * @notice Total value of `assetAddr` currently deployed, including both:
+     *   (a) Strategies whose primary registered asset is `assetAddr`
+     *       → summed via IStrategy.currentValue() (live yield-adjusted value)
+     *   (b) Paired (secondary) asset amounts forwarded via fundPairedAsset()
+     *       → tracked in totalPairedDeployed[assetAddr]
+     *
+     *   This ensures AXUSD deployed to CamelotStrategy (registered with USDC
+     *   as primary asset) is correctly included in totalDeployed(AXUSD), giving
+     *   vaultService an accurate AXUSD AUM figure.
+     */
     function totalDeployed(address assetAddr) external view returns (uint256 total) {
         uint256 len = strategyAddresses.length;
         for (uint256 i = 0; i < len; i++) {
@@ -232,5 +258,7 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
                 total += IStrategy(strategyAddresses[i]).currentValue();
             }
         }
+        // Include amounts deployed as paired (secondary) asset via fundPairedAsset().
+        total += totalPairedDeployed[assetAddr];
     }
 }
