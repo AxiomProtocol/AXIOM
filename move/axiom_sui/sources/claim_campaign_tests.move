@@ -879,7 +879,7 @@ module axiom_sui::claim_campaign_tests {
                 test_scenario::take_from_sender<GuardedTreasury<AXIOM_TEST_CLAIM>>(&scenario);
             let ctx = test_scenario::ctx(&mut scenario);
             let coin = claim_campaign::claim(
-                &mut campaign, &mut treasury, vector[], AMOUNT, ctx,
+                &mut campaign, &mut treasury, AMOUNT, vector[], ctx,
             );
             transfer::public_transfer(coin, ADMIN);
             test_scenario::return_shared(campaign);

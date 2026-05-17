@@ -33,6 +33,7 @@ module axiom_sui::axiom_test_claim {
 
     /// Called once at publish time. Creates the currency and immediately
     /// wraps the TreasuryCap into a GuardedTreasury. (A4 / A5)
+    #[allow(deprecated_usage)]
     fun init(witness: AXIOM_TEST_CLAIM, ctx: &mut TxContext) {
         let (treasury_cap, metadata) = coin::create_currency(
             witness,

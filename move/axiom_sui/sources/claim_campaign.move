@@ -114,7 +114,7 @@ module axiom_sui::claim_campaign {
         expires_at_epoch: u64,
         ctx: &mut TxContext,
     ): AdminCap {
-        let mut campaign = ClaimCampaign {
+        let campaign = ClaimCampaign {
             id: object::new(ctx),
             merkle_root,
             amount_per_claim,

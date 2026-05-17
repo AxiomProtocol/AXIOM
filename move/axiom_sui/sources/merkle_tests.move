@@ -15,7 +15,7 @@ module axiom_sui::merkle_tests {
     /// Build a proof vector of `depth` dummy 32-byte elements.
     /// Used to trigger the MAX_PROOF_DEPTH abort.
     fun make_long_proof(depth: u64): vector<vector<u8>> {
-        let mut proof = vector::empty<vector<u8>>();
+        let mut proof: vector<vector<u8>> = vector[];
         // 32 zero bytes as a dummy sibling
         let dummy = x"0000000000000000000000000000000000000000000000000000000000000000";
         let mut i = 0u64;
