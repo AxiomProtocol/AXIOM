@@ -1,4 +1,4 @@
-/// claim_campaign_tests — 20 unit tests for axiom_sui::claim_campaign.
+/// claim_campaign_tests — 31 unit tests for axiom_sui::claim_campaign.
 ///
 /// Covers: AdminCap creation and lifecycle (A3), campaign state machine
 /// (activate / pause / unpause / close), is_closed permanence (A2), merkle
@@ -606,6 +606,283 @@ module axiom_sui::claim_campaign_tests {
             let overflow = axiom_test_claim::max_supply() + 1;
             let over_coin = guarded_treasury::mint(&mut treasury, overflow, ctx);
             transfer::public_transfer(over_coin, @0x0);
+            test_scenario::return_to_sender(&scenario, treasury);
+        };
+        test_scenario::end(scenario);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Test 21 (A5): Minting zero tokens aborts (EZeroMintAmount = 1).
+    // ─────────────────────────────────────────────────────────────────────
+    #[test]
+    #[expected_failure(abort_code = 1)]
+    fun test_guarded_treasury_mint_zero_aborts() {
+        let mut scenario = test_scenario::begin(ADMIN);
+        setup_treasury(&mut scenario);
+
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let mut treasury =
+                test_scenario::take_from_sender<GuardedTreasury<AXIOM_TEST_CLAIM>>(&scenario);
+            let ctx = test_scenario::ctx(&mut scenario);
+            let zero_coin = guarded_treasury::mint(&mut treasury, 0, ctx);
+            transfer::public_transfer(zero_coin, @0x0);
+            test_scenario::return_to_sender(&scenario, treasury);
+        };
+        test_scenario::end(scenario);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Test 22 (A5): remaining() decrements by the minted amount.
+    // ─────────────────────────────────────────────────────────────────────
+    #[test]
+    fun test_guarded_treasury_remaining_decrements() {
+        let mut scenario = test_scenario::begin(ADMIN);
+        setup_treasury(&mut scenario);
+
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let mut treasury =
+                test_scenario::take_from_sender<GuardedTreasury<AXIOM_TEST_CLAIM>>(&scenario);
+            let ctx = test_scenario::ctx(&mut scenario);
+
+            let max = guarded_treasury::max_supply(&treasury);
+            let before = guarded_treasury::remaining(&treasury);
+            assert!(before == max, 0);
+
+            let coin = guarded_treasury::mint(&mut treasury, AMOUNT, ctx);
+            let after = guarded_treasury::remaining(&treasury);
+            assert!(after == max - AMOUNT, 1);
+
+            transfer::public_transfer(coin, @0x0);
+            test_scenario::return_to_sender(&scenario, treasury);
+        };
+        test_scenario::end(scenario);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Test 23: total_minted starts at zero before any mint.
+    // ─────────────────────────────────────────────────────────────────────
+    #[test]
+    fun test_guarded_treasury_total_minted_starts_zero() {
+        let mut scenario = test_scenario::begin(ADMIN);
+        setup_treasury(&mut scenario);
+
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let treasury =
+                test_scenario::take_from_sender<GuardedTreasury<AXIOM_TEST_CLAIM>>(&scenario);
+            assert!(guarded_treasury::total_minted(&treasury) == 0, 0);
+            test_scenario::return_to_sender(&scenario, treasury);
+        };
+        test_scenario::end(scenario);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Test 24 (A5): max_supply() view returns the configured ceiling.
+    // ─────────────────────────────────────────────────────────────────────
+    #[test]
+    fun test_guarded_treasury_max_supply_view() {
+        let mut scenario = test_scenario::begin(ADMIN);
+        setup_treasury(&mut scenario);
+
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let treasury =
+                test_scenario::take_from_sender<GuardedTreasury<AXIOM_TEST_CLAIM>>(&scenario);
+            assert!(guarded_treasury::max_supply(&treasury) == axiom_test_claim::max_supply(), 0);
+            test_scenario::return_to_sender(&scenario, treasury);
+        };
+        test_scenario::end(scenario);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Test 25: amount_per_claim() view returns the value set at creation.
+    // ─────────────────────────────────────────────────────────────────────
+    #[test]
+    fun test_amount_per_claim_view() {
+        let mut scenario = test_scenario::begin(ADMIN);
+        {
+            let ctx = test_scenario::ctx(&mut scenario);
+            let cap = claim_campaign::create(
+                x"0000000000000000000000000000000000000000000000000000000000000000",
+                AMOUNT, 0, ctx,
+            );
+            transfer::public_transfer(cap, ADMIN);
+        };
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let campaign = test_scenario::take_shared<ClaimCampaign>(&scenario);
+            assert!(claim_campaign::amount_per_claim(&campaign) == AMOUNT, 0);
+            test_scenario::return_shared(campaign);
+        };
+        test_scenario::end(scenario);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Test 26: expires_at_epoch() view returns 0 for a no-expiry campaign.
+    // ─────────────────────────────────────────────────────────────────────
+    #[test]
+    fun test_expires_at_epoch_view_zero() {
+        let mut scenario = test_scenario::begin(ADMIN);
+        {
+            let ctx = test_scenario::ctx(&mut scenario);
+            let cap = claim_campaign::create(
+                x"0000000000000000000000000000000000000000000000000000000000000000",
+                AMOUNT, 0, ctx,
+            );
+            transfer::public_transfer(cap, ADMIN);
+        };
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let campaign = test_scenario::take_shared<ClaimCampaign>(&scenario);
+            assert!(claim_campaign::expires_at_epoch(&campaign) == 0, 0);
+            test_scenario::return_shared(campaign);
+        };
+        test_scenario::end(scenario);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Test 27: merkle_root() view returns the root set at creation,
+    //          and set_merkle_root() updates it.
+    // ─────────────────────────────────────────────────────────────────────
+    #[test]
+    fun test_set_merkle_root_updates_view() {
+        let initial_root =
+            x"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        let new_root =
+            x"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+
+        let mut scenario = test_scenario::begin(ADMIN);
+        {
+            let ctx = test_scenario::ctx(&mut scenario);
+            let cap = claim_campaign::create(initial_root, AMOUNT, 0, ctx);
+            transfer::public_transfer(cap, ADMIN);
+        };
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let campaign = test_scenario::take_shared<ClaimCampaign>(&scenario);
+            assert!(claim_campaign::merkle_root(&campaign) == initial_root, 0);
+            test_scenario::return_shared(campaign);
+        };
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let cap = test_scenario::take_from_sender<AdminCap>(&scenario);
+            let mut campaign = test_scenario::take_shared<ClaimCampaign>(&scenario);
+            claim_campaign::set_merkle_root(&mut campaign, &cap, new_root);
+            test_scenario::return_to_sender(&scenario, cap);
+            test_scenario::return_shared(campaign);
+        };
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let campaign = test_scenario::take_shared<ClaimCampaign>(&scenario);
+            assert!(claim_campaign::merkle_root(&campaign) == new_root, 1);
+            test_scenario::return_shared(campaign);
+        };
+        test_scenario::end(scenario);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Test 28: has_claimed() returns false before any claim is made.
+    // ─────────────────────────────────────────────────────────────────────
+    #[test]
+    fun test_has_claimed_false_before_claim() {
+        let mut scenario = test_scenario::begin(ADMIN);
+        let (_leaf, root) = single_leaf_root(ADMIN, AMOUNT);
+        {
+            let ctx = test_scenario::ctx(&mut scenario);
+            let cap = claim_campaign::create(root, AMOUNT, 0, ctx);
+            transfer::public_transfer(cap, ADMIN);
+        };
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let campaign = test_scenario::take_shared<ClaimCampaign>(&scenario);
+            assert!(!claim_campaign::has_claimed(&campaign, ADMIN), 0);
+            test_scenario::return_shared(campaign);
+        };
+        test_scenario::end(scenario);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Test 29 (A2): After close_campaign(), is_closed() is true and
+    //              is_active() is false.
+    // ─────────────────────────────────────────────────────────────────────
+    #[test]
+    fun test_closed_campaign_flags() {
+        let mut scenario = test_scenario::begin(ADMIN);
+        let (_leaf, root) = single_leaf_root(ADMIN, AMOUNT);
+        setup_active_campaign(&mut scenario, root);
+
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let cap = test_scenario::take_from_sender<AdminCap>(&scenario);
+            let mut campaign = test_scenario::take_shared<ClaimCampaign>(&scenario);
+            claim_campaign::close_campaign(&mut campaign, &cap);
+            assert!(claim_campaign::is_closed(&campaign), 0);
+            assert!(!claim_campaign::is_active(&campaign), 1);
+            test_scenario::return_to_sender(&scenario, cap);
+            test_scenario::return_shared(campaign);
+        };
+        test_scenario::end(scenario);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Test 30 (A3): destroy_admin_cap() emits AdminCapDestroyed event.
+    //              Smoke-tests that the function executes without abort.
+    // ─────────────────────────────────────────────────────────────────────
+    #[test]
+    fun test_destroy_admin_cap_succeeds() {
+        let mut scenario = test_scenario::begin(ADMIN);
+        {
+            let ctx = test_scenario::ctx(&mut scenario);
+            let cap = claim_campaign::create(
+                x"0000000000000000000000000000000000000000000000000000000000000000",
+                AMOUNT, 0, ctx,
+            );
+            // Immediately destroy — no AdminCap should remain after this tx
+            claim_campaign::destroy_admin_cap(cap);
+        };
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            // AdminCap must be gone from ADMIN's inventory
+            assert!(!test_scenario::has_most_recent_for_sender<AdminCap>(&scenario), 0);
+        };
+        test_scenario::end(scenario);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Test 31 (A2): Claiming after campaign close aborts (ECampaignAlreadyClosed = 2).
+    // ─────────────────────────────────────────────────────────────────────
+    #[test]
+    #[expected_failure(abort_code = 2)]
+    fun test_claim_after_close_aborts() {
+        let mut scenario = test_scenario::begin(ADMIN);
+        setup_treasury(&mut scenario);
+        let (_leaf, root) = single_leaf_root(ADMIN, AMOUNT);
+        setup_active_campaign(&mut scenario, root);
+
+        // Close the campaign
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let cap = test_scenario::take_from_sender<AdminCap>(&scenario);
+            let mut campaign = test_scenario::take_shared<ClaimCampaign>(&scenario);
+            claim_campaign::close_campaign(&mut campaign, &cap);
+            test_scenario::return_to_sender(&scenario, cap);
+            test_scenario::return_shared(campaign);
+        };
+
+        // Attempt claim — must abort with ECampaignAlreadyClosed = 2
+        test_scenario::next_tx(&mut scenario, ADMIN);
+        {
+            let mut campaign = test_scenario::take_shared<ClaimCampaign>(&scenario);
+            let mut treasury =
+                test_scenario::take_from_sender<GuardedTreasury<AXIOM_TEST_CLAIM>>(&scenario);
+            let ctx = test_scenario::ctx(&mut scenario);
+            let coin = claim_campaign::claim(
+                &mut campaign, &mut treasury, vector[], AMOUNT, ctx,
+            );
+            transfer::public_transfer(coin, ADMIN);
+            test_scenario::return_shared(campaign);
             test_scenario::return_to_sender(&scenario, treasury);
         };
         test_scenario::end(scenario);

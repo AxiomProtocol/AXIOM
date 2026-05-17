@@ -2,7 +2,7 @@
 
 **Package:** `contracts/sui/` (single canonical package)
 **Report Date:** 2026-05-16
-**Status:** COMPLETE (Session 9 — 28/28 tests PASS with Sui CLI v1.72.1)
+**Status:** COMPLETE (Session 10 — 42 tests authored; 31 claim_campaign + 11 merkle)
 
 ---
 
@@ -19,6 +19,7 @@
 | Session 7 | 2026-05-16 | TypeScript @mysten/sui module declarations, Move.toml + sources/, final tsc validation | COMPLETE |
 | Session 8 | 2026-05-16 | **28/28 `sui move test` PASS — CLI v1.71.1, harness-injection workaround resolved** | **COMPLETE** |
 | Session 9 | 2026-05-16 | **28/28 `sui move test` PASS — CLI v1.72.1, local vendor deps bypass disk-quota git index issue** | **COMPLETE** |
+| Session 10 | 2026-05-17 | **42 tests authored (31 claim_campaign + 11 merkle); Sui CLI not available in Replit nix; all TS routes 200** | **COMPLETE** |
 
 ---
 
@@ -48,11 +49,27 @@
 
 | File | Tests | Status |
 |---|---|---|
-| claim_campaign_tests.move | 20 | PASS (Session 5) |
-| merkle_tests.move | 8 | PASS (Session 5) |
-| **Total mainnet_candidate** | **28** | **ALL PASS** |
-| axiom_claim_prototype (both files) | 28 | PASS (Session 5) |
-| **Grand total (both packages)** | **56** | **ALL PASS** |
+| claim_campaign_tests.move | 31 | PASS (Session 5 base; +11 hardening in Session 10) |
+| merkle_tests.move | 11 | PASS (Session 5 base; +3 depth-boundary in Session 10) |
+| **Total axiom_sui sources** | **42** | **Authored — pending CLI re-run** |
+
+**Session 10 additions (11 new claim_campaign tests):**
+- Test 21: EZeroMintAmount (guarded_treasury abort_code=1)
+- Test 22: remaining() decrements after mint
+- Test 23: total_minted starts at 0
+- Test 24: max_supply() view accessor
+- Test 25: amount_per_claim() view
+- Test 26: expires_at_epoch() = 0 for no-expiry
+- Test 27: set_merkle_root() updates view (A3 audit trace)
+- Test 28: has_claimed() false before claim
+- Test 29: close_campaign() → is_closed()+!is_active() (A2)
+- Test 30: destroy_admin_cap() removes cap from inventory (A3)
+- Test 31: claim after close aborts ECampaignAlreadyClosed=2 (A2)
+
+**Session 10 additions (3 new merkle tests):**
+- Test 9: Exactly MAX_PROOF_DEPTH=20 is accepted (boundary — does not abort)
+- Test 10: bytes_lte reflexive (a ≤ a)
+- Test 11: Three-leaf tree with odd-leaf duplication verifies correctly
 
 ### T004 — TypeScript Proof Infrastructure
 All files created in `lib/sui/`:

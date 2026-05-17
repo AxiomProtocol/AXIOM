@@ -505,8 +505,8 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
           <h2 className="font-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-1">Deposit Capital</h2>
           <p className="text-sm text-dl-gray mb-4">
             Deposits are executed on-chain by the vault admin address.
-            The vault admin must pre-approve the vault contract to spend the deposit amount,
-            then call <code className="bg-gray-100 px-1 font-mono text-xs">deposit(asset, amount)</code>.
+            For USDC (primary), pre-approve the vault and call the ERC-4626 <code className="bg-gray-100 px-1 font-mono text-xs">deposit(uint256 assets, address receiver)</code>.
+            For AXUSD and other secondary assets, call <code className="bg-gray-100 px-1 font-mono text-xs">depositToken(address asset, uint256 amount)</code>.
             Use the calldata below with your wallet or multisig.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
@@ -524,11 +524,20 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
               </div>
             </div>
           </div>
-          <div className="mt-4 border border-dl-border p-4 bg-gray-50 max-w-2xl">
-            <p className="text-xs font-mono text-dl-gray uppercase tracking-wide mb-2">Deposit ABI</p>
-            <pre className="text-xs font-mono text-dl-navy whitespace-pre-wrap break-all">{`function deposit(address asset, uint256 amount) external
+          <div className="mt-4 border border-dl-border p-4 bg-gray-50 max-w-2xl space-y-3">
+            <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Deposit ABI</p>
+            <div>
+              <p className="text-xs font-mono text-dl-gray mb-1">Primary asset (USDC) — ERC-4626:</p>
+              <pre className="text-xs font-mono text-dl-navy whitespace-pre-wrap break-all">{`function deposit(uint256 assets, address receiver) external returns (uint256 shares)
+// Prerequisite: IERC20(USDC).approve(vaultAddress, assets)
+// Mints ATVS shares to receiver. Caller: must hold VAULT_ADMIN role.`}</pre>
+            </div>
+            <div>
+              <p className="text-xs font-mono text-dl-gray mb-1">Secondary assets (AXUSD, etc.) — non-ERC4626:</p>
+              <pre className="text-xs font-mono text-dl-navy whitespace-pre-wrap break-all">{`function depositToken(address asset, uint256 amount) external
 // Prerequisite: IERC20(asset).approve(vaultAddress, amount)
-// Caller: must hold VAULT_ADMIN role on the vault contract`}</pre>
+// Tracked in idleBalance mapping — no ATVS shares minted. Caller: must hold VAULT_ADMIN role.`}</pre>
+            </div>
           </div>
         </section>
 

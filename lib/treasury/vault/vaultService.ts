@@ -21,11 +21,18 @@ const AAVE_STRATEGY    = process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS   ?? '';
 const CAMELOT_STRATEGY = process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS   ?? '';
 const USDC             = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
 
+// AXUSD is an ERC-3643 stablecoin; address configured at deploy time.
+// AXUSD decimals are assumed 6 (standard for stablecoins). Both USDC and AXUSD
+// are treated 1:1 with USD for AUM reporting purposes.
+const AXUSD_ADDRESS    = process.env.AXUSD_ADDRESS ?? '';
+const AXUSD_DECIMALS   = 6;
+
 const VAULT_ABI = [
-  'function balanceOf(address) view returns (uint256)',  // ERC20 share balance
-  'function totalAssets() view returns (uint256)',        // ERC-4626
-  'function totalSupply() view returns (uint256)',        // ERC20 shares
+  'function balanceOf(address) view returns (uint256)',          // ERC20 share balance
+  'function totalAssets() view returns (uint256)',               // ERC-4626 (USDC only)
+  'function totalSupply() view returns (uint256)',               // ERC20 shares
   'function paused() view returns (bool)',
+  'function getIdleBalance(address asset) view returns (uint256)', // multi-asset idle query
 ];
 
 const ERC20_ABI = [
@@ -45,9 +52,16 @@ const STRATEGY_MANAGER_ABI = [
 ];
 
 export interface VaultSummary {
+  /** Total AUM across all accepted assets (USDC + AXUSD), denominated in USD. */
   aumUsdc: number;
+  /** Idle USDC held in vault (not deployed to any strategy). */
   idleUsdc: number;
+  /** USDC deployed across active strategies. */
   deployedUsdc: number;
+  /** Idle AXUSD held in vault (tracked via idleBalance mapping). */
+  axusdIdleUsdc: number;
+  /** AXUSD deployed across active strategies (via SM.totalDeployed). */
+  axusdDeployedUsdc: number;
   aavePosition: StrategyPosition;
   camelotPosition: StrategyPosition;
   blendedApyEstimatePct: number | null;
@@ -195,8 +209,25 @@ export async function getVaultSummary(): Promise<VaultSummary> {
       ]);
 
     const idleUsdc     = toUsdc(idleRaw);
-    const aumUsdc      = toUsdc(totalRaw);
+    const aumUsdc_usdc = toUsdc(totalRaw);
     const deployedUsdc = toUsdc(totalDeployedRaw);
+
+    // ── AXUSD AUM (secondary asset) ──────────────────────────────────────────
+    let axusdIdleUsdc     = 0;
+    let axusdDeployedUsdc = 0;
+    if (AXUSD_ADDRESS) {
+      try {
+        const [axusdIdleRaw, axusdDeployedRaw] = await Promise.all([
+          vault.getIdleBalance(AXUSD_ADDRESS) as Promise<bigint>,
+          sm.totalDeployed(AXUSD_ADDRESS)     as Promise<bigint>,
+        ]);
+        axusdIdleUsdc     = Number(axusdIdleRaw)     / Math.pow(10, AXUSD_DECIMALS);
+        axusdDeployedUsdc = Number(axusdDeployedRaw) / Math.pow(10, AXUSD_DECIMALS);
+      } catch {
+        // AXUSD not yet deployed or address misconfigured — silently omit
+      }
+    }
+    const aumUsdc = aumUsdc_usdc + axusdIdleUsdc + axusdDeployedUsdc;
 
     const [aavePos, camelotPos] = await Promise.all([
       fetchStrategyPosition(provider, AAVE_STRATEGY,    SM_ADDRESS, deployedUsdc, aaveApyPct),
@@ -210,6 +241,8 @@ export async function getVaultSummary(): Promise<VaultSummary> {
       aumUsdc,
       idleUsdc,
       deployedUsdc,
+      axusdIdleUsdc,
+      axusdDeployedUsdc,
       aavePosition:    aavePos,
       camelotPosition: camelotPos,
       blendedApyEstimatePct,
@@ -251,6 +284,8 @@ function buildOfflineResponse(): VaultSummary {
     aumUsdc: 0,
     idleUsdc: 0,
     deployedUsdc: 0,
+    axusdIdleUsdc: 0,
+    axusdDeployedUsdc: 0,
     aavePosition: emptyPos,
     camelotPosition: emptyPos,
     blendedApyEstimatePct: null,

@@ -29,7 +29,8 @@ interface IAavePool {
 contract AaveV3Strategy is IStrategy, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    /// @notice Must match the role constant used by StrategyManager and AxiomTreasuryVault.
+    bytes32 public constant STRATEGY_ADMIN = keccak256("STRATEGY_ADMIN");
 
     // ── Immutables ────────────────────────────────────────────────────────────
     address public immutable override asset;
@@ -59,7 +60,7 @@ contract AaveV3Strategy is IStrategy, AccessControl, ReentrancyGuard {
         aavePool = IAavePool(_aavePool);
         aToken   = IERC20(_aToken);
         _grantRole(DEFAULT_ADMIN_ROLE, _vault);
-        _grantRole(MANAGER_ROLE, manager);
+        _grantRole(STRATEGY_ADMIN, manager);  // manager = StrategyManager address
     }
 
     // ── IStrategy implementation ──────────────────────────────────────────────
@@ -76,7 +77,7 @@ contract AaveV3Strategy is IStrategy, AccessControl, ReentrancyGuard {
      * @notice Deploy `amount` of `asset` into Aave v3.
      *         Caller must have already transferred `amount` to this contract.
      */
-    function deploy(uint256 amount) external override onlyRole(MANAGER_ROLE) nonReentrant {
+    function deploy(uint256 amount) external override onlyRole(STRATEGY_ADMIN) nonReentrant {
         require(amount > 0, "AaveV3Strategy: zero amount");
         IERC20(asset).forceApprove(address(aavePool), amount);
         aavePool.supply(asset, amount, address(this), 0);
@@ -88,7 +89,7 @@ contract AaveV3Strategy is IStrategy, AccessControl, ReentrancyGuard {
     /**
      * @notice Withdraw `amount` from Aave back to the vault.
      */
-    function withdraw(uint256 amount) external override onlyRole(MANAGER_ROLE) nonReentrant returns (uint256 actualAmount) {
+    function withdraw(uint256 amount) external override onlyRole(STRATEGY_ADMIN) nonReentrant returns (uint256 actualAmount) {
         require(amount > 0, "AaveV3Strategy: zero amount");
         actualAmount = aavePool.withdraw(asset, amount, vault);
         if (principal >= actualAmount) {
@@ -103,7 +104,7 @@ contract AaveV3Strategy is IStrategy, AccessControl, ReentrancyGuard {
     /**
      * @notice Harvest yield (aToken balance > principal) to the vault.
      */
-    function harvest() external override onlyRole(MANAGER_ROLE) nonReentrant returns (uint256 yieldAmount) {
+    function harvest() external override onlyRole(STRATEGY_ADMIN) nonReentrant returns (uint256 yieldAmount) {
         uint256 current = aToken.balanceOf(address(this));
         if (current <= principal) return 0;
         yieldAmount = current - principal;

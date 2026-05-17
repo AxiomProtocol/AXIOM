@@ -69,7 +69,8 @@ interface ICamelotPositionManager {
 contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    /// @notice Must match the role constant used by StrategyManager and AxiomTreasuryVault.
+    bytes32 public constant STRATEGY_ADMIN = keccak256("STRATEGY_ADMIN");
 
     // ── Immutables ────────────────────────────────────────────────────────────
     address public immutable override asset;  // primary deployment asset (USDC)
@@ -105,7 +106,7 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
         pairedAsset     = _pairedAsset;
         positionManager = ICamelotPositionManager(_positionManager);
         _grantRole(DEFAULT_ADMIN_ROLE, _vault);
-        _grantRole(MANAGER_ROLE, manager);
+        _grantRole(STRATEGY_ADMIN, manager);  // manager = StrategyManager address
     }
 
     // ── IStrategy implementation ──────────────────────────────────────────────
@@ -130,7 +131,7 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
      * @notice Deploy `amount` of `asset` (USDC) into a new or existing Camelot position.
      *         Caller (StrategyManager) must transfer `amount` of USDC to this address first.
      */
-    function deploy(uint256 amount) external override onlyRole(MANAGER_ROLE) nonReentrant {
+    function deploy(uint256 amount) external override onlyRole(STRATEGY_ADMIN) nonReentrant {
         require(amount > 0, "CamelotStrategy: zero amount");
         require(tokenId == 0, "CamelotStrategy: position already open; withdraw first");
 
@@ -160,19 +161,70 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Withdraw by closing the LP position and returning `amount`
-     *         (approximated) of `asset` to the vault.
-     *         Full-range close: all liquidity is removed.
+     * @notice Withdraw `amount` of `asset` from the LP position back to the vault.
+     *
+     * Partial withdrawal algorithm
+     * ────────────────────────────
+     *   proportion   = amount / currentValue()
+     *   liquidityOut = positionLiquidity × proportion
+     *
+     * If amount ≥ currentValue() (full exit) the entire position is closed and
+     * the NFT is burned. Otherwise a proportional share of liquidity is removed
+     * and the position remains open.
+     *
+     * Note: Camelot V3 uses full-range ticks (−887272 / +887272) for the
+     * USDC/AXUSD stable pair, so both r0 and r1 from collect() are in USDC-
+     * equivalent units for an equal-weight stable pool.
      */
-    function withdraw(uint256 /*amount*/) external override onlyRole(MANAGER_ROLE) nonReentrant returns (uint256 actualAmount) {
+    function withdraw(uint256 amount) external override onlyRole(STRATEGY_ADMIN) nonReentrant returns (uint256 actualAmount) {
         require(tokenId != 0, "CamelotStrategy: no open position");
-        (, , , , , , uint128 liquidity, , , , ) = positionManager.positions(tokenId);
+        require(amount > 0,   "CamelotStrategy: zero amount");
+
+        // Inline currentValue() to avoid external-call overhead and reentrancy surface
+        (, , , , , , uint128 posLiquidity, , , uint128 owed0, uint128 owed1) =
+            positionManager.positions(tokenId);
+        uint256 total = principal + uint256(owed0) + uint256(owed1);
+
+        // Full exit when amount covers the entire position value (or within dust)
+        if (amount >= total || total == 0) {
+            return _closeFullPosition(posLiquidity);
+        }
+
+        // Partial exit: remove proportional liquidity
+        uint128 liquidityOut = uint128(uint256(posLiquidity) * amount / total);
+        require(liquidityOut > 0, "CamelotStrategy: computed liquidity is zero");
+
         positionManager.decreaseLiquidity(ICamelotPositionManager.DecreaseLiquidityParams({
-            tokenId:     tokenId,
-            liquidity:   liquidity,
-            amount0Min:  0,
-            amount1Min:  0,
-            deadline:    block.timestamp + DEADLINE_BUFFER
+            tokenId:    tokenId,
+            liquidity:  liquidityOut,
+            amount0Min: 0,
+            amount1Min: 0,
+            deadline:   block.timestamp + DEADLINE_BUFFER
+        }));
+        (uint256 r0, uint256 r1) = positionManager.collect(ICamelotPositionManager.CollectParams({
+            tokenId:    tokenId,
+            recipient:  vault,
+            amount0Max: type(uint128).max,
+            amount1Max: type(uint128).max
+        }));
+        actualAmount = r0 + r1;
+        if (principal >= actualAmount) principal -= actualAmount;
+        else principal = 0;
+        lastRebalancedAt = block.timestamp;
+        emit Withdrawn(tokenId, r0, r1);
+    }
+
+    /**
+     * @dev Close the full LP position and return all funds to vault.
+     */
+    function _closeFullPosition(uint128 liquidity) internal returns (uint256 actualAmount) {
+        uint256 prevId = tokenId;
+        positionManager.decreaseLiquidity(ICamelotPositionManager.DecreaseLiquidityParams({
+            tokenId:    tokenId,
+            liquidity:  liquidity,
+            amount0Min: 0,
+            amount1Min: 0,
+            deadline:   block.timestamp + DEADLINE_BUFFER
         }));
         (uint256 r0, uint256 r1) = positionManager.collect(ICamelotPositionManager.CollectParams({
             tokenId:    tokenId,
@@ -184,13 +236,13 @@ contract CamelotStrategy is IStrategy, AccessControl, ReentrancyGuard {
         principal = 0;
         lastRebalancedAt = block.timestamp;
         actualAmount = r0 + r1;
-        emit Withdrawn(tokenId, r0, r1);
+        emit Withdrawn(prevId, r0, r1);
     }
 
     /**
      * @notice Harvest accumulated fees without closing the position.
      */
-    function harvest() external override onlyRole(MANAGER_ROLE) nonReentrant returns (uint256 yieldAmount) {
+    function harvest() external override onlyRole(STRATEGY_ADMIN) nonReentrant returns (uint256 yieldAmount) {
         if (tokenId == 0) return 0;
         (uint256 f0, uint256 f1) = positionManager.collect(ICamelotPositionManager.CollectParams({
             tokenId:    tokenId,

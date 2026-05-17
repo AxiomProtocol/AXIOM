@@ -203,6 +203,19 @@ contract AxiomTreasuryVault is ERC4626, AccessControl, ReentrancyGuard {
 
     // ── Admin ─────────────────────────────────────────────────────────────────
 
+    /**
+     * @notice Returns the idle (undeployed) balance of any accepted asset held by this vault.
+     *         For the primary ERC-4626 asset (USDC), returns the live token balance.
+     *         For secondary assets (AXUSD etc.), returns the idleBalance mapping value.
+     *
+     * Used by the service layer to compute multi-asset AUM without relying on
+     * ERC-4626's single-asset totalAssets().
+     */
+    function getIdleBalance(address assetAddr) external view returns (uint256) {
+        if (assetAddr == asset()) return IERC20(asset()).balanceOf(address(this));
+        return idleBalance[assetAddr];
+    }
+
     function setAcceptedAsset(address assetAddr, bool accepted) external onlyRole(VAULT_ADMIN) {
         acceptedAssets[assetAddr] = accepted;
         if (accepted) emit AssetAccepted(assetAddr); else emit AssetRejected(assetAddr);
