@@ -486,6 +486,272 @@ function WalletDepositPanel() {
   );
 }
 
+// ── USDC Backing Panel ─────────────────────────────────────────────────────────
+// Incrementally backs the 10,000 AXUSD genesis mint with real USDC deposits.
+// Presets: $25 / $50 / $100 + custom. Approve → vault.deposit() flow.
+const GENESIS_MINT_TARGET = 10_000;
+
+function UsdcBackingPanel() {
+  const { address, isConnected } = useAccount();
+  const chainId                  = useChainId();
+  const publicClient             = usePublicClient({ chainId: ARBITRUM_ONE });
+  const { writeContractAsync }   = useWriteContract();
+
+  const vaultAddress = (process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS ?? '') as `0x${string}`;
+  const isWrongChain = isConnected && chainId !== ARBITRUM_ONE;
+
+  const PRESETS = [25, 50, 100];
+
+  const [amount,     setAmount]     = useState('');
+  const [step,       setStep]       = useState<DepositStep>('idle');
+  const [errMsg,     setErrMsg]     = useState<string | null>(null);
+  const [approveTx,  setApproveTx]  = useState<`0x${string}` | null>(null);
+  const [depositTx,  setDepositTx]  = useState<`0x${string}` | null>(null);
+  const [walletUsdc, setWalletUsdc] = useState<string | null>(null);
+  const [vaultUsdc,  setVaultUsdc]  = useState<number | null>(null);
+
+  const { isSuccess: approveConfirmed } = useWaitForTransactionReceipt({ hash: approveTx ?? undefined });
+  const { isSuccess: depositConfirmed } = useWaitForTransactionReceipt({ hash: depositTx ?? undefined });
+  const { data: ethBalanceData }        = useBalance({ address });
+  const ethBalance = ethBalanceData ? parseFloat(formatUnits(ethBalanceData.value, 18)).toFixed(4) : null;
+
+  // Wallet USDC balance
+  useEffect(() => {
+    if (!address || !publicClient) return;
+    publicClient.readContract({
+      address: USDC_ADDRESS,
+      abi: erc20Abi,
+      functionName: 'balanceOf',
+      args: [address],
+    }).then((raw) => setWalletUsdc(parseFloat(formatUnits(raw as bigint, 6)).toFixed(2)))
+      .catch(() => setWalletUsdc(null));
+  }, [address, publicClient, step]);
+
+  // Vault USDC balance (backed so far)
+  useEffect(() => {
+    if (!publicClient || !vaultAddress) return;
+    publicClient.readContract({
+      address: USDC_ADDRESS,
+      abi: erc20Abi,
+      functionName: 'balanceOf',
+      args: [vaultAddress],
+    }).then((raw) => setVaultUsdc(parseFloat(formatUnits(raw as bigint, 6))))
+      .catch(() => setVaultUsdc(null));
+  }, [publicClient, vaultAddress, step]);
+
+  useEffect(() => {
+    if (approveConfirmed && step === 'approving') setStep('approved');
+  }, [approveConfirmed, step]);
+
+  useEffect(() => {
+    if (!depositConfirmed || step !== 'depositing' || !depositTx) return;
+    const amtNum = parseFloat(amount);
+    fetch('/api/treasury/vault/record-deposit', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ asset: 'USDC', amountUsdc: amtNum, txHash: depositTx }),
+    }).finally(() => setStep('success'));
+  }, [depositConfirmed, step, depositTx, amount]);
+
+  function reset() {
+    setStep('idle'); setAmount(''); setApproveTx(null); setDepositTx(null); setErrMsg(null);
+  }
+
+  async function handleApprove() {
+    if (!address || !vaultAddress) return;
+    const amtNum = parseFloat(amount);
+    if (!isFinite(amtNum) || amtNum <= 0) { setErrMsg('Enter a valid amount greater than zero.'); return; }
+    setErrMsg(null);
+    setStep('approving');
+    try {
+      const hash = await writeContractAsync({
+        address: USDC_ADDRESS,
+        abi: erc20Abi,
+        functionName: 'approve',
+        args: [vaultAddress, parseUnits(amount, 6)],
+      });
+      setApproveTx(hash);
+    } catch (e: unknown) {
+      setErrMsg(e instanceof Error ? e.message : 'Approval rejected or failed.');
+      setStep('idle');
+    }
+  }
+
+  async function handleDeposit() {
+    if (!address || !vaultAddress) return;
+    if (!publicClient) { setErrMsg('Arbitrum One RPC client not ready.'); return; }
+    setErrMsg(null);
+    setStep('depositing');
+    try {
+      const rawAmt = parseUnits(amount, 6);
+      try {
+        await publicClient.simulateContract({
+          address: vaultAddress, abi: VAULT_ABI, functionName: 'deposit',
+          args: [rawAmt, address], account: address,
+        });
+      } catch (simErr: unknown) {
+        const msg = simErr instanceof Error ? simErr.message : String(simErr);
+        const match = msg.match(/reverted with reason string '([^']+)'/);
+        setErrMsg(`Transaction would fail: ${match ? match[1] : msg.slice(0, 120)}`);
+        setStep('approved');
+        return;
+      }
+      const hash = await writeContractAsync({
+        address: vaultAddress, abi: VAULT_ABI, functionName: 'deposit',
+        args: [rawAmt, address],
+      });
+      setDepositTx(hash);
+    } catch (e: unknown) {
+      setErrMsg(e instanceof Error ? e.message : 'Deposit rejected or failed.');
+      setStep('approved');
+    }
+  }
+
+  if (!isConnected || isWrongChain || !vaultAddress) return null;
+
+  // ── Success ──────────────────────────────────────────────────────────────────
+  if (step === 'success') {
+    return (
+      <div className="border border-dl-forest p-5 max-w-2xl mb-4">
+        <p className="text-xs font-mono text-dl-forest uppercase tracking-wide mb-2">Backing Deposit Complete</p>
+        <p className="text-sm text-dl-navy mb-3">
+          <span className="font-semibold">${amount} USDC</span> deposited toward the genesis reserve gap.
+        </p>
+        {depositTx && (
+          <a href={`https://arbiscan.io/tx/${depositTx}`} target="_blank" rel="noopener noreferrer"
+            className="text-xs font-mono text-dl-forest underline block mb-4">
+            View on Arbiscan → {depositTx.slice(0, 12)}…{depositTx.slice(-6)}
+          </a>
+        )}
+        <button type="button" onClick={reset}
+          className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide border border-dl-border text-dl-navy">
+          Deposit Again
+        </button>
+      </div>
+    );
+  }
+
+  // ── Main panel ───────────────────────────────────────────────────────────────
+  const backedSoFar  = vaultUsdc ?? 0;
+  const remaining    = Math.max(GENESIS_MINT_TARGET - backedSoFar, 0);
+  const progressPct  = Math.min((backedSoFar / GENESIS_MINT_TARGET) * 100, 100);
+  const stepNum      = step === 'idle' || step === 'approving' ? 1 : 2;
+
+  return (
+    <div className="border border-dl-border p-5 max-w-2xl mb-4 space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Genesis Reserve Backing</p>
+          <p className="text-xs font-mono text-dl-gray mt-0.5">Back the 10,000 AXUSD genesis mint with USDC</p>
+        </div>
+        <div className="text-right space-y-0.5">
+          <div className="text-xs font-mono text-dl-gray">{address?.slice(0,6)}…{address?.slice(-4)} · Arb One</div>
+          {ethBalance !== null && (
+            <div className="text-xs font-mono text-dl-gray">
+              Gas: <span className={parseFloat(ethBalance) < 0.001 ? 'text-red-600 font-semibold' : 'text-dl-navy'}>{ethBalance} ETH</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="space-y-1.5">
+        <div className="flex justify-between text-xs font-mono">
+          <span className="text-dl-navy font-semibold">${backedSoFar.toFixed(2)} backed</span>
+          <span className="text-dl-gray">${remaining.toFixed(2)} remaining of $10,000</span>
+        </div>
+        <div className="w-full h-2 bg-gray-100 border border-dl-border">
+          <div className="h-full bg-dl-forest" style={{ width: `${progressPct}%` }} />
+        </div>
+        <p className="text-xs font-mono text-dl-gray">{progressPct.toFixed(2)}% of genesis reserve covered</p>
+      </div>
+
+      {/* Step indicators */}
+      <div className="flex gap-4 text-xs font-mono">
+        <div className={`flex items-center gap-1.5 ${stepNum === 1 ? 'text-dl-navy font-semibold' : 'text-dl-gray'}`}>
+          <span className={`w-5 h-5 flex items-center justify-center border text-xs ${step === 'approved' || step === 'depositing' ? 'bg-dl-forest border-dl-forest text-white' : 'border-dl-border'}`}>
+            {step === 'approved' || step === 'depositing' ? '✓' : '1'}
+          </span>
+          Approve USDC
+        </div>
+        <div className="text-dl-border self-center">→</div>
+        <div className={`flex items-center gap-1.5 ${stepNum === 2 ? 'text-dl-navy font-semibold' : 'text-dl-gray'}`}>
+          <span className="w-5 h-5 flex items-center justify-center border text-xs border-dl-border">2</span>
+          Deposit to Vault
+        </div>
+      </div>
+
+      {/* Preset + custom amount */}
+      <div className="space-y-2">
+        <label className="text-xs font-mono text-dl-gray uppercase">Amount (USDC)</label>
+        <div className="flex gap-2 flex-wrap">
+          {PRESETS.map((p) => (
+            <button key={p} type="button" disabled={step !== 'idle'}
+              onClick={() => setAmount(String(p))}
+              className={`px-3 py-1.5 text-xs font-mono border disabled:opacity-40 ${amount === String(p) ? 'bg-dl-navy text-white border-dl-navy' : 'border-dl-border text-dl-navy hover:bg-gray-50'}`}>
+              ${p}
+            </button>
+          ))}
+          <input
+            type="number" min="0" step="any" value={amount}
+            onChange={(e) => { if (step === 'idle') setAmount(e.target.value); }}
+            placeholder="Custom"
+            className="flex-1 border border-dl-border px-2 py-1.5 text-xs font-mono text-dl-navy min-w-0"
+          />
+          {walletUsdc !== null && (
+            <button type="button" disabled={step !== 'idle'} onClick={() => setAmount(walletUsdc!)}
+              className="text-xs font-mono text-dl-forest underline whitespace-nowrap disabled:opacity-40">
+              Max {walletUsdc}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Error */}
+      {errMsg && (
+        <div className="border border-red-300 bg-red-50 p-3 text-xs font-mono text-red-700">{errMsg}</div>
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-3">
+        {step === 'idle' && (
+          <button type="button" onClick={handleApprove}
+            disabled={!amount || parseFloat(amount) <= 0}
+            className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide bg-dl-navy text-white disabled:opacity-40">
+            Step 1 — Approve USDC
+          </button>
+        )}
+        {step === 'approving' && (
+          <button type="button" disabled
+            className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide bg-dl-navy text-white opacity-60">
+            Approving…
+          </button>
+        )}
+        {step === 'approved' && (
+          <button type="button" onClick={handleDeposit}
+            className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white">
+            Step 2 — Deposit ${amount} USDC
+          </button>
+        )}
+        {step === 'depositing' && (
+          <button type="button" disabled
+            className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white opacity-60">
+            Depositing…
+          </button>
+        )}
+        {step !== 'idle' && (
+          <button type="button" onClick={reset}
+            className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide border border-dl-border text-dl-gray">
+            Reset
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Deposit Record Form ────────────────────────────────────────────────────────
 // Allows vault operators to log a completed on-chain deposit to the audit trail.
 function DepositRecordForm() {
@@ -1012,6 +1278,9 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
 
           {/* Wallet-connected deposit — primary flow */}
           <WalletDepositPanel />
+
+          {/* Genesis reserve backing — USDC deposits against the 10,000 genesis mint */}
+          <UsdcBackingPanel />
 
           {/* Manual record form — fallback for external wallet / hardware signer */}
           <details className="max-w-2xl">
