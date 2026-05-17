@@ -1,36 +1,40 @@
 /**
  * POST /api/treasury/vault/rebalance
  *
- * Sentinel-gated rebalance trigger. Validates the Sentinel rebalance
- * strategy (APY spread check, circuit breaker, direction check), then
- * calls StrategyManager.rebalance() on-chain with the deployer signer
- * (which holds SENTINEL_EXECUTOR role on StrategyManager).
+ * Step 2 of the two-step Sentinel-gated rebalance flow.
  *
- * Body:
+ * Validates the Sentinel authorization token issued by
+ * POST /api/sentinel/rebalance-auth, then calls
+ * AxiomTreasuryVault.rebalance() on-chain using the deployer signer
+ * (which holds SENTINEL_EXECUTOR role on the vault).
+ *
+ * Body (JSON):
  *   fromStrategy  — 'aave_v3' | 'camelot'
  *   toStrategy    — 'aave_v3' | 'camelot'
- *   amountUsdc    — number (e.g. 10000 = $10,000)
+ *   amountUsdc    — number
+ *   token         — HMAC token from /api/sentinel/rebalance-auth
+ *   expiry        — token expiry timestamp (ms)
  *
  * Authorization:
- *   Caller must present the operator session cookie (cap_operator_key)
- *   set during operator login. Uses the same constant-time validation
- *   as the operator console layout.
+ *   Operator session cookie (cap_operator_key) +
+ *   Valid Sentinel HMAC authorization token from /api/sentinel/rebalance-auth.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
-import { evaluateTreasuryRebalance } from '../../../../lib/sentinel/strategies/treasuryRebalance';
 import { readOperatorCookie, isValidOperatorKey } from '../../../../lib/capinfra/operatorAuth';
+import { verifyRebalanceToken } from '../../sentinel/rebalance-auth';
 import { db } from '../../../../server/db';
 import { treasuryVaultEvents } from '../../../../shared/treasuryVaultSchema';
 
-const STRATEGY_MANAGER_ADDRESS = process.env.AXIOM_STRATEGY_MANAGER_ADDRESS ?? '';
-const AAVE_STRATEGY            = process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS ?? '';
-const CAMELOT_STRATEGY         = process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS ?? '';
-const RPC                      = process.env.ARBITRUM_RPC_URL ?? 'https://arb1.arbitrum.io/rpc';
+const VAULT_ADDRESS     = process.env.AXIOM_TREASURY_VAULT_ADDRESS    ?? '';
+const AAVE_STRATEGY     = process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS  ?? '';
+const CAMELOT_STRATEGY  = process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS  ?? '';
+const RPC               = process.env.ARBITRUM_RPC_URL ?? 'https://arb1.arbitrum.io/rpc';
+const USDC              = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
 
-const SM_ABI = [
-  'function rebalance(address fromStrategy, address toStrategy, uint256 amount) external',
+const VAULT_ABI = [
+  'function rebalance(address fromStrategy, address toStrategy, address asset, uint256 amount) external',
 ];
 
 function strategyAddress(key: 'aave_v3' | 'camelot'): string {
@@ -40,19 +44,25 @@ function strategyAddress(key: 'aave_v3' | 'camelot'): string {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // ── Auth check 1: operator session cookie ────────────────────────────────
   const cookie = readOperatorCookie(req);
   if (!isValidOperatorKey(cookie)) {
     return res.status(401).json({ error: 'Unauthorized — valid operator session required' });
   }
 
-  const { fromStrategy, toStrategy, amountUsdc } = req.body as {
+  const { fromStrategy, toStrategy, amountUsdc, token, expiry } = req.body as {
     fromStrategy?: string;
     toStrategy?:   string;
     amountUsdc?:   number;
+    token?:        string;
+    expiry?:       number;
   };
 
-  if (!fromStrategy || !toStrategy || !amountUsdc) {
-    return res.status(400).json({ error: 'fromStrategy, toStrategy, and amountUsdc are required' });
+  if (!fromStrategy || !toStrategy || !amountUsdc || !token || !expiry) {
+    return res.status(400).json({
+      error: 'fromStrategy, toStrategy, amountUsdc, token, and expiry are required. '
+           + 'Obtain a token first from POST /api/sentinel/rebalance-auth.',
+    });
   }
   if (fromStrategy !== 'aave_v3' && fromStrategy !== 'camelot') {
     return res.status(400).json({ error: 'fromStrategy must be aave_v3 or camelot' });
@@ -64,37 +74,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'fromStrategy and toStrategy must differ' });
   }
 
-  const sentinelResult = await evaluateTreasuryRebalance({
-    fromStrategy: fromStrategy as 'aave_v3' | 'camelot',
-    toStrategy:   toStrategy   as 'aave_v3' | 'camelot',
-    amountUsdc,
-  });
-
-  if (!sentinelResult.authorized) {
+  // ── Auth check 2: Sentinel HMAC authorization token ──────────────────────
+  const tokenValid = verifyRebalanceToken(
+    fromStrategy, toStrategy, amountUsdc, expiry, token
+  );
+  if (!tokenValid) {
     return res.status(403).json({
-      success: false,
-      sentinelDecision: sentinelResult,
-      error: sentinelResult.plainLanguage,
+      error: 'Sentinel authorization token is invalid or expired. '
+           + 'Request a new token from POST /api/sentinel/rebalance-auth.',
     });
   }
 
-  if (!STRATEGY_MANAGER_ADDRESS) {
+  if (!VAULT_ADDRESS) {
     return res.status(200).json({
       success: true,
-      sentinelDecision: sentinelResult,
-      txHash: null,
-      note: 'AXIOM_STRATEGY_MANAGER_ADDRESS not configured — on-chain call skipped',
+      txHash:  null,
+      note:    'AXIOM_TREASURY_VAULT_ADDRESS not configured — on-chain call skipped',
     });
   }
 
   try {
-    const provider  = new ethers.JsonRpcProvider(RPC);
-    const signer    = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, provider);
-    const sm        = new ethers.Contract(STRATEGY_MANAGER_ADDRESS, SM_ABI, signer);
-    const amountWei = BigInt(Math.round(amountUsdc * 1e6));
-    const tx = await sm.rebalance(
+    const provider   = new ethers.JsonRpcProvider(RPC);
+    const signer     = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, provider);
+    const vault      = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, signer);
+    const amountWei  = BigInt(Math.round(amountUsdc * 1e6));
+
+    const tx = await vault.rebalance(
       strategyAddress(fromStrategy as 'aave_v3' | 'camelot'),
       strategyAddress(toStrategy   as 'aave_v3' | 'camelot'),
+      USDC,
       amountWei
     );
     const receipt = await tx.wait();
@@ -110,8 +118,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({
       success: true,
-      sentinelDecision: sentinelResult,
-      txHash: receipt.hash,
+      txHash:  receipt.hash,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

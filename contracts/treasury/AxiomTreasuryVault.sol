@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -9,7 +10,7 @@ import "./IStrategy.sol";
 
 /**
  * @title  IStrategyManager
- * @notice Minimal interface the vault uses to delegate all strategy operations.
+ * @notice Minimal interface the vault uses to delegate strategy operations.
  */
 interface IStrategyManager {
     function addStrategy(address strategy, string calldata name) external;
@@ -17,32 +18,40 @@ interface IStrategyManager {
     function allocate(address strategy, uint256 amount) external;
     function recall(address strategy, uint256 amount) external returns (uint256);
     function harvest(address strategy) external returns (uint256);
-    function rebalance(address fromStrategy, address toStrategy, uint256 amount) external;
     function totalDeployed(address asset) external view returns (uint256);
 }
 
 /**
  * @title  AxiomTreasuryVault
- * @notice Operator-only treasury vault that holds USDC / AXUSD protocol capital
- *         and delegates all yield-strategy operations to StrategyManager.
+ * @notice ERC-4626 compliant operator treasury vault.
  *
- * Architecture
- * ────────────
- *   Vault   — custody, deposit/withdraw, idle-balance accounting.
- *   StrategyManager — registers strategies, holds MANAGER_ROLE on each,
- *                     executes allocate / recall / harvest / rebalance.
+ * ERC-4626 implementation
+ * ───────────────────────
+ *   • Underlying asset: USDC (primary)
+ *   • Share token: ATVS (Axiom Treasury Vault Share) — 18 decimals
+ *   • deposit/mint/withdraw/redeem are VAULT_ADMIN-only
+ *   • totalAssets() = USDC.balanceOf(vault) + SM.totalDeployed(USDC)
+ *   • Full share tokenisation is active; shares are 1:1 on initial deployment
+ *     and accrue yield as totalAssets grows relative to totalSupply
  *
- * The vault NEVER calls strategy adapters directly; it always delegates
- * through StrategyManager. This enforces a clean separation of concerns and
- * prevents parallel control-plane conflicts.
+ * Secondary assets (AXUSD and future)
+ * ─────────────────────────────────────
+ *   depositToken(asset, amount) — non-ERC4626 for non-primary assets
+ *   tracked via idleBalance[asset]
  *
- * Role hierarchy (on the Vault)
- * ─────────────────────────────
- *   VAULT_ADMIN       — deposit / withdraw / pause / add-remove accepted assets
- *   STRATEGY_ADMIN    — delegate allocate / recall / harvest / add-remove strategies
- *   SENTINEL_EXECUTOR — trigger rebalances between strategies
+ * Strategy delegation
+ * ────────────────────
+ *   All strategy operations delegate through StrategyManager.
+ *   Vault → StrategyManager (STRATEGY_ADMIN) → Strategy (MANAGER_ROLE)
+ *   Rebalance: vault recalls (funds return to vault) then allocates to destination.
+ *
+ * Role hierarchy (vault)
+ * ──────────────────────
+ *   VAULT_ADMIN       — deposit/withdraw/pause/assets/depositToken
+ *   STRATEGY_ADMIN    — allocate/recall/harvest/addStrategy/removeStrategy
+ *   SENTINEL_EXECUTOR — rebalance
  */
-contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
+contract AxiomTreasuryVault is ERC4626, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // ── Roles ────────────────────────────────────────────────────────────────
@@ -56,15 +65,16 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
     // ── State ─────────────────────────────────────────────────────────────────
     bool public paused;
 
-    /// @notice Accepted deposit assets (USDC, AXUSD).
+    /// @notice Accepted assets (primary USDC + secondary AXUSD / others).
     mapping(address => bool) public acceptedAssets;
 
-    /// @notice Per-asset idle balance held in this contract (not deployed).
+    /// @notice Idle balance for NON-primary (non-ERC4626) assets only.
+    ///         Primary asset (USDC) idle is USDC.balanceOf(address(this)).
     mapping(address => uint256) public idleBalance;
 
     // ── Events ────────────────────────────────────────────────────────────────
-    event Deposit(address indexed asset, uint256 amount, address indexed depositor);
-    event Withdrawal(address indexed asset, uint256 amount, address indexed recipient);
+    event TokenDeposited(address indexed asset, uint256 amount, address indexed depositor);
+    event TokenWithdrawn(address indexed asset, uint256 amount, address indexed recipient);
     event StrategyAllocated(address indexed strategy, address indexed asset, uint256 amount);
     event StrategyRecalled(address indexed strategy, address indexed asset, uint256 amount);
     event StrategyHarvested(address indexed strategy, address indexed asset, uint256 yieldAmount);
@@ -84,6 +94,14 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
     }
 
     // ── Constructor ───────────────────────────────────────────────────────────
+    /**
+     * @param vaultAdmin       Gets VAULT_ADMIN + DEFAULT_ADMIN_ROLE.
+     * @param strategyAdmin    Gets STRATEGY_ADMIN.
+     * @param sentinelExecutor Gets SENTINEL_EXECUTOR.
+     * @param _strategyManager Deployed StrategyManager address.
+     * @param usdc             USDC token address — ERC-4626 underlying asset.
+     * @param axusd            AXUSD token address — secondary accepted asset.
+     */
     constructor(
         address vaultAdmin,
         address strategyAdmin,
@@ -91,7 +109,10 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
         address _strategyManager,
         address usdc,
         address axusd
-    ) {
+    )
+        ERC4626(IERC20(usdc))
+        ERC20("Axiom Treasury Vault Share", "ATVS")
+    {
         _grantRole(DEFAULT_ADMIN_ROLE, vaultAdmin);
         _grantRole(VAULT_ADMIN,        vaultAdmin);
         _grantRole(STRATEGY_ADMIN,     strategyAdmin);
@@ -106,11 +127,85 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
         emit AssetAccepted(axusd);
     }
 
+    // ── ERC-4626 overrides (primary USDC asset) ───────────────────────────────
+
+    /**
+     * @notice Total AUM = idle USDC held in vault + USDC deployed across strategies.
+     */
+    function totalAssets() public view override returns (uint256) {
+        return IERC20(asset()).balanceOf(address(this))
+             + strategyManager.totalDeployed(asset());
+    }
+
+    /**
+     * @notice Deposit `assets` of USDC, mint `shares` ATVS to `receiver`.
+     *         Restricted to VAULT_ADMIN.
+     */
+    function deposit(uint256 assets, address receiver)
+        public override onlyRole(VAULT_ADMIN) whenNotPaused nonReentrant
+        returns (uint256)
+    {
+        return super.deposit(assets, receiver);
+    }
+
+    /**
+     * @notice Mint `shares` ATVS by depositing the equivalent USDC.
+     *         Restricted to VAULT_ADMIN.
+     */
+    function mint(uint256 shares, address receiver)
+        public override onlyRole(VAULT_ADMIN) whenNotPaused nonReentrant
+        returns (uint256)
+    {
+        return super.mint(shares, receiver);
+    }
+
+    /**
+     * @notice Withdraw `assets` of idle USDC, burn equivalent shares.
+     *         Restricted to VAULT_ADMIN.
+     */
+    function withdraw(uint256 assets, address receiver, address owner)
+        public override onlyRole(VAULT_ADMIN) whenNotPaused nonReentrant
+        returns (uint256)
+    {
+        return super.withdraw(assets, receiver, owner);
+    }
+
+    /**
+     * @notice Redeem `shares` of ATVS for USDC.
+     *         Restricted to VAULT_ADMIN.
+     */
+    function redeem(uint256 shares, address receiver, address owner)
+        public override onlyRole(VAULT_ADMIN) whenNotPaused nonReentrant
+        returns (uint256)
+    {
+        return super.redeem(shares, receiver, owner);
+    }
+
+    /**
+     * @notice Restricts deposit availability — only for non-paused state.
+     */
+    function maxDeposit(address) public view override returns (uint256) {
+        return paused ? 0 : type(uint256).max;
+    }
+
+    function maxMint(address) public view override returns (uint256) {
+        return paused ? 0 : type(uint256).max;
+    }
+
+    function maxWithdraw(address owner) public view override returns (uint256) {
+        if (paused) return 0;
+        return convertToAssets(balanceOf(owner));
+    }
+
+    function maxRedeem(address owner) public view override returns (uint256) {
+        return paused ? 0 : balanceOf(owner);
+    }
+
     // ── Admin ─────────────────────────────────────────────────────────────────
 
-    function setAcceptedAsset(address asset, bool accepted) external onlyRole(VAULT_ADMIN) {
-        acceptedAssets[asset] = accepted;
-        if (accepted) emit AssetAccepted(asset); else emit AssetRejected(asset);
+    function setAcceptedAsset(address assetAddr, bool accepted) external onlyRole(VAULT_ADMIN) {
+        acceptedAssets[assetAddr] = accepted;
+        if (accepted) emit AssetAccepted(assetAddr); else emit AssetRejected(assetAddr);
     }
 
     function pause() external onlyRole(VAULT_ADMIN) {
@@ -121,6 +216,33 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
     function unpause() external onlyRole(VAULT_ADMIN) {
         paused = false;
         emit VaultUnpaused(msg.sender);
+    }
+
+    // ── Secondary-asset deposits (non-ERC4626) ────────────────────────────────
+
+    /**
+     * @notice Deposit a secondary asset (e.g. AXUSD) into idle balance.
+     *         Use standard ERC-4626 deposit() for the primary asset (USDC).
+     */
+    function depositToken(address assetAddr, uint256 amount)
+        external onlyRole(VAULT_ADMIN) whenNotPaused nonReentrant
+    {
+        require(acceptedAssets[assetAddr], "AxiomTreasuryVault: asset not accepted");
+        require(assetAddr != asset(),       "AxiomTreasuryVault: use deposit() for primary asset");
+        require(amount > 0,                 "AxiomTreasuryVault: zero amount");
+        IERC20(assetAddr).safeTransferFrom(msg.sender, address(this), amount);
+        idleBalance[assetAddr] += amount;
+        emit TokenDeposited(assetAddr, amount, msg.sender);
+    }
+
+    function withdrawToken(address assetAddr, uint256 amount, address recipient)
+        external onlyRole(VAULT_ADMIN) whenNotPaused nonReentrant
+    {
+        require(assetAddr != asset(), "AxiomTreasuryVault: use withdraw() for primary asset");
+        require(idleBalance[assetAddr] >= amount, "AxiomTreasuryVault: insufficient idle");
+        idleBalance[assetAddr] -= amount;
+        IERC20(assetAddr).safeTransfer(recipient, amount);
+        emit TokenWithdrawn(assetAddr, amount, recipient);
     }
 
     // ── Strategy registry (delegated to StrategyManager) ──────────────────────
@@ -135,112 +257,92 @@ contract AxiomTreasuryVault is AccessControl, ReentrancyGuard {
         emit StrategyRemoved(strategy);
     }
 
-    // ── Deposit / Withdraw (operator only) ────────────────────────────────────
-
-    /**
-     * @notice Operator deposits `amount` of `asset` into the vault idle balance.
-     *         Caller must pre-approve the vault to spend `amount`.
-     */
-    function deposit(address asset, uint256 amount)
-        external onlyRole(VAULT_ADMIN) whenNotPaused nonReentrant
-    {
-        require(acceptedAssets[asset], "AxiomTreasuryVault: asset not accepted");
-        require(amount > 0, "AxiomTreasuryVault: zero amount");
-        IERC20(asset).safeTransferFrom(msg.sender, address(this), amount);
-        idleBalance[asset] += amount;
-        emit Deposit(asset, amount, msg.sender);
-    }
-
-    /**
-     * @notice Operator withdraws idle (un-deployed) capital.
-     */
-    function withdraw(address asset, uint256 amount, address recipient)
-        external onlyRole(VAULT_ADMIN) whenNotPaused nonReentrant
-    {
-        require(idleBalance[asset] >= amount, "AxiomTreasuryVault: insufficient idle");
-        idleBalance[asset] -= amount;
-        IERC20(asset).safeTransfer(recipient, amount);
-        emit Withdrawal(asset, amount, recipient);
-    }
-
     // ── Strategy operations (delegated through StrategyManager) ───────────────
 
     /**
-     * @notice Allocate `amount` of `asset` to a strategy via StrategyManager.
-     *         Vault transfers tokens to StrategyManager; SM transfers to strategy
-     *         then calls strategy.deploy().
+     * @notice Allocate `amount` of `assetAddr` to a strategy via StrategyManager.
+     *         For primary asset (USDC): vault transfers from its balance directly.
+     *         For secondary assets: draws from idleBalance mapping.
      */
-    function allocate(address strategy, address asset, uint256 amount)
+    function allocate(address strategy, address assetAddr, uint256 amount)
         external onlyRole(STRATEGY_ADMIN) whenNotPaused nonReentrant
     {
-        require(acceptedAssets[asset], "AxiomTreasuryVault: asset not accepted");
-        require(idleBalance[asset] >= amount, "AxiomTreasuryVault: insufficient idle");
-        idleBalance[asset] -= amount;
-        IERC20(asset).safeTransfer(address(strategyManager), amount);
+        require(acceptedAssets[assetAddr], "AxiomTreasuryVault: asset not accepted");
+        if (assetAddr == asset()) {
+            require(
+                IERC20(assetAddr).balanceOf(address(this)) >= amount,
+                "AxiomTreasuryVault: insufficient USDC balance"
+            );
+        } else {
+            require(idleBalance[assetAddr] >= amount, "AxiomTreasuryVault: insufficient idle");
+            idleBalance[assetAddr] -= amount;
+        }
+        IERC20(assetAddr).safeTransfer(address(strategyManager), amount);
         strategyManager.allocate(strategy, amount);
-        emit StrategyAllocated(strategy, asset, amount);
+        emit StrategyAllocated(strategy, assetAddr, amount);
     }
 
     /**
-     * @notice Recall `amount` from a strategy back to idle.
-     *         StrategyManager calls strategy.withdraw() which sends funds
-     *         directly back to this vault address.
+     * @notice Recall `amount` from a strategy back to vault idle.
+     *         Strategy sends funds directly to vault address (vault is the strategy's `vault` var).
      */
-    function recallFromStrategy(address strategy, address asset, uint256 amount)
+    function recallFromStrategy(address strategy, address assetAddr, uint256 amount)
         external onlyRole(STRATEGY_ADMIN) whenNotPaused nonReentrant
     {
         uint256 received = strategyManager.recall(strategy, amount);
-        idleBalance[asset] += received;
-        emit StrategyRecalled(strategy, asset, received);
+        if (assetAddr != asset()) {
+            idleBalance[assetAddr] += received;
+        }
+        // Primary asset: vault's USDC balance increases automatically via transfer-to-vault in strategy.
+        emit StrategyRecalled(strategy, assetAddr, received);
     }
 
     /**
-     * @notice Harvest yield from a strategy.
-     *         StrategyManager calls strategy.harvest() which sends yield
-     *         directly to this vault address.
+     * @notice Harvest yield from a strategy; yield is sent directly to vault by strategy.
      */
-    function harvest(address strategy, address asset)
+    function harvest(address strategy, address assetAddr)
         external onlyRole(STRATEGY_ADMIN) nonReentrant
     {
         uint256 yieldAmount = strategyManager.harvest(strategy);
-        if (yieldAmount > 0) {
-            idleBalance[asset] += yieldAmount;
+        if (yieldAmount > 0 && assetAddr != asset()) {
+            idleBalance[assetAddr] += yieldAmount;
         }
-        emit StrategyHarvested(strategy, asset, yieldAmount);
+        emit StrategyHarvested(strategy, assetAddr, yieldAmount);
     }
 
     /**
-     * @notice Sentinel-gated rebalance: moves `amount` from `fromStrategy`
-     *         to `toStrategy` via StrategyManager.
+     * @notice Sentinel-gated rebalance: recall from `fromStrategy`, forward to `toStrategy`.
+     *
+     *         Flow (no vault→SM approval required):
+     *           1. SM.recall(from) → strategy sends funds to vault
+     *           2. Vault transfers to SM
+     *           3. SM.allocate(to) → SM forwards to destination strategy
      */
     function rebalance(
         address fromStrategy,
         address toStrategy,
-        address asset,
+        address assetAddr,
         uint256 amount
     ) external onlyRole(SENTINEL_EXECUTOR) whenNotPaused nonReentrant {
-        strategyManager.rebalance(fromStrategy, toStrategy, amount);
-        emit Rebalanced(fromStrategy, toStrategy, amount);
+        // Step 1: recall from source — funds arrive at this vault
+        uint256 received = strategyManager.recall(fromStrategy, amount);
+        // Step 2: forward to destination via SM
+        IERC20(assetAddr).safeTransfer(address(strategyManager), received);
+        strategyManager.allocate(toStrategy, received);
+        emit Rebalanced(fromStrategy, toStrategy, received);
     }
 
     /**
-     * @notice Emergency exit — calls strategy.emergencyWithdraw() directly
-     *         via DEFAULT_ADMIN_ROLE (vault is DEFAULT_ADMIN on strategies).
+     * @notice Emergency full exit from a strategy — vault holds DEFAULT_ADMIN_ROLE
+     *         on strategy adapters, so it can call emergencyWithdraw() directly.
      */
-    function emergencyWithdrawFromStrategy(address strategy, address asset)
+    function emergencyWithdrawFromStrategy(address strategy, address assetAddr)
         external onlyRole(VAULT_ADMIN) nonReentrant
     {
         uint256 amount = IStrategy(strategy).emergencyWithdraw();
-        idleBalance[asset] += amount;
+        if (assetAddr != asset()) {
+            idleBalance[assetAddr] += amount;
+        }
         emit EmergencyWithdraw(strategy, amount);
-    }
-
-    // ── View helpers ──────────────────────────────────────────────────────────
-
-    /**
-     * @notice Total AUM = idle + deployed capital for `asset`.
-     */
-    function totalAssets(address asset) public view returns (uint256) {
-        return idleBalance[asset] + strategyManager.totalDeployed(asset);
     }
 }

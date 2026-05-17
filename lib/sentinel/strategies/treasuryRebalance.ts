@@ -2,18 +2,19 @@
  * lib/sentinel/strategies/treasuryRebalance.ts
  *
  * Sentinel strategy that evaluates whether the treasury vault should
- * rebalance capital between the Aave v3 and Camelot strategies based
- * on current APY data.
+ * rebalance capital between the Aave v3 and Camelot strategies.
  *
- * Decision logic
- * ──────────────
- *   1. Fetch current Aave v3 USDC supply APY from the live on-chain data provider.
- *   2. Attempt to fetch Camelot AXUSD/USDC pool data (no live APY in the static
- *      registry — returns null gracefully if unavailable).
- *   3. If the spread between them exceeds REBALANCE_THRESHOLD_BPS (50 bps = 0.5%),
- *      authorise a rebalance toward the higher-yielding strategy.
- *   4. If either data source is unavailable, deny to prevent blind rebalances.
- *   5. If the vault is in circuit-breaker state, deny unconditionally.
+ * APY data sources (in priority order):
+ *   1. Caller-supplied `currentAaveApy` / `currentCamelotApy` in request body.
+ *   2. Live Aave v3 USDC supply APY from getAaveArbitrumMarket().
+ *   3. Camelot: env var AXIOM_CAMELOT_APY_PCT (configured estimate).
+ *
+ * Decision logic:
+ *   • Circuit breaker check first — deny if Sentinel is in halt state.
+ *   • Amount limit: max $500k per rebalance.
+ *   • APY spread of ≥ 50 bps required to authorise a rebalance.
+ *   • Direction must target the higher-yielding strategy.
+ *   • If any APY data is unavailable, deny with APY_DATA_UNAVAILABLE.
  */
 
 import { isActionAllowed } from '../circuitBreaker';
@@ -22,10 +23,10 @@ import { listLiquidityPools } from '../../liquidity/registry';
 import type { LiquidityPoolDefinition } from '../../liquidity/types';
 
 export interface TreasuryRebalanceRequest {
-  fromStrategy:      'aave_v3' | 'camelot';
-  toStrategy:        'aave_v3' | 'camelot';
-  amountUsdc:        number;
-  currentAaveApy?:   number;
+  fromStrategy:       'aave_v3' | 'camelot';
+  toStrategy:         'aave_v3' | 'camelot';
+  amountUsdc:         number;
+  currentAaveApy?:    number;
   currentCamelotApy?: number;
 }
 
@@ -41,8 +42,16 @@ export interface TreasuryRebalanceResult {
   timestamp:           string;
 }
 
-const REBALANCE_THRESHOLD_BPS  = 50;     // 0.50 % spread required
+const REBALANCE_THRESHOLD_BPS   = 50;      // 0.50 % spread required
 const MAX_SINGLE_REBALANCE_USDC = 500_000;
+
+/** Parse AXIOM_CAMELOT_APY_PCT env var as a fallback estimate. */
+function getCamelotApyFallback(): number | null {
+  const raw = process.env.AXIOM_CAMELOT_APY_PCT;
+  if (!raw) return null;
+  const v = parseFloat(raw);
+  return Number.isFinite(v) ? v : null;
+}
 
 export async function evaluateTreasuryRebalance(
   req: TreasuryRebalanceRequest
@@ -78,9 +87,8 @@ export async function evaluateTreasuryRebalance(
     };
   }
 
+  // ── Resolve Aave APY ──────────────────────────────────────────────────────
   let aaveApyPct: number | null = req.currentAaveApy ?? null;
-  let camelotApyPct: number | null = req.currentCamelotApy ?? null;
-
   if (aaveApyPct === null) {
     try {
       const market = await getAaveArbitrumMarket();
@@ -91,15 +99,31 @@ export async function evaluateTreasuryRebalance(
     }
   }
 
+  // ── Resolve Camelot APY ───────────────────────────────────────────────────
+  // The liquidity pool registry is a static metadata registry with no live APY.
+  // Live Camelot APY must be supplied by the caller (currentCamelotApy) or
+  // configured via the AXIOM_CAMELOT_APY_PCT environment variable.
+  let camelotApyPct: number | null = req.currentCamelotApy ?? null;
   if (camelotApyPct === null) {
-    try {
-      const pools: LiquidityPoolDefinition[] = listLiquidityPools();
-      const camelotPool = pools.find((p) => p.venue === 'camelot');
-      // LiquidityPoolDefinition does not carry a live APY — the static registry
-      // only holds pool metadata. Return null to indicate data unavailability.
-      camelotApyPct = camelotPool ? null : null;
-    } catch {
-      camelotApyPct = null;
+    // Check env var fallback
+    camelotApyPct = getCamelotApyFallback();
+  }
+  if (camelotApyPct === null) {
+    // Confirm pool is registered (informational) but cannot get APY
+    const pools: LiquidityPoolDefinition[] = listLiquidityPools();
+    const camelotRegistered = pools.some((p) => p.venue === 'camelot');
+    if (!camelotRegistered) {
+      return {
+        authorized:          false,
+        decision:            'DENIED',
+        reasonCode:          'CAMELOT_POOL_NOT_REGISTERED',
+        plainLanguage:       'Camelot pool is not registered in the liquidity registry. Rebalance to Camelot blocked.',
+        recommendedStrategy: null,
+        aaveApyPct,
+        camelotApyPct:       null,
+        spreadBps:           null,
+        timestamp,
+      };
     }
   }
 
@@ -108,7 +132,8 @@ export async function evaluateTreasuryRebalance(
       authorized:          false,
       decision:            'DENIED',
       reasonCode:          'APY_DATA_UNAVAILABLE',
-      plainLanguage:       'Cannot evaluate rebalance: live APY data is unavailable for one or more strategies. Rebalance blocked until data is restored.',
+      plainLanguage:       `Live APY data unavailable for ${aaveApyPct === null ? 'Aave' : 'Camelot'}. `
+        + 'Provide currentAaveApy / currentCamelotApy in the request, or set AXIOM_CAMELOT_APY_PCT env var.',
       recommendedStrategy: null,
       aaveApyPct,
       camelotApyPct,

@@ -20,26 +20,24 @@ import "./IStrategy.sol";
  *
  *   Vault (STRATEGY_ADMIN on SM) → StrategyManager → Strategy
  *
+ * Rebalance control flow
+ * ──────────────────────
+ * Rebalances are orchestrated by the vault (not SM). The vault:
+ *   1. Calls SM.recall(fromStrategy) → funds arrive at vault
+ *   2. Transfers funds from vault to SM
+ *   3. Calls SM.allocate(toStrategy) → SM deploys to destination
+ * This avoids any vault→SM token approval requirement.
+ *
  * Role hierarchy (on StrategyManager)
  * ────────────────────────────────────
- *   DEFAULT_ADMIN_ROLE — grant/revoke all other roles
- *   STRATEGY_ADMIN     — add/remove strategies; execute allocate / recall / harvest
- *                        (granted to vault at deploy time so vault delegates through SM)
- *   SENTINEL_EXECUTOR  — trigger cross-strategy rebalances
- *                        (granted to vault + off-chain Sentinel API signer at deploy time)
- *
- * Deploy order (no circular dependency)
- * ──────────────────────────────────────
- *   1. Deploy StrategyManager(admin, sentinelExecutor)
- *   2. Deploy AxiomTreasuryVault(admin, strategyAdmin, sentinelExecutor, SM_address, …)
- *   3. Grant vault STRATEGY_ADMIN on SM
- *   4. Grant vault SENTINEL_EXECUTOR on SM  (so vault.rebalance → SM.rebalance works)
+ *   DEFAULT_ADMIN_ROLE — grant/revoke all roles
+ *   STRATEGY_ADMIN     — add/remove strategies; allocate / recall / harvest
+ *                        (granted to vault at deploy time)
  */
 contract StrategyManager is AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    bytes32 public constant STRATEGY_ADMIN    = keccak256("STRATEGY_ADMIN");
-    bytes32 public constant SENTINEL_EXECUTOR = keccak256("SENTINEL_EXECUTOR");
+    bytes32 public constant STRATEGY_ADMIN = keccak256("STRATEGY_ADMIN");
 
     // ── Strategy registry ─────────────────────────────────────────────────────
     struct StrategyInfo {
@@ -60,45 +58,41 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
     event Allocated(address indexed strategy, uint256 amount);
     event Recalled(address indexed strategy, uint256 amount);
     event Harvested(address indexed strategy, uint256 yieldAmount);
-    event Rebalanced(address indexed from, address indexed to, uint256 amount);
 
     // ── Constructor ───────────────────────────────────────────────────────────
     /**
-     * @param admin            Receives DEFAULT_ADMIN_ROLE + STRATEGY_ADMIN.
-     * @param sentinelExecutor Receives SENTINEL_EXECUTOR.
+     * @param admin  Receives DEFAULT_ADMIN_ROLE + STRATEGY_ADMIN.
      *
      * After deploying the vault, the deployer must also call:
      *   grantRole(STRATEGY_ADMIN, vaultAddress)
-     *   grantRole(SENTINEL_EXECUTOR, vaultAddress)
-     * so the vault can delegate execution through this contract.
+     * so the vault can delegate allocate/recall/harvest/addStrategy/removeStrategy.
      */
-    constructor(address admin, address sentinelExecutor) {
+    constructor(address admin) {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(STRATEGY_ADMIN,     admin);
-        _grantRole(SENTINEL_EXECUTOR,  sentinelExecutor);
     }
 
-    // ── Strategy registry (STRATEGY_ADMIN — vault delegates here) ─────────────
+    // ── Strategy registry ─────────────────────────────────────────────────────
 
     function addStrategy(address strategy, string calldata name)
         external onlyRole(STRATEGY_ADMIN)
     {
         require(!strategyInfo[strategy].active, "StrategyManager: already active");
-        address asset = IStrategy(strategy).asset();
+        address assetAddr = IStrategy(strategy).asset();
         strategyInfo[strategy] = StrategyInfo({
             active:             true,
             name:               name,
-            asset:              asset,
+            asset:              assetAddr,
             allocatedPrincipal: 0,
             harvestedYield:     0,
             addedAt:            block.timestamp
         });
         strategyAddresses.push(strategy);
-        emit StrategyRegistered(strategy, name, asset);
+        emit StrategyRegistered(strategy, name, assetAddr);
     }
 
     function removeStrategy(address strategy) external onlyRole(STRATEGY_ADMIN) {
-        require(strategyInfo[strategy].active,         "StrategyManager: not active");
+        require(strategyInfo[strategy].active,          "StrategyManager: not active");
         require(IStrategy(strategy).currentValue() == 0, "StrategyManager: still deployed");
         strategyInfo[strategy].active = false;
         uint256 len = strategyAddresses.length;
@@ -115,9 +109,9 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
     // ── Execution (STRATEGY_ADMIN — vault delegates here) ────────────────────
 
     /**
-     * @notice Deploy `amount` to `strategy`.
+     * @notice Deploy `amount` of asset to `strategy`.
      *         Caller (vault) must transfer `amount` to this contract before calling.
-     *         StrategyManager forwards the tokens to strategy then calls deploy().
+     *         SM forwards the tokens to strategy then calls deploy().
      */
     function allocate(address strategy, uint256 amount)
         external onlyRole(STRATEGY_ADMIN) nonReentrant
@@ -132,9 +126,9 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
 
     /**
      * @notice Withdraw `amount` from `strategy`.
-     *         strategy.withdraw() sends the funds directly to the vault's address
+     *         strategy.withdraw() sends funds directly to the vault address
      *         (the strategy's immutable `vault` var).
-     *         Returns the actual amount received by the vault.
+     *         Returns the actual amount received.
      */
     function recall(address strategy, uint256 amount)
         external onlyRole(STRATEGY_ADMIN) nonReentrant returns (uint256 received)
@@ -152,8 +146,8 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
 
     /**
      * @notice Harvest yield from `strategy`.
-     *         strategy.harvest() sends yield directly to the vault's address.
-     *         Returns the yield amount harvested.
+     *         strategy.harvest() sends yield directly to the vault address.
+     *         Returns the yield amount.
      */
     function harvest(address strategy)
         external onlyRole(STRATEGY_ADMIN) nonReentrant returns (uint256 yieldAmount)
@@ -163,52 +157,6 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
         yieldAmount = IStrategy(strategy).harvest();
         info.harvestedYield += yieldAmount;
         emit Harvested(strategy, yieldAmount);
-    }
-
-    // ── Rebalance (SENTINEL_EXECUTOR) ─────────────────────────────────────────
-
-    /**
-     * @notice Sentinel-gated cross-strategy rebalance.
-     *
-     *         Withdraw from `fromStrategy` (funds go to vault), then pull from
-     *         vault back to this contract and forward to `toStrategy`.
-     *
-     *         Requires the caller to hold SENTINEL_EXECUTOR.  Both the vault
-     *         (granted at deploy time) and the off-chain Sentinel API signer
-     *         (deployer, also granted at deploy time) are valid callers.
-     *
-     * @dev    The vault must have pre-approved this contract to spend its tokens
-     *         (or the vault must call approve before rebalancing).  In practice
-     *         the vault grants a max-approval during the setup step to keep the
-     *         gas path clean; this is acceptable because SM is a trusted
-     *         protocol-owned contract.
-     */
-    function rebalance(address fromStrategy, address toStrategy, uint256 amount)
-        external onlyRole(SENTINEL_EXECUTOR) nonReentrant
-    {
-        StrategyInfo storage fromInfo = strategyInfo[fromStrategy];
-        StrategyInfo storage toInfo   = strategyInfo[toStrategy];
-        require(fromInfo.active, "StrategyManager: fromStrategy not active");
-        require(toInfo.active,   "StrategyManager: toStrategy not active");
-        require(fromInfo.asset == toInfo.asset, "StrategyManager: asset mismatch");
-
-        // Step 1: withdraw from source — funds land at vault (strategy's vault immutable)
-        uint256 received = IStrategy(fromStrategy).withdraw(amount);
-        if (fromInfo.allocatedPrincipal >= received) {
-            fromInfo.allocatedPrincipal -= received;
-        } else {
-            fromInfo.allocatedPrincipal = 0;
-        }
-
-        // Step 2: pull those tokens from vault to here, then forward to destination
-        address asset = fromInfo.asset;
-        address vaultAddr = IStrategy(fromStrategy).vault();
-        IERC20(asset).safeTransferFrom(vaultAddr, address(this), received);
-        IERC20(asset).safeTransfer(toStrategy, received);
-        IStrategy(toStrategy).deploy(received);
-        toInfo.allocatedPrincipal += received;
-
-        emit Rebalanced(fromStrategy, toStrategy, received);
     }
 
     // ── View helpers ──────────────────────────────────────────────────────────
@@ -221,10 +169,10 @@ contract StrategyManager is AccessControl, ReentrancyGuard {
         return strategyAddresses;
     }
 
-    function totalDeployed(address asset) external view returns (uint256 total) {
+    function totalDeployed(address assetAddr) external view returns (uint256 total) {
         uint256 len = strategyAddresses.length;
         for (uint256 i = 0; i < len; i++) {
-            if (strategyInfo[strategyAddresses[i]].asset == asset) {
+            if (strategyInfo[strategyAddresses[i]].asset == assetAddr) {
                 total += IStrategy(strategyAddresses[i]).currentValue();
             }
         }

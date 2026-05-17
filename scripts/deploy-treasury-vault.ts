@@ -46,10 +46,10 @@ async function main() {
   }
 
   // ── Step 1: Deploy StrategyManager ───────────────────────────────────────
-  // No vault address needed — vault is granted roles on SM after deploy.
+  // SM only needs admin — vault is granted STRATEGY_ADMIN after vault is deployed.
   console.log('\n[1/7] Deploying StrategyManager...');
   const SMFactory = await ethers.getContractFactory('StrategyManager');
-  const strategyManager = await SMFactory.deploy(strategyAdmin, sentinelExecutor);
+  const strategyManager = await SMFactory.deploy(strategyAdmin);
   await strategyManager.waitForDeployment();
   const smAddress = await strategyManager.getAddress();
   console.log(`      StrategyManager: ${smAddress}`);
@@ -71,13 +71,10 @@ async function main() {
 
   // ── Step 3: Grant vault roles on StrategyManager ─────────────────────────
   console.log('\n[3/7] Granting vault roles on StrategyManager...');
-  const STRATEGY_ADMIN    = await strategyManager.STRATEGY_ADMIN();
-  const SENTINEL_EXECUTOR = await strategyManager.SENTINEL_EXECUTOR();
+  const STRATEGY_ADMIN = await strategyManager.STRATEGY_ADMIN();
 
-  await strategyManager.grantRole(STRATEGY_ADMIN,    vaultAddress);
+  await strategyManager.grantRole(STRATEGY_ADMIN, vaultAddress);
   console.log(`      Vault granted STRATEGY_ADMIN on SM`);
-  await strategyManager.grantRole(SENTINEL_EXECUTOR, vaultAddress);
-  console.log(`      Vault granted SENTINEL_EXECUTOR on SM`);
 
   // ── Step 4: Vault max-approves SM for USDC (rebalance pull) ───────────────
   // During rebalance, SM pulls withdrawn funds from vault to forward to the
