@@ -1114,11 +1114,14 @@ function DepositRecordForm() {
 // Server-side harvest triggered via POST /api/treasury/vault/harvest.
 // Reads unrealized yield from the Aave strategy; enforces a $1.00 minimum
 // before submitting the on-chain transaction.
-function HarvestPanel({ lastHarvestedAt, unrealizedYield }: {
+function HarvestPanel({ lastHarvestedAt, unrealizedYield, principalUsdc, apyEstimatePct, minHarvestThresholdUsdc }: {
   lastHarvestedAt: string | null;
   unrealizedYield: number;
+  principalUsdc: number;
+  apyEstimatePct: number | null;
+  minHarvestThresholdUsdc: number;
 }) {
-  const MIN_HARVEST = 1.0;
+  const MIN_HARVEST = minHarvestThresholdUsdc;
   const [status, setStatus] = useState<
     | null
     | { ok: true;  txHash: string | null; yieldUsdc: number }
@@ -1151,6 +1154,16 @@ function HarvestPanel({ lastHarvestedAt, unrealizedYield }: {
   }
 
   const belowThreshold = unrealizedYield < MIN_HARVEST;
+
+  // Accrual rate derived from Aave APY × deployed principal
+  const apy = apyEstimatePct ?? 0;
+  const dailyYieldUsdc  = principalUsdc * (apy / 100) / 365;
+  const hourlyYieldUsdc = dailyYieldUsdc / 24;
+  const annualYieldUsdc = principalUsdc * (apy / 100);
+  // How many hours until accrued yield crosses the harvest threshold
+  const remaining = Math.max(MIN_HARVEST - unrealizedYield, 0);
+  const hoursToThreshold =
+    hourlyYieldUsdc > 0 ? remaining / hourlyYieldUsdc : null;
 
   return (
     <div className="border border-dl-border p-5 max-w-2xl space-y-4">
@@ -1191,6 +1204,55 @@ function HarvestPanel({ lastHarvestedAt, unrealizedYield }: {
               {new Date(lastHarvestedAt).toLocaleTimeString()}
             </p>
           )}
+        </div>
+      </div>
+
+      {/* Accrual rate strip — derived from Aave APY × deployed principal */}
+      <div className="border-t border-dl-border pt-3">
+        <p className="text-xs font-mono text-dl-gray uppercase tracking-wide mb-2">
+          Live Accrual Rate
+          {apyEstimatePct !== null && (
+            <span className="ml-2 normal-case">({apyEstimatePct.toFixed(2)}% APY × {usd(principalUsdc)} principal)</span>
+          )}
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="border border-dl-border p-3">
+            <p className="text-xs font-mono text-dl-gray uppercase mb-1">Per Hour</p>
+            <p className="text-sm font-mono font-semibold text-dl-forest">
+              {apyEstimatePct !== null ? `+${usd(hourlyYieldUsdc)}` : '—'}
+            </p>
+          </div>
+          <div className="border border-dl-border p-3">
+            <p className="text-xs font-mono text-dl-gray uppercase mb-1">Per Day</p>
+            <p className="text-sm font-mono font-semibold text-dl-forest">
+              {apyEstimatePct !== null ? `+${usd(dailyYieldUsdc)}` : '—'}
+            </p>
+          </div>
+          <div className="border border-dl-border p-3">
+            <p className="text-xs font-mono text-dl-gray uppercase mb-1">Est. Annual</p>
+            <p className="text-sm font-mono font-semibold text-dl-navy">
+              {apyEstimatePct !== null ? usd(annualYieldUsdc) : '—'}
+            </p>
+          </div>
+          <div className="border border-dl-border p-3">
+            <p className="text-xs font-mono text-dl-gray uppercase mb-1">Time to Harvest</p>
+            <p className="text-sm font-mono font-semibold text-dl-navy">
+              {unrealizedYield >= MIN_HARVEST
+                ? <span className="text-dl-forest">Ready now</span>
+                : hoursToThreshold !== null
+                  ? hoursToThreshold < 1
+                    ? `~${Math.ceil(hoursToThreshold * 60)} min`
+                    : hoursToThreshold < 48
+                      ? `~${hoursToThreshold.toFixed(1)} hr`
+                      : `~${(hoursToThreshold / 24).toFixed(1)} days`
+                  : '—'}
+            </p>
+            {hoursToThreshold !== null && unrealizedYield < MIN_HARVEST && (
+              <p className="text-xs font-mono text-dl-gray mt-1">
+                {usd(remaining)} remaining
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1507,6 +1569,9 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
           <HarvestPanel
             lastHarvestedAt={summary.lastHarvestedAt}
             unrealizedYield={summary.aavePosition.unrealizedYieldUsdc}
+            principalUsdc={summary.aavePosition.principalUsdc}
+            apyEstimatePct={summary.aavePosition.apyEstimatePct}
+            minHarvestThresholdUsdc={summary.minHarvestThresholdUsdc}
           />
         </section>
 
