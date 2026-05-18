@@ -593,11 +593,16 @@ async function main(): Promise<void> {
     ];
     const idReader = new ethers.Contract(identityAddress, IDENTITY_CLAIM_READ_ABI, provider);
 
-    for (const [topicId, topicLabel, claimIds] of [
-      [CLAIM_TOPICS.KYC_VERIFIED,   'KYC_VERIFIED (1)',   existingKycClaims],
-      [CLAIM_TOPICS.SANCTIONS_CLEAR, 'SANCTIONS_CLEAR (3)', existingSanClaims],
-    ] as [number, string, string[]][]) {
-      for (const claimId of claimIds) {
+    // Collect invalid claim IDs first (avoid mutating arrays while iterating them)
+    const kycToRemove:  string[] = [];
+    const sanToRemove:  string[] = [];
+
+    for (const [topicId, topicLabel, claimIds, removalList] of [
+      [CLAIM_TOPICS.KYC_VERIFIED,   'KYC_VERIFIED (1)',   existingKycClaims, kycToRemove],
+      [CLAIM_TOPICS.SANCTIONS_CLEAR, 'SANCTIONS_CLEAR (3)', existingSanClaims, sanToRemove],
+    ] as [number, string, string[], string[]][]) {
+      // Snapshot the array before iteration so any future mutation cannot affect the loop
+      for (const claimId of [...claimIds]) {
         try {
           const [, , , sig, data]: [number, number, string, string, string, string] =
             await (idReader as ethers.Contract & {
@@ -609,26 +614,34 @@ async function main(): Promise<void> {
           }).isClaimValid(identityAddress, topicId, sig, data).catch(() => false);
 
           if (!valid) {
-            console.log(`  Removing invalid ${topicLabel} claim (${claimId.slice(0, 10)}…)…`);
-            const removeTx = await identity.removeClaim(claimId);
-            console.log(`  tx: ${removeTx.hash}`);
-            const removeReceipt = await removeTx.wait();
-            if (removeReceipt?.status !== 1) {
-              console.warn(`  WARNING: removeClaim reverted for ${claimId.slice(0, 10)}… — skipping`);
-            } else {
-              console.log(`  Removed invalid ${topicLabel} claim.`);
-              // Remove from local arrays so they get re-issued below
-              if (topicId === CLAIM_TOPICS.KYC_VERIFIED) {
-                existingKycClaims.splice(existingKycClaims.indexOf(claimId), 1);
-              } else {
-                existingSanClaims.splice(existingSanClaims.indexOf(claimId), 1);
-              }
-            }
+            console.log(`  Scheduling removal: invalid ${topicLabel} claim (${claimId.slice(0, 10)}…) — isClaimValid=false`);
+            removalList.push(claimId);
           } else {
             console.log(`  ✓ Existing ${topicLabel} claim (${claimId.slice(0, 10)}…) — already valid, keeping.`);
           }
         } catch {
           console.warn(`  ? Could not validate claim ${claimId.slice(0, 10)}… — leaving in place`);
+        }
+      }
+    }
+
+    // Now remove all collected invalid claims (safe — not iterating the source arrays)
+    for (const [topicLabel, claimIds, removalList] of [
+      ['KYC_VERIFIED (1)',   existingKycClaims, kycToRemove],
+      ['SANCTIONS_CLEAR (3)', existingSanClaims, sanToRemove],
+    ] as [string, string[], string[]][]) {
+      for (const claimId of removalList) {
+        console.log(`  Removing invalid ${topicLabel} claim (${claimId.slice(0, 10)}…)…`);
+        const removeTx = await identity.removeClaim(claimId);
+        console.log(`  tx: ${removeTx.hash}`);
+        const removeReceipt = await removeTx.wait();
+        if (removeReceipt?.status !== 1) {
+          console.warn(`  WARNING: removeClaim reverted for ${claimId.slice(0, 10)}… — skipping removal`);
+        } else {
+          console.log(`  Removed.`);
+          // Remove from source array so claimsToIssue computation below triggers re-issue
+          const idx = claimIds.indexOf(claimId);
+          if (idx !== -1) claimIds.splice(idx, 1);
         }
       }
     }
@@ -795,28 +808,34 @@ async function main(): Promise<void> {
     console.log('══════════════════════════════════════════════════════════');
     process.exit(0);
   } else {
-    // Partial success — registered + claims present, but isVerified still false
+    // Partial success — registered, but isVerified still false.
+    // Most likely cause: claims are on-chain but were signed by a key that is
+    // not registered as CLAIM_SIGNER_KEY (purpose 3) on the ClaimIssuer, so
+    // ClaimIssuer.isClaimValid() rejects them.
     console.warn('\n══════════════════════════════════════════════════════════');
-    console.warn('PARTIAL SUCCESS — vault is registered, claims are on-chain,');
-    console.warn('but isVerified() = false.');
-    console.warn('');
-    console.warn('Root cause: The ClaimIssuer contract at');
-    console.warn(`  ${ERC3643_CONTRACTS.CLAIM_ISSUER}`);
-    console.warn('does not have the deployer key registered as a CLAIM_SIGNER_KEY');
-    console.warn('(purpose 3). ClaimIssuer.isClaimValid() therefore rejects the');
-    console.warn('claims, and IdentityRegistry.isVerified() returns false.');
+    console.warn('PARTIAL SUCCESS — vault is registered but isVerified() = false.');
     console.warn('');
     if (claimsPresent) {
-      console.warn('Claims ARE stored on the ONCHAINID — re-issuing will not help.');
+      console.warn('Claims ARE stored on the ONCHAINID — but isClaimValid() may be');
+      console.warn('returning false because they were signed by a key that is not a');
+      console.warn('registered CLAIM_SIGNER_KEY (purpose 3) on the ClaimIssuer.');
+      console.warn('');
+      console.warn('Action: re-issue the claims with the correct signing key:');
+      console.warn('  1. Run with DRY_RUN=1 to see which key hashes are registered.');
+      console.warn('  2. Set CLAIM_SIGNER_PRIVATE_KEY to the matching key.');
+      console.warn('  3. Re-run with FORCE_REISSUE=1 to remove + re-issue with correct signer.');
+    } else {
+      console.warn('No claims found on ONCHAINID — claims were not issued.');
+      console.warn('  Re-run without DRY_RUN to issue KYC (topic 1) and Sanctions (topic 3).');
     }
-    console.warn('Action required (follow-up #547):');
-    console.warn('  1. Identify the key registered on ClaimIssuer as CLAIM_SIGNER_KEY.');
-    console.warn('  2. Re-issue Topic 1 and Topic 3 claims signed by that key.');
-    console.warn('  3. Re-run this script to confirm isVerified=true.');
+    console.warn('');
+    console.warn(`ClaimIssuer: ${ERC3643_CONTRACTS.CLAIM_ISSUER}`);
+    console.warn(`Run: DRY_RUN=1 NEW_VAULT_ADDRESS=${vaultAddr} npx tsx scripts/register-vault-erc3643.ts`);
+    console.warn('to diagnose registered CLAIM_SIGNER_KEY hashes without sending transactions.');
     console.warn('');
     console.warn('NOTE: USDC→Aave yield path is active and does NOT require isVerified.');
     console.warn('══════════════════════════════════════════════════════════');
-    // Exit 2 = partial success (registered, claims present, not yet verified)
+    // Exit 2 = partial success (registered, but not yet verified)
     process.exit(2);
   }
 }
