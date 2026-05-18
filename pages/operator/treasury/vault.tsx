@@ -1350,21 +1350,61 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
           <div className="border border-dl-error bg-red-50 p-3 text-sm text-dl-error font-mono">{loadError}</div>
         )}
 
-        {/* AUM Panel */}
+        {/* AUM + Live Rate Strip */}
         <section>
           <h2 className="font-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-1">Assets Under Management</h2>
+
+          {/* Primary AUM metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+            <div className="border border-dl-border p-4">
+              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Total AUM</p>
+              <p className="font-mono text-2xl text-dl-navy mt-1">{usd(summary.aumUsdc)}</p>
+              <p className="text-xs text-dl-gray mt-1">Idle + deployed</p>
+            </div>
+            <div className="border border-dl-border p-4">
+              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Idle USDC</p>
+              <p className="font-mono text-2xl text-dl-navy mt-1">{usd(summary.idleUsdc)}</p>
+              <p className="text-xs text-dl-gray mt-1">Held in vault, undeployed</p>
+            </div>
+            <div className="border border-dl-border p-4">
+              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">In Aave v3</p>
+              <p className="font-mono text-2xl text-dl-navy mt-1">{usd(summary.aavePosition.currentValueUsdc)}</p>
+              <p className="text-xs text-dl-gray mt-1">aUSDC position (principal + yield)</p>
+            </div>
+            <div className="border border-dl-border p-4">
+              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Accrued Yield</p>
+              <p className={`font-mono text-2xl mt-1 ${summary.aavePosition.unrealizedYieldUsdc > 0 ? 'text-dl-forest' : 'text-dl-navy'}`}>
+                {summary.aavePosition.unrealizedYieldUsdc >= 0 ? '+' : ''}{usd(summary.aavePosition.unrealizedYieldUsdc)}
+              </p>
+              <p className="text-xs text-dl-gray mt-1">Unrealised Aave yield (since last harvest)</p>
+            </div>
+          </div>
+
+          {/* APY strip */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { label: 'Total AUM', value: usd(summary.aumUsdc), note: 'Idle + deployed' },
-              { label: 'Idle (undeployed)', value: usd(summary.idleUsdc), note: 'Held in vault' },
-              { label: 'Deployed', value: usd(summary.deployedUsdc), note: 'Across strategies' },
-            ].map((m) => (
-              <div key={m.label} className="border border-dl-border p-4">
-                <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">{m.label}</p>
-                <p className="font-mono text-2xl text-dl-navy mt-1">{m.value}</p>
-                <p className="text-xs text-dl-gray mt-1">{m.note}</p>
-              </div>
-            ))}
+            <div className="border border-dl-forest p-4 bg-green-50">
+              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Aave v3 USDC Supply APY</p>
+              <p className="font-mono text-3xl text-dl-forest mt-1">
+                {summary.aavePosition.apyEstimatePct !== null
+                  ? `${summary.aavePosition.apyEstimatePct.toFixed(2)}%`
+                  : '—'}
+              </p>
+              <p className="text-xs text-dl-gray mt-1">Live from Aave v3 Arbitrum · liquidityRate</p>
+            </div>
+            <div className="border border-dl-border p-4">
+              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Blended APY</p>
+              <p className="font-mono text-3xl text-dl-navy mt-1">
+                {summary.blendedApyEstimatePct !== null
+                  ? `${summary.blendedApyEstimatePct.toFixed(2)}%`
+                  : '—'}
+              </p>
+              <p className="text-xs text-dl-gray mt-1">Capital-weighted across active strategies</p>
+            </div>
+            <div className="border border-dl-border p-4">
+              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Total Deployed</p>
+              <p className="font-mono text-3xl text-dl-navy mt-1">{usd(summary.deployedUsdc)}</p>
+              <p className="text-xs text-dl-gray mt-1">USDC across all strategies</p>
+            </div>
           </div>
         </section>
 
@@ -1378,6 +1418,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                 <th className="text-right py-2 pr-4">Current Value</th>
                 <th className="text-right py-2 pr-4">Principal</th>
                 <th className="text-right py-2 pr-4">Unrealised Yield</th>
+                <th className="text-right py-2 pr-4">Live APY</th>
                 <th className="text-right py-2 pr-4">Allocation %</th>
                 <th className="text-right py-2">Last Rebalanced</th>
               </tr>
@@ -1396,6 +1437,11 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                   <td className="py-2 pr-4 text-right">{usd(pos.principalUsdc)}</td>
                   <td className={`py-2 pr-4 text-right ${pos.unrealizedYieldUsdc >= 0 ? 'text-green-700' : 'text-red-600'}`}>
                     {pos.unrealizedYieldUsdc >= 0 ? '+' : ''}{usd(pos.unrealizedYieldUsdc)}
+                  </td>
+                  <td className="py-2 pr-4 text-right">
+                    {pos.apyEstimatePct !== null
+                      ? <span className="text-dl-forest font-semibold">{pos.apyEstimatePct.toFixed(2)}%</span>
+                      : <span className="text-dl-gray">—</span>}
                   </td>
                   <td className="py-2 pr-4 text-right">{pos.allocationPct.toFixed(1)}%</td>
                   <td className="py-2 text-right text-xs text-dl-gray">
