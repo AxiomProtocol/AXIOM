@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
+import type { PublicVaultMetrics } from './api/treasury/vault/public-metrics';
 
 interface TreasuryMetrics {
   totalAUM: string;
@@ -141,10 +142,40 @@ export default function TransparencyPage() {
   const [treasuryLoading, setTreasuryLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
+  const [vaultMetrics, setVaultMetrics] = useState<PublicVaultMetrics | null>(null);
+  const [vaultFetchedAt, setVaultFetchedAt] = useState<Date | null>(null);
+  const [vaultFetchError, setVaultFetchError] = useState(false);
+
   useEffect(() => {
     fetchTreasuryData();
     const interval = setInterval(fetchTreasuryData, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchVaultMetrics() {
+      try {
+        const res = await fetch('/api/treasury/vault/public-metrics');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (!cancelled && json.success) {
+          setVaultMetrics(json.data);
+          setVaultFetchedAt(new Date());
+          setVaultFetchError(false);
+        }
+      } catch {
+        if (!cancelled) setVaultFetchError(true);
+      }
+    }
+
+    fetchVaultMetrics();
+    const id = setInterval(fetchVaultMetrics, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
   }, []);
 
   async function fetchTreasuryData() {
@@ -252,6 +283,59 @@ export default function TransparencyPage() {
                 <p className="text-xs text-dl-gray mb-1">Interest Earned</p>
                 <p className="font-dl-mono text-lg font-semibold text-dl-navy">{formatCurrency(metrics?.totalInterestEarned || 0)}</p>
                 <p className="text-xs text-dl-gray mt-1">Revenue generated</p>
+              </div>
+            </div>
+
+            {/* Vault Yield Engine strip — live, polls every 60s */}
+            <div className="border border-dl-border mb-6">
+              <div className="flex items-center justify-between px-4 py-2 border-b border-dl-border bg-dl-bg-alt">
+                <p className="text-xs font-dl-mono text-dl-gray uppercase tracking-wide">Aave v3 Yield Engine — Arbitrum One</p>
+                <p className="text-xs font-dl-mono text-dl-gray">
+                  {vaultFetchError
+                    ? <span className="text-red-600">Refresh error</span>
+                    : vaultFetchedAt
+                      ? <>Auto-refreshed {vaultFetchedAt.toLocaleTimeString()}</>
+                      : 'Loading…'}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 divide-y sm:divide-y-0 divide-x-0 sm:divide-x divide-dl-border">
+                {[
+                  {
+                    label: 'Vault AUM',
+                    value: vaultMetrics ? formatCurrency(vaultMetrics.aumUsdc) : '—',
+                    sub: 'Total assets under management',
+                  },
+                  {
+                    label: 'Idle USDC',
+                    value: vaultMetrics ? formatCurrency(vaultMetrics.idleUsdc) : '—',
+                    sub: 'Undeployed reserves',
+                  },
+                  {
+                    label: 'Deployed',
+                    value: vaultMetrics ? formatCurrency(vaultMetrics.deployedUsdc) : '—',
+                    sub: 'Capital in active strategies',
+                  },
+                  {
+                    label: 'Aave APY',
+                    value: vaultMetrics?.aaveApyPct != null
+                      ? `${vaultMetrics.aaveApyPct.toFixed(2)}%`
+                      : '—',
+                    sub: 'Current Aave v3 supply rate',
+                  },
+                  {
+                    label: 'Blended APY',
+                    value: vaultMetrics?.blendedApyPct != null
+                      ? `${vaultMetrics.blendedApyPct.toFixed(2)}%`
+                      : '—',
+                    sub: 'Weighted across all strategies',
+                  },
+                ].map((item, i) => (
+                  <div key={i} className="px-4 py-4">
+                    <p className="text-xs text-dl-gray mb-1">{item.label}</p>
+                    <p className="font-dl-mono text-base font-semibold text-dl-navy">{item.value}</p>
+                    <p className="text-xs text-dl-gray mt-1">{item.sub}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
