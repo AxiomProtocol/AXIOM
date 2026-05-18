@@ -79,6 +79,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       camelotPosition: { address: '', name: 'Not deployed', currentValueUsdc: 0, principalUsdc: 0, unrealizedYieldUsdc: 0, allocationPct: 0, lastRebalancedAt: null, apyEstimatePct: null },
       blendedApyEstimatePct: null,
       yieldHarvestedInceptionUsdc: 0,
+      lastHarvestedAt: null,
       paused: false,
       lastUpdated: new Date().toISOString(),
       isLive: false,
@@ -1093,6 +1094,144 @@ function DepositRecordForm() {
   );
 }
 
+// ── Harvest Yield Panel ────────────────────────────────────────────────────────
+// Server-side harvest triggered via POST /api/treasury/vault/harvest.
+// Reads unrealized yield from the Aave strategy; enforces a $1.00 minimum
+// before submitting the on-chain transaction.
+function HarvestPanel({ lastHarvestedAt, unrealizedYield }: {
+  lastHarvestedAt: string | null;
+  unrealizedYield: number;
+}) {
+  const MIN_HARVEST = 1.0;
+  const [status, setStatus] = useState<
+    | null
+    | { ok: true;  txHash: string | null; yieldUsdc: number }
+    | { ok: false; skipped?: boolean; reason?: string; error?: string }
+  >(null);
+  const [busy, setBusy] = useState(false);
+
+  async function handleHarvest() {
+    setBusy(true);
+    setStatus(null);
+    try {
+      const res  = await fetch('/api/treasury/vault/harvest', {
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+      });
+      const json = await res.json();
+      if (json.skipped) {
+        setStatus({ ok: false, skipped: true, reason: json.reason });
+      } else if (json.success) {
+        setStatus({ ok: true, txHash: json.txHash, yieldUsdc: json.yieldUsdc });
+      } else {
+        setStatus({ ok: false, error: json.error ?? json.detail ?? 'Harvest failed' });
+      }
+    } catch (err: unknown) {
+      setStatus({ ok: false, error: err instanceof Error ? err.message : 'Network error' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const belowThreshold = unrealizedYield < MIN_HARVEST;
+
+  return (
+    <div className="border border-dl-border p-5 max-w-2xl space-y-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Trigger Harvest</p>
+          <p className="text-xs font-mono text-dl-gray mt-0.5">
+            Sweeps accrued Aave yield (aUSDC balance − principal) back to the vault.
+            Minimum threshold: ${MIN_HARVEST.toFixed(2)}.
+          </p>
+        </div>
+        {lastHarvestedAt && (
+          <div className="text-right shrink-0 ml-4">
+            <p className="text-xs font-mono text-dl-gray uppercase">Last Harvested</p>
+            <p className="text-xs font-mono text-dl-navy">{new Date(lastHarvestedAt).toLocaleString()}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Live accrued yield indicator */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="border border-dl-border p-3">
+          <p className="text-xs font-mono text-dl-gray uppercase mb-1">Accrued Yield (Aave)</p>
+          <p className={`text-sm font-mono font-semibold ${unrealizedYield > 0 ? 'text-dl-forest' : 'text-dl-navy'}`}>
+            {usd(unrealizedYield)}
+          </p>
+          {belowThreshold && (
+            <p className="text-xs font-mono text-dl-gray mt-1">Below ${MIN_HARVEST.toFixed(2)} threshold</p>
+          )}
+        </div>
+        <div className="border border-dl-border p-3">
+          <p className="text-xs font-mono text-dl-gray uppercase mb-1">Last Harvested</p>
+          <p className="text-sm font-mono text-dl-navy">
+            {lastHarvestedAt ? new Date(lastHarvestedAt).toLocaleDateString() : 'Never'}
+          </p>
+          {lastHarvestedAt && (
+            <p className="text-xs font-mono text-dl-gray mt-1">
+              {new Date(lastHarvestedAt).toLocaleTimeString()}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Action */}
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={handleHarvest}
+          disabled={busy || belowThreshold}
+          className="px-5 py-2 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white disabled:opacity-40"
+          title={belowThreshold ? `Yield below $${MIN_HARVEST.toFixed(2)} minimum` : 'Harvest accrued Aave yield to vault'}
+        >
+          {busy ? 'Harvesting…' : 'Harvest Yield Now'}
+        </button>
+        {belowThreshold && !busy && (
+          <p className="text-xs font-mono text-dl-gray">
+            Accumulating — ${(MIN_HARVEST - unrealizedYield).toFixed(6)} more needed
+          </p>
+        )}
+      </div>
+
+      {/* Role note */}
+      <p className="text-xs font-mono text-dl-gray border-l-2 border-dl-border pl-3">
+        Requires STRATEGY_ADMIN role on-chain. Executes via SENTINEL_EXECUTOR_PRIVATE_KEY
+        (or DEPLOYER_PRIVATE_KEY). Calls vault.harvest(aaveStrategy, USDC).
+      </p>
+
+      {/* Result */}
+      {status && status.ok && (
+        <div className="border border-dl-forest bg-green-50 p-3 text-xs font-mono text-dl-forest space-y-1">
+          <p className="font-semibold">Harvest complete — {usd(status.yieldUsdc)} swept to vault</p>
+          {status.txHash && (
+            <a
+              href={`https://arbiscan.io/tx/${status.txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline block"
+            >
+              View on Arbiscan → {status.txHash.slice(0, 12)}…{status.txHash.slice(-6)}
+            </a>
+          )}
+        </div>
+      )}
+      {status && !status.ok && status.skipped && (
+        <div className="border border-yellow-300 bg-yellow-50 p-3 text-xs font-mono text-yellow-800">
+          Skipped — {status.reason}
+        </div>
+      )}
+      {status && !status.ok && !status.skipped && (
+        <div className="border border-red-300 bg-red-50 p-3 text-xs font-mono text-red-700 break-all">
+          {status.error}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function TreasuryVaultPage({ summary, events, monthly, quarterly, ytd, loadError }: Props) {
   const [rebalanceForm, setRebalanceForm] = useState<RebalanceForm>({
     fromStrategy: 'aave_v3',
@@ -1270,7 +1409,14 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
 
         {/* Yield Totals */}
         <section>
-          <h2 className="font-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-1">Yield Harvested</h2>
+          <div className="flex items-baseline justify-between mb-3 border-b border-dl-border pb-1">
+            <h2 className="font-serif text-lg text-dl-navy">Yield Harvested</h2>
+            {summary.lastHarvestedAt && (
+              <span className="text-xs font-mono text-dl-gray">
+                Last harvest: {new Date(summary.lastHarvestedAt).toLocaleString()}
+              </span>
+            )}
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             {[
               { label: 'This Month',  value: usd(monthly.harvestTotalUsdc),  count: monthly.harvestEventCount },
@@ -1287,6 +1433,19 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
               </div>
             ))}
           </div>
+        </section>
+
+        {/* Harvest Yield */}
+        <section>
+          <h2 className="font-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-1">Harvest Aave Yield</h2>
+          <p className="text-sm text-dl-gray mb-4">
+            Sweeps accrued aUSDC yield (balance above principal) from the Aave v3 strategy back into the vault.
+            Executed server-side via STRATEGY_ADMIN key — no wallet connection required.
+          </p>
+          <HarvestPanel
+            lastHarvestedAt={summary.lastHarvestedAt}
+            unrealizedYield={summary.aavePosition.unrealizedYieldUsdc}
+          />
         </section>
 
         {/* Sentinel-Gated Rebalance — Two-Step Authorization Flow */}

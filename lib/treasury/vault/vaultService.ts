@@ -67,6 +67,8 @@ export interface VaultSummary {
   camelotPosition: StrategyPosition;
   blendedApyEstimatePct: number | null;
   yieldHarvestedInceptionUsdc: number;
+  /** ISO 8601 timestamp of the most recent harvest event, or null if none. */
+  lastHarvestedAt: string | null;
   paused: boolean;
   lastUpdated: string;
   isLive: boolean;
@@ -235,7 +237,10 @@ export async function getVaultSummary(): Promise<VaultSummary> {
       fetchStrategyPosition(provider, CAMELOT_STRATEGY, SM_ADDRESS, deployedUsdc, camelotApyPct),
     ]);
 
-    const yieldHarvestedInceptionUsdc = await getTotalHarvestedFromDb();
+    const [yieldHarvestedInceptionUsdc, lastHarvestedAt] = await Promise.all([
+      getTotalHarvestedFromDb(),
+      getLastHarvestEvent(),
+    ]);
     const blendedApyEstimatePct = calcBlendedApy(aavePos, camelotPos, deployedUsdc);
 
     return {
@@ -248,6 +253,7 @@ export async function getVaultSummary(): Promise<VaultSummary> {
       camelotPosition: camelotPos,
       blendedApyEstimatePct,
       yieldHarvestedInceptionUsdc,
+      lastHarvestedAt,
       paused,
       lastUpdated: new Date().toISOString(),
       isLive: true,
@@ -255,6 +261,20 @@ export async function getVaultSummary(): Promise<VaultSummary> {
   } catch (err) {
     console.error('[vaultService] getVaultSummary error:', err);
     return buildOfflineResponse();
+  }
+}
+
+export async function getLastHarvestEvent(): Promise<string | null> {
+  try {
+    const result = await db
+      .select({ createdAt: treasuryVaultEvents.createdAt })
+      .from(treasuryVaultEvents)
+      .where(eq(treasuryVaultEvents.eventType, 'harvest'))
+      .orderBy(desc(treasuryVaultEvents.createdAt))
+      .limit(1);
+    return result[0]?.createdAt?.toISOString() ?? null;
+  } catch {
+    return null;
   }
 }
 
@@ -291,6 +311,7 @@ function buildOfflineResponse(): VaultSummary {
     camelotPosition: emptyPos,
     blendedApyEstimatePct: null,
     yieldHarvestedInceptionUsdc: 0,
+    lastHarvestedAt: null,
     paused: false,
     lastUpdated: new Date().toISOString(),
     isLive: false,
