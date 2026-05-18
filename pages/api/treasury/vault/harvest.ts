@@ -4,18 +4,27 @@
  * Sweeps accrued Aave v3 yield (aToken balance - principal) back into the
  * AxiomTreasuryVault by calling vault.harvest(aaveStrategy, USDC).
  *
+ * Authorization — two paths:
+ *   1. Operator session cookie (cap_operator_key) — for manual dashboard use.
+ *   2. X-Harvest-Cron-Secret header matching HARVEST_CRON_SECRET env var —
+ *      for external schedulers / Replit cron jobs calling this endpoint
+ *      automatically on a cadence (e.g. every 24 h).
+ *      Set HARVEST_CRON_SECRET to a long random secret and configure your
+ *      cron to send:  -H "X-Harvest-Cron-Secret: <secret>"
+ *
  * Guard rails:
- *   - Operator session cookie required (cap_operator_key).
- *   - Checks unrealized yield on-chain BEFORE submitting any transaction.
+ *   - Reads unrealized yield on-chain BEFORE submitting any transaction.
  *   - Enforces a $1.00 minimum yield threshold — returns a skip response
- *     (HTTP 200, skipped=true) for dust amounts so the caller can distinguish
- *     "not worth it yet" from a real error.
+ *     (HTTP 200, skipped=true) for dust amounts.
  *   - On-chain role required: STRATEGY_ADMIN on AxiomTreasuryVault.
  *     Signing key: SENTINEL_EXECUTOR_PRIVATE_KEY (preferred) or
  *     DEPLOYER_PRIVATE_KEY as fallback.
+ *   - Realized yield amount is parsed from the StrategyHarvested event
+ *     emitted in the receipt — not the pre-tx estimate — ensuring the
+ *     audit log reflects the exact on-chain amount.
  *
  * Success response:
- *   { success: true, txHash, yieldUsdc }
+ *   { success: true, txHash, yieldUsdc, source: 'operator' | 'cron' }
  *
  * Skipped (below threshold):
  *   { success: false, skipped: true, reason, yieldUsdc }
@@ -39,6 +48,7 @@ const MIN_HARVEST_USDC = 1.0; // minimum $1.00 unrealized yield before harvestin
 
 const VAULT_ABI = [
   'function harvest(address strategy, address assetAddr) external',
+  'event StrategyHarvested(address indexed strategy, address indexed asset, uint256 yieldAmount)',
 ];
 
 const STRATEGY_ABI = [
@@ -46,12 +56,32 @@ const STRATEGY_ABI = [
   'function principal()    view returns (uint256)',
 ];
 
+/**
+ * Returns 'operator' if the operator session cookie is valid,
+ * 'cron' if the X-Harvest-Cron-Secret header matches HARVEST_CRON_SECRET,
+ * or null if neither passes.
+ */
+function authenticateRequest(req: NextApiRequest): 'operator' | 'cron' | null {
+  const cookie = readOperatorCookie(req);
+  if (isValidOperatorKey(cookie)) return 'operator';
+
+  const cronSecret = process.env.HARVEST_CRON_SECRET;
+  if (cronSecret && cronSecret.length >= 16) {
+    const provided = req.headers['x-harvest-cron-secret'];
+    if (typeof provided === 'string' && provided === cronSecret) return 'cron';
+  }
+
+  return null;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const cookie = readOperatorCookie(req);
-  if (!isValidOperatorKey(cookie)) {
-    return res.status(401).json({ error: 'Unauthorized — valid operator session required' });
+  const authSource = authenticateRequest(req);
+  if (!authSource) {
+    return res.status(401).json({
+      error: 'Unauthorized — provide a valid operator session cookie or X-Harvest-Cron-Secret header',
+    });
   }
 
   if (!VAULT_ADDRESS) {
@@ -84,20 +114,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       strategy.currentValue() as Promise<bigint>,
       strategy.principal()    as Promise<bigint>,
     ]);
-    const yieldRaw  = currentValueRaw > principalRaw ? currentValueRaw - principalRaw : 0n;
-    const yieldUsdc = Number(yieldRaw) / 1e6;
+    const estimatedYieldRaw  = currentValueRaw > principalRaw ? currentValueRaw - principalRaw : 0n;
+    const estimatedYieldUsdc = Number(estimatedYieldRaw) / 1e6;
 
-    if (yieldUsdc < MIN_HARVEST_USDC) {
+    if (estimatedYieldUsdc < MIN_HARVEST_USDC) {
       return res.status(200).json({
         success:  false,
         skipped:  true,
-        reason:   `Unrealized yield $${yieldUsdc.toFixed(6)} is below the $${MIN_HARVEST_USDC.toFixed(2)} minimum harvest threshold`,
-        yieldUsdc,
+        reason:   `Unrealized yield $${estimatedYieldUsdc.toFixed(6)} is below the $${MIN_HARVEST_USDC.toFixed(2)} minimum harvest threshold`,
+        yieldUsdc: estimatedYieldUsdc,
+        source:   authSource,
       });
     }
 
     // Execute: vault.harvest(aaveStrategy, USDC)
-    // This calls StrategyManager.harvest(strategy) → AaveV3Strategy.harvest()
+    // Calls StrategyManager.harvest(strategy) → AaveV3Strategy.harvest()
     // which withdraws (currentValue - principal) aUSDC from Aave to the vault.
     const vault   = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, signer);
     const tx      = await vault.harvest(AAVE_STRATEGY, USDC);
@@ -111,23 +142,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Record harvest in audit log.
-    // logIndex -1 is the sentinel value for operator-initiated events so that
-    // the (txHash, logIndex) unique constraint never collides with the on-chain
-    // event poller's logIndex 0 for the same transaction.
+    // Parse realized yield from the StrategyHarvested event in the receipt.
+    // This gives the exact on-chain amount rather than the pre-tx read estimate,
+    // which can diverge slightly due to aToken indexing between the read and the tx.
+    const iface = new ethers.Interface(VAULT_ABI);
+    let realizedYieldUsdc = estimatedYieldUsdc; // safe fallback if parsing fails
+    for (const log of receipt.logs) {
+      try {
+        const parsed = iface.parseLog({ topics: log.topics as string[], data: log.data });
+        if (parsed?.name === 'StrategyHarvested') {
+          realizedYieldUsdc = Number(parsed.args[2] as bigint) / 1e6;
+          break;
+        }
+      } catch {
+        // Not a StrategyHarvested log — continue
+      }
+    }
+
+    // Record harvest in audit log with the realized (exact) amount.
+    // logIndex -1 is the sentinel value for operator/cron-initiated inserts so
+    // the (txHash, logIndex) unique constraint never collides with the event
+    // poller's real log-index row for the same transaction.
     await db.insert(treasuryVaultEvents).values({
       eventType:   'harvest',
       strategy:    AAVE_STRATEGY,
-      amountUsd:   yieldUsdc.toFixed(6),
+      amountUsd:   realizedYieldUsdc.toFixed(6),
       txHash:      receipt.hash,
       logIndex:    -1,
       blockNumber: receipt.blockNumber,
     }).onConflictDoNothing();
 
+    console.log(`[harvest] ${authSource} — ${realizedYieldUsdc.toFixed(6)} USDC harvested — ${receipt.hash}`);
+
     return res.status(200).json({
-      success:  true,
-      txHash:   receipt.hash,
-      yieldUsdc,
+      success:   true,
+      txHash:    receipt.hash,
+      yieldUsdc: realizedYieldUsdc,
+      source:    authSource,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
