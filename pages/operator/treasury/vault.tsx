@@ -1468,7 +1468,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
               { label: 'This Month',  value: usd(monthly.harvestTotalUsdc),  count: monthly.harvestEventCount },
               { label: 'This Quarter', value: usd(quarterly.harvestTotalUsdc), count: quarterly.harvestEventCount },
               { label: 'Year to Date', value: usd(ytd.harvestTotalUsdc),      count: ytd.harvestEventCount },
-              { label: 'Inception',   value: usd(summary.yieldHarvestedInceptionUsdc), count: null },
+              { label: 'Harvested Since Inception', value: usd(summary.yieldHarvestedInceptionUsdc), count: null },
             ].map((m) => (
               <div key={m.label} className="border border-dl-border p-4">
                 <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">{m.label}</p>
