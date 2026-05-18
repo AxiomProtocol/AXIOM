@@ -10,8 +10,9 @@
 
 import { ethers } from 'ethers';
 import { db } from '../../../server/db';
-import { treasuryVaultEvents } from '../../../shared/treasuryVaultSchema';
+import { treasuryVaultEvents, harvestCronRuns } from '../../../shared/treasuryVaultSchema';
 import { desc, eq, gte, sql } from 'drizzle-orm';
+import { getMinHarvestThreshold } from './harvestRunner';
 import { getAaveArbitrumMarket } from '../../defi/aave/arbitrumService';
 
 const RPC = process.env.ARBITRUM_RPC_URL ?? 'https://arb1.arbitrum.io/rpc';
@@ -52,6 +53,17 @@ const STRATEGY_MANAGER_ABI = [
   'function totalDeployed(address asset) view returns (uint256)',
 ];
 
+export interface CronRunEntry {
+  id: number;
+  startedAt: string;
+  completedAt: string;
+  status: string;
+  yieldUsdc: number;
+  txHash: string | null;
+  errorMessage: string | null;
+  durationMs: number | null;
+}
+
 export interface VaultSummary {
   /** Total AUM across all accepted assets (USDC + AXUSD), denominated in USD. */
   aumUsdc: number;
@@ -72,6 +84,10 @@ export interface VaultSummary {
   paused: boolean;
   lastUpdated: string;
   isLive: boolean;
+  /** Minimum yield threshold for harvest (from env HARVEST_MIN_USDC, default $1.00). */
+  minHarvestThresholdUsdc: number;
+  /** Last 10 scheduled cron harvest runs. */
+  cronRunHistory: CronRunEntry[];
 }
 
 export interface StrategyPosition {
@@ -237,9 +253,10 @@ export async function getVaultSummary(): Promise<VaultSummary> {
       fetchStrategyPosition(provider, CAMELOT_STRATEGY, SM_ADDRESS, deployedUsdc, camelotApyPct),
     ]);
 
-    const [yieldHarvestedInceptionUsdc, lastHarvestedAt] = await Promise.all([
+    const [yieldHarvestedInceptionUsdc, lastHarvestedAt, cronRunHistory] = await Promise.all([
       getTotalHarvestedFromDb(),
       getLastHarvestEvent(),
+      getCronRunHistory(10),
     ]);
     const blendedApyEstimatePct = calcBlendedApy(aavePos, camelotPos, deployedUsdc);
 
@@ -257,6 +274,8 @@ export async function getVaultSummary(): Promise<VaultSummary> {
       paused,
       lastUpdated: new Date().toISOString(),
       isLive: true,
+      minHarvestThresholdUsdc: getMinHarvestThreshold(),
+      cronRunHistory,
     };
   } catch (err) {
     console.error('[vaultService] getVaultSummary error:', err);
@@ -290,6 +309,28 @@ async function getTotalHarvestedFromDb(): Promise<number> {
   }
 }
 
+export async function getCronRunHistory(limit = 10): Promise<CronRunEntry[]> {
+  try {
+    const rows = await db
+      .select()
+      .from(harvestCronRuns)
+      .orderBy(desc(harvestCronRuns.startedAt))
+      .limit(limit);
+    return rows.map((r) => ({
+      id:           r.id,
+      startedAt:    r.startedAt.toISOString(),
+      completedAt:  r.completedAt.toISOString(),
+      status:       r.status,
+      yieldUsdc:    parseFloat(String(r.yieldUsdc)),
+      txHash:       r.txHash ?? null,
+      errorMessage: r.errorMessage ?? null,
+      durationMs:   r.durationMs ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 function buildOfflineResponse(): VaultSummary {
   const emptyPos: StrategyPosition = {
     address: '',
@@ -315,6 +356,8 @@ function buildOfflineResponse(): VaultSummary {
     paused: false,
     lastUpdated: new Date().toISOString(),
     isLive: false,
+    minHarvestThresholdUsdc: getMinHarvestThreshold(),
+    cronRunHistory: [],
   };
 }
 

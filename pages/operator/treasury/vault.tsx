@@ -6,7 +6,7 @@ import { erc20Abi, parseAbi, parseUnits, formatUnits } from 'viem';
 import { OperatorConsoleLayout } from '../../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../../lib/capinfra/operatorAuth';
 import { getVaultSummary, getVaultEventHistory, getIncomeSummary } from '../../../lib/treasury/vault/vaultService';
-import type { VaultSummary, StrategyPosition } from '../../../lib/treasury/vault/vaultService';
+import type { VaultSummary, StrategyPosition, CronRunEntry } from '../../../lib/treasury/vault/vaultService';
 
 interface VaultEvent {
   id: number;
@@ -83,6 +83,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       paused: false,
       lastUpdated: new Date().toISOString(),
       isLive: false,
+      minHarvestThresholdUsdc: 1.0,
+      cronRunHistory: [],
     };
     const emptyPeriod: IncomePeriod = { period: '', since: '', harvestTotalUsdc: 0, harvestEventCount: 0, depositTotalUsdc: 0, withdrawTotalUsdc: 0, allocateTotalUsdc: 0 };
     return { props: { summary: empty, events: [], monthly: emptyPeriod, quarterly: emptyPeriod, ytd: emptyPeriod, loadError: err?.message ?? 'Failed to load vault data' } };
@@ -1492,6 +1494,111 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             lastHarvestedAt={summary.lastHarvestedAt}
             unrealizedYield={summary.aavePosition.unrealizedYieldUsdc}
           />
+        </section>
+
+        {/* Cron Harvest Schedule */}
+        <section>
+          <h2 className="font-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-1">Automated Harvest Schedule</h2>
+          <p className="text-sm text-dl-gray mb-4">
+            The vault automatically harvests Aave yield every 6 hours via a scheduled cron job
+            (<code className="font-mono text-xs bg-gray-100 px-1">GET /api/cron/harvest-vault</code>).
+            Auth: <code className="font-mono text-xs bg-gray-100 px-1">CRON_SECRET</code> or{' '}
+            <code className="font-mono text-xs bg-gray-100 px-1">HARVEST_CRON_SECRET</code>.
+            Minimum yield threshold: <span className="font-mono font-semibold">${summary.minHarvestThresholdUsdc.toFixed(2)}</span>
+            {' '}(env <code className="font-mono text-xs bg-gray-100 px-1">HARVEST_MIN_USDC</code>).
+          </p>
+
+          {/* Schedule info strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="border border-dl-border p-4">
+              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Cron Schedule</p>
+              <p className="font-mono text-base text-dl-navy mt-1">Every 6 hours</p>
+              <p className="text-xs text-dl-gray mt-1 font-mono">0 */6 * * * (UTC)</p>
+            </div>
+            <div className="border border-dl-border p-4">
+              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Min Yield Threshold</p>
+              <p className="font-mono text-base text-dl-navy mt-1">${summary.minHarvestThresholdUsdc.toFixed(2)} USDC</p>
+              <p className="text-xs text-dl-gray mt-1">Runs below threshold return skipped</p>
+            </div>
+            <div className="border border-dl-border p-4">
+              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Last Cron Run</p>
+              {summary.cronRunHistory.length > 0 ? (
+                <>
+                  <p className="font-mono text-base text-dl-navy mt-1">
+                    {new Date(summary.cronRunHistory[0].startedAt).toLocaleString()}
+                  </p>
+                  <p className={`text-xs font-mono mt-1 ${
+                    summary.cronRunHistory[0].status === 'success' ? 'text-dl-forest' :
+                    summary.cronRunHistory[0].status === 'skipped' ? 'text-yellow-700' : 'text-red-600'
+                  }`}>
+                    {summary.cronRunHistory[0].status.toUpperCase()}
+                    {summary.cronRunHistory[0].status === 'success' &&
+                      ` — ${usd(summary.cronRunHistory[0].yieldUsdc)} harvested`}
+                  </p>
+                </>
+              ) : (
+                <p className="font-mono text-base text-dl-gray mt-1">No runs recorded yet</p>
+              )}
+            </div>
+          </div>
+
+          {/* Run history table */}
+          {summary.cronRunHistory.length > 0 ? (
+            <div>
+              <p className="text-xs font-mono text-dl-gray uppercase tracking-wide mb-2">Last {summary.cronRunHistory.length} Cron Runs</p>
+              <table className="w-full text-xs font-mono border-collapse">
+                <thead>
+                  <tr className="border-b border-dl-border text-dl-gray uppercase">
+                    <th className="text-left py-2 pr-3">Started</th>
+                    <th className="text-left py-2 pr-3">Status</th>
+                    <th className="text-right py-2 pr-3">Yield</th>
+                    <th className="text-right py-2 pr-3">Duration</th>
+                    <th className="text-left py-2">Tx / Note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summary.cronRunHistory.map((run) => (
+                    <tr key={run.id} className="border-b border-dl-border hover:bg-gray-50">
+                      <td className="py-2 pr-3 text-dl-gray">{new Date(run.startedAt).toLocaleString()}</td>
+                      <td className="py-2 pr-3">
+                        <span className={`px-1.5 py-0.5 border text-xs ${
+                          run.status === 'success' ? 'border-green-300 text-green-700 bg-green-50' :
+                          run.status === 'skipped' ? 'border-yellow-300 text-yellow-700 bg-yellow-50' :
+                          'border-red-300 text-red-700 bg-red-50'
+                        }`}>
+                          {run.status}
+                        </span>
+                      </td>
+                      <td className={`py-2 pr-3 text-right ${run.status === 'success' ? 'text-dl-forest' : 'text-dl-gray'}`}>
+                        {run.status === 'success' ? usd(run.yieldUsdc) : '—'}
+                      </td>
+                      <td className="py-2 pr-3 text-right text-dl-gray">
+                        {run.durationMs !== null ? `${(run.durationMs / 1000).toFixed(1)}s` : '—'}
+                      </td>
+                      <td className="py-2 text-dl-gray max-w-xs truncate">
+                        {run.txHash ? (
+                          <a href={`https://arbiscan.io/tx/${run.txHash}`} target="_blank" rel="noopener noreferrer"
+                            className="underline text-dl-forest">
+                            {run.txHash.slice(0, 10)}…{run.txHash.slice(-6)}
+                          </a>
+                        ) : run.errorMessage ? (
+                          <span className="text-red-600 truncate" title={run.errorMessage}>
+                            {run.errorMessage.slice(0, 60)}{run.errorMessage.length > 60 ? '…' : ''}
+                          </span>
+                        ) : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="border border-dl-border p-4 text-xs font-mono text-dl-gray">
+              No cron run history yet. The first automated harvest will run at the next 6-hour interval.
+              Ensure <code className="bg-gray-100 px-1">CRON_SECRET</code> (or <code className="bg-gray-100 px-1">HARVEST_CRON_SECRET</code>) and{' '}
+              <code className="bg-gray-100 px-1">SENTINEL_EXECUTOR_PRIVATE_KEY</code> are configured.
+            </div>
+          )}
         </section>
 
         {/* Sentinel-Gated Rebalance — Two-Step Authorization Flow */}

@@ -56,3 +56,24 @@ export const treasuryVaultEvents = pgTable('treasury_vault_events', {
 
 export type TreasuryVaultEvent       = typeof treasuryVaultEvents.$inferSelect;
 export type InsertTreasuryVaultEvent = typeof treasuryVaultEvents.$inferInsert;
+
+/**
+ * Records every scheduled harvest cron run — success, skip, or error.
+ * Powers the cron run history panel on the operator vault dashboard.
+ */
+export const harvestCronRuns = pgTable('harvest_cron_runs', {
+  id:           serial('id').primaryKey(),
+  startedAt:    timestamp('started_at').notNull(),
+  completedAt:  timestamp('completed_at').notNull(),
+  status:       varchar('status', { length: 20 }).notNull(), // 'success' | 'skipped' | 'error'
+  yieldUsdc:    decimal('yield_usdc', { precision: 18, scale: 6 }).notNull().default('0'),
+  txHash:       varchar('tx_hash',    { length: 66 }),
+  errorMessage: text('error_message'),
+  durationMs:   integer('duration_ms'),
+}, (table) => ({
+  startedAtIdx: index('harvest_cron_runs_started_at_idx').on(table.startedAt),
+  statusIdx:    index('harvest_cron_runs_status_idx').on(table.status),
+}));
+
+export type HarvestCronRun       = typeof harvestCronRuns.$inferSelect;
+export type InsertHarvestCronRun = typeof harvestCronRuns.$inferInsert;
