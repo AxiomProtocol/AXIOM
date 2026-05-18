@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getVaultSummary } from '../../../../lib/treasury/vault/vaultService';
+import { rateLimitDefault } from '../../../../lib/rateLimit';
 
 export interface PublicVaultMetrics {
   aumUsdc: number;
@@ -18,6 +19,8 @@ export default async function handler(
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
+  if (!rateLimitDefault(req, res)) return;
+
   try {
     const summary = await getVaultSummary();
 
@@ -33,7 +36,7 @@ export default async function handler(
     res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return res.status(500).json({ success: false, error: message });
+    console.error('[public-metrics] getVaultSummary failed:', err);
+    return res.status(500).json({ success: false, error: 'Failed to fetch public vault metrics' });
   }
 }
