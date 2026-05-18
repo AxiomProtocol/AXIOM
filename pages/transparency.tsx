@@ -293,8 +293,8 @@ export default function TransparencyPage() {
                 <p className="text-xs font-dl-mono text-dl-gray">
                   {vaultFetchError
                     ? <span className="text-red-600">Refresh error</span>
-                    : vaultFetchedAt
-                      ? <>Auto-refreshed {vaultFetchedAt.toLocaleTimeString()}</>
+                    : vaultMetrics
+                      ? <>Data as-of {new Date(vaultMetrics.lastUpdated).toLocaleTimeString()}{vaultFetchedAt ? ` · fetched ${vaultFetchedAt.toLocaleTimeString()}` : ''}</>
                       : 'Loading…'}
                 </p>
               </div>
