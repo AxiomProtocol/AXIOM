@@ -318,6 +318,54 @@ async function phaseB_InfraState(): Promise<void> {
   record('B7 CreditMarket.identityRegistry() matches ERC3643_CONTRACTS.IDENTITY_REGISTRY', cmRegistryMatch,
     `cmRegistry=${cmRegistry} expected=${ERC3643_CONTRACTS.IDENTITY_REGISTRY}`,
     cmRegistryMatch ? undefined : 'hard');
+
+  // B8: ClaimIssuer registered CLAIM_SIGNER_KEY (purpose 3) diagnosis
+  // isVerified() will return false even for correctly registered identities if
+  // the key used to sign claims is not registered on the ClaimIssuer with purpose 3.
+  // This check enumerates the registered purpose-3 keys and cross-references the
+  // deployer EOA — the current default claim-signing key — so operators can see
+  // whether CLAIM_SIGNER_PRIVATE_KEY is needed.
+  {
+    const claimIssuerErc734 = new ethers.Contract(
+      ERC3643_CONTRACTS.CLAIM_ISSUER,
+      CLAIM_ISSUER_ABI,
+      provider,
+    );
+    const registeredHashes: string[] = await (claimIssuerErc734 as ethers.Contract & {
+      getKeysByPurpose(p: number): Promise<string[]>;
+    }).getKeysByPurpose(3).catch((): string[] => []);
+
+    // ONCHAINID stores key hashes: keccak256(abi.encode(address))
+    const deployerKeyHash = ethers.keccak256(
+      ethers.AbiCoder.defaultAbiCoder().encode(['address'], [DEPLOYER_EOA]),
+    );
+    const deployerIsRegistered = registeredHashes.some(
+      (h) => h.toLowerCase() === deployerKeyHash.toLowerCase(),
+    );
+
+    const hashDisplay = registeredHashes.length > 0
+      ? registeredHashes.map(h =>
+          `${h}${h.toLowerCase() === deployerKeyHash.toLowerCase() ? ' ← deployer' : ''}`
+        ).join('; ')
+      : '(none)';
+
+    record('B8 ClaimIssuer has at least one CLAIM_SIGNER_KEY (purpose 3)', registeredHashes.length > 0,
+      `registeredHashes=[${hashDisplay}] deployerKeyHash=${deployerKeyHash} deployerRegistered=${deployerIsRegistered}. ` +
+      (registeredHashes.length === 0
+        ? 'BLOCKER: ClaimIssuer has no registered signer keys — isClaimValid() will reject all signatures.'
+        : deployerIsRegistered
+          ? 'Deployer IS a registered CLAIM_SIGNER_KEY — claims signed by deployer will be accepted.'
+          : `Deployer is NOT registered. Set CLAIM_SIGNER_PRIVATE_KEY to a key matching one of the registered hashes and re-run register-vault-erc3643.ts with FORCE_REISSUE=1.`),
+      registeredHashes.length === 0 ? 'hard' : undefined);
+
+    record('B8b Deployer EOA is a registered CLAIM_SIGNER_KEY', deployerIsRegistered,
+      `deployer=${DEPLOYER_EOA} registered=${deployerIsRegistered}. ` +
+      (deployerIsRegistered
+        ? 'No CLAIM_SIGNER_PRIVATE_KEY needed — deployer can sign claims directly.'
+        : `Deployer key hash ${deployerKeyHash} not in registered set. ` +
+          `Provide CLAIM_SIGNER_PRIVATE_KEY whose address hash matches a registered key.`),
+      deployerIsRegistered ? undefined : 'known');
+  }
 }
 
 // ── Phase C — KYC submission + approval ──────────────────────────────────────

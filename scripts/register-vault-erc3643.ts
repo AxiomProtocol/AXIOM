@@ -16,11 +16,21 @@
  *   already registered).
  *
  * Claim signing:
- *   Claims are signed by the deployer EOA using eth_sign (EIP-191).
+ *   Claims are signed by the CLAIM_SIGNER key using eth_sign (EIP-191).
  *   For isVerified() to return true, the ClaimIssuer contract at
- *   ERC3643_CONTRACTS.CLAIM_ISSUER must have the deployer key registered as a
- *   CLAIM_SIGNER_KEY (purpose 3).  If not, claims are stored on-chain but
- *   isVerified() will remain false — see KNOWN LIMITATION below.
+ *   ERC3643_CONTRACTS.CLAIM_ISSUER must have the signing key registered as a
+ *   CLAIM_SIGNER_KEY (purpose 3).
+ *
+ *   Two roles, two keys:
+ *     - DEPLOYER_PRIVATE_KEY   — sends on-chain txs (needs MANAGEMENT_KEY on ONCHAINID
+ *                                and agent role on IdentityRegistry; pays gas).
+ *     - CLAIM_SIGNER_PRIVATE_KEY — signs claim payloads only (no gas; must be registered
+ *                                as CLAIM_SIGNER_KEY purpose 3 on the ClaimIssuer).
+ *                                Falls back to DEPLOYER_PRIVATE_KEY if not set.
+ *
+ *   Diagnose which key is registered: run with DRY_RUN=1 — the script prints all
+ *   registered CLAIM_SIGNER_KEY (purpose 3) hashes from the ClaimIssuer so you can
+ *   identify the required address before providing its key.
  *
  * Claim signing (corrected encoding):
  *   Claims are signed using keccak256(abi.encode(identity, topic, data)) — standard
@@ -28,40 +38,51 @@
  *   on-chain.  After each addClaim(), the script calls isClaimValid() to verify
  *   the signature is accepted before continuing.
  *
- * KNOWN LIMITATION (2026-05, follow-up #547):
- *   Even with correct abi.encode hashing, isVerified() may return false if the
- *   deployer key is not registered as a CLAIM_SIGNER_KEY (purpose 3) on the
- *   ClaimIssuer at 0x579A367ead….  The isClaimValid() post-check will report
- *   false if this is the case, and the script will exit 2 with remediation steps.
- *   The USDC→Aave yield path does NOT require isVerified and works correctly.
- *
  * Exit codes:
  *   0 — vault is fully registered AND isVerified() is true
  *   2 — vault is registered and claims are on-chain, but isVerified() is false
- *       (ClaimIssuer signer key not configured — see follow-up #547)
+ *       (CLAIM_SIGNER_PRIVATE_KEY not set or its address not a registered
+ *        CLAIM_SIGNER_KEY on the ClaimIssuer — run DRY_RUN=1 to diagnose)
  *   1 — hard error (unrecoverable failure)
  *
  * Usage:
  *   NEW_VAULT_ADDRESS=0x<addr> \
  *   DEPLOYER_PRIVATE_KEY=<key> \
+ *   CLAIM_SIGNER_PRIVATE_KEY=<key> \
  *   npx tsx scripts/register-vault-erc3643.ts
  *
- *   Dry-run (read-only, no transactions):
- *   DRY_RUN=1 NEW_VAULT_ADDRESS=0x<addr> npx tsx scripts/register-vault-erc3643.ts
+ *   Force re-issue existing claims with correct signer (vault already registered):
+ *   FORCE_REISSUE=1 NEW_VAULT_ADDRESS=0x<addr> \
+ *   DEPLOYER_PRIVATE_KEY=<key> \
+ *   CLAIM_SIGNER_PRIVATE_KEY=<key> \
+ *   npx tsx scripts/register-vault-erc3643.ts
+ *
+ *   Dry-run — diagnose ClaimIssuer signer keys, no transactions:
+ *   DRY_RUN=1 NEW_VAULT_ADDRESS=0x<addr> \
+ *   DEPLOYER_PRIVATE_KEY=<key> \
+ *   npx tsx scripts/register-vault-erc3643.ts
  *
  *   Skip LendingPlatformModule whitelist:
  *   SKIP_LENDING_MODULE=1 NEW_VAULT_ADDRESS=0x<addr> \
  *   npx tsx scripts/register-vault-erc3643.ts
  *
  * Environment variables required:
- *   NEW_VAULT_ADDRESS      — the newly deployed AxiomTreasuryVault address
- *   DEPLOYER_PRIVATE_KEY   — deployer EOA (must be a ClaimIssuer signer key
- *                            for isVerified() to return true — see #547)
+ *   NEW_VAULT_ADDRESS           — the newly deployed AxiomTreasuryVault address
+ *   DEPLOYER_PRIVATE_KEY        — sends on-chain txs; must hold MANAGEMENT_KEY on
+ *                                 the ONCHAINID and agent role on IdentityRegistry
+ *
+ * Environment variables — claim signing:
+ *   CLAIM_SIGNER_PRIVATE_KEY    — signs claim payloads; its address must be registered
+ *                                 as CLAIM_SIGNER_KEY (purpose 3) on the ClaimIssuer.
+ *                                 Falls back to DEPLOYER_PRIVATE_KEY if not set.
+ *                                 DRY_RUN=1 prints which key hashes are registered.
  *
  * Optional:
- *   ALCHEMY_API_KEY        — use Alchemy RPC instead of public fallback
- *   SKIP_LENDING_MODULE=1  — skip LendingPlatformModule whitelist step
- *   DRY_RUN=1              — read-only checks, no transactions sent
+ *   ALCHEMY_API_KEY             — use Alchemy RPC instead of public fallback
+ *   SKIP_LENDING_MODULE=1       — skip LendingPlatformModule whitelist step
+ *   DRY_RUN=1                   — read-only checks + ClaimIssuer key diagnosis
+ *   FORCE_REISSUE=1             — remove and re-issue existing claims using
+ *                                 CLAIM_SIGNER_PRIVATE_KEY (fixes wrong-signer claims)
  */
 
 import 'dotenv/config';
@@ -157,6 +178,108 @@ function getSigner(provider: ethers.JsonRpcProvider): ethers.Wallet {
   const key = process.env.DEPLOYER_PRIVATE_KEY;
   if (!key) throw new Error('DEPLOYER_PRIVATE_KEY not set');
   return new ethers.Wallet(key, provider);
+}
+
+/**
+ * Returns the claim-signing wallet: CLAIM_SIGNER_PRIVATE_KEY if set,
+ * otherwise DEPLOYER_PRIVATE_KEY.  This wallet signs claim payloads only —
+ * it does not need gas or an agent role.  Its address must be registered as
+ * CLAIM_SIGNER_KEY (purpose 3) on the ClaimIssuer for isVerified() to work.
+ */
+function getClaimSigner(provider: ethers.JsonRpcProvider): ethers.Wallet {
+  const signerKey = process.env.CLAIM_SIGNER_PRIVATE_KEY
+                 || process.env.DEPLOYER_PRIVATE_KEY;
+  if (!signerKey) throw new Error('DEPLOYER_PRIVATE_KEY not set');
+  return new ethers.Wallet(signerKey, provider);
+}
+
+/**
+ * ERC-734 ABI fragment for the ClaimIssuer contract's key management surface.
+ * The ClaimIssuer is itself an ONCHAINID that stores authorised signer keys.
+ */
+const CLAIM_ISSUER_ERC734_ABI = [
+  'function getKeysByPurpose(uint256 _purpose) view returns (bytes32[])',
+  'function keyHasPurpose(bytes32 _key, uint256 _purpose) view returns (bool)',
+] as const;
+
+/**
+ * Pre-flight: verify the claim-signing address is registered on the
+ * ClaimIssuer contract as a CLAIM_SIGNER_KEY (purpose 3).
+ *
+ * ONCHAINID stores key hashes, not addresses.
+ * keyHash = keccak256(abi.encode(address))
+ *
+ * Returns the list of registered CLAIM_SIGNER_KEY hashes (always, so the
+ * caller can log them for operator diagnosis even if the check passes).
+ */
+async function getClaimIssuerSignerKeys(
+  provider: ethers.JsonRpcProvider,
+): Promise<string[]> {
+  const claimIssuer = new ethers.Contract(
+    ERC3643_CONTRACTS.CLAIM_ISSUER,
+    CLAIM_ISSUER_ERC734_ABI,
+    provider,
+  );
+  return (claimIssuer as ethers.Contract & {
+    getKeysByPurpose(p: number): Promise<string[]>;
+  }).getKeysByPurpose(3).catch((): string[] => []);
+}
+
+function computeKeyHash(address: string): string {
+  return ethers.keccak256(
+    ethers.AbiCoder.defaultAbiCoder().encode(['address'], [address]),
+  );
+}
+
+/**
+ * Assert that `signerAddress` has purpose-3 (CLAIM_SIGNER_KEY) on the
+ * ClaimIssuer.  Throws with a remediation message if not found.
+ * Always prints all registered hashes + their decode attempt.
+ */
+async function assertClaimSignerRegistered(
+  provider: ethers.JsonRpcProvider,
+  signerAddress: string,
+): Promise<void> {
+  const registeredHashes = await getClaimIssuerSignerKeys(provider);
+  const expectedHash     = computeKeyHash(signerAddress);
+
+  console.log(`  ClaimIssuer at ${ERC3643_CONTRACTS.CLAIM_ISSUER}`);
+  console.log(`  Registered CLAIM_SIGNER_KEY hashes (purpose 3):`);
+  if (registeredHashes.length === 0) {
+    console.log('    (none — ClaimIssuer has no registered signer keys)');
+  }
+  for (const h of registeredHashes) {
+    console.log(`    ${h}`);
+  }
+  console.log(`  Claim signer address:    ${signerAddress}`);
+  console.log(`  Expected key hash:       ${expectedHash}`);
+
+  const isRegistered = registeredHashes.some(
+    (h) => h.toLowerCase() === expectedHash.toLowerCase(),
+  );
+
+  if (!isRegistered) {
+    throw new Error(
+      `\nCLAIM_SIGNER_KEY not registered on ClaimIssuer.\n` +
+      `  Signer address: ${signerAddress}\n` +
+      `  Key hash:       ${expectedHash}\n` +
+      `  Registered hashes on ClaimIssuer (purpose 3):\n` +
+      (registeredHashes.length === 0
+        ? '    (none)\n'
+        : registeredHashes.map(h => `    ${h}\n`).join('')) +
+      `\n` +
+      `Remediation:\n` +
+      `  Option A: Set CLAIM_SIGNER_PRIVATE_KEY to the private key whose address\n` +
+      `            matches one of the registered hashes above, then re-run.\n` +
+      `  Option B: Register ${signerAddress} as a CLAIM_SIGNER_KEY (purpose 3)\n` +
+      `            on the ClaimIssuer by calling claimIssuer.addKey() from the\n` +
+      `            ClaimIssuer management key, then re-run.\n` +
+      `\nTIP: Run with DRY_RUN=1 to see which key hashes are registered without\n` +
+      `     sending any transactions.\n`,
+    );
+  }
+
+  console.log(`  ✓ Signer is a registered CLAIM_SIGNER_KEY on the ClaimIssuer.`);
 }
 
 // ── EIP-1167 proxy deployment ─────────────────────────────────────────────────
@@ -259,17 +382,25 @@ async function main(): Promise<void> {
 
   const dryRun      = process.env.DRY_RUN === '1';
   const skipLending = process.env.SKIP_LENDING_MODULE === '1';
+  const forceReissue = process.env.FORCE_REISSUE === '1';
   const vaultAddr   = ethers.getAddress(newVaultAddress);
 
-  const provider = getProvider();
-  const signer   = getSigner(provider);
+  const provider    = getProvider();
+  const signer      = getSigner(provider);
+  const claimSigner = getClaimSigner(provider);
+
+  const usingDedicatedClaimSigner =
+    !!process.env.CLAIM_SIGNER_PRIVATE_KEY &&
+    claimSigner.address.toLowerCase() !== signer.address.toLowerCase();
 
   console.log('ERC-3643 Vault Registration');
   console.log('═══════════════════════════════════════════════════════════');
-  console.log(`  New vault:    ${vaultAddr}`);
-  console.log(`  Deployer:     ${signer.address}`);
-  console.log(`  Dry run:      ${dryRun ? 'YES — no transactions' : 'NO'}`);
-  console.log(`  Lending step: ${skipLending ? 'SKIPPED' : 'ENABLED'}`);
+  console.log(`  New vault:         ${vaultAddr}`);
+  console.log(`  Deployer (tx):     ${signer.address}`);
+  console.log(`  Claim signer:      ${claimSigner.address}${usingDedicatedClaimSigner ? ' (CLAIM_SIGNER_PRIVATE_KEY)' : ' (same as deployer)'}`);
+  console.log(`  Dry run:           ${dryRun ? 'YES — no transactions' : 'NO'}`);
+  console.log(`  Force re-issue:    ${forceReissue ? 'YES — will remove + re-issue existing claims' : 'NO'}`);
+  console.log(`  Lending step:      ${skipLending ? 'SKIPPED' : 'ENABLED'}`);
   console.log('═══════════════════════════════════════════════════════════\n');
 
   const registry = new ethers.Contract(
@@ -326,6 +457,32 @@ async function main(): Promise<void> {
       console.log(`  [DRY RUN] Would call factory.createIdentity(vault, ${signer.address})`);
       console.log(`  [DRY RUN] Would call registry.registerIdentity(vault, identity, ${COUNTRY_US})`);
     }
+
+    // Dry-run: diagnose ClaimIssuer registered CLAIM_SIGNER_KEY hashes
+    console.log('\n[DRY RUN] ClaimIssuer signer key diagnosis...');
+    const registeredHashes = await getClaimIssuerSignerKeys(provider);
+    const claimSignerHash  = computeKeyHash(claimSigner.address);
+    console.log(`  ClaimIssuer: ${ERC3643_CONTRACTS.CLAIM_ISSUER}`);
+    console.log(`  Registered CLAIM_SIGNER_KEY hashes (purpose 3):`);
+    if (registeredHashes.length === 0) {
+      console.log('    (none — ClaimIssuer has no registered purpose-3 keys)');
+    }
+    for (const h of registeredHashes) {
+      const match = h.toLowerCase() === claimSignerHash.toLowerCase();
+      console.log(`    ${h}${match ? '  ← matches claim signer' : ''}`);
+    }
+    console.log(`  Claim signer address: ${claimSigner.address}`);
+    console.log(`  Claim signer hash:    ${claimSignerHash}`);
+    const signerRegistered = registeredHashes.some(
+      (h) => h.toLowerCase() === claimSignerHash.toLowerCase(),
+    );
+    if (signerRegistered) {
+      console.log('  ✓ Claim signer IS registered — isClaimValid() will accept signatures from this key.');
+    } else {
+      console.warn('  ✗ Claim signer NOT registered — claims signed by this key will be rejected.');
+      console.warn('    Set CLAIM_SIGNER_PRIVATE_KEY to a key whose address matches a registered hash.');
+    }
+
     console.log('\n  Dry run complete — no transactions sent. Re-run without DRY_RUN=1 to execute.');
     return;
   }
@@ -396,6 +553,12 @@ async function main(): Promise<void> {
 
   console.log('\n[4/5] Issuing KYC (topic 1) and Sanctions (topic 3) claims...');
 
+  // Pre-flight: verify the claim signer key is registered on ClaimIssuer.
+  // Throws with a remediation message if not — prevents wasted gas on addClaim()
+  // calls that would succeed on-chain but leave isVerified() returning false.
+  console.log('  Pre-flight: checking claim signer registration on ClaimIssuer...');
+  await assertClaimSignerRegistered(provider, claimSigner.address);
+
   const identity = new ethers.Contract(
     identityAddress, IDENTITY_ABI, signer,
   ) as ethers.Contract & IIdentity;
@@ -407,17 +570,8 @@ async function main(): Promise<void> {
     .getClaimIdsByTopic(CLAIM_TOPICS.SANCTIONS_CLEAR)
     .catch((): string[] => []);
 
-  console.log(`  Existing KYC claims on-chain:      ${existingKycClaims.length}`);
-  console.log(`  Existing Sanctions claims on-chain:${existingSanClaims.length}`);
-
-  const claimsToIssue = [
-    ...(existingKycClaims.length === 0
-      ? [{ topic: CLAIM_TOPICS.KYC_VERIFIED,   label: 'KYC_VERIFIED (1)' }]
-      : []),
-    ...(existingSanClaims.length === 0
-      ? [{ topic: CLAIM_TOPICS.SANCTIONS_CLEAR, label: 'SANCTIONS_CLEAR (3)' }]
-      : []),
-  ];
+  console.log(`  Existing KYC claims on-chain:       ${existingKycClaims.length}`);
+  console.log(`  Existing Sanctions claims on-chain: ${existingSanClaims.length}`);
 
   // ClaimIssuer read-only interface for post-claim validation
   const claimIssuer = new ethers.Contract(
@@ -428,33 +582,21 @@ async function main(): Promise<void> {
     provider,
   );
 
-  if (claimsToIssue.length === 0) {
-    console.log('  All required claims already present on ONCHAINID.');
-    console.log('  Validating existing claims against ClaimIssuer (checking for encoding issues)...');
+  // FORCE_REISSUE: remove existing claims whose isClaimValid() = false so they
+  // can be re-issued with the correct claim signer key.  Only removes claims that
+  // fail the signature check — valid claims are left untouched.
+  if (forceReissue) {
+    console.log('  FORCE_REISSUE=1 — checking existing claims for removal...');
 
-    // For each pre-existing claim topic, retrieve the stored signature and
-    // validate it.  This catches claims signed with a wrong encoding (e.g. the
-    // old abi.encodePacked pattern) that would cause isVerified() to stay false
-    // even though the claims appear present.
-    const CLAIM_ISSUER_EXT_ABI = [
-      'function isClaimValid(address _identity, uint256 _claimTopic, bytes calldata _sig, bytes calldata _data) view returns (bool)',
-    ];
     const IDENTITY_CLAIM_READ_ABI = [
       'function getClaim(bytes32 claimId) view returns (uint256 topic, uint256 scheme, address issuer, bytes memory signature, bytes memory data, string memory uri)',
     ];
     const idReader = new ethers.Contract(identityAddress, IDENTITY_CLAIM_READ_ABI, provider);
-    const ciReader = new ethers.Contract(ERC3643_CONTRACTS.CLAIM_ISSUER, CLAIM_ISSUER_EXT_ABI, provider);
 
-    for (const [topicId, topicLabel] of [
-      [CLAIM_TOPICS.KYC_VERIFIED, 'KYC_VERIFIED (1)'],
-      [CLAIM_TOPICS.SANCTIONS_CLEAR, 'SANCTIONS_CLEAR (3)'],
-    ] as [number, string][]) {
-      const claimIds: string[] = await identity
-        .getClaimIdsByTopic(topicId)
-        .catch((): string[] => []);
-
-      if (claimIds.length === 0) continue;
-
+    for (const [topicId, topicLabel, claimIds] of [
+      [CLAIM_TOPICS.KYC_VERIFIED,   'KYC_VERIFIED (1)',   existingKycClaims],
+      [CLAIM_TOPICS.SANCTIONS_CLEAR, 'SANCTIONS_CLEAR (3)', existingSanClaims],
+    ] as [number, string, string[]][]) {
       for (const claimId of claimIds) {
         try {
           const [, , , sig, data]: [number, number, string, string, string, string] =
@@ -462,7 +604,54 @@ async function main(): Promise<void> {
               getClaim(id: string): Promise<[number, number, string, string, string, string]>;
             }).getClaim(claimId);
 
-          const valid: boolean = await (ciReader as ethers.Contract & {
+          const valid: boolean = await (claimIssuer as ethers.Contract & {
+            isClaimValid(id: string, topic: number, sig: string, data: string): Promise<boolean>;
+          }).isClaimValid(identityAddress, topicId, sig, data).catch(() => false);
+
+          if (!valid) {
+            console.log(`  Removing invalid ${topicLabel} claim (${claimId.slice(0, 10)}…)…`);
+            const removeTx = await identity.removeClaim(claimId);
+            console.log(`  tx: ${removeTx.hash}`);
+            const removeReceipt = await removeTx.wait();
+            if (removeReceipt?.status !== 1) {
+              console.warn(`  WARNING: removeClaim reverted for ${claimId.slice(0, 10)}… — skipping`);
+            } else {
+              console.log(`  Removed invalid ${topicLabel} claim.`);
+              // Remove from local arrays so they get re-issued below
+              if (topicId === CLAIM_TOPICS.KYC_VERIFIED) {
+                existingKycClaims.splice(existingKycClaims.indexOf(claimId), 1);
+              } else {
+                existingSanClaims.splice(existingSanClaims.indexOf(claimId), 1);
+              }
+            }
+          } else {
+            console.log(`  ✓ Existing ${topicLabel} claim (${claimId.slice(0, 10)}…) — already valid, keeping.`);
+          }
+        } catch {
+          console.warn(`  ? Could not validate claim ${claimId.slice(0, 10)}… — leaving in place`);
+        }
+      }
+    }
+  } else if (existingKycClaims.length > 0 || existingSanClaims.length > 0) {
+    // Not force-reissuing: validate existing claims and warn if any are invalid
+    console.log('  Validating existing claims (run FORCE_REISSUE=1 to replace invalid ones)...');
+    const IDENTITY_CLAIM_READ_ABI = [
+      'function getClaim(bytes32 claimId) view returns (uint256 topic, uint256 scheme, address issuer, bytes memory signature, bytes memory data, string memory uri)',
+    ];
+    const idReader = new ethers.Contract(identityAddress, IDENTITY_CLAIM_READ_ABI, provider);
+
+    for (const [topicId, topicLabel, claimIds] of [
+      [CLAIM_TOPICS.KYC_VERIFIED,   'KYC_VERIFIED (1)',   existingKycClaims],
+      [CLAIM_TOPICS.SANCTIONS_CLEAR, 'SANCTIONS_CLEAR (3)', existingSanClaims],
+    ] as [number, string, string[]][]) {
+      for (const claimId of claimIds) {
+        try {
+          const [, , , sig, data]: [number, number, string, string, string, string] =
+            await (idReader as ethers.Contract & {
+              getClaim(id: string): Promise<[number, number, string, string, string, string]>;
+            }).getClaim(claimId);
+
+          const valid: boolean = await (claimIssuer as ethers.Contract & {
             isClaimValid(id: string, topic: number, sig: string, data: string): Promise<boolean>;
           }).isClaimValid(identityAddress, topicId, sig, data).catch(() => false);
 
@@ -470,8 +659,9 @@ async function main(): Promise<void> {
             console.log(`  ✓ Existing ${topicLabel} claim (${claimId.slice(0, 10)}…) — isClaimValid=true`);
           } else {
             console.warn(`  ✗ Existing ${topicLabel} claim (${claimId.slice(0, 10)}…) — isClaimValid=false`);
-            console.warn(`    This claim may have been signed with incorrect encoding.`);
-            console.warn(`    Set FORCE_REISSUE=1 to replace it with a correctly-encoded claim.`);
+            console.warn(`    Signed by a key that is not a registered CLAIM_SIGNER_KEY on ClaimIssuer.`);
+            console.warn(`    Re-run with FORCE_REISSUE=1 and CLAIM_SIGNER_PRIVATE_KEY=<registered-key>`);
+            console.warn(`    to remove this claim and re-issue it with the correct signer.`);
           }
         } catch {
           console.warn(`  ? Could not fetch claim ${claimId.slice(0, 10)}… — skipping validation`);
@@ -480,11 +670,26 @@ async function main(): Promise<void> {
     }
   }
 
+  // Build the list of claims that still need to be issued
+  const claimsToIssue = [
+    ...(existingKycClaims.length === 0
+      ? [{ topic: CLAIM_TOPICS.KYC_VERIFIED,   label: 'KYC_VERIFIED (1)' }]
+      : []),
+    ...(existingSanClaims.length === 0
+      ? [{ topic: CLAIM_TOPICS.SANCTIONS_CLEAR, label: 'SANCTIONS_CLEAR (3)' }]
+      : []),
+  ];
+
+  if (claimsToIssue.length === 0) {
+    console.log('  All required claims already present — nothing to issue.');
+  }
+
   for (const { topic, label } of claimsToIssue) {
     const data = ethers.toUtf8Bytes(`axiom-vault:${vaultAddr.toLowerCase()}:topic${topic}`);
-    const { signature } = await signClaim(signer, identityAddress, topic, data);
+    // Sign with the registered claim signer (not the deployer tx signer)
+    const { signature } = await signClaim(claimSigner, identityAddress, topic, data);
 
-    console.log(`  Issuing ${label}...`);
+    console.log(`  Issuing ${label} (signed by ${claimSigner.address})...`);
     const claimTx = await identity.addClaim(
       topic,
       1,
@@ -504,11 +709,11 @@ async function main(): Promise<void> {
     }).isClaimValid(identityAddress, topic, signature, data).catch(() => false);
 
     if (claimValid) {
-      console.log(`  ✓ ClaimIssuer.isClaimValid() = true  — signature accepted by issuer.`);
+      console.log(`  ✓ ClaimIssuer.isClaimValid() = true  — signature accepted.`);
     } else {
-      console.warn(`  ✗ ClaimIssuer.isClaimValid() = false — deployer key may not be a CLAIM_SIGNER_KEY on`);
-      console.warn(`    ${ERC3643_CONTRACTS.CLAIM_ISSUER}`);
-      console.warn(`    Claim is stored on-chain but isVerified() will return false until resolved (#547).`);
+      console.warn(`  ✗ ClaimIssuer.isClaimValid() = false — claim signer (${claimSigner.address})`);
+      console.warn(`    is not a registered CLAIM_SIGNER_KEY on ${ERC3643_CONTRACTS.CLAIM_ISSUER}`);
+      console.warn(`    The pre-flight check should have caught this. Check ClaimIssuer state.`);
     }
   }
 

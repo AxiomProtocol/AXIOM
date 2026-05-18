@@ -92,7 +92,7 @@ export const IDENTITY_FACTORY_ABI = [
  */
 export const IDENTITY_ABI = [
   "function addClaim(uint256 topic, uint256 scheme, address issuer, bytes signature, bytes data, string uri) returns (bytes32)",
-  "function removeClaim(bytes32 claimId) returns (bool)",
+  "function removeClaim(bytes32 _claimId) returns (bool)",
   "function getClaim(bytes32 claimId) view returns (uint256 topic, uint256 scheme, address issuer, bytes signature, bytes data, string uri)",
   "function getClaimIdsByTopic(uint256 topic) view returns (bytes32[])",
   "function keyHasPurpose(bytes32 key, uint256 purpose) view returns (bool)",
@@ -113,6 +113,8 @@ export const CLAIM_ISSUER_ABI = [
   "function revokeClaimBySignature(bytes)",
   "function isClaimRevoked(bytes) view returns (bool)",
   "function getClaimDataHash(address,uint256,bytes) pure returns (bytes32)",
+  "function getKeysByPurpose(uint256 _purpose) view returns (bytes32[])",
+  "function keyHasPurpose(bytes32 _key, uint256 _purpose) view returns (bool)",
 ] as const;
 
 export const MODULAR_COMPLIANCE_ABI = [
