@@ -35,6 +35,19 @@ interface Props {
   quarterly: IncomePeriod;
   ytd: IncomePeriod;
   loadError: string | null;
+  /** ISO 8601 UTC timestamp of the next scheduled harvest cron run. */
+  nextCronRunAt: string;
+}
+
+// Compute the next UTC time at which the harvest cron fires.
+// Schedule: "0 */6 * * *" — runs at 00:00, 06:00, 12:00, 18:00 UTC.
+function computeNextHarvestCronRun(from: Date = new Date()): Date {
+  const next = new Date(from);
+  const h = next.getUTCHours();
+  // Advance to the start of the next 6-hour slot.
+  const nextSlotH = (Math.floor(h / 6) + 1) * 6;
+  next.setUTCHours(nextSlotH, 0, 0, 0);
+  return next;
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
@@ -66,6 +79,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
         quarterly,
         ytd,
         loadError: null,
+        nextCronRunAt: computeNextHarvestCronRun().toISOString(),
       },
     };
   } catch (err: any) {
@@ -87,7 +101,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       cronRunHistory: [],
     };
     const emptyPeriod: IncomePeriod = { period: '', since: '', harvestTotalUsdc: 0, harvestEventCount: 0, depositTotalUsdc: 0, withdrawTotalUsdc: 0, allocateTotalUsdc: 0 };
-    return { props: { summary: empty, events: [], monthly: emptyPeriod, quarterly: emptyPeriod, ytd: emptyPeriod, loadError: err?.message ?? 'Failed to load vault data' } };
+    return { props: { summary: empty, events: [], monthly: emptyPeriod, quarterly: emptyPeriod, ytd: emptyPeriod, loadError: err?.message ?? 'Failed to load vault data', nextCronRunAt: computeNextHarvestCronRun().toISOString() } };
   }
 };
 
@@ -1234,7 +1248,7 @@ function HarvestPanel({ lastHarvestedAt, unrealizedYield }: {
   );
 }
 
-export default function TreasuryVaultPage({ summary, events, monthly, quarterly, ytd, loadError }: Props) {
+export default function TreasuryVaultPage({ summary, events, monthly, quarterly, ytd, loadError, nextCronRunAt }: Props) {
   const [rebalanceForm, setRebalanceForm] = useState<RebalanceForm>({
     fromStrategy: 'aave_v3',
     toStrategy: 'camelot',
@@ -1514,6 +1528,13 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
               <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Cron Schedule</p>
               <p className="font-mono text-base text-dl-navy mt-1">Every 6 hours</p>
               <p className="text-xs text-dl-gray mt-1 font-mono">0 */6 * * * (UTC)</p>
+            </div>
+            <div className="border border-dl-border p-4">
+              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Next Scheduled Harvest</p>
+              <p className="font-mono text-base text-dl-navy mt-1">
+                {new Date(nextCronRunAt).toLocaleString(undefined, { hour12: false })}
+              </p>
+              <p className="text-xs text-dl-gray mt-1 font-mono">{new Date(nextCronRunAt).toUTCString()}</p>
             </div>
             <div className="border border-dl-border p-4">
               <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Min Yield Threshold</p>

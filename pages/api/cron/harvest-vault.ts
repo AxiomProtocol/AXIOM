@@ -38,23 +38,29 @@ function safeEqualStr(a: string, b: string): boolean {
   return timingSafeEqual(aBuf, bBuf);
 }
 
+/**
+ * Accepts only dedicated cron secrets — no query-string key, no admin key
+ * fallback. Least-privilege: this endpoint executes on-chain transactions
+ * and must not accept a broader admin credential via an easily spoofable path.
+ *
+ * Accepted methods:
+ *   Authorization: Bearer <CRON_SECRET>       (Vercel scheduler automatic)
+ *   x-cron-secret: <CRON_SECRET|HARVEST_CRON_SECRET>  (direct callers)
+ */
 function isAuthorized(req: NextApiRequest): boolean {
   const cronSecret    = process.env.CRON_SECRET         ?? '';
   const harvestSecret = process.env.HARVEST_CRON_SECRET ?? '';
-  const adminKey      = process.env.ADMIN_SOLVENCY_KEY  ?? '';
 
-  const validSecrets = [cronSecret, harvestSecret, adminKey].filter(Boolean);
+  const validSecrets = [cronSecret, harvestSecret].filter(Boolean);
   if (validSecrets.length === 0) return false;
 
   const bearer = (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
   const header = (req.headers['x-cron-secret'] as string) ?? '';
-  const query  = (req.query.key as string) ?? '';
 
   return validSecrets.some(
     (secret) =>
       (bearer && safeEqualStr(bearer, secret)) ||
-      (header && safeEqualStr(header, secret)) ||
-      (query  && safeEqualStr(query, secret)),
+      (header && safeEqualStr(header, secret)),
   );
 }
 
