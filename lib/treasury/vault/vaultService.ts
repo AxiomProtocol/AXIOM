@@ -17,10 +17,13 @@ import { getAaveArbitrumMarket } from '../../defi/aave/arbitrumService';
 
 const RPC = process.env.ARBITRUM_RPC_URL ?? 'https://arb1.arbitrum.io/rpc';
 
-const VAULT_ADDRESS    = process.env.AXIOM_TREASURY_VAULT_ADDRESS     ?? '';
-const SM_ADDRESS       = process.env.AXIOM_STRATEGY_MANAGER_ADDRESS   ?? '';
-const AAVE_STRATEGY    = process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS   ?? '';
-const CAMELOT_STRATEGY = process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS   ?? '';
+const VAULT_ADDRESS          = process.env.AXIOM_TREASURY_VAULT_ADDRESS            ?? '';
+const SM_ADDRESS             = process.env.AXIOM_STRATEGY_MANAGER_ADDRESS          ?? '';
+const AAVE_STRATEGY          = process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS          ?? '';
+const CAMELOT_STRATEGY       = process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS          ?? '';
+const EULER_USDC_STRATEGY    = process.env.EULER_USDC_THEO_STRATEGY_ADDRESS        ?? '';
+const EULER_THBILL_STRATEGY  = process.env.EULER_THBILL_THEO_STRATEGY_ADDRESS      ?? '';
+const EULER_WETH_STRATEGY    = process.env.EULER_WETH_ARBITRUM_STRATEGY_ADDRESS    ?? '';
 const USDC             = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
 
 // AXUSD is an ERC-3643 stablecoin; address configured at deploy time.
@@ -65,7 +68,7 @@ export interface CronRunEntry {
 }
 
 export interface VaultSummary {
-  /** Total AUM across all accepted assets (USDC + AXUSD), denominated in USD. */
+  /** Total AUM across all accepted assets (USDC + AXUSD + Euler), denominated in USD. */
   aumUsdc: number;
   /** Idle USDC held in vault (not deployed to any strategy). */
   idleUsdc: number;
@@ -77,6 +80,12 @@ export interface VaultSummary {
   axusdDeployedUsdc: number;
   aavePosition: StrategyPosition;
   camelotPosition: StrategyPosition;
+  /** Euler v2 — USDC Theo Market (~13.11% APY) */
+  eulerUsdcPosition: StrategyPosition;
+  /** Euler v2 — thBILL Theo Market (~15.31% APY) */
+  eulerThbillPosition: StrategyPosition;
+  /** Euler v2 — WETH Arbitrum Market (~15.98% APY) */
+  eulerWethPosition: StrategyPosition;
   blendedApyEstimatePct: number | null;
   yieldHarvestedInceptionUsdc: number;
   /** ISO 8601 timestamp of the most recent harvest event, or null if none. */
@@ -109,10 +118,13 @@ async function getProvider() {
   return new ethers.JsonRpcProvider(RPC);
 }
 
-/** Fetch live Aave USDC supply APY and per-strategy configured APY. */
+/** Fetch live Aave USDC supply APY and per-strategy configured APYs. */
 async function fetchApyEstimates(): Promise<{
   aaveApyPct: number | null;
   camelotApyPct: number | null;
+  eulerUsdcApyPct: number | null;
+  eulerThbillApyPct: number | null;
+  eulerWethApyPct: number | null;
 }> {
   let aaveApyPct: number | null = null;
   try {
@@ -123,11 +135,45 @@ async function fetchApyEstimates(): Promise<{
     aaveApyPct = null;
   }
 
-  // Camelot APY from env var (set AXIOM_CAMELOT_APY_PCT to a configured estimate)
+  // Camelot APY from env var
   const camelotRaw = process.env.AXIOM_CAMELOT_APY_PCT;
   const camelotApyPct = camelotRaw ? (parseFloat(camelotRaw) || null) : null;
 
-  return { aaveApyPct, camelotApyPct };
+  // Euler APYs — fetched live from Euler app API, fallback to env vars
+  let eulerUsdcApyPct: number | null   = null;
+  let eulerThbillApyPct: number | null = null;
+  let eulerWethApyPct: number | null   = null;
+  try {
+    const res  = await fetch('https://app.euler.finance/api/vaults?chainId=42161', { next: { revalidate: 300 } });
+    const data = await res.json() as { evkVaults?: Array<{ address: string; supplyApy?: { __bi?: string } | number }> };
+    const vaults = data.evkVaults ?? [];
+    const find = (addr: string) => vaults.find((v) => v.address.toLowerCase() === addr.toLowerCase());
+
+    const parseApy = (v: typeof vaults[0] | undefined): number | null => {
+      if (!v) return null;
+      if (typeof v.supplyApy === 'number') return v.supplyApy;
+      // __bi field is in ray (1e27) — convert: apy = value / 1e25 (gives %)
+      const raw = v.supplyApy?.__bi;
+      if (raw) return parseFloat(raw) / 1e25;
+      return null;
+    };
+
+    eulerUsdcApyPct   = parseApy(find('0x05d28A86E057364F6ad1a88944297E58Fc6160b3'));
+    eulerThbillApyPct = parseApy(find('0x79e1F4a1Cde92568D58EB823f81D9c0C7C384e6b'));
+    eulerWethApyPct   = parseApy(find('0x78E3E051D32157AACD550fBB78458762d8f7edFF'));
+  } catch {
+    // Fallback to env var overrides if API is unreachable
+  }
+
+  // Allow env var overrides for any Euler market
+  const eulerUsdcEnv   = process.env.EULER_USDC_APY_PCT;
+  const eulerThbillEnv = process.env.EULER_THBILL_APY_PCT;
+  const eulerWethEnv   = process.env.EULER_WETH_APY_PCT;
+  if (eulerUsdcEnv)   eulerUsdcApyPct   = parseFloat(eulerUsdcEnv)   || eulerUsdcApyPct;
+  if (eulerThbillEnv) eulerThbillApyPct = parseFloat(eulerThbillEnv) || eulerThbillApyPct;
+  if (eulerWethEnv)   eulerWethApyPct   = parseFloat(eulerWethEnv)   || eulerWethApyPct;
+
+  return { aaveApyPct, camelotApyPct, eulerUsdcApyPct, eulerThbillApyPct, eulerWethApyPct };
 }
 
 async function fetchStrategyPosition(
@@ -189,23 +235,29 @@ async function fetchStrategyPosition(
 }
 
 /**
- * Calculate blended APY as a capital-weighted average of per-strategy APYs.
- * Returns null if either APY is unavailable.
+ * Calculate blended APY as a capital-weighted average of all active strategy APYs.
+ * Returns null if no APY data is available.
  */
 function calcBlendedApy(
-  aavePos: StrategyPosition,
-  camelotPos: StrategyPosition,
-  deployedUsdc: number
+  positions: StrategyPosition[],
+  totalDeployedUsdc: number
 ): number | null {
-  const aave = aavePos.apyEstimatePct;
-  const camelot = camelotPos.apyEstimatePct;
-  if (deployedUsdc <= 0) return aave ?? null;
-  if (aave !== null && camelot !== null) {
-    return (aavePos.currentValueUsdc * aave + camelotPos.currentValueUsdc * camelot) / deployedUsdc;
+  if (totalDeployedUsdc <= 0) {
+    // No capital deployed — return first non-null APY as reference rate
+    return positions.find((p) => p.apyEstimatePct !== null)?.apyEstimatePct ?? null;
   }
-  if (aave !== null && camelotPos.currentValueUsdc === 0) return aave;
-  if (camelot !== null && aavePos.currentValueUsdc === 0) return camelot;
-  return aave ?? camelot ?? null;
+  let weightedSum = 0;
+  let totalWeight = 0;
+  for (const pos of positions) {
+    if (pos.apyEstimatePct !== null && pos.currentValueUsdc > 0) {
+      weightedSum += pos.currentValueUsdc * pos.apyEstimatePct;
+      totalWeight += pos.currentValueUsdc;
+    }
+  }
+  if (totalWeight === 0) {
+    return positions.find((p) => p.apyEstimatePct !== null)?.apyEstimatePct ?? null;
+  }
+  return weightedSum / totalWeight;
 }
 
 export async function getVaultSummary(): Promise<VaultSummary> {
@@ -218,7 +270,7 @@ export async function getVaultSummary(): Promise<VaultSummary> {
     const usdc     = new ethers.Contract(USDC, ERC20_ABI, provider);
     const sm       = new ethers.Contract(SM_ADDRESS, STRATEGY_MANAGER_ABI, provider);
 
-    const [idleRaw, totalRaw, paused, totalDeployedRaw, { aaveApyPct, camelotApyPct }] =
+    const [idleRaw, totalRaw, paused, totalDeployedRaw, apyEst] =
       await Promise.all([
         usdc.balanceOf(VAULT_ADDRESS) as Promise<bigint>,
         vault.totalAssets()           as Promise<bigint>,
@@ -226,6 +278,8 @@ export async function getVaultSummary(): Promise<VaultSummary> {
         sm.totalDeployed(USDC)        as Promise<bigint>,
         fetchApyEstimates(),
       ]);
+
+    const { aaveApyPct, camelotApyPct, eulerUsdcApyPct, eulerThbillApyPct, eulerWethApyPct } = apyEst;
 
     const idleUsdc     = toUsdc(idleRaw);
     const aumUsdc_usdc = toUsdc(totalRaw);
@@ -248,9 +302,13 @@ export async function getVaultSummary(): Promise<VaultSummary> {
     }
     const aumUsdc = aumUsdc_usdc + axusdIdleUsdc + axusdDeployedUsdc;
 
-    const [aavePos, camelotPos] = await Promise.all([
-      fetchStrategyPosition(provider, AAVE_STRATEGY,    SM_ADDRESS, deployedUsdc, aaveApyPct),
-      fetchStrategyPosition(provider, CAMELOT_STRATEGY, SM_ADDRESS, deployedUsdc, camelotApyPct),
+    // ── Fetch all strategy positions in parallel ──────────────────────────────
+    const [aavePos, camelotPos, eulerUsdcPos, eulerThbillPos, eulerWethPos] = await Promise.all([
+      fetchStrategyPosition(provider, AAVE_STRATEGY,         SM_ADDRESS, deployedUsdc, aaveApyPct),
+      fetchStrategyPosition(provider, CAMELOT_STRATEGY,      SM_ADDRESS, deployedUsdc, camelotApyPct),
+      fetchStrategyPosition(provider, EULER_USDC_STRATEGY,   SM_ADDRESS, deployedUsdc, eulerUsdcApyPct),
+      fetchStrategyPosition(provider, EULER_THBILL_STRATEGY, SM_ADDRESS, deployedUsdc, eulerThbillApyPct),
+      fetchStrategyPosition(provider, EULER_WETH_STRATEGY,   SM_ADDRESS, deployedUsdc, eulerWethApyPct),
     ]);
 
     const [yieldHarvestedInceptionUsdc, lastHarvestedAt, cronRunHistory] = await Promise.all([
@@ -258,7 +316,11 @@ export async function getVaultSummary(): Promise<VaultSummary> {
       getLastHarvestEvent(),
       getCronRunHistory(10),
     ]);
-    const blendedApyEstimatePct = calcBlendedApy(aavePos, camelotPos, deployedUsdc);
+
+    const blendedApyEstimatePct = calcBlendedApy(
+      [aavePos, camelotPos, eulerUsdcPos, eulerThbillPos, eulerWethPos],
+      deployedUsdc,
+    );
 
     return {
       aumUsdc,
@@ -266,8 +328,11 @@ export async function getVaultSummary(): Promise<VaultSummary> {
       deployedUsdc,
       axusdIdleUsdc,
       axusdDeployedUsdc,
-      aavePosition:    aavePos,
-      camelotPosition: camelotPos,
+      aavePosition:       aavePos,
+      camelotPosition:    camelotPos,
+      eulerUsdcPosition:  eulerUsdcPos,
+      eulerThbillPosition: eulerThbillPos,
+      eulerWethPosition:  eulerWethPos,
       blendedApyEstimatePct,
       yieldHarvestedInceptionUsdc,
       lastHarvestedAt,
@@ -348,8 +413,11 @@ function buildOfflineResponse(): VaultSummary {
     deployedUsdc: 0,
     axusdIdleUsdc: 0,
     axusdDeployedUsdc: 0,
-    aavePosition: emptyPos,
-    camelotPosition: emptyPos,
+    aavePosition:        emptyPos,
+    camelotPosition:     emptyPos,
+    eulerUsdcPosition:   emptyPos,
+    eulerThbillPosition: emptyPos,
+    eulerWethPosition:   emptyPos,
     blendedApyEstimatePct: null,
     yieldHarvestedInceptionUsdc: 0,
     lastHarvestedAt: null,

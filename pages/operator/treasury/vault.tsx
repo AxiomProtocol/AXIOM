@@ -89,8 +89,11 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       deployedUsdc: 0,
       axusdIdleUsdc: 0,
       axusdDeployedUsdc: 0,
-      aavePosition: { address: '', name: 'Not deployed', currentValueUsdc: 0, principalUsdc: 0, unrealizedYieldUsdc: 0, allocationPct: 0, lastRebalancedAt: null, apyEstimatePct: null },
-      camelotPosition: { address: '', name: 'Not deployed', currentValueUsdc: 0, principalUsdc: 0, unrealizedYieldUsdc: 0, allocationPct: 0, lastRebalancedAt: null, apyEstimatePct: null },
+      aavePosition:        { address: '', name: 'Not deployed', currentValueUsdc: 0, principalUsdc: 0, unrealizedYieldUsdc: 0, allocationPct: 0, lastRebalancedAt: null, apyEstimatePct: null },
+      camelotPosition:     { address: '', name: 'Not deployed', currentValueUsdc: 0, principalUsdc: 0, unrealizedYieldUsdc: 0, allocationPct: 0, lastRebalancedAt: null, apyEstimatePct: null },
+      eulerUsdcPosition:   { address: '', name: 'Not deployed', currentValueUsdc: 0, principalUsdc: 0, unrealizedYieldUsdc: 0, allocationPct: 0, lastRebalancedAt: null, apyEstimatePct: null },
+      eulerThbillPosition: { address: '', name: 'Not deployed', currentValueUsdc: 0, principalUsdc: 0, unrealizedYieldUsdc: 0, allocationPct: 0, lastRebalancedAt: null, apyEstimatePct: null },
+      eulerWethPosition:   { address: '', name: 'Not deployed', currentValueUsdc: 0, principalUsdc: 0, unrealizedYieldUsdc: 0, allocationPct: 0, lastRebalancedAt: null, apyEstimatePct: null },
       blendedApyEstimatePct: null,
       yieldHarvestedInceptionUsdc: 0,
       lastHarvestedAt: null,
@@ -515,7 +518,14 @@ function WalletDepositPanel() {
 // AaveV3Strategy adapter, starting yield generation on Aave v3 Arbitrum.
 // Requires new vault (with SM wired) to be deployed first.
 
-const AAVE_STRATEGY_ADDRESS = (process.env.NEXT_PUBLIC_AXIOM_AAVE_V3_STRATEGY_ADDRESS ?? '') as `0x${string}`;
+const AAVE_STRATEGY_ADDRESS         = (process.env.NEXT_PUBLIC_AXIOM_AAVE_V3_STRATEGY_ADDRESS          ?? '') as `0x${string}`;
+const EULER_USDC_STRATEGY_ADDRESS   = (process.env.NEXT_PUBLIC_EULER_USDC_THEO_STRATEGY_ADDRESS        ?? '') as `0x${string}`;
+const EULER_THBILL_STRATEGY_ADDRESS = (process.env.NEXT_PUBLIC_EULER_THBILL_THEO_STRATEGY_ADDRESS      ?? '') as `0x${string}`;
+const EULER_WETH_STRATEGY_ADDRESS   = (process.env.NEXT_PUBLIC_EULER_WETH_ARBITRUM_STRATEGY_ADDRESS    ?? '') as `0x${string}`;
+
+// Euler v2 vault underlying assets (Arbitrum One)
+const THBILL_ADDRESS = '0xfDD22Ce6D1F66bc0Ec89b20BF16CcB6670F55A5a' as `0x${string}`;
+const WETH_ADDRESS   = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1' as `0x${string}`;
 
 function AllocateToAavePanel() {
   const { address, isConnected } = useAccount();
@@ -737,6 +747,242 @@ function AllocateToAavePanel() {
       <div className="text-xs font-mono text-dl-gray space-y-0.5">
         <div>Vault: <span className="text-dl-navy">{vaultAddress}</span></div>
         <div>Strategy: <span className="text-dl-navy">{strategyAddress}</span></div>
+      </div>
+    </div>
+  );
+}
+
+// ── Generic Euler v2 Allocate Panel ───────────────────────────────────────────
+// One panel per Euler market. Calls vault.allocate(eulerStrategy, assetAddr, amount).
+// For USDC: uses idle vault USDC balance.
+// For thBILL/WETH: caller must first call vault.depositToken(asset, amount) to
+// load the secondary asset, then allocate from the vault's idle balance.
+
+type EulerAllocatePanelProps = {
+  label: string;
+  marketDesc: string;
+  apyLabel: string;
+  strategyAddress: `0x${string}`;
+  assetAddress: `0x${string}`;
+  assetSymbol: string;
+  assetDecimals: number;
+};
+
+function AllocateToEulerPanel({
+  label,
+  marketDesc,
+  apyLabel,
+  strategyAddress,
+  assetAddress,
+  assetSymbol,
+  assetDecimals,
+}: EulerAllocatePanelProps) {
+  const { address, isConnected } = useAccount();
+  const chainId                  = useChainId();
+  const publicClient             = usePublicClient({ chainId: ARBITRUM_ONE });
+  const { writeContractAsync }   = useWriteContract();
+
+  const vaultAddress = (process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS ?? '') as `0x${string}`;
+  const isWrongChain = isConnected && chainId !== ARBITRUM_ONE;
+
+  const [amount,     setAmount]     = useState('');
+  const [step,       setStep]       = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [errMsg,     setErrMsg]     = useState<string | null>(null);
+  const [allocateTx, setAllocateTx] = useState<`0x${string}` | null>(null);
+  const [idleBal,    setIdleBal]    = useState<number | null>(null);
+  const [deployed,   setDeployed]   = useState<number | null>(null);
+  const [principal,  setPrincipal]  = useState<number | null>(null);
+
+  const { isSuccess: confirmed } = useWaitForTransactionReceipt({ hash: allocateTx ?? undefined });
+
+  const refreshStats = useCallback(() => {
+    if (!publicClient || !vaultAddress) return;
+    const scaleFactor = Math.pow(10, assetDecimals);
+    publicClient.readContract({ address: assetAddress, abi: erc20Abi, functionName: 'balanceOf', args: [vaultAddress] })
+      .then((raw) => setIdleBal(Number(raw as bigint) / scaleFactor))
+      .catch(() => setIdleBal(null));
+    if (!strategyAddress) return;
+    Promise.all([
+      publicClient.readContract({ address: strategyAddress, abi: AAVE_STRATEGY_ABI, functionName: 'currentValue' }),
+      publicClient.readContract({ address: strategyAddress, abi: AAVE_STRATEGY_ABI, functionName: 'principal' }),
+    ]).then(([cv, pr]) => {
+      setDeployed(Number(cv as bigint) / scaleFactor);
+      setPrincipal(Number(pr as bigint) / scaleFactor);
+    }).catch(() => { setDeployed(null); setPrincipal(null); });
+  }, [publicClient, vaultAddress, strategyAddress, assetAddress, assetDecimals]);
+
+  useEffect(() => { refreshStats(); }, [refreshStats, step]);
+  useEffect(() => {
+    const id = setInterval(refreshStats, 30_000);
+    return () => clearInterval(id);
+  }, [refreshStats]);
+  useEffect(() => {
+    if (confirmed && step === 'sending') { refreshStats(); setStep('success'); }
+  }, [confirmed, step, refreshStats]);
+
+  async function handleAllocate() {
+    if (!address || !vaultAddress || !strategyAddress || !publicClient) return;
+    const amtNum = parseFloat(amount);
+    if (!isFinite(amtNum) || amtNum <= 0) { setErrMsg('Enter a valid amount greater than zero.'); return; }
+    setErrMsg(null);
+    setStep('sending');
+    try {
+      const rawAmt = parseUnits(amount, assetDecimals);
+      try {
+        await publicClient.simulateContract({
+          address: vaultAddress, abi: VAULT_ABI, functionName: 'allocate',
+          args: [strategyAddress, assetAddress, rawAmt], account: address,
+        });
+      } catch (simErr: unknown) {
+        const msg = simErr instanceof Error ? simErr.message : String(simErr);
+        const match = msg.match(/reverted with reason string '([^']+)'/);
+        setErrMsg(`Transaction would fail: ${match ? match[1] : msg.slice(0, 200)}`);
+        setStep('error');
+        return;
+      }
+      const hash = await writeContractAsync({
+        address: vaultAddress, abi: VAULT_ABI, functionName: 'allocate',
+        args: [strategyAddress, assetAddress, rawAmt],
+      });
+      setAllocateTx(hash);
+    } catch (e: unknown) {
+      setErrMsg(e instanceof Error ? e.message : 'Transaction rejected or failed.');
+      setStep('error');
+    }
+  }
+
+  function reset() { setStep('idle'); setAmount(''); setAllocateTx(null); setErrMsg(null); }
+
+  if (!isConnected || isWrongChain) return null;
+  if (!vaultAddress || !strategyAddress) {
+    return (
+      <div className="border border-dl-border p-5 max-w-2xl mb-4">
+        <p className="text-xs font-mono text-dl-gray uppercase tracking-wide mb-2">{label}</p>
+        <div className="border border-yellow-300 bg-yellow-50 p-3 text-xs font-mono text-yellow-800">
+          Strategy not yet deployed. Deploy EulerV2Strategy for this market and set the
+          corresponding NEXT_PUBLIC_EULER_*_STRATEGY_ADDRESS secret.
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'success') {
+    return (
+      <div className="border border-dl-forest p-5 max-w-2xl mb-4 space-y-3">
+        <p className="text-xs font-mono text-dl-forest uppercase tracking-wide">Allocation Complete</p>
+        <p className="text-sm text-dl-navy">
+          <span className="font-semibold">{amount} {assetSymbol}</span> deployed into {label}.
+        </p>
+        {allocateTx && (
+          <a href={`https://arbiscan.io/tx/${allocateTx}`} target="_blank" rel="noopener noreferrer"
+            className="text-xs font-mono text-dl-forest underline block">
+            View on Arbiscan → {allocateTx.slice(0, 12)}…{allocateTx.slice(-6)}
+          </a>
+        )}
+        {deployed !== null && (
+          <p className="text-xs font-mono text-dl-navy">
+            Strategy currentValue(): <span className="font-semibold">{deployed.toFixed(6)} {assetSymbol}</span>
+          </p>
+        )}
+        <button type="button" onClick={reset}
+          className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide border border-dl-border text-dl-navy">
+          Allocate Again
+        </button>
+      </div>
+    );
+  }
+
+  const unrealized = deployed !== null && principal !== null ? deployed - principal : null;
+
+  return (
+    <div className="border border-dl-border p-5 max-w-2xl mb-4 space-y-5">
+      <div>
+        <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">{label}</p>
+        <p className="text-xs font-mono text-dl-gray mt-0.5">{marketDesc} — Target APY: <span className="text-dl-forest font-semibold">{apyLabel}</span></p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="border border-dl-border p-3">
+          <p className="text-xs font-mono text-dl-gray uppercase mb-1">Vault Idle {assetSymbol}</p>
+          <p className="text-sm font-mono font-semibold text-dl-navy">
+            {idleBal !== null ? idleBal.toFixed(assetDecimals === 6 ? 2 : 6) : '—'}
+          </p>
+        </div>
+        <div className="border border-dl-border p-3">
+          <p className="text-xs font-mono text-dl-gray uppercase mb-1">In Euler</p>
+          <p className="text-sm font-mono font-semibold text-dl-navy">
+            {deployed !== null ? deployed.toFixed(assetDecimals === 6 ? 6 : 8) : '—'}
+          </p>
+        </div>
+        <div className="border border-dl-border p-3">
+          <p className="text-xs font-mono text-dl-gray uppercase mb-1">Accrued Yield</p>
+          <p className={`text-sm font-mono font-semibold ${unrealized !== null && unrealized > 0 ? 'text-dl-forest' : 'text-dl-navy'}`}>
+            {unrealized !== null ? unrealized.toFixed(assetDecimals === 6 ? 6 : 8) : '—'}
+          </p>
+        </div>
+      </div>
+
+      {assetSymbol !== 'USDC' && (
+        <div className="border border-dl-border bg-gray-50 p-3 text-xs font-mono text-dl-navy space-y-1">
+          <p className="text-dl-gray uppercase tracking-wide mb-1">Pre-allocation step required</p>
+          <p>Before allocating, load {assetSymbol} into the vault via <code className="bg-white px-1">vault.depositToken({assetAddress.slice(0,10)}…, amount)</code></p>
+          <p className="text-dl-gray">The Vault Idle {assetSymbol} stat above must be &gt; 0 before you can allocate.</p>
+        </div>
+      )}
+
+      <div className="text-xs font-mono text-dl-gray border-l-2 border-dl-border pl-3">
+        Requires STRATEGY_ADMIN role — connect deployer wallet ({address?.slice(0,6)}…{address?.slice(-4)}).
+        Calls vault.allocate(eulerStrategy, {assetAddress.slice(0,10)}…, amount).
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-mono text-dl-gray uppercase">Amount ({assetSymbol})</label>
+        <div className="flex gap-2">
+          <input
+            type="number" min="0" step="any" value={amount}
+            onChange={(e) => { if (step === 'idle' || step === 'error') setAmount(e.target.value); }}
+            placeholder={`e.g. ${assetSymbol === 'USDC' ? '25.00' : '0.01'}`}
+            className="flex-1 border border-dl-border px-2 py-1.5 text-xs font-mono text-dl-navy"
+          />
+          {idleBal !== null && idleBal > 0 && (
+            <button type="button" onClick={() => setAmount(idleBal.toFixed(assetDecimals === 6 ? 2 : 8))}
+              className="text-xs font-mono text-dl-forest underline whitespace-nowrap">
+              Max {idleBal.toFixed(assetDecimals === 6 ? 2 : 6)}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {errMsg && (
+        <div className="border border-red-300 bg-red-50 p-3 text-xs font-mono text-red-700 break-all">{errMsg}</div>
+      )}
+
+      <div className="flex gap-3">
+        {(step === 'idle' || step === 'error') && (
+          <button type="button" onClick={handleAllocate}
+            disabled={!amount || parseFloat(amount) <= 0}
+            className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white disabled:opacity-40">
+            Allocate to {label}
+          </button>
+        )}
+        {step === 'sending' && (
+          <button type="button" disabled
+            className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white opacity-60">
+            Sending…
+          </button>
+        )}
+        {step === 'error' && (
+          <button type="button" onClick={reset}
+            className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide border border-dl-border text-dl-gray">
+            Reset
+          </button>
+        )}
+      </div>
+
+      <div className="text-xs font-mono text-dl-gray space-y-0.5">
+        <div>Vault: <span className="text-dl-navy">{vaultAddress}</span></div>
+        <div>Strategy: <span className="text-dl-navy">{strategyAddress}</span></div>
+        <div>Asset: <span className="text-dl-navy">{assetAddress}</span></div>
       </div>
     </div>
   );
@@ -1547,6 +1793,9 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
               {[
                 { key: 'Aave v3 (USDC)', pos: liveSummary.aavePosition },
                 { key: 'Camelot (AXUSD/USDC)', pos: liveSummary.camelotPosition },
+                { key: 'Euler v2 — USDC Theo', pos: liveSummary.eulerUsdcPosition },
+                { key: 'Euler v2 — thBILL Theo', pos: liveSummary.eulerThbillPosition },
+                { key: 'Euler v2 — WETH Arbitrum', pos: liveSummary.eulerWethPosition },
               ].map(({ key, pos }) => (
                 <tr key={key} className="border-b border-dl-border hover:bg-gray-50">
                   <td className="py-2 pr-4 text-dl-navy">
@@ -1960,6 +2209,35 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
 
           {/* Allocate idle USDC into Aave v3 for yield — STRATEGY_ADMIN only */}
           <AllocateToAavePanel />
+
+          {/* ── Euler v2 allocation panels — STRATEGY_ADMIN only ─────────── */}
+          <AllocateToEulerPanel
+            label="Euler v2 — USDC Theo Market"
+            marketDesc="K3 Capital Theo cluster, eUSDC-5"
+            apyLabel="~13.11%"
+            strategyAddress={EULER_USDC_STRATEGY_ADDRESS}
+            assetAddress={USDC_ADDRESS}
+            assetSymbol="USDC"
+            assetDecimals={6}
+          />
+          <AllocateToEulerPanel
+            label="Euler v2 — thBILL Theo Market"
+            marketDesc="K3 Capital Theo cluster, ethBILL-2 (tokenised T-bill)"
+            apyLabel="~15.31%"
+            strategyAddress={EULER_THBILL_STRATEGY_ADDRESS}
+            assetAddress={THBILL_ADDRESS}
+            assetSymbol="thBILL"
+            assetDecimals={6}
+          />
+          <AllocateToEulerPanel
+            label="Euler v2 — WETH Arbitrum Market"
+            marketDesc="K3 Capital Arbitrum cluster, eWETH-1"
+            apyLabel="~15.98%"
+            strategyAddress={EULER_WETH_STRATEGY_ADDRESS}
+            assetAddress={WETH_ADDRESS}
+            assetSymbol="WETH"
+            assetDecimals={18}
+          />
 
           {/* Genesis reserve backing — USDC deposits against the 10,000 genesis mint */}
           <UsdcBackingPanel />
