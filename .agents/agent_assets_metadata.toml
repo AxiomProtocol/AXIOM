@@ -1025,3 +1025,9 @@ id = "hqb4fuealD4EVOJiNQdLQ"
 uri = "file://public/documents/axiom-white-paper.txt"
 type = "text"
 title = "Axiom Protocol — White Paper v1.0"
+
+[[outputs]]
+id = "Ey_lZNI1qNLnusBIpP20H"
+uri = "file://documents/axiom-treasury-vault-whitepaper.md"
+type = "text"
+title = "AxiomTreasuryVault — Executive Summary & Technical Reference"
