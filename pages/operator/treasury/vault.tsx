@@ -1325,6 +1325,37 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
   const [authError, setAuthError] = useState<string | null>(null);
   const [executeResult, setExecuteResult] = useState<{ success: boolean; txHash?: string | null } | null>(null);
 
+  // Live polling state — refreshed every 60 s from /api/treasury/vault/summary
+  const [liveSummary, setLiveSummary] = useState<VaultSummary>(summary);
+  const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const [pollError, setPollError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function poll() {
+      try {
+        const res = await fetch('/api/treasury/vault/summary', { credentials: 'include' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json() as { success: boolean; data?: VaultSummary; error?: string };
+        if (!cancelled && json.success && json.data) {
+          setLiveSummary(json.data);
+          setLastFetched(new Date());
+          setPollError(null);
+        } else if (!cancelled && !json.success) {
+          setPollError(json.error ?? 'Refresh failed');
+        }
+      } catch (err: unknown) {
+        if (!cancelled) setPollError(err instanceof Error ? err.message : 'Refresh failed');
+      }
+    }
+
+    // First fetch immediately, then every 60 s
+    poll();
+    const interval = setInterval(poll, 60_000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
   function authExpired(): boolean {
     return sentinelAuth !== null && Date.now() > sentinelAuth.expiry;
   }
@@ -1414,13 +1445,13 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             </p>
           </div>
           <div className="text-right">
-            <span className={`inline-block px-2 py-1 text-xs font-mono border ${summary.isLive ? 'border-green-300 text-green-700 bg-green-50' : 'border-yellow-300 text-yellow-700 bg-yellow-50'}`}>
-              {summary.isLive ? 'LIVE' : 'OFFLINE / NOT DEPLOYED'}
+            <span className={`inline-block px-2 py-1 text-xs font-mono border ${liveSummary.isLive ? 'border-green-300 text-green-700 bg-green-50' : 'border-yellow-300 text-yellow-700 bg-yellow-50'}`}>
+              {liveSummary.isLive ? 'LIVE' : 'OFFLINE / NOT DEPLOYED'}
             </span>
-            {summary.paused && (
+            {liveSummary.paused && (
               <span className="ml-2 inline-block px-2 py-1 text-xs font-mono border border-red-300 text-red-700 bg-red-50">PAUSED</span>
             )}
-            <p className="text-xs text-dl-gray font-mono mt-1">Updated {new Date(summary.lastUpdated).toLocaleTimeString()}</p>
+            <p className="text-xs text-dl-gray font-mono mt-1">Updated {new Date(liveSummary.lastUpdated).toLocaleTimeString()}</p>
           </div>
         </div>
 
@@ -1430,29 +1461,40 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
 
         {/* AUM + Live Rate Strip */}
         <section>
-          <h2 className="font-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-1">Assets Under Management</h2>
+          <div className="flex items-baseline justify-between mb-3 border-b border-dl-border pb-1">
+            <h2 className="font-serif text-lg text-dl-navy">Assets Under Management</h2>
+            <span className="text-xs font-mono text-dl-gray">
+              {pollError ? (
+                <span className="text-red-600">Refresh error — {pollError}</span>
+              ) : lastFetched ? (
+                <>Auto-refreshed {lastFetched.toLocaleTimeString(undefined, { hour12: false })}</>
+              ) : (
+                'Refreshing…'
+              )}
+            </span>
+          </div>
 
           {/* Primary AUM metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
             <div className="border border-dl-border p-4">
               <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Total AUM</p>
-              <p className="font-mono text-2xl text-dl-navy mt-1">{usd(summary.aumUsdc)}</p>
+              <p className="font-mono text-2xl text-dl-navy mt-1">{usd(liveSummary.aumUsdc)}</p>
               <p className="text-xs text-dl-gray mt-1">Idle + deployed</p>
             </div>
             <div className="border border-dl-border p-4">
               <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Idle USDC</p>
-              <p className="font-mono text-2xl text-dl-navy mt-1">{usd(summary.idleUsdc)}</p>
+              <p className="font-mono text-2xl text-dl-navy mt-1">{usd(liveSummary.idleUsdc)}</p>
               <p className="text-xs text-dl-gray mt-1">Held in vault, undeployed</p>
             </div>
             <div className="border border-dl-border p-4">
               <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">In Aave v3</p>
-              <p className="font-mono text-2xl text-dl-navy mt-1">{usd(summary.aavePosition.currentValueUsdc)}</p>
+              <p className="font-mono text-2xl text-dl-navy mt-1">{usd(liveSummary.aavePosition.currentValueUsdc)}</p>
               <p className="text-xs text-dl-gray mt-1">aUSDC position (principal + yield)</p>
             </div>
             <div className="border border-dl-border p-4">
               <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Accrued Yield</p>
-              <p className={`font-mono text-2xl mt-1 ${summary.aavePosition.unrealizedYieldUsdc > 0 ? 'text-dl-forest' : 'text-dl-navy'}`}>
-                {summary.aavePosition.unrealizedYieldUsdc >= 0 ? '+' : ''}{usd(summary.aavePosition.unrealizedYieldUsdc)}
+              <p className={`font-mono text-2xl mt-1 ${liveSummary.aavePosition.unrealizedYieldUsdc > 0 ? 'text-dl-forest' : 'text-dl-navy'}`}>
+                {liveSummary.aavePosition.unrealizedYieldUsdc >= 0 ? '+' : ''}{usd(liveSummary.aavePosition.unrealizedYieldUsdc)}
               </p>
               <p className="text-xs text-dl-gray mt-1">Unrealised Aave yield (since last harvest)</p>
             </div>
@@ -1463,8 +1505,8 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             <div className="border border-dl-forest p-4 bg-green-50">
               <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Aave v3 USDC Supply APY</p>
               <p className="font-mono text-3xl text-dl-forest mt-1">
-                {summary.aavePosition.apyEstimatePct !== null
-                  ? `${summary.aavePosition.apyEstimatePct.toFixed(2)}%`
+                {liveSummary.aavePosition.apyEstimatePct !== null
+                  ? `${liveSummary.aavePosition.apyEstimatePct.toFixed(2)}%`
                   : '—'}
               </p>
               <p className="text-xs text-dl-gray mt-1">Live from Aave v3 Arbitrum · liquidityRate</p>
@@ -1472,15 +1514,15 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             <div className="border border-dl-border p-4">
               <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Blended APY</p>
               <p className="font-mono text-3xl text-dl-navy mt-1">
-                {summary.blendedApyEstimatePct !== null
-                  ? `${summary.blendedApyEstimatePct.toFixed(2)}%`
+                {liveSummary.blendedApyEstimatePct !== null
+                  ? `${liveSummary.blendedApyEstimatePct.toFixed(2)}%`
                   : '—'}
               </p>
               <p className="text-xs text-dl-gray mt-1">Capital-weighted across active strategies</p>
             </div>
             <div className="border border-dl-border p-4">
               <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Total Deployed</p>
-              <p className="font-mono text-3xl text-dl-navy mt-1">{usd(summary.deployedUsdc)}</p>
+              <p className="font-mono text-3xl text-dl-navy mt-1">{usd(liveSummary.deployedUsdc)}</p>
               <p className="text-xs text-dl-gray mt-1">USDC across all strategies</p>
             </div>
           </div>
@@ -1503,8 +1545,8 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             </thead>
             <tbody>
               {[
-                { key: 'Aave v3 (USDC)', pos: summary.aavePosition },
-                { key: 'Camelot (AXUSD/USDC)', pos: summary.camelotPosition },
+                { key: 'Aave v3 (USDC)', pos: liveSummary.aavePosition },
+                { key: 'Camelot (AXUSD/USDC)', pos: liveSummary.camelotPosition },
               ].map(({ key, pos }) => (
                 <tr key={key} className="border-b border-dl-border hover:bg-gray-50">
                   <td className="py-2 pr-4 text-dl-navy">
@@ -1535,9 +1577,9 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
         <section>
           <div className="flex items-baseline justify-between mb-3 border-b border-dl-border pb-1">
             <h2 className="font-serif text-lg text-dl-navy">Yield Harvested</h2>
-            {summary.lastHarvestedAt && (
+            {liveSummary.lastHarvestedAt && (
               <span className="text-xs font-mono text-dl-gray">
-                Last harvest: {new Date(summary.lastHarvestedAt).toLocaleString()}
+                Last harvest: {new Date(liveSummary.lastHarvestedAt).toLocaleString()}
               </span>
             )}
           </div>
@@ -1567,11 +1609,11 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             Executed server-side via STRATEGY_ADMIN key — no wallet connection required.
           </p>
           <HarvestPanel
-            lastHarvestedAt={summary.lastHarvestedAt}
-            unrealizedYield={summary.aavePosition.unrealizedYieldUsdc}
-            principalUsdc={summary.aavePosition.principalUsdc}
-            apyEstimatePct={summary.aavePosition.apyEstimatePct}
-            minHarvestThresholdUsdc={summary.minHarvestThresholdUsdc}
+            lastHarvestedAt={liveSummary.lastHarvestedAt}
+            unrealizedYield={liveSummary.aavePosition.unrealizedYieldUsdc}
+            principalUsdc={liveSummary.aavePosition.principalUsdc}
+            apyEstimatePct={liveSummary.aavePosition.apyEstimatePct}
+            minHarvestThresholdUsdc={liveSummary.minHarvestThresholdUsdc}
           />
         </section>
 
@@ -1583,7 +1625,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             (<code className="font-mono text-xs bg-gray-100 px-1">GET /api/cron/harvest-vault</code>).
             Auth: <code className="font-mono text-xs bg-gray-100 px-1">CRON_SECRET</code> or{' '}
             <code className="font-mono text-xs bg-gray-100 px-1">HARVEST_CRON_SECRET</code>.
-            Minimum yield threshold: <span className="font-mono font-semibold">${summary.minHarvestThresholdUsdc.toFixed(2)}</span>
+            Minimum yield threshold: <span className="font-mono font-semibold">${liveSummary.minHarvestThresholdUsdc.toFixed(2)}</span>
             {' '}(env <code className="font-mono text-xs bg-gray-100 px-1">HARVEST_MIN_USDC</code>).
           </p>
 
@@ -1603,23 +1645,23 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             </div>
             <div className="border border-dl-border p-4">
               <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Min Yield Threshold</p>
-              <p className="font-mono text-base text-dl-navy mt-1">${summary.minHarvestThresholdUsdc.toFixed(2)} USDC</p>
+              <p className="font-mono text-base text-dl-navy mt-1">${liveSummary.minHarvestThresholdUsdc.toFixed(2)} USDC</p>
               <p className="text-xs text-dl-gray mt-1">Runs below threshold return skipped</p>
             </div>
             <div className="border border-dl-border p-4">
               <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Last Cron Run</p>
-              {summary.cronRunHistory.length > 0 ? (
+              {liveSummary.cronRunHistory.length > 0 ? (
                 <>
                   <p className="font-mono text-base text-dl-navy mt-1">
-                    {new Date(summary.cronRunHistory[0].startedAt).toLocaleString()}
+                    {new Date(liveSummary.cronRunHistory[0].startedAt).toLocaleString()}
                   </p>
                   <p className={`text-xs font-mono mt-1 ${
-                    summary.cronRunHistory[0].status === 'success' ? 'text-dl-forest' :
-                    summary.cronRunHistory[0].status === 'skipped' ? 'text-yellow-700' : 'text-red-600'
+                    liveSummary.cronRunHistory[0].status === 'success' ? 'text-dl-forest' :
+                    liveSummary.cronRunHistory[0].status === 'skipped' ? 'text-yellow-700' : 'text-red-600'
                   }`}>
-                    {summary.cronRunHistory[0].status.toUpperCase()}
-                    {summary.cronRunHistory[0].status === 'success' &&
-                      ` — ${usd(summary.cronRunHistory[0].yieldUsdc)} harvested`}
+                    {liveSummary.cronRunHistory[0].status.toUpperCase()}
+                    {liveSummary.cronRunHistory[0].status === 'success' &&
+                      ` — ${usd(liveSummary.cronRunHistory[0].yieldUsdc)} harvested`}
                   </p>
                 </>
               ) : (
@@ -1629,9 +1671,9 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
           </div>
 
           {/* Run history table */}
-          {summary.cronRunHistory.length > 0 ? (
+          {liveSummary.cronRunHistory.length > 0 ? (
             <div>
-              <p className="text-xs font-mono text-dl-gray uppercase tracking-wide mb-2">Last {summary.cronRunHistory.length} Cron Runs</p>
+              <p className="text-xs font-mono text-dl-gray uppercase tracking-wide mb-2">Last {liveSummary.cronRunHistory.length} Cron Runs</p>
               <table className="w-full text-xs font-mono border-collapse">
                 <thead>
                   <tr className="border-b border-dl-border text-dl-gray uppercase">
@@ -1643,7 +1685,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                   </tr>
                 </thead>
                 <tbody>
-                  {summary.cronRunHistory.map((run) => (
+                  {liveSummary.cronRunHistory.map((run) => (
                     <tr key={run.id} className="border-b border-dl-border hover:bg-gray-50">
                       <td className="py-2 pr-3 text-dl-gray">{new Date(run.startedAt).toLocaleString()}</td>
                       <td className="py-2 pr-3">
