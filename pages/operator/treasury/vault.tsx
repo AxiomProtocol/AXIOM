@@ -121,6 +121,11 @@ function short(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
+function formatEventStrategy(value: string | null) {
+  if (!value) return '—';
+  return value.includes('·') ? value : short(value);
+}
+
 function eventBadge(type: string) {
   const map: Record<string, string> = {
     deposit:          'bg-blue-50 text-blue-800 border-blue-200',
@@ -2159,7 +2164,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                           {ev.eventType}
                         </span>
                       </td>
-                      <td className="py-2 pr-3 text-dl-gray">{ev.strategy ? short(ev.strategy) : '—'}</td>
+                      <td className="py-2 pr-3 text-dl-gray">{formatEventStrategy(ev.strategy)}</td>
                       <td className="py-2 pr-3 text-right">{normalizedAmount(ev.amountUsd)}</td>
                       <td className="py-2 pr-3">
                         {ev.txHash ? (
