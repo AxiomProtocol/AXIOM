@@ -3,6 +3,8 @@ import Head from "next/head";
 import { useWallet } from "../components/WalletConnect/WalletContext";
 import { DesignLawLayout } from "../components/design-law";
 import { CollateralClassificationPanel } from "../components/disclosure/CollateralClassificationPanel";
+import { ACTIVE_AXUSD, CANONICAL_PSM } from "../src/config/activeContracts.generated";
+import { AXUSD_USD_PEG_ADAPTER } from "../src/config/oracleConfig";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -108,7 +110,10 @@ function Hero() {
           fontFamily: 'Georgia, serif', fontSize: 15, color: C.muted,
           maxWidth: 620, margin: '0 auto 24px', lineHeight: 1.75,
         }}>
-          AXUSD is not a generic stablecoin. It is the Axiom Protocol&apos;s identity-gated settlement infrastructure — issued exclusively through the Peg Stability Module (PSM), governed by an ERC-3643 identity framework, and functioning as the mandatory unit of account for all capital movement across the protocol stack. Connection to Layer 02 (AXAU/PAXG reserve) and Layer 01.5 (Protocol Exchange) ensures peg integrity without reliance on a single mechanism.
+          AXUSD is a compliance-native stable settlement asset. Live minting and redemption operate through
+          the canonical USDC-backed Peg Stability Module (PSM), governed by an ERC-3643 identity framework.
+          Tokenized Treasury reserve sleeves, AXAU-linked reserve programs, and other reserve expansion paths
+          remain planned infrastructure unless explicitly deployed, verified, and disclosed.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href="/axusd-3643" style={{
@@ -305,31 +310,32 @@ function ReserveConnection() {
           AXUSD → AXAU Reserve Relationship
         </h2>
         <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: C.muted, maxWidth: 620, lineHeight: 1.75, marginBottom: 36 }}>
-          AXUSD is the protocol&apos;s Layer 01 settlement token. At the reserve layer, AXAU (Layer 02)
-          provides the hard-asset backing via on-chain PAXG. AXUSD participants gain exposure to protocol operations;
-          the treasury maintains AXAU coverage positions to anchor reserve depth.
+          AXUSD is the protocol&apos;s Layer 01 settlement token. Its live minting and redemption path is the
+          canonical USDC-backed PSM. AXAU is a separate reserve instrument used in broader protocol reserve
+          programs; it is not the current live mint/redeem backing asset for AXUSD, and no tokenized Treasury
+          reserve sleeve is active unless separately disclosed.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, border: `1px solid ${C.border}` }}>
           {[
             {
               title: 'PAXG (Gold Vault)',
-              sub: 'Layer 02 Reserve Asset',
-              desc: 'On-chain Paxos Gold (PAXG) held in the GoldVault contract. Verified via Chainlink XAU/USD oracle. 100%+ target coverage ratio.',
+              sub: 'Layer 02 Reserve Program',
+              desc: 'On-chain Paxos Gold (PAXG) held in the GoldVault contract. This is part of broader protocol reserve infrastructure and should not be read as the live canonical AXUSD mint/redeem backing sleeve.',
               href: '/axau',
               cta: 'VIEW AXAU RESERVE',
             },
             {
               title: 'PSM (USDC Pool)',
               sub: 'Layer 01 Issuance Engine',
-              desc: 'USDC deposited in the Peg Stability Module becomes the primary backing for AXUSD at issuance. Reserve ratio monitored continuously.',
+              desc: 'USDC deposited in the canonical Peg Stability Module is the live mint/redeem backing source for AXUSD today. Reserve ratio is monitored continuously against the canonical PSM.',
               href: null,
               cta: null,
             },
             {
               title: 'DEX Settlement Venue',
               sub: 'Layer 01.5 Exchange Liquidity',
-              desc: 'EulerSwap is the primary on-chain settlement venue for AXUSD. Concentrated liquidity around the $1.00 peg anchors secondary market pricing.',
+              desc: 'EulerSwap and other venues support secondary-market liquidity. Treasury Vault AUM and operator liquidity programs are separate from the canonical AXUSD reserve controller unless explicitly disclosed otherwise.',
               href: '/dex',
               cta: 'VIEW DEX VENUE',
             },
@@ -483,9 +489,9 @@ function GovernanceSupplyCap() {
 // ─── Contract Registry ────────────────────────────────────────────────────────
 function ContractRegistry() {
   const contracts = [
-    { name: 'AXUSD Token (ERC-3643)', address: '0x73585df5E62a5E85E6dd6b1df3C08E00eee5b89C', status: 'LIVE', note: 'Settlement layer token contract' },
-    { name: 'Peg Stability Module', address: '0x5db58d9c21369d1532a48Bdd658E4Fe415404922', status: 'LIVE', note: 'USDC ↔ AXUSD issuance engine' },
-    { name: 'Oracle Adapter', address: '0xE3b1f38AaBAd138d0EF2e2C7429ee57c512fDF3D', status: 'LIVE', note: 'ERC-7726 pricing oracle adapter' },
+    { name: 'AXUSD Token (ERC-3643)', address: ACTIVE_AXUSD, status: 'LIVE', note: 'Canonical settlement layer token contract' },
+    { name: 'Canonical Peg Stability Module', address: CANONICAL_PSM, status: 'LIVE', note: 'Live USDC ↔ AXUSD mint/redeem backing source' },
+    { name: 'AXUSD/USD Peg Adapter', address: AXUSD_USD_PEG_ADAPTER, status: 'LIVE', note: 'Single-pair AXUSD ↔ USD pricing adapter' },
     { name: 'Backstop USDC', address: '0x54438249457694eB5431811f3f19444Af0a01B29', status: 'LIVE', note: 'Secondary reserve backstop pool' },
     { name: 'Rate Limiter', address: '0xE19E4172786A193997f985edC27f7932a0B65327', status: 'LIVE', note: 'Flow control and circuit breaker' },
     { name: 'Market Operations', address: '0x42E31Ac3A6aF2B2925a0B979A05156833b6660E4', status: 'CONFIGURED', note: 'Ops team authorization layer' },
@@ -561,7 +567,7 @@ function FAQ() {
     },
     {
       q: 'How does AXUSD relate to AXAU?',
-      a: 'AXAU is the Layer 02 reserve instrument, backed by PAXG (on-chain Paxos Gold). AXUSD is the Layer 01 settlement token backed by USDC in the PSM. The treasury maintains AXAU coverage positions to provide hard-asset depth behind the protocol\'s broader reserve pool. They serve distinct roles within the same capital stack.',
+      a: 'AXAU is a separate Layer 02 reserve instrument backed by PAXG. AXUSD is the Layer 01 settlement token whose live mint/redeem backing comes from the canonical USDC-backed PSM. AXAU programs and any future tokenized Treasury reserve sleeves are separate infrastructure and are not live AXUSD redemption assets unless explicitly disclosed.',
     },
     {
       q: 'What is the protocol fee for PSM operations?',

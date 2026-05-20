@@ -87,7 +87,7 @@ const CAPITAL_FLOW = [
     step: 'AXAU',
     layer: '02',
     title: 'Reserve Backing',
-    why: 'AXUSD participants can access AXAU — a PAXG-backed gold reserve unit. The treasury maintains AXAU coverage positions to provide hard-asset depth behind the protocol\'s reserve pool.',
+    why: 'AXUSD participants can access AXAU — a separate PAXG-backed reserve unit. AXAU programs may support broader protocol reserve depth, but AXUSD live mint/redeem backing remains the canonical USDC-backed PSM unless additional reserve sleeves are explicitly disclosed.',
     href: '/axau',
   },
   {
@@ -413,7 +413,7 @@ export default function SystemMapPage() {
           </div>
           <div style={{ flex: 1, minWidth: 240 }}>
             <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: C.muted, lineHeight: 1.78, margin: 0 }}>
-              AXAU is the reserve anchor of the entire Axiom stack. Backed by on-chain PAXG (Paxos Gold), governed by a live coverage ratio enforced by the GoldVault contract, and priced via Chainlink XAU/USD oracle. The treasury maintains AXAU coverage positions to provide hard-asset depth behind the protocol&apos;s broader reserve pool. AXUSD settlement is ultimately backed by this layer.
+              AXAU is a reserve instrument within the broader Axiom stack. It is backed by on-chain PAXG (Paxos Gold), governed by a live coverage ratio enforced by the GoldVault contract, and priced via Chainlink XAU/USD oracle. These reserve programs are distinct from AXUSD&apos;s live mint/redeem backing, which remains the canonical USDC-backed PSM unless a different reserve sleeve is explicitly deployed and disclosed.
             </p>
           </div>
           <a href="/axau" style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.13em', textTransform: 'uppercase' as const, color: '#7a5c1e', border: `1px solid ${C.gold}`, padding: '8px 16px', textDecoration: 'none', background: C.white, flexShrink: 0, alignSelf: 'flex-start' as const }}>

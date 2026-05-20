@@ -82,9 +82,12 @@ export default async function handler(
     const legacyDebtNum     = parseFloat(ethers.formatUnits(legacyDebt, 18));
     const backstopNum       = parseFloat(ethers.formatUnits(backstopUsdcBalance, 6));
 
-    // Total reserves = canonical PSM USDC + legacy PSM USDC + backstop USDC
-    const totalReserves     = canonicalUsdcNum + legacyUsdcNum + backstopNum;
-    const reserveRatio      = totalSupplyNum > 0 ? (totalReserves / totalSupplyNum) * 100 : 100;
+    // Canonical AXUSD mint/redeem backing is sourced from the Canonical PSM only.
+    // Legacy PSM + backstop balances are tracked here as supplemental/internal balances.
+    const canonicalReserves = canonicalUsdcNum;
+    const supplementalReserves = legacyUsdcNum + backstopNum;
+    const totalTrackedReserves = canonicalReserves + supplementalReserves;
+    const reserveRatio      = totalSupplyNum > 0 ? (canonicalReserves / totalSupplyNum) * 100 : 100;
 
     // Utilization rates
     const canonicalUtil     = canonicalCeilNum > 0 ? (canonicalDebtNum / canonicalCeilNum) * 100 : 0;
@@ -107,26 +110,26 @@ export default async function handler(
       scenario1: {
         name: '10% Redemption Wave',
         redemptionAmount: totalSupplyNum * 0.1,
-        reservesAfter: totalReserves - (totalSupplyNum * 0.1),
-        canHandle: totalReserves >= totalSupplyNum * 0.1,
+        reservesAfter: canonicalReserves - (totalSupplyNum * 0.1),
+        canHandle: canonicalReserves >= totalSupplyNum * 0.1,
         newReserveRatio: totalSupplyNum > 0
-          ? ((totalReserves - totalSupplyNum * 0.1) / (totalSupplyNum * 0.9)) * 100 : 100,
+          ? ((canonicalReserves - totalSupplyNum * 0.1) / (totalSupplyNum * 0.9)) * 100 : 100,
       },
       scenario2: {
         name: '25% Redemption Wave',
         redemptionAmount: totalSupplyNum * 0.25,
-        reservesAfter: totalReserves - (totalSupplyNum * 0.25),
-        canHandle: totalReserves >= totalSupplyNum * 0.25,
+        reservesAfter: canonicalReserves - (totalSupplyNum * 0.25),
+        canHandle: canonicalReserves >= totalSupplyNum * 0.25,
         newReserveRatio: totalSupplyNum > 0
-          ? ((totalReserves - totalSupplyNum * 0.25) / (totalSupplyNum * 0.75)) * 100 : 100,
+          ? ((canonicalReserves - totalSupplyNum * 0.25) / (totalSupplyNum * 0.75)) * 100 : 100,
       },
       scenario3: {
         name: '50% Redemption Wave',
         redemptionAmount: totalSupplyNum * 0.5,
-        reservesAfter: totalReserves - (totalSupplyNum * 0.5),
-        canHandle: totalReserves >= totalSupplyNum * 0.5,
+        reservesAfter: canonicalReserves - (totalSupplyNum * 0.5),
+        canHandle: canonicalReserves >= totalSupplyNum * 0.5,
         newReserveRatio: totalSupplyNum > 0
-          ? ((totalReserves - totalSupplyNum * 0.5) / (totalSupplyNum * 0.5)) * 100 : 100,
+          ? ((canonicalReserves - totalSupplyNum * 0.5) / (totalSupplyNum * 0.5)) * 100 : 100,
       },
     };
 
@@ -135,11 +138,20 @@ export default async function handler(
       data: {
         overview: {
           totalSupply: totalSupplyNum.toFixed(2),
-          totalReserves: totalReserves.toFixed(2),
+          totalReserves: canonicalReserves.toFixed(2),
           reserveRatio: reserveRatio.toFixed(2),
           healthStatus,
           healthScore,
           fullyBacked: reserveRatio >= 100,
+        },
+        backingMethodology: {
+          officialBackingSource: 'Canonical PSM only',
+          canonicalReserves: canonicalReserves.toFixed(6),
+          supplementalInternalReserves: supplementalReserves.toFixed(6),
+          totalTrackedReserves: totalTrackedReserves.toFixed(6),
+          treasuryVaultIncluded: false,
+          tokenizedTreasurySleevesLive: false,
+          note: 'Legacy PSM balances and backstop balances are tracked for internal monitoring but are not reported here as the live canonical mint/redeem reserve source for AXUSD.',
         },
         reservePools: {
           canonical: {
@@ -154,7 +166,7 @@ export default async function handler(
             paused: canonicalPaused,
           },
           legacy: {
-            label: 'Legacy PSM USDC (Migrating)',
+            label: 'Legacy PSM USDC (Internal / migrating)',
             address: AXUSD_GENIUS_CONTRACTS.PSM,
             usdcReserves: legacyUsdcNum.toFixed(6),
             debtCeiling: legacyCeilNum.toFixed(2),
@@ -162,16 +174,18 @@ export default async function handler(
             utilization: legacyUtil.toFixed(2),
             deprecated: true,
             migrating: true,
+            note: 'Supplemental/internal balance only. Not the live canonical reserve controller.',
           },
           backstop: {
-            label: 'Backstop Vault (USDC)',
+            label: 'Backstop Vault (USDC, internal support)',
             address: AXUSD_GENIUS_CONTRACTS.BACKSTOP_VAULT_USDC,
             usdcReserves: backstopNum.toFixed(6),
+            note: 'Internal support balance. Not the canonical mint/redeem sleeve.',
           },
         },
         stressTests,
         riskIndicators: {
-          concentrationRisk: legacyUsdcNum > totalReserves * 0.9 ? 'high' : 'low',
+          concentrationRisk: canonicalReserves > 0 && legacyUsdcNum > canonicalReserves ? 'elevated_legacy_overhang' : 'low',
           liquidityRisk: canonicalUtil > 80 ? 'elevated' : 'low',
           pegRisk: 'low',
         },
