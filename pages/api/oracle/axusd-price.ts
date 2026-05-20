@@ -6,7 +6,7 @@
  * returns price quotes normalised to 18-decimal WAD precision.
  *
  * Sources (priority order):
- *   1. PSM backing ratio  (USDC in PSM / AXUSD circulating supply)
+ *   1. Canonical PSM backing ratio  (USDC in CanonicalPSM / AXUSD circulating supply)
  *   2. Chainlink USDC/USD via CoinGecko public API
  *   3. Static 1:1 parity fallback
  *
@@ -24,7 +24,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ethers } from 'ethers';
 import { ERC3643_CONTRACTS } from '../../../shared/contracts-3643';
-import { ACTIVE_AXUSD, ACTIVE_PSM, EULER_PSM } from '../../../src/config/activeContracts.generated';
+import { CANONICAL_PSM } from '../../../src/config/activeContracts.generated';
 import { AXUSD_ORACLE_ADAPTER } from '../../../src/config/oracleConfig';
 
 const ARBITRUM_RPC = process.env.ALCHEMY_API_KEY
@@ -150,23 +150,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
   }
 
-  // ── Step 2: PSM backing ratio ──────────────────────────────────────────────
+  // ── Step 2: Canonical PSM backing ratio ────────────────────────────────────
   if (source !== 'on_chain_erc7726') {
     try {
       const [
-        primaryPsmUsdcRaw,
-        eulerPsmUsdcRaw,
+        canonicalPsmUsdcRaw,
         primaryAxusdSupplyRaw,
       ] = await Promise.all([
-        usdc.balanceOf(ACTIVE_PSM),
-        usdc.balanceOf(EULER_PSM),
+        usdc.balanceOf(CANONICAL_PSM),
         primaryAxusdToken.totalSupply(),
       ]);
 
-      const primaryPsmUsdc  = parseFloat(ethers.formatUnits(primaryPsmUsdcRaw, 6));
-      const eulerPsmUsdc    = parseFloat(ethers.formatUnits(eulerPsmUsdcRaw,   6));
-      const totalPsmUsdc    = primaryPsmUsdc + eulerPsmUsdc;
-      // ACTIVE_AXUSD (ERC-3643) has 18 decimals from on-chain decimals() call
+      const canonicalPsmUsdc = parseFloat(ethers.formatUnits(canonicalPsmUsdcRaw, 6));
+      const totalPsmUsdc     = canonicalPsmUsdc;
       const primaryAxusdSupply = parseFloat(ethers.formatEther(primaryAxusdSupplyRaw));
 
       if (primaryAxusdSupply > 0 && totalPsmUsdc > 0) {
@@ -174,11 +170,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         // Clamp PSM-derived price to [0.90, 1.10] to prevent oracle manipulation edge cases
         axusdUsdPrice  = Math.min(1.10, Math.max(0.90, Math.min(1.0, backingRatio)));
         source         = 'psm_ratio';
-        sourceLabel    = `PSM backing ratio: ${backingRatio.toFixed(6)} USDC per AXUSD`;
+        sourceLabel    = `Canonical PSM backing ratio: ${backingRatio.toFixed(6)} USDC per AXUSD`;
 
         psmBacking = {
-          primaryPsmUsdcBalance: primaryPsmUsdc.toFixed(6),
-          eulerPsmUsdcBalance:   eulerPsmUsdc.toFixed(6),
+          primaryPsmUsdcBalance: canonicalPsmUsdc.toFixed(6),
+          eulerPsmUsdcBalance:   '0.000000',
           totalPsmUsdc:          totalPsmUsdc.toFixed(6),
           primaryAxusdSupply:    primaryAxusdSupply.toFixed(6),
           backingRatio:          backingRatio.toFixed(6),

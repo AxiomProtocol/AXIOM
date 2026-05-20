@@ -112,6 +112,10 @@ function usd(n: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(n);
 }
 
+function normalizedAmount(n: number) {
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 }).format(n);
+}
+
 function short(addr: string) {
   if (!addr || addr.length < 10) return addr || '—';
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
@@ -2141,7 +2145,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                   <tr className="border-b border-dl-border text-dl-gray uppercase">
                     <th className="text-left py-2 pr-3">Type</th>
                     <th className="text-left py-2 pr-3">Strategy</th>
-                    <th className="text-right py-2 pr-3">Amount (USD)</th>
+                    <th className="text-right py-2 pr-3">Amount</th>
                     <th className="text-left py-2 pr-3">Tx Hash</th>
                     <th className="text-left py-2 pr-3">Block</th>
                     <th className="text-left py-2">Date</th>
@@ -2156,7 +2160,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                         </span>
                       </td>
                       <td className="py-2 pr-3 text-dl-gray">{ev.strategy ? short(ev.strategy) : '—'}</td>
-                      <td className="py-2 pr-3 text-right">{usd(ev.amountUsd)}</td>
+                      <td className="py-2 pr-3 text-right">{normalizedAmount(ev.amountUsd)}</td>
                       <td className="py-2 pr-3">
                         {ev.txHash ? (
                           <a
@@ -2177,6 +2181,9 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                   ))}
                 </tbody>
               </table>
+              <p className="mt-3 text-[11px] text-dl-gray">
+                Amounts from the event poller are normalized by asset decimals. Stable assets remain approximately USD-equivalent; non-stable assets such as WETH are shown in native asset units and are not Treasury Vault AUM or AXUSD reserve disclosures.
+              </p>
             </div>
           )}
         </section>

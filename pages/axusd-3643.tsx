@@ -1257,9 +1257,9 @@ function OracleTab({
               <SectionHeading>PSM Backing Analysis</SectionHeading>
               <DetailGrid
                 left={[
-                  { label: 'Primary PSM USDC', value: `$${parseFloat(oracleData.psmBacking.primaryPsmUsdcBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-                  { label: 'Euler PSM USDC', value: `$${parseFloat(oracleData.psmBacking.eulerPsmUsdcBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-                  { label: 'Total PSM USDC', value: `$${parseFloat(oracleData.psmBacking.totalPsmUsdc).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+                  { label: 'Canonical PSM USDC', value: `$${parseFloat(oracleData.psmBacking.primaryPsmUsdcBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+                  { label: 'Legacy PSM USDC', value: `$${parseFloat(oracleData.psmBacking.eulerPsmUsdcBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+                  { label: 'Total Counted by Oracle', value: `$${parseFloat(oracleData.psmBacking.totalPsmUsdc).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
                 ]}
                 right={[
                   { label: 'AXUSD Circulating', value: `${parseFloat(oracleData.psmBacking.primaryAxusdSupply).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} AXUSD` },
