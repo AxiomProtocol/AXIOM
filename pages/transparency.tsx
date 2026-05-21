@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { DesignLawLayout, SectionHeading } from '../components/design-law';
+import { ReserveHealthBadge } from '../components/reserve/ReserveHealthBadge';
 import type { PublicVaultMetrics } from './api/treasury/vault/public-metrics';
 
 interface TreasuryMetrics {
@@ -489,6 +490,11 @@ export default function TransparencyPage() {
           T-bills, Treasury funds, gold) carry zero eligible reserve value until they are
           oracle-connected and governance-approved.
         </p>
+
+        {/* Live reserve health badge */}
+        <div className="mb-6">
+          <ReserveHealthBadge />
+        </div>
 
         {/* Oracle architecture overview */}
         <div className="border border-dl-border mb-6">

@@ -3,6 +3,7 @@ import Head from "next/head";
 import { useWallet } from "../components/WalletConnect/WalletContext";
 import { DesignLawLayout } from "../components/design-law";
 import { CollateralClassificationPanel } from "../components/disclosure/CollateralClassificationPanel";
+import { ReserveHealthBadge } from "../components/reserve/ReserveHealthBadge";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -667,6 +668,7 @@ export default function AXUSDPage() {
       </Head>
 
       <Hero />
+      <ReserveHealthBadge />
       <ArchitectureStrip />
       <PSMSection />
       <ReserveConnection />
