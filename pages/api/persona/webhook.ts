@@ -17,8 +17,8 @@ function getRawBody(req: NextApiRequest): Promise<Buffer> {
 function verifyPersonaSignature(rawBody: Buffer, signatureHeader: string, secret: string): boolean {
   const parts = Object.fromEntries(
     signatureHeader.split(',').map((part) => {
-      const [k, v] = part.split('=');
-      return [k.trim(), v.trim()];
+      const eqIdx = part.indexOf('=');
+      return [part.slice(0, eqIdx).trim(), part.slice(eqIdx + 1).trim()];
     })
   );
 
@@ -30,10 +30,53 @@ function verifyPersonaSignature(rawBody: Buffer, signatureHeader: string, secret
   const ageSeconds = Math.abs(Date.now() / 1000 - parseInt(timestamp, 10));
   if (ageSeconds > 300) return false;
 
-  const payload = `${timestamp}.${rawBody.toString('utf8')}`;
-  const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+  const toSign = `${timestamp}.${rawBody.toString('utf8')}`;
+  const expected = crypto.createHmac('sha256', secret).update(toSign).digest('hex');
 
-  return crypto.timingSafeEqual(Buffer.from(receivedSig, 'hex'), Buffer.from(expected, 'hex'));
+  try {
+    return crypto.timingSafeEqual(Buffer.from(receivedSig, 'hex'), Buffer.from(expected, 'hex'));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Extract fields from Persona's actual webhook payload shape:
+ *
+ * {
+ *   "data": {
+ *     "type": "event",
+ *     "id": "evt_xxx",
+ *     "attributes": {
+ *       "name": "inquiry.approved",          ← event name
+ *       "created-at": "...",
+ *       "payload": {
+ *         "data": {
+ *           "type": "inquiry",
+ *           "id": "inq_xxx",                  ← inquiry ID
+ *           "attributes": {
+ *             "status": "approved",
+ *             "reference-id": "user_123"       ← our reference ID
+ *           }
+ *         }
+ *       }
+ *     }
+ *   }
+ * }
+ */
+function parsePersonaWebhook(payload: any): {
+  eventName: string;
+  inquiryId: string;
+  referenceId: string;
+} {
+  const attrs = payload?.data?.attributes ?? {};
+  const eventName: string = attrs?.name ?? '';
+
+  const inquiryData = attrs?.payload?.data ?? {};
+  const inquiryId: string = inquiryData?.id ?? '';
+  const referenceId: string = inquiryData?.attributes?.['reference-id'] ?? '';
+
+  return { eventName, inquiryId, referenceId };
 }
 
 const STATUS_MAP: Record<string, string> = {
@@ -61,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let rawBody: Buffer;
   try {
     rawBody = await getRawBody(req);
-  } catch (err) {
+  } catch {
     return res.status(400).json({ error: 'Failed to read request body' });
   }
 
@@ -77,24 +120,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Invalid JSON body' });
   }
 
-  const eventName: string = payload?.data?.type ?? payload?.type ?? '';
-  const inquiryId: string = payload?.data?.id ?? payload?.data?.attributes?.id ?? '';
-  const referenceId: string =
-    payload?.data?.attributes?.['reference-id'] ??
-    payload?.data?.relationships?.account?.data?.id ??
-    '';
+  const { eventName, inquiryId, referenceId } = parsePersonaWebhook(payload);
 
   const newStatus = STATUS_MAP[eventName];
   if (!newStatus) {
+    console.info(`[Persona Webhook] Skipping unhandled event: ${eventName || '(empty)'}`);
     return res.status(200).json({ received: true, skipped: true, reason: `Unhandled event: ${eventName}` });
   }
 
   if (!inquiryId) {
-    console.warn('[Persona Webhook] Missing inquiry ID in payload', payload);
+    console.warn('[Persona Webhook] Missing inquiry ID in payload', JSON.stringify(payload).slice(0, 500));
     return res.status(400).json({ error: 'Missing inquiry ID' });
   }
 
   try {
+    // Match by inquiry ID first (preferred), then fall back to reference-id lookup for
+    // rows where the inquiry was just submitted and the ID may not yet be stored.
     const result = await pool.query(
       `UPDATE kyc_verifications
          SET verification_status = $1,
@@ -102,38 +143,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
              reviewed_at          = NOW(),
              updated_at           = NOW()
        WHERE persona_inquiry_id = $2
-          OR (user_id = (
-                SELECT id FROM users WHERE auth0_id = $3 OR id::text = $3
-                LIMIT 1
-              ) AND persona_inquiry_id IS NULL)
+          OR (
+               persona_inquiry_id IS NULL
+               AND user_id = (
+                 SELECT id FROM users
+                 WHERE auth0_id = $3 OR id::text = $3
+                 LIMIT 1
+               )
+             )
        RETURNING id, user_id, verification_status`,
       [newStatus, inquiryId, referenceId]
     );
 
     if (result.rows.length === 0) {
-      console.warn(`[Persona Webhook] No matching kyc_verifications row for inquiry ${inquiryId} / ref ${referenceId}`);
+      console.warn(
+        `[Persona Webhook] No matching row for inquiry=${inquiryId} ref=${referenceId}. ` +
+        `Event=${eventName}. Row may not exist yet — safe to ignore if inquiry was just started.`
+      );
       return res.status(200).json({ received: true, matched: false });
     }
 
     const row = result.rows[0];
 
     addAuditEntry({
-      action: `persona_webhook_${eventName}`,
+      action: `persona_webhook.${eventName}`,
       actor: 'persona',
       actorType: 'system',
       resource: 'kyc_verification',
       resourceId: String(row.id),
-      details: {
-        inquiryId,
-        referenceId,
-        eventName,
-        newStatus,
-        personaPayloadType: payload?.data?.type,
-      },
-      ipAddress: req.headers['x-forwarded-for'] as string ?? req.socket.remoteAddress ?? 'unknown',
+      details: { inquiryId, referenceId, eventName, newStatus },
+      ipAddress:
+        (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim() ??
+        req.socket.remoteAddress ??
+        'unknown',
     });
 
-    console.info(`[Persona Webhook] Updated kyc_verifications id=${row.id} → status=${newStatus} (inquiry=${inquiryId})`);
+    console.info(
+      `[Persona Webhook] kyc_verifications id=${row.id} → ${newStatus} (inquiry=${inquiryId})`
+    );
     return res.status(200).json({ received: true, matched: true, kycId: row.id, status: newStatus });
   } catch (err: any) {
     console.error('[Persona Webhook] DB error:', err.message);

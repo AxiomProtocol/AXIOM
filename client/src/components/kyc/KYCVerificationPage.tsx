@@ -120,26 +120,21 @@ export const KYCVerificationPage: React.FC<KYCVerificationPageProps> = ({
     const token = localStorage.getItem('auth-token');
 
     try {
-      const res = await fetch('/api/kyc/submit-verification', {
+      const res = await fetch('/api/persona/submit-inquiry', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({
-          personaInquiryId: resolvedInquiryId,
-          personalInfo: {
-            firstName: '—',
-            lastName: '—',
-            dateOfBirth: '2000-01-01',
-            nationality: 'unknown',
-            address: 'via persona hosted flow',
-            phoneNumber: '—',
-          },
-        }),
+        body: JSON.stringify({ personaInquiryId: resolvedInquiryId }),
       });
 
       if (!res.ok) throw new Error('Submission failed');
+
+      // Signal KYCVerificationGate instances on other pages to re-check status
+      try {
+        localStorage.setItem('kyc_status_dirty', String(Date.now()));
+      } catch { /* storage may be blocked */ }
 
       if (onComplete) onComplete(resolvedInquiryId);
 

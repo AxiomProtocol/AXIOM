@@ -57,6 +57,9 @@ export async function register() {
       { key: 'RENTCAST_API_KEY',            service: 'RentCast property data'                          },
       { key: 'ALPHA_VANTAGE_API_KEY',       service: 'Alpha Vantage market data'                       },
       { key: 'PINATA_JWT',                  service: 'Pinata IPFS storage'                             },
+      { key: 'PERSONA_TEMPLATE_ID',         service: 'Persona identity verification (template ID)'    },
+      { key: 'PERSONA_WEBHOOK_SECRET',      service: 'Persona webhook signature verification'         },
+      { key: 'PERSONA_API_KEY',             service: 'Persona identity verification API'              },
     ];
 
     const missingFatal: string[] = [];

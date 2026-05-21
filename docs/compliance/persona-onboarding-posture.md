@@ -15,10 +15,10 @@
 Axiom Protocol maintains a written compliance framework governing participant onboarding and capital activity. The framework includes:
 
 - **Customer Identification Program (CIP):** Identity verification is performed at onboarding via Persona's hosted inquiry flow. Required fields: legal name, date of birth, government-issued identity document, proof of address, and liveness check.
-- **Customer Due Diligence (CDD):** A risk-tiered profile is assigned at onboarding based on country of residence, declared income band, source of funds, and investment experience. High-risk profiles trigger enhanced review.
-- **Ongoing transaction monitoring:** Protocol-layer controls enforce per-user transaction limits mapped to verification tier. Automated control layers (on-chain financial rails) enforce limits at the settlement layer without manual intervention.
-- **Suspicious Activity Reporting (SAR) readiness:** Operator procedures designate a compliance officer responsible for reviewing flagged participants and filing SARs as required under 31 U.S.C. § 5318(g). Automated filing is deferred; current process is manual review.
-- **Record retention:** All identity records, audit entries, and transaction logs are retained for a minimum of five years per 31 C.F.R. § 1010.430.
+- **Customer Due Diligence (CDD):** A risk-tiered profile is assigned at onboarding based on declared income band, source of funds, investment experience, and PEP/criminal-record disclosures. High-risk profiles (isPoliticallyExposed=true or hasCriminalRecord=true) trigger mandatory manual review before access is granted.
+- **Transaction monitoring:** Automated transaction monitoring is **not yet implemented**. Current controls are limited to per-tier access gates enforced by the KYCVerificationGate component. Ongoing monitoring is deferred to a future compliance module.
+- **Suspicious Activity Reporting (SAR) readiness:** Operator procedures designate a compliance officer responsible for reviewing flagged participants and filing SARs as required under 31 U.S.C. § 5318(g). Automated SAR filing is deferred; current process is manual operator review.
+- **Record retention:** Audit entries written by `lib/compliance.ts` `addAuditEntry()` and `kyc_verifications` database rows are retained per platform data policy. Formal five-year retention enforcement is **planned** and not yet automated.
 
 **Program maturity:** Operational draft. External BSA/AML examination has not yet been completed. External attestation is pending.
 

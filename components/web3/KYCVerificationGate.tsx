@@ -8,6 +8,13 @@ interface KYCVerificationGateProps {
 
 type GateStatus = 'loading' | 'unverified' | 'pending' | 'verified';
 
+function mapVerificationStatus(verificationStatus: string | undefined): GateStatus {
+  if (!verificationStatus) return 'unverified';
+  if (verificationStatus === 'approved') return 'verified';
+  if (verificationStatus === 'pending' || verificationStatus === 'under_review') return 'pending';
+  return 'unverified';
+}
+
 export default function KYCVerificationGate({ children, onVerified }: KYCVerificationGateProps) {
   const { isConnected, address, connect } = useWallet();
   const [kycStatus, setKycStatus] = useState<GateStatus>('loading');
@@ -18,17 +25,12 @@ export default function KYCVerificationGate({ children, onVerified }: KYCVerific
       return;
     }
     try {
-      const res = await fetch(`/api/kyc/status?address=${encodeURIComponent(address)}`);
+      const res = await fetch('/api/kyc/verification');
       if (res.ok) {
         const data = await res.json();
-        if (data.verified) {
-          setKycStatus('verified');
-          if (onVerified) onVerified();
-        } else if (data.pending) {
-          setKycStatus('pending');
-        } else {
-          setKycStatus('unverified');
-        }
+        const next = mapVerificationStatus(data?.kycVerification?.verificationStatus);
+        setKycStatus(next);
+        if (next === 'verified' && onVerified) onVerified();
       } else {
         setKycStatus('unverified');
       }
@@ -37,12 +39,28 @@ export default function KYCVerificationGate({ children, onVerified }: KYCVerific
     }
   }, [address, onVerified]);
 
+  // Initial check when wallet connects
   useEffect(() => {
     if (isConnected && address) {
       checkKYCStatus();
     } else {
       setKycStatus('unverified');
     }
+  }, [isConnected, address, checkKYCStatus]);
+
+  // Re-check when the tab regains focus (user returns after completing Persona flow)
+  // or when KYCVerificationPage signals completion via localStorage
+  useEffect(() => {
+    const onFocus = () => { if (isConnected && address) checkKYCStatus(); };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'kyc_status_dirty' && isConnected && address) checkKYCStatus();
+    };
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('storage', onStorage);
+    };
   }, [isConnected, address, checkKYCStatus]);
 
   if (kycStatus === 'loading') {
@@ -170,6 +188,7 @@ export default function KYCVerificationGate({ children, onVerified }: KYCVerific
     );
   }
 
+  // Unverified — wallet connected, no KYC
   return (
     <div style={{ maxWidth: 500, margin: '0 auto', textAlign: 'center', padding: 48 }}>
       <div
