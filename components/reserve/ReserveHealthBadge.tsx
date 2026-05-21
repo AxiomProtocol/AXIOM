@@ -18,26 +18,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 
-// ── Source-type base scores — mirrors valuationConfidence.ts ─────────────────
-
-const SOURCE_BASE_SCORES: Record<string, number> = {
-  FIXED_PEG:                  99,
-  CHAINLINK:                  92,
-  ERC4626_CONVERT_TO_ASSETS:  85,
-  ISSUER_NAV_API:             80,
-  CUSTODIAN_ATTESTATION:      75,
-  MANUAL_OPERATOR_INPUT:      50,
-  DEX_TWAP:                   40,
-  INTERNAL_ACCOUNTING:        60,
-  FALLBACK_COMPOSITE:         65,
-};
-
 // ── Types ─────────────────────────────────────────────────────────────────────
+
+type FreshnessLabel = 'FRESH' | 'APPROACHING STALE' | 'STALE' | 'UNAVAILABLE';
 
 interface OracleSourceHealth {
   sourceId: string;
   sourceName: string;
   sourceType: string;
+  baseScore: number;
   isActive: boolean;
   isDeprecated: boolean;
   isHealthy: boolean;
@@ -49,6 +38,8 @@ interface OracleSourceHealth {
 
 interface OracleHealthResponse {
   fetchedAt: string;
+  confidenceScore: number;
+  freshnessState: FreshnessLabel;
   meta: {
     sourceType: string;
     isFallback: boolean;
@@ -63,41 +54,6 @@ interface OracleHealthResponse {
     degradedSources: number;
   };
   sources: OracleSourceHealth[];
-}
-
-// ── Score computation ─────────────────────────────────────────────────────────
-
-function computeConfidenceScore(data: OracleHealthResponse): number {
-  const activeSources = data.sources.filter(s => s.isActive && !s.isDeprecated);
-  const healthySources = activeSources.filter(s => s.isHealthy);
-
-  if (activeSources.length === 0) return 0;
-  if (healthySources.length === 0) return 0;
-
-  const baseScore =
-    healthySources.reduce((sum, s) => sum + (SOURCE_BASE_SCORES[s.sourceType] ?? 60), 0) /
-    healthySources.length;
-
-  // Weight by coverage: ratio of healthy to total active
-  const coverageRatio = healthySources.length / activeSources.length;
-  const weighted = baseScore * coverageRatio;
-
-  // Apply freshness penalty
-  const penalized = data.meta.isStale
-    ? weighted - 25
-    : !data.meta.isFresh
-      ? weighted - 5
-      : weighted;
-
-  return Math.max(0, Math.min(100, Math.round(penalized)));
-}
-
-type FreshnessLabel = 'FRESH' | 'APPROACHING STALE' | 'STALE' | 'UNAVAILABLE';
-
-function getFreshnessLabel(data: OracleHealthResponse): FreshnessLabel {
-  if (data.meta.isStale) return 'STALE';
-  if (!data.meta.isFresh) return 'APPROACHING STALE';
-  return 'FRESH';
 }
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -213,9 +169,9 @@ export function ReserveHealthBadge({ compact = false }: ReserveHealthBadgeProps)
     );
   }
 
-  // ── Computed values ────────────────────────────────────────────────────────
-  const score        = computeConfidenceScore(data);
-  const freshness    = getFreshnessLabel(data);
+  // ── Values from API (no local recomputation) ───────────────────────────────
+  const score        = data.confidenceScore;
+  const freshness    = data.freshnessState;
   const scoreCol     = scoreColor(score);
   const freshCol     = freshnessColor(freshness);
   const { overallHealth } = data;
@@ -395,8 +351,8 @@ export function ReserveHealthBadge({ compact = false }: ReserveHealthBadgeProps)
                     {src.latencyMs}ms
                   </span>
                 )}
-                <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, fontWeight: 700, color: SOURCE_BASE_SCORES[src.sourceType] !== undefined ? T.navy : T.muted }}>
-                  {src.isHealthy ? (SOURCE_BASE_SCORES[src.sourceType] ?? 60) : '—'}
+                <span style={{ fontFamily: '"Courier New", monospace', fontSize: 9, fontWeight: 700, color: T.navy }}>
+                  {src.isHealthy ? src.baseScore : '—'}
                   {src.isHealthy && <span style={{ fontWeight: 400, color: T.muted }}> base</span>}
                 </span>
               </div>
