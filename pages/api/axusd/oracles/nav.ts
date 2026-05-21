@@ -5,11 +5,40 @@
  * freshness state, and fallback flag.
  *
  * If ?asset= is omitted, returns observations for all registry assets.
+ *
+ * Phase 4 additions:
+ *   - cache stats (entries, fresh, stale) appended to all responses
+ *   - lastPoll summary (most recent refreshAllObservations run)
+ *   - liveAttestationStatus surfaced explicitly for PAXG / BitGo attestation
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getTreasuryNAVOracle } from '../../../../lib/reserves/phase3/treasuryNAVOracle';
 import { getApprovedReserveAssetRegistry } from '../../../../lib/reserves/phase2/approvedReserveAssetRegistry';
+import { getCacheStats } from '../../../../lib/reserves/phase3/navObservationCache';
+import { getLastPollSummary } from '../../../../lib/reserves/phase3/navPollingService';
+
+function buildCacheAndPollMeta() {
+  const stats = getCacheStats();
+  const lastPoll = getLastPollSummary();
+  return {
+    cache: {
+      entries: stats.entries,
+      fresh: stats.fresh,
+      stale: stats.stale,
+      assets: stats.assets,
+    },
+    lastPoll: lastPoll
+      ? {
+          startedAt: lastPoll.startedAt,
+          completedAt: lastPoll.completedAt,
+          durationMs: lastPoll.durationMs,
+          successCount: lastPoll.successCount,
+          failureCount: lastPoll.failureCount,
+        }
+      : null,
+  };
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
@@ -33,6 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               : null,
         },
         observation: obs,
+        ...buildCacheAndPollMeta(),
       });
     }
 
@@ -60,6 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         stale: observations.filter(o => o.isStale).length,
         fallback: observations.filter(o => o.isFallback).length,
       },
+      ...buildCacheAndPollMeta(),
     });
   } catch (err) {
     return res.status(500).json({

@@ -13,6 +13,7 @@
  */
 
 import type { GetServerSideProps } from 'next';
+import { useState, useEffect } from 'react';
 import { OperatorConsoleLayout } from '../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../lib/capinfra/operatorAuth';
 import {
@@ -237,6 +238,328 @@ function OracleHealthPanel({ sources }: { sources: OracleSource[] }) {
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// ── Oracle Live Feed Panel ────────────────────────────────────────────────────
+
+const PHASE4_ASSETS = [
+  { assetId: 'paxg-tokenized-gold-planned',         symbol: 'PAXG',   name: 'Pax Gold' },
+  { assetId: 'thbill-theo-market-planned',          symbol: 'thBILL', name: 'T-Bill Token' },
+  { assetId: 'buidl-tokenized-treasury-planned',    symbol: 'BUIDL',  name: 'BlackRock USD Fund' },
+  { assetId: 'ondo-usdy-tokenized-govmmf-planned',  symbol: 'USDY',   name: 'Ondo Gov MMF' },
+];
+
+interface OracleNavObs {
+  assetId: string;
+  symbol: string;
+  grossNavPerToken: number | null;
+  quoteCurrency: string;
+  sourceType: string;
+  sourceName: string;
+  confidenceScore: number;
+  freshnessState: string;
+  liveAttestationStatus: string | null;
+  isUsable: boolean;
+  unusableReason: string | null;
+  timestamp: string | null;
+}
+
+interface NavFeedData {
+  fetchedAt: string;
+  observations: OracleNavObs[];
+  cache: { entries: number; fresh: number; stale: number };
+  lastPoll: {
+    startedAt: string;
+    completedAt: string;
+    durationMs: number;
+    successCount: number;
+    failureCount: number;
+  } | null;
+}
+
+function OracleLiveFeedPanel() {
+  const [data, setData]               = useState<NavFeedData | null>(null);
+  const [loading, setLoading]         = useState(false);
+  const [fetchError, setFetchError]   = useState<string | null>(null);
+  const [refreshing, setRefreshing]   = useState(false);
+  const [refreshMsg, setRefreshMsg]   = useState<string | null>(null);
+
+  const fetchFeed = async () => {
+    try {
+      setLoading(true);
+      setFetchError(null);
+      const res = await fetch('/api/axusd/oracles/nav');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json: NavFeedData = await res.json();
+      setData(json);
+    } catch (e) {
+      setFetchError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeed();
+    const id = setInterval(fetchFeed, 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const handleRefreshNow = async () => {
+    try {
+      setRefreshing(true);
+      setRefreshMsg(null);
+      const res = await fetch('/api/operator/oracles/refresh', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setRefreshMsg(`Error: ${json.error ?? 'Refresh failed'}`);
+      } else {
+        setRefreshMsg(
+          `Refreshed — ${json.successCount} OK · ${json.failureCount} failed · ${json.durationMs}ms`
+        );
+        await fetchFeed();
+      }
+    } catch (e) {
+      setRefreshMsg(`Error: ${(e as Error).message}`);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const obsMap = new Map<string, OracleNavObs>();
+  if (data?.observations) {
+    for (const obs of data.observations) {
+      obsMap.set(obs.assetId, obs);
+    }
+  }
+
+  return (
+    <div style={{ border: '1px solid #1e3a5f', marginBottom: 32 }}>
+      {/* Header */}
+      <div style={{
+        background: '#1e3a5f',
+        padding: '8px 12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <span style={{ fontFamily: 'Georgia, serif', fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>
+          Phase 4 — Live Oracle Feed
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {data && !loading && (
+            <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#93c5fd' }}>
+              Polled {new Date(data.fetchedAt).toLocaleTimeString()}
+            </span>
+          )}
+          {loading && data && (
+            <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#93c5fd' }}>Updating…</span>
+          )}
+          <button
+            onClick={handleRefreshNow}
+            disabled={refreshing || loading}
+            style={{
+              fontFamily: 'monospace',
+              fontSize: '10px',
+              fontWeight: 700,
+              color: '#ffffff',
+              background: 'transparent',
+              border: '1px solid #93c5fd',
+              padding: '2px 8px',
+              cursor: refreshing || loading ? 'not-allowed' : 'pointer',
+              opacity: refreshing || loading ? 0.6 : 1,
+            }}
+          >
+            {refreshing ? 'Refreshing…' : 'Refresh Now'}
+          </button>
+        </div>
+      </div>
+
+      {/* Loading / error / refresh status */}
+      {loading && !data && (
+        <div style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: '11px', color: '#6b7280' }}>
+          Loading oracle feed…
+        </div>
+      )}
+      {fetchError && (
+        <div style={{ padding: '8px 12px', background: '#fee2e2', fontFamily: 'monospace', fontSize: '11px', color: '#991b1b' }}>
+          ⚠ Failed to load oracle feed: {fetchError}
+        </div>
+      )}
+      {refreshMsg && (
+        <div style={{
+          padding: '6px 12px',
+          background: refreshMsg.startsWith('Error') ? '#fee2e2' : '#d8f3dc',
+          fontFamily: 'monospace',
+          fontSize: '11px',
+          color: refreshMsg.startsWith('Error') ? '#991b1b' : '#2d6a4f',
+        }}>
+          {refreshMsg}
+        </div>
+      )}
+
+      {/* Asset table */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+        <thead>
+          <tr style={{ background: '#f0f4ff' }}>
+            {['Asset', 'Price / NAV', 'Source', 'Freshness', 'Confidence', 'Attestation', 'Last Updated'].map(h => (
+              <th key={h} style={{
+                fontFamily: 'monospace',
+                fontSize: '10px',
+                padding: '5px 8px',
+                textAlign: 'left',
+                color: '#1e3a5f',
+                fontWeight: 700,
+                borderBottom: '1px solid #d1d5db',
+                letterSpacing: '0.04em',
+              }}>
+                {h.toUpperCase()}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {PHASE4_ASSETS.map(({ assetId, symbol, name }) => {
+            const obs = obsMap.get(assetId);
+            const noData = !data;
+            return (
+              <tr key={assetId} style={{ background: '#ffffff', borderBottom: '1px solid #e5e7eb' }}>
+
+                {/* Asset */}
+                <td style={{ ...td, minWidth: 180 }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 700 }}>{symbol}</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: '9px', color: '#6b7280' }}>{name}</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: '8px', color: '#d1d5db', marginTop: 1 }}>{assetId}</div>
+                </td>
+
+                {/* Price / NAV */}
+                <td style={{ ...td, textAlign: 'right', minWidth: 110 }}>
+                  {noData ? (
+                    <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#9ca3af' }}>—</span>
+                  ) : obs?.isUsable && obs.grossNavPerToken != null ? (
+                    <div>
+                      <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 700, color: '#1e3a5f' }}>
+                        ${obs.grossNavPerToken.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <span style={{ fontFamily: 'monospace', fontSize: '9px', color: '#6b7280', marginLeft: 3 }}>
+                        {obs.quoteCurrency}
+                      </span>
+                    </div>
+                  ) : (
+                    <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#b88a2f' }}>
+                      Unavailable
+                    </span>
+                  )}
+                </td>
+
+                {/* Source */}
+                <td style={td}>
+                  <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#374151' }}>
+                    {noData ? '—' : (obs?.sourceType ?? 'UNUSABLE')}
+                  </span>
+                  {obs?.sourceName && (
+                    <div style={{ fontFamily: 'monospace', fontSize: '9px', color: '#9ca3af', marginTop: 1 }}>
+                      {obs.sourceName}
+                    </div>
+                  )}
+                </td>
+
+                {/* Freshness */}
+                <td style={td}>
+                  {noData ? (
+                    <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#9ca3af' }}>—</span>
+                  ) : (
+                    <StatusPill status={obs?.freshnessState ?? 'EXPIRED'} />
+                  )}
+                  {obs?.unusableReason && (
+                    <div style={{ fontFamily: 'monospace', fontSize: '9px', color: '#b88a2f', marginTop: 2, maxWidth: 180 }}>
+                      {obs.unusableReason}
+                    </div>
+                  )}
+                </td>
+
+                {/* Confidence */}
+                <td style={{ ...td, textAlign: 'center' }}>
+                  {noData ? (
+                    <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#9ca3af' }}>—</span>
+                  ) : (
+                    <ConfidenceBadge score={obs?.confidenceScore ?? 0} />
+                  )}
+                </td>
+
+                {/* Attestation */}
+                <td style={td}>
+                  {noData || !obs?.liveAttestationStatus ? (
+                    <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#9ca3af' }}>—</span>
+                  ) : (
+                    <StatusPill status={obs.liveAttestationStatus} />
+                  )}
+                </td>
+
+                {/* Last Updated */}
+                <td style={td}>
+                  <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6b7280' }}>
+                    {noData
+                      ? '—'
+                      : obs?.timestamp
+                        ? new Date(obs.timestamp).toLocaleString('en-US', {
+                            month: 'short', day: 'numeric',
+                            hour: '2-digit', minute: '2-digit',
+                          })
+                        : 'Never'}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      {/* Cache stats strip */}
+      {data && (
+        <div style={{
+          display: 'flex',
+          gap: 16,
+          padding: '6px 12px',
+          background: '#f9fafb',
+          borderTop: '1px solid #e5e7eb',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+        }}>
+          <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#1e3a5f', fontWeight: 700 }}>
+            CACHE
+          </span>
+          {[
+            { label: 'entries', value: String(data.cache.entries), color: '#374151' },
+            { label: 'fresh',   value: String(data.cache.fresh),   color: '#2d6a4f' },
+            { label: 'stale',   value: String(data.cache.stale),   color: data.cache.stale > 0 ? '#991b1b' : '#9ca3af' },
+          ].map(s => (
+            <span key={s.label} style={{ fontFamily: 'monospace', fontSize: '10px' }}>
+              <span style={{ fontWeight: 700, color: s.color }}>{s.value}</span>{' '}
+              <span style={{ color: '#9ca3af' }}>{s.label}</span>
+            </span>
+          ))}
+          {data.lastPoll ? (
+            <>
+              <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#d1d5db' }}>·</span>
+              <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6b7280' }}>
+                Last poll {new Date(data.lastPoll.completedAt).toLocaleTimeString()} ·{' '}
+                {data.lastPoll.successCount}/{data.lastPoll.successCount + data.lastPoll.failureCount} OK ·{' '}
+                {data.lastPoll.durationMs}ms
+              </span>
+            </>
+          ) : (
+            <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#b88a2f' }}>
+              No poll has run yet — check Vercel cron or trigger Refresh Now
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -542,6 +865,12 @@ export default function ReserveRegistryPage({ summary, attestation, oracleSource
             Phase 3: attestation publisher stubs wired. All assets show NONE pending deployment of custodian proof sources.
           </div>
         </div>
+
+        {/* Phase 4: Live Oracle Feed */}
+        <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '16px', fontWeight: 700, marginBottom: 16, borderBottom: '1px solid #d1d5db', paddingBottom: 8 }}>
+          Phase 4 — Oracle Health &amp; Live Price Feed
+        </h2>
+        <OracleLiveFeedPanel />
 
         {/* Phase 3: Oracle Source Registry */}
         <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '16px', fontWeight: 700, marginBottom: 16, borderBottom: '1px solid #d1d5db', paddingBottom: 8 }}>
