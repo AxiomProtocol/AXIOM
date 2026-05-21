@@ -35,6 +35,8 @@ import {
   type SupportedSymbol,
 } from '../../lib/assets/externalAssetService';
 import { _internal as portfolioInternal } from '../../lib/portfolio/realAssetsPortfolio';
+import { getTreasuryNAVOracle } from '../../lib/reserves/phase3/treasuryNAVOracle';
+import { fetchBitGoAttestation } from '../../lib/reserves/phase3/feeds/bitgoAttestationFetcher';
 
 interface SpotRow {
   symbol: SupportedSymbol;
@@ -52,10 +54,33 @@ interface AxauSpot {
   error?: string;
 }
 
+interface PaxgNavData {
+  grossNavPerToken: number | null;
+  sourceName: string;
+  sourceUrl: string | null;
+  timestamp: string;
+  confidenceScore: number;
+  freshnessState: string;
+  liveAttestationStatus: string | null;
+  isStale: boolean;
+  isUsable: boolean;
+  unusableReason: string | null;
+}
+
+interface PaxgAttestationData {
+  status: string;
+  lastCheckedAt: string;
+  walletAddress: string | null;
+  paxgBalanceFormatted: string | null;
+  notes: string;
+}
+
 interface PageProps {
   assets: AssetMetadata[];
   spots: SpotRow[];
   axauSpot: AxauSpot;
+  paxgNav: PaxgNavData | null;
+  paxgAttestation: PaxgAttestationData | null;
   fetchedAt: string;
 }
 
@@ -210,11 +235,46 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async () => {
     }
   }
 
+  // Fetch PAXG NAV observation and BitGo attestation in parallel
+  const [paxgNavResult, paxgAttestResult] = await Promise.allSettled([
+    getTreasuryNAVOracle().getNAVWithMetadata('paxg-tokenized-gold-planned'),
+    fetchBitGoAttestation(),
+  ]);
+
+  const paxgNav: PaxgNavData | null =
+    paxgNavResult.status === 'fulfilled'
+      ? {
+          grossNavPerToken: paxgNavResult.value.grossNavPerToken,
+          sourceName: paxgNavResult.value.sourceName,
+          sourceUrl: paxgNavResult.value.sourceUrl,
+          timestamp: paxgNavResult.value.timestamp,
+          confidenceScore: paxgNavResult.value.confidenceScore,
+          freshnessState: paxgNavResult.value.freshnessState,
+          liveAttestationStatus: paxgNavResult.value.liveAttestationStatus ?? null,
+          isStale: paxgNavResult.value.isStale,
+          isUsable: paxgNavResult.value.isUsable,
+          unusableReason: paxgNavResult.value.unusableReason,
+        }
+      : null;
+
+  const paxgAttestation: PaxgAttestationData | null =
+    paxgAttestResult.status === 'fulfilled'
+      ? {
+          status: paxgAttestResult.value.status,
+          lastCheckedAt: paxgAttestResult.value.lastCheckedAt,
+          walletAddress: paxgAttestResult.value.walletAddress,
+          paxgBalanceFormatted: paxgAttestResult.value.paxgBalanceFormatted,
+          notes: paxgAttestResult.value.notes,
+        }
+      : null;
+
   return {
     props: {
       assets,
       spots,
       axauSpot,
+      paxgNav,
+      paxgAttestation,
       fetchedAt: new Date().toISOString(),
     },
   };
@@ -235,7 +295,9 @@ function fmtPct(n: number | null): string {
   return `${n.toFixed(2)}%`;
 }
 
-export default function AssetsDashboard({ assets, spots, axauSpot, fetchedAt }: PageProps) {
+const PAXG_HAIRCUT_BPS = 500; // 5% — from approvedReserveAssetRegistry Phase 4 admission
+
+export default function AssetsDashboard({ assets, spots, axauSpot, paxgNav, paxgAttestation, fetchedAt }: PageProps) {
   const [walletAddress, setWalletAddress] = useState('');
   const [submittedAddress, setSubmittedAddress] = useState<string | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioResponse | null>(null);
@@ -302,6 +364,20 @@ export default function AssetsDashboard({ assets, spots, axauSpot, fetchedAt }: 
   const usdcSpot = spots.find((s) => s.symbol === 'USDC');
   const wbtcSpot = spots.find((s) => s.symbol === 'WBTC');
   const cbethSpot = spots.find((s) => s.symbol === 'cbETH');
+
+  // PAXG reserve contribution computed values
+  const paxgSpotPerToken = paxgNav?.grossNavPerToken ?? null;
+  const paxgBalance = paxgAttestation?.paxgBalanceFormatted
+    ? parseFloat(paxgAttestation.paxgBalanceFormatted)
+    : null;
+  const paxgNavPerTokenAfterHaircut =
+    paxgSpotPerToken !== null
+      ? paxgSpotPerToken * (1 - PAXG_HAIRCUT_BPS / 10_000)
+      : null;
+  const paxgImpliedSleeveNavUsd =
+    paxgSpotPerToken !== null && paxgBalance !== null && paxgBalance > 0
+      ? paxgSpotPerToken * paxgBalance * (1 - PAXG_HAIRCUT_BPS / 10_000)
+      : null;
 
   return (
     <DesignLawLayout>
@@ -522,6 +598,180 @@ export default function AssetsDashboard({ assets, spots, axauSpot, fetchedAt }: 
               ]} />
             </tbody>
           </table>
+        </div>
+      </section>
+
+      {/* ── Section 3b: PAXG Reserve Contribution ───────────────────────── */}
+      <section style={{ marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+          <SectionHeading>PAXG Reserve Contribution</SectionHeading>
+          <span style={{
+            background: COLOR.navy,
+            color: '#fff',
+            padding: '3px 8px',
+            fontFamily: '"Courier New", monospace',
+            fontSize: 10,
+            letterSpacing: '0.08em',
+          }}>
+            PHASE_4_LIVE
+          </span>
+          <span style={{
+            background: COLOR.green,
+            color: '#fff',
+            padding: '3px 8px',
+            fontFamily: '"Courier New", monospace',
+            fontSize: 10,
+            letterSpacing: '0.08em',
+          }}>
+            GOVERNANCE_ADMITTED
+          </span>
+        </div>
+        <p style={{ color: COLOR.muted, fontFamily: 'Georgia, serif', fontSize: 14, marginTop: 4, marginBottom: 16 }}>
+          Live PAXG gold sleeve NAV contribution to the AXUSD reserve, priced by the on-chain
+          Chainlink XAU/USD feed and verified by BitGo on-chain token attestation. A 500 bps (5%)
+          haircut applies for intraday XAU/USD volatility. Dual-counting guard: this sleeve balance
+          is separate from the CanonicalReserveSnapshot hard-asset numerator.
+        </p>
+
+        {/* Metric strip */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16 }}>
+          <SpotCard
+            label="Spot per PAXG (Chainlink XAU/USD)"
+            value={fmtUsd(paxgSpotPerToken, { maximumFractionDigits: 2 })}
+            sub={paxgNav ? `Oracle: ${paxgNav.sourceName}` : 'Oracle unavailable'}
+            error={paxgNav === null ? 'Oracle fetch failed' : undefined}
+            highlight
+          />
+          <SpotCard
+            label="Per-token after haircut (500 bps)"
+            value={fmtUsd(paxgNavPerTokenAfterHaircut, { maximumFractionDigits: 2 })}
+            sub="Haircut: 5% gold-volatility buffer"
+          />
+          <SpotCard
+            label="BitGo custody balance (PAXG)"
+            value={
+              paxgAttestation?.paxgBalanceFormatted
+                ? `${paxgAttestation.paxgBalanceFormatted} PAXG`
+                : paxgAttestation?.status === 'PENDING'
+                ? 'Pending'
+                : '—'
+            }
+            sub={`Attestation: ${paxgAttestation?.status ?? 'unavailable'}`}
+            error={
+              paxgAttestation?.status === 'FAILED'
+                ? paxgAttestation.notes
+                : undefined
+            }
+          />
+          <SpotCard
+            label="Implied sleeve NAV (after haircut)"
+            value={
+              paxgImpliedSleeveNavUsd !== null
+                ? fmtUsd(paxgImpliedSleeveNavUsd)
+                : paxgAttestation?.status === 'PENDING'
+                ? 'Pending attestation'
+                : '—'
+            }
+            sub="spot × balance × (1 − 5%)"
+          />
+        </div>
+
+        {/* Oracle detail row */}
+        <div style={{
+          border: `1px solid ${COLOR.borderAlt}`,
+          background: COLOR.bgAlt,
+          padding: '12px 16px',
+          fontFamily: '"Courier New", monospace',
+          fontSize: 12,
+          marginBottom: 12,
+        }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
+            <div>
+              <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Oracle freshness</span>
+              <div style={{ color: paxgNav?.isStale ? COLOR.amber : COLOR.text, marginTop: 2 }}>
+                {paxgNav?.freshnessState ?? '—'}
+              </div>
+            </div>
+            <div>
+              <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Confidence score</span>
+              <div style={{ color: COLOR.text, marginTop: 2 }}>
+                {paxgNav ? `${paxgNav.confidenceScore} / 100` : '—'}
+              </div>
+            </div>
+            <div>
+              <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Last oracle poll</span>
+              <div style={{ color: COLOR.text, marginTop: 2 }}>
+                {paxgNav ? new Date(paxgNav.timestamp).toLocaleString() : '—'}
+              </div>
+            </div>
+            <div>
+              <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Attestation status</span>
+              <div style={{ color: COLOR.text, marginTop: 2 }}>
+                {paxgNav?.liveAttestationStatus ?? paxgAttestation?.status ?? '—'}
+              </div>
+            </div>
+            {paxgAttestation?.walletAddress ? (
+              <div style={{ gridColumn: 'span 2' }}>
+                <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>BitGo custody address (on-chain verified)</span>
+                <div style={{ color: COLOR.text, marginTop: 2, wordBreak: 'break-all' }}>
+                  {paxgAttestation.walletAddress}
+                </div>
+              </div>
+            ) : null}
+            {paxgNav?.sourceUrl ? (
+              <div>
+                <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Oracle source</span>
+                <div style={{ marginTop: 2 }}>
+                  <a
+                    href={paxgNav.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: COLOR.navy, fontSize: 11 }}
+                  >
+                    {paxgNav.sourceName} ↗
+                  </a>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Oracle staleness warning */}
+        {paxgNav?.unusableReason ? (
+          <div style={{
+            padding: '10px 14px',
+            background: COLOR.amberBg,
+            border: `1px solid ${COLOR.borderAlt}`,
+            fontFamily: '"Courier New", monospace',
+            fontSize: 12,
+            color: COLOR.amber,
+            marginBottom: 12,
+          }}>
+            Oracle note: {paxgNav.unusableReason}. Sleeve NAV excluded from eligible reserve total
+            until oracle freshness is restored. See task #600 for heartbeat threshold fix.
+          </div>
+        ) : null}
+
+        {/* Governance admission record link */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '10px 14px',
+          border: `1px solid ${COLOR.borderAlt}`,
+          background: COLOR.bg,
+          fontFamily: '"Courier New", monospace',
+          fontSize: 12,
+        }}>
+          <span style={{ color: COLOR.muted }}>Admission record on file:</span>
+          <Link
+            href="/operator/reserve-registry"
+            style={{ color: COLOR.navy, textDecoration: 'underline', fontWeight: 600 }}
+          >
+            /operator/reserve-registry →
+          </Link>
+          <span style={{ color: COLOR.muted }}>·</span>
+          <span style={{ color: COLOR.muted }}>Operator access required to view governance detail</span>
         </div>
       </section>
 
