@@ -8492,6 +8492,25 @@ END $seed$`, 'seed dp_listings');
       await exec(`CREATE INDEX IF NOT EXISTS rbs_symbol_time_idx ON reserve_balance_snapshots(symbol, snapshot_hour)`, 'index rbs_symbol_time_idx');
 
       // ═══════════════════════════════════════════
+      //  HARVEST CRON RUNS (vault harvest history)
+      // ═══════════════════════════════════════════
+      // Mirrors drizzle/migrations/0008_harvest_cron_runs.sql.
+      // Must live here (not in the numbered-migration block) so it applies in
+      // production where the !isProductionEnv guard blocks the file runner.
+      await exec(`CREATE TABLE IF NOT EXISTS harvest_cron_runs (
+        id            serial        PRIMARY KEY,
+        started_at    timestamptz   NOT NULL,
+        completed_at  timestamptz   NOT NULL,
+        status        varchar(20)   NOT NULL,
+        yield_usdc    numeric(18,6) NOT NULL DEFAULT 0,
+        tx_hash       varchar(66),
+        error_message text,
+        duration_ms   integer
+      )`, 'table harvest_cron_runs');
+      await exec(`CREATE INDEX IF NOT EXISTS harvest_cron_runs_started_at_idx ON harvest_cron_runs (started_at DESC)`, 'index harvest_cron_runs_started_at_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS harvest_cron_runs_status_idx ON harvest_cron_runs (status)`, 'index harvest_cron_runs_status_idx');
+
+      // ═══════════════════════════════════════════
       //  KEYGROW DEPOSITS
       // ═══════════════════════════════════════════
       await exec(enumSafe('keygrow_deposit_status', ['pending','paid','staking','applied','refunded']), 'enum keygrow_deposit_status');
