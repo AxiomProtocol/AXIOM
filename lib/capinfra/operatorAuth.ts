@@ -44,14 +44,14 @@ export function setOperatorCookie(res: NextApiResponse, key: string): void {
   const isProd = process.env.NODE_ENV === 'production';
   res.setHeader(
     'Set-Cookie',
-    `${OPERATOR_COOKIE}=${encodeURIComponent(key)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${isProd ? '; Secure' : ''}`,
+    `${OPERATOR_COOKIE}=${encodeURIComponent(key)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${isProd ? '; Secure' : ''}`,
   );
 }
 
 export function clearOperatorCookie(res: NextApiResponse): void {
   res.setHeader(
     'Set-Cookie',
-    `${OPERATOR_COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`,
+    `${OPERATOR_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`,
   );
 }
 
