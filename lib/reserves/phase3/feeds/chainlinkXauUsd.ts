@@ -21,7 +21,7 @@ const AGGREGATOR_V3_ABI = [
 
 // Canonical Chainlink XAU/USD proxy on Arbitrum One
 // https://docs.chain.link/data-feeds/price-feeds/addresses?network=arbitrum
-export const CHAINLINK_XAU_USD_ADDRESS = '0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2C';
+export const CHAINLINK_XAU_USD_ADDRESS = '0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2c';
 
 // Max age before a Chainlink round is considered stale (3600s = 1 hr heartbeat)
 const MAX_ROUND_AGE_SECONDS = 3600;

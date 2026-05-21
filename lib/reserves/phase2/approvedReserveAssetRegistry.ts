@@ -392,7 +392,7 @@ function buildRegistry(): ApprovedReserveAsset[] {
       admissionGateOpen:        true, // OPEN: TOKENIZED_GOLD — Phase 1 compliance gaps do NOT apply
       adminNotes:
         'PAXG tokenized gold sleeve admitted LIVE in Phase 4. ' +
-        'Oracle: Chainlink XAU/USD (Arbitrum One, 0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2C). ' +
+        'Oracle: Chainlink XAU/USD (Arbitrum One, 0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2c). ' +
         'Attestation: BitGo on-chain ERC-20 balanceOf() — verifies actual PAXG token holdings. ' +
         'DUAL-COUNTING GUARD: this AXUSD sleeve balance must NOT overlap with PAXG already ' +
         'included in CanonicalReserveSnapshot hard-asset numerator. ' +

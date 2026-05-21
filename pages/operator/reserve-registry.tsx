@@ -591,7 +591,7 @@ const PAXG_DEFAULTS = {
   proposalDescription:
     'PAXG (Pax Gold, tokenized gold on Arbitrum One) is admitted as an active AXUSD reserve ' +
     'asset effective this governance record. The Phase 4 oracle feed (Chainlink XAU/USD on ' +
-    'Arbitrum One, 0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2C) is live. BitGo CaaS on-chain ' +
+    'Arbitrum One, 0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2c) is live. BitGo CaaS on-chain ' +
     'ERC-20 balanceOf() attestation verifies actual PAXG token holdings. Haircut: 500 bps (5%) ' +
     'for intraday XAU/USD volatility. Max allocation: 20% of eligible reserve (maxAllocationBps=2000). ' +
     'This record constitutes operator sign-off on the registry change and dual-counting guard confirmation.',
