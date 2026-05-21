@@ -19,7 +19,7 @@
  */
 
 import { ethers } from 'ethers';
-import { bitGoRequest, isBitGoConfigured, bitgoCoin } from '../../bitgo/client';
+import { bitGoRequest, isBitGoConfigured, bitgoCoin } from '../../../bitgo/client';
 
 export type AttestationStatus = 'CURRENT' | 'PENDING' | 'STALE' | 'FAILED' | 'NONE';
 

@@ -64,6 +64,13 @@ export interface NAVObservation {
   confidenceScore: number;
   freshnessState: ValuationFreshnessState;
 
+  /**
+   * Live attestation status sourced at observation fetch time.
+   * When set, rwaValuationAdapter uses this over asset.custody.attestationStatus.
+   * This ensures live BitGo results (not static registry metadata) gate eligibility.
+   */
+  liveAttestationStatus?: 'NONE' | 'PENDING' | 'CURRENT' | 'STALE' | 'FAILED' | 'MANUAL_REVIEW';
+
   isStale: boolean;
   isFallback: boolean;
   isManuallyReviewed: boolean;

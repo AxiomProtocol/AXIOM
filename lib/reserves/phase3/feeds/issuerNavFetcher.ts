@@ -38,7 +38,7 @@ const ASSET_ADDRESSES: Record<string, { address: string; chainId: number; decima
     decimals: 18,
   },
   'buidl-tokenized-treasury-planned': {
-    address: '0x7712c34205737192402172409a8F7ccef8aA2AEc', // BUIDL on Ethereum mainnet
+    address: '0x7712c34205737192402172409a8F7ccef8aA2AEc', // BUIDL on Ethereum mainnet (chainId 1)
     chainId: 1,
     decimals: 6,
   },

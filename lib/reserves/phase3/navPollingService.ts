@@ -105,6 +105,9 @@ async function pollPaxg(): Promise<PollResult> {
     sourceUrl: 'https://data.chain.link/arbitrum/mainnet/commodities/xau-usd',
     confidenceScore,
     freshnessState,
+    // Propagate live BitGo attestation result so rwaValuationAdapter gates on
+    // the dynamic on-chain result, not the static registry custody field.
+    liveAttestationStatus: attestationStatus,
     isStale,
     isFallback: false,
     isManuallyReviewed: false,
@@ -133,6 +136,7 @@ const ISSUER_ASSETS: Array<{
   symbol: string;
   assetAddress: string;
   decimals: number;
+  chainId: number;   // per-asset chain — do NOT default all to 42161
   sourceName: string;
   maxStalenessSeconds: number;
 }> = [
@@ -140,6 +144,7 @@ const ISSUER_ASSETS: Array<{
     assetId: 'thbill-theo-market-planned',
     symbol: 'thBILL',
     assetAddress: '0x0000000000000000000000000000000000000001',
+    chainId: 42161, // Arbitrum One (placeholder until Theo Market deploys)
     decimals: 18,
     sourceName: 'Theo Market Issuer NAV API',
     maxStalenessSeconds: 86400,
@@ -148,6 +153,7 @@ const ISSUER_ASSETS: Array<{
     assetId: 'buidl-tokenized-treasury-planned',
     symbol: 'BUIDL',
     assetAddress: '0x7712c34205737192402172409a8F7ccef8aA2AEc',
+    chainId: 1,     // Ethereum mainnet — BUIDL ERC-4626 is NOT on Arbitrum
     decimals: 6,
     sourceName: 'BlackRock BUIDL Issuer NAV / On-Chain',
     maxStalenessSeconds: 86400,
@@ -156,6 +162,7 @@ const ISSUER_ASSETS: Array<{
     assetId: 'ondo-usdy-tokenized-govmmf-planned',
     symbol: 'USDY',
     assetAddress: '0x35e050d3C0eC2d29D269a8EcEa763a183bDF9A9D',
+    chainId: 42161, // Arbitrum One
     decimals: 18,
     sourceName: 'Ondo USDY Issuer NAV API',
     maxStalenessSeconds: 86400,
@@ -199,7 +206,7 @@ async function pollIssuerAsset(config: typeof ISSUER_ASSETS[number]): Promise<Po
   const observation: NAVObservation = {
     assetId: config.assetId,
     assetAddress: config.assetAddress,
-    chainId: 42161,
+    chainId: config.chainId, // per-asset chain (BUIDL=1, others=42161)
     symbol: config.symbol,
     grossNavPerToken: result.nav,
     quoteCurrency: 'USD',

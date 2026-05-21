@@ -209,6 +209,9 @@ async function fetchPaxgObservation(): Promise<NAVObservation> {
     sourceUrl: 'https://data.chain.link/arbitrum/mainnet/commodities/xau-usd',
     confidenceScore,
     freshnessState,
+    // Propagate live BitGo attestation result so rwaValuationAdapter gates on
+    // the dynamic on-chain result, not the static registry custody field.
+    liveAttestationStatus: attestationStatus,
     isStale,
     isFallback: false,
     isManuallyReviewed: false,
@@ -227,6 +230,7 @@ async function fetchPaxgObservation(): Promise<NAVObservation> {
 const ISSUER_ASSET_CONFIG: Record<string, {
   symbol: string;
   address: string;
+  chainId: number;   // per-asset chain — do NOT default all to 42161
   decimals: number;
   sourceName: string;
   maxStaleness: number;
@@ -234,6 +238,7 @@ const ISSUER_ASSET_CONFIG: Record<string, {
   'thbill-theo-market-planned': {
     symbol: 'thBILL',
     address: '0x0000000000000000000000000000000000000001',
+    chainId: 42161, // Arbitrum One (placeholder address until Theo Market deploys)
     decimals: 18,
     sourceName: 'Theo Market Issuer NAV API',
     maxStaleness: 86400,
@@ -241,6 +246,7 @@ const ISSUER_ASSET_CONFIG: Record<string, {
   'buidl-tokenized-treasury-planned': {
     symbol: 'BUIDL',
     address: '0x7712c34205737192402172409a8F7ccef8aA2AEc',
+    chainId: 1,     // Ethereum mainnet — BUIDL ERC-4626 is NOT on Arbitrum
     decimals: 6,
     sourceName: 'BlackRock BUIDL / On-Chain ERC-4626',
     maxStaleness: 86400,
@@ -248,6 +254,7 @@ const ISSUER_ASSET_CONFIG: Record<string, {
   'ondo-usdy-tokenized-govmmf-planned': {
     symbol: 'USDY',
     address: '0x35e050d3C0eC2d29D269a8EcEa763a183bDF9A9D',
+    chainId: 42161, // Arbitrum One
     decimals: 18,
     sourceName: 'Ondo Finance USDY Issuer NAV API',
     maxStaleness: 86400,
@@ -296,7 +303,7 @@ async function fetchIssuerNAVObservation(assetId: string): Promise<NAVObservatio
   const obs: NAVObservation = {
     assetId,
     assetAddress: config.address,
-    chainId: 42161,
+    chainId: config.chainId, // per-asset chain (BUIDL=1, others=42161)
     symbol: config.symbol,
     grossNavPerToken: result.nav,
     quoteCurrency: 'USD',

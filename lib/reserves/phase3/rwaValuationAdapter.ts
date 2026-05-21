@@ -50,7 +50,9 @@ export function getValuation(
                      fallbackState === 'BOTH_STALE' || fallbackState === 'BOTH_FAILED';
   const isManualReview = nav.isManuallyReviewed || asset.haircutPolicy.manualReviewRequired;
 
-  const attestationStatus = asset.custody.attestationStatus;
+  // Prefer live attestation status from oracle observation over static registry field.
+  // This ensures live BitGo on-chain results (not stale registry metadata) gate eligibility.
+  const attestationStatus = nav.liveAttestationStatus ?? asset.custody.attestationStatus;
   const hasAttestation = attestationStatus === 'CURRENT';
   const attestationMissing = policy.attestationRequired &&
     (attestationStatus === 'NONE' || attestationStatus === 'FAILED' || attestationStatus === 'STALE');
@@ -59,7 +61,7 @@ export function getValuation(
   const confidenceScore = computeConfidenceScore({
     sourceType: nav.sourceType,
     freshnessState: nav.freshnessState,
-    attestationStatus: asset.custody.attestationStatus,
+    attestationStatus,
     reconciliationStatus: asset.custody.reconciliationStatus,
     isFallback,
     isManuallyReviewed: nav.isManuallyReviewed,
@@ -129,7 +131,7 @@ export function getValuation(
     valuationTimestamp: nav.isUsable ? nav.timestamp : null,
     freshnessState: nav.freshnessState,
     fallbackState,
-    attestationStatus: asset.custody.attestationStatus,
+    attestationStatus,
     reconciliationStatus: asset.custody.reconciliationStatus,
     isStale: isStaleValuation,
     isFallback,
