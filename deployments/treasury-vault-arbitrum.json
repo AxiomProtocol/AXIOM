@@ -2,12 +2,18 @@
   "network": "arbitrum-one",
   "chainId": 42161,
   "deployedAt": "2026-05-17T03:02:45.332Z",
+  "redeployedAt": "2026-05-21T00:00:00.000Z",
   "deployer": "0x8d7892CF226B43d48B6e3ce988A1274e6D114C96",
   "contracts": {
-    "StrategyManager": "0x22aAB6892cC0486d42d011BeB19B69143A05e72B",
-    "AxiomTreasuryVault": "0x0d04742A8b5A8e3351B9273e585E980f6e0F46F8",
-    "AaveV3Strategy_USDC": "0xf01456B53546031568E83726A9F9C0A8ce5c68C2",
+    "StrategyManager": "0x432dFEe1DAb2D7d423690819DC65C033FE266E8e",
+    "AxiomTreasuryVault": "0x8c9761D465CB95306266a68FF8935C4690EC6092",
+    "AaveV3Strategy_USDC": "0x7d500015C5765456C16Ce2CF38AAF14075C01DD4",
     "CamelotStrategy": "0xa82d47eA0c82B4c7E6A4b3BaFC703706407E3f70"
+  },
+  "deprecated": {
+    "AxiomTreasuryVault_v1": "0x0d04742A8b5A8e3351B9273e585E980f6e0F46F8",
+    "StrategyManager_v1": "0x22aAB6892cC0486d42d011BeB19B69143A05e72B",
+    "AaveV3Strategy_USDC_v1": "0xf01456B53546031568E83726A9F9C0A8ce5c68C2"
   },
   "axusd": "0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7",
   "roles": {
