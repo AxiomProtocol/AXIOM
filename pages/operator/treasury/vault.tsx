@@ -167,9 +167,130 @@ const AAVE_STRATEGY_ABI = parseAbi([
 type DepositAsset = 'USDC' | 'AXUSD';
 type DepositStep  = 'idle' | 'approving' | 'approved' | 'depositing' | 'success' | 'error';
 
+// ── Server-Side Deposit Panel ──────────────────────────────────────────────────
+// Primary deposit path. Calls /api/treasury/vault/execute-deposit which signs
+// and broadcasts the on-chain deposit using the deployer wallet (holds VAULT_ADMIN
+// role). No MetaMask / WalletConnect interaction needed — operator cookie only.
+interface ServerDepositResult {
+  approveTx?: string;
+  depositTx?: string;
+  deployerAddress?: string;
+}
+
+function ServerDepositPanel() {
+  const [amount,  setAmount]  = useState('');
+  const [asset,   setAsset]   = useState<'USDC' | 'AXUSD'>('USDC');
+  const [loading, setLoading] = useState(false);
+  const [result,  setResult]  = useState<ServerDepositResult | null>(null);
+  const [errMsg,  setErrMsg]  = useState<string | null>(null);
+
+  async function handleSubmit() {
+    const amtNum = parseFloat(amount);
+    if (!isFinite(amtNum) || amtNum <= 0) {
+      setErrMsg('Enter a valid amount greater than zero.');
+      return;
+    }
+    setErrMsg(null);
+    setResult(null);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/treasury/vault/execute-deposit', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ asset, amount }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setErrMsg(data.error ?? 'Deposit failed — check server logs.');
+      } else {
+        setResult({ approveTx: data.approveTx, depositTx: data.depositTx, deployerAddress: data.deployerAddress });
+        setAmount('');
+      }
+    } catch (e: unknown) {
+      setErrMsg(e instanceof Error ? e.message : 'Network error — could not reach execute-deposit API.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="border border-dl-border p-5 max-w-2xl mb-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Server Deposit — Admin Key</p>
+        <p className="text-xs font-mono text-dl-gray">Deployer wallet · no MetaMask required</p>
+      </div>
+
+      {result && (
+        <div className="border border-dl-forest p-4 space-y-2">
+          <p className="text-xs font-mono text-dl-forest uppercase tracking-wide">Deposit Confirmed On-Chain</p>
+          {result.approveTx && (
+            <a href={`https://arbiscan.io/tx/${result.approveTx}`} target="_blank" rel="noopener noreferrer"
+               className="text-xs font-mono text-dl-forest underline block">
+              Approve TX → {result.approveTx.slice(0, 12)}…{result.approveTx.slice(-6)}
+            </a>
+          )}
+          {result.depositTx && (
+            <a href={`https://arbiscan.io/tx/${result.depositTx}`} target="_blank" rel="noopener noreferrer"
+               className="text-xs font-mono text-dl-forest underline block">
+              Deposit TX → {result.depositTx.slice(0, 12)}…{result.depositTx.slice(-6)}
+            </a>
+          )}
+          {!result.approveTx && (
+            <p className="text-xs font-mono text-dl-gray">Allowance already sufficient — approve skipped.</p>
+          )}
+          <button type="button" onClick={() => setResult(null)}
+                  className="mt-2 px-3 py-1 text-xs font-mono uppercase tracking-wide border border-dl-border text-dl-navy">
+            New Deposit
+          </button>
+        </div>
+      )}
+
+      {!result && (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-dl-gray uppercase">Asset</label>
+              <select value={asset} onChange={e => setAsset(e.target.value as 'USDC' | 'AXUSD')}
+                      disabled={loading}
+                      className="w-full border border-dl-border bg-white text-sm font-mono text-dl-navy px-2 py-1.5">
+                <option value="USDC">USDC</option>
+                <option value="AXUSD">AXUSD</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-dl-gray uppercase">Amount</label>
+              <input type="number" min="0" step="any" placeholder="0.00"
+                     value={amount} onChange={e => setAmount(e.target.value)}
+                     disabled={loading}
+                     className="w-full border border-dl-border bg-white text-sm font-mono text-dl-navy px-2 py-1.5" />
+            </div>
+          </div>
+
+          {errMsg && (
+            <p className="text-xs font-mono text-red-700 border border-red-200 bg-red-50 px-3 py-2">{errMsg}</p>
+          )}
+
+          <button type="button" onClick={handleSubmit}
+                  disabled={loading || !amount}
+                  className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide border border-dl-navy text-dl-navy disabled:opacity-40 disabled:cursor-not-allowed">
+            {loading ? 'Executing deposit…' : `Deposit ${amount || '—'} ${asset}`}
+          </button>
+
+          {loading && (
+            <p className="text-xs font-mono text-dl-gray">
+              Signing and broadcasting on Arbitrum One via deployer key. This takes 5–30 seconds…
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Wallet Deposit Panel ───────────────────────────────────────────────────────
-// Connects to the operator's wallet and executes approve → deposit on-chain,
-// then auto-records the deposit in the vault audit log.
+// Secondary / advanced path — requires the connected wallet to hold the
+// VAULT_ADMIN on-chain role. Use ServerDepositPanel (above) for standard deposits.
 function WalletDepositPanel() {
   const { address, isConnected } = useAccount();
   const chainId                  = useChainId();
@@ -296,7 +417,12 @@ function WalletDepositPanel() {
         }
       } catch (simErr: unknown) {
         const msg = simErr instanceof Error ? simErr.message : String(simErr);
-        // Extract the revert reason if present
+        const isAccessControl = msg.includes('0xe2517d3f') || /missing role|AccessControl/i.test(msg);
+        if (isAccessControl) {
+          setErrMsg('Connected wallet does not hold the required on-chain role to deposit. Use the Server Deposit — Admin Key panel above.');
+          setStep('approved');
+          return;
+        }
         const revertMatch = msg.match(/reverted with reason string '([^']+)'/);
         const reason = revertMatch ? revertMatch[1] : msg.slice(0, 120);
         setErrMsg(`Transaction would fail: ${reason}. Check your USDC balance and that the vault is not paused.`);
@@ -1094,6 +1220,12 @@ function UsdcBackingPanel() {
         });
       } catch (simErr: unknown) {
         const msg = simErr instanceof Error ? simErr.message : String(simErr);
+        const isAccessControl = msg.includes('0xe2517d3f') || /missing role|AccessControl/i.test(msg);
+        if (isAccessControl) {
+          setErrMsg('Connected wallet does not hold the required on-chain role. Use the Server Deposit — Admin Key panel to deposit.');
+          setStep('approved');
+          return;
+        }
         const match = msg.match(/reverted with reason string '([^']+)'/);
         setErrMsg(`Transaction would fail: ${match ? match[1] : msg.slice(0, 120)}`);
         setStep('approved');
@@ -2204,8 +2336,18 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             </div>
           </div>
 
-          {/* Wallet-connected deposit — primary flow */}
-          <WalletDepositPanel />
+          {/* Server-side deposit — primary flow (deployer key, VAULT_ADMIN role) */}
+          <ServerDepositPanel />
+
+          {/* Wallet deposit — advanced / requires VAULT_ADMIN role on connected wallet */}
+          <details className="max-w-2xl mb-6">
+            <summary className="text-xs font-mono text-dl-gray uppercase tracking-wide cursor-pointer select-none hover:text-dl-navy">
+              Wallet Deposit (requires VAULT_ADMIN role on connected wallet)
+            </summary>
+            <div className="mt-3">
+              <WalletDepositPanel />
+            </div>
+          </details>
 
           {/* Allocate idle USDC into Aave v3 for yield — STRATEGY_ADMIN only */}
           <AllocateToAavePanel />
