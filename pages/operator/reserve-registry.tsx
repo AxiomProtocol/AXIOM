@@ -564,6 +564,401 @@ function OracleLiveFeedPanel() {
   );
 }
 
+// ── Admission Log Panel ───────────────────────────────────────────────────────
+
+interface AdmissionRecord {
+  id: number;
+  assetId: string;
+  assetSymbol: string;
+  sleeve: string;
+  proposalTitle: string;
+  proposalDescription: string;
+  complianceResolution: string | null;
+  dualCountingGuardAcknowledged: boolean;
+  governanceSafeTxHash: string | null;
+  status: string;
+  registryChangeSummary: string | null;
+  admittedAt: string | null;
+  operatorNotes: string | null;
+  createdAt: string;
+}
+
+const PAXG_ASSET_ID = 'paxg-tokenized-gold-planned';
+
+const PAXG_DEFAULTS = {
+  proposalTitle:
+    'Phase 4 Governance Admission — PAXG TOKENIZED_GOLD Sleeve (PLANNED → LIVE)',
+  proposalDescription:
+    'PAXG (Pax Gold, tokenized gold on Arbitrum One) is admitted as an active AXUSD reserve ' +
+    'asset effective this governance record. The Phase 4 oracle feed (Chainlink XAU/USD on ' +
+    'Arbitrum One, 0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2C) is live. BitGo CaaS on-chain ' +
+    'ERC-20 balanceOf() attestation verifies actual PAXG token holdings. Haircut: 500 bps (5%) ' +
+    'for intraday XAU/USD volatility. Max allocation: 20% of eligible reserve (maxAllocationBps=2000). ' +
+    'This record constitutes operator sign-off on the registry change and dual-counting guard confirmation.',
+  complianceResolution:
+    'Phase 1 compliance gaps (LendingPlatformModule whitelist, CountryAllowModule country-0 pass-through, ' +
+    'TransferLimitModule tier-3 assignment) apply exclusively to the TOKENIZED_TBILL sleeve and are NOT ' +
+    'applicable to the TOKENIZED_GOLD sleeve. PAXG admission does not depend on resolution of these gaps. ' +
+    'Confirmed by operator in approvedReserveAssetRegistry.ts comment block dated Phase 4.',
+  registryChangeSummary:
+    'lib/reserves/phase2/approvedReserveAssetRegistry.ts: paxg-tokenized-gold-planned status PLANNED → LIVE, ' +
+    'isLive false → true, isPlanned true → false, admissionGateOpen set to true. ' +
+    'lib/reserves/phase3/assetValuationPolicy.ts: manualReviewRequired cleared (false). ' +
+    'Oracle live: lib/reserves/phase3/treasuryNAVOracle.ts + feeds/chainlinkXauUsd.ts + feeds/bitgoAttestationFetcher.ts.',
+};
+
+function AdmissionLogPanel() {
+  const [records, setRecords]         = useState<AdmissionRecord[]>([]);
+  const [loadErr, setLoadErr]         = useState<string | null>(null);
+  const [showForm, setShowForm]       = useState(false);
+  const [submitting, setSubmitting]   = useState(false);
+  const [submitMsg, setSubmitMsg]     = useState<string | null>(null);
+
+  // Form fields
+  const [proposalTitle, setProposalTitle]             = useState(PAXG_DEFAULTS.proposalTitle);
+  const [proposalDescription, setProposalDescription] = useState(PAXG_DEFAULTS.proposalDescription);
+  const [complianceResolution, setComplianceResolution] = useState(PAXG_DEFAULTS.complianceResolution);
+  const [dualCountingGuardAck, setDualCountingGuardAck] = useState(false);
+  const [govSafeTxHash, setGovSafeTxHash]             = useState('');
+  const [admissionStatus, setAdmissionStatus]         = useState('APPROVED');
+  const [admittedAt, setAdmittedAt]                   = useState('');
+  const [operatorNotes, setOperatorNotes]             = useState('');
+
+  const fetchRecords = async () => {
+    try {
+      setLoadErr(null);
+      const res = await fetch(`/api/operator/reserve-admissions?assetId=${PAXG_ASSET_ID}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setRecords(json.records ?? []);
+    } catch (e) {
+      setLoadErr((e as Error).message);
+    }
+  };
+
+  useEffect(() => { fetchRecords(); }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!dualCountingGuardAck) {
+      setSubmitMsg('Error: You must acknowledge the dual-counting guard before recording.');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      setSubmitMsg(null);
+      const res = await fetch('/api/operator/reserve-admissions', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assetId: PAXG_ASSET_ID,
+          assetSymbol: 'PAXG',
+          sleeve: 'TOKENIZED_GOLD',
+          proposalTitle,
+          proposalDescription,
+          complianceResolution: complianceResolution || null,
+          dualCountingGuardAcknowledged: dualCountingGuardAck,
+          governanceSafeTxHash: govSafeTxHash.trim() || null,
+          status: admissionStatus,
+          registryChangeSummary: PAXG_DEFAULTS.registryChangeSummary,
+          admittedAt: admittedAt || null,
+          operatorNotes: operatorNotes.trim() || null,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setSubmitMsg(`Error: ${json.error ?? 'Submission failed'}`);
+      } else {
+        setSubmitMsg('Admission record created successfully.');
+        setShowForm(false);
+        await fetchRecords();
+      }
+    } catch (e) {
+      setSubmitMsg(`Error: ${(e as Error).message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const statusColor = (s: string) => {
+    if (s === 'EXECUTED') return '#2d6a4f';
+    if (s === 'APPROVED') return '#1e3a5f';
+    if (s === 'PROPOSED') return '#b88a2f';
+    return '#6b7280';
+  };
+
+  const hasApproved = records.some(r => r.status === 'APPROVED' || r.status === 'EXECUTED');
+
+  return (
+    <div style={{ border: '1px solid #1e3a5f', marginBottom: 32 }}>
+      {/* Header */}
+      <div style={{
+        background: '#1e3a5f',
+        padding: '8px 12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <span style={{ fontFamily: 'Georgia, serif', fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>
+          Phase 4 — Governance Admission Log
+        </span>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#93c5fd' }}>
+            {records.length} record{records.length !== 1 ? 's' : ''} · PAXG TOKENIZED_GOLD
+          </span>
+          <button
+            onClick={() => setShowForm(v => !v)}
+            style={{
+              fontFamily: 'monospace',
+              fontSize: '10px',
+              fontWeight: 700,
+              color: '#ffffff',
+              background: 'transparent',
+              border: '1px solid #93c5fd',
+              padding: '2px 8px',
+              cursor: 'pointer',
+            }}
+          >
+            {showForm ? 'Cancel' : '+ Record Admission'}
+          </button>
+        </div>
+      </div>
+
+      {/* Error */}
+      {loadErr && (
+        <div style={{ padding: '8px 12px', background: '#fee2e2', fontFamily: 'monospace', fontSize: '11px', color: '#991b1b' }}>
+          ⚠ Failed to load admission records: {loadErr}
+        </div>
+      )}
+
+      {/* Submit message */}
+      {submitMsg && (
+        <div style={{
+          padding: '6px 12px',
+          background: submitMsg.startsWith('Error') ? '#fee2e2' : '#d8f3dc',
+          fontFamily: 'monospace',
+          fontSize: '11px',
+          color: submitMsg.startsWith('Error') ? '#991b1b' : '#2d6a4f',
+        }}>
+          {submitMsg}
+        </div>
+      )}
+
+      {/* Record form */}
+      {showForm && (
+        <form onSubmit={handleSubmit} style={{ padding: '16px 12px', borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
+          <div style={{ fontFamily: 'Georgia, serif', fontSize: '12px', fontWeight: 700, marginBottom: 12, color: '#1e3a5f' }}>
+            Record PAXG Admission Decision
+          </div>
+          {[
+            { label: 'Proposal Title', value: proposalTitle, set: setProposalTitle, rows: 2 },
+            { label: 'Proposal Description', value: proposalDescription, set: setProposalDescription, rows: 4 },
+            { label: 'Compliance Resolution (Phase 1 gap disposition)', value: complianceResolution, set: setComplianceResolution, rows: 3 },
+          ].map(({ label, value, set, rows }) => (
+            <div key={label} style={{ marginBottom: 10 }}>
+              <label style={{ display: 'block', fontFamily: 'monospace', fontSize: '10px', color: '#374151', marginBottom: 3, fontWeight: 700 }}>
+                {label.toUpperCase()}
+              </label>
+              <textarea
+                value={value}
+                onChange={e => set(e.target.value)}
+                rows={rows}
+                required
+                style={{
+                  width: '100%',
+                  fontFamily: 'monospace',
+                  fontSize: '10px',
+                  padding: '4px 6px',
+                  border: '1px solid #d1d5db',
+                  background: '#ffffff',
+                  resize: 'vertical',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          ))}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div>
+              <label style={{ display: 'block', fontFamily: 'monospace', fontSize: '10px', color: '#374151', marginBottom: 3, fontWeight: 700 }}>
+                STATUS
+              </label>
+              <select
+                value={admissionStatus}
+                onChange={e => setAdmissionStatus(e.target.value)}
+                style={{ fontFamily: 'monospace', fontSize: '10px', padding: '4px 6px', border: '1px solid #d1d5db', width: '100%', background: '#ffffff' }}
+              >
+                {['PROPOSED', 'APPROVED', 'EXECUTED'].map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontFamily: 'monospace', fontSize: '10px', color: '#374151', marginBottom: 3, fontWeight: 700 }}>
+                ADMITTED AT (ISO, optional)
+              </label>
+              <input
+                type="text"
+                value={admittedAt}
+                onChange={e => setAdmittedAt(e.target.value)}
+                placeholder="2026-04-30T00:00:00Z"
+                style={{ fontFamily: 'monospace', fontSize: '10px', padding: '4px 6px', border: '1px solid #d1d5db', width: '100%', background: '#ffffff', boxSizing: 'border-box' }}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 10 }}>
+            <label style={{ display: 'block', fontFamily: 'monospace', fontSize: '10px', color: '#374151', marginBottom: 3, fontWeight: 700 }}>
+              GOVERNANCE SAFE TX HASH (optional — on-chain vote tx)
+            </label>
+            <input
+              type="text"
+              value={govSafeTxHash}
+              onChange={e => setGovSafeTxHash(e.target.value)}
+              placeholder="0x…"
+              style={{ fontFamily: 'monospace', fontSize: '10px', padding: '4px 6px', border: '1px solid #d1d5db', width: '100%', background: '#ffffff', boxSizing: 'border-box' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 10 }}>
+            <label style={{ display: 'block', fontFamily: 'monospace', fontSize: '10px', color: '#374151', marginBottom: 3, fontWeight: 700 }}>
+              OPERATOR NOTES (optional)
+            </label>
+            <textarea
+              value={operatorNotes}
+              onChange={e => setOperatorNotes(e.target.value)}
+              rows={2}
+              style={{ width: '100%', fontFamily: 'monospace', fontSize: '10px', padding: '4px 6px', border: '1px solid #d1d5db', background: '#ffffff', resize: 'vertical', boxSizing: 'border-box' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={dualCountingGuardAck}
+                onChange={e => setDualCountingGuardAck(e.target.checked)}
+                required
+              />
+              <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#1e3a5f', fontWeight: 700 }}>
+                I confirm the dual-counting guard is enforced: the PAXG balance counted in this AXUSD reserve
+                sleeve is NOT already included in the CanonicalReserveSnapshot hard-asset numerator.
+              </span>
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting || !dualCountingGuardAck}
+            style={{
+              fontFamily: 'monospace',
+              fontSize: '11px',
+              fontWeight: 700,
+              color: '#ffffff',
+              background: '#1e3a5f',
+              border: 'none',
+              padding: '6px 14px',
+              cursor: submitting || !dualCountingGuardAck ? 'not-allowed' : 'pointer',
+              opacity: submitting || !dualCountingGuardAck ? 0.6 : 1,
+            }}
+          >
+            {submitting ? 'Recording…' : 'Record Admission'}
+          </button>
+        </form>
+      )}
+
+      {/* Records list */}
+      {records.length === 0 && !loadErr ? (
+        <div style={{ padding: '12px', fontFamily: 'monospace', fontSize: '11px', color: '#b88a2f' }}>
+          ⚑ No admission record on file for PAXG. Click &ldquo;+ Record Admission&rdquo; to document the governance decision.
+        </div>
+      ) : (
+        <div>
+          {records.map(r => (
+            <div key={r.id} style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb', background: '#ffffff' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <span style={{
+                  fontFamily: 'monospace', fontSize: '10px', fontWeight: 700,
+                  color: statusColor(r.status),
+                  border: `1px solid ${statusColor(r.status)}`,
+                  padding: '1px 5px',
+                }}>
+                  {r.status}
+                </span>
+                <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 700, color: '#1e3a5f' }}>
+                  {r.proposalTitle}
+                </span>
+              </div>
+              <div style={{ fontFamily: 'monospace', fontSize: '10px', color: '#374151', lineHeight: 1.5, marginBottom: 4 }}>
+                {r.proposalDescription}
+              </div>
+              {r.complianceResolution && (
+                <div style={{ fontFamily: 'monospace', fontSize: '9px', color: '#2d6a4f', background: '#f0fdf4', padding: '4px 6px', marginBottom: 4, border: '1px solid #86efac' }}>
+                  <strong>Compliance:</strong> {r.complianceResolution}
+                </div>
+              )}
+              {r.registryChangeSummary && (
+                <div style={{ fontFamily: 'monospace', fontSize: '9px', color: '#1e3a5f', background: '#f0f4ff', padding: '4px 6px', marginBottom: 4 }}>
+                  <strong>Registry change:</strong> {r.registryChangeSummary}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 4 }}>
+                {[
+                  { label: 'Dual-count guard', value: r.dualCountingGuardAcknowledged ? '✓ Acknowledged' : '✗ Not confirmed', color: r.dualCountingGuardAcknowledged ? '#2d6a4f' : '#991b1b' },
+                  { label: 'Admitted at', value: r.admittedAt ? new Date(r.admittedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—', color: '#374151' },
+                  { label: 'Recorded', value: new Date(r.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }), color: '#374151' },
+                ].map(m => (
+                  <span key={m.label} style={{ fontFamily: 'monospace', fontSize: '10px' }}>
+                    <span style={{ color: '#9ca3af' }}>{m.label}: </span>
+                    <span style={{ color: m.color, fontWeight: 700 }}>{m.value}</span>
+                  </span>
+                ))}
+                {r.governanceSafeTxHash && (
+                  <span style={{ fontFamily: 'monospace', fontSize: '10px' }}>
+                    <span style={{ color: '#9ca3af' }}>Safe tx: </span>
+                    <a
+                      href={`https://arbiscan.io/tx/${r.governanceSafeTxHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#1e3a5f', fontWeight: 700 }}
+                    >
+                      {r.governanceSafeTxHash.slice(0, 10)}…
+                    </a>
+                  </span>
+                )}
+              </div>
+              {r.operatorNotes && (
+                <div style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6b7280', marginTop: 4 }}>
+                  Notes: {r.operatorNotes}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* PAXG admission gate status */}
+      <div style={{ padding: '6px 12px', background: '#f0f4ff', borderTop: '1px solid #e5e7eb', display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#1e3a5f', fontWeight: 700 }}>REGISTRY GATE</span>
+        <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#2d6a4f' }}>
+          ✓ admissionGateOpen = true &nbsp;·&nbsp; status = LIVE &nbsp;·&nbsp; isLive = true
+        </span>
+        <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#9ca3af' }}>
+          Phase 1 compliance gaps: N/A (TOKENIZED_GOLD sleeve) &nbsp;·&nbsp; Oracle: CHAINLINK XAU/USD + BitGo
+        </span>
+        {!hasApproved && (
+          <span style={{ fontFamily: 'monospace', fontSize: '10px', color: '#b88a2f', fontWeight: 700 }}>
+            ⚑ Registry is LIVE but no governance record on file — record the admission decision above.
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Valuation Result Row ──────────────────────────────────────────────────────
 
 function ValuationResultPanel({ results }: { results: ValuationResult[] }) {
@@ -891,6 +1286,12 @@ export default function ReserveRegistryPage({ summary, attestation, oracleSource
           Reserve Sleeves
         </h2>
         {summary.sleeves.map(sleeve => <SleeveSection key={sleeve.sleeve} sleeve={sleeve} />)}
+
+        {/* Phase 4: Governance Admission Log */}
+        <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '16px', fontWeight: 700, marginBottom: 16, borderBottom: '1px solid #d1d5db', paddingBottom: 8 }}>
+          Phase 4 — Governance Admission Record
+        </h2>
+        <AdmissionLogPanel />
 
         {/* Compliance gaps */}
         <div style={{ border: '1px solid #b88a2f', background: '#fffbeb', padding: '14px 16px', marginTop: 32 }}>

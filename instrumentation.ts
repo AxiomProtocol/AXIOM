@@ -8511,6 +8511,33 @@ END $seed$`, 'seed dp_listings');
       await exec(`CREATE INDEX IF NOT EXISTS harvest_cron_runs_status_idx ON harvest_cron_runs (status)`, 'index harvest_cron_runs_status_idx');
 
       // ═══════════════════════════════════════════
+      //  RESERVE ADMISSION LOG (governance audit trail)
+      // ═══════════════════════════════════════════
+      // Append-only governance record for reserve asset admission decisions.
+      // One row per admission event (PLANNED → LIVE). Phase 4 seed: PAXG.
+      // Schema: shared/reserveAdmissionSchema.ts
+      await exec(`CREATE TABLE IF NOT EXISTS reserve_admission_log (
+        id                               serial        PRIMARY KEY,
+        asset_id                         varchar(100)  NOT NULL,
+        asset_symbol                     varchar(20)   NOT NULL,
+        sleeve                           varchar(100)  NOT NULL,
+        proposal_title                   text          NOT NULL,
+        proposal_description             text          NOT NULL,
+        compliance_resolution            text,
+        dual_counting_guard_acknowledged boolean       NOT NULL DEFAULT false,
+        governance_safe_tx_hash          varchar(66),
+        status                           varchar(30)   NOT NULL DEFAULT 'APPROVED',
+        registry_change_summary          text,
+        admitted_at                      timestamptz,
+        operator_notes                   text,
+        created_at                       timestamptz   NOT NULL DEFAULT NOW(),
+        updated_at                       timestamptz   NOT NULL DEFAULT NOW()
+      )`, 'table reserve_admission_log');
+      await exec(`CREATE INDEX IF NOT EXISTS ral_asset_id_idx  ON reserve_admission_log (asset_id)`,   'index ral_asset_id_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS ral_status_idx     ON reserve_admission_log (status)`,     'index ral_status_idx');
+      await exec(`CREATE INDEX IF NOT EXISTS ral_created_at_idx ON reserve_admission_log (created_at)`, 'index ral_created_at_idx');
+
+      // ═══════════════════════════════════════════
       //  KEYGROW DEPOSITS
       // ═══════════════════════════════════════════
       await exec(enumSafe('keygrow_deposit_status', ['pending','paid','staking','applied','refunded']), 'enum keygrow_deposit_status');
