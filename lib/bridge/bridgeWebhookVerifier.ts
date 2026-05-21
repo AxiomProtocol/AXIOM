@@ -21,11 +21,11 @@ export function verifyBridgeWebhook(
   const secret = process.env.BRIDGE_WEBHOOK_SECRET;
 
   if (!secret) {
-    console.warn(
-      '[BridgeWebhook] BRIDGE_WEBHOOK_SECRET not set — skipping signature verification. ' +
-        'Add the secret in Replit Secrets to enable full webhook security.'
+    console.error(
+      '[BridgeWebhook] BRIDGE_WEBHOOK_SECRET is not set. ' +
+        'All webhook requests are rejected until the secret is configured in Replit Secrets.'
     );
-    return true;
+    return false;
   }
 
   if (!signatureHeader) {
