@@ -1,0 +1,194 @@
+AXIOM NEXUS LLC
+BUSINESS PLAN, PRODUCT OVERVIEW & KYB COMPLIANCE PACKAGE
+Prepared for Submission to Bridge Compliance Team
+================================================================
+
+COMPANY INFORMATION
+-------------------
+Legal Name:       Axiom Nexus LLC
+Formation State:  Mississippi
+Formation Date:   December 26, 2025
+State Entity ID:  1522557
+EIN:              41-5188895
+Management Type:  Manager Managed
+Website:          https://axiomprotocol.app
+Industry:         Professional, Scientific, and Technical Services
+Sub-Industry:     Computer Systems Design and Related Services
+NAICS Codes:      541511, 541512
+
+================================================================
+SECTION 1 — EXECUTIVE SUMMARY
+================================================================
+
+Axiom Nexus LLC is a financial technology and blockchain software infrastructure
+company. The company develops compliance-focused digital asset systems, smart
+contract tools, tokenized real-world asset infrastructure, treasury management
+technology, and payment rail integration tooling.
+
+Axiom Nexus LLC is currently an early-stage software and technology company
+focused on product development, technical architecture, vendor onboarding,
+compliance preparation, and internal business operations. No regulated financial
+products are currently offered to the public.
+
+================================================================
+SECTION 2 — BUSINESS MODEL
+================================================================
+
+Axiom Nexus LLC's business model is based on developing software infrastructure,
+dashboards, smart contract systems, treasury management tools, compliance tooling,
+and platform technology for digital finance and tokenized real-world asset
+workflows.
+
+The company is not a bank, money transmitter, investment adviser, broker-dealer,
+custodian, crypto brokerage, OTC desk, or payment processor.
+
+================================================================
+SECTION 3 — PRODUCTS AND PLATFORM MODULES
+================================================================
+
+  - Axiom Protocol Platform
+    A modular blockchain software infrastructure platform providing on-chain
+    identity, governance, and asset-management tooling for institutional and
+    developer use.
+
+  - Compliance-Focused Digital Asset Infrastructure
+    Software systems designed to support KYC/KYB workflows, audit trails, and
+    regulatory-aligned data structures for digital asset environments.
+
+  - Smart Contract Tools
+    ERC-20, ERC-3643, and ERC-7726 compatible automated control layer tooling
+    for on-chain identity verification, token issuance, and oracle-driven pricing.
+
+  - Treasury Management Dashboard
+    An internal dashboard providing real-time visibility into on-chain treasury
+    balances, reserve compositions, and multi-party authorization activity.
+
+  - Reserve and Solvency Reporting Tools
+    Oracle-driven reserve attestation dashboards that produce readable
+    solvency reports suitable for compliance review and internal governance.
+
+  - Payment Rail Integration Tooling
+    Software adapters connecting internal treasury operations to Stellar SEP
+    and EVM-compatible payment rails for business operational purposes.
+
+  - Tokenized Real-World Asset Platform Infrastructure
+    A framework for onboarding physical asset data onto blockchain-based
+    registries, including land and commodity reference instruments.
+
+  - Business Dashboards and Reporting Systems
+    Operations dashboards providing capital performance intelligence, audit
+    logging, and business reporting functions for internal use.
+
+  - On-Chain Identity and Governance Tools
+    Identity registry and governance token infrastructure enabling
+    permissioned access control and participant management within the platform.
+
+================================================================
+SECTION 4 — CURRENT DEVELOPMENT STAGE
+================================================================
+
+The company is in early-stage development and onboarding. Axiom Nexus LLC is
+currently building software, technical infrastructure, compliance workflows,
+dashboards, and platform interfaces.
+
+No regulated financial products are currently offered to the public.
+
+================================================================
+SECTION 5 — ACCOUNT USAGE
+================================================================
+
+The Bridge account will be used only for:
+  - Internal business treasury activity
+  - Owner-funded operating expenses
+  - Software development costs
+  - Infrastructure expenses
+  - Vendor payments
+  - Compliance preparation
+  - Platform setup costs
+  - General business operations
+
+The account will NOT be used to:
+  - Transmit customer funds
+  - Custody customer assets
+  - Hold client escrow funds
+  - Process third-party payments
+  - Operate a virtual currency brokerage
+  - Operate an OTC trading desk
+  - Provide investment advisory services
+
+================================================================
+SECTION 6 — SOURCE OF FUNDS
+================================================================
+
+The company is currently funded by owner's capital contributed by the
+founder/member for formation, software development, infrastructure, compliance
+preparation, and operating expenses.
+
+Funds are not derived from:
+  - Customer deposits
+  - Customer custody
+  - Money transmission activity
+  - Public investment offerings
+  - Third-party client funds
+
+================================================================
+SECTION 7 — COMPLIANCE CLARIFICATION
+================================================================
+
+Axiom Nexus LLC does not currently custody customer funds, transmit customer
+funds, operate as a bank, operate as a licensed money transmitter, provide
+investment advisory services, operate a virtual currency brokerage or OTC trading
+desk, hold client escrow funds, or provide regulated financial products to the
+public.
+
+Any regulated activity, if launched in the future, will be conducted only after
+applicable legal review, required registrations or exemptions, approved compliance
+procedures, and/or the use of licensed third-party providers.
+
+================================================================
+SECTION 8 — PRODUCT SCREENSHOTS AND WIREFRAMES
+================================================================
+
+Product wireframes and development previews are provided in the accompanying
+folder: bridge_product_screenshots/
+
+Included wireframes:
+  01_homepage.png                 — Axiom Protocol public homepage overview
+  02_treasury_dashboard.png       — Treasury management dashboard
+  03_reserve_solvency.png         — Reserve and solvency reporting dashboard
+  04_compliance_workflow.png      — Compliance workflow dashboard
+  05_payment_rail.png             — Payment rail integration overview
+  06_smart_contract.png           — Smart contract infrastructure overview
+  07_tokenized_assets.png         — Tokenized real-world asset infrastructure
+
+================================================================
+SECTION 9 — WEBSITE AND PUBLIC PRESENCE
+================================================================
+
+Website: https://axiomprotocol.app
+
+The website provides public information about the Axiom Protocol ecosystem,
+product direction, and platform infrastructure. It does not offer financial
+products, investment opportunities, or regulated services to the public.
+
+================================================================
+SECTION 10 — FINAL KYB SUMMARY
+================================================================
+
+Axiom Nexus LLC is a software and technology infrastructure company. The company
+is not currently using Bridge for customer funds, money transmission, custody,
+escrow, investment advisory activity, brokerage activity, OTC trading, or banking
+activity.
+
+The requested Bridge account is intended for internal business operations and
+treasury activity only.
+
+================================================================
+END OF DOCUMENT
+================================================================
+
+Prepared by:    Axiom Nexus LLC (Manager Managed)
+Website:        https://axiomprotocol.app
+EIN:            41-5188895
+State ID:       1522557 (Mississippi)
+Classification: CONFIDENTIAL — KYB Compliance Submission

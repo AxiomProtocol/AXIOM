@@ -1043,3 +1043,57 @@ id = "aFA_AI6x2gdABiuJkuKmc"
 uri = "file://public/Axiom_Nexus_LLC_Business_Overview.txt"
 type = "text"
 title = "Axiom Nexus LLC — Business Overview (Plain Text)"
+
+[[outputs]]
+id = "mS6JsmMDv9d5DG62tO3h3"
+uri = "file://Axiom_Nexus_Business_Plan_Product_Overview.pdf"
+type = "pdf"
+title = "Axiom_Nexus_Business_Plan_Product_Overview.pdf"
+
+[[outputs]]
+id = "yUYstNHC6rCg7SHH4_RrI"
+uri = "file://Axiom_Nexus_Business_Plan_Product_Overview.txt"
+type = "text"
+title = "Axiom_Nexus_Business_Plan_Product_Overview.txt"
+
+[[outputs]]
+id = "foQH7Sn4JogdNKfYx_4gm"
+uri = "file://bridge_product_screenshots/01_homepage.png"
+type = "image"
+title = "Wireframe 01 — Homepage"
+
+[[outputs]]
+id = "FkLMaQ-Td20KC2u-wpI3M"
+uri = "file://bridge_product_screenshots/02_treasury_dashboard.png"
+type = "image"
+title = "Wireframe 02 — Treasury Dashboard"
+
+[[outputs]]
+id = "CrcKNKN7QIOi5IJ0NFLFh"
+uri = "file://bridge_product_screenshots/03_reserve_solvency.png"
+type = "image"
+title = "Wireframe 03 — Reserve & Solvency"
+
+[[outputs]]
+id = "U8BxgvCqJtrMoZPQ8wcC1"
+uri = "file://bridge_product_screenshots/04_compliance_workflow.png"
+type = "image"
+title = "Wireframe 04 — Compliance Workflow"
+
+[[outputs]]
+id = "u9tEj-gYrlI_Glmg-5e3w"
+uri = "file://bridge_product_screenshots/05_payment_rail.png"
+type = "image"
+title = "Wireframe 05 — Payment Rail"
+
+[[outputs]]
+id = "w-or3s6Mk5A8QSUbxotkZ"
+uri = "file://bridge_product_screenshots/06_smart_contract.png"
+type = "image"
+title = "Wireframe 06 — Smart Contract Infrastructure"
+
+[[outputs]]
+id = "ZWmG0ybl8Qp-szUbw8aQy"
+uri = "file://bridge_product_screenshots/07_tokenized_assets.png"
+type = "image"
+title = "Wireframe 07 — Tokenized Assets"
