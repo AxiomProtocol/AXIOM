@@ -15,7 +15,7 @@
  * Auth: CRON_SECRET (Authorization: Bearer) or ADMIN_SOLVENCY_KEY (x-admin-key).
  * When CRON_SECRET is set in Vercel env vars, the scheduler sends it automatically.
  *
- * Schedule: */5 * * * * (see vercel.json crons block)
+ * Schedule: *\/5 * * * * (see vercel.json crons block)
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
