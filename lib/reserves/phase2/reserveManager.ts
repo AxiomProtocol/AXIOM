@@ -1,33 +1,21 @@
 /**
  * lib/reserves/phase2/reserveManager.ts
  *
- * Phase 2 — ReserveManager
+ * Phase 2 — ReserveManager (updated for Phase 3 oracle integration)
  *
- * Aggregates the ApprovedReserveAssetRegistry and the live CanonicalPSM balance
- * to produce reserve accounting data for:
- *   - API responses (reserve-assets, reserve-sleeves, reserve-manager/*)
- *   - Operator dashboard
- *   - Future Phase 3 oracle integration
- *   - Future Phase 4 mint/redeem module
+ * Phase 3 changes:
+ *   - fetchTbillNAV() and fetchOraclePrice() stubs replaced by
+ *     TreasuryNAVOracleService.getNAVWithMetadata() calls
+ *   - enrichWithLiveBalances() also enriches non-USDC assets with NAVObservation
+ *   - ReserveManagerSummary extended with:
+ *       staleValueUsd, manualReviewValueUsd, fallbackValuedAmountUsd,
+ *       haircutAdjustedReserveValueUsd
+ *   - All Phase 2 governance invariants remain strictly enforced
  *
- * Governance separation (must remain strict):
- *   CanonicalPSM    → live USDC mint/redeem backing source (unchanged from Phase 1)
- *   ReserveManager  → reserve accounting and asset eligibility layer (Phase 2)
+ * Governance separation (unchanged from Phase 2):
+ *   CanonicalPSM    → live USDC mint/redeem backing source
+ *   ReserveManager  → reserve accounting and asset eligibility layer
  *   AxiomTreasuryVault → internal operator capital (excluded from AXUSD backing)
- *
- * Phase 2 does NOT:
- *   - Mint or burn AXUSD
- *   - Deploy new contracts to mainnet
- *   - Grant or revoke production roles
- *   - Connect live T-Bill NAV valuation (placeholder interfaces only)
- *
- * Phase 3 hooks (stubs prepared here):
- *   - fetchTbillNAV()   — placeholder, returns null
- *   - fetchOraclePrice() — placeholder, returns null
- *
- * Phase 4 hooks (stubs prepared here):
- *   - prepareMintInput()   — not implemented
- *   - prepareRedeemInput() — not implemented
  */
 
 import { ethers } from 'ethers';
@@ -48,6 +36,12 @@ import {
   type ReserveCoverageResult,
   type AttestationStatusSummary,
 } from './types';
+import { getTreasuryNAVOracle } from '../phase3/treasuryNAVOracle';
+import { getValuationPolicy } from '../phase3/assetValuationPolicy';
+import { getValuation } from '../phase3/rwaValuationAdapter';
+import { selectValuationSource } from '../phase3/fallbackHierarchy';
+import { assembleReserveSnapshot } from '../phase3/reserveSnapshot';
+import type { NAVObservation, ValuationResult, ReserveSnapshot } from '../phase3/types';
 
 // ── RPC / contract constants ──────────────────────────────────────────────────
 
@@ -77,30 +71,17 @@ function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
   ]);
 }
 
-// ── Phase 3 stub: T-Bill NAV oracle ──────────────────────────────────────────
-// Replace with real oracle call in Phase 3.
-async function fetchTbillNAV(_assetAddress: string): Promise<number | null> {
-  return null; // Phase 3: connect to NAV oracle
-}
-
-// ── Phase 3 stub: generic oracle price ───────────────────────────────────────
-async function fetchOraclePrice(_assetAddress: string): Promise<number | null> {
-  return null; // Phase 3: connect to Chainlink or NAV oracle
-}
-
 // ── Phase 4 stubs: mint / redeem inputs ──────────────────────────────────────
-// These prepare the interface for the future mint/redeem module.
-// Do NOT implement mint or burn logic here.
 export function prepareMintInput(_assetSymbol: string, _amount: number): never {
   throw new Error(
     'prepareMintInput is a Phase 4 feature. ' +
-    'ReserveManager does not mint AXUSD in Phase 2.'
+    'ReserveManager does not mint AXUSD in Phase 2/3.'
   );
 }
 export function prepareRedeemInput(_assetSymbol: string, _amount: number): never {
   throw new Error(
     'prepareRedeemInput is a Phase 4 feature. ' +
-    'ReserveManager does not redeem AXUSD in Phase 2.'
+    'ReserveManager does not redeem AXUSD in Phase 2/3.'
   );
 }
 
@@ -141,34 +122,65 @@ async function fetchLiveBalances(): Promise<LiveBalances> {
   }
 }
 
-// ── Enrich registry with live balances ───────────────────────────────────────
+// ── Phase 3: Enrich registry with NAV observations ────────────────────────────
 
-function enrichWithLiveBalances(
+export async function enrichWithPhase3Valuations(
   registry: ApprovedReserveAsset[],
   live: LiveBalances,
   fetchedAt: string,
-): ApprovedReserveAsset[] {
-  return registry.map(asset => {
+): Promise<{ enrichedAssets: ApprovedReserveAsset[]; valuationResults: ValuationResult[]; navObservations: Map<string, NAVObservation> }> {
+  const oracle = getTreasuryNAVOracle();
+  const navMap = new Map<string, NAVObservation>();
+  const valuationResults: ValuationResult[] = [];
+
+  // Fetch all NAV observations in parallel
+  await Promise.all(
+    registry.map(async asset => {
+      const nav = await oracle.getNAVWithMetadata(asset.id);
+      navMap.set(asset.id, nav);
+    })
+  );
+
+  const enrichedAssets = registry.map(asset => {
+    const nav = navMap.get(asset.id);
+    if (!nav) return asset;
+
+    // For USDC PSM: use live balance, fixed $1.00 peg
     if (asset.id === 'usdc-canonical-psm' && asset.status === 'LIVE') {
-      const balance      = live.usdcInPsm;
-      const grossValue   = balance * 1.0;
-      const eligible     = computeEligibleValue(
+      const balance    = live.usdcInPsm;
+      const grossValue = balance * 1.0;
+      const eligible   = computeEligibleValue(
         asset.assetAddress, grossValue, asset.haircutPolicy, asset.isLive, asset.sleeve
       );
-      return {
+      const enriched: ApprovedReserveAsset = {
         ...asset,
         currentBalance:          balance,
         grossValueUsd:           grossValue,
         eligibleReserveValueUsd: eligible,
         lastValuedAt:            fetchedAt,
-        custody: {
-          ...asset.custody,
-          custodyWallet: CANONICAL_PSM_ADDRESS,
-        },
+        custody: { ...asset.custody, custodyWallet: CANONICAL_PSM_ADDRESS },
       };
+      const policy = getValuationPolicy(asset.id);
+      if (policy) {
+        const result = getValuation(enriched, policy, nav);
+        valuationResults.push(result);
+      }
+      return enriched;
     }
+
+    // For all other assets: NAV observation provides pricing data
+    const policy = getValuationPolicy(asset.id);
+    if (!policy) return asset;
+
+    // Compute valuation result
+    const result = getValuation(asset, policy, nav);
+    valuationResults.push(result);
+
+    // Return asset enriched with Phase 3 valuation data (balance remains null for planned/internal)
     return asset;
   });
+
+  return { enrichedAssets, valuationResults, navObservations: navMap };
 }
 
 // ── Sleeve descriptors ────────────────────────────────────────────────────────
@@ -231,8 +243,8 @@ function aggregateSleeve(
     a => a.status === 'DISABLED' || a.status === 'DEPRECATED' || a.status === 'INTERNAL_ONLY'
   );
 
-  const grossValueUsd            = liveAssets.reduce((s, a) => s + (a.grossValueUsd ?? 0), 0);
-  const eligibleReserveValueUsd  = liveAssets.reduce((s, a) => s + a.eligibleReserveValueUsd, 0);
+  const grossValueUsd           = liveAssets.reduce((s, a) => s + (a.grossValueUsd ?? 0), 0);
+  const eligibleReserveValueUsd = liveAssets.reduce((s, a) => s + a.eligibleReserveValueUsd, 0);
 
   return {
     sleeve,
@@ -250,9 +262,26 @@ function aggregateSleeve(
   };
 }
 
+// ── Extended summary type ─────────────────────────────────────────────────────
+
+export interface ReserveManagerSummaryPhase3 extends ReserveManagerSummary {
+  /** Assets with stale valuation (excluded from eligible reserve). */
+  staleValueUsd: number;
+  /** Assets in manual review state. */
+  manualReviewValueUsd: number;
+  /** Value of assets currently valued via fallback oracle. */
+  fallbackValuedAmountUsd: number;
+  /** Eligible reserve value after effective haircuts (same as eligibleReserveValueUsd for Phase 3). */
+  haircutAdjustedReserveValueUsd: number;
+  /** Phase 3 valuation results per asset. */
+  valuationResults: ValuationResult[];
+  /** Phase 3 NAV observations per asset (keyed by assetId). */
+  navObservations: Record<string, NAVObservation>;
+}
+
 // ── Main: getReserveManagerSummary ───────────────────────────────────────────
 
-export async function getReserveManagerSummary(): Promise<ReserveManagerSummary> {
+export async function getReserveManagerSummary(): Promise<ReserveManagerSummaryPhase3> {
   const fetchedAt = new Date().toISOString();
   const warnings: string[] = [];
 
@@ -262,11 +291,12 @@ export async function getReserveManagerSummary(): Promise<ReserveManagerSummary>
     warnings.push('Live balance fetch returned zero — RPC may be unavailable. Data may be stale.');
   }
 
-  // 2. Enrich registry with live balances
+  // 2. Enrich registry with Phase 3 valuations
   const rawRegistry = getApprovedReserveAssetRegistry();
-  const registry    = enrichWithLiveBalances(rawRegistry, live, fetchedAt);
+  const { enrichedAssets: registry, valuationResults, navObservations: navMap } =
+    await enrichWithPhase3Valuations(rawRegistry, live, fetchedAt);
 
-  // 3. Build sleeve aggregates across all known sleeves
+  // 3. Build sleeve aggregates
   const allSleeves: ReserveSleeve[] = [
     'USDC_PSM',
     'TOKENIZED_TBILL',
@@ -280,23 +310,34 @@ export async function getReserveManagerSummary(): Promise<ReserveManagerSummary>
   const sleeves = allSleeves.map(s => aggregateSleeve(s, registry));
 
   // 4. Compute summary values
-  const liveAssets             = registry.filter(a => a.isLive && a.status === 'LIVE');
-  const plannedAssets          = registry.filter(a => a.status === 'PLANNED');
-  const operatorAssets         = registry.filter(a => a.sleeve === 'OPERATOR_TREASURY');
-  const excludedAssets         = registry.filter(
+  const liveAssets         = registry.filter(a => a.isLive && a.status === 'LIVE');
+  const plannedAssets      = registry.filter(a => a.status === 'PLANNED');
+  const operatorAssets     = registry.filter(a => a.sleeve === 'OPERATOR_TREASURY');
+  const excludedAssets     = registry.filter(
     a => a.status === 'DISABLED' || a.status === 'DEPRECATED'
   );
-  const internalOnlyAssets     = registry.filter(a => a.status === 'INTERNAL_ONLY');
+  const internalOnlyAssets = registry.filter(a => a.status === 'INTERNAL_ONLY');
 
-  const totalGrossValueUsd         = registry.reduce((s, a) => s + (a.grossValueUsd ?? 0), 0);
-  const liveGrossValueUsd          = liveAssets.reduce((s, a) => s + (a.grossValueUsd ?? 0), 0);
-  const eligibleReserveValueUsd    = sleeves
+  const totalGrossValueUsd        = registry.reduce((s, a) => s + (a.grossValueUsd ?? 0), 0);
+  const liveGrossValueUsd         = liveAssets.reduce((s, a) => s + (a.grossValueUsd ?? 0), 0);
+  const eligibleReserveValueUsd   = sleeves
     .filter(s => s.isEligibleForAxusdBacking)
     .reduce((s, sl) => s + sl.eligibleReserveValueUsd, 0);
-  const canonicalPsmReserveUsd     = sleeves.find(s => s.sleeve === 'USDC_PSM')?.eligibleReserveValueUsd ?? 0;
-  const plannedGrossValueUsd       = plannedAssets.reduce((s, a) => s + (a.grossValueUsd ?? 0), 0);
-  const operatorTreasuryValueUsd   = operatorAssets.reduce((s, a) => s + (a.grossValueUsd ?? 0), 0);
-  const excludedValueUsd           = excludedAssets.reduce((s, a) => s + (a.grossValueUsd ?? 0), 0);
+  const canonicalPsmReserveUsd    = sleeves.find(s => s.sleeve === 'USDC_PSM')?.eligibleReserveValueUsd ?? 0;
+  const plannedGrossValueUsd      = plannedAssets.reduce((s, a) => s + (a.grossValueUsd ?? 0), 0);
+  const operatorTreasuryValueUsd  = operatorAssets.reduce((s, a) => s + (a.grossValueUsd ?? 0), 0);
+  const excludedValueUsd          = excludedAssets.reduce((s, a) => s + (a.grossValueUsd ?? 0), 0);
+
+  // Phase 3 additional metrics
+  const staleValueUsd = valuationResults
+    .filter(r => r.isStale && r.exclusionReason === 'STALE_VALUATION')
+    .reduce((s, r) => s + (r.grossValueUsd ?? 0), 0);
+  const manualReviewValueUsd = valuationResults
+    .filter(r => r.isManuallyReviewed)
+    .reduce((s, r) => s + (r.grossValueUsd ?? 0), 0);
+  const fallbackValuedAmountUsd = valuationResults
+    .filter(r => r.isFallback)
+    .reduce((s, r) => s + (r.grossValueUsd ?? 0), 0);
 
   // 5. Invariant warnings
   if (plannedGrossValueUsd > 0) {
@@ -311,6 +352,14 @@ export async function getReserveManagerSummary(): Promise<ReserveManagerSummary>
       'and are excluded from AXUSD backing per governance invariant.'
     );
   }
+  if (staleValueUsd > 0) {
+    warnings.push(
+      `$${staleValueUsd.toFixed(2)} in assets have stale valuations and are excluded.`
+    );
+  }
+
+  const navObservations: Record<string, NAVObservation> = {};
+  navMap.forEach((obs, id) => { navObservations[id] = obs; });
 
   return {
     fetchedAt,
@@ -322,24 +371,31 @@ export async function getReserveManagerSummary(): Promise<ReserveManagerSummary>
     operatorTreasuryValueUsd,
     excludedValueUsd,
     sleeves,
-    totalAssetCount:       registry.length,
-    liveAssetCount:        liveAssets.length,
-    plannedAssetCount:     plannedAssets.length,
-    excludedAssetCount:    excludedAssets.length + internalOnlyAssets.length,
-    internalOnlyAssetCount: internalOnlyAssets.length,
+    totalAssetCount:         registry.length,
+    liveAssetCount:          liveAssets.length,
+    plannedAssetCount:       plannedAssets.length,
+    excludedAssetCount:      excludedAssets.length + internalOnlyAssets.length,
+    internalOnlyAssetCount:  internalOnlyAssets.length,
     coverageInputs: {
       eligibleReserveValueUsd,
       denominatorNote:
         'Coverage denominator must come from AXUSD.totalSupply() (circulating supply), ' +
-        'NOT from any value in this registry. See getCanonicalReserveSnapshot.ts.',
+        'NOT from any value in this registry.',
     },
     methodology:
-      'AXUSD eligible reserve value = sum of (grossValueUsd × (1 − haircutBps/10000)) ' +
+      'AXUSD eligible reserve value = sum of (grossValueUsd × (1 − effectiveHaircutBps/10000)) ' +
       'for all LIVE assets in AXUSD-eligible sleeves (USDC_PSM, CASH_EQUIVALENT). ' +
-      'PLANNED assets, OPERATOR_TREASURY assets, DISABLED, DEPRECATED, and INTERNAL_ONLY ' +
-      'assets are all excluded from the eligible reserve value. ' +
+      'PLANNED, OPERATOR_TREASURY, DISABLED, DEPRECATED, and INTERNAL_ONLY assets excluded. ' +
+      'Phase 3: effective haircut expanded on stale or fallback valuations per ValuationPolicy. ' +
       'Coverage ratio = eligibleReserveValueUsd / AXUSD.totalSupply().',
     warnings,
+    // Phase 3 extensions
+    staleValueUsd,
+    manualReviewValueUsd,
+    fallbackValuedAmountUsd,
+    haircutAdjustedReserveValueUsd: eligibleReserveValueUsd,
+    valuationResults,
+    navObservations,
   };
 }
 
@@ -363,9 +419,7 @@ export async function getReserveCoverage(): Promise<ReserveCoverageResult> {
   const opSleeve    = summary.sleeves.find(s => s.sleeve === 'OPERATOR_TREASURY');
 
   if (tbillSleeve && tbillSleeve.grossValueUsd > 0) {
-    warnings.push(
-      'PLANNED T-Bill sleeve has gross value but is correctly excluded from coverage ratio.'
-    );
+    warnings.push('PLANNED T-Bill sleeve has gross value but is correctly excluded from coverage ratio.');
   }
   if (!supply) {
     warnings.push('AXUSD circulating supply is zero or unavailable — coverage ratio is null.');
@@ -379,14 +433,14 @@ export async function getReserveCoverage(): Promise<ReserveCoverageResult> {
     coverageRatio:           ratio,
     coverageRatioFormatted:  ratio !== null ? `${(ratio * 100).toFixed(2)}%` : 'N/A',
     breakdown: {
-      canonicalPsmUsd:       summary.canonicalPsmReserveUsd,
-      plannedTbillUsd:       tbillSleeve?.grossValueUsd ?? 0,
+      canonicalPsmUsd:        summary.canonicalPsmReserveUsd,
+      plannedTbillUsd:        tbillSleeve?.grossValueUsd ?? 0,
       plannedTreasuryFundUsd: fundSleeve?.grossValueUsd ?? 0,
-      operatorTreasuryUsd:   opSleeve?.grossValueUsd ?? 0,
-      excludedUsd:           summary.excludedValueUsd,
+      operatorTreasuryUsd:    opSleeve?.grossValueUsd ?? 0,
+      excludedUsd:            summary.excludedValueUsd,
     },
     warnings,
-    methodology:             summary.methodology,
+    methodology: summary.methodology,
   };
 }
 
@@ -427,4 +481,17 @@ export async function getAttestationStatusSummary(): Promise<AttestationStatusSu
   );
 
   return { fetchedAt, assets: entries, summary };
+}
+
+// ── getReserveSnapshot (Phase 3) ──────────────────────────────────────────────
+
+export async function getReserveSnapshotPhase3(): Promise<ReserveSnapshot> {
+  const live = await fetchLiveBalances();
+  const rawRegistry = getApprovedReserveAssetRegistry();
+  const fetchedAt = new Date().toISOString();
+
+  const { enrichedAssets: registry, valuationResults } =
+    await enrichWithPhase3Valuations(rawRegistry, live, fetchedAt);
+
+  return assembleReserveSnapshot(registry, valuationResults);
 }

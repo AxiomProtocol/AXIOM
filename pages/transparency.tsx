@@ -478,6 +478,179 @@ export default function TransparencyPage() {
           ))}
         </div>
       </section>
+
+      {/* ── Phase 3 Oracle and Valuation Readiness ─────────────────────────────── */}
+      <section id="oracle-valuation" className="mb-10">
+        <SectionHeading>Oracle and Valuation Readiness</SectionHeading>
+        <p className="font-dl-mono text-xs text-dl-gray mb-4 leading-relaxed">
+          Phase 3 introduces a structured oracle and NAV adapter layer for the AXUSD reserve system.
+          Each reserve asset is assigned a <strong>ValuationPolicy</strong> that governs which oracle
+          source is used, how confidence degrades under stale or fallback conditions, and whether
+          an asset remains eligible for AXUSD backing under adverse valuation states.
+        </p>
+
+        {/* Oracle architecture overview */}
+        <div className="border border-dl-border mb-6">
+          <div className="px-5 py-3 border-b border-dl-border bg-dl-bg-alt">
+            <p className="text-xs text-dl-navy uppercase tracking-widest font-dl-mono">Phase 3 Oracle Architecture</p>
+          </div>
+          <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-dl-border">
+            {[
+              {
+                label: 'TreasuryNAVOracleService',
+                status: 'WIRED',
+                desc: 'Routes each registry asset to the correct oracle source. USDC: Fixed Peg ($1.00, confidence 99). PLANNED assets (thBILL, BUIDL, USDY, PAXG): stub observations, unusable, zero eligible.',
+              },
+              {
+                label: 'RWAValuationAdapter',
+                status: 'WIRED',
+                desc: 'Computes ValuationResult per asset. Enforces all eligibility gates: PLANNED → 0, INTERNAL_ONLY → 0, stale + eligibleWhenStale=false → 0. Applies haircut expansion on stale/fallback sources.',
+              },
+              {
+                label: 'FallbackHierarchy',
+                status: 'WIRED',
+                desc: 'Selects best available source: PRIMARY_HEALTHY → USING_FALLBACK → BOTH_STALE → BOTH_FAILED. Manual override support with 24h expiry.',
+              },
+            ].map(item => (
+              <div key={item.label} className="px-5 py-4">
+                <div className="flex items-center justify-between mb-2 pb-2 border-b border-dl-border">
+                  <p className="font-dl-mono text-xs text-dl-navy font-semibold">{item.label}</p>
+                  <span className={`font-dl-mono text-xs px-1.5 py-0.5 flex-shrink-0 ml-2 ${
+                    item.status === 'LIVE'
+                      ? 'text-dl-forest border border-dl-forest'
+                      : 'text-dl-gold border border-dl-gold'
+                  }`}>{item.status}</span>
+                </div>
+                <p className="font-dl-mono text-xs text-dl-gray leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Oracle source status table */}
+        <div className="border border-dl-border mb-6">
+          <div className="px-5 py-3 border-b border-dl-border bg-dl-bg-alt">
+            <p className="text-xs text-dl-navy uppercase tracking-widest font-dl-mono">Oracle Source Status</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs font-dl-mono border-collapse">
+              <thead>
+                <tr className="border-b border-dl-border bg-dl-bg-alt">
+                  {['Oracle Source', 'Type', 'Assets', 'Max Staleness', 'Status', 'Note'].map(h => (
+                    <th key={h} className="px-4 py-2 text-left text-dl-navy text-xs uppercase tracking-wider font-semibold border-r border-dl-border last:border-r-0">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-dl-border">
+                {[
+                  { source: 'Fixed Peg ($1.00)', type: 'FIXED_PEG', assets: 'USDC', staleness: 'Never', status: 'LIVE', note: 'Canonical AXUSD backing. Always confidence 99.' },
+                  { source: 'Chainlink XAU/USD', type: 'CHAINLINK', assets: 'PAXG', staleness: '1 hour', status: 'PLANNED', note: 'Phase 3 connection pending. PAXG not yet live.' },
+                  { source: 'Chainlink USDC/USD', type: 'CHAINLINK', assets: 'USDC (fallback)', staleness: '1 hour', status: 'LIVE', note: 'Secondary confirmation for fixed peg.' },
+                  { source: 'Issuer NAV API', type: 'ISSUER_NAV_API', assets: 'thBILL, BUIDL, USDY', staleness: '24 hours', status: 'PLANNED', note: 'Not yet connected. Phase 3 integration required.' },
+                  { source: 'ERC-4626 convertToAssets()', type: 'ERC4626', assets: 'thBILL, BUIDL, USDY (fallback)', staleness: '24 hours', status: 'PLANNED', note: 'Fallback for tokenized funds when NAV API unavailable.' },
+                  { source: 'Custodian Attestation (BitGo)', type: 'CUSTODIAN_ATTESTATION', assets: 'PAXG', staleness: '24 hours', status: 'PLANNED', note: 'Required for PAXG eligibility alongside Chainlink.' },
+                ].map(row => (
+                  <tr key={row.source} className="border-b border-dl-border">
+                    <td className="px-4 py-2 text-dl-navy font-medium border-r border-dl-border">{row.source}</td>
+                    <td className="px-4 py-2 text-dl-gray border-r border-dl-border">{row.type}</td>
+                    <td className="px-4 py-2 text-dl-gray border-r border-dl-border">{row.assets}</td>
+                    <td className="px-4 py-2 text-dl-gray border-r border-dl-border">{row.staleness}</td>
+                    <td className="px-4 py-2 border-r border-dl-border">
+                      <span className={`text-xs font-semibold ${row.status === 'LIVE' ? 'text-dl-forest' : 'text-dl-gold'}`}>
+                        {row.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-dl-gray">{row.note}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Valuation confidence model */}
+        <div className="border border-dl-border mb-6">
+          <div className="px-5 py-3 border-b border-dl-border bg-dl-bg-alt">
+            <p className="text-xs text-dl-navy uppercase tracking-widest font-dl-mono">Confidence Scoring Model</p>
+          </div>
+          <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-dl-border">
+            <div className="px-5 py-4">
+              <p className="font-dl-mono text-xs text-dl-navy font-semibold mb-2">Base Scores by Source Type</p>
+              <div className="space-y-1">
+                {[
+                  { source: 'Fixed Peg', score: 99 },
+                  { source: 'Chainlink On-Chain Feed', score: 92 },
+                  { source: 'ERC-4626 convertToAssets()', score: 85 },
+                  { source: 'Issuer NAV API', score: 80 },
+                  { source: 'Custodian Attestation', score: 75 },
+                  { source: 'Internal Accounting', score: 60 },
+                  { source: 'Fallback Composite', score: 65 },
+                  { source: 'Manual Operator Input', score: 50 },
+                  { source: 'DEX TWAP (secondary only)', score: 40 },
+                ].map(s => (
+                  <div key={s.source} className="flex items-center justify-between text-xs font-dl-mono">
+                    <span className="text-dl-gray">{s.source}</span>
+                    <span className={`font-semibold ${s.score >= 80 ? 'text-dl-forest' : s.score >= 60 ? 'text-dl-gold' : 'text-red-600'}`}>
+                      {s.score}/100
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="px-5 py-4">
+              <p className="font-dl-mono text-xs text-dl-navy font-semibold mb-2">Penalty Table</p>
+              <div className="space-y-1">
+                {[
+                  { condition: 'Approaching Stale (80–100% threshold)', penalty: '−5' },
+                  { condition: 'Stale (100–200% threshold)', penalty: '−25' },
+                  { condition: 'Expired (>200% threshold)', penalty: '−40' },
+                  { condition: 'Fallback source in use', penalty: '−10' },
+                  { condition: 'Attestation required but missing', penalty: '−20' },
+                  { condition: 'Attestation failed', penalty: '−30' },
+                  { condition: 'Attestation stale', penalty: '−15' },
+                  { condition: 'Reconciliation overdue', penalty: '−10' },
+                  { condition: 'Reconciliation failed', penalty: '−20' },
+                  { condition: 'Manual review active', penalty: '−5' },
+                  { condition: 'Asset not live (planned/internal)', penalty: '−10' },
+                ].map(p => (
+                  <div key={p.condition} className="flex items-center justify-between text-xs font-dl-mono">
+                    <span className="text-dl-gray">{p.condition}</span>
+                    <span className="font-semibold text-red-600">{p.penalty}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs font-dl-mono text-dl-gray mt-3">All scores clamped to [0, 100].</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Separation invariants */}
+        <div className="border border-dl-border">
+          <div className="px-5 py-3 border-b border-dl-border bg-dl-bg-alt">
+            <p className="text-xs text-dl-navy uppercase tracking-widest font-dl-mono">Reserve Separation Invariants (Phase 3)</p>
+          </div>
+          <div className="px-5 py-4">
+            <div className="space-y-2">
+              {[
+                'PLANNED assets always return eligibleReserveValueUsd = 0 regardless of NAV data present.',
+                'INTERNAL_ONLY and OPERATOR_TREASURY assets always return eligibleReserveValueUsd = 0.',
+                'DEX_TWAP is prohibited as primary source for TOKENIZED_TBILL, TOKENIZED_TREASURY_FUND, TOKENIZED_GOVERNMENT_MONEY_MARKET (enforced at registry level).',
+                'AXUSD protocol holdings are excluded by circular backing guard — AXUSD cannot back itself.',
+                'Stale valuations where eligibleWhenStale=false exclude asset from reserve accounting.',
+                'Manual override expires after 24 hours; expired overrides produce unusable observations.',
+                'Effective haircut always ≥ base haircut — expansions on stale/fallback never reduce haircut.',
+              ].map((inv, i) => (
+                <div key={i} className="flex gap-2 text-xs font-dl-mono text-dl-gray">
+                  <span className="text-dl-forest flex-shrink-0">✓</span>
+                  <span>{inv}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
     </DesignLawLayout>
   );
 }
