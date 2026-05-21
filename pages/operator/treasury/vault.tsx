@@ -2339,15 +2339,8 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
           {/* Server-side deposit — primary flow (deployer key, VAULT_ADMIN role) */}
           <ServerDepositPanel />
 
-          {/* Wallet deposit — advanced / requires VAULT_ADMIN role on connected wallet */}
-          <details className="max-w-2xl mb-6">
-            <summary className="text-xs font-mono text-dl-gray uppercase tracking-wide cursor-pointer select-none hover:text-dl-navy">
-              Wallet Deposit (requires VAULT_ADMIN role on connected wallet)
-            </summary>
-            <div className="mt-3">
-              <WalletDepositPanel />
-            </div>
-          </details>
+          {/* Wallet deposit — deployer wallet holds VAULT_ADMIN and can use this path */}
+          <WalletDepositPanel />
 
           {/* Allocate idle USDC into Aave v3 for yield — STRATEGY_ADMIN only */}
           <AllocateToAavePanel />
