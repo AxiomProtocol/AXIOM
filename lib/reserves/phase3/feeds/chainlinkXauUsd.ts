@@ -23,8 +23,11 @@ const AGGREGATOR_V3_ABI = [
 // https://docs.chain.link/data-feeds/price-feeds/addresses?network=arbitrum
 export const CHAINLINK_XAU_USD_ADDRESS = '0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2c';
 
-// Max age before a Chainlink round is considered stale (3600s = 1 hr heartbeat)
-const MAX_ROUND_AGE_SECONDS = 3600;
+// Max age before a Chainlink round is considered stale.
+// Chainlink XAU/USD on Arbitrum One has a 24-hour heartbeat (86400s).
+// The previous value of 3600s (1 hr) was incorrect and caused valid rounds
+// to be flagged as stale. Reference: https://data.chain.link/arbitrum/mainnet/commodities/xau-usd
+const MAX_ROUND_AGE_SECONDS = 86400;
 
 export interface ChainlinkRoundData {
   price: number;          // XAU/USD in USD (normalized float)

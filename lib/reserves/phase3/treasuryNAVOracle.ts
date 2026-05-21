@@ -150,7 +150,9 @@ function buildUnusableObservation(
 
 async function fetchPaxgObservation(): Promise<NAVObservation> {
   const assetId = 'paxg-tokenized-gold-planned';
-  const maxStaleness = 3600;
+  // 86400s = Chainlink XAU/USD 24-hour heartbeat on Arbitrum One.
+  // Was incorrectly 3600s (1 hr), causing valid rounds to be marked EXPIRED.
+  const maxStaleness = 86400;
 
   const [chainlinkData, attestation] = await Promise.allSettled([
     fetchChainlinkXauUsd(),
@@ -178,6 +180,8 @@ async function fetchPaxgObservation(): Promise<NAVObservation> {
     ? mapAttestationToValuationStatus(attest)
     : 'NONE';
 
+  // 86400s = Chainlink XAU/USD 24-hour heartbeat on Arbitrum One.
+  // Was incorrectly 3600s, causing valid rounds to be marked EXPIRED.
   const freshnessState = computeFreshnessState(round.updatedAt.toISOString(), maxStaleness);
   const isStale =
     freshnessState === 'STALE' ||
