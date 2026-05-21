@@ -102,6 +102,12 @@ export function getValuation(
     exclusionReason = 'ASSET_DISABLED_OR_DEPRECATED';
   } else if (isEmergency) {
     exclusionReason = 'EMERGENCY_DISABLED';
+  } else if (asset.admissionGateOpen === false) {
+    // Explicit admission gate — blocks TOKENIZED_TBILL/TREASURY_FUND/GOV_MMF until
+    // Phase 1 compliance gaps are resolved in code (not just in comments):
+    //   LendingPlatformModule whitelist, CountryAllowModule country-0, TransferLimitModule tier-3.
+    // This gate fires even if status=LIVE, preventing premature admission.
+    exclusionReason = 'ADMISSION_GATE_CLOSED_PHASE1_COMPLIANCE';
   } else if (!asset.isLive) {
     exclusionReason = 'ASSET_NOT_LIVE';
   } else if (!nav.isUsable && nav.grossNavPerToken === null) {

@@ -195,6 +195,21 @@ export interface ApprovedReserveAsset {
   adminNotes: string;
   metadataUri?: string;
 
+  /**
+   * Explicit admission gate. When false, the asset is EXCLUDED from live reserve
+   * accounting regardless of status or isLive flags.
+   *
+   * Use case: TOKENIZED_TBILL/TOKENIZED_TREASURY_FUND/TOKENIZED_GOVERNMENT_MONEY_MARKET
+   * assets are blocked (admissionGateOpen=false) until Phase 1 compliance gaps are
+   * resolved in code:
+   *   - LendingPlatformModule whitelist enforcement
+   *   - CountryAllowModule country-code-0 pass-through
+   *   - TransferLimitModule tier-3 assignment
+   *
+   * When undefined, treated as open (true). Must be explicitly set to false to block.
+   */
+  admissionGateOpen?: boolean;
+
   lastUpdatedAt: string;
   addedAt: string;
 }

@@ -271,6 +271,11 @@ function buildRegistry(): ApprovedReserveAsset[] {
       haircutPolicy:            TBILL_HAIRCUT,
       eligibleReserveValueUsd:  0,      // Always 0: PLANNED
       custody:                  PLANNED_CUSTODY,
+      admissionGateOpen:        false, // BLOCKED: Phase 1 compliance gaps unresolved
+      // Gap 1: LendingPlatformModule whitelist does not enforce platform restrictions
+      // Gap 2: CountryAllowModule treats country code 0 as pass-through
+      // Gap 3: TransferLimitModule defines tier 3 but does not assign it
+      // Set admissionGateOpen=true only after all three are resolved in code.
       adminNotes:
         'Theo Finance thBILL — tokenized U.S. Treasury Bill. ' +
         'Currently held in EulerV2Strategy as yield collateral (OPERATOR_TREASURY use only). ' +
@@ -306,8 +311,11 @@ function buildRegistry(): ApprovedReserveAsset[] {
       haircutPolicy:            TBILL_FUND_HAIRCUT,
       eligibleReserveValueUsd:  0,
       custody:                  PLANNED_CUSTODY,
+      admissionGateOpen:        false, // BLOCKED: Phase 1 compliance gaps unresolved (same scope as thBILL)
       adminNotes:
         'BlackRock BUIDL or equivalent tokenized Treasury fund. ' +
+        'Phase 4 oracle: ERC-4626 convertToAssets() on Ethereum mainnet is authoritative primary source ' +
+        '(no public BlackRock REST NAV API exists). isFallback=false for on-chain fetch. ' +
         'Integration pathway: Phase 3 oracle + Phase 4 mint/redeem module. ' +
         'Asset address is a placeholder — must be updated when integrated.',
       lastUpdatedAt:            NOW,
@@ -337,6 +345,7 @@ function buildRegistry(): ApprovedReserveAsset[] {
       haircutPolicy:            GOVMMF_HAIRCUT,
       eligibleReserveValueUsd:  0,
       custody:                  PLANNED_CUSTODY,
+      admissionGateOpen:        false, // BLOCKED: Phase 1 compliance gaps unresolved (same scope as thBILL)
       adminNotes:
         'Ondo USDY or equivalent tokenized government money market fund. ' +
         'Placeholder — integrate after Phase 3 oracle approval.',
@@ -380,6 +389,7 @@ function buildRegistry(): ApprovedReserveAsset[] {
         attestationStatus:       'CURRENT',
         reconciliationStatus:    'CURRENT',
       },
+      admissionGateOpen:        true, // OPEN: TOKENIZED_GOLD — Phase 1 compliance gaps do NOT apply
       adminNotes:
         'PAXG tokenized gold sleeve admitted LIVE in Phase 4. ' +
         'Oracle: Chainlink XAU/USD (Arbitrum One, 0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2C). ' +

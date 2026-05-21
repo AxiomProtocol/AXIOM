@@ -143,12 +143,36 @@ async function tryOnChainConvertToAssets(assetId: string): Promise<number | null
 
 /**
  * Fetches the issuer NAV for a given PLANNED asset.
- * Returns null if both the issuer API and on-chain fallback fail.
+ *
+ * Source priority:
+ *   - If ISSUER_API_ENDPOINTS[assetId] is non-empty → try REST API first, on-chain as fallback.
+ *   - If ISSUER_API_ENDPOINTS[assetId] is empty (e.g. BUIDL) → use on-chain ERC-4626 as
+ *     PRIMARY (isFallback=false). BlackRock has no public REST NAV API; ERC-4626
+ *     convertToAssets() is the authoritative source for BUIDL, verified on-chain.
+ *
+ * Returns null if all configured sources fail.
  */
 export async function fetchIssuerNav(assetId: string): Promise<IssuerNavResult | null> {
   const fetchedAt = new Date().toISOString();
+  const endpoint = ISSUER_API_ENDPOINTS[assetId];
 
-  // 1. Try issuer API
+  // No REST endpoint configured → go straight to on-chain primary (not fallback).
+  // BUIDL maintains $1.00 NAV by design; ERC-4626 convertToAssets() is authoritative.
+  if (!endpoint) {
+    const onChainNav = await tryOnChainConvertToAssets(assetId);
+    if (onChainNav !== null) {
+      return {
+        nav: onChainNav,
+        source: 'ERC4626_ONCHAIN',
+        fetchedAt,
+        isFallback: false, // PRIMARY — ERC-4626 is the authoritative source (no public REST API)
+        notes: `NAV fetched via on-chain ERC-4626 convertToAssets() — primary source for ${assetId} (no public issuer REST API)`,
+      };
+    }
+    return null;
+  }
+
+  // 1. Try issuer REST API
   const apiNav = await tryIssuerApi(assetId);
   if (apiNav !== null) {
     return {
@@ -156,19 +180,19 @@ export async function fetchIssuerNav(assetId: string): Promise<IssuerNavResult |
       source: 'ISSUER_API',
       fetchedAt,
       isFallback: false,
-      notes: `NAV fetched from issuer API endpoint for ${assetId}`,
+      notes: `NAV fetched from issuer REST API for ${assetId}`,
     };
   }
 
-  // 2. Try on-chain ERC-4626 convertToAssets()
+  // 2. REST API failed — fall back to on-chain ERC-4626 convertToAssets()
   const onChainNav = await tryOnChainConvertToAssets(assetId);
   if (onChainNav !== null) {
     return {
       nav: onChainNav,
       source: 'ERC4626_ONCHAIN',
       fetchedAt,
-      isFallback: true,
-      notes: `NAV fetched via on-chain ERC-4626 convertToAssets() for ${assetId} (issuer API unavailable)`,
+      isFallback: true, // FALLBACK — REST API was configured but unavailable
+      notes: `NAV fetched via on-chain ERC-4626 convertToAssets() for ${assetId} (issuer REST API unavailable)`,
     };
   }
 

@@ -273,7 +273,7 @@ async function fetchIssuerNAVObservation(assetId: string): Promise<NAVObservatio
     const obs = buildUnusableObservation(
       assetId, config.symbol, 'ISSUER_NAV_API', config.sourceName,
       'Issuer NAV API and on-chain ERC-4626 fallback both unavailable',
-      config.address, 42161, config.decimals,
+      config.address, config.chainId, config.decimals, // per-asset chain (BUIDL=1, others=42161)
     );
     setObservationCache(assetId, obs);
     return obs;
