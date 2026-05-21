@@ -22,7 +22,7 @@
 
 import Head from 'next/head';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { GetServerSideProps } from 'next';
 import { DesignLawLayout, SectionHeading } from '../../components/design-law';
 import { PageVisualSuite } from '../../components/visual';
@@ -410,6 +410,68 @@ export default function AssetsDashboard({ assets, spots, axauSpot, paxgNav, paxg
     void loadPortfolio(addr);
   }
 
+  // ── PAXG live polling ─────────────────────────────────────────────────────
+  // Seed live state from SSR props so there is no loading flash on first render.
+  const [liveNav, setLiveNav]           = useState<PaxgNavData | null>(paxgNav);
+  const [liveLastPoll, setLiveLastPoll] = useState<PaxgLastPollData | null>(paxgLastPoll);
+  const [paxgFetchedAt, setPaxgFetchedAt] = useState<Date | null>(null);
+  const [paxgPollError, setPaxgPollError] = useState<string | null>(null);
+
+  const pollPaxgNav = useCallback(async () => {
+    try {
+      const res = await fetch(
+        '/api/axusd/oracles/nav?asset=paxg-tokenized-gold-planned',
+        { headers: { 'Cache-Control': 'no-cache' } }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const obs = json.observation as {
+        grossNavPerToken: number | null;
+        sourceName: string;
+        sourceUrl: string | null;
+        timestamp: string;
+        confidenceScore: number;
+        freshnessState: string;
+        liveAttestationStatus: string | null;
+        isStale: boolean;
+        isUsable: boolean;
+        unusableReason: string | null;
+      };
+      setLiveNav({
+        grossNavPerToken: obs.grossNavPerToken,
+        sourceName: obs.sourceName,
+        sourceUrl: obs.sourceUrl,
+        timestamp: obs.timestamp,
+        confidenceScore: obs.confidenceScore,
+        freshnessState: obs.freshnessState,
+        liveAttestationStatus: obs.liveAttestationStatus ?? null,
+        isStale: obs.isStale,
+        isUsable: obs.isUsable,
+        unusableReason: obs.unusableReason,
+      });
+      if (json.lastPoll) {
+        setLiveLastPoll({
+          completedAt: json.lastPoll.completedAt,
+          durationMs: json.lastPoll.durationMs,
+          successCount: json.lastPoll.successCount,
+          failureCount: json.lastPoll.failureCount,
+        });
+      }
+      setPaxgFetchedAt(new Date(json.fetchedAt));
+      setPaxgPollError(null);
+    } catch (e) {
+      // Keep previous data visible; just surface the error note.
+      setPaxgPollError((e as Error).message);
+    }
+  }, []);
+
+  useEffect(() => {
+    // First client-side fetch runs immediately (SSR data may already be seconds old).
+    void pollPaxgNav();
+    const id = setInterval(() => { void pollPaxgNav(); }, 60_000);
+    return () => clearInterval(id);
+  }, [pollPaxgNav]);
+
   // Build comparison rows
   const usdcMeta = assets.find((a) => a.symbol === 'USDC');
   const paxgMeta = assets.find((a) => a.symbol === 'PAXG');
@@ -423,8 +485,8 @@ export default function AssetsDashboard({ assets, spots, axauSpot, paxgNav, paxg
   const wbtcSpot = spots.find((s) => s.symbol === 'WBTC');
   const cbethSpot = spots.find((s) => s.symbol === 'cbETH');
 
-  // PAXG reserve contribution computed values
-  const paxgSpotPerToken = paxgNav?.grossNavPerToken ?? null;
+  // PAXG reserve contribution computed values (use live state, seeded from SSR)
+  const paxgSpotPerToken = liveNav?.grossNavPerToken ?? null;
   const paxgBalance = paxgAttestation?.paxgBalanceFormatted
     ? parseFloat(paxgAttestation.paxgBalanceFormatted)
     : null;
@@ -683,6 +745,23 @@ export default function AssetsDashboard({ assets, spots, axauSpot, paxgNav, paxg
           }}>
             GOVERNANCE_ADMITTED
           </span>
+          {/* Live-refresh timestamp — updates client-side every 60s */}
+          <span style={{
+            marginLeft: 'auto',
+            fontFamily: '"Courier New", monospace',
+            fontSize: 10,
+            color: paxgPollError ? COLOR.amber : COLOR.muted,
+            letterSpacing: '0.06em',
+          }}>
+            {paxgPollError
+              ? `Poll error — ${paxgPollError}`
+              : paxgFetchedAt
+              ? `Last updated: ${paxgFetchedAt.toLocaleTimeString('en-US', {
+                  hour: '2-digit', minute: '2-digit', second: '2-digit',
+                  timeZone: 'America/New_York', timeZoneName: 'short',
+                })} · Auto-refresh 60s`
+              : 'Auto-refresh 60s'}
+          </span>
         </div>
         <p style={{ color: COLOR.muted, fontFamily: 'Georgia, serif', fontSize: 14, marginTop: 4, marginBottom: 16 }}>
           Live PAXG gold sleeve NAV contribution to the AXUSD reserve, priced by the on-chain
@@ -696,8 +775,8 @@ export default function AssetsDashboard({ assets, spots, axauSpot, paxgNav, paxg
           <SpotCard
             label="Spot per PAXG (Chainlink XAU/USD)"
             value={fmtUsd(paxgSpotPerToken, { maximumFractionDigits: 2 })}
-            sub={paxgNav ? `Oracle: ${paxgNav.sourceName}` : 'Oracle unavailable'}
-            error={paxgNav === null ? 'Oracle fetch failed' : undefined}
+            sub={liveNav ? `Oracle: ${liveNav.sourceName}` : 'Oracle unavailable'}
+            error={liveNav === null ? 'Oracle fetch failed' : undefined}
             highlight
           />
           <SpotCard
@@ -746,34 +825,34 @@ export default function AssetsDashboard({ assets, spots, axauSpot, paxgNav, paxg
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
             <div>
               <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Oracle freshness</span>
-              <div style={{ color: paxgNav?.isStale ? COLOR.amber : COLOR.text, marginTop: 2 }}>
-                {paxgNav?.freshnessState ?? '—'}
+              <div style={{ color: liveNav?.isStale ? COLOR.amber : COLOR.text, marginTop: 2 }}>
+                {liveNav?.freshnessState ?? '—'}
               </div>
             </div>
             <div>
               <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Confidence score</span>
               <div style={{ color: COLOR.text, marginTop: 2 }}>
-                {paxgNav ? `${paxgNav.confidenceScore} / 100` : '—'}
+                {liveNav ? `${liveNav.confidenceScore} / 100` : '—'}
               </div>
             </div>
             <div>
               <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Last oracle poll (Axiom)</span>
               <div style={{ color: COLOR.text, marginTop: 2 }}>
-                {paxgLastPoll
-                  ? new Date(paxgLastPoll.completedAt).toLocaleString()
+                {liveLastPoll
+                  ? new Date(liveLastPoll.completedAt).toLocaleString()
                   : 'No poll run this session'}
               </div>
             </div>
             <div>
               <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Chainlink round timestamp</span>
               <div style={{ color: COLOR.text, marginTop: 2 }}>
-                {paxgNav ? new Date(paxgNav.timestamp).toLocaleString() : '—'}
+                {liveNav ? new Date(liveNav.timestamp).toLocaleString() : '—'}
               </div>
             </div>
             <div>
               <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Attestation status</span>
               <div style={{ color: COLOR.text, marginTop: 2 }}>
-                {paxgNav?.liveAttestationStatus ?? paxgAttestation?.status ?? '—'}
+                {liveNav?.liveAttestationStatus ?? paxgAttestation?.status ?? '—'}
               </div>
             </div>
             {paxgAttestation?.walletAddress ? (
@@ -784,17 +863,17 @@ export default function AssetsDashboard({ assets, spots, axauSpot, paxgNav, paxg
                 </div>
               </div>
             ) : null}
-            {paxgNav?.sourceUrl ? (
+            {liveNav?.sourceUrl ? (
               <div>
                 <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Oracle source</span>
                 <div style={{ marginTop: 2 }}>
                   <a
-                    href={paxgNav.sourceUrl}
+                    href={liveNav.sourceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ color: COLOR.navy, fontSize: 11 }}
                   >
-                    {paxgNav.sourceName} ↗
+                    {liveNav.sourceName} ↗
                   </a>
                 </div>
               </div>
@@ -803,7 +882,7 @@ export default function AssetsDashboard({ assets, spots, axauSpot, paxgNav, paxg
         </div>
 
         {/* Oracle staleness warning */}
-        {paxgNav?.unusableReason ? (
+        {liveNav?.unusableReason ? (
           <div style={{
             padding: '10px 14px',
             background: COLOR.amberBg,
@@ -813,8 +892,8 @@ export default function AssetsDashboard({ assets, spots, axauSpot, paxgNav, paxg
             color: COLOR.amber,
             marginBottom: 12,
           }}>
-            Oracle note: {paxgNav.unusableReason}. Sleeve NAV excluded from eligible reserve total
-            until oracle freshness is restored. See task #600 for heartbeat threshold fix.
+            Oracle note: {liveNav.unusableReason}. Sleeve NAV excluded from eligible reserve total
+            until oracle freshness is restored.
           </div>
         ) : null}
 
