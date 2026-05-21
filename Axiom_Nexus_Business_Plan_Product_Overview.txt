@@ -48,11 +48,10 @@ SECTION 3 — PRODUCTS AND PLATFORM MODULES
 
   - Axiom Protocol Platform
     A modular blockchain software infrastructure platform providing on-chain
-    identity, governance, and asset-management tooling for institutional and
-    developer use.
+    identity, governance, and asset-management tooling.
 
   - Compliance-Focused Digital Asset Infrastructure
-    Software systems designed to support KYC/KYB workflows, audit trails, and
+    Software systems supporting KYC/KYB workflows, audit trails, and
     regulatory-aligned data structures for digital asset environments.
 
   - Smart Contract Tools
@@ -60,12 +59,12 @@ SECTION 3 — PRODUCTS AND PLATFORM MODULES
     for on-chain identity verification, token issuance, and oracle-driven pricing.
 
   - Treasury Management Dashboard
-    An internal dashboard providing real-time visibility into on-chain treasury
+    Internal dashboard providing real-time visibility into on-chain treasury
     balances, reserve compositions, and multi-party authorization activity.
 
   - Reserve and Solvency Reporting Tools
-    Oracle-driven reserve attestation dashboards that produce readable
-    solvency reports suitable for compliance review and internal governance.
+    Oracle-driven reserve attestation dashboards producing readable solvency
+    reports suitable for compliance review and internal governance.
 
   - Payment Rail Integration Tooling
     Software adapters connecting internal treasury operations to Stellar SEP
@@ -80,32 +79,26 @@ SECTION 3 — PRODUCTS AND PLATFORM MODULES
     logging, and business reporting functions for internal use.
 
   - On-Chain Identity and Governance Tools
-    Identity registry and governance token infrastructure enabling
-    permissioned access control and participant management within the platform.
+    Identity registry and governance token infrastructure enabling permissioned
+    access control and participant management within the platform.
 
 ================================================================
 SECTION 4 — CURRENT DEVELOPMENT STAGE
 ================================================================
 
-The company is in early-stage development and onboarding. Axiom Nexus LLC is
-currently building software, technical infrastructure, compliance workflows,
-dashboards, and platform interfaces.
-
+The company is in early-stage development and onboarding.
+Axiom Nexus LLC is currently building software, technical infrastructure,
+compliance workflows, dashboards, and platform interfaces.
 No regulated financial products are currently offered to the public.
 
 ================================================================
 SECTION 5 — ACCOUNT USAGE
 ================================================================
 
-The Bridge account will be used only for:
-  - Internal business treasury activity
-  - Owner-funded operating expenses
-  - Software development costs
-  - Infrastructure expenses
-  - Vendor payments
-  - Compliance preparation
-  - Platform setup costs
-  - General business operations
+The Bridge account will be used only for internal business treasury activity,
+owner-funded operating expenses, software development costs, infrastructure
+expenses, vendor payments, compliance preparation, platform setup, and general
+business operations.
 
 The account will NOT be used to:
   - Transmit customer funds
@@ -124,12 +117,8 @@ The company is currently funded by owner's capital contributed by the
 founder/member for formation, software development, infrastructure, compliance
 preparation, and operating expenses.
 
-Funds are not derived from:
-  - Customer deposits
-  - Customer custody
-  - Money transmission activity
-  - Public investment offerings
-  - Third-party client funds
+Funds are not derived from customer deposits, customer custody, money
+transmission activity, public investment offerings, or third-party client funds.
 
 ================================================================
 SECTION 7 — COMPLIANCE CLARIFICATION
@@ -146,20 +135,214 @@ applicable legal review, required registrations or exemptions, approved complian
 procedures, and/or the use of licensed third-party providers.
 
 ================================================================
-SECTION 8 — PRODUCT SCREENSHOTS AND WIREFRAMES
-================================================================
+SECTION 8 — PRODUCT SCREENSHOTS AND PLATFORM PAGE DIRECTORY
+==================================================================
 
-Product wireframes and development previews are provided in the accompanying
-folder: bridge_product_screenshots/
+All screenshots were taken from the live platform at:
+https://axiomprotocol.app
 
-Included wireframes:
-  01_homepage.png                 — Axiom Protocol public homepage overview
-  02_treasury_dashboard.png       — Treasury management dashboard
-  03_reserve_solvency.png         — Reserve and solvency reporting dashboard
-  04_compliance_workflow.png      — Compliance workflow dashboard
-  05_payment_rail.png             — Payment rail integration overview
-  06_smart_contract.png           — Smart contract infrastructure overview
-  07_tokenized_assets.png         — Tokenized real-world asset infrastructure
+The following pages were captured. Each URL is publicly accessible
+and demonstrates the operational depth of the platform.
+
+--- Platform Identity ---
+  Homepage
+  URL  : https://axiomprotocol.app/
+  Note : Public-facing overview of the Axiom Protocol ecosystem, product direction, and infrastructure mission.
+
+  About
+  URL  : https://axiomprotocol.app/about-us
+  Note : Company background, mission, and team description for Axiom Nexus LLC.
+
+--- Trust & Governance ---
+  Trust Stack
+  URL  : https://axiomprotocol.app/trust
+  Note : Overview of the trust architecture: multi-party authorization, on-chain identity, and governance structure.
+
+  Security & Live Controls
+  URL  : https://axiomprotocol.app/trust/security
+  Note : Real-time security controls, circuit-breaker status, and active risk parameters.
+
+  Audits & Verification
+  URL  : https://axiomprotocol.app/trust/audits
+  Note : On-chain contract verification links, audit trail references, and third-party attestation records.
+
+  Governance & Roles
+  URL  : https://axiomprotocol.app/trust/governance
+  Note : Token-holder governance framework, role assignments, and on-chain proposal tooling.
+
+  Team & Entity
+  URL  : https://axiomprotocol.app/trust/team
+  Note : Entity details for Axiom Nexus LLC including formation state, management structure, and key personnel.
+
+  Loss Coverage Reserve
+  URL  : https://axiomprotocol.app/trust/loss-coverage-reserve
+  Note : Reserve buffer documentation for operational risk management.
+
+  No-Bridges Allow-List
+  URL  : https://axiomprotocol.app/trust/no-bridges
+  Note : Approved cross-chain bridge allow-list and governance policy for bridge access control.
+
+  Bridge Allow-List Governance
+  URL  : https://axiomprotocol.app/governance/bridge-allowlist
+  Note : On-chain governance module for maintaining and updating the approved bridge allow-list.
+
+--- Compliance & Disclosure ---
+  Institutional Disclosure
+  URL  : https://axiomprotocol.app/disclosure
+  Note : Full institutional disclosure including regulatory vocabulary, GENIUS Act alignment language, and glossary of approved terms.
+
+  Collateral Risk Policy
+  URL  : https://axiomprotocol.app/disclosure/collateral-risk-policy
+  Note : Policy document governing collateral acceptance, risk parameters, and concentration limits.
+
+  Verify Infrastructure
+  URL  : https://axiomprotocol.app/infrastructure
+  Note : Live on-chain contract addresses, verification links (Arbiscan), and deployment status for all smart contract layers.
+
+--- Asset Infrastructure — Stack ---
+  System Map
+  URL  : https://axiomprotocol.app/system-map
+  Note : Full technical architecture diagram showing all platform layers: identity, treasury, oracle, settlement, and asset registry.
+
+  Real Assets (Overview)
+  URL  : https://axiomprotocol.app/real-assets
+  Note : Framework overview for onboarding real-world assets including land, commodities, and physical property data.
+
+  AXAU — Gold Reserve
+  URL  : https://axiomprotocol.app/axau
+  Note : Axiom-issued gold reserve instrument backed by PAXG; shows live oracle pricing, reserve composition, and mint/redemption design.
+
+  Silver Reserve (KAG)
+  URL  : https://axiomprotocol.app/commodities/kag
+  Note : Silver reserve reference instrument backed by XAUT; shows Chainlink oracle pricing and reserve framework.
+
+  Supported Assets
+  URL  : https://axiomprotocol.app/assets
+  Note : Read-only registry of the 5 externally-supported assets: USDC, PAXG, XAUT, WBTC, cbETH.
+
+  Asset Dashboard
+  URL  : https://axiomprotocol.app/assets/dashboard
+  Note : Live oracle dashboard showing real-time spot prices, NAV observations, reserve attestations, and AXAU/AXUSD comparisons.
+
+  AXUSD Settlement Rail
+  URL  : https://axiomprotocol.app/axusd-3643
+  Note : ERC-3643 compliant stablecoin settlement rail documentation including KYC enforcement and on-chain identity requirements.
+
+  Tokenized Commodities
+  URL  : https://axiomprotocol.app/commodity-framework
+  Note : Framework for commodity-backed instrument issuance covering gold, silver, and planned commodity assets.
+
+  AXAU Early Access
+  URL  : https://axiomprotocol.app/axau-early-access
+  Note : Early access registration and information page for the AXAU gold reserve instrument.
+
+  Card Onramp
+  URL  : https://axiomprotocol.app/onramp
+  Note : Coinbase-powered fiat-to-crypto onramp for acquiring AXUSD and AXAU via card payment.
+
+  DePIN Network
+  URL  : https://axiomprotocol.app/depin/denet
+  Note : Decentralized physical infrastructure network integration (DeNet node) for distributed storage and compute.
+
+--- Capital & Intelligence ---
+  Protocol Intelligence
+  URL  : https://axiomprotocol.app/capital/protocol-intelligence
+  Note : Macro-level capital intelligence dashboard showing protocol-level metrics and treasury performance data.
+
+  Capital Program
+  URL  : https://axiomprotocol.app/pilot
+  Note : Capital program overview for early participants and institutional allocators.
+
+  Lending Fund
+  URL  : https://axiomprotocol.app/lending-fund
+  Note : SEC Reg D 506(c) compliant lending fund infrastructure integrated with Aave v3 yield layer.
+
+  Syndication
+  URL  : https://axiomprotocol.app/syndication
+  Note : Syndication module for deal structuring and multi-party capital allocation.
+
+  Investor Portal
+  URL  : https://axiomprotocol.app/syndication/portal
+  Note : Secure portal for syndication participants to review deal terms and allocation status.
+
+  Secondary Network
+  URL  : https://axiomprotocol.app/secondary
+  Note : Axiom Secondary Network V1 for secondary liquidity and peer transfer tooling.
+
+  Regime Intelligence
+  URL  : https://axiomprotocol.app/mirdt
+  Note : MIRDT macro intelligence terminal for capital regime analysis and risk signal monitoring.
+
+  Sentinel
+  URL  : https://axiomprotocol.app/sentinel
+  Note : Axiom Sentinel capital decision and risk authorization system with three-mode institutional solvency console.
+
+  Observer
+  URL  : https://axiomprotocol.app/observer
+  Note : On-chain event observer for monitoring protocol activity and flagging anomalies.
+
+  RE Intelligence
+  URL  : https://axiomprotocol.app/re
+  Note : Real estate intelligence dashboard powered by RentCast and Walk Score data feeds.
+
+  Deal Intelligence
+  URL  : https://axiomprotocol.app/deal-intelligence
+  Note : AI-powered acquisition memo builder and deal analysis tool using Gemini AI.
+
+  Deal Flow
+  URL  : https://axiomprotocol.app/distressed-feed
+  Note : Distressed property feed with automated scoring and acquisition pipeline management.
+
+  Property Analysis
+  URL  : https://axiomprotocol.app/property
+  Note : Property analysis tool for underwriting, IVCEE scoring, and DePIN-integrated field capture.
+
+--- Operations & Transparency ---
+  Solvency Console
+  URL  : https://axiomprotocol.app/solvency
+  Note : Three-mode institutional solvency console showing reserve health badges, oracle confidence scores, and attestation status.
+
+  Proof of Execution
+  URL  : https://axiomprotocol.app/proof-of-execution
+  Note : On-chain proof-of-execution log for treasury operations, governance actions, and system events.
+
+  Transparency
+  URL  : https://axiomprotocol.app/transparency
+  Note : Public transparency dashboard with on-chain treasury data, reserve ratios, and protocol metrics.
+
+  Execution Framework
+  URL  : https://axiomprotocol.app/execution-framework
+  Note : Documented execution framework for treasury management, asset onboarding, and compliance procedures.
+
+--- Community ---
+  Wealth Practice
+  URL  : https://axiomprotocol.app/wealth-practice
+  Note : Community group economics platform (formerly SUSU/ROSCA model) for cooperative savings and credit circles.
+
+  Land Pipeline
+  URL  : https://axiomprotocol.app/land
+  Note : Land acquisition pipeline dashboard tracking targeted property opportunities and physical-digital bridge activity.
+
+  Community Credit
+  URL  : https://axiomprotocol.app/community-credit
+  Note : Community credit framework for participant credit scoring and cooperative lending.
+
+  NFT Utility Collection
+  URL  : https://axiomprotocol.app/nft
+  Note : Axiom NFT utility collection including Founder Badges, Participation NFTs, and Land Receipt tokens on Arbitrum One.
+
+--- Products ---
+  Savings
+  URL  : https://axiomprotocol.app/savings
+  Note : Savings product interface built on the Wealth Practice cooperative model.
+
+  All Products
+  URL  : https://axiomprotocol.app/products
+  Note : Full product directory listing all active and planned platform modules.
+
+  Contact
+  URL  : https://axiomprotocol.app/contact
+  Note : Contact information and inquiry form for Axiom Nexus LLC.
 
 ================================================================
 SECTION 9 — WEBSITE AND PUBLIC PRESENCE
