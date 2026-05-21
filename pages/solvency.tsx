@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { DesignLawLayout, SectionHeading, DetailGrid, DisclosureBlock, PaginationControls } from '../components/design-law';
+import { ReserveHealthBadge } from '../components/reserve/ReserveHealthBadge';
 
 const HistoryChart = dynamic(() => import('../components/solvency/HistoryChart'), { ssr: false });
 
@@ -1645,6 +1646,9 @@ export default function SolvencyPage() {
           All figures are derived from controlled reconciliation snapshots and reflect capital positions,
           reserve adequacy, and stabilization policy status at the time of the most recent disclosure cycle.
         </p>
+        <div className="mt-4">
+          <ReserveHealthBadge compact />
+        </div>
       </div>
 
       <div className="border border-dl-border mb-8">
