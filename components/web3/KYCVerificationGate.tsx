@@ -25,12 +25,18 @@ export default function KYCVerificationGate({ children, onVerified }: KYCVerific
       return;
     }
     try {
-      const res = await fetch('/api/kyc/verification');
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth-token') : null;
+      const res = await fetch('/api/kyc/verification', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (res.ok) {
         const data = await res.json();
         const next = mapVerificationStatus(data?.kycVerification?.verificationStatus);
         setKycStatus(next);
         if (next === 'verified' && onVerified) onVerified();
+      } else if (res.status === 401) {
+        // Not authenticated yet — wallet connected but no session
+        setKycStatus('unverified');
       } else {
         setKycStatus('unverified');
       }
