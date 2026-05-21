@@ -614,6 +614,13 @@ function AdmissionLogPanel() {
   const [submitting, setSubmitting]   = useState(false);
   const [submitMsg, setSubmitMsg]     = useState<string | null>(null);
 
+  // Mark Executed inline form state
+  const [executingId, setExecutingId]   = useState<number | null>(null);
+  const [execTxHash, setExecTxHash]     = useState('');
+  const [execNotes, setExecNotes]       = useState('');
+  const [execLoading, setExecLoading]   = useState(false);
+  const [execMsg, setExecMsg]           = useState<string | null>(null);
+
   // Form fields
   const [proposalTitle, setProposalTitle]             = useState(PAXG_DEFAULTS.proposalTitle);
   const [proposalDescription, setProposalDescription] = useState(PAXG_DEFAULTS.proposalDescription);
@@ -680,6 +687,41 @@ function AdmissionLogPanel() {
       setSubmitMsg(`Error: ${(e as Error).message}`);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleMarkExecuted = async (id: number) => {
+    setExecLoading(true);
+    setExecMsg(null);
+    try {
+      const res = await fetch(`/api/operator/reserve-admissions/${id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'EXECUTED',
+          governanceSafeTxHash: execTxHash.trim() || undefined,
+          operatorNotes: execNotes.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setExecMsg(`Error: ${json.error ?? 'Update failed'}`);
+      } else {
+        const v = json.arbiscanVerification;
+        const verNote = v?.attempted
+          ? (v.confirmed ? ' · Arbiscan: tx confirmed ✓' : ` · Arbiscan: ${v.error ?? 'unconfirmed'}`)
+          : '';
+        setExecMsg(`Record #${id} marked EXECUTED.${verNote}`);
+        setExecutingId(null);
+        setExecTxHash('');
+        setExecNotes('');
+        await fetchRecords();
+      }
+    } catch (e) {
+      setExecMsg(`Error: ${(e as Error).message}`);
+    } finally {
+      setExecLoading(false);
     }
   };
 
@@ -933,6 +975,89 @@ function AdmissionLogPanel() {
               {r.operatorNotes && (
                 <div style={{ fontFamily: 'monospace', fontSize: '10px', color: '#6b7280', marginTop: 4 }}>
                   Notes: {r.operatorNotes}
+                </div>
+              )}
+
+              {/* Mark Executed action — only on APPROVED / PROPOSED records */}
+              {(r.status === 'APPROVED' || r.status === 'PROPOSED') && (
+                <div style={{ marginTop: 8 }}>
+                  {executingId === r.id ? (
+                    <div style={{ background: '#f0fdf4', border: '1px solid #86efac', padding: '8px 10px' }}>
+                      <div style={{ fontFamily: 'monospace', fontSize: '10px', fontWeight: 700, color: '#2d6a4f', marginBottom: 6 }}>
+                        Mark Record #{r.id} as EXECUTED
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6, marginBottom: 6 }}>
+                        <input
+                          type="text"
+                          value={execTxHash}
+                          onChange={e => setExecTxHash(e.target.value)}
+                          placeholder="Governance Safe tx hash — 0x… (optional)"
+                          style={{
+                            fontFamily: 'monospace', fontSize: '10px',
+                            padding: '4px 6px', border: '1px solid #86efac',
+                            background: '#ffffff', width: '100%', boxSizing: 'border-box',
+                          }}
+                        />
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button
+                            onClick={() => handleMarkExecuted(r.id)}
+                            disabled={execLoading}
+                            style={{
+                              fontFamily: 'monospace', fontSize: '10px', fontWeight: 700,
+                              color: '#ffffff', background: '#2d6a4f',
+                              border: 'none', padding: '4px 10px',
+                              cursor: execLoading ? 'not-allowed' : 'pointer',
+                              opacity: execLoading ? 0.6 : 1,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {execLoading ? 'Saving…' : 'Confirm Executed'}
+                          </button>
+                          <button
+                            onClick={() => { setExecutingId(null); setExecTxHash(''); setExecNotes(''); setExecMsg(null); }}
+                            style={{
+                              fontFamily: 'monospace', fontSize: '10px',
+                              color: '#6b7280', background: 'transparent',
+                              border: '1px solid #d1d5db', padding: '4px 8px', cursor: 'pointer',
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                      <input
+                        type="text"
+                        value={execNotes}
+                        onChange={e => setExecNotes(e.target.value)}
+                        placeholder="Operator note (optional — appended to existing notes)"
+                        style={{
+                          fontFamily: 'monospace', fontSize: '10px',
+                          padding: '4px 6px', border: '1px solid #86efac',
+                          background: '#ffffff', width: '100%', boxSizing: 'border-box',
+                        }}
+                      />
+                      {execMsg && (
+                        <div style={{
+                          marginTop: 6, fontFamily: 'monospace', fontSize: '9px',
+                          color: execMsg.startsWith('Error') ? '#991b1b' : '#2d6a4f',
+                        }}>
+                          {execMsg}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setExecutingId(r.id); setExecMsg(null); }}
+                      style={{
+                        fontFamily: 'monospace', fontSize: '9px', fontWeight: 700,
+                        color: '#2d6a4f', background: 'transparent',
+                        border: '1px solid #2d6a4f', padding: '3px 8px',
+                        cursor: 'pointer', letterSpacing: '0.06em',
+                      }}
+                    >
+                      Mark Executed →
+                    </button>
+                  )}
                 </div>
               )}
             </div>
