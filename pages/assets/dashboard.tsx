@@ -37,6 +37,8 @@ import {
 import { _internal as portfolioInternal } from '../../lib/portfolio/realAssetsPortfolio';
 import { getTreasuryNAVOracle } from '../../lib/reserves/phase3/treasuryNAVOracle';
 import { fetchBitGoAttestation } from '../../lib/reserves/phase3/feeds/bitgoAttestationFetcher';
+import { getLastPollSummary } from '../../lib/reserves/phase3/navPollingService';
+import { db } from '../../lib/db';
 
 interface SpotRow {
   symbol: SupportedSymbol;
@@ -75,12 +77,28 @@ interface PaxgAttestationData {
   notes: string;
 }
 
+interface PaxgLastPollData {
+  completedAt: string;
+  durationMs: number;
+  successCount: number;
+  failureCount: number;
+}
+
+interface PaxgAdmissionData {
+  recordCount: number;
+  latestStatus: string;
+  latestProposalTitle: string;
+  latestCreatedAt: string;
+}
+
 interface PageProps {
   assets: AssetMetadata[];
   spots: SpotRow[];
   axauSpot: AxauSpot;
   paxgNav: PaxgNavData | null;
   paxgAttestation: PaxgAttestationData | null;
+  paxgLastPoll: PaxgLastPollData | null;
+  paxgAdmission: PaxgAdmissionData | null;
   fetchedAt: string;
 }
 
@@ -235,10 +253,24 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async () => {
     }
   }
 
-  // Fetch PAXG NAV observation and BitGo attestation in parallel
-  const [paxgNavResult, paxgAttestResult] = await Promise.allSettled([
+  // Fetch PAXG NAV observation, BitGo attestation, and admission records in parallel.
+  // getLastPollSummary() is sync — captures the most recent navPollingService run.
+  const [paxgNavResult, paxgAttestResult, paxgAdmissionResult] = await Promise.allSettled([
     getTreasuryNAVOracle().getNAVWithMetadata('paxg-tokenized-gold-planned'),
     fetchBitGoAttestation(),
+    db.query<{
+      asset_id: string;
+      asset_symbol: string;
+      status: string;
+      proposal_title: string;
+      created_at: Date | null;
+    }>(
+      `SELECT asset_id, asset_symbol, status, proposal_title, created_at
+       FROM reserve_admission_log
+       WHERE asset_id = $1
+       ORDER BY created_at DESC`,
+      ['paxg-tokenized-gold-planned']
+    ),
   ]);
 
   const paxgNav: PaxgNavData | null =
@@ -268,6 +300,30 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async () => {
         }
       : null;
 
+  // Last oracle poll summary — the most recent navPollingService.refreshAllObservations() run
+  const pollSummary = getLastPollSummary();
+  const paxgLastPoll: PaxgLastPollData | null = pollSummary
+    ? {
+        completedAt: pollSummary.completedAt,
+        durationMs: pollSummary.durationMs,
+        successCount: pollSummary.successCount,
+        failureCount: pollSummary.failureCount,
+      }
+    : null;
+
+  // Admission records — real governance audit trail for PAXG from the DB
+  const admissionRows =
+    paxgAdmissionResult.status === 'fulfilled' ? paxgAdmissionResult.value.rows : [];
+  const latestRecord = admissionRows[0] ?? null;
+  const paxgAdmission: PaxgAdmissionData | null = latestRecord
+    ? {
+        recordCount: admissionRows.length,
+        latestStatus: latestRecord.status,
+        latestProposalTitle: latestRecord.proposal_title,
+        latestCreatedAt: latestRecord.created_at?.toISOString() ?? '',
+      }
+    : null;
+
   return {
     props: {
       assets,
@@ -275,6 +331,8 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async () => {
       axauSpot,
       paxgNav,
       paxgAttestation,
+      paxgLastPoll,
+      paxgAdmission,
       fetchedAt: new Date().toISOString(),
     },
   };
@@ -297,7 +355,7 @@ function fmtPct(n: number | null): string {
 
 const PAXG_HAIRCUT_BPS = 500; // 5% — from approvedReserveAssetRegistry Phase 4 admission
 
-export default function AssetsDashboard({ assets, spots, axauSpot, paxgNav, paxgAttestation, fetchedAt }: PageProps) {
+export default function AssetsDashboard({ assets, spots, axauSpot, paxgNav, paxgAttestation, paxgLastPoll, paxgAdmission, fetchedAt }: PageProps) {
   const [walletAddress, setWalletAddress] = useState('');
   const [submittedAddress, setSubmittedAddress] = useState<string | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioResponse | null>(null);
@@ -699,7 +757,15 @@ export default function AssetsDashboard({ assets, spots, axauSpot, paxgNav, paxg
               </div>
             </div>
             <div>
-              <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Last oracle poll</span>
+              <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Last oracle poll (Axiom)</span>
+              <div style={{ color: COLOR.text, marginTop: 2 }}>
+                {paxgLastPoll
+                  ? new Date(paxgLastPoll.completedAt).toLocaleString()
+                  : 'No poll run this session'}
+              </div>
+            </div>
+            <div>
+              <span style={{ color: COLOR.muted, textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: 10 }}>Chainlink round timestamp</span>
               <div style={{ color: COLOR.text, marginTop: 2 }}>
                 {paxgNav ? new Date(paxgNav.timestamp).toLocaleString() : '—'}
               </div>
@@ -752,26 +818,60 @@ export default function AssetsDashboard({ assets, spots, axauSpot, paxgNav, paxg
           </div>
         ) : null}
 
-        {/* Governance admission record link */}
+        {/* Governance admission record indicator — driven from DB */}
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
           padding: '10px 14px',
           border: `1px solid ${COLOR.borderAlt}`,
           background: COLOR.bg,
           fontFamily: '"Courier New", monospace',
           fontSize: 12,
         }}>
-          <span style={{ color: COLOR.muted }}>Admission record on file:</span>
-          <Link
-            href="/operator/reserve-registry"
-            style={{ color: COLOR.navy, textDecoration: 'underline', fontWeight: 600 }}
-          >
-            /operator/reserve-registry →
-          </Link>
-          <span style={{ color: COLOR.muted }}>·</span>
-          <span style={{ color: COLOR.muted }}>Operator access required to view governance detail</span>
+          {paxgAdmission ? (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{
+                background: COLOR.green,
+                color: '#fff',
+                padding: '2px 7px',
+                fontSize: 10,
+                letterSpacing: '0.07em',
+              }}>
+                RECORD_ON_FILE
+              </span>
+              <span style={{ color: COLOR.text }}>
+                {paxgAdmission.recordCount} governance record{paxgAdmission.recordCount !== 1 ? 's' : ''} ·
+                Latest status: <strong>{paxgAdmission.latestStatus}</strong> ·
+                Filed: {new Date(paxgAdmission.latestCreatedAt).toLocaleDateString()}
+              </span>
+              <span style={{ color: COLOR.muted }}>·</span>
+              <Link
+                href="/operator/reserve-registry"
+                style={{ color: COLOR.navy, textDecoration: 'underline' }}
+              >
+                View full record (operator) →
+              </Link>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{
+                background: COLOR.amber,
+                color: '#fff',
+                padding: '2px 7px',
+                fontSize: 10,
+                letterSpacing: '0.07em',
+              }}>
+                NO_RECORD
+              </span>
+              <span style={{ color: COLOR.muted }}>
+                No governance admission record found in audit log for this asset.
+              </span>
+              <Link
+                href="/operator/reserve-registry"
+                style={{ color: COLOR.navy, textDecoration: 'underline' }}
+              >
+                /operator/reserve-registry →
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
