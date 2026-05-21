@@ -345,20 +345,6 @@ export const KYCDocumentUpload: React.FC<KYCDocumentUploadProps> = ({
           </p>
         </div>
         
-        {/* SERVER-SIDE SECURITY REQUIREMENTS WARNING */}
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <h4 className="text-sm font-medium text-red-800 mb-2">🛡️ Production Security Requirements</h4>
-          <div className="text-xs text-red-700 space-y-1">
-            <p><strong>File Upload Security (Server-side required):</strong></p>
-            <p>• Virus/malware scanning for all uploaded files</p>
-            <p>• EXIF data stripping to remove location metadata</p>
-            <p>• File type validation beyond MIME type checking</p>
-            <p>• Encrypted storage with access audit logging</p>
-            <p>• Presigned URLs for direct-to-cloud upload</p>
-            <p>• Maximum retention period enforcement per regulations</p>
-            <p><strong>Note:</strong> This demo interface does not implement these security measures</p>
-          </div>
-        </div>
       </div>
 
       <div className="grid gap-6 max-w-4xl mx-auto">
@@ -395,21 +381,6 @@ export const KYCDocumentUpload: React.FC<KYCDocumentUploadProps> = ({
           </div>
         </div>
         
-        {/* Document Verification Technology Requirements */}
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-          <h4 className="font-medium text-orange-800 mb-2">🤖 Production Document Verification</h4>
-          <div className="text-xs text-orange-700 space-y-1">
-            <p><strong>Automated Verification Requirements:</strong></p>
-            <p>• OCR (Optical Character Recognition) for data extraction</p>
-            <p>• Document authenticity verification (watermarks, security features)</p>
-            <p>• Cross-reference with issuing authority databases</p>
-            <p>• Facial recognition matching between ID and selfie</p>
-            <p>• Liveness detection to prevent photo spoofing</p>
-            <p>• Integration with providers like Jumio, Onfido, or Veriff</p>
-            <p>• Real-time fraud detection and risk scoring</p>
-            <p><strong>Note:</strong> This demo uses basic file upload without verification</p>
-          </div>
-        </div>
       </div>
 
       {/* Action Buttons */}

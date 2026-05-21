@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { personalInfo, riskAssessment } = req.body;
+    const { personalInfo, riskAssessment, personaInquiryId } = req.body;
 
     if (!personalInfo) {
       return res.status(400).json({ success: false, error: 'Personal information is required' });
@@ -69,6 +69,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const ipAddress = getClientIp(req);
     const userAgent = req.headers['user-agent'] || null;
 
+    // Sanitise: only accept alphanumeric + dash/underscore, max 100 chars
+    const sanitizedInquiryId =
+      typeof personaInquiryId === 'string' && /^[a-zA-Z0-9_-]{1,100}$/.test(personaInquiryId)
+        ? personaInquiryId
+        : null;
+
     const existingResult = await pool.query(
       `SELECT id FROM kyc_verifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
       [user.userId]
@@ -82,8 +88,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
            first_name = $1, last_name = $2, date_of_birth = $3, nationality = $4,
            address = $5, phone_number = $6, verification_status = 'pending',
            submitted_at = NOW(), risk_level = $7, ip_address = $8, user_agent = $9,
-           last_updated_by = $10, updated_at = NOW()
-         WHERE id = $11
+           last_updated_by = $10,
+           persona_inquiry_id = COALESCE($11, persona_inquiry_id),
+           updated_at = NOW()
+         WHERE id = $12
          RETURNING *`,
         [
           personalInfo.firstName.trim(),
@@ -96,6 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ipAddress,
           userAgent,
           user.userId,
+          sanitizedInquiryId,
           existingResult.rows[0].id,
         ]
       );
@@ -104,8 +113,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const insertResult = await pool.query(
         `INSERT INTO kyc_verifications
            (user_id, first_name, last_name, date_of_birth, nationality, address, phone_number,
-            verification_status, submitted_at, risk_level, ip_address, user_agent, last_updated_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW(), $8, $9, $10, $11)
+            verification_status, submitted_at, risk_level, ip_address, user_agent,
+            last_updated_by, persona_inquiry_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW(), $8, $9, $10, $11, $12)
          RETURNING *`,
         [
           user.userId,
@@ -119,6 +129,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ipAddress,
           userAgent,
           user.userId,
+          sanitizedInquiryId,
         ]
       );
       kycRow = insertResult.rows[0];
@@ -152,6 +163,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       verificationStatus: kycRow.verification_status,
       submittedAt: kycRow.submitted_at,
       riskLevel: kycRow.risk_level,
+      personaInquiryId: kycRow.persona_inquiry_id,
       createdAt: kycRow.created_at,
       updatedAt: kycRow.updated_at,
     };

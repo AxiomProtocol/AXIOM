@@ -331,7 +331,10 @@ export const kycVerifications = pgTable("kyc_verifications", {
   // Compliance tracking
   lastUpdatedBy: integer("last_updated_by").references(() => users.id),
   expiresAt: timestamp("expires_at"), // KYC verification expiry
-  
+
+  // Persona identity verification
+  personaInquiryId: varchar("persona_inquiry_id", { length: 100 }),
+
   // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -341,6 +344,7 @@ export const kycVerifications = pgTable("kyc_verifications", {
   statusIdx: index("kyc_verifications_status_idx").on(table.verificationStatus),
   reviewedByIdx: index("kyc_verifications_reviewed_by_idx").on(table.reviewedBy),
   submittedAtIdx: index("kyc_verifications_submitted_at_idx").on(table.submittedAt),
+  personaInquiryIdIdx: index("kyc_verifications_persona_inquiry_id_idx").on(table.personaInquiryId),
 }));
 
 // KYC documents table for file uploads

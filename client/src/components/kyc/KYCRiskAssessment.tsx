@@ -297,18 +297,6 @@ export const KYCRiskAssessment: React.FC<KYCRiskAssessmentProps> = ({
           </p>
         </div>
         
-        {/* AML/COMPLIANCE WARNINGS */}
-        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <h4 className="text-sm font-medium text-yellow-800 mb-2">⚠️ Production Compliance Requirements</h4>
-          <div className="text-xs text-yellow-700 space-y-1">
-            <p><strong>AML/KYC Compliance:</strong></p>
-            <p>• Enhanced due diligence for high-risk customers</p>
-            <p>• Ongoing transaction monitoring and suspicious activity reporting</p>
-            <p>• Customer risk scoring and periodic re-assessment</p>
-            <p>• Integration with global sanctions and PEP databases</p>
-            <p><strong>Note:</strong> This demo does not perform real compliance screening</p>
-          </div>
-        </div>
       </div>
 
       <div className="max-w-4xl mx-auto space-y-8">
