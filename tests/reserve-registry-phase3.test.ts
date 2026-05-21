@@ -480,10 +480,13 @@ describe('TreasuryNAVOracleService', () => {
     expect(obs.sourceType).toBe('INTERNAL_ACCOUNTING');
   });
 
-  it('AXUSD (internal): returns fixed peg observation', async () => {
+  it('AXUSD (internal): returns INTERNAL_ACCOUNTING observation (circular backing guard)', async () => {
     const obs = await oracle.getNAVWithMetadata('axusd-protocol-holdings-internal');
-    expect(obs.grossNavPerToken).toBe(1.0);
-    expect(obs.sourceType).toBe('FIXED_PEG');
+    // AXUSD uses INTERNAL_ACCOUNTING — it is the liability, not a reserve asset.
+    // grossNavPerToken is null because no external balance is tracked here.
+    expect(obs.sourceType).toBe('INTERNAL_ACCOUNTING');
+    expect(obs.grossNavPerToken).toBeNull();
+    expect(obs.isUsable).toBe(true); // Usable for internal accounting; RWAValuationAdapter zeroes eligible
   });
 
   it('Unknown asset: returns unusable observation', async () => {

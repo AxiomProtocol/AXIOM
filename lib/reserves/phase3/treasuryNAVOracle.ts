@@ -202,7 +202,14 @@ export class TreasuryNAVOracleService implements ITreasuryNAVOracle {
         );
 
       case 'axusd-protocol-holdings-internal':
-        return buildFixedPegObservation(assetId, 'AXUSD');
+        // INTERNAL_ACCOUNTING: AXUSD is the liability being covered, not a reserve asset.
+        // Circular backing guard permanently excludes this via RWAValuationAdapter.
+        return buildInternalAccountingObservation(
+          assetId,
+          'AXUSD',
+          '0x0000000000000000000000000000000000000000', // placeholder — no external balance needed
+          18,
+        );
 
       default:
         return buildUnconnectedObservation(

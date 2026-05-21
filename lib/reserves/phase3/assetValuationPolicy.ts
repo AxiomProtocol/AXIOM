@@ -135,7 +135,7 @@ const POLICIES: ValuationPolicy[] = [
   {
     assetId: 'axusd-protocol-holdings-internal',
     symbol: 'AXUSD',
-    primarySourceId: 'FIXED_PEG',
+    primarySourceId: 'INTERNAL_ACCOUNTING',   // Circular backing guard — AXUSD backs itself
     fallbackSourceId: null,
     maxStalenessSeconds: 315360000,
     minConfidenceScore: 0,  // Irrelevant — always excluded (circular backing)

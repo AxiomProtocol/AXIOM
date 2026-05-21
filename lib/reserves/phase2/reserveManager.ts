@@ -145,6 +145,9 @@ export async function enrichWithPhase3Valuations(
     const nav = navMap.get(asset.id);
     if (!nav) return asset;
 
+    // Resolve policy (required for all code paths below)
+    const policy = getValuationPolicy(asset.id);
+
     // For USDC PSM: use live balance, fixed $1.00 peg
     if (asset.id === 'usdc-canonical-psm' && asset.status === 'LIVE') {
       const balance    = live.usdcInPsm;
@@ -160,20 +163,27 @@ export async function enrichWithPhase3Valuations(
         lastValuedAt:            fetchedAt,
         custody: { ...asset.custody, custodyWallet: CANONICAL_PSM_ADDRESS },
       };
-      const policy = getValuationPolicy(asset.id);
       if (policy) {
-        const result = getValuation(enriched, policy, nav);
+        // Run fallback hierarchy to determine source health and fallback state
+        // (For USDC fixed peg, fallback is always null — always PRIMARY_HEALTHY)
+        const selection = selectValuationSource(nav, null, null, policy.minConfidenceScore);
+        const result = getValuation(enriched, policy, selection.observation, selection.fallbackState);
         valuationResults.push(result);
       }
       return enriched;
     }
 
-    // For all other assets: NAV observation provides pricing data
-    const policy = getValuationPolicy(asset.id);
+    // For all other assets: run through fallback hierarchy before valuation
     if (!policy) return asset;
 
-    // Compute valuation result
-    const result = getValuation(asset, policy, nav);
+    // Phase 3 fallback hierarchy: for assets with a fallbackSourceId, a secondary
+    // NAVObservation would be fetched here (Phase 4). For now, fallback is null
+    // (all secondary oracle connections are Phase 4 work). selectValuationSource
+    // will return BOTH_FAILED for PLANNED/unusable primary observations.
+    const fallbackNav = null;
+    const selection   = selectValuationSource(nav, fallbackNav, null, policy.minConfidenceScore);
+
+    const result = getValuation(asset, policy, selection.observation, selection.fallbackState);
     valuationResults.push(result);
 
     // Return asset enriched with Phase 3 valuation data (balance remains null for planned/internal)
