@@ -28,6 +28,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     recipientAccountNumber,
     recipientRoutingNumber,
     recipientName,
+    fullName,
+    email,
   } = req.body ?? {};
 
   const amtErr = validateDollarAmount(fiatAmountCents);
@@ -39,15 +41,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (direction !== 'fiat_to_crypto' && direction !== 'crypto_to_fiat') {
     return res.status(400).json({ error: 'Direction must be fiat_to_crypto or crypto_to_fiat.' });
   }
-  if (!bitgoWalletId) return res.status(400).json({ error: 'bitgoWalletId is required.' });
-
-  if (direction === 'crypto_to_fiat') {
-    if (!recipientAccountNumber || !recipientRoutingNumber) {
-      return res.status(400).json({
-        error: 'recipientAccountNumber and recipientRoutingNumber are required for fiat withdrawal.',
-      });
-    }
-  }
 
   const fn = direction === 'fiat_to_crypto' ? bridgeService.fiatToCrypto : bridgeService.cryptoToFiat;
   const result = await fn.call(bridgeService, {
@@ -55,20 +48,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     direction,
     fiatAmountCents: Number(fiatAmountCents),
     cryptoAsset: cryptoAsset as CryptoAsset,
-    bankingAccountId: bankingAccountId ? String(bankingAccountId) : undefined,
-    bitgoWalletId: String(bitgoWalletId),
-    quoteSnapshotId: quoteSnapshotId ? String(quoteSnapshotId) : undefined,
-    recipientAccountNumber: recipientAccountNumber ? String(recipientAccountNumber) : undefined,
-    recipientRoutingNumber: recipientRoutingNumber ? String(recipientRoutingNumber) : undefined,
-    recipientName: recipientName ? String(recipientName) : undefined,
+    bankingAccountId:        bankingAccountId        ? String(bankingAccountId)        : undefined,
+    bitgoWalletId:           bitgoWalletId           ? String(bitgoWalletId)           : undefined,
+    quoteSnapshotId:         quoteSnapshotId         ? String(quoteSnapshotId)         : undefined,
+    recipientAccountNumber:  recipientAccountNumber  ? String(recipientAccountNumber)  : undefined,
+    recipientRoutingNumber:  recipientRoutingNumber  ? String(recipientRoutingNumber)  : undefined,
+    recipientName:           recipientName           ? String(recipientName)           : undefined,
+    fullName:                fullName                ? String(fullName)                : undefined,
+    email:                   email                   ? String(email)                   : undefined,
   });
 
-  if (!result.success) return res.status(400).json({ error: result.error });
+  if (!result.success) {
+    return res.status(result.kycRequired ? 422 : 400).json({
+      error:       result.error,
+      kycRequired: result.kycRequired ?? false,
+      kycUrl:      result.kycUrl ?? null,
+    });
+  }
 
   return res.status(200).json({
-    success: true,
-    transferId: result.transferId,
-    status: result.status,
+    success:     true,
+    transferId:  result.transferId,
+    status:      result.status,
     depositInfo: result.depositInfo,
     achTransferId: result.achTransferId,
   });

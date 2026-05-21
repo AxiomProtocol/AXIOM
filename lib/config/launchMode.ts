@@ -50,7 +50,6 @@ export const WALLET_ONLY_GATED_PAGE_PREFIXES: readonly string[] = [
   '/banking',
   '/credit',
   '/dao-payroll',
-  '/direct-deposit',
   '/my-card',
   '/rent-collection',
 ] as const;
