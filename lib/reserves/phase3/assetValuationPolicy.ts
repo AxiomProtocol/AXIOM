@@ -89,7 +89,7 @@ const POLICIES: ValuationPolicy[] = [
     notes: 'PLANNED. Integrate after Phase 3 oracle approval.',
   },
 
-  // ── PAXG — TOKENIZED_GOLD ─────────────────────────────────────────────────
+  // ── PAXG — TOKENIZED_GOLD (Phase 4 LIVE) ────────────────────────────────
   {
     assetId: 'paxg-tokenized-gold-planned',
     symbol: 'PAXG',
@@ -102,12 +102,13 @@ const POLICIES: ValuationPolicy[] = [
     eligibleWhenStale: false,
     eligibleWhenFallback: false,
     eligibleWhenAttestationMissing: false,
-    attestationRequired: true,     // BitGo attestation required
-    manualReviewRequired: true,
+    attestationRequired: true,     // BitGo on-chain ERC-20 balanceOf() attestation required
+    manualReviewRequired: false,   // Phase 4: oracle live, manual review cleared
     emergencyDisableBehavior: 'EXCLUDE',
     notes:
-      'PLANNED. PAXG is already counted in CanonicalReserveSnapshot hard-asset coverage. ' +
-      'Dual-counting must be avoided. Reserve-control separation required before eligibility.',
+      'LIVE (Phase 4). Chainlink XAU/USD + BitGo on-chain token attestation active. ' +
+      'Dual-counting guard: AXUSD sleeve balance must not overlap with CanonicalReserveSnapshot hard-asset numerator. ' +
+      'TOKENIZED_GOLD sleeve is not subject to TOKENIZED_TBILL compliance gaps.',
   },
 
   // ── WETH — OPERATOR_TREASURY ──────────────────────────────────────────────

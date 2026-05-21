@@ -87,7 +87,7 @@ async function pollPaxg(): Promise<PollResult> {
     reconciliationStatus: 'CURRENT',
     isFallback: false,
     isManuallyReviewed: false,
-    isAssetLive: false, // PLANNED — not yet admitted as AXUSD reserve
+    isAssetLive: true, // LIVE — Phase 4 admitted TOKENIZED_GOLD sleeve
     attestationRequired: true,
   });
 

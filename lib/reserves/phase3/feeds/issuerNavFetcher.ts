@@ -50,10 +50,12 @@ const ASSET_ADDRESSES: Record<string, { address: string; chainId: number; decima
   },
 };
 
-// Public API endpoints (unauthenticated)
+// Public API endpoints (unauthenticated).
+// BUIDL: BlackRock has no public NAV REST API. On-chain ERC-4626 is the authoritative
+// primary source for BUIDL (maintained at $1.00 by design, verifiable via convertToAssets).
 const ISSUER_API_ENDPOINTS: Record<string, string> = {
   'ondo-usdy-tokenized-govmmf-planned': 'https://api.ondo.finance/api/v1/fund/usdy/nav',
-  'buidl-tokenized-treasury-planned':   '', // No public REST API; rely on on-chain
+  'buidl-tokenized-treasury-planned':   '', // Intentionally empty — use ERC-4626 on-chain as primary
   'thbill-theo-market-planned':          'https://api.theomarket.io/v1/nav/thBILL',
 };
 

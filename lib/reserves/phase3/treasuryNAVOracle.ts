@@ -191,7 +191,7 @@ async function fetchPaxgObservation(): Promise<NAVObservation> {
     reconciliationStatus: 'CURRENT',
     isFallback: false,
     isManuallyReviewed: false,
-    isAssetLive: false, // PLANNED — not yet an admitted AXUSD reserve sleeve
+    isAssetLive: true, // LIVE — Phase 4 admitted AXUSD TOKENIZED_GOLD sleeve
     attestationRequired: true,
   });
 

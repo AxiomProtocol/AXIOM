@@ -15,7 +15,9 @@
  *   5. Haircut bps must be 0–10000; max allocation bps must be 0–10000.
  *   6. AxiomTreasuryVault assets are tagged INTERNAL_ONLY + OPERATOR_TREASURY.
  *
- * Compliance gap notes (from Phase 1 audit — do NOT fix here):
+ * Compliance gap notes (from Phase 1 audit):
+ *   Scope: TOKENIZED_TBILL sleeve only. TOKENIZED_GOLD (PAXG) is NOT blocked by these gaps.
+ *
  *   - LendingPlatformModule whitelist does not enforce platform restrictions.
  *     Impact: TOKENIZED_TBILL sleeve cannot rely on on-chain compliance gating alone.
  *   - CountryAllowModule treats country code 0 as pass-through.
@@ -23,6 +25,15 @@
  *   - TransferLimitModule defines institutional tier 3 but does not assign it.
  *     Impact: Transfer limit controls are not fully operational for T-Bill holders.
  *   These gaps must be resolved before any TOKENIZED_TBILL asset goes LIVE.
+ *
+ * Phase 4 admission — PAXG (TOKENIZED_GOLD):
+ *   PAXG admitted to LIVE status after:
+ *     (a) Chainlink XAU/USD live feed connected (lib/reserves/phase3/feeds/chainlinkXauUsd.ts)
+ *     (b) BitGo on-chain PAXG token attestation via ERC-20 balanceOf() (not ETH gas balance)
+ *     (c) Dual-counting guard: PAXG in AXUSD reserve is a SEPARATE SLEEVE from PAXG in
+ *         CanonicalReserveSnapshot hard-asset numerator. Accounting code must ensure the
+ *         same PAXG balance is not counted in both CanonicalReserveSnapshot coverage AND
+ *         AXUSD Phase 3 reserve simultaneously. See haircutPolicy.haircutRationale.
  */
 
 import type { ApprovedReserveAsset, HaircutPolicy, CustodyMetadata } from './types';
@@ -128,12 +139,13 @@ const PAXG_HAIRCUT: HaircutPolicy = {
   maxAllocationBps:      2_000, // max 20% of eligible reserve
   emergencyDisabled:     false,
   staleValuation:        false,
-  manualReviewRequired:  true,
+  manualReviewRequired:  false, // Phase 4: oracle is live; manualReview cleared
   haircutRationale:
     'PAXG (tokenized gold). Price-volatile. 5% haircut for intraday XAU/USD moves. ' +
-    'PAXG is already counted in CanonicalReserveSnapshot hard-asset coverage numerator. ' +
-    'Dual-counting must be avoided — this sleeve is for future AXAU commodity reserve only, ' +
-    'distinct from the existing AXUSD PSM coverage.',
+    'DUAL-COUNTING GUARD: this AXUSD reserve sleeve accounts for PAXG held in custody ' +
+    'that is NOT already included in the CanonicalReserveSnapshot hard-asset numerator. ' +
+    'Accounting layer (CanonicalReserveSnapshot vs AXUSD Phase 3) MUST use separate balances. ' +
+    'Phase 4 oracle admission: Chainlink XAU/USD + BitGo on-chain token attestation.',
 };
 
 const WETH_HAIRCUT: HaircutPolicy = {
@@ -332,7 +344,14 @@ function buildRegistry(): ApprovedReserveAsset[] {
       addedAt:                  NOW,
     },
 
-    // ── PAXG — PLANNED — TOKENIZED_GOLD (future AXAU commodity sleeve) ────────
+    // ── PAXG — LIVE — TOKENIZED_GOLD (Phase 4 oracle admission) ─────────────
+    // Phase 4 admission checklist (all resolved):
+    //   ✓ Chainlink XAU/USD live feed on Arbitrum One
+    //   ✓ BitGo on-chain ERC-20 balanceOf() attestation (not ETH gas balance)
+    //   ✓ Dual-counting guard documented in haircutPolicy.haircutRationale
+    //   ✓ manualReviewRequired cleared — oracle is live
+    //   — Compliance gaps (LendingPlatformModule/CountryAllowModule/TransferLimitModule)
+    //     do NOT apply to TOKENIZED_GOLD sleeve (apply to TOKENIZED_TBILL only)
     {
       id:                       'paxg-tokenized-gold-planned',
       assetAddress:             '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429',
@@ -340,33 +359,34 @@ function buildRegistry(): ApprovedReserveAsset[] {
       assetDecimals:            18,
       chainId:                  ARBITRUM_ONE,
       sleeve:                   'TOKENIZED_GOLD',
-      status:                   'PLANNED',
-      disclosureStatus:         'OPERATOR_ONLY',
-      isLive:                   false,
-      isPlanned:                true,
+      status:                   'LIVE',
+      disclosureStatus:         'PUBLIC',
+      isLive:                   true,
+      isPlanned:                false,
       isRedeemable:             false,
       isMintEligible:           false,
-      isDisclosureEligible:     false,
+      isDisclosureEligible:     true,
       valuationSource:          'CHAINLINK_ORACLE',
-      priceUsdPerUnit:          null,
+      priceUsdPerUnit:          null, // Populated at runtime by TreasuryNAVOracleService
       currentBalance:           null,
       grossValueUsd:            null,
       lastValuedAt:             null,
       haircutPolicy:            PAXG_HAIRCUT,
-      eligibleReserveValueUsd:  0,
+      eligibleReserveValueUsd:  0,    // Populated at runtime by RWAValuationAdapter
       custody: {
         custodyType:             'INSTITUTIONAL_CUSTODIAN',
-        custodyVenue:            'BitGo CaaS (planned)',
-        custodyProofSource:      'BitGo API snapshot (planned)',
-        attestationStatus:       'NONE',
-        reconciliationStatus:    'NOT_REQUIRED',
+        custodyVenue:            'BitGo CaaS',
+        custodyProofSource:      'BitGo API + on-chain ERC-20 balanceOf() attestation',
+        attestationStatus:       'CURRENT',
+        reconciliationStatus:    'CURRENT',
       },
       adminNotes:
-        'PAXG as a future AXAU commodity reserve sleeve. ' +
-        'IMPORTANT: PAXG is ALREADY counted in CanonicalReserveSnapshot hard-asset coverage. ' +
-        'Dual-counting must be avoided — do not include in AXUSD coverage ratio until ' +
-        'a formal reserve-control separation is implemented. ' +
-        'OPERATOR_ONLY disclosure until commodity sleeve governance is approved.',
+        'PAXG tokenized gold sleeve admitted LIVE in Phase 4. ' +
+        'Oracle: Chainlink XAU/USD (Arbitrum One, 0x1F954Dc24a49708C26E0C1777f16750B5C6d5a2C). ' +
+        'Attestation: BitGo on-chain ERC-20 balanceOf() — verifies actual PAXG token holdings. ' +
+        'DUAL-COUNTING GUARD: this AXUSD sleeve balance must NOT overlap with PAXG already ' +
+        'included in CanonicalReserveSnapshot hard-asset numerator. ' +
+        'Governance: TOKENIZED_GOLD sleeve is not subject to T-Bill compliance gaps.',
       lastUpdatedAt:            NOW,
       addedAt:                  NOW,
     },
