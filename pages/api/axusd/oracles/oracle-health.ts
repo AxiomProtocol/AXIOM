@@ -12,7 +12,23 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getOracleSourceRegistry } from '../../../../lib/reserves/phase3/oracleSourceRegistry';
 import { getTreasuryNAVOracle } from '../../../../lib/reserves/phase3/treasuryNAVOracle';
 import { getApprovedReserveAssetRegistry } from '../../../../lib/reserves/phase2/approvedReserveAssetRegistry';
-import { SOURCE_BASE_SCORES } from '../../../../lib/reserves/phase3/valuationConfidence';
+import {
+  SOURCE_BASE_SCORES,
+  computeConfidenceScore,
+  computeFreshnessState,
+} from '../../../../lib/reserves/phase3/valuationConfidence';
+import type { OracleSourceType } from '../../../../lib/reserves/phase3/types';
+
+// ── Freshness state → badge label mapping ─────────────────────────────────────
+// ValuationFreshnessState has six states; the badge-facing API contract collapses
+// them to three for display clarity. The mapping keeps the computation in one place.
+type BadgeFreshnessLabel = 'FRESH' | 'APPROACHING STALE' | 'STALE';
+
+function toBadgeFreshnessLabel(state: ReturnType<typeof computeFreshnessState>): BadgeFreshnessLabel {
+  if (state === 'FRESH') return 'FRESH';
+  if (state === 'APPROACHING_STALE') return 'APPROACHING STALE';
+  return 'STALE';
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
@@ -91,27 +107,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const healthySources = healthChecks.filter(h => h.isHealthy).length;
   const totalActive = sources.filter(s => s.isActive && !s.isDeprecated).length;
 
-  // ── Confidence score and freshness — single source of truth ──────────────
-  // Mirrors the computation previously duplicated in ReserveHealthBadge.tsx.
-  // The badge now reads these values directly from the response.
-  const meta = {
-    isFresh: true,
-    isStale: false,
-  };
+  // ── Confidence score and freshness — computed via valuationConfidence.ts ─────
+  // freshnessState: derived from the endpoint's own fetchedAt timestamp using the
+  // shared computeFreshnessState function (max staleness = 300s for a live probe).
+  // confidenceScore: weighted average of per-source computeConfidenceScore calls,
+  // scaled by coverage ratio (healthy / total active).
+  const MAX_HEALTH_STALENESS_SECONDS = 300;
+
+  const endpointFreshnessRaw = computeFreshnessState(fetchedAt, MAX_HEALTH_STALENESS_SECONDS);
+  const freshnessState: BadgeFreshnessLabel = toBadgeFreshnessLabel(endpointFreshnessRaw);
 
   const activeSources = healthChecks.filter(h => h.isActive && !h.isDeprecated);
   const healthyActive = activeSources.filter(h => h.isHealthy);
   let confidenceScore = 0;
   if (activeSources.length > 0 && healthyActive.length > 0) {
-    const avgBase = healthyActive.reduce((sum, h) => sum + h.baseScore, 0) / healthyActive.length;
+    const sumScores = healthyActive.reduce((sum, h) => {
+      const sourceFreshnessRaw = computeFreshnessState(
+        h.lastSuccessAt,
+        MAX_HEALTH_STALENESS_SECONDS,
+      );
+      return sum + computeConfidenceScore({
+        sourceType: h.sourceType as OracleSourceType,
+        freshnessState: sourceFreshnessRaw,
+        attestationStatus: 'NONE',
+        reconciliationStatus: 'NOT_REQUIRED',
+        isFallback: false,
+        isManuallyReviewed: false,
+        isAssetLive: true,
+        attestationRequired: false,
+      });
+    }, 0);
+    const avgScore = sumScores / healthyActive.length;
     const coverageRatio = healthyActive.length / activeSources.length;
-    const weighted = avgBase * coverageRatio;
-    const penalized = meta.isStale ? weighted - 25 : !meta.isFresh ? weighted - 5 : weighted;
-    confidenceScore = Math.max(0, Math.min(100, Math.round(penalized)));
+    confidenceScore = Math.max(0, Math.min(100, Math.round(avgScore * coverageRatio)));
   }
-
-  const freshnessState: 'FRESH' | 'APPROACHING STALE' | 'STALE' =
-    meta.isStale ? 'STALE' : !meta.isFresh ? 'APPROACHING STALE' : 'FRESH';
 
   return res.status(200).json({
     fetchedAt,
