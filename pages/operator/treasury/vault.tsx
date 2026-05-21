@@ -297,7 +297,7 @@ function WalletDepositPanel() {
   const publicClient             = usePublicClient({ chainId: ARBITRUM_ONE });
   const { writeContractAsync }   = useWriteContract();
 
-  const vaultAddress = (process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS ?? '') as `0x${string}`;
+  const vaultAddress = VAULT_ADDRESS;
   const isWrongChain = isConnected && chainId !== ARBITRUM_ONE;
   const isReady      = isConnected && !isWrongChain && !!vaultAddress;
 
@@ -644,7 +644,20 @@ function WalletDepositPanel() {
 // AaveV3Strategy adapter, starting yield generation on Aave v3 Arbitrum.
 // Requires new vault (with SM wired) to be deployed first.
 
-const AAVE_STRATEGY_ADDRESS         = (process.env.NEXT_PUBLIC_AXIOM_AAVE_V3_STRATEGY_ADDRESS          ?? '') as `0x${string}`;
+// Canonical live addresses — Arbitrum One (v2 vault, redeployed 2026-05-21)
+// These guard against stale NEXT_PUBLIC_ values baked into older Vercel builds.
+const _DEPRECATED_VAULT    = '0x0d04742A8b5A8e3351B9273e585E980f6e0F46F8';
+const _DEPRECATED_AAVE     = '0xf01456B53546031568E83726A9F9C0A8ce5c68C2';
+const _LIVE_VAULT          = '0x8c9761D465CB95306266a68FF8935C4690EC6092';
+const _LIVE_AAVE           = '0x7d500015C5765456C16Ce2CF38AAF14075C01DD4';
+
+function resolveAddr(envVal: string | undefined, deprecated: string, live: string): `0x${string}` {
+  const v = envVal ?? '';
+  return (v && v.toLowerCase() !== deprecated.toLowerCase() ? v : live) as `0x${string}`;
+}
+
+const VAULT_ADDRESS             = resolveAddr(process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS,   _DEPRECATED_VAULT, _LIVE_VAULT);
+const AAVE_STRATEGY_ADDRESS     = resolveAddr(process.env.NEXT_PUBLIC_AXIOM_AAVE_V3_STRATEGY_ADDRESS, _DEPRECATED_AAVE,  _LIVE_AAVE);
 const EULER_USDC_STRATEGY_ADDRESS   = (process.env.NEXT_PUBLIC_EULER_USDC_THEO_STRATEGY_ADDRESS        ?? '') as `0x${string}`;
 const EULER_THBILL_STRATEGY_ADDRESS = (process.env.NEXT_PUBLIC_EULER_THBILL_THEO_STRATEGY_ADDRESS      ?? '') as `0x${string}`;
 const EULER_WETH_STRATEGY_ADDRESS   = (process.env.NEXT_PUBLIC_EULER_WETH_ARBITRUM_STRATEGY_ADDRESS    ?? '') as `0x${string}`;
@@ -659,7 +672,7 @@ function AllocateToAavePanel() {
   const publicClient             = usePublicClient({ chainId: ARBITRUM_ONE });
   const { writeContractAsync }   = useWriteContract();
 
-  const vaultAddress    = (process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS ?? '') as `0x${string}`;
+  const vaultAddress    = VAULT_ADDRESS;
   const strategyAddress = AAVE_STRATEGY_ADDRESS;
   const isWrongChain    = isConnected && chainId !== ARBITRUM_ONE;
 
@@ -908,7 +921,7 @@ function AllocateToEulerPanel({
   const publicClient             = usePublicClient({ chainId: ARBITRUM_ONE });
   const { writeContractAsync }   = useWriteContract();
 
-  const vaultAddress = (process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS ?? '') as `0x${string}`;
+  const vaultAddress = VAULT_ADDRESS;
   const isWrongChain = isConnected && chainId !== ARBITRUM_ONE;
 
   const [amount,     setAmount]     = useState('');
@@ -1125,7 +1138,7 @@ function UsdcBackingPanel() {
   const publicClient             = usePublicClient({ chainId: ARBITRUM_ONE });
   const { writeContractAsync }   = useWriteContract();
 
-  const vaultAddress = (process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS ?? '') as `0x${string}`;
+  const vaultAddress = VAULT_ADDRESS;
   const isWrongChain = isConnected && chainId !== ARBITRUM_ONE;
 
   const PRESETS = [25, 50, 100];
@@ -2322,9 +2335,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             <div className="border border-dl-border p-3 space-y-1">
               <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Vault Address</p>
               <p className="font-mono text-xs break-all text-dl-navy">
-                {process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS
-                  ? <a href={`https://arbiscan.io/address/${process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS}`} target="_blank" rel="noopener noreferrer" className="text-dl-forest underline">{process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS}</a>
-                  : <span className="text-red-500">(configure NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS)</span>}
+                <a href={`https://arbiscan.io/address/${VAULT_ADDRESS}`} target="_blank" rel="noopener noreferrer" className="text-dl-forest underline">{VAULT_ADDRESS}</a>
               </p>
             </div>
             <div className="border border-dl-border p-3 space-y-1">
