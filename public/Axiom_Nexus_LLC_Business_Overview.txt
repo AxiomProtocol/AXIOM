@@ -1,0 +1,105 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AXIOM NEXUS LLC
+BUSINESS OVERVIEW & IDENTITY DOCUMENT
+KYB / Compliance Use — Prepared: May 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. BUSINESS IDENTITY
+────────────────────────────────────────────────────────────────────────────────
+
+Legal Business Name:  Axiom Nexus LLC
+Formation State:      Mississippi
+Formation Date:       December 26, 2025
+State Entity ID:      1522557
+EIN:                  41-5188895
+Management Type:      Manager Managed
+Website:              https://axiomprotocol.app
+Industry:             Professional, Scientific, and Technical Services
+Sub-Industry:         Computer Systems Design and Related Services
+NAICS Codes:          541511 – Custom Computer Programming Services
+                      541512 – Computer Systems Design Services
+
+
+2. BUSINESS DESCRIPTION
+────────────────────────────────────────────────────────────────────────────────
+
+Axiom Nexus LLC is a financial technology and blockchain software infrastructure
+company developing compliance-focused digital asset systems, smart contract tools,
+tokenized real-world asset infrastructure, treasury management technology, and
+payment rail integrations.
+
+
+3. NATURE OF BUSINESS
+────────────────────────────────────────────────────────────────────────────────
+
+Axiom Nexus LLC develops software infrastructure for digital finance, tokenized
+real-world assets, on-chain treasury management, smart contract systems, compliance
+tooling, payment rail integrations, dashboards, and related fintech platform
+technology.
+
+Primary Technology and Service Areas:
+
+  • Blockchain infrastructure and smart contract development
+  • Compliance-native digital asset systems
+  • Treasury management technology
+  • Tokenized real-world asset platform infrastructure
+  • Payment rail integration tooling
+  • Business dashboards and reporting systems
+  • Fintech platform operations
+  • On-chain identity and governance systems
+
+
+4. CURRENT BUSINESS STAGE
+────────────────────────────────────────────────────────────────────────────────
+
+Axiom Nexus LLC is currently an early-stage software and technology company. The
+company is primarily engaged in software development, platform infrastructure,
+compliance preparation, technical architecture, vendor setup, and business
+operations. No regulated financial products are currently offered to the public.
+
+
+5. ACCOUNT USAGE STATEMENT
+────────────────────────────────────────────────────────────────────────────────
+
+Business accounts will be used for internal company treasury activity,
+owner-funded operating expenses, software development costs, infrastructure
+expenses, vendor payments, compliance preparation, and general business
+operations.
+
+
+6. SOURCE OF FUNDS
+────────────────────────────────────────────────────────────────────────────────
+
+The company is currently funded by owner's capital contributed by the
+founder/member for formation, software development, infrastructure, compliance
+preparation, and operating expenses. Funds are not derived from customer
+deposits, customer custody, money transmission activity, public investment
+offerings, or third-party client funds.
+
+
+7. COMPLIANCE CLARIFICATION
+────────────────────────────────────────────────────────────────────────────────
+
+Axiom Nexus LLC does not currently:
+
+  • Custody customer funds through this account
+  • Transmit customer funds through this account
+  • Operate as a bank or licensed money transmitter
+  • Provide investment advisory services
+  • Operate a virtual currency brokerage or OTC trading desk
+  • Hold client escrow funds
+
+Any regulated activity, if launched in the future, will be conducted only through
+applicable legal review, licensed third-party providers, approved compliance
+procedures, and required registrations or exemptions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Axiom Nexus LLC  |  State Entity ID: 1522557  |  EIN: 41-5188895
+Mississippi  |  Formed: December 26, 2025  |  axiomprotocol.app
+
+This document is prepared for KYB, bank, fintech, and compliance onboarding
+purposes only. It does not constitute a solicitation, offering, or investment
+product.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

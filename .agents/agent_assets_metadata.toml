@@ -1031,3 +1031,15 @@ id = "Ey_lZNI1qNLnusBIpP20H"
 uri = "file://documents/axiom-treasury-vault-whitepaper.md"
 type = "text"
 title = "AxiomTreasuryVault — Executive Summary & Technical Reference"
+
+[[outputs]]
+id = "2fUSgV7LTewOuODo-NGmM"
+uri = "file://public/Axiom_Nexus_LLC_Business_Overview.pdf"
+type = "pdf"
+title = "Axiom Nexus LLC — Business Overview (PDF)"
+
+[[outputs]]
+id = "aFA_AI6x2gdABiuJkuKmc"
+uri = "file://public/Axiom_Nexus_LLC_Business_Overview.txt"
+type = "text"
+title = "Axiom Nexus LLC — Business Overview (Plain Text)"
