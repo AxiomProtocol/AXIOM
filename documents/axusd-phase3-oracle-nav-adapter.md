@@ -1,8 +1,8 @@
 # AXUSD Phase 3 — Oracle and NAV Adapter Architecture
 
-**Version:** 3.0.0  
+**Version:** 4.0.0  
 **Date:** 2026-05-21  
-**Status:** WIRED — TypeScript layer complete, oracle connections pending  
+**Status:** LIVE — Oracle feeds connected; PAXG Chainlink feed active; issuer NAV fetchers wired  
 **Scope:** Off-chain valuation layer only. No mainnet deployment.
 
 ---

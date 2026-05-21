@@ -1,24 +1,35 @@
 /**
  * lib/reserves/phase3/treasuryNAVOracle.ts
  *
- * Phase 3 — TreasuryNAVOracleService
+ * Phase 4 — TreasuryNAVOracleService (LIVE feeds activated)
  *
- * Routes each registry asset to the correct oracle source.
- * Replaces Phase 2 stubs (fetchTbillNAV, fetchOraclePrice) with
- * structured NAVObservation objects.
+ * Routes each registry asset to its correct oracle source and returns a
+ * structured NAVObservation. Phase 4 replaces stubs with live data:
  *
- * USDC:   FIXED_PEG   — returns $1.00, confidence 99, never stale.
- * thBILL: ISSUER_NAV_API stub — unusable (Phase 3 API not connected).
- * BUIDL:  ISSUER_NAV_API stub — unusable.
- * USDY:   ISSUER_NAV_API stub — unusable.
- * PAXG:   CHAINLINK_XAU_USD + CUSTODIAN_ATTESTATION stub — unusable.
+ * USDC:   FIXED_PEG   — $1.00, confidence 99, never stale.
+ * PAXG:   CHAINLINK XAU/USD (Arbitrum) + BitGo attestation — live price.
+ * thBILL: ISSUER_NAV_API (Theo Market) → ERC-4626 fallback.
+ * BUIDL:  ISSUER_NAV_API (BlackRock) → ERC-4626 on-chain fallback.
+ * USDY:   ISSUER_NAV_API (Ondo Finance) → ERC-4626 on Arbitrum fallback.
  * WETH:   INTERNAL_ACCOUNTING — always zero eligible (OPERATOR_TREASURY).
  * AXUSD:  INTERNAL_ACCOUNTING — always zero eligible (circular backing).
+ *
+ * Observations are served from navObservationCache. If the cache is empty
+ * for a PLANNED asset, the oracle triggers a one-time background fetch and
+ * returns the result. Subsequent calls return cached data until TTL expires.
  */
 
 import type { NAVObservation, OracleSourceType, ValuationFreshnessState } from './types';
 import { computeFreshnessState, computeConfidenceScore } from './valuationConfidence';
 import { getValuationPolicy } from './assetValuationPolicy';
+import {
+  getObservationFromCache,
+  isCacheEntryFresh,
+  setObservationCache,
+} from './navObservationCache';
+import { fetchChainlinkXauUsd } from './feeds/chainlinkXauUsd';
+import { fetchBitGoAttestation, mapAttestationToValuationStatus } from './feeds/bitgoAttestationFetcher';
+import { fetchIssuerNav } from './feeds/issuerNavFetcher';
 
 // ── Interface ─────────────────────────────────────────────────────────────────
 
@@ -58,9 +69,52 @@ function buildFixedPegObservation(assetId: string, symbol: string): NAVObservati
   };
 }
 
-// ── Stub builder for unconnected sources ──────────────────────────────────────
+// ── Internal accounting builder ───────────────────────────────────────────────
 
-function buildUnconnectedObservation(
+function buildInternalAccountingObservation(
+  assetId: string,
+  symbol: string,
+  assetAddress: string,
+  decimals: number,
+): NAVObservation {
+  const now = new Date().toISOString();
+  const policy = getValuationPolicy(assetId);
+  const freshnessState: ValuationFreshnessState = 'FRESH';
+  const confidence = computeConfidenceScore({
+    sourceType: 'INTERNAL_ACCOUNTING',
+    freshnessState,
+    attestationStatus: 'NONE',
+    reconciliationStatus: 'NOT_REQUIRED',
+    isFallback: false,
+    isManuallyReviewed: false,
+    isAssetLive: false,
+    attestationRequired: policy?.attestationRequired ?? false,
+  });
+  return {
+    assetId,
+    assetAddress,
+    chainId: 42161,
+    symbol,
+    grossNavPerToken: null,
+    quoteCurrency: 'USD',
+    decimals,
+    timestamp: now,
+    sourceName: 'Internal Accounting',
+    sourceType: 'INTERNAL_ACCOUNTING',
+    sourceUrl: null,
+    confidenceScore: confidence,
+    freshnessState,
+    isStale: false,
+    isFallback: false,
+    isManuallyReviewed: false,
+    isUsable: true,
+    unusableReason: null,
+  };
+}
+
+// ── Fallback UNUSABLE observation ─────────────────────────────────────────────
+
+function buildUnusableObservation(
   assetId: string,
   symbol: string,
   sourceType: OracleSourceType,
@@ -92,47 +146,178 @@ function buildUnconnectedObservation(
   };
 }
 
-// ── Internal accounting builder ───────────────────────────────────────────────
+// ── PAXG live fetch ───────────────────────────────────────────────────────────
 
-function buildInternalAccountingObservation(
-  assetId: string,
-  symbol: string,
-  assetAddress: string,
-  decimals: number,
-): NAVObservation {
-  const now = new Date().toISOString();
-  const policy = getValuationPolicy(assetId);
-  const freshnessState: ValuationFreshnessState = 'FRESH';
-  const confidence = computeConfidenceScore({
-    sourceType: 'INTERNAL_ACCOUNTING',
+async function fetchPaxgObservation(): Promise<NAVObservation> {
+  const assetId = 'paxg-tokenized-gold-planned';
+  const maxStaleness = 3600;
+
+  const [chainlinkData, attestation] = await Promise.allSettled([
+    fetchChainlinkXauUsd(),
+    fetchBitGoAttestation(),
+  ]);
+
+  const round = chainlinkData.status === 'fulfilled' ? chainlinkData.value : null;
+  const attest = attestation.status === 'fulfilled' ? attestation.value : null;
+
+  if (!round) {
+    const reason = chainlinkData.status === 'rejected'
+      ? `Chainlink XAU/USD fetch failed: ${(chainlinkData as PromiseRejectedResult).reason}`
+      : 'Chainlink XAU/USD returned no data';
+
+    return buildUnusableObservation(
+      assetId, 'PAXG', 'CHAINLINK',
+      'Chainlink XAU/USD (Arbitrum One)',
+      reason,
+      '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429',
+      42161, 18,
+    );
+  }
+
+  const attestationStatus = attest
+    ? mapAttestationToValuationStatus(attest)
+    : 'NONE';
+
+  const freshnessState = computeFreshnessState(round.updatedAt.toISOString(), maxStaleness);
+  const isStale =
+    freshnessState === 'STALE' ||
+    freshnessState === 'EXPIRED' ||
+    freshnessState === 'MANUAL_REVIEW_REQUIRED';
+
+  const confidenceScore = computeConfidenceScore({
+    sourceType: 'CHAINLINK',
     freshnessState,
-    attestationStatus: 'NONE',
-    reconciliationStatus: 'NOT_REQUIRED',
+    attestationStatus,
+    reconciliationStatus: 'CURRENT',
     isFallback: false,
     isManuallyReviewed: false,
-    isAssetLive: false, // INTERNAL_ONLY assets are not live for AXUSD purposes
-    attestationRequired: policy?.attestationRequired ?? false,
+    isAssetLive: false, // PLANNED — not yet an admitted AXUSD reserve sleeve
+    attestationRequired: true,
   });
-  return {
+
+  const obs: NAVObservation = {
     assetId,
-    assetAddress,
+    assetAddress: '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429',
     chainId: 42161,
-    symbol,
-    grossNavPerToken: null, // Balances fetched externally via AxiomTreasuryVault
+    symbol: 'PAXG',
+    grossNavPerToken: round.price,
     quoteCurrency: 'USD',
-    decimals,
-    timestamp: now,
-    sourceName: 'Internal Accounting',
-    sourceType: 'INTERNAL_ACCOUNTING',
-    sourceUrl: null,
-    confidenceScore: confidence,
+    decimals: 18,
+    timestamp: round.updatedAt.toISOString(),
+    sourceName: 'Chainlink XAU/USD (Arbitrum One)',
+    sourceType: 'CHAINLINK',
+    sourceUrl: 'https://data.chain.link/arbitrum/mainnet/commodities/xau-usd',
+    confidenceScore,
     freshnessState,
-    isStale: false,
+    isStale,
     isFallback: false,
     isManuallyReviewed: false,
-    isUsable: true, // Usable for internal accounting; eligibleValue will be 0
-    unusableReason: null,
+    isUsable: !isStale,
+    unusableReason: isStale
+      ? `Chainlink round stale — last update: ${round.updatedAt.toISOString()}`
+      : null,
   };
+
+  setObservationCache(assetId, obs);
+  return obs;
+}
+
+// ── Issuer NAV live fetch ─────────────────────────────────────────────────────
+
+const ISSUER_ASSET_CONFIG: Record<string, {
+  symbol: string;
+  address: string;
+  decimals: number;
+  sourceName: string;
+  maxStaleness: number;
+}> = {
+  'thbill-theo-market-planned': {
+    symbol: 'thBILL',
+    address: '0x0000000000000000000000000000000000000001',
+    decimals: 18,
+    sourceName: 'Theo Market Issuer NAV API',
+    maxStaleness: 86400,
+  },
+  'buidl-tokenized-treasury-planned': {
+    symbol: 'BUIDL',
+    address: '0x7712c34205737192402172409a8F7ccef8aA2AEc',
+    decimals: 6,
+    sourceName: 'BlackRock BUIDL / On-Chain ERC-4626',
+    maxStaleness: 86400,
+  },
+  'ondo-usdy-tokenized-govmmf-planned': {
+    symbol: 'USDY',
+    address: '0x35e050d3C0eC2d29D269a8EcEa763a183bDF9A9D',
+    decimals: 18,
+    sourceName: 'Ondo Finance USDY Issuer NAV API',
+    maxStaleness: 86400,
+  },
+};
+
+async function fetchIssuerNAVObservation(assetId: string): Promise<NAVObservation> {
+  const config = ISSUER_ASSET_CONFIG[assetId];
+  if (!config) {
+    return buildUnusableObservation(assetId, assetId, 'ISSUER_NAV_API', 'Unknown', `No config for ${assetId}`);
+  }
+
+  const result = await fetchIssuerNav(assetId);
+
+  if (!result) {
+    const obs = buildUnusableObservation(
+      assetId, config.symbol, 'ISSUER_NAV_API', config.sourceName,
+      'Issuer NAV API and on-chain ERC-4626 fallback both unavailable',
+      config.address, 42161, config.decimals,
+    );
+    setObservationCache(assetId, obs);
+    return obs;
+  }
+
+  const sourceType = result.source === 'ISSUER_API'
+    ? 'ISSUER_NAV_API' as const
+    : 'ERC4626_CONVERT_TO_ASSETS' as const;
+
+  const freshnessState = computeFreshnessState(result.fetchedAt, config.maxStaleness);
+  const isStale =
+    freshnessState === 'STALE' ||
+    freshnessState === 'EXPIRED' ||
+    freshnessState === 'MANUAL_REVIEW_REQUIRED';
+
+  const confidenceScore = computeConfidenceScore({
+    sourceType,
+    freshnessState,
+    attestationStatus: 'PENDING',
+    reconciliationStatus: 'CURRENT',
+    isFallback: result.isFallback,
+    isManuallyReviewed: false,
+    isAssetLive: false, // PLANNED
+    attestationRequired: true,
+  });
+
+  const obs: NAVObservation = {
+    assetId,
+    assetAddress: config.address,
+    chainId: 42161,
+    symbol: config.symbol,
+    grossNavPerToken: result.nav,
+    quoteCurrency: 'USD',
+    decimals: config.decimals,
+    timestamp: result.fetchedAt,
+    sourceName: config.sourceName,
+    sourceType,
+    sourceUrl: null,
+    confidenceScore,
+    freshnessState,
+    isStale,
+    isFallback: result.isFallback,
+    isManuallyReviewed: false,
+    isUsable: !isStale && result.nav > 0,
+    unusableReason: isStale
+      ? 'Issuer NAV data stale — operator review required before reserve eligibility'
+      : null,
+  };
+
+  setObservationCache(assetId, obs);
+  return obs;
 }
 
 // ── TreasuryNAVOracleService ──────────────────────────────────────────────────
@@ -145,77 +330,34 @@ export class TreasuryNAVOracleService implements ITreasuryNAVOracle {
       case 'usdc-canonical-psm':
         return buildFixedPegObservation(assetId, 'USDC');
 
+      case 'paxg-tokenized-gold-planned': {
+        // Serve from cache if fresh; otherwise fetch live
+        const cached = getObservationFromCache(assetId);
+        if (cached && isCacheEntryFresh(assetId)) return cached;
+        return fetchPaxgObservation();
+      }
+
       case 'thbill-theo-market-planned':
-        return buildUnconnectedObservation(
-          assetId,
-          'thBILL',
-          'ISSUER_NAV_API',
-          'Theo Market Issuer NAV API',
-          'Phase 3 NAV API not yet connected — thBILL integration pending',
-          '0x0000000000000000000000000000000000000001',
-          42161,
-          18,
-        );
-
       case 'buidl-tokenized-treasury-planned':
-        return buildUnconnectedObservation(
-          assetId,
-          'BUIDL',
-          'ISSUER_NAV_API',
-          'BlackRock BUIDL Issuer NAV API',
-          'Phase 3 NAV API not yet connected — BUIDL integration pending',
-          '0x0000000000000000000000000000000000000000',
-          42161,
-          6,
-        );
-
-      case 'ondo-usdy-tokenized-govmmf-planned':
-        return buildUnconnectedObservation(
-          assetId,
-          'USDY',
-          'ISSUER_NAV_API',
-          'Ondo USDY Issuer NAV API',
-          'Phase 3 NAV API not yet connected — USDY integration pending',
-          '0x0000000000000000000000000000000000000000',
-          42161,
-          18,
-        );
-
-      case 'paxg-tokenized-gold-planned':
-        return buildUnconnectedObservation(
-          assetId,
-          'PAXG',
-          'CHAINLINK',
-          'Chainlink XAU/USD + BitGo Attestation',
-          'Phase 3 Chainlink XAU/USD and BitGo attestation not yet connected — PAXG integration pending',
-          '0xfEb4DfC8C4Cf7Ed305bb08065D08eC6ee6728429',
-          42161,
-          18,
-        );
+      case 'ondo-usdy-tokenized-govmmf-planned': {
+        const cached = getObservationFromCache(assetId);
+        if (cached && isCacheEntryFresh(assetId)) return cached;
+        return fetchIssuerNAVObservation(assetId);
+      }
 
       case 'weth-operator-treasury-internal':
         return buildInternalAccountingObservation(
-          assetId,
-          'WETH',
-          '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
-          18,
+          assetId, 'WETH', '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', 18,
         );
 
       case 'axusd-protocol-holdings-internal':
-        // INTERNAL_ACCOUNTING: AXUSD is the liability being covered, not a reserve asset.
-        // Circular backing guard permanently excludes this via RWAValuationAdapter.
         return buildInternalAccountingObservation(
-          assetId,
-          'AXUSD',
-          '0x0000000000000000000000000000000000000000', // placeholder — no external balance needed
-          18,
+          assetId, 'AXUSD', '0x0000000000000000000000000000000000000000', 18,
         );
 
       default:
-        return buildUnconnectedObservation(
-          assetId,
-          assetId,
-          'INTERNAL_ACCOUNTING',
+        return buildUnusableObservation(
+          assetId, assetId, 'INTERNAL_ACCOUNTING',
           'Unknown Asset Source',
           `No oracle configured for asset: ${assetId}`,
         );
@@ -235,8 +377,6 @@ export class TreasuryNAVOracleService implements ITreasuryNAVOracle {
   getValuationSource(assetId: string): OracleSourceType {
     const policy = getValuationPolicy(assetId);
     if (!policy) return 'INTERNAL_ACCOUNTING';
-    const sourceId = policy.primarySourceId;
-    // Map policy source ID to OracleSourceType
     const typeMap: Record<string, OracleSourceType> = {
       FIXED_PEG:                  'FIXED_PEG',
       CHAINLINK_USDC_USD:         'CHAINLINK',
@@ -249,7 +389,7 @@ export class TreasuryNAVOracleService implements ITreasuryNAVOracle {
       INTERNAL_ACCOUNTING:        'INTERNAL_ACCOUNTING',
       FALLBACK_COMPOSITE:         'FALLBACK_COMPOSITE',
     };
-    return typeMap[sourceId] ?? 'INTERNAL_ACCOUNTING';
+    return typeMap[policy.primarySourceId] ?? 'INTERNAL_ACCOUNTING';
   }
 
   async getConfidenceScore(assetId: string): Promise<number> {

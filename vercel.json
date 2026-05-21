@@ -30,6 +30,10 @@
     {
       "path": "/api/cron/harvest-vault",
       "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/nav-oracle-refresh",
+      "schedule": "*/5 * * * *"
     }
   ],
   "headers": [
