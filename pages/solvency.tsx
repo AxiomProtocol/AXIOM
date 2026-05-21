@@ -915,6 +915,17 @@ export default function SolvencyPage() {
       )}
 
       <div className="mb-10">
+        <SectionHeading>Oracle Confidence</SectionHeading>
+        <p className="text-sm text-dl-gray mb-4 leading-relaxed">
+          Live oracle confidence score and source-by-source health breakdown for the AXUSD reserve.
+          Fetched from the active oracle health endpoint and refreshed automatically every 60 seconds.
+          A score of 90 or above indicates all primary oracle sources are reporting within acceptable
+          freshness bounds. This signal is independent of the deterministic solvency metrics above.
+        </p>
+        <ReserveHealthBadge />
+      </div>
+
+      <div className="mb-10">
         <SectionHeading>Custody and Authorization Structure</SectionHeading>
         <div className="border border-dl-border p-6 bg-dl-bg-alt">
           <p className="text-sm text-dl-gray leading-relaxed mb-4">
