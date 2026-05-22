@@ -5,6 +5,7 @@ import {
   calcBlendedApy,
   deriveDeployedUsdcFromPositions,
   getStrategyCurrentValueDecimals,
+  resolveKnownDeployedAddress,
   strategyRawAssetValueToUsd,
   type StrategyPosition,
 } from '../lib/treasury/vault/vaultService';
@@ -42,6 +43,14 @@ describe('vault summary math helpers', () => {
   it('computes AUM from normalized idle and deployed components', () => {
     const aum = calcVaultAumUsdc(79.9, 0.1, 40.9605, 0);
     expect(aum).toBeCloseTo(120.9605, 6);
+  });
+
+  it('resolves deprecated deployed addresses to the active deployment', () => {
+    const active = '0x7d500015C5765456C16Ce2CF38AAF14075C01DD4';
+    const deprecated = '0xf01456B53546031568E83726A9F9C0A8ce5c68C2';
+
+    expect(resolveKnownDeployedAddress(deprecated, active, [deprecated])).toBe(active);
+    expect(resolveKnownDeployedAddress(undefined, active, [deprecated])).toBe(active);
   });
 
   it('converts 6-decimal strategy asset balances to USD', () => {

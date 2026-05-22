@@ -18,9 +18,34 @@ import { resolveCanonicalCamelotStrategyAddress } from '../../axiom/camelotStrat
 
 const RPC = process.env.ARBITRUM_RPC_URL ?? 'https://arb1.arbitrum.io/rpc';
 
+const ACTIVE_AAVE_V3_USDC_STRATEGY = '0x7d500015C5765456C16Ce2CF38AAF14075C01DD4';
+const DEPRECATED_AAVE_V3_USDC_STRATEGY = '0xf01456B53546031568E83726A9F9C0A8ce5c68C2';
+
+export function resolveKnownDeployedAddress(
+  configured: string | undefined,
+  fallback: string,
+  deprecated: string[] = [],
+): string {
+  if (!configured) return ethers.getAddress(fallback);
+
+  try {
+    const candidate = ethers.getAddress(configured);
+    if (deprecated.some((addr) => addr.toLowerCase() === candidate.toLowerCase())) {
+      return ethers.getAddress(fallback);
+    }
+    return candidate;
+  } catch {
+    return ethers.getAddress(fallback);
+  }
+}
+
 const VAULT_ADDRESS          = process.env.AXIOM_TREASURY_VAULT_ADDRESS            ?? '';
 const SM_ADDRESS             = process.env.AXIOM_STRATEGY_MANAGER_ADDRESS          ?? '';
-const AAVE_STRATEGY          = process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS          ?? '';
+const AAVE_STRATEGY          = resolveKnownDeployedAddress(
+  process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS,
+  ACTIVE_AAVE_V3_USDC_STRATEGY,
+  [DEPRECATED_AAVE_V3_USDC_STRATEGY],
+);
 const CAMELOT_STRATEGY       = resolveCanonicalCamelotStrategyAddress(process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS);
 const EULER_USDC_STRATEGY    = process.env.EULER_USDC_THEO_STRATEGY_ADDRESS        ?? '';
 const EULER_THBILL_STRATEGY  = process.env.EULER_THBILL_THEO_STRATEGY_ADDRESS      ?? '';
