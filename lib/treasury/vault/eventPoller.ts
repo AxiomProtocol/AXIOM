@@ -34,6 +34,12 @@ const RPC            = process.env.ARBITRUM_RPC_URL ?? 'https://arb1.arbitrum.io
 const VAULT_ADDRESS  = process.env.AXIOM_TREASURY_VAULT_ADDRESS ?? '';
 const POLL_MS        = 60_000;
 const BLOCK_LOOKBACK = 200;
+const USDC_ADDRESS   = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+const AXUSD_ADDRESS  = process.env.AXUSD_ADDRESS ?? '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
+const THBILL_ADDRESS = '0xfDD22Ce6D1F66bc0Ec89b20BF16CcB6670F55A5a';
+const WETH_ADDRESS   = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1';
+const CHAINLINK_ETH_USD_FEED = '0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612';
+const MAX_CHAINLINK_ETH_USD_STALENESS_SECONDS = 3 * 60 * 60;
 
 const VAULT_ABI = [
   // ERC-4626 standard primary-asset events (USDC)
@@ -50,8 +56,52 @@ const VAULT_ABI = [
   'event EmergencyWithdraw(address indexed strategy, uint256 amount)',
 ];
 
+const CHAINLINK_FEED_ABI = [
+  'function decimals() view returns (uint8)',
+  'function latestRoundData() view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)',
+];
+
 let running = false;
 let lastProcessedBlock = 0;
+
+function sameAddress(a: string, b: string): boolean {
+  return a.toLowerCase() === b.toLowerCase();
+}
+
+async function fetchEthUsdPrice(provider: ethers.Provider): Promise<number | null> {
+  try {
+    const feed = new ethers.Contract(CHAINLINK_ETH_USD_FEED, CHAINLINK_FEED_ABI, provider);
+    const [decimals, round] = await Promise.all([
+      feed.decimals() as Promise<number | bigint>,
+      feed.latestRoundData() as Promise<{ answer: bigint; updatedAt: bigint }>,
+    ]);
+
+    if (round.answer <= 0n || round.updatedAt <= 0n) return null;
+    const ageSeconds = (Date.now() - Number(round.updatedAt) * 1000) / 1000;
+    if (ageSeconds > MAX_CHAINLINK_ETH_USD_STALENESS_SECONDS) return null;
+
+    return Number(round.answer) / Math.pow(10, Number(decimals));
+  } catch {
+    return null;
+  }
+}
+
+export async function eventAmountToUsd(
+  provider: ethers.Provider,
+  amountRaw: bigint,
+  assetAddress: string | null,
+): Promise<number> {
+  if (!assetAddress) return 0;
+  if (sameAddress(assetAddress, USDC_ADDRESS)) return Number(ethers.formatUnits(amountRaw, 6));
+  if (sameAddress(assetAddress, AXUSD_ADDRESS)) return Number(ethers.formatUnits(amountRaw, 18));
+  if (sameAddress(assetAddress, THBILL_ADDRESS)) return Number(ethers.formatUnits(amountRaw, 6));
+  if (sameAddress(assetAddress, WETH_ADDRESS)) {
+    const ethUsd = await fetchEthUsdPrice(provider);
+    return ethUsd === null ? 0 : Number(ethers.formatUnits(amountRaw, 18)) * ethUsd;
+  }
+
+  return 0;
+}
 
 export function startVaultEventPoller() {
   if (!VAULT_ADDRESS) {
@@ -117,6 +167,7 @@ async function fetchAndStoreEvents() {
       let eventType: string;
       let strategy:  string | null = null;
       let amountRaw: bigint = 0n;
+      let assetAddress: string | null = USDC_ADDRESS;
 
       switch (parsed.name) {
         case 'Deposit':
@@ -132,43 +183,50 @@ async function fetchAndStoreEvents() {
         case 'TokenDeposited':
           // Secondary asset: TokenDeposited(asset, amount, depositor) — amount at index 1
           eventType = 'deposit';
+          assetAddress = parsed.args[0] as string;
           amountRaw = parsed.args[1] as bigint;
           break;
         case 'TokenWithdrawn':
           // Secondary asset: TokenWithdrawn(asset, amount, recipient) — amount at index 1
           eventType = 'withdraw';
+          assetAddress = parsed.args[0] as string;
           amountRaw = parsed.args[1] as bigint;
           break;
         case 'StrategyAllocated':
           eventType = 'allocate';
           strategy  = parsed.args[0] as string;
+          assetAddress = parsed.args[1] as string;
           amountRaw = parsed.args[2] as bigint;
           break;
         case 'StrategyRecalled':
           eventType = 'recall';
           strategy  = parsed.args[0] as string;
+          assetAddress = parsed.args[1] as string;
           amountRaw = parsed.args[2] as bigint;
           break;
         case 'StrategyHarvested':
           eventType = 'harvest';
           strategy  = parsed.args[0] as string;
+          assetAddress = parsed.args[1] as string;
           amountRaw = parsed.args[2] as bigint;  // args: [strategy, asset, yieldAmount]
           break;
         case 'Rebalanced':
           eventType = 'rebalance';
           strategy  = `${parsed.args[0] as string}→${parsed.args[1] as string}`;
+          assetAddress = null;
           amountRaw = parsed.args[2] as bigint;
           break;
         case 'EmergencyWithdraw':
           eventType = 'emergency_withdraw';
           strategy  = parsed.args[0] as string;
+          assetAddress = null;
           amountRaw = parsed.args[1] as bigint;
           break;
         default:
           continue;
       }
 
-      const amountUsd = Number(amountRaw) / 1e6;
+      const amountUsd = await eventAmountToUsd(provider, amountRaw, assetAddress);
 
       await db.insert(treasuryVaultEvents).values({
         eventType,
