@@ -6,6 +6,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
   }
-  clearOperatorCookie(res);
+  clearOperatorCookie(res, { hostHeader: req.headers.host });
   res.status(200).json({ ok: true });
 }

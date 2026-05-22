@@ -20,7 +20,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
   try {
     const key = getOperatorAdminKey();
-    setOperatorCookie(res, key);
+    setOperatorCookie(res, key, { hostHeader: req.headers.host });
     return res.status(200).json({ ok: true });
   } catch {
     return res.status(503).json({ error: 'OPERATOR_KEY_NOT_CONFIGURED' });
