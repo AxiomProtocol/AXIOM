@@ -198,7 +198,8 @@ type EulerDownstreamSnapshot = {
   eulerVault: Address;
   hookTarget: Address;
   hookedOps: number;
-  maxDepositRaw: bigint;
+  maxDepositZeroRaw: bigint;
+  maxDepositStrategyRaw: bigint;
 };
 
 function isEulerOperationDisabled(snapshot: EulerDownstreamSnapshot | null): boolean {
@@ -206,8 +207,14 @@ function isEulerOperationDisabled(snapshot: EulerDownstreamSnapshot | null): boo
   return snapshot.hookedOps > 0 && snapshot.hookTarget.toLowerCase() === ZERO_ADDRESS;
 }
 
+function isEulerMaxDepositBlocked(snapshot: EulerDownstreamSnapshot | null): boolean {
+  if (!snapshot) return false;
+  return snapshot.maxDepositStrategyRaw === 0n;
+}
+
 function eulerDownstreamDiagnosticsLines(input: {
   snapshot: EulerDownstreamSnapshot | null;
+  strategyAddress: Address;
   assetSymbol: string;
   assetDecimals: number;
 }) {
@@ -215,8 +222,13 @@ function eulerDownstreamDiagnosticsLines(input: {
     return ['Downstream Euler vault: unknown'];
   }
 
-  const maxDepositFormatted = formatTokenAmount(
-    input.snapshot.maxDepositRaw,
+  const maxDepositZeroFormatted = formatTokenAmount(
+    input.snapshot.maxDepositZeroRaw,
+    input.assetDecimals,
+    input.assetDecimals === 6 ? 2 : 8,
+  );
+  const maxDepositStrategyFormatted = formatTokenAmount(
+    input.snapshot.maxDepositStrategyRaw,
     input.assetDecimals,
     input.assetDecimals === 6 ? 2 : 8,
   );
@@ -225,17 +237,24 @@ function eulerDownstreamDiagnosticsLines(input: {
     `Downstream Euler vault: ${input.snapshot.eulerVault}`,
     `Downstream hook target: ${input.snapshot.hookTarget}`,
     `Downstream hooked ops: ${input.snapshot.hookedOps}`,
-    `Downstream maxDeposit(0x0): ${maxDepositFormatted} ${input.assetSymbol}`,
+    `Downstream maxDeposit(0x0): ${maxDepositZeroFormatted} ${input.assetSymbol}`,
+    `Downstream maxDeposit(strategy): ${maxDepositStrategyFormatted} ${input.assetSymbol} (${input.strategyAddress})`,
   ];
 }
 
 function buildEulerOperationDisabledMessage(input: {
   snapshot: EulerDownstreamSnapshot;
+  strategyAddress: Address;
   assetSymbol: string;
   assetDecimals: number;
 }) {
-  const maxDepositFormatted = formatTokenAmount(
-    input.snapshot.maxDepositRaw,
+  const maxDepositZeroFormatted = formatTokenAmount(
+    input.snapshot.maxDepositZeroRaw,
+    input.assetDecimals,
+    input.assetDecimals === 6 ? 2 : 8,
+  );
+  const maxDepositStrategyFormatted = formatTokenAmount(
+    input.snapshot.maxDepositStrategyRaw,
     input.assetDecimals,
     input.assetDecimals === 6 ? 2 : 8,
   );
@@ -246,8 +265,36 @@ function buildEulerOperationDisabledMessage(input: {
     'Decoded error: E_OperationDisabled',
     `Downstream Euler vault: ${input.snapshot.eulerVault}`,
     `hookConfig: target=${input.snapshot.hookTarget}, hookedOps=${input.snapshot.hookedOps}`,
-    `maxDeposit(0x0): ${maxDepositFormatted} ${input.assetSymbol}`,
+    `maxDeposit(0x0): ${maxDepositZeroFormatted} ${input.assetSymbol}`,
+    `maxDeposit(strategy): ${maxDepositStrategyFormatted} ${input.assetSymbol} (${input.strategyAddress})`,
     'Suggested fix: clear downstream hook ops (setHookConfig(0x0, 0)) or switch this strategy to an enabled Euler vault.',
+  ].join('\n');
+}
+
+function buildEulerMaxDepositBlockedMessage(input: {
+  snapshot: EulerDownstreamSnapshot;
+  strategyAddress: Address;
+  assetSymbol: string;
+  assetDecimals: number;
+}) {
+  const maxDepositZeroFormatted = formatTokenAmount(
+    input.snapshot.maxDepositZeroRaw,
+    input.assetDecimals,
+    input.assetDecimals === 6 ? 2 : 8,
+  );
+  const maxDepositStrategyFormatted = formatTokenAmount(
+    input.snapshot.maxDepositStrategyRaw,
+    input.assetDecimals,
+    input.assetDecimals === 6 ? 2 : 8,
+  );
+
+  return [
+    'Allocation blocked: downstream Euler vault reports maxDeposit(strategy)=0.',
+    `Downstream Euler vault: ${input.snapshot.eulerVault}`,
+    `hookConfig: target=${input.snapshot.hookTarget}, hookedOps=${input.snapshot.hookedOps}`,
+    `maxDeposit(0x0): ${maxDepositZeroFormatted} ${input.assetSymbol}`,
+    `maxDeposit(strategy): ${maxDepositStrategyFormatted} ${input.assetSymbol} (${input.strategyAddress})`,
+    'Suggested fix: inspect downstream EVK pause/supply-cap/hook policy for this strategy receiver.',
   ].join('\n');
 }
 
@@ -1198,13 +1245,15 @@ export function AllocateToEulerPanel({
       return Promise.all([
         publicClient.readContract({ address: eulerVault, abi: EULER_VAULT_OPERATION_ABI, functionName: 'hookConfig' }),
         publicClient.readContract({ address: eulerVault, abi: EULER_VAULT_OPERATION_ABI, functionName: 'maxDeposit', args: [ZERO_ADDRESS] }),
-      ]).then(([hookConfig, maxDeposit]) => {
+        publicClient.readContract({ address: eulerVault, abi: EULER_VAULT_OPERATION_ABI, functionName: 'maxDeposit', args: [strategyAddress] }),
+      ]).then(([hookConfig, maxDepositZero, maxDepositStrategy]) => {
         const [hookTarget, hookedOps] = hookConfig as readonly [Address, number];
         setDownstreamEuler({
           eulerVault,
           hookTarget,
           hookedOps: Number(hookedOps),
-          maxDepositRaw: maxDeposit as bigint,
+          maxDepositZeroRaw: maxDepositZero as bigint,
+          maxDepositStrategyRaw: maxDepositStrategy as bigint,
         });
       });
     }).catch(() => setDownstreamEuler(null));
@@ -1237,12 +1286,14 @@ export function AllocateToEulerPanel({
     : null;
   const strategyAssetMismatch = strategyInfo !== null && strategyInfo.asset.toLowerCase() !== assetAddress.toLowerCase();
   const downstreamOperationDisabled = isEulerOperationDisabled(downstreamEuler);
+  const downstreamMaxDepositBlocked = isEulerMaxDepositBlocked(downstreamEuler);
   const canAllocate = Boolean(amount)
     && parsedAmountRaw !== null
     && currentValidation?.ok === true
     && strategyInfo?.active !== false
     && !strategyAssetMismatch
     && !downstreamOperationDisabled
+    && !downstreamMaxDepositBlocked
     && hasStrategyRole !== false
     && !isWrongChain
     && step !== 'sending';
@@ -1259,7 +1310,7 @@ export function AllocateToEulerPanel({
     idleFormatted,
     strategyInfo,
     hasStrategyRole,
-  }), ...eulerDownstreamDiagnosticsLines({ snapshot: downstreamEuler, assetSymbol, assetDecimals })];
+  }), ...eulerDownstreamDiagnosticsLines({ snapshot: downstreamEuler, strategyAddress, assetSymbol, assetDecimals })];
 
   async function handleAllocate() {
     if (!address || !vaultAddress || !strategyAddress || !publicClient) return;
@@ -1267,7 +1318,12 @@ export function AllocateToEulerPanel({
     if (strategyInfo?.active === false) { setErrMsg(['Allocation blocked: strategy is not active in StrategyManager.', ...diagnostics].join('\n')); return; }
     if (strategyAssetMismatch) { setErrMsg([`Allocation blocked: strategy registered asset ${strategyInfo?.asset} does not match ${assetAddress}.`, ...diagnostics].join('\n')); return; }
     if (downstreamOperationDisabled && downstreamEuler) {
-      setErrMsg([buildEulerOperationDisabledMessage({ snapshot: downstreamEuler, assetSymbol, assetDecimals }), ...diagnostics].join('\n'));
+      setErrMsg([buildEulerOperationDisabledMessage({ snapshot: downstreamEuler, strategyAddress, assetSymbol, assetDecimals }), ...diagnostics].join('\n'));
+      setStep('error');
+      return;
+    }
+    if (downstreamMaxDepositBlocked && downstreamEuler) {
+      setErrMsg([buildEulerMaxDepositBlockedMessage({ snapshot: downstreamEuler, strategyAddress, assetSymbol, assetDecimals }), ...diagnostics].join('\n'));
       setStep('error');
       return;
     }
@@ -1374,7 +1430,9 @@ export function AllocateToEulerPanel({
         `Required deposit call: ${preValidationError.suggestedFix}`,
       ].join('\n')
     : downstreamOperationDisabled && downstreamEuler
-      ? buildEulerOperationDisabledMessage({ snapshot: downstreamEuler, assetSymbol, assetDecimals })
+      ? buildEulerOperationDisabledMessage({ snapshot: downstreamEuler, strategyAddress, assetSymbol, assetDecimals })
+      : downstreamMaxDepositBlocked && downstreamEuler
+        ? buildEulerMaxDepositBlockedMessage({ snapshot: downstreamEuler, strategyAddress, assetSymbol, assetDecimals })
       : strategyInfo?.active === false
       ? 'Allocation blocked: strategy is not active in StrategyManager.'
       : strategyAssetMismatch
