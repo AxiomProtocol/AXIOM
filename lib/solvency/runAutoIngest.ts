@@ -211,8 +211,6 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
 
   const EULERSWAP_POOL_ABI_LITE = [
     'function getReserves() view returns (uint256 reserve0, uint256 reserve1)',
-    'function token0() view returns (address)',
-    'function token1() view returns (address)',
   ];
   let eulerSwapUsdcTvl = 0;
   let eulerSwapAxmTvl = 0;
@@ -221,18 +219,19 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
     if ((EULER_SWAP_AXUSD_USDC_POOL_ADDRESS as string) !== ZERO_ADDR) {
       try {
         const usdcPool = new ethers.Contract(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULERSWAP_POOL_ABI_LITE, provider);
-        const [r, token0, token1] = await Promise.all([usdcPool.getReserves(), usdcPool.token0(), usdcPool.token1()]);
+        const r = await usdcPool.getReserves();
+        // ActiveContracts documents token0=USDC (6 decimals), token1=AXUSD (18 decimals).
         eulerSwapUsdcTvl =
-          formatStableReserve(r[0] as bigint, token0 as string) +
-          formatStableReserve(r[1] as bigint, token1 as string);
+          formatStableReserve(r[0] as bigint, USDC_ADDRESS) +
+          formatStableReserve(r[1] as bigint, AXUSD_ADDRESS);
       } catch {}
     }
     if ((EULER_SWAP_AXUSD_AXM_POOL_ADDRESS as string) !== ZERO_ADDR) {
       try {
         const axmPool = new ethers.Contract(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, EULERSWAP_POOL_ABI_LITE, provider);
-        const [r, token0] = await Promise.all([axmPool.getReserves(), axmPool.token0()]);
-        const isAxusdToken0 = sameAddress(token0 as string, AXUSD_ADDRESS);
-        const axusdRaw = isAxusdToken0 ? r[0] : r[1];
+        const r = await axmPool.getReserves();
+        // ActiveContracts documents token0=AXM, token1=AXUSD.
+        const axusdRaw = r[1] as bigint;
         const axusdReserve = parseFloat(ethers.formatUnits(axusdRaw, 18));
         eulerSwapAxmTvl = axusdReserve * 2;
       } catch {}
