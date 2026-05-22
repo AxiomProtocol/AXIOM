@@ -2304,25 +2304,25 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
           </div>
 
           {/* Primary AUM metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-            <div className="border border-dl-border p-4">
-              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Total AUM</p>
-              <p className="font-mono text-2xl text-dl-navy mt-1">{usd(liveSummary.aumUsdc)}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
+            <div className="border border-dl-border rounded-sm p-4 min-w-0">
+              <p className="text-[11px] sm:text-xs text-dl-gray font-mono uppercase tracking-wide">Total AUM</p>
+              <p className="font-mono text-xl sm:text-2xl text-dl-navy mt-1 break-words leading-tight">{usd(liveSummary.aumUsdc)}</p>
               <p className="text-xs text-dl-gray mt-1">Idle + deployed</p>
             </div>
-            <div className="border border-dl-border p-4">
-              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Idle USDC</p>
-              <p className="font-mono text-2xl text-dl-navy mt-1">{usd(liveSummary.idleUsdc)}</p>
+            <div className="border border-dl-border rounded-sm p-4 min-w-0">
+              <p className="text-[11px] sm:text-xs text-dl-gray font-mono uppercase tracking-wide">Idle USDC</p>
+              <p className="font-mono text-xl sm:text-2xl text-dl-navy mt-1 break-words leading-tight">{usd(liveSummary.idleUsdc)}</p>
               <p className="text-xs text-dl-gray mt-1">Held in vault, undeployed</p>
             </div>
-            <div className="border border-dl-border p-4">
-              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">In Aave v3</p>
-              <p className="font-mono text-2xl text-dl-navy mt-1">{usd(liveSummary.aavePosition.currentValueUsdc)}</p>
+            <div className="border border-dl-border rounded-sm p-4 min-w-0">
+              <p className="text-[11px] sm:text-xs text-dl-gray font-mono uppercase tracking-wide">In Aave v3</p>
+              <p className="font-mono text-xl sm:text-2xl text-dl-navy mt-1 break-words leading-tight">{usd(liveSummary.aavePosition.currentValueUsdc)}</p>
               <p className="text-xs text-dl-gray mt-1">aUSDC position (principal + yield)</p>
             </div>
-            <div className="border border-dl-border p-4">
-              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Accrued Yield</p>
-              <p className={`font-mono text-2xl mt-1 ${liveSummary.aavePosition.unrealizedYieldUsdc > 0 ? 'text-dl-forest' : 'text-dl-navy'}`}>
+            <div className="border border-dl-border rounded-sm p-4 min-w-0">
+              <p className="text-[11px] sm:text-xs text-dl-gray font-mono uppercase tracking-wide">Accrued Yield</p>
+              <p className={`font-mono text-xl sm:text-2xl mt-1 break-words leading-tight ${liveSummary.aavePosition.unrealizedYieldUsdc > 0 ? 'text-dl-forest' : 'text-dl-navy'}`}>
                 {liveSummary.aavePosition.unrealizedYieldUsdc >= 0 ? '+' : ''}{usd(liveSummary.aavePosition.unrealizedYieldUsdc)}
               </p>
               <p className="text-xs text-dl-gray mt-1">Unrealised Aave yield (since last harvest)</p>
@@ -2330,28 +2330,28 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
           </div>
 
           {/* APY strip */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="border border-dl-forest p-4 bg-green-50">
-              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Aave v3 USDC Supply APY</p>
-              <p className="font-mono text-3xl text-dl-forest mt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="border border-dl-forest rounded-sm p-4 bg-green-50 min-w-0">
+              <p className="text-[11px] sm:text-xs text-dl-gray font-mono uppercase tracking-wide">Aave v3 USDC Supply APY</p>
+              <p className="font-mono text-2xl sm:text-3xl text-dl-forest mt-1 break-words leading-tight">
                 {liveSummary.aavePosition.apyEstimatePct !== null
                   ? `${liveSummary.aavePosition.apyEstimatePct.toFixed(2)}%`
                   : '—'}
               </p>
               <p className="text-xs text-dl-gray mt-1">Live from Aave v3 Arbitrum · liquidityRate</p>
             </div>
-            <div className="border border-dl-border p-4">
-              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Blended APY</p>
-              <p className="font-mono text-3xl text-dl-navy mt-1">
+            <div className="border border-dl-border rounded-sm p-4 min-w-0">
+              <p className="text-[11px] sm:text-xs text-dl-gray font-mono uppercase tracking-wide">Blended APY</p>
+              <p className="font-mono text-2xl sm:text-3xl text-dl-navy mt-1 break-words leading-tight">
                 {liveSummary.blendedApyEstimatePct !== null
                   ? `${liveSummary.blendedApyEstimatePct.toFixed(2)}%`
                   : '—'}
               </p>
               <p className="text-xs text-dl-gray mt-1">Capital-weighted across active strategies</p>
             </div>
-            <div className="border border-dl-border p-4">
-              <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Total Deployed</p>
-              <p className="font-mono text-3xl text-dl-navy mt-1">{usd(liveSummary.deployedUsdc)}</p>
+            <div className="border border-dl-border rounded-sm p-4 min-w-0">
+              <p className="text-[11px] sm:text-xs text-dl-gray font-mono uppercase tracking-wide">Total Deployed</p>
+              <p className="font-mono text-2xl sm:text-3xl text-dl-navy mt-1 break-words leading-tight">{usd(liveSummary.deployedUsdc)}</p>
               <p className="text-xs text-dl-gray mt-1">USDC across all strategies</p>
             </div>
           </div>
@@ -2419,16 +2419,16 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
               </span>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {[
               { label: 'This Month',  value: usd(monthly.harvestTotalUsdc),  count: monthly.harvestEventCount },
               { label: 'This Quarter', value: usd(quarterly.harvestTotalUsdc), count: quarterly.harvestEventCount },
               { label: 'Year to Date', value: usd(ytd.harvestTotalUsdc),      count: ytd.harvestEventCount },
               { label: 'Harvested Since Inception', value: usd(liveSummary.yieldHarvestedInceptionUsdc), count: null },
             ].map((m) => (
-              <div key={m.label} className="border border-dl-border p-4">
-                <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">{m.label}</p>
-                <p className="font-mono text-xl text-dl-forest mt-1">{m.value}</p>
+              <div key={m.label} className="border border-dl-border rounded-sm p-4 min-w-0">
+                <p className="text-[11px] sm:text-xs text-dl-gray font-mono uppercase tracking-wide">{m.label}</p>
+                <p className="font-mono text-lg sm:text-xl text-dl-forest mt-1 break-words leading-tight">{m.value}</p>
                 {m.count !== null && (
                   <p className="text-xs text-dl-gray mt-1">{m.count} harvest event{m.count !== 1 ? 's' : ''}</p>
                 )}

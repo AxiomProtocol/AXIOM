@@ -115,6 +115,36 @@ function toUsdc(raw: bigint): number {
   return Number(raw) / 1e6;
 }
 
+function capitalWeightUsdc(pos: StrategyPosition): number {
+  return Math.max(pos.currentValueUsdc, pos.principalUsdc, 0);
+}
+
+export function deriveDeployedUsdcFromPositions(
+  positions: StrategyPosition[],
+  fallbackDeployedUsdc = 0
+): number {
+  const totalFromPositions = positions.reduce((sum, pos) => sum + capitalWeightUsdc(pos), 0);
+  if (totalFromPositions > 0) return totalFromPositions;
+  return Math.max(fallbackDeployedUsdc, 0);
+}
+
+export function applyAllocationPercentages(
+  positions: StrategyPosition[],
+  totalDeployedUsdc: number
+): StrategyPosition[] {
+  if (totalDeployedUsdc <= 0) {
+    return positions.map((pos) => ({ ...pos, allocationPct: 0 }));
+  }
+
+  return positions.map((pos) => {
+    const allocationPct = (capitalWeightUsdc(pos) / totalDeployedUsdc) * 100;
+    return {
+      ...pos,
+      allocationPct: Math.round(allocationPct * 10) / 10,
+    };
+  });
+}
+
 async function getProvider() {
   return new ethers.JsonRpcProvider(RPC);
 }
@@ -181,7 +211,6 @@ async function fetchStrategyPosition(
   provider: ethers.Provider,
   stratAddr: string,
   smAddr: string,
-  totalDeployedUsdc: number,
   apyEstimatePct: number | null
 ): Promise<StrategyPosition> {
   if (!stratAddr) {
@@ -209,15 +238,13 @@ async function fetchStrategyPosition(
     const currentValueUsdc    = toUsdc(cv);
     const principalUsdc       = toUsdc(pr);
     const unrealizedYieldUsdc = Number(uy) / 1e6;
-    const allocationPct       = totalDeployedUsdc > 0
-      ? (currentValueUsdc / totalDeployedUsdc) * 100 : 0;
     return {
       address: stratAddr,
       name: info.name,
       currentValueUsdc,
       principalUsdc,
       unrealizedYieldUsdc,
-      allocationPct: Math.round(allocationPct * 10) / 10,
+      allocationPct: 0,
       lastRebalancedAt: lra > 0n ? new Date(Number(lra) * 1000).toISOString() : null,
       apyEstimatePct,
     };
@@ -239,7 +266,7 @@ async function fetchStrategyPosition(
  * Calculate blended APY as a capital-weighted average of all active strategy APYs.
  * Returns null if no APY data is available.
  */
-function calcBlendedApy(
+export function calcBlendedApy(
   positions: StrategyPosition[],
   totalDeployedUsdc: number
 ): number | null {
@@ -250,9 +277,10 @@ function calcBlendedApy(
   let weightedSum = 0;
   let totalWeight = 0;
   for (const pos of positions) {
-    if (pos.apyEstimatePct !== null && pos.currentValueUsdc > 0) {
-      weightedSum += pos.currentValueUsdc * pos.apyEstimatePct;
-      totalWeight += pos.currentValueUsdc;
+    const weight = capitalWeightUsdc(pos);
+    if (pos.apyEstimatePct !== null && weight > 0) {
+      weightedSum += weight * pos.apyEstimatePct;
+      totalWeight += weight;
     }
   }
   if (totalWeight === 0) {
@@ -284,7 +312,7 @@ export async function getVaultSummary(): Promise<VaultSummary> {
 
     const idleUsdc     = toUsdc(idleRaw);
     const aumUsdc_usdc = toUsdc(totalRaw);
-    const deployedUsdc = toUsdc(totalDeployedRaw);
+    const fallbackDeployedUsdc = toUsdc(totalDeployedRaw);
 
     // ── AXUSD AUM (secondary asset) ──────────────────────────────────────────
     let axusdIdleUsdc     = 0;
@@ -301,16 +329,24 @@ export async function getVaultSummary(): Promise<VaultSummary> {
         // AXUSD not yet deployed or address misconfigured — silently omit
       }
     }
-    const aumUsdc = aumUsdc_usdc + axusdIdleUsdc + axusdDeployedUsdc;
-
     // ── Fetch all strategy positions in parallel ──────────────────────────────
-    const [aavePos, camelotPos, eulerUsdcPos, eulerThbillPos, eulerWethPos] = await Promise.all([
-      fetchStrategyPosition(provider, AAVE_STRATEGY,         SM_ADDRESS, deployedUsdc, aaveApyPct),
-      fetchStrategyPosition(provider, CAMELOT_STRATEGY,      SM_ADDRESS, deployedUsdc, camelotApyPct),
-      fetchStrategyPosition(provider, EULER_USDC_STRATEGY,   SM_ADDRESS, deployedUsdc, eulerUsdcApyPct),
-      fetchStrategyPosition(provider, EULER_THBILL_STRATEGY, SM_ADDRESS, deployedUsdc, eulerThbillApyPct),
-      fetchStrategyPosition(provider, EULER_WETH_STRATEGY,   SM_ADDRESS, deployedUsdc, eulerWethApyPct),
+    const basePositions = await Promise.all([
+      fetchStrategyPosition(provider, AAVE_STRATEGY,         SM_ADDRESS, aaveApyPct),
+      fetchStrategyPosition(provider, CAMELOT_STRATEGY,      SM_ADDRESS, camelotApyPct),
+      fetchStrategyPosition(provider, EULER_USDC_STRATEGY,   SM_ADDRESS, eulerUsdcApyPct),
+      fetchStrategyPosition(provider, EULER_THBILL_STRATEGY, SM_ADDRESS, eulerThbillApyPct),
+      fetchStrategyPosition(provider, EULER_WETH_STRATEGY,   SM_ADDRESS, eulerWethApyPct),
     ]);
+    const deployedUsdc = deriveDeployedUsdcFromPositions(basePositions, fallbackDeployedUsdc);
+    const [aavePos, camelotPos, eulerUsdcPos, eulerThbillPos, eulerWethPos] = applyAllocationPercentages(
+      basePositions,
+      deployedUsdc,
+    );
+    const aumFromIdleAndStrategies = idleUsdc + axusdIdleUsdc + deployedUsdc;
+    const aumUsdc = Math.max(
+      aumFromIdleAndStrategies,
+      aumUsdc_usdc + axusdIdleUsdc + axusdDeployedUsdc,
+    );
 
     const [yieldHarvestedInceptionUsdc, lastHarvestedAt, cronRunHistory] = await Promise.all([
       getTotalHarvestedFromDb(),
