@@ -462,7 +462,7 @@ function ServerDepositPanel() {
 
       {!result && (
         <>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-xs font-mono text-dl-gray uppercase">Asset</label>
               <select value={asset} onChange={e => setAsset(e.target.value as 'USDC' | 'AXUSD')}
@@ -757,7 +757,7 @@ function WalletDepositPanel() {
       </div>
 
       {/* Asset + Amount inputs (only editable before approve) */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">
           <label className="text-xs font-mono text-dl-gray uppercase">Asset</label>
           <select
@@ -1086,7 +1086,7 @@ function AllocateToAavePanel() {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="border border-dl-border p-3">
           <p className="text-xs font-mono text-dl-gray uppercase mb-1">Vault Idle</p>
           <p className="text-sm font-mono font-semibold text-dl-navy">
@@ -1450,7 +1450,7 @@ export function AllocateToEulerPanel({
         <p className="text-xs font-mono text-dl-gray mt-0.5">{marketDesc} — Target APY: <span className="text-dl-forest font-semibold">{apyLabel}</span></p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="border border-dl-border p-3">
           <p className="text-xs font-mono text-dl-gray uppercase mb-1">Vault Idle {assetSymbol}</p>
           <p className="text-sm font-mono font-semibold text-dl-navy">
@@ -1990,7 +1990,7 @@ function HarvestPanel({ lastHarvestedAt, unrealizedYield, principalUsdc, apyEsti
       </div>
 
       {/* Live accrued yield indicator */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="border border-dl-border p-3">
           <p className="text-xs font-mono text-dl-gray uppercase mb-1">Accrued Yield (Aave)</p>
           <p className={`text-sm font-mono font-semibold ${unrealizedYield > 0 ? 'text-dl-forest' : 'text-dl-navy'}`}>
@@ -2579,7 +2579,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
 
           {/* Step 1: Authorization form */}
           <form onSubmit={handleRequestAuth} className="space-y-4 max-w-lg">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-mono text-dl-gray uppercase mb-1">From Strategy</label>
                 <select
@@ -2635,7 +2635,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
               />
               <p className="text-xs text-dl-gray mt-1">Max per rebalance: $500,000</p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-mono text-dl-gray uppercase mb-1">Current Aave APY % <span className="normal-case">(optional override)</span></label>
                 <input
