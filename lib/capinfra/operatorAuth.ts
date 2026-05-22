@@ -38,20 +38,46 @@ export function readOperatorCookie(req: GetServerSidePropsContext['req'] | NextA
   return cookies[OPERATOR_COOKIE] ?? null;
 }
 
-export function setOperatorCookie(res: NextApiResponse, key: string): void {
+function resolveOperatorCookieDomain(hostHeader?: string): string | null {
+  const override = process.env.OPERATOR_COOKIE_DOMAIN?.trim();
+  if (override) return override;
+
+  if (!hostHeader) return null;
+  const hostname = hostHeader.split(':')[0].trim().toLowerCase();
+  if (!hostname) return null;
+
+  // Share operator cookie between apex and www production hosts.
+  if (hostname === 'axiomprotocol.app' || hostname.endsWith('.axiomprotocol.app')) {
+    return '.axiomprotocol.app';
+  }
+  return null;
+}
+
+export function setOperatorCookie(
+  res: NextApiResponse,
+  key: string,
+  options?: { hostHeader?: string }
+): void {
   // 8 hour session
   const maxAge = 60 * 60 * 8;
   const isProd = process.env.NODE_ENV === 'production';
+  const domain = resolveOperatorCookieDomain(options?.hostHeader);
+  const domainPart = domain ? `; Domain=${domain}` : '';
   res.setHeader(
     'Set-Cookie',
-    `${OPERATOR_COOKIE}=${encodeURIComponent(key)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${isProd ? '; Secure' : ''}`,
+    `${OPERATOR_COOKIE}=${encodeURIComponent(key)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${domainPart}${isProd ? '; Secure' : ''}`,
   );
 }
 
-export function clearOperatorCookie(res: NextApiResponse): void {
+export function clearOperatorCookie(
+  res: NextApiResponse,
+  options?: { hostHeader?: string }
+): void {
+  const domain = resolveOperatorCookieDomain(options?.hostHeader);
+  const domainPart = domain ? `; Domain=${domain}` : '';
   res.setHeader(
     'Set-Cookie',
-    `${OPERATOR_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`,
+    `${OPERATOR_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${domainPart}`,
   );
 }
 

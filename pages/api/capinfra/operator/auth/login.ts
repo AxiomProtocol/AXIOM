@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const body = ZBody.parse(req.body);
     if (!isValidOperatorKey(body.key)) throw new UnauthorizedError('invalid operator key');
-    setOperatorCookie(res, body.key);
+    setOperatorCookie(res, body.key, { hostHeader: req.headers.host });
     res.status(200).json({ ok: true });
   } catch (err) {
     sendError(res, err);
