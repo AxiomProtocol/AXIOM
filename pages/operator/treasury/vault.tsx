@@ -173,6 +173,17 @@ const STRATEGY_POSITION_ABI = parseAbi([
   'function unrealizedYield() view returns (int256)',
 ]);
 
+const EULER_STRATEGY_INTROSPECTION_ABI = parseAbi([
+  'function eulerVault() view returns (address)',
+]);
+
+const EULER_VAULT_OPERATION_ABI = parseAbi([
+  'function hookConfig() view returns (address hookTarget, uint32 hookedOps)',
+  'function maxDeposit(address account) view returns (uint256)',
+]);
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
 
 type StrategyInfoSnapshot = {
   active: boolean;
@@ -182,6 +193,63 @@ type StrategyInfoSnapshot = {
   harvestedYield: bigint;
   addedAt: bigint;
 };
+
+type EulerDownstreamSnapshot = {
+  eulerVault: Address;
+  hookTarget: Address;
+  hookedOps: number;
+  maxDepositRaw: bigint;
+};
+
+function isEulerOperationDisabled(snapshot: EulerDownstreamSnapshot | null): boolean {
+  if (!snapshot) return false;
+  return snapshot.hookedOps > 0 && snapshot.hookTarget.toLowerCase() === ZERO_ADDRESS;
+}
+
+function eulerDownstreamDiagnosticsLines(input: {
+  snapshot: EulerDownstreamSnapshot | null;
+  assetSymbol: string;
+  assetDecimals: number;
+}) {
+  if (!input.snapshot) {
+    return ['Downstream Euler vault: unknown'];
+  }
+
+  const maxDepositFormatted = formatTokenAmount(
+    input.snapshot.maxDepositRaw,
+    input.assetDecimals,
+    input.assetDecimals === 6 ? 2 : 8,
+  );
+
+  return [
+    `Downstream Euler vault: ${input.snapshot.eulerVault}`,
+    `Downstream hook target: ${input.snapshot.hookTarget}`,
+    `Downstream hooked ops: ${input.snapshot.hookedOps}`,
+    `Downstream maxDeposit(0x0): ${maxDepositFormatted} ${input.assetSymbol}`,
+  ];
+}
+
+function buildEulerOperationDisabledMessage(input: {
+  snapshot: EulerDownstreamSnapshot;
+  assetSymbol: string;
+  assetDecimals: number;
+}) {
+  const maxDepositFormatted = formatTokenAmount(
+    input.snapshot.maxDepositRaw,
+    input.assetDecimals,
+    input.assetDecimals === 6 ? 2 : 8,
+  );
+
+  return [
+    'Allocation blocked: downstream Euler vault has operations disabled.',
+    'Technical selector: 0x750f8817',
+    'Decoded error: E_OperationDisabled',
+    `Downstream Euler vault: ${input.snapshot.eulerVault}`,
+    `hookConfig: target=${input.snapshot.hookTarget}, hookedOps=${input.snapshot.hookedOps}`,
+    `maxDeposit(0x0): ${maxDepositFormatted} ${input.assetSymbol}`,
+    'Suggested fix: clear downstream hook ops (setHookConfig(0x0, 0)) or switch this strategy to an enabled Euler vault.',
+  ].join('\n');
+}
 
 function formatMaxInput(raw: bigint, decimals: number): string {
   if (raw === 0n) return '0';
@@ -1096,6 +1164,7 @@ export function AllocateToEulerPanel({
   const [principal,  setPrincipal]  = useState<number | null>(null);
   const [strategyInfo, setStrategyInfo] = useState<StrategyInfoSnapshot | null>(null);
   const [hasStrategyRole, setHasStrategyRole] = useState<boolean | null>(null);
+  const [downstreamEuler, setDownstreamEuler] = useState<EulerDownstreamSnapshot | null>(null);
 
   const { isSuccess: confirmed } = useWaitForTransactionReceipt({ hash: allocateTx ?? undefined });
 
@@ -1119,6 +1188,26 @@ export function AllocateToEulerPanel({
         setStrategyInfo({ active, name, asset, allocatedPrincipal, harvestedYield, addedAt });
       })
       .catch(() => setStrategyInfo(null));
+
+    publicClient.readContract({
+      address: strategyAddress,
+      abi: EULER_STRATEGY_INTROSPECTION_ABI,
+      functionName: 'eulerVault',
+    }).then((downstreamAddress) => {
+      const eulerVault = downstreamAddress as Address;
+      return Promise.all([
+        publicClient.readContract({ address: eulerVault, abi: EULER_VAULT_OPERATION_ABI, functionName: 'hookConfig' }),
+        publicClient.readContract({ address: eulerVault, abi: EULER_VAULT_OPERATION_ABI, functionName: 'maxDeposit', args: [ZERO_ADDRESS] }),
+      ]).then(([hookConfig, maxDeposit]) => {
+        const [hookTarget, hookedOps] = hookConfig as readonly [Address, number];
+        setDownstreamEuler({
+          eulerVault,
+          hookTarget,
+          hookedOps: Number(hookedOps),
+          maxDepositRaw: maxDeposit as bigint,
+        });
+      });
+    }).catch(() => setDownstreamEuler(null));
 
     if (address) {
       publicClient.readContract({ address: vaultAddress, abi: VAULT_ABI, functionName: 'STRATEGY_ADMIN' })
@@ -1147,15 +1236,17 @@ export function AllocateToEulerPanel({
     ? validateAllocationRequest({ amountInput: amount, idleRaw, assetAddress, assetSymbol, assetDecimals, chainId })
     : null;
   const strategyAssetMismatch = strategyInfo !== null && strategyInfo.asset.toLowerCase() !== assetAddress.toLowerCase();
+  const downstreamOperationDisabled = isEulerOperationDisabled(downstreamEuler);
   const canAllocate = Boolean(amount)
     && parsedAmountRaw !== null
     && currentValidation?.ok === true
     && strategyInfo?.active !== false
     && !strategyAssetMismatch
+    && !downstreamOperationDisabled
     && hasStrategyRole !== false
     && !isWrongChain
     && step !== 'sending';
-  const diagnostics = allocationDiagnosticsLines({
+  const diagnostics = [...allocationDiagnosticsLines({
     chainId,
     wallet: address,
     vaultAddress,
@@ -1168,13 +1259,18 @@ export function AllocateToEulerPanel({
     idleFormatted,
     strategyInfo,
     hasStrategyRole,
-  });
+  }), ...eulerDownstreamDiagnosticsLines({ snapshot: downstreamEuler, assetSymbol, assetDecimals })];
 
   async function handleAllocate() {
     if (!address || !vaultAddress || !strategyAddress || !publicClient) return;
     if (idleRaw === null) { setErrMsg('Vault idle balance is unavailable. Refresh the stats before allocating.'); return; }
     if (strategyInfo?.active === false) { setErrMsg(['Allocation blocked: strategy is not active in StrategyManager.', ...diagnostics].join('\n')); return; }
     if (strategyAssetMismatch) { setErrMsg([`Allocation blocked: strategy registered asset ${strategyInfo?.asset} does not match ${assetAddress}.`, ...diagnostics].join('\n')); return; }
+    if (downstreamOperationDisabled && downstreamEuler) {
+      setErrMsg([buildEulerOperationDisabledMessage({ snapshot: downstreamEuler, assetSymbol, assetDecimals }), ...diagnostics].join('\n'));
+      setStep('error');
+      return;
+    }
     if (hasStrategyRole === false) { setErrMsg(['Allocation blocked: connected wallet does not hold STRATEGY_ADMIN on the vault.', ...diagnostics].join('\n')); return; }
 
     const validation = validateAllocationRequest({ amountInput: amount, idleRaw, assetAddress, assetSymbol, assetDecimals, chainId });
@@ -1277,7 +1373,9 @@ export function AllocateToEulerPanel({
         `Max allocatable: ${preValidationError.maxAllocatableFormatted} ${assetSymbol}.`,
         `Required deposit call: ${preValidationError.suggestedFix}`,
       ].join('\n')
-    : strategyInfo?.active === false
+    : downstreamOperationDisabled && downstreamEuler
+      ? buildEulerOperationDisabledMessage({ snapshot: downstreamEuler, assetSymbol, assetDecimals })
+      : strategyInfo?.active === false
       ? 'Allocation blocked: strategy is not active in StrategyManager.'
       : strategyAssetMismatch
         ? `Allocation blocked: strategy registered asset ${strategyInfo?.asset} does not match ${assetAddress}.`
