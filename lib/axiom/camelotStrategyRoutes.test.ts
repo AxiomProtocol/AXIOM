@@ -12,8 +12,8 @@ describe('camelot strategy route classification', () => {
     expect(result.deprecationCode).toBe('POSITION_MANAGER_NO_BYTECODE');
   });
 
-  it('resolves compact v2 route as deprecated tick spacing', () => {
-    const result = classifyCamelotRoute('0x2Ef2...A29F');
+  it('resolves v2 route as deprecated tick spacing', () => {
+    const result = classifyCamelotRoute('0x2Ef29EA19f490bbC61959C29Eb1566e4a62fA29F');
     expect(result.classification).toBe('v2_tick_spacing');
     expect(result.deprecationCode).toBe('INVALID_TICK_SPACING');
   });
@@ -22,6 +22,6 @@ describe('camelot strategy route classification', () => {
     expect(resolveCanonicalCamelotStrategyAddress('0x511441D31e629d7513004a692c2dB67438151696')).toBe(
       CAMELOT_USDC_AXUSD_V3_STRATEGY,
     );
-    expect(resolveCanonicalCamelotStrategyAddress('0x2Ef2...A29F')).toBe(CAMELOT_USDC_AXUSD_V3_STRATEGY);
+    expect(resolveCanonicalCamelotStrategyAddress('0x2Ef29EA19f490bbC61959C29Eb1566e4a62fA29F')).toBe(CAMELOT_USDC_AXUSD_V3_STRATEGY);
   });
 });

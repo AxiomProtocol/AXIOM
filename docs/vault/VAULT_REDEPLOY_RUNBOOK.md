@@ -295,7 +295,7 @@ Canonical live route:
 
 Deprecated routes (diagnostics-only):
 - old Camelot: `0x511441D31e629d7513004a692c2dB67438151696` → `POSITION_MANAGER_NO_BYTECODE`
-- Camelot v2: `0x2Ef2...A29F` → `INVALID_TICK_SPACING`
+- Camelot v2: `0x2Ef29EA19f490bbC61959C29Eb1566e4a62fA29F` → `INVALID_TICK_SPACING`
 
 Preflight requirements:
 1. reject old/v2 route selections,
@@ -403,7 +403,7 @@ Expected: a value ≥ `25.000000 USDC`, growing over time.
 | StrategyManager | `0x432dFEe1DAb2D7d423690819DC65C033FE266E8e` |
 | CamelotStrategy (v3 canonical) | `0x958F533112cA68078Ba37aEb5ee977c289C81829` |
 | CamelotStrategy old (deprecated) | `0x511441D31e629d7513004a692c2dB67438151696` |
-| CamelotStrategy v2 (deprecated) | `0x2Ef2...A29F` |
+| CamelotStrategy v2 (deprecated) | `0x2Ef29EA19f490bbC61959C29Eb1566e4a62fA29F` |
 
 ---
 
@@ -435,7 +435,7 @@ tx hashes were printed to console at execution time.
 | StrategyManager | `0x432dFEe1DAb2D7d423690819DC65C033FE266E8e` |
 | CamelotStrategy (v3 canonical) | `0x958F533112cA68078Ba37aEb5ee977c289C81829` |
 | CamelotStrategy old (deprecated) | `0x511441D31e629d7513004a692c2dB67438151696` |
-| CamelotStrategy v2 (deprecated) | `0x2Ef2...A29F` |
+| CamelotStrategy v2 (deprecated) | `0x2Ef29EA19f490bbC61959C29Eb1566e4a62fA29F` |
 
 **AaveV3Strategy.currentValue() — confirmed live read:**
 ```

@@ -2,7 +2,8 @@ import { getAddress, type Address } from 'viem';
 
 export const CAMELOT_USDC_AXUSD_V3_STRATEGY = getAddress('0x958F533112cA68078Ba37aEb5ee977c289C81829');
 export const CAMELOT_LEGACY_STRATEGY = getAddress('0x511441D31e629d7513004a692c2dB67438151696');
-export const CAMELOT_V2_COMPACT_ADDRESS = '0x2Ef2...A29F' as const;
+export const CAMELOT_V2_STRATEGY = getAddress('0x2Ef29EA19f490bbC61959C29Eb1566e4a62fA29F');
+export const CAMELOT_V2_COMPACT_ADDRESS = CAMELOT_V2_STRATEGY;
 
 export type CamelotRouteDeprecationCode =
   | 'POSITION_MANAGER_NO_BYTECODE'

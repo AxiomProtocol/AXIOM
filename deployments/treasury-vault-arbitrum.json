@@ -15,7 +15,7 @@
     "StrategyManager_v1": "0x22aAB6892cC0486d42d011BeB19B69143A05e72B",
     "AaveV3Strategy_USDC_v1": "0xf01456B53546031568E83726A9F9C0A8ce5c68C2",
     "CamelotStrategy_old_invalid_position_manager": "0x511441D31e629d7513004a692c2dB67438151696",
-    "CamelotStrategy_v2_invalid_tick_spacing": "0x2Ef2...A29F"
+    "CamelotStrategy_v2_invalid_tick_spacing": "0x2Ef29EA19f490bbC61959C29Eb1566e4a62fA29F"
   },
   "axusd": "0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7",
   "roles": {

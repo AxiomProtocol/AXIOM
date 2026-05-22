@@ -34,7 +34,7 @@
         "reason": "POSITION_MANAGER_NO_BYTECODE"
       },
       "v2Strategy": {
-        "address": "0x2Ef2...A29F",
+        "address": "0x2Ef29EA19f490bbC61959C29Eb1566e4a62fA29F",
         "status": "deprecated",
         "reason": "INVALID_TICK_SPACING"
       }

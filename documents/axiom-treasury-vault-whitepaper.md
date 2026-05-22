@@ -104,7 +104,7 @@ Each strategy adapter is a standalone smart contract implementing the `IStrategy
 | Underlying Asset | USDC / AXUSD |
 | APY Estimate | Variable (fee-based) |
 | Status | Active |
-| Notes | Canonical Camelot v3 route for AXUSD/USDC; single-position model requires recall/withdraw before reallocation. Deprecated routes: old `0x5114...1696` (invalid Position Manager), v2 `0x2Ef2...A29F` (invalid tick spacing). |
+| Notes | Canonical Camelot v3 route for AXUSD/USDC; single-position model requires recall/withdraw before reallocation. Deprecated routes: old `0x5114...1696` (invalid Position Manager), v2 `0x2Ef29EA19f490bbC61959C29Eb1566e4a62fA29F` (invalid tick spacing). |
 
 ---
 
