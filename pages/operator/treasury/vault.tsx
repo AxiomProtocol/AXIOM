@@ -2352,7 +2352,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             <div className="border border-dl-border rounded-sm p-4 min-w-0">
               <p className="text-[11px] sm:text-xs text-dl-gray font-mono uppercase tracking-wide">Total Deployed</p>
               <p className="font-mono text-2xl sm:text-3xl text-dl-navy mt-1 break-words leading-tight">{usd(liveSummary.deployedUsdc)}</p>
-              <p className="text-xs text-dl-gray mt-1">USDC across all strategies</p>
+              <p className="text-xs text-dl-gray mt-1">USD value across all strategies</p>
             </div>
           </div>
         </section>

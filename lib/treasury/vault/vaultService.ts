@@ -26,6 +26,10 @@ const EULER_USDC_STRATEGY    = process.env.EULER_USDC_THEO_STRATEGY_ADDRESS     
 const EULER_THBILL_STRATEGY  = process.env.EULER_THBILL_THEO_STRATEGY_ADDRESS      ?? '';
 const EULER_WETH_STRATEGY    = process.env.EULER_WETH_ARBITRUM_STRATEGY_ADDRESS    ?? '';
 const USDC             = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+const WETH             = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1';
+const THBILL           = '0xfDD22Ce6D1F66bc0Ec89b20BF16CcB6670F55A5a';
+const CHAINLINK_ETH_USD_FEED = '0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612';
+const MAX_CHAINLINK_ETH_USD_STALENESS_SECONDS = 3 * 60 * 60;
 
 // AXUSD is an ERC-3643 stablecoin; address configured at deploy time.
 // AXUSD has 18 decimals (ERC-20 standard, confirmed on-chain). Both USDC and AXUSD
@@ -43,6 +47,12 @@ const VAULT_ABI = [
 
 const ERC20_ABI = [
   'function balanceOf(address) view returns (uint256)',
+  'function decimals() view returns (uint8)',
+];
+
+const CHAINLINK_FEED_ABI = [
+  'function decimals() view returns (uint8)',
+  'function latestRoundData() view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)',
 ];
 
 const STRATEGY_ABI = [
@@ -69,11 +79,11 @@ export interface CronRunEntry {
 }
 
 export interface VaultSummary {
-  /** Total AUM across all accepted assets (USDC + AXUSD + Euler), denominated in USD. */
+  /** Total AUM across accepted assets and valued strategies, denominated in USD. */
   aumUsdc: number;
   /** Idle USDC held in vault (not deployed to any strategy). */
   idleUsdc: number;
-  /** USDC deployed across active strategies. */
+  /** USD value deployed across active strategies. */
   deployedUsdc: number;
   /** Idle AXUSD held in vault (tracked via idleBalance mapping). */
   axusdIdleUsdc: number;
@@ -115,6 +125,19 @@ function toUsdc(raw: bigint): number {
   return Number(raw) / 1e6;
 }
 
+function sameAddress(a: string, b: string): boolean {
+  return a.toLowerCase() === b.toLowerCase();
+}
+
+export function strategyRawAssetValueToUsd(
+  raw: bigint,
+  assetDecimals: number,
+  usdPricePerToken: number | null,
+): number {
+  if (usdPricePerToken === null || usdPricePerToken <= 0) return 0;
+  return parseFloat(ethers.formatUnits(raw, assetDecimals)) * usdPricePerToken;
+}
+
 function capitalWeightUsdc(pos: StrategyPosition): number {
   return Math.max(pos.currentValueUsdc, pos.principalUsdc, 0);
 }
@@ -147,6 +170,54 @@ export function applyAllocationPercentages(
 
 async function getProvider() {
   return new ethers.JsonRpcProvider(RPC);
+}
+
+async function getAssetDecimals(provider: ethers.Provider, asset: string): Promise<number> {
+  if (!asset) return 18;
+  if (sameAddress(asset, USDC)) return 6;
+  if (sameAddress(asset, WETH)) return 18;
+  if (AXUSD_ADDRESS && sameAddress(asset, AXUSD_ADDRESS)) return AXUSD_DECIMALS;
+
+  try {
+    const token = new ethers.Contract(asset, ERC20_ABI, provider);
+    const decimals = await token.decimals() as number | bigint;
+    return Number(decimals);
+  } catch {
+    // Fail closed toward 18 decimals so unknown assets cannot be overstated by 1e12.
+    return 18;
+  }
+}
+
+async function fetchEthUsdPrice(provider: ethers.Provider): Promise<number | null> {
+  try {
+    const feed = new ethers.Contract(CHAINLINK_ETH_USD_FEED, CHAINLINK_FEED_ABI, provider);
+    const [decimals, round] = await Promise.all([
+      feed.decimals() as Promise<number | bigint>,
+      feed.latestRoundData() as Promise<{
+        answer: bigint;
+        updatedAt: bigint;
+      }>,
+    ]);
+
+    if (round.answer <= 0n || round.updatedAt <= 0n) return null;
+    const updatedAtMs = Number(round.updatedAt) * 1000;
+    const ageSeconds = (Date.now() - updatedAtMs) / 1000;
+    if (ageSeconds > MAX_CHAINLINK_ETH_USD_STALENESS_SECONDS) return null;
+
+    return Number(round.answer) / Math.pow(10, Number(decimals));
+  } catch {
+    return null;
+  }
+}
+
+async function fetchAssetUsdPrice(provider: ethers.Provider, asset: string): Promise<number | null> {
+  if (!asset) return null;
+  if (sameAddress(asset, USDC)) return 1;
+  if (AXUSD_ADDRESS && sameAddress(asset, AXUSD_ADDRESS)) return 1;
+  if (sameAddress(asset, THBILL)) return 1;
+  if (sameAddress(asset, WETH)) return fetchEthUsdPrice(provider);
+
+  return null;
 }
 
 /** Fetch live Aave USDC supply APY and per-strategy configured APYs. */
@@ -233,11 +304,16 @@ async function fetchStrategyPosition(
       strat.principal()       as Promise<bigint>,
       strat.unrealizedYield() as Promise<bigint>,
       strat.lastRebalancedAt() as Promise<bigint>,
-      sm.strategyInfo(stratAddr) as Promise<{ name: string }>,
+      sm.strategyInfo(stratAddr) as Promise<{ name: string; asset: string }>,
     ]);
-    const currentValueUsdc    = toUsdc(cv);
-    const principalUsdc       = toUsdc(pr);
-    const unrealizedYieldUsdc = Number(uy) / 1e6;
+    const asset = info.asset ?? '';
+    const [assetDecimals, usdPricePerToken] = await Promise.all([
+      getAssetDecimals(provider, asset),
+      fetchAssetUsdPrice(provider, asset),
+    ]);
+    const currentValueUsdc = strategyRawAssetValueToUsd(cv, assetDecimals, usdPricePerToken);
+    const principalUsdc = strategyRawAssetValueToUsd(pr, assetDecimals, usdPricePerToken);
+    const unrealizedYieldUsdc = strategyRawAssetValueToUsd(uy, assetDecimals, usdPricePerToken);
     return {
       address: stratAddr,
       name: info.name,

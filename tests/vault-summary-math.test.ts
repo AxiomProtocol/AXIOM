@@ -3,6 +3,7 @@ import {
   applyAllocationPercentages,
   calcBlendedApy,
   deriveDeployedUsdcFromPositions,
+  strategyRawAssetValueToUsd,
   type StrategyPosition,
 } from '../lib/treasury/vault/vaultService';
 
@@ -34,6 +35,24 @@ describe('vault summary math helpers', () => {
   it('falls back to on-chain deployed figure when no position capital is present', () => {
     const deployed = deriveDeployedUsdcFromPositions([pos({}), pos({})], 42.5);
     expect(deployed).toBe(42.5);
+  });
+
+  it('converts 6-decimal strategy asset balances to USD', () => {
+    const value = strategyRawAssetValueToUsd(125_000_000n, 6, 1);
+    expect(value).toBe(125);
+  });
+
+  it('does not inflate 18-decimal WETH strategy balances as 6-decimal USDC', () => {
+    const rawWeth = 100_400_011_745_460_000n; // 0.10040001174546 WETH
+    const value = strategyRawAssetValueToUsd(rawWeth, 18, 4_000);
+
+    expect(value).toBeCloseTo(401.60004698184, 10);
+    expect(value).toBeLessThan(1_000);
+  });
+
+  it('excludes strategy values when no USD price is available', () => {
+    const value = strategyRawAssetValueToUsd(100_400_011_745_460_000n, 18, null);
+    expect(value).toBe(0);
   });
 
   it('applies allocation percentages from derived total', () => {
