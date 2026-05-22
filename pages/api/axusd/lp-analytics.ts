@@ -20,15 +20,27 @@ const CAMELOT_PAIR_ABI = [
 const EULERSWAP_POOL_ABI = [
   'function getReserves() view returns (uint256 reserve0, uint256 reserve1)',
   'function token0() view returns (address)',
+  'function token1() view returns (address)',
   'function totalSupply() view returns (uint256)',
   'function balanceOf(address account) view returns (uint256)',
   'function fee() view returns (uint256)',
 ];
 
 const ZERO = '0x0000000000000000000000000000000000000000';
+const AXUSD_ADDRESS = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
 const CAMELOT_FEE_RATE = 0.003;
 
 const EVK_SUPPLY_APY_BPS = 350;
+
+function sameAddress(a: string, b: string): boolean {
+  return a.toLowerCase() === b.toLowerCase();
+}
+
+function formatEulerSwapStableReserve(raw: bigint, tokenAddress: string): number {
+  if (sameAddress(tokenAddress, STABLECOINS.USDC)) return Number(ethers.formatUnits(raw, 6));
+  if (sameAddress(tokenAddress, AXUSD_ADDRESS)) return Number(ethers.formatUnits(raw, 18));
+  return 0;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -155,15 +167,23 @@ async function fetchEulerSwapPool(
 
   try {
     const pool = new ethers.Contract(poolAddress, EULERSWAP_POOL_ABI, provider);
-    const [reserves, totalLpSupply] = await Promise.all([
+    const [reserves, token0, token1, totalLpSupply] = await Promise.all([
       pool.getReserves(),
+      pool.token0(),
+      pool.token1(),
       pool.totalSupply(),
     ]);
     let feeBps = 30;
     try { feeBps = Number(await pool.fee()); } catch {}
 
-    const axusdReserve = Number(ethers.formatUnits(reserves[0], 6));
-    const usdcReserve  = Number(ethers.formatUnits(reserves[1], 6));
+    const axusdReserve =
+      sameAddress(token0 as string, AXUSD_ADDRESS)
+        ? formatEulerSwapStableReserve(reserves[0] as bigint, token0 as string)
+        : formatEulerSwapStableReserve(reserves[1] as bigint, token1 as string);
+    const usdcReserve =
+      sameAddress(token0 as string, STABLECOINS.USDC)
+        ? formatEulerSwapStableReserve(reserves[0] as bigint, token0 as string)
+        : formatEulerSwapStableReserve(reserves[1] as bigint, token1 as string);
     const totalSupply  = Number(ethers.formatUnits(totalLpSupply, 18));
     const tvlUsd       = axusdReserve + usdcReserve;
     const dailyVol     = tvlUsd * 0.15;

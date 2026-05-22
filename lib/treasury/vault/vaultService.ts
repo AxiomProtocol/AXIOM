@@ -138,6 +138,31 @@ export function strategyRawAssetValueToUsd(
   return parseFloat(ethers.formatUnits(raw, assetDecimals)) * usdPricePerToken;
 }
 
+export function getStrategyCurrentValueDecimals(
+  strategyAddress: string,
+  strategyName: string,
+  assetDecimals: number,
+): number {
+  if (
+    (CAMELOT_STRATEGY && sameAddress(strategyAddress, CAMELOT_STRATEGY)) ||
+    strategyName.toLowerCase().includes('camelot')
+  ) {
+    // CamelotStrategy.currentValue() reports the pool position in 18-decimal
+    // units even though StrategyManager registers the strategy's asset as USDC.
+    return 18;
+  }
+  return assetDecimals;
+}
+
+export function calcVaultAumUsdc(
+  idleUsdc: number,
+  axusdIdleUsdc: number,
+  deployedUsdc: number,
+  axusdDeployedUsdc: number,
+): number {
+  return idleUsdc + axusdIdleUsdc + deployedUsdc + axusdDeployedUsdc;
+}
+
 function capitalWeightUsdc(pos: StrategyPosition): number {
   return Math.max(pos.currentValueUsdc, pos.principalUsdc, 0);
 }
@@ -311,7 +336,8 @@ async function fetchStrategyPosition(
       getAssetDecimals(provider, asset),
       fetchAssetUsdPrice(provider, asset),
     ]);
-    const currentValueUsdc = strategyRawAssetValueToUsd(cv, assetDecimals, usdPricePerToken);
+    const currentValueDecimals = getStrategyCurrentValueDecimals(stratAddr, info.name, assetDecimals);
+    const currentValueUsdc = strategyRawAssetValueToUsd(cv, currentValueDecimals, usdPricePerToken);
     const principalUsdc = strategyRawAssetValueToUsd(pr, assetDecimals, usdPricePerToken);
     const unrealizedYieldUsdc = strategyRawAssetValueToUsd(uy, assetDecimals, usdPricePerToken);
     return {
@@ -375,10 +401,9 @@ export async function getVaultSummary(): Promise<VaultSummary> {
     const usdc     = new ethers.Contract(USDC, ERC20_ABI, provider);
     const sm       = new ethers.Contract(SM_ADDRESS, STRATEGY_MANAGER_ABI, provider);
 
-    const [idleRaw, totalRaw, paused, totalDeployedRaw, apyEst] =
+    const [idleRaw, paused, totalDeployedRaw, apyEst] =
       await Promise.all([
         usdc.balanceOf(VAULT_ADDRESS) as Promise<bigint>,
-        vault.totalAssets()           as Promise<bigint>,
         vault.paused()                as Promise<boolean>,
         sm.totalDeployed(USDC)        as Promise<bigint>,
         fetchApyEstimates(),
@@ -387,7 +412,6 @@ export async function getVaultSummary(): Promise<VaultSummary> {
     const { aaveApyPct, camelotApyPct, eulerUsdcApyPct, eulerThbillApyPct, eulerWethApyPct } = apyEst;
 
     const idleUsdc     = toUsdc(idleRaw);
-    const aumUsdc_usdc = toUsdc(totalRaw);
     const fallbackDeployedUsdc = toUsdc(totalDeployedRaw);
 
     // ── AXUSD AUM (secondary asset) ──────────────────────────────────────────
@@ -418,11 +442,7 @@ export async function getVaultSummary(): Promise<VaultSummary> {
       basePositions,
       deployedUsdc,
     );
-    const aumFromIdleAndStrategies = idleUsdc + axusdIdleUsdc + deployedUsdc;
-    const aumUsdc = Math.max(
-      aumFromIdleAndStrategies,
-      aumUsdc_usdc + axusdIdleUsdc + axusdDeployedUsdc,
-    );
+    const aumUsdc = calcVaultAumUsdc(idleUsdc, axusdIdleUsdc, deployedUsdc, axusdDeployedUsdc);
 
     const [yieldHarvestedInceptionUsdc, lastHarvestedAt, cronRunHistory] = await Promise.all([
       getTotalHarvestedFromDb(),

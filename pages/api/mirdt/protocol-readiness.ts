@@ -14,6 +14,7 @@ let prsCache: PRSCacheEntry | null = null;
 const ALCHEMY_RPC = `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 const TOTAL_ASSETS_ABI = ['function totalAssets() view returns (uint256)'];
 const EULER_EARN_VAULT = '0x4359184cb90cDbaa1e1923d8A38Ff96Bb58cB45B';
+const EULER_EARN_ASSET_DECIMALS = 18;
 const ERC20_TOTAL_SUPPLY_ABI = ['function totalSupply() view returns (uint256)'];
 // Canonical ERC-3643 Unified AXUSD — supply tracking for protocol readiness score
 const AXUSD_TOKEN = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
@@ -182,7 +183,7 @@ async function protocolHealthIntelligence(): Promise<DimensionResult> {
   try {
     const [snapshotRes, earnTvl, onChainSupply] = await Promise.all([
       pool.query(`SELECT payload_json FROM solvency_snapshots ORDER BY created_at DESC LIMIT 1`),
-      fetchOnChainTotalAssets(EULER_EARN_VAULT, 6),
+      fetchOnChainTotalAssets(EULER_EARN_VAULT, EULER_EARN_ASSET_DECIMALS),
       fetchAxusdSupply(),
     ]);
 

@@ -47,9 +47,20 @@ const ERC20_ABI = [
 ];
 
 const USDC_ADDRESS = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+const AXUSD_ADDRESS = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7';
 const DEPLOYER_ADDRESS = '0x8d7892CF226B43d48B6e3ce988A1274e6D114C96';
 
 void PSM_ABI; // ABI retained for future PSM-state enrichment
+
+function sameAddress(a: string, b: string): boolean {
+  return a.toLowerCase() === b.toLowerCase();
+}
+
+function formatStableReserve(raw: bigint, tokenAddress: string): number {
+  if (sameAddress(tokenAddress, USDC_ADDRESS)) return Number(ethers.formatUnits(raw, 6));
+  if (sameAddress(tokenAddress, AXUSD_ADDRESS)) return Number(ethers.formatUnits(raw, 18));
+  return 0;
+}
 
 export type RunAutoIngestOpts = {
   notes?: string;
@@ -192,7 +203,7 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
     try {
       const eulerEarnVault = new ethers.Contract(EULER_EARN_VAULT_ADDRESS, VAULT_ABI_SIMPLE, provider);
       const tvlRaw: bigint = await eulerEarnVault.totalAssets();
-      eulerEarnTvlAxusd = parseFloat(ethers.formatUnits(tvlRaw, 6));
+      eulerEarnTvlAxusd = parseFloat(ethers.formatUnits(tvlRaw, 18));
     } catch {
       // Non-fatal
     }
@@ -201,8 +212,8 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
   const EULERSWAP_POOL_ABI_LITE = [
     'function getReserves() view returns (uint256 reserve0, uint256 reserve1)',
     'function token0() view returns (address)',
+    'function token1() view returns (address)',
   ];
-  const AXUSD_ADDR_LOWER = '0xd6110f59a978ada6ef5c0e9d6baa04455d46ade7';
   let eulerSwapUsdcTvl = 0;
   let eulerSwapAxmTvl = 0;
   const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
@@ -210,18 +221,19 @@ export async function runAutoIngest(opts: RunAutoIngestOpts = {}): Promise<RunAu
     if ((EULER_SWAP_AXUSD_USDC_POOL_ADDRESS as string) !== ZERO_ADDR) {
       try {
         const usdcPool = new ethers.Contract(EULER_SWAP_AXUSD_USDC_POOL_ADDRESS, EULERSWAP_POOL_ABI_LITE, provider);
-        const [r, token0] = await Promise.all([usdcPool.getReserves(), usdcPool.token0()]);
-        eulerSwapUsdcTvl = parseFloat(ethers.formatUnits(r[0], 6)) + parseFloat(ethers.formatUnits(r[1], 6));
-        void token0;
+        const [r, token0, token1] = await Promise.all([usdcPool.getReserves(), usdcPool.token0(), usdcPool.token1()]);
+        eulerSwapUsdcTvl =
+          formatStableReserve(r[0] as bigint, token0 as string) +
+          formatStableReserve(r[1] as bigint, token1 as string);
       } catch {}
     }
     if ((EULER_SWAP_AXUSD_AXM_POOL_ADDRESS as string) !== ZERO_ADDR) {
       try {
         const axmPool = new ethers.Contract(EULER_SWAP_AXUSD_AXM_POOL_ADDRESS, EULERSWAP_POOL_ABI_LITE, provider);
         const [r, token0] = await Promise.all([axmPool.getReserves(), axmPool.token0()]);
-        const isAxusdToken0 = (token0 as string).toLowerCase() === AXUSD_ADDR_LOWER;
+        const isAxusdToken0 = sameAddress(token0 as string, AXUSD_ADDRESS);
         const axusdRaw = isAxusdToken0 ? r[0] : r[1];
-        const axusdReserve = parseFloat(ethers.formatUnits(axusdRaw, 6));
+        const axusdReserve = parseFloat(ethers.formatUnits(axusdRaw, 18));
         eulerSwapAxmTvl = axusdReserve * 2;
       } catch {}
     }

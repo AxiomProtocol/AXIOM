@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyAllocationPercentages,
+  calcVaultAumUsdc,
   calcBlendedApy,
   deriveDeployedUsdcFromPositions,
+  getStrategyCurrentValueDecimals,
   strategyRawAssetValueToUsd,
   type StrategyPosition,
 } from '../lib/treasury/vault/vaultService';
@@ -37,6 +39,11 @@ describe('vault summary math helpers', () => {
     expect(deployed).toBe(42.5);
   });
 
+  it('computes AUM from normalized idle and deployed components', () => {
+    const aum = calcVaultAumUsdc(79.9, 0.1, 40.9605, 0);
+    expect(aum).toBeCloseTo(120.9605, 6);
+  });
+
   it('converts 6-decimal strategy asset balances to USD', () => {
     const value = strategyRawAssetValueToUsd(125_000_000n, 6, 1);
     expect(value).toBe(125);
@@ -53,6 +60,18 @@ describe('vault summary math helpers', () => {
   it('excludes strategy values when no USD price is available', () => {
     const value = strategyRawAssetValueToUsd(100_400_011_745_460_000n, 18, null);
     expect(value).toBe(0);
+  });
+
+  it('decodes Camelot currentValue with 18 decimals despite a 6-decimal USDC asset', () => {
+    const decimals = getStrategyCurrentValueDecimals(
+      '0x958F533112cA68078Ba37aEb5ee977c289C81829',
+      'Camelot-AXUSD-USDC-v3',
+      6,
+    );
+    const value = strategyRawAssetValueToUsd(100_000_000_000_100_000n, decimals, 1);
+
+    expect(decimals).toBe(18);
+    expect(value).toBeCloseTo(0.1000000000001, 12);
   });
 
   it('applies allocation percentages from derived total', () => {
