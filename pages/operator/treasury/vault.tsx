@@ -2,11 +2,16 @@ import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import { useState, useCallback, useEffect } from 'react';
 import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt, usePublicClient, useBalance } from 'wagmi';
-import { erc20Abi, parseAbi, parseUnits, formatUnits } from 'viem';
+import { erc20Abi, parseAbi, parseUnits, formatUnits, type Abi, type Address } from 'viem';
 import { OperatorConsoleLayout } from '../../../components/operator/OperatorConsoleLayout';
 import { requireOperatorCookie } from '../../../lib/capinfra/operatorAuth';
 import { getVaultSummary, getVaultEventHistory, getIncomeSummary } from '../../../lib/treasury/vault/vaultService';
 import type { VaultSummary, StrategyPosition, CronRunEntry } from '../../../lib/treasury/vault/vaultService';
+import { decodeContractError } from '../../../lib/contracts/decodeContractError';
+import { TREASURY_VAULT_REGISTRY, ARBITRUM_ONE_CHAIN_ID } from '../../../lib/axiom/treasuryVaultRegistry';
+import { formatTokenAmount, parseAllocationAmount, validateAllocationRequest } from '../../../lib/axiom/treasuryVaultAllocation';
+import treasuryVaultAbi from '../../../artifacts-treasury/AxiomTreasuryVault.abi.json';
+import strategyManagerAbi from '../../../artifacts-treasury/StrategyManager.abi.json';
 
 interface VaultEvent {
   id: number;
@@ -147,22 +152,115 @@ interface SentinelAuth {
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-const ARBITRUM_ONE = 42161;
-const USDC_ADDRESS  = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831' as `0x${string}`;
-const AXUSD_ADDRESS = '0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7' as `0x${string}`;
+const ARBITRUM_ONE = ARBITRUM_ONE_CHAIN_ID;
+const VAULT_ADDRESS             = TREASURY_VAULT_REGISTRY.contracts.treasuryVault;
+const STRATEGY_MANAGER_ADDRESS  = TREASURY_VAULT_REGISTRY.contracts.strategyManager;
+const USDC_ADDRESS              = TREASURY_VAULT_REGISTRY.contracts.usdc;
+const AXUSD_ADDRESS             = TREASURY_VAULT_REGISTRY.contracts.axusd;
+const THBILL_ADDRESS            = TREASURY_VAULT_REGISTRY.contracts.thbill;
+const WETH_ADDRESS              = TREASURY_VAULT_REGISTRY.contracts.weth;
+const AAVE_STRATEGY_ADDRESS     = TREASURY_VAULT_REGISTRY.strategies.aaveV3Usdc.address;
+const EULER_USDC_STRATEGY_ADDRESS   = TREASURY_VAULT_REGISTRY.strategies.eulerUsdcTheo.address;
+const EULER_THBILL_STRATEGY_ADDRESS = TREASURY_VAULT_REGISTRY.strategies.eulerThbillTheo.address;
+const EULER_WETH_STRATEGY_ADDRESS   = TREASURY_VAULT_REGISTRY.strategies.eulerWeth.address;
 
-const VAULT_ABI = parseAbi([
-  'function deposit(uint256 assets, address receiver) external returns (uint256 shares)',
-  'function depositToken(address asset, uint256 amount) external',
-  'function allocate(address strategy, address assetAddr, uint256 amount) external',
-  'function paused() view returns (bool)',
-]);
+const VAULT_ABI = treasuryVaultAbi as Abi;
+const STRATEGY_MANAGER_ABI = strategyManagerAbi as Abi;
 
-const AAVE_STRATEGY_ABI = parseAbi([
+const STRATEGY_POSITION_ABI = parseAbi([
   'function currentValue() view returns (uint256)',
   'function principal() view returns (uint256)',
   'function unrealizedYield() view returns (int256)',
 ]);
+
+
+type StrategyInfoSnapshot = {
+  active: boolean;
+  name: string;
+  asset: Address;
+  allocatedPrincipal: bigint;
+  harvestedYield: bigint;
+  addedAt: bigint;
+};
+
+function formatMaxInput(raw: bigint, decimals: number): string {
+  if (raw === 0n) return '0';
+  return decimals === 6
+    ? Number(formatUnits(raw, decimals)).toFixed(2)
+    : formatTokenAmount(raw, decimals, 8);
+}
+
+function WrongChainAllocationNotice({ title }: { title: string }) {
+  return (
+    <div className="border border-amber-300 p-5 max-w-2xl mb-4 bg-amber-50">
+      <p className="text-xs font-mono text-amber-700 uppercase tracking-wide mb-2">{title}</p>
+      <p className="text-sm text-amber-800">Switch to Arbitrum One to operate the Axiom Treasury Vault.</p>
+    </div>
+  );
+}
+
+function allocationDiagnosticsLines(input: {
+  chainId: number | undefined;
+  wallet: Address | undefined;
+  vaultAddress: Address;
+  strategyAddress: Address;
+  assetAddress: Address;
+  assetSymbol: string;
+  amount: string;
+  parsedAmountRaw: bigint | null;
+  idleRaw: bigint | null;
+  idleFormatted: string | null;
+  strategyInfo: StrategyInfoSnapshot | null;
+  hasStrategyRole: boolean | null;
+}) {
+  return [
+    `Chain ID: ${input.chainId ?? 'not connected'} (${input.chainId === ARBITRUM_ONE ? 'Arbitrum One' : 'not Arbitrum One'})`,
+    `Connected wallet: ${input.wallet ?? 'not connected'}`,
+    `Vault: ${input.vaultAddress}`,
+    `Strategy: ${input.strategyAddress}`,
+    `Asset ${input.assetSymbol}: ${input.assetAddress}`,
+    `Amount input: ${input.amount || 'not entered'}`,
+    `Parsed amount raw: ${input.parsedAmountRaw !== null ? input.parsedAmountRaw.toString() : 'not parsed'}`,
+    `Vault idle raw: ${input.idleRaw !== null ? input.idleRaw.toString() : 'loading'}`,
+    `Vault idle formatted: ${input.idleFormatted ?? 'loading'}`,
+    `Strategy active: ${input.strategyInfo ? String(input.strategyInfo.active) : 'unknown'}`,
+    `Strategy registered asset: ${input.strategyInfo?.asset ?? 'unknown'}`,
+    `Wallet has STRATEGY_ADMIN: ${input.hasStrategyRole === null ? 'unknown' : String(input.hasStrategyRole)}`,
+  ];
+}
+
+function buildSimulationErrorMessage(input: {
+  error: unknown;
+  vaultAddress: Address;
+  strategyAddress: Address;
+  assetSymbol: string;
+  assetAddress: Address;
+  amount: string;
+}) {
+  const decoded = decodeContractError(input.error);
+  const unknownSelector = decoded.selector && !decoded.decoded;
+  const suggestedFix = decoded.errorName === 'E_OperationDisabled'
+    ? 'Inspect the downstream Euler EVK vault or hook configuration; selector 0x750f8817 is E_OperationDisabled().'
+    : decoded.errorName === 'AccessControlUnauthorizedAccount'
+      ? 'Use a wallet with STRATEGY_ADMIN on the vault.'
+      : unknownSelector
+        ? 'Add the missing custom error ABI or inspect the downstream strategy contract that emitted this selector.'
+        : 'Resolve the decoded revert reason, then retry simulation.';
+
+  return [
+    unknownSelector
+      ? `Allocation simulation reverted with unknown selector ${decoded.selector}.`
+      : `Allocation blocked: ${decoded.message}`,
+    `Technical selector: ${decoded.selector ?? 'not provided'}`,
+    `Decoded error: ${decoded.errorName ?? 'unknown'}`,
+    'Technical function: allocate',
+    `Vault: ${input.vaultAddress}`,
+    `Strategy: ${input.strategyAddress}`,
+    `Asset ${input.assetSymbol}: ${input.assetAddress}`,
+    `Amount: ${input.amount} ${input.assetSymbol}`,
+    `Suggested fix: ${suggestedFix}`,
+  ].join('\n');
+}
 
 type DepositAsset = 'USDC' | 'AXUSD';
 type DepositStep  = 'idle' | 'approving' | 'approved' | 'depositing' | 'success' | 'error';
@@ -644,28 +742,6 @@ function WalletDepositPanel() {
 // AaveV3Strategy adapter, starting yield generation on Aave v3 Arbitrum.
 // Requires new vault (with SM wired) to be deployed first.
 
-// Canonical live addresses — Arbitrum One (v2 vault, redeployed 2026-05-21)
-// These guard against stale NEXT_PUBLIC_ values baked into older Vercel builds.
-const _DEPRECATED_VAULT    = '0x0d04742A8b5A8e3351B9273e585E980f6e0F46F8';
-const _DEPRECATED_AAVE     = '0xf01456B53546031568E83726A9F9C0A8ce5c68C2';
-const _LIVE_VAULT          = '0x8c9761D465CB95306266a68FF8935C4690EC6092';
-const _LIVE_AAVE           = '0x7d500015C5765456C16Ce2CF38AAF14075C01DD4';
-
-function resolveAddr(envVal: string | undefined, deprecated: string, live: string): `0x${string}` {
-  const v = envVal ?? '';
-  return (v && v.toLowerCase() !== deprecated.toLowerCase() ? v : live) as `0x${string}`;
-}
-
-const VAULT_ADDRESS             = resolveAddr(process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS,   _DEPRECATED_VAULT, _LIVE_VAULT);
-const AAVE_STRATEGY_ADDRESS     = resolveAddr(process.env.NEXT_PUBLIC_AXIOM_AAVE_V3_STRATEGY_ADDRESS, _DEPRECATED_AAVE,  _LIVE_AAVE);
-const EULER_USDC_STRATEGY_ADDRESS   = (process.env.NEXT_PUBLIC_EULER_USDC_THEO_STRATEGY_ADDRESS        ?? '') as `0x${string}`;
-const EULER_THBILL_STRATEGY_ADDRESS = (process.env.NEXT_PUBLIC_EULER_THBILL_THEO_STRATEGY_ADDRESS      ?? '') as `0x${string}`;
-const EULER_WETH_STRATEGY_ADDRESS   = (process.env.NEXT_PUBLIC_EULER_WETH_ARBITRUM_STRATEGY_ADDRESS    ?? '') as `0x${string}`;
-
-// Euler v2 vault underlying assets (Arbitrum One)
-const THBILL_ADDRESS = '0xfDD22Ce6D1F66bc0Ec89b20BF16CcB6670F55A5a' as `0x${string}`;
-const WETH_ADDRESS   = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1' as `0x${string}`;
-
 function AllocateToAavePanel() {
   const { address, isConnected } = useAccount();
   const chainId                  = useChainId();
@@ -674,39 +750,57 @@ function AllocateToAavePanel() {
 
   const vaultAddress    = VAULT_ADDRESS;
   const strategyAddress = AAVE_STRATEGY_ADDRESS;
+  const assetAddress    = USDC_ADDRESS;
+  const assetSymbol     = 'USDC';
+  const assetDecimals   = 6;
   const isWrongChain    = isConnected && chainId !== ARBITRUM_ONE;
 
   const [amount,     setAmount]     = useState('');
   const [step,       setStep]       = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [errMsg,     setErrMsg]     = useState<string | null>(null);
   const [allocateTx, setAllocateTx] = useState<`0x${string}` | null>(null);
-  const [idleUsdc,   setIdleUsdc]   = useState<number | null>(null);
+  const [idleRaw,    setIdleRaw]    = useState<bigint | null>(null);
   const [deployed,   setDeployed]   = useState<number | null>(null);
   const [principal,  setPrincipal]  = useState<number | null>(null);
+  const [strategyInfo, setStrategyInfo] = useState<StrategyInfoSnapshot | null>(null);
+  const [hasStrategyRole, setHasStrategyRole] = useState<boolean | null>(null);
 
   const { isSuccess: confirmed } = useWaitForTransactionReceipt({ hash: allocateTx ?? undefined });
 
-  // Fetch vault idle USDC and strategy position
   const refreshStats = useCallback(() => {
     if (!publicClient || !vaultAddress) return;
-    // Vault idle USDC
-    publicClient.readContract({ address: USDC_ADDRESS, abi: erc20Abi, functionName: 'balanceOf', args: [vaultAddress] })
-      .then((raw) => setIdleUsdc(parseFloat(formatUnits(raw as bigint, 6))))
-      .catch(() => setIdleUsdc(null));
-    // Strategy position
-    if (!strategyAddress) return;
+
+    publicClient.readContract({ address: vaultAddress, abi: VAULT_ABI, functionName: 'getIdleBalance', args: [assetAddress] })
+      .then((raw) => setIdleRaw(raw as bigint))
+      .catch(() => setIdleRaw(null));
+
     Promise.all([
-      publicClient.readContract({ address: strategyAddress, abi: AAVE_STRATEGY_ABI, functionName: 'currentValue' }),
-      publicClient.readContract({ address: strategyAddress, abi: AAVE_STRATEGY_ABI, functionName: 'principal' }),
+      publicClient.readContract({ address: strategyAddress, abi: STRATEGY_POSITION_ABI, functionName: 'currentValue' }),
+      publicClient.readContract({ address: strategyAddress, abi: STRATEGY_POSITION_ABI, functionName: 'principal' }),
     ]).then(([cv, pr]) => {
-      setDeployed(parseFloat(formatUnits(cv as bigint, 6)));
-      setPrincipal(parseFloat(formatUnits(pr as bigint, 6)));
+      setDeployed(parseFloat(formatUnits(cv as bigint, assetDecimals)));
+      setPrincipal(parseFloat(formatUnits(pr as bigint, assetDecimals)));
     }).catch(() => { setDeployed(null); setPrincipal(null); });
-  }, [publicClient, vaultAddress, strategyAddress]);
+
+    publicClient.readContract({ address: STRATEGY_MANAGER_ADDRESS, abi: STRATEGY_MANAGER_ABI, functionName: 'strategyInfo', args: [strategyAddress] })
+      .then((info) => {
+        const [active, name, asset, allocatedPrincipal, harvestedYield, addedAt] = info as readonly [boolean, string, Address, bigint, bigint, bigint];
+        setStrategyInfo({ active, name, asset, allocatedPrincipal, harvestedYield, addedAt });
+      })
+      .catch(() => setStrategyInfo(null));
+
+    if (address) {
+      publicClient.readContract({ address: vaultAddress, abi: VAULT_ABI, functionName: 'STRATEGY_ADMIN' })
+        .then((role) => publicClient.readContract({ address: vaultAddress, abi: VAULT_ABI, functionName: 'hasRole', args: [role as `0x${string}`, address] }))
+        .then((allowed) => setHasStrategyRole(Boolean(allowed)))
+        .catch(() => setHasStrategyRole(null));
+    } else {
+      setHasStrategyRole(null);
+    }
+  }, [publicClient, vaultAddress, strategyAddress, assetAddress, address]);
 
   useEffect(() => { refreshStats(); }, [refreshStats, step]);
 
-  // Poll strategy position every 30 s so accrued yield stays live
   useEffect(() => {
     const id = setInterval(refreshStats, 30_000);
     return () => clearInterval(id);
@@ -719,43 +813,89 @@ function AllocateToAavePanel() {
     }
   }, [confirmed, step, refreshStats]);
 
+  const idleFormatted = idleRaw !== null ? formatTokenAmount(idleRaw, assetDecimals, 2) : null;
+  const parsedAmountRaw = amount ? (() => {
+    try { return parseAllocationAmount(amount, assetDecimals); } catch { return null; }
+  })() : null;
+  const currentValidation = amount && idleRaw !== null
+    ? validateAllocationRequest({ amountInput: amount, idleRaw, assetAddress, assetSymbol, assetDecimals, chainId })
+    : null;
+  const strategyAssetMismatch = strategyInfo !== null && strategyInfo.asset.toLowerCase() !== assetAddress.toLowerCase();
+  const canAllocate = Boolean(amount)
+    && parsedAmountRaw !== null
+    && currentValidation?.ok === true
+    && strategyInfo?.active !== false
+    && !strategyAssetMismatch
+    && hasStrategyRole !== false
+    && !isWrongChain
+    && step !== 'sending';
+  const diagnostics = allocationDiagnosticsLines({
+    chainId,
+    wallet: address,
+    vaultAddress,
+    strategyAddress,
+    assetAddress,
+    assetSymbol,
+    amount,
+    parsedAmountRaw,
+    idleRaw,
+    idleFormatted,
+    strategyInfo,
+    hasStrategyRole,
+  });
+
   async function handleAllocate() {
     if (!address || !vaultAddress || !strategyAddress || !publicClient) return;
-    const amtNum = parseFloat(amount);
-    if (!isFinite(amtNum) || amtNum <= 0) { setErrMsg('Enter a valid amount greater than zero.'); return; }
+    if (idleRaw === null) { setErrMsg('Vault idle balance is unavailable. Refresh the stats before allocating.'); return; }
+    if (strategyInfo?.active === false) { setErrMsg(['Allocation blocked: strategy is not active in StrategyManager.', ...diagnostics].join('\n')); return; }
+    if (strategyAssetMismatch) { setErrMsg([`Allocation blocked: strategy registered asset ${strategyInfo?.asset} does not match ${assetAddress}.`, ...diagnostics].join('\n')); return; }
+    if (hasStrategyRole === false) { setErrMsg(['Allocation blocked: connected wallet does not hold STRATEGY_ADMIN on the vault.', ...diagnostics].join('\n')); return; }
+
+    const validation = validateAllocationRequest({ amountInput: amount, idleRaw, assetAddress, assetSymbol, assetDecimals, chainId });
+    if (!validation.ok) {
+      const lines = [validation.message];
+      if (validation.reason === 'insufficient-idle') {
+        lines.push(`Vault idle ${assetSymbol}: ${validation.idleFormatted}.`);
+        lines.push(`Max allocatable: ${validation.maxAllocatableFormatted} ${assetSymbol}.`);
+        lines.push(`Required deposit call: ${validation.suggestedFix}`);
+      } else {
+        lines.push(`Suggested fix: ${validation.suggestedFix}`);
+      }
+      setErrMsg([...lines, ...diagnostics].join('\n'));
+      setStep('error');
+      return;
+    }
+
     setErrMsg(null);
     setStep('sending');
     try {
-      const rawAmt = parseUnits(amount, 6);
-      // Simulate first
+      const rawAmt = validation.parsedAmountRaw;
       try {
         await publicClient.simulateContract({
           address: vaultAddress, abi: VAULT_ABI, functionName: 'allocate',
-          args: [strategyAddress, USDC_ADDRESS, rawAmt], account: address,
+          args: [strategyAddress, assetAddress, rawAmt], account: address,
         });
       } catch (simErr: unknown) {
-        const msg = simErr instanceof Error ? simErr.message : String(simErr);
-        const match = msg.match(/reverted with reason string '([^']+)'/);
-        setErrMsg(`Transaction would fail: ${match ? match[1] : msg.slice(0, 160)}`);
+        setErrMsg([buildSimulationErrorMessage({ error: simErr, vaultAddress, strategyAddress, assetSymbol, assetAddress, amount }), ...diagnostics].join('\n'));
         setStep('error');
         return;
       }
       const hash = await writeContractAsync({
         address: vaultAddress, abi: VAULT_ABI, functionName: 'allocate',
-        args: [strategyAddress, USDC_ADDRESS, rawAmt],
+        args: [strategyAddress, assetAddress, rawAmt],
       });
       setAllocateTx(hash);
     } catch (e: unknown) {
-      setErrMsg(e instanceof Error ? e.message : 'Transaction rejected or failed.');
+      setErrMsg(buildSimulationErrorMessage({ error: e, vaultAddress, strategyAddress, assetSymbol, assetAddress, amount }));
       setStep('error');
     }
   }
 
   function reset() { setStep('idle'); setAmount(''); setAllocateTx(null); setErrMsg(null); }
 
-  if (!isConnected || isWrongChain) return null;
+  if (isConnected && isWrongChain) return <WrongChainAllocationNotice title="Allocate to Aave v3" />;
+  if (!isConnected) return null;
 
-  // ── Vault redeploy pending ────────────────────────────────────────────────────
   if (!vaultAddress || !strategyAddress) {
     return (
       <div className="border border-dl-border p-5 max-w-2xl mb-4">
@@ -768,7 +908,6 @@ function AllocateToAavePanel() {
     );
   }
 
-  // ── Success ───────────────────────────────────────────────────────────────────
   if (step === 'success') {
     return (
       <div className="border border-dl-forest p-5 max-w-2xl mb-4 space-y-3">
@@ -796,10 +935,34 @@ function AllocateToAavePanel() {
   }
 
   const unrealized = deployed !== null && principal !== null ? deployed - principal : null;
+  const idleUsdc = idleRaw !== null ? parseFloat(formatUnits(idleRaw, assetDecimals)) : null;
+  const preValidationError = currentValidation && !currentValidation.ok ? currentValidation : null;
+  const zeroIdleBlock = idleRaw === 0n
+    ? [
+        'Insufficient idle balance. Deposit asset into the vault before allocating.',
+        `Vault idle ${assetSymbol}: 0.`,
+        `Max allocatable: 0 ${assetSymbol}.`,
+        `Required deposit call: vault.depositToken(${assetAddress}, amount)`,
+      ].join('\n')
+    : null;
+  const statusBlock = preValidationError?.reason === 'insufficient-idle'
+    ? [
+        preValidationError.message,
+        `Vault idle ${assetSymbol}: ${preValidationError.idleFormatted}.`,
+        `Max allocatable: ${preValidationError.maxAllocatableFormatted} ${assetSymbol}.`,
+        `Required deposit call: ${preValidationError.suggestedFix}`,
+      ].join('\n')
+    : strategyInfo?.active === false
+      ? 'Allocation blocked: strategy is not active in StrategyManager.'
+      : strategyAssetMismatch
+        ? `Allocation blocked: strategy registered asset ${strategyInfo?.asset} does not match ${assetAddress}.`
+        : zeroIdleBlock
+          ?? (hasStrategyRole === false
+            ? 'Allocation blocked: connected wallet does not hold STRATEGY_ADMIN on the vault.'
+            : null);
 
   return (
     <div className="border border-dl-border p-5 max-w-2xl mb-4 space-y-5">
-      {/* Header */}
       <div>
         <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Allocate to Aave v3</p>
         <p className="text-xs font-mono text-dl-gray mt-0.5">
@@ -807,7 +970,6 @@ function AllocateToAavePanel() {
         </p>
       </div>
 
-      {/* Live position stats */}
       <div className="grid grid-cols-3 gap-3">
         <div className="border border-dl-border p-3">
           <p className="text-xs font-mono text-dl-gray uppercase mb-1">Vault Idle</p>
@@ -829,13 +991,11 @@ function AllocateToAavePanel() {
         </div>
       </div>
 
-      {/* Role note */}
       <div className="text-xs font-mono text-dl-gray border-l-2 border-dl-border pl-3">
         Requires STRATEGY_ADMIN role — connect the deployer wallet ({address?.slice(0,6)}…{address?.slice(-4)}).
         Vault calls allocate(aaveStrategy, USDC, amount) → StrategyManager → AaveV3Strategy.deploy().
       </div>
 
-      {/* Amount input */}
       <div className="space-y-2">
         <label className="text-xs font-mono text-dl-gray uppercase">Amount (USDC)</label>
         <div className="flex gap-2">
@@ -845,25 +1005,27 @@ function AllocateToAavePanel() {
             placeholder="e.g. 25.00"
             className="flex-1 border border-dl-border px-2 py-1.5 text-xs font-mono text-dl-navy"
           />
-          {idleUsdc !== null && idleUsdc > 0 && (
-            <button type="button" onClick={() => setAmount(idleUsdc.toFixed(2))}
+          {idleRaw !== null && (
+            <button type="button" onClick={() => setAmount(formatMaxInput(idleRaw, assetDecimals))}
               className="text-xs font-mono text-dl-forest underline whitespace-nowrap">
-              Max {idleUsdc.toFixed(2)}
+              Max {formatMaxInput(idleRaw, assetDecimals)}
             </button>
           )}
         </div>
       </div>
 
-      {/* Error */}
-      {errMsg && (
-        <div className="border border-red-300 bg-red-50 p-3 text-xs font-mono text-red-700 break-all">{errMsg}</div>
+      {statusBlock && (
+        <div className="border border-amber-300 bg-amber-50 p-3 text-xs font-mono text-amber-800 whitespace-pre-wrap break-all">{statusBlock}</div>
       )}
 
-      {/* Action */}
+      {errMsg && (
+        <div className="border border-red-300 bg-red-50 p-3 text-xs font-mono text-red-700 whitespace-pre-wrap break-all">{errMsg}</div>
+      )}
+
       <div className="flex gap-3">
         {(step === 'idle' || step === 'error') && (
           <button type="button" onClick={handleAllocate}
-            disabled={!amount || parseFloat(amount) <= 0}
+            disabled={!canAllocate}
             className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white disabled:opacity-40">
             Allocate to Aave v3
           </button>
@@ -882,11 +1044,12 @@ function AllocateToAavePanel() {
         )}
       </div>
 
-      {/* Addresses */}
-      <div className="text-xs font-mono text-dl-gray space-y-0.5">
-        <div>Vault: <span className="text-dl-navy">{vaultAddress}</span></div>
-        <div>Strategy: <span className="text-dl-navy">{strategyAddress}</span></div>
-      </div>
+      <details className="text-xs font-mono text-dl-gray">
+        <summary className="cursor-pointer text-dl-navy">Allocation diagnostics</summary>
+        <div className="mt-2 space-y-0.5 break-all">
+          {diagnostics.map((line) => <div key={line}>{line}</div>)}
+        </div>
+      </details>
     </div>
   );
 }
@@ -907,7 +1070,7 @@ type EulerAllocatePanelProps = {
   assetDecimals: number;
 };
 
-function AllocateToEulerPanel({
+export function AllocateToEulerPanel({
   label,
   marketDesc,
   apyLabel,
@@ -928,27 +1091,44 @@ function AllocateToEulerPanel({
   const [step,       setStep]       = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [errMsg,     setErrMsg]     = useState<string | null>(null);
   const [allocateTx, setAllocateTx] = useState<`0x${string}` | null>(null);
-  const [idleBal,    setIdleBal]    = useState<number | null>(null);
+  const [idleRaw,    setIdleRaw]    = useState<bigint | null>(null);
   const [deployed,   setDeployed]   = useState<number | null>(null);
   const [principal,  setPrincipal]  = useState<number | null>(null);
+  const [strategyInfo, setStrategyInfo] = useState<StrategyInfoSnapshot | null>(null);
+  const [hasStrategyRole, setHasStrategyRole] = useState<boolean | null>(null);
 
   const { isSuccess: confirmed } = useWaitForTransactionReceipt({ hash: allocateTx ?? undefined });
 
   const refreshStats = useCallback(() => {
     if (!publicClient || !vaultAddress) return;
-    const scaleFactor = Math.pow(10, assetDecimals);
-    publicClient.readContract({ address: assetAddress, abi: erc20Abi, functionName: 'balanceOf', args: [vaultAddress] })
-      .then((raw) => setIdleBal(Number(raw as bigint) / scaleFactor))
-      .catch(() => setIdleBal(null));
-    if (!strategyAddress) return;
+    publicClient.readContract({ address: vaultAddress, abi: VAULT_ABI, functionName: 'getIdleBalance', args: [assetAddress] })
+      .then((raw) => setIdleRaw(raw as bigint))
+      .catch(() => setIdleRaw(null));
+
     Promise.all([
-      publicClient.readContract({ address: strategyAddress, abi: AAVE_STRATEGY_ABI, functionName: 'currentValue' }),
-      publicClient.readContract({ address: strategyAddress, abi: AAVE_STRATEGY_ABI, functionName: 'principal' }),
+      publicClient.readContract({ address: strategyAddress, abi: STRATEGY_POSITION_ABI, functionName: 'currentValue' }),
+      publicClient.readContract({ address: strategyAddress, abi: STRATEGY_POSITION_ABI, functionName: 'principal' }),
     ]).then(([cv, pr]) => {
-      setDeployed(Number(cv as bigint) / scaleFactor);
-      setPrincipal(Number(pr as bigint) / scaleFactor);
+      setDeployed(parseFloat(formatUnits(cv as bigint, assetDecimals)));
+      setPrincipal(parseFloat(formatUnits(pr as bigint, assetDecimals)));
     }).catch(() => { setDeployed(null); setPrincipal(null); });
-  }, [publicClient, vaultAddress, strategyAddress, assetAddress, assetDecimals]);
+
+    publicClient.readContract({ address: STRATEGY_MANAGER_ADDRESS, abi: STRATEGY_MANAGER_ABI, functionName: 'strategyInfo', args: [strategyAddress] })
+      .then((info) => {
+        const [active, name, asset, allocatedPrincipal, harvestedYield, addedAt] = info as readonly [boolean, string, Address, bigint, bigint, bigint];
+        setStrategyInfo({ active, name, asset, allocatedPrincipal, harvestedYield, addedAt });
+      })
+      .catch(() => setStrategyInfo(null));
+
+    if (address) {
+      publicClient.readContract({ address: vaultAddress, abi: VAULT_ABI, functionName: 'STRATEGY_ADMIN' })
+        .then((role) => publicClient.readContract({ address: vaultAddress, abi: VAULT_ABI, functionName: 'hasRole', args: [role as `0x${string}`, address] }))
+        .then((allowed) => setHasStrategyRole(Boolean(allowed)))
+        .catch(() => setHasStrategyRole(null));
+    } else {
+      setHasStrategyRole(null);
+    }
+  }, [publicClient, vaultAddress, strategyAddress, assetAddress, assetDecimals, address]);
 
   useEffect(() => { refreshStats(); }, [refreshStats, step]);
   useEffect(() => {
@@ -959,23 +1139,70 @@ function AllocateToEulerPanel({
     if (confirmed && step === 'sending') { refreshStats(); setStep('success'); }
   }, [confirmed, step, refreshStats]);
 
+  const idleFormatted = idleRaw !== null ? formatTokenAmount(idleRaw, assetDecimals, assetDecimals === 6 ? 2 : 8) : null;
+  const parsedAmountRaw = amount ? (() => {
+    try { return parseAllocationAmount(amount, assetDecimals); } catch { return null; }
+  })() : null;
+  const currentValidation = amount && idleRaw !== null
+    ? validateAllocationRequest({ amountInput: amount, idleRaw, assetAddress, assetSymbol, assetDecimals, chainId })
+    : null;
+  const strategyAssetMismatch = strategyInfo !== null && strategyInfo.asset.toLowerCase() !== assetAddress.toLowerCase();
+  const canAllocate = Boolean(amount)
+    && parsedAmountRaw !== null
+    && currentValidation?.ok === true
+    && strategyInfo?.active !== false
+    && !strategyAssetMismatch
+    && hasStrategyRole !== false
+    && !isWrongChain
+    && step !== 'sending';
+  const diagnostics = allocationDiagnosticsLines({
+    chainId,
+    wallet: address,
+    vaultAddress,
+    strategyAddress,
+    assetAddress,
+    assetSymbol,
+    amount,
+    parsedAmountRaw,
+    idleRaw,
+    idleFormatted,
+    strategyInfo,
+    hasStrategyRole,
+  });
+
   async function handleAllocate() {
     if (!address || !vaultAddress || !strategyAddress || !publicClient) return;
-    const amtNum = parseFloat(amount);
-    if (!isFinite(amtNum) || amtNum <= 0) { setErrMsg('Enter a valid amount greater than zero.'); return; }
+    if (idleRaw === null) { setErrMsg('Vault idle balance is unavailable. Refresh the stats before allocating.'); return; }
+    if (strategyInfo?.active === false) { setErrMsg(['Allocation blocked: strategy is not active in StrategyManager.', ...diagnostics].join('\n')); return; }
+    if (strategyAssetMismatch) { setErrMsg([`Allocation blocked: strategy registered asset ${strategyInfo?.asset} does not match ${assetAddress}.`, ...diagnostics].join('\n')); return; }
+    if (hasStrategyRole === false) { setErrMsg(['Allocation blocked: connected wallet does not hold STRATEGY_ADMIN on the vault.', ...diagnostics].join('\n')); return; }
+
+    const validation = validateAllocationRequest({ amountInput: amount, idleRaw, assetAddress, assetSymbol, assetDecimals, chainId });
+    if (!validation.ok) {
+      const lines = [validation.message];
+      if (validation.reason === 'insufficient-idle') {
+        lines.push(`Vault idle ${assetSymbol}: ${validation.idleFormatted}.`);
+        lines.push(`Max allocatable: ${validation.maxAllocatableFormatted} ${assetSymbol}.`);
+        lines.push(`Required deposit call: ${validation.suggestedFix}`);
+      } else {
+        lines.push(`Suggested fix: ${validation.suggestedFix}`);
+      }
+      setErrMsg([...lines, ...diagnostics].join('\n'));
+      setStep('error');
+      return;
+    }
+
     setErrMsg(null);
     setStep('sending');
     try {
-      const rawAmt = parseUnits(amount, assetDecimals);
+      const rawAmt = validation.parsedAmountRaw;
       try {
         await publicClient.simulateContract({
           address: vaultAddress, abi: VAULT_ABI, functionName: 'allocate',
           args: [strategyAddress, assetAddress, rawAmt], account: address,
         });
       } catch (simErr: unknown) {
-        const msg = simErr instanceof Error ? simErr.message : String(simErr);
-        const match = msg.match(/reverted with reason string '([^']+)'/);
-        setErrMsg(`Transaction would fail: ${match ? match[1] : msg.slice(0, 200)}`);
+        setErrMsg([buildSimulationErrorMessage({ error: simErr, vaultAddress, strategyAddress, assetSymbol, assetAddress, amount }), ...diagnostics].join('\n'));
         setStep('error');
         return;
       }
@@ -985,14 +1212,15 @@ function AllocateToEulerPanel({
       });
       setAllocateTx(hash);
     } catch (e: unknown) {
-      setErrMsg(e instanceof Error ? e.message : 'Transaction rejected or failed.');
+      setErrMsg(buildSimulationErrorMessage({ error: e, vaultAddress, strategyAddress, assetSymbol, assetAddress, amount }));
       setStep('error');
     }
   }
 
   function reset() { setStep('idle'); setAmount(''); setAllocateTx(null); setErrMsg(null); }
 
-  if (!isConnected || isWrongChain) return null;
+  if (isConnected && isWrongChain) return <WrongChainAllocationNotice title={label} />;
+  if (!isConnected) return null;
   if (!vaultAddress || !strategyAddress) {
     return (
       <div className="border border-dl-border p-5 max-w-2xl mb-4">
@@ -1032,6 +1260,31 @@ function AllocateToEulerPanel({
   }
 
   const unrealized = deployed !== null && principal !== null ? deployed - principal : null;
+  const idleBal = idleRaw !== null ? parseFloat(formatUnits(idleRaw, assetDecimals)) : null;
+  const preValidationError = currentValidation && !currentValidation.ok ? currentValidation : null;
+  const zeroIdleBlock = idleRaw === 0n
+    ? [
+        'Insufficient idle balance. Deposit asset into the vault before allocating.',
+        `Vault idle ${assetSymbol}: 0.`,
+        `Max allocatable: 0 ${assetSymbol}.`,
+        `Required deposit call: vault.depositToken(${assetAddress}, amount)`,
+      ].join('\n')
+    : null;
+  const statusBlock = preValidationError?.reason === 'insufficient-idle'
+    ? [
+        preValidationError.message,
+        `Vault idle ${assetSymbol}: ${preValidationError.idleFormatted}.`,
+        `Max allocatable: ${preValidationError.maxAllocatableFormatted} ${assetSymbol}.`,
+        `Required deposit call: ${preValidationError.suggestedFix}`,
+      ].join('\n')
+    : strategyInfo?.active === false
+      ? 'Allocation blocked: strategy is not active in StrategyManager.'
+      : strategyAssetMismatch
+        ? `Allocation blocked: strategy registered asset ${strategyInfo?.asset} does not match ${assetAddress}.`
+        : zeroIdleBlock
+          ?? (hasStrategyRole === false
+            ? 'Allocation blocked: connected wallet does not hold STRATEGY_ADMIN on the vault.'
+            : null);
 
   return (
     <div className="border border-dl-border p-5 max-w-2xl mb-4 space-y-5">
@@ -1064,7 +1317,7 @@ function AllocateToEulerPanel({
       {assetSymbol !== 'USDC' && (
         <div className="border border-dl-border bg-gray-50 p-3 text-xs font-mono text-dl-navy space-y-1">
           <p className="text-dl-gray uppercase tracking-wide mb-1">Pre-allocation step required</p>
-          <p>Before allocating, load {assetSymbol} into the vault via <code className="bg-white px-1">vault.depositToken({assetAddress.slice(0,10)}…, amount)</code></p>
+          <p>Before allocating, load {assetSymbol} into the vault via <code className="bg-white px-1">vault.depositToken({assetAddress}, amount)</code></p>
           <p className="text-dl-gray">The Vault Idle {assetSymbol} stat above must be &gt; 0 before you can allocate.</p>
         </div>
       )}
@@ -1083,23 +1336,27 @@ function AllocateToEulerPanel({
             placeholder={`e.g. ${assetSymbol === 'USDC' ? '25.00' : '0.01'}`}
             className="flex-1 border border-dl-border px-2 py-1.5 text-xs font-mono text-dl-navy"
           />
-          {idleBal !== null && idleBal > 0 && (
-            <button type="button" onClick={() => setAmount(idleBal.toFixed(assetDecimals === 6 ? 2 : 8))}
+          {idleRaw !== null && (
+            <button type="button" onClick={() => setAmount(formatMaxInput(idleRaw, assetDecimals))}
               className="text-xs font-mono text-dl-forest underline whitespace-nowrap">
-              Max {idleBal.toFixed(assetDecimals === 6 ? 2 : 6)}
+              Max {formatMaxInput(idleRaw, assetDecimals)}
             </button>
           )}
         </div>
       </div>
 
+      {statusBlock && (
+        <div className="border border-amber-300 bg-amber-50 p-3 text-xs font-mono text-amber-800 whitespace-pre-wrap break-all">{statusBlock}</div>
+      )}
+
       {errMsg && (
-        <div className="border border-red-300 bg-red-50 p-3 text-xs font-mono text-red-700 break-all">{errMsg}</div>
+        <div className="border border-red-300 bg-red-50 p-3 text-xs font-mono text-red-700 whitespace-pre-wrap break-all">{errMsg}</div>
       )}
 
       <div className="flex gap-3">
         {(step === 'idle' || step === 'error') && (
           <button type="button" onClick={handleAllocate}
-            disabled={!amount || parseFloat(amount) <= 0}
+            disabled={!canAllocate}
             className="px-4 py-1.5 text-xs font-mono uppercase tracking-wide bg-dl-forest text-white disabled:opacity-40">
             Allocate to {label}
           </button>
@@ -1118,11 +1375,12 @@ function AllocateToEulerPanel({
         )}
       </div>
 
-      <div className="text-xs font-mono text-dl-gray space-y-0.5">
-        <div>Vault: <span className="text-dl-navy">{vaultAddress}</span></div>
-        <div>Strategy: <span className="text-dl-navy">{strategyAddress}</span></div>
-        <div>Asset: <span className="text-dl-navy">{assetAddress}</span></div>
-      </div>
+      <details className="text-xs font-mono text-dl-gray">
+        <summary className="cursor-pointer text-dl-navy">Allocation diagnostics</summary>
+        <div className="mt-2 space-y-0.5 break-all">
+          {diagnostics.map((line) => <div key={line}>{line}</div>)}
+        </div>
+      </details>
     </div>
   );
 }
