@@ -23,7 +23,21 @@
       "address": "0x432dFEe1DAb2D7d423690819DC65C033FE266E8e"
     },
     "camelotStrategy": {
-      "address": "0x511441D31e629d7513004a692c2dB67438151696"
+      "address": "0x958F533112cA68078Ba37aEb5ee977c289C81829",
+      "status": "live_success",
+      "allocationTx": "0x6de3ec9692264ff4a366d81aa863aaf268885e9e747051be8c5152e3f8e035b8"
+    },
+    "camelotDeprecatedDiagnostics": {
+      "oldStrategy": {
+        "address": "0x511441D31e629d7513004a692c2dB67438151696",
+        "status": "deprecated",
+        "reason": "POSITION_MANAGER_NO_BYTECODE"
+      },
+      "v2Strategy": {
+        "address": "0x2Ef2...A29F",
+        "status": "deprecated",
+        "reason": "INVALID_TICK_SPACING"
+      }
     },
     "oldVault": {
       "address": "0x0d04742A8b5A8e3351B9273e585E980f6e0F46F8",
@@ -64,7 +78,12 @@
     {
       "ref": "#548",
       "description": "NEXT_PUBLIC_AXIOM_CAMELOT_STRATEGY_ADDRESS missing; frontend cannot read Camelot position",
-      "status": "open"
+      "status": "resolved"
+    },
+    {
+      "ref": "#camelot-v3-single-position",
+      "description": "Camelot v3 route is single-position; repeated allocations require recall/withdraw before reallocation",
+      "status": "operator_runbook_required"
     }
   ],
   "activeYieldPath": "USDC → vault.deposit() → AaveV3Strategy → Aave v3 Pool → aUSDC",

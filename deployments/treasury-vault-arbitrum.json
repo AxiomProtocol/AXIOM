@@ -8,12 +8,14 @@
     "StrategyManager": "0x432dFEe1DAb2D7d423690819DC65C033FE266E8e",
     "AxiomTreasuryVault": "0x8c9761D465CB95306266a68FF8935C4690EC6092",
     "AaveV3Strategy_USDC": "0x7d500015C5765456C16Ce2CF38AAF14075C01DD4",
-    "CamelotStrategy": "0xa82d47eA0c82B4c7E6A4b3BaFC703706407E3f70"
+    "CamelotStrategy": "0x958F533112cA68078Ba37aEb5ee977c289C81829"
   },
   "deprecated": {
     "AxiomTreasuryVault_v1": "0x0d04742A8b5A8e3351B9273e585E980f6e0F46F8",
     "StrategyManager_v1": "0x22aAB6892cC0486d42d011BeB19B69143A05e72B",
-    "AaveV3Strategy_USDC_v1": "0xf01456B53546031568E83726A9F9C0A8ce5c68C2"
+    "AaveV3Strategy_USDC_v1": "0xf01456B53546031568E83726A9F9C0A8ce5c68C2",
+    "CamelotStrategy_old_invalid_position_manager": "0x511441D31e629d7513004a692c2dB67438151696",
+    "CamelotStrategy_v2_invalid_tick_spacing": "0x2Ef2...A29F"
   },
   "axusd": "0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7",
   "roles": {

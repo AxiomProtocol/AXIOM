@@ -14,13 +14,14 @@ import { treasuryVaultEvents, harvestCronRuns } from '../../../shared/treasuryVa
 import { desc, eq, gte, sql } from 'drizzle-orm';
 import { getMinHarvestThreshold } from './harvestRunner';
 import { getAaveArbitrumMarket } from '../../defi/aave/arbitrumService';
+import { resolveCanonicalCamelotStrategyAddress } from '../../axiom/camelotStrategyRoutes';
 
 const RPC = process.env.ARBITRUM_RPC_URL ?? 'https://arb1.arbitrum.io/rpc';
 
 const VAULT_ADDRESS          = process.env.AXIOM_TREASURY_VAULT_ADDRESS            ?? '';
 const SM_ADDRESS             = process.env.AXIOM_STRATEGY_MANAGER_ADDRESS          ?? '';
 const AAVE_STRATEGY          = process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS          ?? '';
-const CAMELOT_STRATEGY       = process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS          ?? '';
+const CAMELOT_STRATEGY       = resolveCanonicalCamelotStrategyAddress(process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS);
 const EULER_USDC_STRATEGY    = process.env.EULER_USDC_THEO_STRATEGY_ADDRESS        ?? '';
 const EULER_THBILL_STRATEGY  = process.env.EULER_THBILL_THEO_STRATEGY_ADDRESS      ?? '';
 const EULER_WETH_STRATEGY    = process.env.EULER_WETH_ARBITRUM_STRATEGY_ADDRESS    ?? '';
