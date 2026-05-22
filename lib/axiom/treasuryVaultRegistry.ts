@@ -1,4 +1,8 @@
 import { getAddress, type Address } from 'viem';
+import {
+  CAMELOT_LEGACY_STRATEGY,
+  resolveCanonicalCamelotStrategyAddress,
+} from './camelotStrategyRoutes';
 
 export const ARBITRUM_ONE_CHAIN_ID = 42161;
 
@@ -58,11 +62,11 @@ export const TREASURY_VAULT_REGISTRY = {
       assetDecimals: 6,
     },
     camelotUsdcAxusd: {
-      name: 'Camelot USDC/AXUSD',
-      address: resolveAddress(
+      name: 'Camelot USDC/AXUSD v3',
+      address: resolveCanonicalCamelotStrategyAddress(
         process.env.NEXT_PUBLIC_AXIOM_CAMELOT_STRATEGY_ADDRESS,
-        checksum('0x511441D31e629d7513004a692c2dB67438151696'),
       ),
+      deprecated: [CAMELOT_LEGACY_STRATEGY],
       asset: checksum('0xaf88d065e77c8cC2239327C5EDb3A432268e5831'),
       assetSymbol: 'USDC',
       assetDecimals: 6,

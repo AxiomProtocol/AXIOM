@@ -286,6 +286,34 @@ After confirmation, `AllocateToAavePanel` polls every 30 s. You should see:
 
 ---
 
+## Step 7A — Camelot USDC/AXUSD v3 Route
+
+Canonical live route:
+- `0x958F533112cA68078Ba37aEb5ee977c289C81829`
+- successful allocation tx:
+  `0x6de3ec9692264ff4a366d81aa863aaf268885e9e747051be8c5152e3f8e035b8`
+
+Deprecated routes (diagnostics-only):
+- old Camelot: `0x511441D31e629d7513004a692c2dB67438151696` → `POSITION_MANAGER_NO_BYTECODE`
+- Camelot v2: `0x2Ef29EA19f490bbC61959C29Eb1566e4a62fA29F` → `INVALID_TICK_SPACING`
+
+Preflight requirements:
+1. reject old/v2 route selections,
+2. validate `positionManager()` has bytecode,
+3. if `tokenId > 0`, return `POSITION_ALREADY_OPEN_WITHDRAW_FIRST` and stop,
+4. pre-fund AXUSD paired asset before USDC allocation.
+
+Single-position lifecycle:
+- Camelot v3 is single-position; recall/withdraw before reallocation.
+- After recall, sync idle AXUSD balance, then rotate/reallocate.
+
+Residual balance handling:
+- inspect deprecated old/v2 strategy balances,
+- use verified recall/sync flows,
+- escalate to governance when no verified safe recovery path exists.
+
+---
+
 ## Step 8 — Final Smoke Test
 
 Run the dedicated smoke-check script to assert all three post-deployment
@@ -373,7 +401,9 @@ Expected: a value ≥ `25.000000 USDC`, growing over time.
 | New vault identity (ONCHAINID) | `0x8771b290A5976eEc205809149cC3d4e84B2ec729` |
 | AaveV3Strategy (USDC) | `0x7d500015C5765456C16Ce2CF38AAF14075C01DD4` (AXIOM_AAVE_V3_STRATEGY_ADDRESS) |
 | StrategyManager | `0x432dFEe1DAb2D7d423690819DC65C033FE266E8e` |
-| CamelotStrategy | `0x511441D31e629d7513004a692c2dB67438151696` |
+| CamelotStrategy (v3 canonical) | `0x958F533112cA68078Ba37aEb5ee977c289C81829` |
+| CamelotStrategy old (deprecated) | `0x511441D31e629d7513004a692c2dB67438151696` |
+| CamelotStrategy v2 (deprecated) | `0x2Ef29EA19f490bbC61959C29Eb1566e4a62fA29F` |
 
 ---
 
@@ -383,7 +413,9 @@ Expected: a value ≥ `25.000000 USDC`, growing over time.
 |---|---|---|
 | `isVerified(vault) = false` — deployer key not a ClaimIssuer CLAIM_SIGNER_KEY | Open | #547 |
 | `LendingPlatformModule.addPlatform` reverts `COMPLIANCE_NOT_BOUND` | Open | #547 |
-| `NEXT_PUBLIC_AXIOM_CAMELOT_STRATEGY_ADDRESS` missing (frontend can't read Camelot position) | Open | #548 |
+| `NEXT_PUBLIC_AXIOM_CAMELOT_STRATEGY_ADDRESS` missing (frontend can't read Camelot position) | Resolved | #548 |
+| Camelot deprecated old route remains configured | Blocked by preflight (`POSITION_MANAGER_NO_BYTECODE`) | camelot-v3-migration |
+| Camelot deprecated v2 route remains configured | Blocked by preflight (`INVALID_TICK_SPACING`) | camelot-v3-migration |
 | USDC→Aave yield | **ACTIVE** — `currentValue = 24.9999 USDC` | — |
 
 ---
@@ -401,7 +433,9 @@ tx hashes were printed to console at execution time.
 | New ONCHAINID proxy | `0x8771b290A5976eEc205809149cC3d4e84B2ec729` |
 | AaveV3Strategy | `0x7d500015C5765456C16Ce2CF38AAF14075C01DD4` |
 | StrategyManager | `0x432dFEe1DAb2D7d423690819DC65C033FE266E8e` |
-| CamelotStrategy | `0x511441D31e629d7513004a692c2dB67438151696` |
+| CamelotStrategy (v3 canonical) | `0x958F533112cA68078Ba37aEb5ee977c289C81829` |
+| CamelotStrategy old (deprecated) | `0x511441D31e629d7513004a692c2dB67438151696` |
+| CamelotStrategy v2 (deprecated) | `0x2Ef29EA19f490bbC61959C29Eb1566e4a62fA29F` |
 
 **AaveV3Strategy.currentValue() — confirmed live read:**
 ```
@@ -423,7 +457,7 @@ Sanctions claims:  1 (Topic 3, on ONCHAINID proxy)
 - `AXIOM_STRATEGY_MANAGER_ADDRESS` = `0x432dFEe1DAb2D7d423690819DC65C033FE266E8e`
 - `AXIOM_AAVE_V3_STRATEGY_ADDRESS` = `0x7d500015C5765456C16Ce2CF38AAF14075C01DD4`
 - `NEXT_PUBLIC_AXIOM_AAVE_V3_STRATEGY_ADDRESS` = same
-- `AXIOM_CAMELOT_STRATEGY_ADDRESS` = `0x511441D31e629d7513004a692c2dB67438151696`
+- `AXIOM_CAMELOT_STRATEGY_ADDRESS` = `0x958F533112cA68078Ba37aEb5ee977c289C81829`
 
 **Post-smoke-check command to re-verify at any time:**
 ```bash

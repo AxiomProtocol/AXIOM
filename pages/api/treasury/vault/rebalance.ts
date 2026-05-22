@@ -33,6 +33,10 @@ import { readOperatorCookie, isValidOperatorKey } from '../../../../lib/capinfra
 import { verifyRebalanceToken } from '../../sentinel/rebalance-auth';
 import { db } from '../../../../server/db';
 import {
+  classifyCamelotRoute,
+  resolveCanonicalCamelotStrategyAddress,
+} from '../../../../lib/axiom/camelotStrategyRoutes';
+import {
   sentinelRebalanceNonces,
   treasuryVaultEvents,
 } from '../../../../shared/treasuryVaultSchema';
@@ -66,7 +70,8 @@ async function consumeNonceDb(nonce: string, expiry: number): Promise<boolean> {
 // ── Environment ────────────────────────────────────────────────────────────
 const VAULT_ADDRESS    = process.env.AXIOM_TREASURY_VAULT_ADDRESS   ?? '';
 const AAVE_STRATEGY    = process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS ?? '';
-const CAMELOT_STRATEGY = process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS ?? '';
+const RAW_CAMELOT_STRATEGY = process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS;
+const CAMELOT_STRATEGY = resolveCanonicalCamelotStrategyAddress(process.env.AXIOM_CAMELOT_STRATEGY_ADDRESS);
 const RPC              = process.env.ARBITRUM_RPC_URL ?? 'https://arb1.arbitrum.io/rpc';
 const USDC             = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
 const AXUSD_ADDRESS    = process.env.AXUSD_ADDRESS ?? '';
@@ -81,9 +86,26 @@ function resolveAssetAddress(asset: string): string {
 const VAULT_ABI = [
   'function rebalance(address fromStrategy, address toStrategy, address asset, uint256 amount) external',
 ];
+const CAMELOT_PREFLIGHT_ABI = [
+  'function tokenId() view returns (uint256)',
+  'function positionManager() view returns (address)',
+];
 
 function strategyAddress(key: 'aave_v3' | 'camelot'): string {
   return key === 'aave_v3' ? AAVE_STRATEGY : CAMELOT_STRATEGY;
+}
+
+function camelotPreflightError(
+  res: NextApiResponse,
+  status: number,
+  code: 'POSITION_MANAGER_NO_BYTECODE' | 'INVALID_TICK_SPACING' | 'POSITION_ALREADY_OPEN_WITHDRAW_FIRST',
+  detail: string,
+) {
+  return res.status(status).json({
+    success: false,
+    error: code,
+    detail,
+  });
 }
 
 // ── Handler ────────────────────────────────────────────────────────────────
@@ -130,6 +152,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'fromStrategy and toStrategy must differ' });
   }
 
+  const selectedCamelotRoute = fromStrategy === 'camelot' || toStrategy === 'camelot';
+  if (selectedCamelotRoute) {
+    const classifiedCamelotRoute = classifyCamelotRoute(RAW_CAMELOT_STRATEGY);
+    if (classifiedCamelotRoute.deprecationCode === 'POSITION_MANAGER_NO_BYTECODE') {
+      return camelotPreflightError(
+        res,
+        400,
+        'POSITION_MANAGER_NO_BYTECODE',
+        'Configured Camelot strategy route is deprecated (invalid Position Manager). Set AXIOM_CAMELOT_STRATEGY_ADDRESS to the canonical Camelot v3 strategy.',
+      );
+    }
+    if (classifiedCamelotRoute.deprecationCode === 'INVALID_TICK_SPACING') {
+      return camelotPreflightError(
+        res,
+        400,
+        'INVALID_TICK_SPACING',
+        'Configured Camelot strategy route is deprecated (invalid tick spacing). Set AXIOM_CAMELOT_STRATEGY_ADDRESS to the canonical Camelot v3 strategy.',
+      );
+    }
+  }
+
   // ── Auth check 2: Sentinel HMAC token (includes nonce in payload) ─────────
   const tokenValid = verifyRebalanceToken(
     fromStrategy, toStrategy, amountUsdc, expiry, nonce, asset, token
@@ -162,6 +205,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const provider  = new ethers.JsonRpcProvider(RPC);
+
+    if (toStrategy === 'camelot') {
+      const camelot = new ethers.Contract(CAMELOT_STRATEGY, CAMELOT_PREFLIGHT_ABI, provider);
+      const [tokenId, positionManager] = await Promise.all([
+        camelot.tokenId() as Promise<bigint>,
+        camelot.positionManager() as Promise<string>,
+      ]);
+      const bytecode = await provider.getCode(positionManager);
+      if (!bytecode || bytecode === '0x') {
+        return camelotPreflightError(
+          res,
+          400,
+          'POSITION_MANAGER_NO_BYTECODE',
+          'Camelot route preflight failed: position manager target has no bytecode.',
+        );
+      }
+      if (tokenId > 0n) {
+        return camelotPreflightError(
+          res,
+          409,
+          'POSITION_ALREADY_OPEN_WITHDRAW_FIRST',
+          'Camelot v3 route already has an open position. Recall/withdraw before reallocation.',
+        );
+      }
+    }
+
     // rebalance() is gated by SENTINEL_EXECUTOR role on-chain.
     // The signing key must hold that role — use a dedicated key, NOT the deployer key.
     const sentinelKey = process.env.SENTINEL_EXECUTOR_PRIVATE_KEY

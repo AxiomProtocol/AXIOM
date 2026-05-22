@@ -100,11 +100,11 @@ Each strategy adapter is a standalone smart contract implementing the `IStrategy
 | | |
 |---|---|
 | Protocol | Camelot DEX |
-| Strategy Contract | `0x511441D31e629d7513004a692c2dB67438151696` |
+| Strategy Contract | `0x958F533112cA68078Ba37aEb5ee977c289C81829` |
 | Underlying Asset | USDC / AXUSD |
 | APY Estimate | Variable (fee-based) |
 | Status | Active |
-| Notes | Native Arbitrum AMM. Provides AXUSD/USDC liquidity and fee income. Withdrawals subject to slippage. |
+| Notes | Canonical Camelot v3 route for AXUSD/USDC; single-position model requires recall/withdraw before reallocation. Deprecated routes: old `0x5114...1696` (invalid Position Manager), v2 `0x2Ef29EA19f490bbC61959C29Eb1566e4a62fA29F` (invalid tick spacing). |
 
 ---
 

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt, usePublicClient, useBalance } from 'wagmi';
 import { erc20Abi, parseAbi, parseUnits, formatUnits, type Abi, type Address } from 'viem';
 import { OperatorConsoleLayout } from '../../../components/operator/OperatorConsoleLayout';
+import { TreasuryRouteHealthPanels } from '../../../components/operator/treasury/TreasuryRouteHealthPanels';
 import { requireOperatorCookie } from '../../../lib/capinfra/operatorAuth';
 import { getVaultSummary, getVaultEventHistory, getIncomeSummary } from '../../../lib/treasury/vault/vaultService';
 import type { VaultSummary, StrategyPosition, CronRunEntry } from '../../../lib/treasury/vault/vaultService';
@@ -2351,7 +2352,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             <tbody>
               {[
                 { key: 'Aave v3 (USDC)', pos: liveSummary.aavePosition },
-                { key: 'Camelot (AXUSD/USDC)', pos: liveSummary.camelotPosition },
+                { key: 'Camelot v3 (AXUSD/USDC)', pos: liveSummary.camelotPosition },
                 { key: 'Euler v2 — USDC Theo', pos: liveSummary.eulerUsdcPosition },
                 { key: 'Euler v2 — thBILL Theo', pos: liveSummary.eulerThbillPosition },
                 { key: 'Euler v2 — WETH Arbitrum', pos: liveSummary.eulerWethPosition },
@@ -2380,6 +2381,8 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             </tbody>
           </table>
         </section>
+
+        <TreasuryRouteHealthPanels />
 
         {/* Yield Totals */}
         <section>
@@ -2545,7 +2548,8 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             Step 2 presents the token to execute the on-chain transaction. A 0.50% APY spread is required.
           </p>
           <p className="text-xs text-dl-gray font-mono mb-4">
-            Provide current APYs if Sentinel lacks live data (Camelot has no on-chain APY feed).
+            Provide current APYs if Sentinel lacks live data (Camelot v3 has no on-chain APY feed).
+            If Camelot position is already open, recall/withdraw before reallocation.
           </p>
 
           {/* Step 1: Authorization form */}
@@ -2562,7 +2566,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                   }}
                 >
                   <option value="aave_v3">Aave v3</option>
-                  <option value="camelot">Camelot</option>
+                  <option value="camelot">Camelot v3</option>
                 </select>
               </div>
               <div>
@@ -2575,7 +2579,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                     setRebalanceForm((f) => ({ ...f, toStrategy: e.target.value as 'aave_v3' | 'camelot' }));
                   }}
                 >
-                  <option value="camelot">Camelot</option>
+                  <option value="camelot">Camelot v3</option>
                   <option value="aave_v3">Aave v3</option>
                 </select>
               </div>
@@ -2618,7 +2622,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                 />
               </div>
               <div>
-                <label className="block text-xs font-mono text-dl-gray uppercase mb-1">Current Camelot APY % <span className="normal-case">(required if env unset)</span></label>
+                <label className="block text-xs font-mono text-dl-gray uppercase mb-1">Current Camelot v3 APY % <span className="normal-case">(required if env unset)</span></label>
                 <input
                   type="number" min="0" max="100" step="0.01"
                   className="w-full border border-dl-border p-2 font-mono text-sm"
@@ -2655,7 +2659,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                   <p>Aave APY: {sentinelAuth.decision.aaveApyPct.toFixed(2)}%</p>
                 )}
                 {sentinelAuth.decision.camelotApyPct !== null && (
-                  <p>Camelot APY: {sentinelAuth.decision.camelotApyPct.toFixed(2)}%</p>
+                  <p>Camelot v3 APY: {sentinelAuth.decision.camelotApyPct.toFixed(2)}%</p>
                 )}
                 {sentinelAuth.decision.spreadBps !== null && (
                   <p>Spread: {sentinelAuth.decision.spreadBps} bps</p>
