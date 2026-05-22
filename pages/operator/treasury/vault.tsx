@@ -2129,7 +2129,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
   const [executing, setExecuting] = useState(false);
   const [sentinelAuth, setSentinelAuth] = useState<SentinelAuth | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [executeResult, setExecuteResult] = useState<{ success: boolean; txHash?: string | null } | null>(null);
+  const [executeResult, setExecuteResult] = useState<{ success: boolean; txHash?: string | null; error?: string } | null>(null);
 
   // Live polling state — refreshed every 60 s from /api/treasury/vault/summary
   const [liveSummary, setLiveSummary] = useState<VaultSummary>(summary);
@@ -2170,7 +2170,10 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
   async function handleRequestAuth(e: React.FormEvent) {
     e.preventDefault();
     const amt = parseFloat(rebalanceForm.amountUsdc);
-    if (!amt || amt <= 0) return;
+    if (!Number.isFinite(amt) || amt <= 0) {
+      setAuthError('Enter a valid rebalance amount greater than zero.');
+      return;
+    }
     setAuthorizing(true);
     setSentinelAuth(null);
     setAuthError(null);
@@ -2227,12 +2230,32 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
           expiry:       sentinelAuth.expiry,
         }),
       });
-      const json = await res.json();
-      setExecuteResult({ success: json.success, txHash: json.txHash });
-      if (json.success) setSentinelAuth(null);
+      const json = await res.json().catch(() => ({} as Record<string, unknown>)) as Record<string, unknown>;
+      const success = json.success === true;
+      if (!res.ok || !success) {
+        const detail = typeof json.detail === 'string' && json.detail
+          ? json.detail
+          : typeof json.error === 'string' && json.error
+            ? json.error
+            : `Execution failed (HTTP ${res.status})`;
+        setExecuteResult({
+          success: false,
+          txHash: typeof json.txHash === 'string' ? json.txHash : null,
+          error: detail,
+        });
+        setAuthError(detail);
+        return;
+      }
+      setExecuteResult({
+        success: true,
+        txHash: typeof json.txHash === 'string' ? json.txHash : null,
+      });
+      setAuthError(null);
+      setSentinelAuth(null);
     } catch (err: unknown) {
-      setExecuteResult({ success: false });
-      setAuthError(err instanceof Error ? err.message : 'Network error during execution');
+      const msg = err instanceof Error ? err.message : 'Network error during execution';
+      setExecuteResult({ success: false, error: msg });
+      setAuthError(msg);
     } finally {
       setExecuting(false);
     }
@@ -2243,7 +2266,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
       <div className="space-y-8">
 
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="font-serif text-2xl text-dl-navy">Treasury Vault</h1>
             <p className="text-sm text-dl-gray font-mono mt-1">
@@ -2267,7 +2290,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
 
         {/* AUM + Live Rate Strip */}
         <section>
-          <div className="flex items-baseline justify-between mb-3 border-b border-dl-border pb-1">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between mb-3 border-b border-dl-border pb-1">
             <h2 className="font-serif text-lg text-dl-navy">Assets Under Management</h2>
             <span className="text-xs font-mono text-dl-gray">
               {pollError ? (
@@ -2337,49 +2360,51 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
         {/* Strategy Allocations */}
         <section>
           <h2 className="font-serif text-lg text-dl-navy mb-3 border-b border-dl-border pb-1">Strategy Allocations</h2>
-          <table className="w-full text-sm font-mono border-collapse">
-            <thead>
-              <tr className="border-b border-dl-border text-dl-gray text-xs uppercase">
-                <th className="text-left py-2 pr-4">Strategy</th>
-                <th className="text-right py-2 pr-4">Current Value</th>
-                <th className="text-right py-2 pr-4">Principal</th>
-                <th className="text-right py-2 pr-4">Unrealised Yield</th>
-                <th className="text-right py-2 pr-4">Live APY</th>
-                <th className="text-right py-2 pr-4">Allocation %</th>
-                <th className="text-right py-2">Last Rebalanced</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { key: 'Aave v3 (USDC)', pos: liveSummary.aavePosition },
-                { key: 'Camelot v3 (AXUSD/USDC)', pos: liveSummary.camelotPosition },
-                { key: 'Euler v2 — USDC Theo', pos: liveSummary.eulerUsdcPosition },
-                { key: 'Euler v2 — thBILL Theo', pos: liveSummary.eulerThbillPosition },
-                { key: 'Euler v2 — WETH Arbitrum', pos: liveSummary.eulerWethPosition },
-              ].map(({ key, pos }) => (
-                <tr key={key} className="border-b border-dl-border hover:bg-gray-50">
-                  <td className="py-2 pr-4 text-dl-navy">
-                    <div>{key}</div>
-                    <div className="text-xs text-dl-gray">{short(pos.address)}</div>
-                  </td>
-                  <td className="py-2 pr-4 text-right">{usd(pos.currentValueUsdc)}</td>
-                  <td className="py-2 pr-4 text-right">{usd(pos.principalUsdc)}</td>
-                  <td className={`py-2 pr-4 text-right ${pos.unrealizedYieldUsdc >= 0 ? 'text-green-700' : 'text-red-600'}`}>
-                    {pos.unrealizedYieldUsdc >= 0 ? '+' : ''}{usd(pos.unrealizedYieldUsdc)}
-                  </td>
-                  <td className="py-2 pr-4 text-right">
-                    {pos.apyEstimatePct !== null
-                      ? <span className="text-dl-forest font-semibold">{pos.apyEstimatePct.toFixed(2)}%</span>
-                      : <span className="text-dl-gray">—</span>}
-                  </td>
-                  <td className="py-2 pr-4 text-right">{pos.allocationPct.toFixed(1)}%</td>
-                  <td className="py-2 text-right text-xs text-dl-gray">
-                    {pos.lastRebalancedAt ? new Date(pos.lastRebalancedAt).toLocaleDateString() : '—'}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[880px] text-sm font-mono border-collapse">
+              <thead>
+                <tr className="border-b border-dl-border text-dl-gray text-xs uppercase">
+                  <th className="text-left py-2 pr-4">Strategy</th>
+                  <th className="text-right py-2 pr-4">Current Value</th>
+                  <th className="text-right py-2 pr-4">Principal</th>
+                  <th className="text-right py-2 pr-4">Unrealised Yield</th>
+                  <th className="text-right py-2 pr-4">Live APY</th>
+                  <th className="text-right py-2 pr-4">Allocation %</th>
+                  <th className="text-right py-2">Last Rebalanced</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {[
+                  { key: 'Aave v3 (USDC)', pos: liveSummary.aavePosition },
+                  { key: 'Camelot v3 (AXUSD/USDC)', pos: liveSummary.camelotPosition },
+                  { key: 'Euler v2 — USDC Theo', pos: liveSummary.eulerUsdcPosition },
+                  { key: 'Euler v2 — thBILL Theo', pos: liveSummary.eulerThbillPosition },
+                  { key: 'Euler v2 — WETH Arbitrum', pos: liveSummary.eulerWethPosition },
+                ].map(({ key, pos }) => (
+                  <tr key={key} className="border-b border-dl-border hover:bg-gray-50">
+                    <td className="py-2 pr-4 text-dl-navy">
+                      <div>{key}</div>
+                      <div className="text-xs text-dl-gray">{short(pos.address)}</div>
+                    </td>
+                    <td className="py-2 pr-4 text-right">{usd(pos.currentValueUsdc)}</td>
+                    <td className="py-2 pr-4 text-right">{usd(pos.principalUsdc)}</td>
+                    <td className={`py-2 pr-4 text-right ${pos.unrealizedYieldUsdc >= 0 ? 'text-green-700' : 'text-red-600'}`}>
+                      {pos.unrealizedYieldUsdc >= 0 ? '+' : ''}{usd(pos.unrealizedYieldUsdc)}
+                    </td>
+                    <td className="py-2 pr-4 text-right">
+                      {pos.apyEstimatePct !== null
+                        ? <span className="text-dl-forest font-semibold">{pos.apyEstimatePct.toFixed(2)}%</span>
+                        : <span className="text-dl-gray">—</span>}
+                    </td>
+                    <td className="py-2 pr-4 text-right">{pos.allocationPct.toFixed(1)}%</td>
+                    <td className="py-2 text-right text-xs text-dl-gray">
+                      {pos.lastRebalancedAt ? new Date(pos.lastRebalancedAt).toLocaleDateString() : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <TreasuryRouteHealthPanels />
@@ -2441,7 +2466,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
           </p>
 
           {/* Schedule info strip */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
             <div className="border border-dl-border p-4">
               <p className="text-xs text-dl-gray font-mono uppercase tracking-wide">Cron Schedule</p>
               <p className="font-mono text-base text-dl-navy mt-1">Every 6 hours</p>
@@ -2688,6 +2713,9 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                   </a>
                 </p>
               )}
+              {!executeResult.success && executeResult.error && (
+                <p className="mt-1 text-xs break-all">{executeResult.error}</p>
+              )}
             </div>
           )}
         </section>
@@ -2758,7 +2786,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
             </div>
             <div className="border border-dl-border p-3 space-y-1">
               <p className="text-xs font-mono text-dl-gray uppercase tracking-wide">Accepted Assets</p>
-              <div className="space-y-0.5 text-xs font-mono text-dl-navy">
+              <div className="space-y-0.5 text-xs font-mono text-dl-navy break-all">
                 <div>USDC — 0xaf88d065e77c8cC2239327C5EDb3A432268e5831</div>
                 <div>AXUSD — 0xD6110F59A978aDa6eF5c0E9D6BaA04455D46Ade7</div>
               </div>
