@@ -18,7 +18,7 @@ interface OperatorConsoleLayoutProps {
 
 export function OperatorConsoleLayout({ children }: OperatorConsoleLayoutProps) {
   return (
-    <DesignLawLayout>
+    <DesignLawLayout showAuthButton={false} showWalletButton={false}>
       <div
         className="flex items-center justify-end mb-4 -mt-2"
         data-testid="operator-console-header"

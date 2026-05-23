@@ -33,7 +33,7 @@ export default function OperatorLoginPage() {
   }
 
   return (
-    <DesignLawLayout>
+    <DesignLawLayout showAuthButton={false} showWalletButton={false}>
       <div className="max-w-md mx-auto py-12">
         <h1 className="text-2xl font-serif mb-6">Operator Console</h1>
         <p className="text-sm mb-6 text-dl-muted">
