@@ -902,7 +902,13 @@ function AllocateToAavePanel() {
       setPrincipal(parseFloat(formatUnits(pr as bigint, assetDecimals)));
     }).catch(() => { setDeployed(null); setPrincipal(null); });
 
-    publicClient.readContract({ address: STRATEGY_MANAGER_ADDRESS, abi: STRATEGY_MANAGER_ABI, functionName: 'strategyInfo', args: [strategyAddress] })
+    publicClient.readContract({ address: vaultAddress, abi: VAULT_ABI, functionName: 'strategyManager' })
+      .then((managerAddress) => publicClient.readContract({
+        address: managerAddress as Address,
+        abi: STRATEGY_MANAGER_ABI,
+        functionName: 'strategyInfo',
+        args: [strategyAddress],
+      }))
       .then((info) => {
         const [active, name, asset, allocatedPrincipal, harvestedYield, addedAt] = info as readonly [boolean, string, Address, bigint, bigint, bigint];
         setStrategyInfo({ active, name, asset, allocatedPrincipal, harvestedYield, addedAt });

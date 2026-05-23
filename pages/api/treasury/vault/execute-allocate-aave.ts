@@ -10,6 +10,11 @@ const VAULT_ABI = [
   'function allocate(address strategy, address asset, uint256 amount) external',
   'function paused() view returns (bool)',
   'function getIdleBalance(address asset) view returns (uint256)',
+  'function strategyManager() view returns (address)',
+] as const;
+
+const STRATEGY_MANAGER_ABI = [
+  'function strategyInfo(address) view returns (bool active, string name, address asset, uint256 allocatedPrincipal, uint256 harvestedYield, uint256 addedAt)',
 ] as const;
 
 type ExecuteAllocateAaveResponse = {
@@ -17,6 +22,8 @@ type ExecuteAllocateAaveResponse = {
   txHash?: string;
   amountRaw?: string;
   executorAddress?: string;
+  strategyAddress?: string;
+  vaultAddress?: string;
   error?: string;
 };
 
@@ -34,6 +41,59 @@ function getExecutionKey(): string | null {
     || process.env.DEPLOYER_PRIVATE_KEY
     || process.env.DEPLOYER_PK
     || null
+  );
+}
+
+function normalizeAddress(input: string | undefined): string | null {
+  if (!input) return null;
+  try {
+    return ethers.getAddress(input.trim());
+  } catch {
+    return null;
+  }
+}
+
+async function resolveActiveAaveStrategyAddress(
+  provider: ethers.JsonRpcProvider,
+  vaultAddress: string,
+): Promise<string> {
+  const candidates = [
+    normalizeAddress(process.env.NEXT_PUBLIC_AXIOM_AAVE_V3_STRATEGY_ADDRESS),
+    normalizeAddress(process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS),
+    normalizeAddress(DEFAULT_AAVE_STRATEGY_ADDRESS),
+  ].filter((value): value is string => Boolean(value));
+
+  const deduped = [...new Set(candidates.map((addr) => addr.toLowerCase()))];
+  const lookup = new Map(candidates.map((addr) => [addr.toLowerCase(), addr]));
+
+  const vaultRead = new ethers.Contract(vaultAddress, VAULT_ABI, provider);
+  const strategyManagerAddress = await vaultRead.strategyManager() as string;
+  const strategyManager = new ethers.Contract(strategyManagerAddress, STRATEGY_MANAGER_ABI, provider);
+
+  const diagnostics: Array<{ strategy: string; active: boolean; asset: string; name: string }> = [];
+
+  for (const key of deduped) {
+    const strategy = lookup.get(key)!;
+    try {
+      const [active, name, asset] = await strategyManager.strategyInfo(strategy) as [
+        boolean,
+        string,
+        string,
+        bigint,
+        bigint,
+        bigint,
+      ];
+      diagnostics.push({ strategy, active: Boolean(active), asset, name });
+      if (active && asset.toLowerCase() === USDC_ADDRESS.toLowerCase()) {
+        return strategy;
+      }
+    } catch {
+      diagnostics.push({ strategy, active: false, asset: 'unreadable', name: 'unreadable' });
+    }
+  }
+
+  throw new Error(
+    `No active USDC Aave strategy found in StrategyManager for candidates: ${JSON.stringify(diagnostics)}`,
   );
 }
 
@@ -60,14 +120,21 @@ export default async function handler(
     return res.status(400).json({ success: false, error: 'amountUsdc must be a positive number' });
   }
 
-  const vaultAddress =
-    process.env.AXIOM_TREASURY_VAULT_ADDRESS
-    || process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS
-    || DEFAULT_VAULT_ADDRESS;
-  const strategyAddress =
-    process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS
-    || process.env.NEXT_PUBLIC_AXIOM_AAVE_V3_STRATEGY_ADDRESS
-    || DEFAULT_AAVE_STRATEGY_ADDRESS;
+  const publicVaultAddress = normalizeAddress(
+    process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS || DEFAULT_VAULT_ADDRESS,
+  )!;
+  const privateVaultAddress = normalizeAddress(process.env.AXIOM_TREASURY_VAULT_ADDRESS);
+  if (privateVaultAddress && privateVaultAddress.toLowerCase() !== publicVaultAddress.toLowerCase()) {
+    return res.status(503).json({
+      success: false,
+      error:
+        `Vault config mismatch: AXIOM_TREASURY_VAULT_ADDRESS=${privateVaultAddress} `
+        + `but NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS=${publicVaultAddress}. `
+        + 'Align these env values before running operator allocation.',
+      vaultAddress: privateVaultAddress,
+    });
+  }
+  const vaultAddress = privateVaultAddress || publicVaultAddress;
   const rpcUrl = resolveRpcUrl();
   const executorKey = getExecutionKey();
 
@@ -89,6 +156,7 @@ export default async function handler(
     const provider = new ethers.JsonRpcProvider(rpcUrl);
     const signer = new ethers.Wallet(executorKey, provider);
     const vault = new ethers.Contract(vaultAddress, VAULT_ABI, signer);
+    const strategyAddress = await resolveActiveAaveStrategyAddress(provider, vaultAddress);
 
     const isPaused = await vault.paused().catch(() => false);
     if (isPaused) {
@@ -114,6 +182,8 @@ export default async function handler(
       txHash: receipt?.hash ?? tx.hash,
       amountRaw: amountRaw.toString(),
       executorAddress: signer.address,
+      strategyAddress,
+      vaultAddress,
     });
   } catch (err: unknown) {
     const e = err as { message?: string; reason?: string; shortMessage?: string };

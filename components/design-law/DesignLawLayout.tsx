@@ -14,9 +14,15 @@ const ConnectWalletButton = dynamic(
 
 interface DesignLawLayoutProps {
   children: ReactNode;
+  showAuthButton?: boolean;
+  showWalletButton?: boolean;
 }
 
-export function DesignLawLayout({ children }: DesignLawLayoutProps) {
+export function DesignLawLayout({
+  children,
+  showAuthButton = true,
+  showWalletButton = true,
+}: DesignLawLayoutProps) {
   const [timestamp, setTimestamp] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -62,12 +68,16 @@ export function DesignLawLayout({ children }: DesignLawLayoutProps) {
             )}
           </div>
           <div className="flex items-center gap-3">
-            <div className="hidden lg:block">
-              <AuthButton />
-            </div>
-            <div className="hidden lg:block">
-              <ConnectWalletButton />
-            </div>
+            {showAuthButton && (
+              <div className="hidden lg:block">
+                <AuthButton />
+              </div>
+            )}
+            {showWalletButton && (
+              <div className="hidden lg:block">
+                <ConnectWalletButton />
+              </div>
+            )}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-dl-navy border border-dl-border bg-dl-bg"
@@ -120,10 +130,12 @@ export function DesignLawLayout({ children }: DesignLawLayoutProps) {
                 </Link>
               )
             )}
-            <div className="pt-3 space-y-2">
-              <AuthButton />
-              <ConnectWalletButton />
-            </div>
+            {(showAuthButton || showWalletButton) && (
+              <div className="pt-3 space-y-2">
+                {showAuthButton && <AuthButton />}
+                {showWalletButton && <ConnectWalletButton />}
+              </div>
+            )}
           </div>
         </div>
       </nav>
