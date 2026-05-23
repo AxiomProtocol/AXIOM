@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, ReactNod
 import { useAccount, useBalance, useChainId, useDisconnect, useSwitchChain } from 'wagmi';
 import { arbitrum } from 'viem/chains';
 import { formatUnits } from 'viem';
+import { useRouter } from 'next/router';
 
 interface WalletState {
   isConnected: boolean;
@@ -59,6 +60,7 @@ interface WalletProviderProps {
 }
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
+  const router = useRouter();
   const { address, isConnected, isConnecting: wagmiConnecting } = useAccount();
   const chainId = useChainId();
   const { disconnect: wagmiDisconnect } = useDisconnect();
@@ -78,11 +80,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // Operator surfaces already use dedicated operator-cookie auth and do not
   // depend on SIWE. Auto-triggering SIWE signatures there can interrupt wallet
   // transaction flows (e.g., allocate/deposit) with extra sign prompts.
-  const shouldSkipAutoSiweForCurrentRoute = useCallback((): boolean => {
-    if (typeof window === 'undefined') return false;
-    const path = window.location.pathname;
-    return path === '/operator' || path.startsWith('/operator/');
-  }, []);
+  const isOperatorRoute =
+    router.pathname === '/operator' ||
+    router.pathname.startsWith('/operator/');
 
   const walletState: WalletState = {
     isConnected: !!isConnected && !!address,
@@ -145,7 +145,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       return;
     }
 
-    if (shouldSkipAutoSiweForCurrentRoute()) {
+    if (isOperatorRoute) {
       return;
     }
 
@@ -205,10 +205,33 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     };
 
     performAutoSIWE();
-  }, [isConnected, address, chainId, shouldSkipAutoSiweForCurrentRoute]);
+  }, [isConnected, address, chainId, isOperatorRoute]);
+
+  // If the user is on an operator route, force-clear any in-flight SIWE UI
+  // state so transaction prompts are never interleaved with SIWE prompts.
+  useEffect(() => {
+    if (!isOperatorRoute) return;
+    if (siweInProgressRef.current) {
+      siweInProgressRef.current = false;
+      siweService.resetSigningState();
+    }
+    setSIWEState((prev) => (
+      prev.isAuthenticating || prev.authError
+        ? { ...prev, isAuthenticating: false, authError: null }
+        : prev
+    ));
+  }, [isOperatorRoute]);
 
   const signInWithEthereum = async (): Promise<boolean> => {
     if (typeof window === 'undefined') return false;
+    if (isOperatorRoute) {
+      setSIWEState(prev => ({
+        ...prev,
+        isAuthenticating: false,
+        authError: 'Wallet SIWE sign-in is disabled in Operator Console.',
+      }));
+      return false;
+    }
     if (!isConnected || !address) {
       setSIWEState(prev => ({ ...prev, authError: 'Please connect your wallet first' }));
       return false;
