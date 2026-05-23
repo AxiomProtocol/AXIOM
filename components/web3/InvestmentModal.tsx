@@ -25,6 +25,8 @@ export default function InvestmentModal({
   onSuccess
 }: InvestmentModalProps) {
   const { isConnected, isCorrectChain, signer, address, connect, switchToArbitrum } = useWallet();
+  // Observation window: investment flows are suspended until banking rails are live.
+  const isObservationMode = process.env.NEXT_PUBLIC_OBSERVATION_MODE === 'true';
   const [amount, setAmount] = useState('');
   const [axusdBalance, setAxusdBalance] = useState('0');
   const [step, setStep] = useState<TransactionStep>('input');
@@ -292,23 +294,30 @@ export default function InvestmentModal({
                 </div>
               )}
 
-              <button
-                onClick={handleInvest}
-                disabled={!amount || !acceptedRisks || step === 'confirming'}
-                style={{
-                  width: '100%',
-                  padding: '14px 24px',
-                  background: !amount || !acceptedRisks ? '#9ca3af' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  color: '#ffffff',
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: !amount || !acceptedRisks ? 'not-allowed' : 'pointer',
-                  fontSize: 16
-                }}
-              >
-                {step === 'confirming' ? 'Confirm in Wallet...' : `Invest ${amount || '0'} AXUSD`}
-              </button>
+              {isObservationMode ? (
+                <div style={{ background: '#fef3cd', border: '1px solid #ffc107', borderRadius: 8, padding: '14px 24px', textAlign: 'center', fontSize: 14, color: '#856404' }}>
+                  <strong>Investment flows are paused</strong> during the observation window.
+                  External deposits will reopen when the banking integration is live.
+                </div>
+              ) : (
+                <button
+                  onClick={handleInvest}
+                  disabled={!amount || !acceptedRisks || step === 'confirming'}
+                  style={{
+                    width: '100%',
+                    padding: '14px 24px',
+                    background: !amount || !acceptedRisks ? '#9ca3af' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    borderRadius: 8,
+                    fontWeight: 600,
+                    border: 'none',
+                    cursor: !amount || !acceptedRisks ? 'not-allowed' : 'pointer',
+                    fontSize: 16
+                  }}
+                >
+                  {step === 'confirming' ? 'Confirm in Wallet...' : `Invest ${amount || '0'} AXUSD`}
+                </button>
+              )}
             </>
           )}
         </div>
