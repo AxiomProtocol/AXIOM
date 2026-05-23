@@ -7,9 +7,12 @@ const nextConfig = {
     '@mysten/bcs',
     '@mysten/wallet-standard',
   ],
-  // Compression handled by reverse proxy (nginx/Cloudflare) in production
+  // Compression handled by reverse proxy (nginx/Cloudflare) in production.
+  // If deploying without a proxy, re-enable this.
   compress: false,
-  allowedDevOrigins: ['*'],
+
+  // allowedDevOrigins is intentionally restricted to development only.
+  ...(process.env.NODE_ENV === 'development' ? { allowedDevOrigins: ['*'] } : {}),
 
   async redirects() {
     return [
@@ -50,43 +53,30 @@ const nextConfig = {
       },
     ];
   },
+
   eslint: {
-    ignoreDuringBuilds: true,
+    // ESLint errors now fail the build. Fix lint errors before merging.
+    ignoreDuringBuilds: false,
   },
 
   typescript: {
-    ignoreBuildErrors: true,
+    // TypeScript errors now fail the build. Fix type errors before merging.
+    ignoreBuildErrors: false,
   },
-
-  swcMinify: true,
 
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'plus.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 's.gravatar.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'avatars.githubusercontent.com',
-      },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'plus.unsplash.com' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 's.gravatar.com' },
+      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
     ],
   },
 
   experimental: {
-    instrumentationHook: true,
+    // instrumentationHook is now stable in Next.js 14+ — no longer needs to
+    // be in experimental. Kept here only for backward compat with older Next.
     serverComponentsExternalPackages: [
       'pg',
       'hardhat',
