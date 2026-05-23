@@ -590,6 +590,8 @@ function WalletDepositPanel() {
         abi: erc20Abi,
         functionName: 'approve',
         args: [vaultAddress, rawAmt],
+        account: address,
+        chainId: ARBITRUM_ONE,
       });
       setApproveTx(hash);
     } catch (e: unknown) {
@@ -651,6 +653,8 @@ function WalletDepositPanel() {
           abi: VAULT_ABI,
           functionName: 'deposit',
           args: [rawAmt, address],
+          account: address,
+          chainId: ARBITRUM_ONE,
         });
       } else {
         hash = await writeContractAsync({
@@ -658,6 +662,8 @@ function WalletDepositPanel() {
           abi: VAULT_ABI,
           functionName: 'depositToken',
           args: [AXUSD_ADDRESS, rawAmt],
+          account: address,
+          chainId: ARBITRUM_ONE,
         });
       }
       setDepositTx(hash);
@@ -999,6 +1005,8 @@ function AllocateToAavePanel() {
       const hash = await writeContractAsync({
         address: vaultAddress, abi: VAULT_ABI, functionName: 'allocate',
         args: [strategyAddress, assetAddress, rawAmt],
+        account: address,
+        chainId: ARBITRUM_ONE,
       });
       setAllocateTx(hash);
     } catch (e: unknown) {
@@ -1362,6 +1370,8 @@ export function AllocateToEulerPanel({
       const hash = await writeContractAsync({
         address: vaultAddress, abi: VAULT_ABI, functionName: 'allocate',
         args: [strategyAddress, assetAddress, rawAmt],
+        account: address,
+        chainId: ARBITRUM_ONE,
       });
       setAllocateTx(hash);
     } catch (e: unknown) {
@@ -1626,6 +1636,8 @@ function UsdcBackingPanel() {
         abi: erc20Abi,
         functionName: 'approve',
         args: [vaultAddress, parseUnits(amount, 6)],
+        account: address,
+        chainId: ARBITRUM_ONE,
       });
       setApproveTx(hash);
     } catch (e: unknown) {
@@ -1662,6 +1674,8 @@ function UsdcBackingPanel() {
       const hash = await writeContractAsync({
         address: vaultAddress, abi: VAULT_ABI, functionName: 'deposit',
         args: [rawAmt, address],
+        account: address,
+        chainId: ARBITRUM_ONE,
       });
       setDepositTx(hash);
     } catch (e: unknown) {
@@ -2692,6 +2706,7 @@ export default function TreasuryVaultPage({ summary, events, monthly, quarterly,
                 <p>Token expires: {new Date(sentinelAuth.expiry).toLocaleTimeString()}</p>
               </div>
               <button
+                type="button"
                 onClick={handleExecute}
                 disabled={executing}
                 className="px-6 py-2 bg-green-700 text-white font-mono text-sm disabled:opacity-50"
