@@ -15,6 +15,7 @@ const VAULT_ABI = [
 
 const STRATEGY_MANAGER_ABI = [
   'function strategyInfo(address) view returns (bool active, string name, address asset, uint256 allocatedPrincipal, uint256 harvestedYield, uint256 addedAt)',
+  'function getStrategyAddresses() view returns (address[])',
 ] as const;
 
 type ExecuteAllocateAaveResponse = {
@@ -57,23 +58,30 @@ async function resolveActiveAaveStrategyAddress(
   provider: ethers.JsonRpcProvider,
   vaultAddress: string,
 ): Promise<string> {
-  const candidates = [
+  const preferredCandidates = [
     normalizeAddress(process.env.NEXT_PUBLIC_AXIOM_AAVE_V3_STRATEGY_ADDRESS),
     normalizeAddress(process.env.AXIOM_AAVE_V3_STRATEGY_ADDRESS),
     normalizeAddress(DEFAULT_AAVE_STRATEGY_ADDRESS),
   ].filter((value): value is string => Boolean(value));
 
-  const deduped = [...new Set(candidates.map((addr) => addr.toLowerCase()))];
-  const lookup = new Map(candidates.map((addr) => [addr.toLowerCase(), addr]));
-
   const vaultRead = new ethers.Contract(vaultAddress, VAULT_ABI, provider);
   const strategyManagerAddress = await vaultRead.strategyManager() as string;
   const strategyManager = new ethers.Contract(strategyManagerAddress, STRATEGY_MANAGER_ABI, provider);
 
-  const diagnostics: Array<{ strategy: string; active: boolean; asset: string; name: string }> = [];
+  const discovered = await strategyManager.getStrategyAddresses() as string[];
+  const allCandidates = [
+    ...preferredCandidates,
+    ...discovered.map((addr) => normalizeAddress(addr)).filter((value): value is string => Boolean(value)),
+  ];
+  const deduped = [...new Set(allCandidates.map((addr) => addr.toLowerCase()))];
+  const lookup = new Map(allCandidates.map((addr) => [addr.toLowerCase(), addr]));
+
+  const diagnostics: Array<{ strategy: string; active: boolean; asset: string; name: string; preferred: boolean }> = [];
+  let firstActiveUsdc: string | null = null;
 
   for (const key of deduped) {
     const strategy = lookup.get(key)!;
+    const preferred = preferredCandidates.some((candidate) => candidate.toLowerCase() === key);
     try {
       const [active, name, asset] = await strategyManager.strategyInfo(strategy) as [
         boolean,
@@ -83,17 +91,32 @@ async function resolveActiveAaveStrategyAddress(
         bigint,
         bigint,
       ];
-      diagnostics.push({ strategy, active: Boolean(active), asset, name });
-      if (active && asset.toLowerCase() === USDC_ADDRESS.toLowerCase()) {
+      const normalizedAsset = asset.toLowerCase();
+      const isActiveUsdc = Boolean(active) && normalizedAsset === USDC_ADDRESS.toLowerCase();
+      diagnostics.push({ strategy, active: Boolean(active), asset, name, preferred });
+      if (!isActiveUsdc) {
+        continue;
+      }
+
+      if (!firstActiveUsdc) {
+        firstActiveUsdc = strategy;
+      }
+
+      const lowerName = name.toLowerCase();
+      if (lowerName.includes('aave')) {
         return strategy;
       }
     } catch {
-      diagnostics.push({ strategy, active: false, asset: 'unreadable', name: 'unreadable' });
+      diagnostics.push({ strategy, active: false, asset: 'unreadable', name: 'unreadable', preferred });
     }
   }
 
+  if (firstActiveUsdc) {
+    return firstActiveUsdc;
+  }
+
   throw new Error(
-    `No active USDC Aave strategy found in StrategyManager for candidates: ${JSON.stringify(diagnostics)}`,
+    `No active USDC strategy found in StrategyManager for candidates: ${JSON.stringify(diagnostics)}`,
   );
 }
 
