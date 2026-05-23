@@ -860,22 +860,20 @@ function WalletDepositPanel() {
 }
 
 // ── Allocate to Aave v3 Panel ──────────────────────────────────────────────────
-// STRATEGY_ADMIN-gated panel that pushes idle USDC from the vault into the
+// Operator-session panel that pushes idle USDC from the vault into the
 // AaveV3Strategy adapter, starting yield generation on Aave v3 Arbitrum.
-// Requires new vault (with SM wired) to be deployed first.
+// Execution is server-side to avoid wallet reconnect/signature loops.
 
 function AllocateToAavePanel() {
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
   const chainId                  = useChainId();
   const publicClient             = usePublicClient({ chainId: ARBITRUM_ONE });
-  const { writeContractAsync }   = useWriteContract();
 
   const vaultAddress    = VAULT_ADDRESS;
   const strategyAddress = AAVE_STRATEGY_ADDRESS;
   const assetAddress    = USDC_ADDRESS;
   const assetSymbol     = 'USDC';
   const assetDecimals   = 6;
-  const isWrongChain    = isConnected && chainId !== ARBITRUM_ONE;
 
   const [amount,     setAmount]     = useState('');
   const [step,       setStep]       = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
@@ -939,8 +937,9 @@ function AllocateToAavePanel() {
   const parsedAmountRaw = amount ? (() => {
     try { return parseAllocationAmount(amount, assetDecimals); } catch { return null; }
   })() : null;
+  const validationChainId = ARBITRUM_ONE;
   const currentValidation = amount && idleRaw !== null
-    ? validateAllocationRequest({ amountInput: amount, idleRaw, assetAddress, assetSymbol, assetDecimals, chainId })
+    ? validateAllocationRequest({ amountInput: amount, idleRaw, assetAddress, assetSymbol, assetDecimals, chainId: validationChainId })
     : null;
   const strategyAssetMismatch = strategyInfo !== null && strategyInfo.asset.toLowerCase() !== assetAddress.toLowerCase();
   const canAllocate = Boolean(amount)
@@ -948,8 +947,6 @@ function AllocateToAavePanel() {
     && currentValidation?.ok === true
     && strategyInfo?.active !== false
     && !strategyAssetMismatch
-    && hasStrategyRole !== false
-    && !isWrongChain
     && step !== 'sending';
   const diagnostics = allocationDiagnosticsLines({
     chainId,
@@ -967,13 +964,19 @@ function AllocateToAavePanel() {
   });
 
   async function handleAllocate() {
-    if (!address || !vaultAddress || !strategyAddress || !publicClient) return;
+    if (!vaultAddress || !strategyAddress || !publicClient) return;
     if (idleRaw === null) { setErrMsg('Vault idle balance is unavailable. Refresh the stats before allocating.'); return; }
     if (strategyInfo?.active === false) { setErrMsg(['Allocation blocked: strategy is not active in StrategyManager.', ...diagnostics].join('\n')); return; }
     if (strategyAssetMismatch) { setErrMsg([`Allocation blocked: strategy registered asset ${strategyInfo?.asset} does not match ${assetAddress}.`, ...diagnostics].join('\n')); return; }
-    if (hasStrategyRole === false) { setErrMsg(['Allocation blocked: connected wallet does not hold STRATEGY_ADMIN on the vault.', ...diagnostics].join('\n')); return; }
 
-    const validation = validateAllocationRequest({ amountInput: amount, idleRaw, assetAddress, assetSymbol, assetDecimals, chainId });
+    const validation = validateAllocationRequest({
+      amountInput: amount,
+      idleRaw,
+      assetAddress,
+      assetSymbol,
+      assetDecimals,
+      chainId: validationChainId,
+    });
     if (!validation.ok) {
       const lines = [validation.message];
       if (validation.reason === 'insufficient-idle') {
@@ -991,24 +994,28 @@ function AllocateToAavePanel() {
     setErrMsg(null);
     setStep('sending');
     try {
-      const rawAmt = validation.parsedAmountRaw;
-      try {
-        await publicClient.simulateContract({
-          address: vaultAddress, abi: VAULT_ABI, functionName: 'allocate',
-          args: [strategyAddress, assetAddress, rawAmt], account: address,
-        });
-      } catch (simErr: unknown) {
-        setErrMsg([buildSimulationErrorMessage({ error: simErr, vaultAddress, strategyAddress, assetSymbol, assetAddress, amount }), ...diagnostics].join('\n'));
+      const response = await fetch('/api/treasury/vault/execute-allocate-aave', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amountUsdc: amount }),
+      });
+      const payload = await response.json().catch(() => ({} as Record<string, unknown>));
+      if (!response.ok || payload.success !== true) {
+        const detail = (typeof payload.error === 'string' && payload.error)
+          || (typeof payload.detail === 'string' && payload.detail)
+          || `Allocation execution failed (HTTP ${response.status})`;
+        setErrMsg([detail, ...diagnostics].join('\n'));
         setStep('error');
         return;
       }
-      const hash = await writeContractAsync({
-        address: vaultAddress, abi: VAULT_ABI, functionName: 'allocate',
-        args: [strategyAddress, assetAddress, rawAmt],
-        account: address,
-        chainId: ARBITRUM_ONE,
-      });
-      setAllocateTx(hash);
+      if (typeof payload.txHash === 'string' && payload.txHash.startsWith('0x')) {
+        setAllocateTx(payload.txHash as `0x${string}`);
+      } else {
+        setAllocateTx(null);
+      }
+      refreshStats();
+      setStep('success');
     } catch (e: unknown) {
       setErrMsg(buildSimulationErrorMessage({ error: e, vaultAddress, strategyAddress, assetSymbol, assetAddress, amount }));
       setStep('error');
@@ -1016,9 +1023,6 @@ function AllocateToAavePanel() {
   }
 
   function reset() { setStep('idle'); setAmount(''); setAllocateTx(null); setErrMsg(null); }
-
-  if (isConnected && isWrongChain) return <WrongChainAllocationNotice title="Allocate to Aave v3" />;
-  if (!isConnected) return null;
 
   if (!vaultAddress || !strategyAddress) {
     return (
@@ -1080,10 +1084,7 @@ function AllocateToAavePanel() {
       ? 'Allocation blocked: strategy is not active in StrategyManager.'
       : strategyAssetMismatch
         ? `Allocation blocked: strategy registered asset ${strategyInfo?.asset} does not match ${assetAddress}.`
-        : zeroIdleBlock
-          ?? (hasStrategyRole === false
-            ? 'Allocation blocked: connected wallet does not hold STRATEGY_ADMIN on the vault.'
-            : null);
+        : zeroIdleBlock;
 
   return (
     <div className="border border-dl-border p-5 max-w-2xl mb-4 space-y-5">
@@ -1116,8 +1117,9 @@ function AllocateToAavePanel() {
       </div>
 
       <div className="text-xs font-mono text-dl-gray border-l-2 border-dl-border pl-3">
-        Requires STRATEGY_ADMIN role — connect the deployer wallet ({address?.slice(0,6)}…{address?.slice(-4)}).
-        Vault calls allocate(aaveStrategy, USDC, amount) → StrategyManager → AaveV3Strategy.deploy().
+        Allocation executes server-side via operator session (no wallet signature loop).
+        Server calls vault.allocate(aaveStrategy, USDC, amount) using SENTINEL_EXECUTOR_PRIVATE_KEY
+        (fallback DEPLOYER_PRIVATE_KEY) and waits for confirmation before returning.
       </div>
 
       <div className="space-y-2">
