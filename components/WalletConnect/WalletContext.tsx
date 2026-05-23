@@ -75,6 +75,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const siweInProgressRef = useRef(false);
   const [axmBalance, setAxmBalance] = useState('0');
 
+  // Operator surfaces already use dedicated operator-cookie auth and do not
+  // depend on SIWE. Auto-triggering SIWE signatures there can interrupt wallet
+  // transaction flows (e.g., allocate/deposit) with extra sign prompts.
+  const shouldSkipAutoSiweForCurrentRoute = useCallback((): boolean => {
+    if (typeof window === 'undefined') return false;
+    const path = window.location.pathname;
+    return path === '/operator' || path.startsWith('/operator/');
+  }, []);
+
   const walletState: WalletState = {
     isConnected: !!isConnected && !!address,
     address: address || null,
@@ -136,6 +145,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       return;
     }
 
+    if (shouldSkipAutoSiweForCurrentRoute()) {
+      return;
+    }
+
     if (autoSiweAttemptedForRef.current === address) return;
     if (siweInProgressRef.current) return;
 
@@ -192,7 +205,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     };
 
     performAutoSIWE();
-  }, [isConnected, address, chainId]);
+  }, [isConnected, address, chainId, shouldSkipAutoSiweForCurrentRoute]);
 
   const signInWithEthereum = async (): Promise<boolean> => {
     if (typeof window === 'undefined') return false;
