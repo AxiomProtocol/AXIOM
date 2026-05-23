@@ -23,6 +23,7 @@ type ExecuteAllocateAaveResponse = {
   amountRaw?: string;
   executorAddress?: string;
   strategyAddress?: string;
+  vaultAddress?: string;
   error?: string;
 };
 
@@ -119,10 +120,21 @@ export default async function handler(
     return res.status(400).json({ success: false, error: 'amountUsdc must be a positive number' });
   }
 
-  const vaultAddress =
-    process.env.AXIOM_TREASURY_VAULT_ADDRESS
-    || process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS
-    || DEFAULT_VAULT_ADDRESS;
+  const publicVaultAddress = normalizeAddress(
+    process.env.NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS || DEFAULT_VAULT_ADDRESS,
+  )!;
+  const privateVaultAddress = normalizeAddress(process.env.AXIOM_TREASURY_VAULT_ADDRESS);
+  if (privateVaultAddress && privateVaultAddress.toLowerCase() !== publicVaultAddress.toLowerCase()) {
+    return res.status(503).json({
+      success: false,
+      error:
+        `Vault config mismatch: AXIOM_TREASURY_VAULT_ADDRESS=${privateVaultAddress} `
+        + `but NEXT_PUBLIC_AXIOM_TREASURY_VAULT_ADDRESS=${publicVaultAddress}. `
+        + 'Align these env values before running operator allocation.',
+      vaultAddress: privateVaultAddress,
+    });
+  }
+  const vaultAddress = privateVaultAddress || publicVaultAddress;
   const rpcUrl = resolveRpcUrl();
   const executorKey = getExecutionKey();
 
@@ -171,6 +183,7 @@ export default async function handler(
       amountRaw: amountRaw.toString(),
       executorAddress: signer.address,
       strategyAddress,
+      vaultAddress,
     });
   } catch (err: unknown) {
     const e = err as { message?: string; reason?: string; shortMessage?: string };
