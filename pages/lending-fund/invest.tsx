@@ -78,6 +78,8 @@ interface InvestmentStep {
 
 export default function InvestPage() {
   const router = useRouter();
+  // Observation window: deposit flows are suspended until banking rails are live.
+  const isObservationMode = process.env.NEXT_PUBLIC_OBSERVATION_MODE === 'true';
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [amount, setAmount] = useState('100');
@@ -1172,13 +1174,19 @@ export default function InvestPage() {
                 );
               })()}
 
-              <button
-                onClick={proceedToDeposit}
-                disabled={parseFloat(amount) < 100}
-                className="w-full py-4 bg-dl-navy text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Proceed to Deposit
-              </button>
+              {isObservationMode ? (
+                <div className="w-full py-4 px-4 bg-amber-50 border border-amber-300 text-amber-800 text-sm text-center font-medium">
+                  Deposits are paused during the observation window. External investment flows will reopen when the banking integration is live.
+                </div>
+              ) : (
+                <button
+                  onClick={proceedToDeposit}
+                  disabled={parseFloat(amount) < 100}
+                  className="w-full py-4 bg-dl-navy text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Proceed to Deposit
+                </button>
+              )}
             </StepCard>
           )}
 
@@ -1372,13 +1380,19 @@ export default function InvestPage() {
                           {txStatus === 'approving' ? 'Approving...' : `Approve AXUSD for ${formatUSD(amount)}`}
                         </button>
                       ) : (
-                        <button
-                          onClick={handleOnChainDeposit}
-                          disabled={txStatus === 'depositing'}
-                          className="w-full py-4 bg-dl-navy text-white font-medium disabled:opacity-50"
-                        >
-                          {txStatus === 'depositing' ? 'Depositing...' : `Deposit ${formatUSD(amount)}`}
-                        </button>
+                        {isObservationMode ? (
+                          <div className="w-full py-4 px-4 bg-amber-50 border border-amber-300 text-amber-800 text-sm text-center font-medium">
+                            Deposits are paused during the observation window.
+                          </div>
+                        ) : (
+                          <button
+                            onClick={handleOnChainDeposit}
+                            disabled={txStatus === 'depositing'}
+                            className="w-full py-4 bg-dl-navy text-white font-medium disabled:opacity-50"
+                          >
+                            {txStatus === 'depositing' ? 'Depositing...' : `Deposit ${formatUSD(amount)}`}
+                          </button>
+                        )}
                       )}
                     </>
                   )}
