@@ -76,12 +76,12 @@ describe('ACH reconciliation observedAmount format consistency', () => {
   );
 
   it('reconciliation fallback path uses centsToDecimalString for observedAmount', () => {
-    // Source-level guard: ensure increaseDiff.ts no longer serializes the raw
+    // Source-level guard: ensure achDiff.ts no longer serializes the raw
     // absolute cents value into observedAmount. If this regresses, the
     // reconciler-driven SETTLE will write "50000" instead of "500.00" and the
     // webhook processor's amount comparison will report a 100x mismatch.
     const source = readFileSync(
-      join(__dirname, '..', 'lib', 'capinfra', 'reconciliation', 'increaseDiff.ts'),
+      join(__dirname, '..', 'lib', 'capinfra', 'reconciliation', 'achDiff.ts'),
       'utf8',
     );
 
@@ -103,7 +103,7 @@ describe('ACH reconciliation observedAmount format consistency', () => {
     // like "50000" instead of "500.00") and downstream comparisons via
     // decimalStringToCents will misread it.
     const source = readFileSync(
-      join(__dirname, '..', 'lib', 'capinfra', 'reconciliation', 'increaseDiff.ts'),
+      join(__dirname, '..', 'lib', 'capinfra', 'reconciliation', 'achDiff.ts'),
       'utf8',
     );
 

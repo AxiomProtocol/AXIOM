@@ -282,7 +282,7 @@ describe('cardDeposits CSV helper', () => {
     expect(csvHelpers.CARD_DEPOSITS_CSV_HEADER).toEqual([
       'id', 'intent', 'status', 'amount_cents', 'currency',
       'stripe_session_id', 'stripe_payment_intent_id', 'stripe_payout_id',
-      'increase_transfer_id', 'mint_tx_hash', 'target_wallet_address',
+      'banking_transfer_id', 'mint_tx_hash', 'target_wallet_address',
       'buyer_email', 'user_id', 'idempotency_key', 'error_reason',
       'created_at', 'updated_at',
     ]);
