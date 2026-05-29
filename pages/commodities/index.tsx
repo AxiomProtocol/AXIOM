@@ -25,7 +25,7 @@ import { DesignLawLayout, SectionHeading } from '../../components/design-law';
 import { CommodityStatusBadge } from '../../components/commodities/CommodityStatusBadge';
 import { CommodityComparisonTable } from '../../components/commodities/CommodityComparisonTable';
 import { COMMODITY_DISCLOSURES, COMMODITY_PAGE_BANNER } from '../../lib/commodities/disclosures';
-import { COMMODITY_REGISTRY } from '../../lib/commodities/registry';
+import { getCommodity } from '../../lib/commodities/registry';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -188,10 +188,18 @@ function LayerExplainer() {
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
+function requireCommodity(symbol: string) {
+  const commodity = getCommodity(symbol);
+  if (!commodity) {
+    throw new Error(`Commodity registry entry missing for ${symbol}`);
+  }
+  return commodity;
+}
+
 export default function CommoditiesHubPage() {
-  const axau = COMMODITY_REGISTRY.find((c) => c.symbol === 'AXAU')!;
-  const kag  = COMMODITY_REGISTRY.find((c) => c.symbol === 'KAG')!;
-  const axag = COMMODITY_REGISTRY.find((c) => c.symbol === 'AXAG')!;
+  const axau = requireCommodity('AXAU');
+  const kag  = requireCommodity('KAG');
+  const axag = requireCommodity('AXAG');
 
   return (
     <DesignLawLayout>
