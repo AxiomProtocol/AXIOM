@@ -67,7 +67,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const cronSecret = process.env.CRON_SECRET;
-  const expected = cronSecret || adminKey;
 
   const bearer = (req.headers['authorization'] || '').toString().replace(/^Bearer\s+/i, '');
   const headerKey = (req.headers['x-cron-secret'] || '').toString();
@@ -79,13 +78,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // trust this header as proof of an internal cron call — it cannot be
   // injected from the public internet in the same way because the VERCEL
   // env var is only present on Vercel's own execution environment.
-  // If CRON_SECRET is also set AND a Bearer token is provided, that
+  // If CRON_SECRET is also set AND an auth credential is provided, that
   // takes priority and is validated normally.
   const isVercelCron = req.headers['x-vercel-cron'] === '1';
   const isVercelEnv  = !!process.env.VERCEL;
   const vercelCronBypass = isVercelCron && isVercelEnv;
 
-  if (!vercelCronBypass && (!provided || !safeEqualStr(provided, expected))) {
+  // Accept either CRON_SECRET or ADMIN_SOLVENCY_KEY independently so that
+  // callers configured with either secret can authenticate successfully.
+  const isValid = !!(provided && (
+    (cronSecret && safeEqualStr(provided, cronSecret)) ||
+    safeEqualStr(provided, adminKey)
+  ));
+
+  if (!vercelCronBypass && !isValid) {
     return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
 
