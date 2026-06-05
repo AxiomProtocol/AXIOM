@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import type { GetServerSideProps } from 'next';
 import { DesignLawLayout, SectionHeading } from '../../components/design-law';
 import PilotNav from '../../components/pilot/PilotNav';
+import { requireOperatorCookie, readOperatorCookie } from '../../lib/capinfra/operatorAuth';
 
 interface SpvOption {
   id: string;
@@ -75,7 +77,14 @@ function Modal({ open, onClose, title, children }: { open: boolean; onClose: () 
   );
 }
 
-export default function DocumentsPage() {
+export const getServerSideProps: GetServerSideProps<{ adminKey: string }> = async (ctx) => {
+  const redirect = requireOperatorCookie(ctx);
+  if (redirect) return redirect;
+  const adminKey = readOperatorCookie(ctx.req) as string;
+  return { props: { adminKey } };
+};
+
+export default function DocumentsPage({ adminKey }: { adminKey: string }) {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [spvs, setSpvs] = useState<SpvOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,7 +151,7 @@ export default function DocumentsPage() {
       fd.append('note', formDescription);
       const res = await fetch('/api/founder/upload-settlement', {
         method: 'POST',
-        headers: { 'x-admin-key': 'Promote9' },
+        headers: { 'x-admin-key': adminKey },
         body: fd,
       });
       const result = await res.json();
