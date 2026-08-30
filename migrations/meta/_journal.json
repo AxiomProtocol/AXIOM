@@ -204,6 +204,20 @@
       "when": 1777708800000,
       "tag": "0058_reserve_positions_settlement",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1777795200000,
+      "tag": "0059_bridge_settlement_rails",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1777881600000,
+      "tag": "0060_persona_kyc",
+      "breakpoints": true
     }
   ]
 }

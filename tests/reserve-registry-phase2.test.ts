@@ -376,19 +376,20 @@ describe('Disclosure eligibility rules', () => {
     expect(axusd!.isDisclosureEligible).toBe(false);
   });
 
-  it('PAXG tokenized gold sleeve is OPERATOR_ONLY (not public)', () => {
+  it('PAXG tokenized gold sleeve is PUBLIC in Phase 4 admission', () => {
     const paxg = getApprovedReserveAssetRegistry().find(a => a.assetSymbol === 'PAXG');
-    expect(paxg!.disclosureStatus).toBe('OPERATOR_ONLY');
-    expect(paxg!.isDisclosureEligible).toBe(false);
+    expect(paxg!.disclosureStatus).toBe('PUBLIC');
+    expect(paxg!.isDisclosureEligible).toBe(true);
   });
 });
 
 // ── Attestation status ────────────────────────────────────────────────────────
 
 describe('Attestation status defaults', () => {
-  it('all assets in Phase 2 have attestationStatus NONE (infrastructure not yet deployed)', () => {
+  it('non-PAXG assets in Phase 2 default to attestationStatus NONE', () => {
     const registry = getApprovedReserveAssetRegistry();
     for (const asset of registry) {
+      if (asset.assetSymbol === 'PAXG') continue;
       expect(asset.custody.attestationStatus).toBe('NONE');
     }
   });
@@ -405,13 +406,13 @@ describe('Attestation status defaults', () => {
     expect(unknownCustody.length).toBeGreaterThan(0);
   });
 
-  it('PAXG planned asset may have a known intended custodian (BitGo CaaS)', () => {
+  it('PAXG live asset has institutional custody with CURRENT attestation', () => {
     const paxg = getApprovedReserveAssetRegistry().find(a => a.assetSymbol === 'PAXG');
     expect(paxg).toBeDefined();
-    // PAXG has a known planned custodian; custodyType may be INSTITUTIONAL_CUSTODIAN or UNKNOWN
-    expect(['INSTITUTIONAL_CUSTODIAN', 'UNKNOWN']).toContain(paxg!.custody.custodyType);
-    // Regardless of custody type, PLANNED PAXG has zero eligible value
-    expect(paxg!.eligibleReserveValueUsd).toBe(0);
+    expect(paxg!.status).toBe('LIVE');
+    expect(paxg!.isLive).toBe(true);
+    expect(paxg!.custody.custodyType).toBe('INSTITUTIONAL_CUSTODIAN');
+    expect(paxg!.custody.attestationStatus).toBe('CURRENT');
   });
 });
 
